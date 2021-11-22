@@ -114,9 +114,9 @@ def interpret_token(val):
     the uninterpreted token.
 
     >>> interpret_token("3")
-    ["3"]
+    ['3']
     >>> interpret_token("1.0")
-    ["1.0"]
+    ['1.0']
     >>> interpret_token("'hello'")
     ['hello']
     >>> interpret_token("PORO")

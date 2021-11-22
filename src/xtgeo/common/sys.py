@@ -16,7 +16,6 @@ from typing import Optional
 
 import h5py
 import numpy as np
-
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from .xtgeo_dialog import XTGeoDialog
@@ -220,10 +219,11 @@ class _XTGeoFile(object):
             obj (XTGeo instance): Instance of e.g. RegularSurface()
 
         Example::
-            >>> surf = xtgeo.RegularSurface("somefile")
-            >>> xx = _XTGeoFile("/tmp/$md5sum.gri")
-            >>> print(xx)
-            >>> '/tmp/41b24b05be153a09db6ade2f53acd6b5.gri'
+            >>> import xtgeo
+            >>> surf = xtgeo.surface_from_file(surface_dir + "/topreek_rota.gri")
+            >>> xx = _XTGeoFile("/tmp/$md5sum.gri", "rb", surf)
+            >>> print(xx.file)
+            /tmp/c144fe19742adac8187b97e7976ac68c.gri
 
         .. versionadded:: 2.14
         """

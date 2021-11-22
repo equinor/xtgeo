@@ -1,7 +1,7 @@
 """Tests for 3D grid."""
 import math
-import pathlib
 from collections import OrderedDict
+from os.path import join
 
 import numpy as np
 import pytest
@@ -21,14 +21,11 @@ if not xtg.testsetup():
 
 TPATH = xtg.testpathobj
 
-EMEGFILE = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
 REEKFILE = TPATH / "3dgrids/reek/REEK.EGRID"
 REEKFIL2 = TPATH / "3dgrids/reek3/reek_sim.grdecl"  # ASCII GRDECL
 REEKFIL3 = TPATH / "3dgrids/reek3/reek_sim.bgrdecl"  # binary GRDECL
 REEKFIL4 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
 REEKFIL5 = TPATH / "3dgrids/reek/reek_geo2_grid_3props.roff"
-REEKROOT = TPATH / "3dgrids/reek/REEK"
-SPROOT = TPATH / "3dgrids/etc/TEST_SP"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = TPATH / "3dgrids/bri/b.grdecl"
 BANAL6 = TPATH / "3dgrids/etc/banal6.roff"
@@ -37,8 +34,6 @@ GRIDQC1_CELLVOL = TPATH / "3dgrids/etc/gridqc1_totbulk.roff"
 GRIDQC2 = TPATH / "3dgrids/etc/gridqc_negthick_twisted.roff"
 
 DUALFIL1 = TPATH / "3dgrids/etc/dual_grid.roff"
-DUALFIL2 = TPATH / "3dgrids/etc/dual_grid_noactivetag.roff"
-
 DUALFIL3 = TPATH / "3dgrids/etc/TEST_DPDK.EGRID"
 
 # =============================================================================
@@ -48,26 +43,19 @@ DUALFIL3 = TPATH / "3dgrids/etc/TEST_DPDK.EGRID"
 
 
 @pytest.fixture()
-def load_gfile1():
-    """Fixture for loading EMEGFILE grid."""
-    return xtgeo.grid3d.Grid(EMEGFILE)
+def emerald_grid(testpath):
+    return xtgeo.grid3d.Grid(join(testpath, "3dgrids/eme/1/emerald_hetero_grid.roff"))
 
 
-def test_import_wrong(tmp_path):
-    """Importing wrong fformat, etc."""
+def test_import_wrong_format(tmp_path):
     grd = xtgeo.create_box_grid((2, 2, 2))
     grd.to_file(tmp_path / "grd.roff")
     with pytest.raises(ValueError):
         xtgeo.grid_from_file(tmp_path / "grd.roff", fformat="stupid_wrong_name")
 
 
-def test_import_guess(load_gfile1):
-    """Import with guessing fformat, and also test name attribute."""
-    grd = load_gfile1
-
-    assert grd.ncol == 70
-    assert grd.name == "emerald_hetero_grid"
-
+def test_get_set_name():
+    grd = xtgeo.create_box_grid((2, 2, 2))
     grd.name = "xxx"
     assert grd.name == "xxx"
 
@@ -131,70 +119,50 @@ def test_shoebox_egrid(tmp_path, dimensions):
     assert grd1.dimensions == dimensions
 
 
-def test_shoebox_xtgeo_vs_roff(tmp_path):
-    """Test timing for xtgeo xtgcpgeom format vs roff vs egrid."""
-    dimens = (20, 30, 50)
+def test_emerald_grid_values(emerald_grid):
+    assert emerald_grid.name == "emerald_hetero_grid"
+    assert emerald_grid.dimensions == (70, 100, 46)
+    assert emerald_grid.nactive == 120842
 
-    grd = xtgeo.Grid()
-    grd.create_box(dimension=dimens)
-    grd._xtgformat2()
-    t0 = xtg.timer()
-    grd.to_xtgf(tmp_path / "show.xtgf")
-    t1 = xtg.timer(t0)
-    logger.info("TIME XTGEO %s", t1)
-    t0 = xtg.timer()
-    grd.to_file(tmp_path / "show.roff", fformat="roff")
-    t1 = xtg.timer(t0)
-    logger.info("TIME ROFF %s", t1)
-    t0 = xtg.timer()
-    grd.to_file(tmp_path / "show.egrid", fformat="egrid")
-    t1 = xtg.timer(t0)
-    logger.info("TIME EGRID (incl conv) %s", t1)
+    dzv = emerald_grid.get_dz()
+    dzval = dzv.values
+    mydz = float(dzval[31:32, 72:73, 0:1])
+    assert mydz == pytest.approx(2.761, abs=0.001), "Grid DZ Emerald"
+    dxv, dyv = emerald_grid.get_dxdy()
 
-    t0 = xtg.timer()
-    grd2 = xtgeo.Grid()
-    grd2.from_xtgf(tmp_path / "show.xtgf")
-    t1 = xtg.timer(t0)
-    logger.info("TIME READ xtgeo %s", t1)
+    mydx = float(dxv.values3d[31:32, 72:73, 0:1])
+    mydy = float(dyv.values3d[31:32, 72:73, 0:1])
 
-    t0 = xtg.timer()
-    grd2 = xtgeo.Grid()
-    grd2.from_file(tmp_path / "show.roff", fformat="roff")
-    t1 = xtg.timer(t0)
-    logger.info("TIME READ roff %s", t1)
+    assert mydx == pytest.approx(118.51, abs=0.01), "Grid DX Emerald"
+    assert mydy == pytest.approx(141.26, abs=0.01), "Grid DY Emerald"
+
+    xvv, yvv, zvv = emerald_grid.get_xyz(names=["xxx", "yyy", "zzz"])
+
+    assert xvv.name == "xxx", "Name of X coord"
+    xvv.name = "Xerxes"
+
+    emerald_grid.props = [xvv, yvv]
+
+    assert emerald_grid.get_prop_by_name("Xerxes").name == "Xerxes"
 
 
-def test_roffbin_get_dataframe_for_grid(load_gfile1):
-    """Import ROFF grid and return a grid dataframe (no props)."""
-    grd = load_gfile1
-
-    assert isinstance(grd, Grid)
-
-    df = grd.dataframe()
-    print(df.head())
-
-    assert len(df) == grd.nactive
+def test_roffbin_get_dataframe_for_grid(emerald_grid):
+    df = emerald_grid.dataframe()
+    assert len(df) == emerald_grid.nactive
 
     assert df["X_UTME"][0] == pytest.approx(459176.7937727844, abs=0.1)
 
     assert len(df.columns) == 6
 
-    df = grd.dataframe(activeonly=False)
-    print(df.head())
-
+    df = emerald_grid.dataframe(activeonly=False)
     assert len(df.columns) == 7
-    assert len(df) != grd.nactive
+    assert len(df) != emerald_grid.nactive
 
-    assert len(df) == grd.ncol * grd.nrow * grd.nlay
+    assert len(df) == np.prod(emerald_grid.dimensions)
 
 
-def test_subgrids(load_gfile1):
-    """Import ROFF and test different subgrid functions."""
-    grd = load_gfile1
-
-    assert isinstance(grd, Grid)
-
-    logger.info(grd.subgrids)
+def test_subgrids():
+    grd = xtgeo.create_box_grid((10, 10, 46))
 
     newsub = OrderedDict()
     newsub["XX1"] = 20
@@ -202,23 +170,15 @@ def test_subgrids(load_gfile1):
     newsub["XX3"] = 24
 
     grd.set_subgrids(newsub)
-    logger.info(grd.subgrids)
-
-    subs = grd.get_subgrids()
-    logger.info(subs)
-
-    assert subs == newsub
+    assert grd.get_subgrids() == newsub
 
     _i_index, _j_index, k_index = grd.get_ijk()
 
     zprop = k_index.copy()
     zprop.values[k_index.values > 4] = 2
     zprop.values[k_index.values <= 4] = 1
-    print(zprop.values)
-    grd.describe()
-    grd.subgrids_from_zoneprop(zprop)
 
-    grd.describe()
+    grd.subgrids_from_zoneprop(zprop)
 
     # rename
     grd.rename_subgrids(["AAAA", "BBBB"])
@@ -227,108 +187,6 @@ def test_subgrids(load_gfile1):
     # set to None
     grd.subgrids = None
     assert grd._subgrids is None
-
-
-def test_roffbin_import1(load_gfile1):
-    """Test roff binary import case 1."""
-    grd = load_gfile1
-
-    assert grd.ncol == 70, "Grid NCOL Emerald"
-    assert grd.nlay == 46, "Grid NLAY Emerald"
-
-    # extract ACTNUM parameter as a property instance (a GridProperty)
-    act = grd.get_actnum()
-
-    # get dZ...
-    dzv = grd.get_dz()
-
-    logger.info("ACTNUM is %s", act)
-    logger.debug("DZ values are \n%s", dzv.values1d[888:999])
-
-    dzval = dzv.values
-    print("DZ mean and shape: ", dzval.mean(), dzval.shape)
-    # get the value is cell 32 73 1 shall be 2.761
-    mydz = float(dzval[31:32, 72:73, 0:1])
-    assert mydz == pytest.approx(2.761, abs=0.001), "Grid DZ Emerald"
-
-    # get dX dY
-    logger.info("Get dX dY")
-    dxv, dyv = grd.get_dxdy()
-
-    mydx = float(dxv.values3d[31:32, 72:73, 0:1])
-    mydy = float(dyv.values3d[31:32, 72:73, 0:1])
-
-    assert mydx == pytest.approx(118.51, abs=0.01), "Grid DX Emerald"
-    assert mydy == pytest.approx(141.26, abs=0.01), "Grid DY Emerald"
-
-    # get X Y Z coordinates (as GridProperty objects) in one go
-    logger.info("Get X Y Z...")
-    xvv, yvv, zvv = grd.get_xyz(names=["xxx", "yyy", "zzz"])
-
-    assert xvv.name == "xxx", "Name of X coord"
-    xvv.name = "Xerxes"
-
-    # attach some properties to grid
-    grd.props = [xvv, yvv]
-
-    logger.info(grd.props)
-    grd.props = [zvv]
-
-    logger.info(grd.props)
-
-    grd.props.append(xvv)
-    logger.info(grd.propnames)
-
-    # get the property of name Xerxes
-    myx = grd.get_prop_by_name("Xerxes")
-    if myx is None:
-        logger.info(myx)
-    else:
-        logger.info("Got nothing!")
-
-
-def test_roffbin_import_v2_banal():
-    """Test roff binary import ROFF using new API, banal case."""
-    t0 = xtg.timer()
-    grd1 = Grid()
-    grd1._xtgformat = 1
-    grd1.from_file(BANAL6)
-    print("V1: ", xtg.timer(t0))
-
-    t0 = xtg.timer()
-
-    grd2 = Grid()
-    grd2._xtgformat = 2
-    grd2.from_file(BANAL6)
-    print("V2: ", xtg.timer(t0))
-
-    t0 = xtg.timer()
-    grd3 = Grid()
-    grd3._xtgformat = 2
-    grd3.from_file(BANAL6)
-    grd3._convert_xtgformat2to1()
-    print("V3: ", xtg.timer(t0))
-
-    t0 = xtg.timer()
-    grd4 = Grid()
-    grd4._xtgformat = 1
-    grd4.from_file(BANAL6)
-    grd4._convert_xtgformat1to2()
-    print("V4: ", xtg.timer(t0))
-
-    for irange in range(grd1.ncol):
-        for jrange in range(grd1.nrow):
-            for krange in range(grd1.nlay):
-                cell = (irange + 1, jrange + 1, krange + 1)
-
-                xx1 = grd1.get_xyz_cell_corners(cell, activeonly=False)
-                xx2 = grd2.get_xyz_cell_corners(cell, activeonly=False)
-                xx3 = grd3.get_xyz_cell_corners(cell, activeonly=False)
-                xx4 = grd4.get_xyz_cell_corners(cell, activeonly=False)
-
-                assert np.allclose(np.array(xx1), np.array(xx2)) is True
-                assert np.allclose(np.array(xx1), np.array(xx3)) is True
-                assert np.allclose(np.array(xx1), np.array(xx4)) is True
 
 
 def test_roffbin_import_v2stress():
@@ -341,14 +199,9 @@ def test_roffbin_import_v2stress():
     print("100 loops with ROXAPIV 2 took: ", t1)
 
 
-def test_roffbin_banal6():
-    """Test roff binary for banal no. 6 case."""
-    grd1 = Grid()
-    grd1.from_file(BANAL6)
-
-    grd2 = Grid()
-    grd2._xtgformat = 2
-    grd2.from_file(BANAL6)
+def test_convert_vs_xyz_cell_corners():
+    grd1 = xtgeo.grid_from_file(BANAL6)
+    grd2 = grd1.copy()
 
     assert grd1.get_xyz_cell_corners() == grd2.get_xyz_cell_corners()
 
@@ -363,13 +216,9 @@ def test_roffbin_banal6():
     assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
 
 
-def test_roffbin_export_v2_banal6(tmp_path):
-    """Test roff binary export v2 for banal no. 6 case."""
-    # export
-    grd1 = Grid()
-    grd1._xtgformat = 2
+def test_roff_bin_vs_ascii_export(tmp_path):
+    grd1 = xtgeo.create_box_grid(dimension=(10, 10, 10))
 
-    logger.info("EXPORT")
     grd1.to_file(tmp_path / "b6_export.roffasc", fformat="roff_asc")
     grd1.to_file(tmp_path / "b6_export.roffbin", fformat="roff_bin")
 
@@ -399,11 +248,14 @@ def test_benchmark_get_xyz_cell_cornerns(benchmark, xtgformat):
     )
 
 
-def test_roffbin_import_v2_wsubgrids():
-    """Test roff binary import ROFF using new API, now with subgrids."""
-    grd1 = Grid()
-    grd1.from_file(REEKFIL5)
-    print(grd1.subgrids)
+def test_roffbin_import_wsubgrids():
+    assert xtgeo.grid_from_file(REEKFIL5).subgrids == OrderedDict(
+        [
+            ("subgrid_0", range(1, 21)),
+            ("subgrid_1", range(21, 41)),
+            ("subgrid_2", range(41, 57)),
+        ]
+    )
 
 
 def test_import_grdecl_and_bgrdecl():
@@ -484,115 +336,19 @@ def test_geometrics_reek():
     assert geom["xmin"] == pytest.approx(456620, abs=1), "Xmin cell center"
 
 
-def test_activate_all_cells(tmp_path):
-    """Make the grid active for all cells."""
-    grid = Grid(EMEGFILE)
-    logger.info("Number of active cells %s before", grid.nactive)
-    grid.activate_all()
-    logger.info("Number of active cells %s after", grid.nactive)
-
-    assert grid.nactive == grid.ntotal
-    grid.to_file(tmp_path / "emerald_all_active.roff")
+def test_activate_all_cells(emerald_grid):
+    emerald_grid.activate_all()
+    assert emerald_grid.nactive == emerald_grid.ntotal
 
 
-def test_get_adjacent_cells(tmp_path):
+def test_get_adjacent_cells(tmp_path, emerald_grid):
     """Get the cell indices for discrete value X vs Y, if connected."""
-    grid = Grid(EMEGFILE)
-    actnum = grid.get_actnum()
+    actnum = emerald_grid.get_actnum()
     actnum.to_file(tmp_path / "emerald_actnum.roff")
-    result = grid.get_adjacent_cells(actnum, 0, 1, activeonly=False)
+    result = emerald_grid.get_adjacent_cells(actnum, 0, 1, activeonly=False)
+    assert result.name == "ADJ_CELLS"
+    assert result.dimensions == emerald_grid.dimensions
     result.to_file(tmp_path / "emerald_adj_cells.roff")
-
-
-def test_simple_io(tmp_path):
-    """Test various import and export formats, incl egrid and bgrdecl."""
-    reek_grid = Grid(REEKFILE, fformat="egrid")
-
-    assert reek_grid.ncol == 40
-
-    filex = tmp_path / "grid_test_simple_io.roff"
-
-    reek_grid.to_file(filex)
-
-    reek_grid2 = xtgeo.grid_from_file(filex, fformat="roff")
-
-    assert reek_grid2.ncol == 40
-
-    filex = tmp_path / "grid_test_simple_io.EGRID"
-    filey = tmp_path / "grid_test_simple_io.bgrdecl"
-
-    reek_grid.to_file(filex, fformat="egrid")
-    reek_grid.to_file(filey, fformat="bgrdecl")
-
-    reek_grid2 = xtgeo.grid_from_file(filex, fformat="egrid")
-    reek_grid3 = xtgeo.grid_from_file(filey, fformat="bgrdecl")
-
-    assert reek_grid2.ncol == 40
-
-    dz1 = reek_grid.get_dz()
-    dz2 = reek_grid2.get_dz()
-    dz3 = reek_grid3.get_dz()
-
-    assert dz1.values.mean() == pytest.approx(dz2.values.mean(), abs=0.001)
-    assert dz1.values.std() == pytest.approx(dz2.values.std(), abs=0.001)
-    assert dz1.values.mean() == pytest.approx(dz3.values.mean(), abs=0.001)
-    assert dz1.values.std() == pytest.approx(dz3.values.std(), abs=0.001)
-
-
-def test_ecl_run(tmp_path):
-    """Test import an eclrun with dates and export to roff after a diff."""
-    dates = [19991201, 20030101]
-    rprops = ["PRESSURE", "SWAT"]
-
-    gg = Grid(REEKROOT, fformat="eclipserun", restartdates=dates, restartprops=rprops)
-
-    # get the property object:
-    pres1 = gg.get_prop_by_name("PRESSURE_20030101")
-    assert pres1.values.mean() == pytest.approx(308.45, abs=0.001)
-
-    pres1.to_file(tmp_path / "pres1.roff")
-
-    pres2 = gg.get_prop_by_name("PRESSURE_19991201")
-
-    logger.debug(pres1.values)
-    logger.debug(pres2.values)
-
-    pres1.values = pres1.values - pres2.values
-    # logger.debug(pres1.values)
-    # logger.debug(pres1)
-    avg = pres1.values.mean()
-    # ok checked in RMS:
-    assert avg == pytest.approx(-26.073, abs=0.001)
-
-    pres1.to_file(tmp_path / "pressurediff.roff", name="PRESSUREDIFF")
-
-
-def test_ecl_run_all():
-    """Test import an eclrun with all dates and props."""
-    gg = Grid()
-    gg.from_file(
-        REEKROOT,
-        fformat="eclipserun",
-        initprops="all",
-        restartdates="all",
-        restartprops="all",
-    )
-
-    assert len(gg.gridprops.names) == 287
-
-
-def test_ecl_run_all_sp(testpath):
-    """Test import an eclrun with all dates and props."""
-    gg = Grid()
-    gg.from_file(
-        SPROOT,
-        fformat="eclipserun",
-        initprops="all",
-        restartdates="all",
-        restartprops="all",
-    )
-
-    assert len(gg.gridprops.names) == 59
 
 
 def test_npvalues1d():
@@ -617,66 +373,48 @@ def test_npvalues1d():
     assert dz1.all() == dz2.all()
 
 
-def test_pathlib(tmp_path):
-    """Import and export via pathlib."""
-    grd = xtgeo.grid_from_file(pathlib.Path(DUALFIL1))
-
-    assert grd.dimensions == (5, 3, 1)
-
-    out = tmp_path / "grdpathtest.roff"
-    grd.to_file(out, fformat="roff")
-
-    with pytest.raises(OSError):
-        out = pathlib.Path() / "nosuchdir" / "grdpathtest.roff"
-        grd.to_file(out, fformat="roff")
-
-
-def test_grid_design(load_gfile1):
+def test_grid_design(emerald_grid):
     """Determine if a subgrid is topconform (T), baseconform (B), proportional (P).
 
     "design" refers to type of conformity
     "dzsimbox" is avg or representative simbox thickness per cell
 
     """
-    grd = load_gfile1
-
-    print(grd.subgrids)
-
-    code = grd.estimate_design(1)
+    code = emerald_grid.estimate_design(1)
     assert code["design"] == "P"
     assert code["dzsimbox"] == pytest.approx(2.5488, abs=0.001)
 
-    code = grd.estimate_design(2)
+    code = emerald_grid.estimate_design(2)
     assert code["design"] == "T"
     assert code["dzsimbox"] == pytest.approx(3.0000, abs=0.001)
 
-    code = grd.estimate_design("subgrid_0")
+    code = emerald_grid.estimate_design("subgrid_0")
     assert code["design"] == "P"
 
-    code = grd.estimate_design("subgrid_1")
+    code = emerald_grid.estimate_design("subgrid_1")
     assert code["design"] == "T"
 
-    code = grd.estimate_design("subgrid_2")
+    code = emerald_grid.estimate_design("subgrid_2")
     assert code is None
 
     with pytest.raises(ValueError):
-        code = grd.estimate_design(nsub=None)
+        code = emerald_grid.estimate_design(nsub=None)
 
 
-def test_flip(load_gfile1):
+@pytest.mark.parametrize(
+    "grid, flip",
+    [
+        (xtgeo.create_box_grid((30, 20, 3), flip=-1), -1),
+        (xtgeo.create_box_grid((30, 20, 3), flip=1), 1),
+        (xtgeo.create_box_grid((30, 20, 3), rotation=30, flip=1), 1),
+        (xtgeo.create_box_grid((30, 20, 3), rotation=30, flip=-1), -1),
+        (xtgeo.create_box_grid((30, 20, 3), rotation=190, flip=-1), -1),
+        (xtgeo.create_box_grid((30, 20, 3), rotation=190, flip=1), 1),
+    ],
+)
+def test_flip(grid, flip):
     """Determine if grid is flipped (lefthanded vs righthanded)."""
-    grd = load_gfile1
-
-    assert grd.estimate_flip() == 1
-
-    grd.create_box(dimension=(30, 20, 3), flip=-1)
-    assert grd.estimate_flip() == -1
-
-    grd.create_box(dimension=(30, 20, 3), rotation=30, flip=-1)
-    assert grd.estimate_flip() == -1
-
-    grd.create_box(dimension=(30, 20, 3), rotation=190, flip=-1)
-    assert grd.estimate_flip() == -1
+    assert grid.estimate_flip() == flip
 
 
 def test_xyz_cell_corners():
@@ -747,16 +485,17 @@ def test_gridquality_properties(show_plot):
     assert neg.values[0, 0, 0] == 0
     assert neg.values[2, 1, 0] == 1
 
-    grd3 = Grid(EMEGFILE)
-    props3 = grd3.get_gridquality_properties()
 
-    concp = props3.get_prop_by_name("concave_proj")
+def test_gridquality_properties_emerald(show_plot, emerald_grid):
+    props = emerald_grid.get_gridquality_properties()
+
+    concp = props.get_prop_by_name("concave_proj")
     if show_plot:
         lay = 23
         layslice = xtgeo.plot.Grid3DSlice()
         layslice.canvas(title=f"Layer {lay}")
         layslice.plot_gridslice(
-            grd3,
+            emerald_grid,
             prop=concp,
             mode="layer",
             index=lay + 1,
@@ -776,20 +515,16 @@ def test_bulkvol():
     logger.info("Sum this: %s", bulk.values.sum())
     logger.info("Sum RMS: %s", cellvol_rms.values.sum())
 
-    assert bulk.values.sum() == pytest.approx(cellvol_rms.values.sum(), rel=0.001)
 
+@pytest.mark.benchmark(group="bulkvol")
+def test_benchmark_bulkvol(benchmark):
+    dimens = (10, 50, 5)
+    grd = xtgeo.create_box_grid(dimension=dimens)
 
-def test_bulkvol_speed():
-    """Test cell bulk volume calculation speed."""
-    dimens = (100, 500, 50)
-    grd = Grid()
-    grd.create_box(dimension=dimens)
-    grd._xtgformat2()
+    def run():
+        _ = grd.get_bulk_volume()
 
-    t0 = xtg.timer()
-    _ = grd.get_bulk_volume()
-    ncells = np.prod(dimens)
-    print(xtg.timer(t0), ncells)
+    benchmark(run)
 
 
 def test_bad_egrid_ends_before_kw(tmp_path):

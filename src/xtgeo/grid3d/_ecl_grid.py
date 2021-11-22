@@ -95,20 +95,27 @@ class GrdeclKeyword:
 
     Gives a general implementation of to/from grdecl which recurses on
     fields. Ie. a dataclass such as
+    >>> class A(GrdeclKeyword):
+    ...     ...
+    >>> class B(GrdeclKeyword):
+    ...     ...
 
     >>> @dataclass
-    >>> class MyKeyword(GrdeclKeyword):
-    >>>      field1 : A
-    >>>      field2 : B
+    ... class MyKeyword(GrdeclKeyword):
+    ...     field1: A
+    ...     field2: B
 
-    will have a to_grdec  method that returns
+    will have a to_grdecl method that will be similar to
 
-    >>> [self.field1.to_grdecl(), self.field2.to_grdecl]
+    >>> def to_grdecl(self):
+    ...     return [self.field1.to_grdecl(), self.field2.to_grdecl]
 
     Similarly from_grdecl will call fields from_grdecl
     to construct the object
 
-    >>> MyKeyword(A.from_grdecl(values[0]), B.from_grdecl(values[1]))
+    >>> @classmethod
+    ... def from_grdecl(cls, values):
+    ...     return cls(A.from_grdecl(values[0]), B.from_grdecl(values[1]))
     """
 
     def to_grdecl(self) -> List[Any]:

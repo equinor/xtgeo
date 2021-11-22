@@ -1,76 +1,99 @@
-# -*- coding: utf-8 -*-
-"""Import/export of grid properties (cf GridProperties class)"""
-
 from copy import deepcopy
+from typing import List, Tuple, Union
+
+from typing_extensions import Literal
 
 import xtgeo
 
 from . import _grid3d_utils as utils
-from ._gridprop_import_eclrun import (
-    decorate_name,
-    import_gridprop_from_init_file,
-    import_gridprops_from_restart_file,
+from ._find_gridprop_in_eclrun import (
+    find_gridprop_from_init_file,
+    find_gridprops_from_restart_file,
     valid_gridprop_lengths,
 )
+from ._gridprop_import_eclrun import decorate_name
 from .grid_property import GridProperty
 
-xtg = xtgeo.XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-# self is the GridProperties() instance
 
-# On "strict" keyword: Default is (True, False)
-# A strict (False, False) simply means that if keyname, optionally with date is not
-# found is will just warn and continue to next! If (True, True) it will warn but TRY to
-# import anyway, which in turn may raise a KeywordNotError or DateNotFoundError, etc
-#
-# The (True, False) will be strict on keywords, but sloppy on dates, meaning that
-# missing dates will be skipped. However, if all dates are missing an exception will be
-# raised
-#
-# Note that there are keyword and data checks also in _gridprop_import_eclrun
+def sanitize_date_list(
+    dates: Union[List[int], List[str], Literal["first", "all", "last"]]
+) -> Union[List[int], Literal["first", "all", "last"]]:
+    """
+    Converts dateformats of the form 'YYYY-MM-DD', 'YYYYMMDD' or YYYYMMDD to
+    list of integers of the form [YYYYMMDD] (ie. suitible for find_gridprops
+    functions), but lets the special literals 'first' and 'last' remain
+    unchanged.
+
+    >>> sanitize_date_list('first')
+    'first'
+    >>> sanitize_date_list('last')
+    'last'
+    >>> sanitize_date_list('all')
+    'all'
+    >>> sanitize_date_list(['2020-01-01'])
+    [20200101]
+    >>> sanitize_date_list(['20200101'])
+    [20200101]
+    >>> sanitize_date_list([20200101])
+    [20200101]
+    """
+    if dates in ("first", "last", "all"):
+        return dates
+    new_dates = []
+    for date in dates:
+        if isinstance(date, int):
+            new_dates.append(date)
+        else:
+            try:
+                if (
+                    isinstance(date, str)
+                    and len(date) == 10
+                    and date[4] == "-"
+                    and date[7] == "-"
+                ):
+                    date = date.replace("-", "")
+                new_dates.append(int(date))
+            except ValueError as err:
+                raise ValueError(
+                    "valid dates are either 'first'/'all'/'last', "
+                    "list ints of the form YYYYMMDD or list of strings of "
+                    f"'YYYY-MM-DD'/'YYYYMMDD' got {dates}"
+                ) from err
+    return new_dates
 
 
-def import_ecl_output(
-    self,
+def import_ecl_init_gridproperties(
     pfile,
-    names=None,
-    dates=None,
-    grid=None,
-    namestyle=0,
-    strict=(True, False),
-):
+    names: Union[List[str], Literal["all"]],
+    grid,
+    strict=True,
+) -> List[GridProperty]:
+    """Imports list of properties from an init file.
 
-    strictkeys, strictdates = strict
+    Note, the method does not determine whether a given keyword in the file
+    is a grid property, only that it has the correct data type and length
+    to be considered as a grid property.
 
+    Args:
+        pfile: Path to the ecl restart file
+        names: List of names to fetch, can also be "all" to fetch all properties.
+        grid: The grid used by the simulator to produce the restart file.
+        strict: If strict=True, will raise error if key is not found.
+    Returns:
+        List of GridProperty objects fetched from the init file.
+    """
     if not isinstance(pfile, xtgeo._XTGeoFile):
-        raise RuntimeError("BUG kode 84728, pfile is not a _XTGeoFile instance")
+        pfile = xtgeo._XTGeoFile(pfile)
 
     if not grid:
         raise ValueError("Grid Geometry object is missing")
 
     if not names:
         raise ValueError("Name list cannot be empty (None)")
-
-    if dates is None:
-        _import_ecl_output_v2_init(self, pfile, names, grid, strictkeys)
-
-    else:
-        _import_ecl_output_v2_rsta(
-            self,
-            pfile,
-            names,
-            dates,
-            grid,
-            strictkeys,
-            strictdates,
-            namestyle,
-        )
-
-
-def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
-    """Import INIT parameters"""
 
     # scan valid keywords
     kwlist = utils.scan_keywords(
@@ -106,44 +129,62 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
                     name,
                 )
 
-    results = import_gridprop_from_init_file(
+    results = find_gridprop_from_init_file(
         pfile.file,
         names=names,
         grid=grid,
     )
+    properties_list = []
     for result in results:
-        prop = GridProperty()
-        self._names.append(result["name"])
         result["name"] = decorate_name(result["name"], grid.dualporo, fracture=False)
-        for attr, value in result.items():
-            setattr(prop, "_" + attr, value)
+        properties_list.append(GridProperty(**result))
 
-        self._props.append(prop)
-        self._dates.append(prop._date)
-
-    self._ncol = grid.ncol
-    self._nrow = grid.nrow
-    self._nlay = grid.nlay
+    return properties_list
 
 
-def _import_ecl_output_v2_rsta(
-    self,
+def import_ecl_restart_gridproperties(
     pfile,
-    names,
-    dates,
+    names: Union[List[str], Literal["all"]],
+    dates: Union[List[int], List[str], Literal["all", "last", "first"]],
     grid,
-    strictkeycomb,
-    strictdate,
-    namestyle,
-):
-    """Import RESTART parameters"""
+    strict: Tuple[bool, bool],
+    namestyle: Literal[0, 1],
+) -> List[GridProperty]:
+    """Imports list of gridproperties from a restart file.
 
-    if isinstance(dates, list):
-        # dates may come on form 2020-12-22 or 20201222; process all to latter fmt
-        dates = [
-            int(str(thedate).replace("-", "")) if isinstance(thedate, str) else thedate
-            for thedate in dates
-        ]
+    Note, the method does not determine whether a given keyword in the file
+    is a grid property, only that it has the correct data type and length
+    to be considered as a grid property.
+
+    Args:
+        pfile: Path to the ecl restart file
+        names: List of names to fetch, can also be "all" to fetch all properties.
+        dates: List of xtgeo style dates (e.g. int(19990101) or "YYYYMMDD"),
+            also Also accepts "YYYY-MM-DD".  "all", "last" and "first" can be
+            given for all, last or first date(s) in the file. Dates=None means
+            look for properties in the init file.
+        grid: The grid used by the simulator to produce the restart file.
+        strict: strict (False, False) means that if keyname,
+            optionally with date is not found is will just warn and continue to
+            next. If (True, True) it will warn but TRY to import anyway, which
+            in turn may raise a KeywordNotError or DateNotFoundError.  The
+            (True, False) will be strict on keywords, but sloppy on dates,
+            meaning that missing dates will be skipped. However, if all dates
+            are missing an exception will be raised
+        namestyle : 0 (default) for style SWAT_20110223,
+            1 for SWAT--2011_02_23 (applies to restart only)
+    Returns:
+        List of GridProperty objects fetched from the restart file.
+    """
+
+    strictkeycomb, strictdate = strict
+    if not grid:
+        raise ValueError("Grid Geometry object is missing")
+
+    if not names:
+        raise ValueError("Name list cannot be empty (None)")
+
+    dates = sanitize_date_list(dates)
 
     # scan valid keywords with dates
     kwlist = utils.scan_keywords(
@@ -196,10 +237,9 @@ def _import_ecl_output_v2_rsta(
                     validnamedatepairs,
                 )
 
-    results = import_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    properties_list = []
     for result in results:
-        prop = GridProperty()
-
         if namestyle == 1:
             sdate = str(result["date"])
             result["name"] += "--" + sdate[0:4] + "_" + sdate[4:6] + "_" + sdate[6:8]
@@ -208,16 +248,9 @@ def _import_ecl_output_v2_rsta(
                 result["name"], grid.dualporo, fracture=False, date=result["date"]
             )
 
-        for attr, value in result.items():
-            setattr(prop, "_" + attr, value)
+        properties_list.append(GridProperty(**result))
 
-        self._props.append(prop)
-        self._names.append(prop.name)
-        self._dates.append(prop.date)
-
-    self._ncol = grid.ncol
-    self._nrow = grid.nrow
-    self._nlay = grid.nlay
+    return properties_list
 
 
 def _process_valid_namesdates(kwlist, grid):

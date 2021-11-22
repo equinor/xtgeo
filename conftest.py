@@ -86,3 +86,14 @@ def testpath(request):
         testdatapath = environ_path
 
     return testdatapath
+
+
+@pytest.fixture(autouse=True)
+def add_testfile_paths(doctest_namespace, testpath, tmpdir):
+    doctest_namespace["surface_dir"] = testpath + "/surfaces/reek/1/"
+    doctest_namespace["reek_dir"] = testpath + "/3dgrids/reek/"
+    doctest_namespace["emerald_dir"] = testpath + "/3dgrids/eme/1/"
+    doctest_namespace["cube_dir"] = testpath + "/cubes/etc/"
+    doctest_namespace["well_dir"] = testpath + "/wells/reek/1/"
+    doctest_namespace["points_dir"] = testpath + "/points/reek/1/"
+    doctest_namespace["outdir"] = str(tmpdir)

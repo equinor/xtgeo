@@ -139,7 +139,9 @@ class Wells(object):
             Here the from_file method is used to initiate the object
             directly::
 
-            >>> mywells = Wells(['31_2-6.w', '31_2-7.w', '31_2-8.w'])
+                >>> mywells = Wells(
+                ...     [well_dir + '/OP_1.w', well_dir + '/OP_2.w']
+                ... )
         """
 
         if not append:

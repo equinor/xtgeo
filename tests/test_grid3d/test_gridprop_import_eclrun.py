@@ -11,7 +11,7 @@ import pytest
 from hypothesis import HealthCheck, assume, given, settings
 
 import xtgeo
-import xtgeo.grid3d._gridprop_import_eclrun as xtg_im_ecl
+import xtgeo.grid3d._find_gridprop_in_eclrun as xtg_im_ecl
 from xtgeo.grid3d._ecl_inte_head import InteHead
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Phases
@@ -291,24 +291,6 @@ def test_gridprop_ecl_run_empty_files():
             grid=xtgeo.Grid(),
             date=19991231,
         )
-
-
-def test_gridprop_ecl_run_missing_parameters():
-    with pytest.raises(ValueError, match="grid is required"):
-        xtgeo.gridproperty_from_file(
-            io.BytesIO(),
-            fformat="init",
-            name="PROP",
-        )
-    with pytest.raises(ValueError, match="grid is required"):
-        xtgeo.gridproperty_from_file(
-            io.BytesIO(),
-            fformat="unrst",
-            name="PROP",
-            date=19991231,
-        )
-    with pytest.raises(ValueError, match="no date is given"):
-        xtgeo.gridproperty_from_file(io.BytesIO(), fformat="unrst", grid=xtgeo.Grid())
 
 
 @dataclass

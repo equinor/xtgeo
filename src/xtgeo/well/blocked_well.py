@@ -28,8 +28,8 @@ def blockedwell_from_file(
 
     Example::
 
-        import xtgeo
-        mybwell = xtgeo.blockedwell_from_file('somewell.xxx')
+        >>> import xtgeo
+        >>> well3 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
     """
 
     obj = BlockedWell()
@@ -106,13 +106,20 @@ class BlockedWell(Well):
     Note there is a method that can return a dataframe (copy) with Integer
     and Float columns, see :meth:`get_filled_dataframe`.
 
-    The instance can be made either from file or, if in RMS, from RMS icon::
+    The instance can be made either from file or::
 
-        >>> well1 = BlockedWell('somefilename')  # assume RMS ascii well
-        >>> well2 = BlockedWell('somefilename', fformat='rms_ascii')
-        >>> well3 = xtgeo.blockedwell_from_file('somefilename')
-        >>> well4 = xtgeo.blockedwell_from_roxar(project, 'gridname', 'bwname',
-                                                 'wellname')
+        >>> well1 = BlockedWell(well_dir + '/OP_1.bw')  # assume RMS ascii well
+        >>> well2 = BlockedWell(well_dir + '/OP_1.bw', fformat='rms_ascii')
+        >>> well3 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
+
+    If in RMS, instance can be made also from RMS icon::
+
+        well4 = xtgeo.blockedwell_from_roxar(
+            project,
+            'gridname',
+            'bwname',
+            'wellname',
+        )
 
     For arguments, see method under :meth:`from_file`.
 

@@ -36,21 +36,21 @@ indexing scheme rearranges the cells as follows:
 
 We set up two zones describing the two layers (disregarding the fault):
 
-rsg_grid = project.grid_models["repeat_sections_grid"].get_grid()
-rsg_grid.grid_indexer.zonation
->>> {0: [range(0,1), range(2,3)], 1: [range(1,2), range(3,4)]}
-rsg_grid.simbox_indexer.zonation
->>> {0: [range(0,1)], 1: [range(1,2)]}
+>> rsg_grid = project.grid_models["repeat_sections_grid"].get_grid()
+>> rsg_grid.grid_indexer.zonation
+{0: [range(0,1), range(2,3)], 1: [range(1,2), range(3,4)]}
+>> rsg_grid.simbox_indexer.zonation
+{0: [range(0,1)], 1: [range(1,2)]}
 
 As mentioned, the dual index is described by the has_dual_index_system
 property and signals that simbox_indexer and grid_indexer are different.
 
-print(rsg_grid.has_dual_index_system)
->>> True
-print(rsg_grid.grid_indexer.dimensions)
->>> (2,1,4)
-print(rsg_grid.simbox_indexer.dimensions)
->>> (3,1,2)
+>> print(rsg_grid.has_dual_index_system)
+True
+>> print(rsg_grid.grid_indexer.dimensions)
+(2,1,4)
+>> print(rsg_grid.simbox_indexer.dimensions)
+(3,1,2)
 """
 from unittest.mock import MagicMock, patch
 
