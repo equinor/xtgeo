@@ -3,46 +3,82 @@
 """Wells module, which has the Wells class (collection of Well objects)"""
 
 
+import functools
+import warnings
 from distutils.version import StrictVersion
+from typing import List
 
+import deprecation
 import pandas as pd
 
 import xtgeo
 
 from . import _wells_utils
+from .well1 import Well
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-class Wells(object):
+def wells_from_files(filelist, *args, **kwargs):
+
+    """Import wells from a list of files (filelist).
+
+    Creates a Wells object from a list of filenames. Remaining arguments are
+        the same as :func:`xtgeo.well_from_file`.
+
+    Args:
+        filelist (list of filenames): List with file names
+
+    Example:
+        Here the from_file method is used to initiate the object
+        directly::
+
+            >>> mywells = Wells(
+            ...     [well_dir + '/OP_1.w', well_dir + '/OP_2.w']
+            ... )
+    """
+    return Wells([xtgeo.well_from_file(wfile, *args, **kwargs) for wfile in filelist])
+
+
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Wells and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # Checking if we are doing an initialization
+        # from file and raise a deprecation warning if
+        # we are.
+        if args and args[0] and not isinstance(args[0][0], Well):
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                "mywells = xtgeo.wells_from_files(['some_name.w']) instead",
+                DeprecationWarning,
+            )
+            return func(xtgeo.wells_from_files(*args, **kwargs))
+        return func(cls, *args, **kwargs)
+
+    return wrapper
+
+
+class Wells:
     """Class for a collection of Well objects, for operations that involves
     a number of wells.
 
     See also the :class:`xtgeo.well.Well` class.
+
+    Args:
+        wells: The list of Well objects.
     """
 
-    def __init__(self, *args, **kwargs):
-
-        self._wells = []  # list of Well objects
-        self._bw = False
-        self._props = None
-
-        if args:
-            # make instance from file import
-            wfiles = args[0]
-            fformat = kwargs.get("fformat", "rms_ascii")
-            mdlogname = kwargs.get("mdlogname", None)
-            zonelogname = kwargs.get("zonelogname", None)
-            strict = kwargs.get("strict", True)
-            self.from_files(
-                wfiles,
-                fformat=fformat,
-                mdlogname=mdlogname,
-                zonelogname=zonelogname,
-                strict=strict,
-                append=False,
-            )
+    @allow_deprecated_init
+    def __init__(self, wells: List[Well] = None):
+        if wells is None:
+            self._wells = []
+        else:
+            self._wells = wells
 
     @property
     def names(self):
@@ -55,12 +91,7 @@ class Wells(object):
                 print ('Well name is {}'.format(name))
 
         """
-
-        wlist = []
-        for wel in self._wells:
-            wlist.append(wel.name)
-
-        return wlist
+        return [w.name for w in self._wells]
 
     @property
     def wells(self):
@@ -94,13 +125,13 @@ class Wells(object):
 
         return dsc.astext()
 
+    def __iter__(self):
+        return iter(self.wells)
+
     def copy(self):
         """Copy a Wells instance to a new unique instance (a deep copy)."""
 
-        new = Wells()
-        new.wells = [w.copy() for w in self._wells]
-
-        return new
+        return Wells(self._wells.copy())
 
     def get_well(self, name):
         """Get a Well() instance by name, or None"""
@@ -111,6 +142,12 @@ class Wells(object):
                 return well
         return None
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.wells_from_files() instead",
+    )
     def from_files(
         self,
         filelist,
@@ -121,28 +158,7 @@ class Wells(object):
         append=True,
     ):
 
-        """Import wells from a list of files (filelist).
-
-        Args:
-            filelist (list of str): List with file names
-            fformat (str): File format, rms_ascii (rms well) is
-                currently supported and default format.
-            mdlogname (str): Name of measured depth log, if any
-            zonelogname (str): Name of zonation log, if any
-            strict (bool): If True, then import will fail if
-                zonelogname or mdlogname are asked for but not present
-                in wells.
-            append (bool): If True, new wells will be added to existing
-                wells.
-
-        Example:
-            Here the from_file method is used to initiate the object
-            directly::
-
-                >>> mywells = Wells(
-                ...     [well_dir + '/OP_1.w', well_dir + '/OP_2.w']
-                ... )
-        """
+        """Deprecated see :func:`wells_from_files`"""
 
         if not append:
             self._wells = []
@@ -226,9 +242,7 @@ class Wells(object):
             dfr = dfr.fillna(fill_value2)
 
         spec_order = ["WELLNAME", "X_UTME", "Y_UTMN", "Z_TVDSS"]
-        dfr = dfr[spec_order + [col for col in dfr if col not in spec_order]]
-
-        return dfr
+        return dfr[spec_order + [col for col in dfr if col not in spec_order]]
 
     def quickplot(self, filename=None, title="QuickPlot"):
         """Fast plot of wells using matplotlib.
@@ -288,8 +302,6 @@ class Wells(object):
                 and also MDEPTH for the WELL.
         """
 
-        dfr = _wells_utils.wellintersections(
+        return _wells_utils.wellintersections(
             self, wfilter=wfilter, showprogress=showprogress
         )
-
-        return dfr

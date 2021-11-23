@@ -185,6 +185,8 @@ from xtgeo.cube.cube1 import cube_from_roxar
 from xtgeo.well.well1 import well_from_file
 from xtgeo.well.well1 import well_from_roxar
 
+from xtgeo.well.wells import wells_from_files
+
 from xtgeo.well.blocked_well import blockedwell_from_file
 from xtgeo.well.blocked_well import blockedwell_from_roxar
 
