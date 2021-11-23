@@ -4,12 +4,8 @@ from collections import OrderedDict
 from os.path import join
 
 import pytest
-<<<<<<< HEAD
-=======
-from hypothesis import given
-
->>>>>>> dc3663fdedcfd70154caf6363d4ba7a93beb590e
 import xtgeo
+from hypothesis import given
 from xtgeo.common import XTGeoDialog
 
 from .grid_generator import xtgeo_grids
