@@ -4,14 +4,56 @@
 # ======================================================================================
 
 
+import deprecation
+
 import xtgeo
-from .wells import Wells
-from .blocked_well import BlockedWell
 
 from . import _blockedwells_roxapi
+from .blocked_well import BlockedWell
+from .wells import Wells
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+
+def blockedwells_from_files(
+    filelist,
+    fformat="rms_ascii",
+    mdlogname=None,
+    zonelogname=None,
+    strict=True,
+):
+
+    """Import blocked wells from a list of files (filelist).
+
+    Args:
+        filelist (list of str): List with file names
+        fformat (str): File format, rms_ascii (rms well) is
+            currently supported and default format.
+        mdlogname (str): Name of measured depth log, if any
+        zonelogname (str): Name of zonation log, if any
+        strict (bool): If True, then import will fail if
+            zonelogname or mdlogname are asked for but not present
+            in wells.
+
+    Example:
+        Here the from_file method is used to initiate the object
+        directly::
+
+          mywells = BlockedWells(['31_2-6.w', '31_2-7.w', '31_2-8.w'])
+    """
+    return BlockedWells(
+        [
+            xtgeo.blockedwell_from_file(
+                wfile,
+                fformat=fformat,
+                mdlogname=mdlogname,
+                zonelogname=zonelogname,
+                strict=strict,
+            )
+            for wfile in filelist
+        ]
+    )
 
 
 def blockedwells_from_roxar(project, gname, bwname, lognames=None, ijk=True):
@@ -46,24 +88,22 @@ class BlockedWells(Wells):
     See also the :class:`xtgeo.well.BlockedWell` class.
     """
 
-    def __init__(self):
-
-        super().__init__()
-        self._wells = []  # list of Well objects
-
     def copy(self):
         """Copy a BlockedWells instance to a new unique instance."""
 
-        new = BlockedWells()
-        new.wells = [w.copy() for w in self._wells]
-
-        return new
+        return BlockedWells([w.copy() for w in self._wells])
 
     def get_blocked_well(self, name):
         """Get a BlockedWell() instance by name, or None"""
         logger.info("Calling super...")
         return super().get_well(name)
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.blockedwells_from_files() instead",
+    )
     def from_files(
         self,
         filelist,
@@ -115,6 +155,12 @@ class BlockedWells(Wells):
         if not self._wells:
             xtg.warn("No wells imported!")
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.blockedwells_from_roxar() instead",
+    )
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) blocked wells from roxar project.
 

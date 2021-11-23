@@ -5,6 +5,7 @@ from os.path import join
 
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import BlockedWells
 
@@ -18,8 +19,7 @@ if not xtg.testsetup():
 @pytest.fixture(name="testblockedwells")
 def fixture_testblockedwells(testpath):
     well_files = [join(testpath, "wells", "reek", "1", "OP_1.bw")]
-    bws = BlockedWells()
-    bws.from_files(well_files)
+    bws = xtgeo.blockedwells_from_files(well_files)
     return bws
 
 

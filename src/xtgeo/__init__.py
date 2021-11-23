@@ -194,6 +194,7 @@ from xtgeo.well.blocked_well import blockedwell_from_file
 from xtgeo.well.blocked_well import blockedwell_from_roxar
 
 from xtgeo.well.blocked_wells import blockedwells_from_roxar
+from xtgeo.well.blocked_wells import blockedwells_from_files
 
 from xtgeo.xyz.polygons import polygons_from_file
 from xtgeo.xyz.polygons import polygons_from_roxar

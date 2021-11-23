@@ -40,3 +40,10 @@ def test_wells_init_warns(any_well_file):
 
     with pytest.warns(DeprecationWarning, match="directly from file"):
         xtgeo.Wells([any_well_file])
+
+
+def test_blockedwells_from_files_warns(any_well_file):
+    if version.parse(xtgeo_version) < version.parse("2.16"):
+        pytest.skip()
+    with pytest.warns(DeprecationWarning, match="from_files is deprecated"):
+        xtgeo.BlockedWells().from_files([any_well_file])
