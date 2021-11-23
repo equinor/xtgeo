@@ -5,6 +5,7 @@ from os.path import join
 
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Wells
 
@@ -31,7 +32,7 @@ def fixture_testwells(testpath):
     well_files = [
         join(testpath, "wells", "battle", "1", wn + ".rmswell") for wn in w_names
     ]
-    return Wells(well_files, fformat="rms_ascii")
+    return xtgeo.wells_from_files(well_files, fformat="rms_ascii")
 
 
 def test_wells_empty_is_none():

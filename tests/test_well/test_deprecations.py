@@ -1,6 +1,7 @@
 import pytest
 from packaging import version
 
+import xtgeo
 from xtgeo import Well
 from xtgeo import version as xtgeo_version
 
@@ -8,6 +9,12 @@ from xtgeo import version as xtgeo_version
 @pytest.fixture
 def any_well():
     return Well()
+
+
+@pytest.fixture
+def any_well_file(any_well, tmp_path):
+    any_well.to_file(tmp_path / "mywell.w")
+    return tmp_path / "mywell.w"
 
 
 def test_default_well_warns():
@@ -24,8 +31,12 @@ def test_from_file_warns(any_well, tmp_path):
         any_well.from_file(tmp_path / "mywell.w")
 
 
-def test_init_from_file_warns(any_well, tmp_path):
-    any_well.to_file(tmp_path / "mywell.w")
-
+def test_init_from_file_warns(any_well_file):
     with pytest.warns(DeprecationWarning, match="from file"):
-        Well(tmp_path / "mywell.w")
+        Well(any_well_file)
+
+
+def test_wells_init_warns(any_well_file):
+
+    with pytest.warns(DeprecationWarning, match="directly from file"):
+        xtgeo.Wells([any_well_file])
