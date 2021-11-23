@@ -1,11 +1,15 @@
 # coding: utf-8
 """Module for a seismic (or whatever) cube."""
-
+import functools
 import numbers
 import os.path
+import pathlib
 import tempfile
+import warnings
 
+import deprecation
 import numpy as np
+
 import xtgeo
 import xtgeo.common.sys as xtgeosys
 from xtgeo.common import XTGDescription, XTGeoDialog
@@ -14,27 +18,16 @@ from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# Attributes and datamodel:
-# _xori         : Origin in Easting coordinate
-# _yori         : Origin in Northing coordinate
-# _zori         : Origin in Depth coordinate, where depth is positive down
-# _ncol         : Number of columns
-# _nrow         : Number of columns
-# _nlay         : Number of layers, starting from top
-# _rotation     : Cube rotation, X axis is applied and "school-wise" rotation,
-#                 anti-clock in degrees
-# _values       : Numpy array with shape (ncol, nrow, nlay), C order, np.float32
-# _filesrc      : String: Source file if any
-# _yflip        : Normally 1; if -1 Y axis is flipped --> from left-handed (1) to
-#                 right handed (-1). Right handed cubes are common.
-# _ilines       : 1D numpy array with ncol elements, aka INLINES array
-# _xlines       : 1D numpy array with nrow elements, aka XLINES array
-# _traceidcodes : 2D array with trace ID codes
-# _segyfile     : Name of SEGY file (not sure what the point of this is, TODO check)
-# _undef        : Undef value, defaulted to xtgeo.UNDEF
-#
-# See also Cube section in documentation: docs/datamodel.rst
-# ======================================================================================
+
+def _data_reader_factory(fformat):
+    if fformat == "segy":
+        return _cube_import.import_segy
+    elif fformat == "storm":
+        return _cube_import.import_stormcube
+    elif fformat == "xtg":
+        return _cube_import.import_xtgregcube
+    else:
+        raise ValueError(f"File format fformat={fformat} is not supported")
 
 
 def cube_from_file(mfile, fformat="guess"):
@@ -49,11 +42,7 @@ def cube_from_file(mfile, fformat="guess"):
         >>> import xtgeo
         >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
     """
-    obj = Cube()
-
-    obj.from_file(mfile, fformat=fformat)
-
-    return obj
+    return Cube._read_file(mfile, fformat)
 
 
 def cube_from_roxar(project, name, folder=None):
@@ -74,50 +63,187 @@ def cube_from_roxar(project, name, folder=None):
     return obj
 
 
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Cube and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # Checking if we are doing an initialization
+        # from file and raise a deprecation warning if
+        # we are.
+        if args and isinstance(args[0], (str, pathlib.Path)):
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                "mcube = xtgeo.cube_from_file('some_name.gri') instead",
+                DeprecationWarning,
+            )
+            cfile = args[0]
+            if len(args) > 1:
+                fformat = args[1]
+            else:
+                fformat = kwargs.get("fformat", None)
+            mfile = xtgeosys._XTGeoFile(cfile)
+            if fformat is None or fformat == "guess":
+                fformat = mfile.detect_fformat(suffixonly=True)
+            else:
+                fformat = mfile.generic_format_by_proposal(fformat)  # default
+            kwargs = _data_reader_factory(fformat)(mfile)
+            kwargs["filesrc"] = mfile.file
+            return func(cls, **kwargs)
+        return func(cls, *args, **kwargs)
+
+    return wrapper
+
+
+def allow_deprecated_default_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Cube and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        _deprecation_msg = (
+            "{} is a required argument and will no "
+            "longer be defaulted in xtgeo version 4.0"
+        )
+        if "ncol" not in kwargs and len(args) < 1:
+            warnings.warn(_deprecation_msg.format("ncol"), DeprecationWarning)
+            kwargs["ncol"] = 5
+        if "nrow" not in kwargs and len(args) < 2:
+            warnings.warn(_deprecation_msg.format("nrow"), DeprecationWarning)
+            kwargs["nrow"] = 3
+        if "nlay" not in kwargs and len(args) < 3:
+            warnings.warn(_deprecation_msg.format("nlay"), DeprecationWarning)
+            kwargs["nlay"] = 2
+        if "xinc" not in kwargs and len(args) < 4:
+            warnings.warn(_deprecation_msg.format("xinc"), DeprecationWarning)
+            kwargs["xinc"] = 25.0
+        if "yinc" not in kwargs and len(args) < 5:
+            warnings.warn(_deprecation_msg.format("yinc"), DeprecationWarning)
+            kwargs["yinc"] = 25.0
+        if "zinc" not in kwargs and len(args) < 6:
+            warnings.warn(_deprecation_msg.format("zinc"), DeprecationWarning)
+            kwargs["zinc"] = 2.0
+        return func(cls, *args, **kwargs)
+
+    return wrapper
+
+
 class Cube:  # pylint: disable=too-many-public-methods
     """Class for a (seismic) cube in the XTGeo framework.
 
     The values are stored as a 3D numpy array (4 bytes; float32 is default),
     with internal C ordering (nlay fastest).
 
-    The cube object instance can be initialized by either a spesification, or via
-    a file import. The import is most common, and usually SEGY, but also other
-    formats are available (or will be).
+    See :func:`xtgeo.cube_from_file` for importing cubes from e.g. segy files.
+
+    See also Cube section in documentation: docs/datamodel.rst
 
     Examples::
 
-        import xtgeo
+        >>> import xtgeo
+        >>> # a user defined cube:
+        >>> mycube = xtgeo.Cube(
+        ...     xori=100.0,
+        ...     yori=200.0,
+        ...     zori=150.0,
+        ...     ncol=40,
+        ...     nrow=30,
+        ...     nlay=10,
+        ...     rotation=30,
+        ...     values=0
+        ... )
 
-        # a user defined cube:
-        mycube = xtgeo.Cube(xori=100.0, yori=200.0, zori=150.0, ncol=40, nrow=30,
-                            nlay=10, rotation=30, values=0)
-
-        # or from a file
-        mycube = xtgeo.Cube("somefile.segy", fformat="segy")
+    Args:
+      xori: Origin in Easting coordinate
+      yori: Origin in Northing coordinate
+      zori: Origin in Depth coordinate, where depth is positive down
+      ncol: Number of columns
+      nrow: Number of columns
+      nlay: Number of layers, starting from top
+      rotation: Cube rotation, X axis is applied and "school-wise" rotation,
+                     anti-clock in degrees
+      values: Numpy array with shape (ncol, nrow, nlay), C order, np.float32
+      ilines: 1D numpy array with ncol elements, aka INLINES array, defaults to arange
+      xlines: 1D numpy array with nrow elements, aka XLINES array, defaults to arange
+      segyfile: Name of source segyfile if any
+      filesrc: String: Source file if any
+      yflip: Normally 1; if -1 Y axis is flipped --> from left-handed (1) to
+                     right handed (-1). Right handed cubes are common.
 
     """
 
+    @allow_deprecated_init
+    @allow_deprecated_default_init
     def __init__(
         self,
-        *args,
+        ncol,
+        nrow,
+        nlay,
+        xinc,
+        yinc,
+        zinc,
         xori=0.0,
         yori=0.0,
         zori=0.0,
+        yflip=1,
+        values=0.0,
+        rotation=0.0,
+        zflip=1,
+        ilines=None,
+        xlines=None,
+        traceidcodes=None,
+        segyfile=None,
+        filesrc=None,
+    ):
+        """Initiate a Cube instance."""
+
+        self._reset(
+            xori=xori,
+            yori=yori,
+            zori=zori,
+            ncol=ncol,
+            nrow=nrow,
+            nlay=nlay,
+            xinc=xinc,
+            yinc=yinc,
+            zinc=zinc,
+            yflip=yflip,
+            values=values,
+            rotation=rotation,
+            zflip=zflip,
+            ilines=ilines,
+            xlines=xlines,
+            traceidcodes=traceidcodes,
+            segyfile=segyfile,
+            filesrc=filesrc,
+        )
+
+    def _reset(
+        self,
         ncol=5,
         nrow=3,
         nlay=2,
         xinc=25.0,
         yinc=25.0,
         zinc=2.0,
+        xori=0.0,
+        yori=0.0,
+        zori=0.0,
         yflip=1,
         values=0.0,
         rotation=0.0,
-        **kwargs,
+        zflip=1,
+        ilines=None,
+        xlines=None,
+        traceidcodes=None,
+        segyfile=None,
+        filesrc=None,
+        undef=xtgeo.UNDEF,
     ):
-        """Initiate a Cube instance."""
-        self._values = None
 
-        self._filesrc = None
+        self._filesrc = filesrc
         self._xori = xori
         self._yori = yori
         self._zori = zori
@@ -128,20 +254,29 @@ class Cube:  # pylint: disable=too-many-public-methods
         self._yinc = yinc
         self._zinc = zinc
         self._yflip = yflip
-        self._zflip = 1  # currently not in use
+        self._zflip = zflip  # currently not in use
         self._rotation = rotation
-        self.values = values  # "values" is intentional over "_values"; cf. values()
-        self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-        self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-        self._traceidcodes = np.ones((self._ncol, self._nrow), dtype=np.int32)
-        self._segyfile = None
-        self._metadata = xtgeo.MetaDataRegularCube()
-        self._undef = xtgeo.UNDEF
-        self.undef = xtgeo.UNDEF
 
-        if len(args) >= 1:
-            fformat = kwargs.get("fformat", "guess")
-            self.from_file(args[0], fformat=fformat)
+        self._values = None
+        self.values = values  # "values" is intentional over "_values"; cf. values()
+
+        if ilines is None:
+            self._ilines = ilines or np.array(range(1, self._ncol + 1), dtype=np.int32)
+        else:
+            self._ilines = ilines
+        if xlines is None:
+            self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+        else:
+            self._xlines = xlines
+        if traceidcodes is None:
+            self._traceidcodes = np.ones((self._ncol, self._nrow), dtype=np.int32)
+        else:
+            self._traceidcodes = traceidcodes
+        self._segyfile = segyfile
+        self._undef = undef
+        self.undef = undef
+        self._metadata = xtgeo.MetaDataRegularCube()
+        self._metadata.required = self
 
     def __repr__(self):
         """The __repr__ method."""
@@ -706,7 +841,32 @@ class Cube:  # pylint: disable=too-many-public-methods
     # Import and export
     # =========================================================================
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.cube_from_file() instead",
+    )
     def from_file(self, sfile, fformat="guess", engine=None):
+        """Deprecated, see :func:`cube_from_file`."""
+        mfile = xtgeosys._XTGeoFile(sfile)
+        if fformat is None or fformat == "guess":
+            fformat = mfile.detect_fformat(suffixonly=True)
+        else:
+            fformat = mfile.generic_format_by_proposal(fformat)  # default
+
+        if engine is not None:
+            warnings.warn(
+                "The engine parameter is deprecated, and has no effect.",
+                DeprecationWarning,
+            )
+
+        kwargs = _data_reader_factory(fformat)(mfile)
+        kwargs["filesrc"] = mfile.file
+        self._reset(**kwargs)
+
+    @classmethod
+    def _read_file(cls, sfile, fformat="guess"):
         """Import cube data from file.
 
         If fformat is not provided, the file type will be guessed based
@@ -716,7 +876,6 @@ class Cube:  # pylint: disable=too-many-public-methods
             sfile (str): Filename (as string or pathlib.Path instance).
             fformat (str): file format guess/segy/rms_regular/xtgregcube
                 where 'guess' is default. Regard 'xtgrecube' format as experimental.
-            engine (str): Deprecated option, only engine='segyio' is supported.
             deadtraces (float): Set 'dead' trace values to this value (SEGY
                 only). Default is UNDEF value (a very large number).
 
@@ -731,37 +890,14 @@ class Cube:  # pylint: disable=too-many-public-methods
 
 
         """
-        fobj = xtgeosys._XTGeoFile(sfile)
-        fobj.check_file(raiseerror=OSError)
-
-        if engine is not None:
-            xtg.warndeprecated("'engine' is a depracated option.")
-            if engine != "segyio":
-                raise ValueError("Only engine='segyio' is supported.")
-
-        _, fext = fobj.splitext(lower=True)
-
-        if fformat == "guess":
-            if not fext:
-                raise ValueError("File extension for Cube missing while fformat==guess")
-
-            fformat = fext.lower()
-
-        if "rms" in fformat:
-            _cube_import.import_rmsregular(self, fobj.name)
-        elif fformat in ("segy", "sgy"):
-            _cube_import.import_segy(self, fobj.name)
-
-        elif fformat == "storm":
-            _cube_import.import_stormcube(self, fobj.name)
-        elif fformat == "xtgregcube":
-            # experimental format
-            _cube_import.import_xtgregcube(self, fobj)
+        mfile = xtgeosys._XTGeoFile(sfile)
+        if fformat is None or fformat == "guess":
+            fformat = mfile.detect_fformat(suffixonly=True)
         else:
-            raise ValueError(f"File format fformat={fformat} is not supported")
-
-        self._filesrc = fobj.name
-        self._metadata.required = self
+            fformat = mfile.generic_format_by_proposal(fformat)  # default
+        kwargs = _data_reader_factory(fformat)(mfile)
+        kwargs["filesrc"] = mfile.file
+        return cls(**kwargs)
 
     def to_file(self, sfile, fformat="segy", pristine=False, engine="xtgeo"):
         """Export cube data to file.
