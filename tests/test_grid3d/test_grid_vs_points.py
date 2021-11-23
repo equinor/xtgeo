@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+import pytest
 
 import xtgeo
 
@@ -102,6 +103,7 @@ def test_get_ijk_from_points_banalcase3():
     assert ijk["KZ"][7] == 3
 
 
+@pytest.mark.bigtest
 def test_get_ijk_from_points_tricky():
     """Testing getting IJK coordinates from points on a tricky case"""
     g1 = xtgeo.grid_from_file(DROGON)
@@ -203,6 +205,7 @@ def test_get_ijk_from_points_smallcase():
     assert fails < 13  # < 0.5% deviation; x_chk_in_cell ~4 % error!
 
 
+@pytest.mark.bigtest
 def test_get_ijk_from_points_full():
     """Testing getting IJK coordinates from points, for all cells"""
 

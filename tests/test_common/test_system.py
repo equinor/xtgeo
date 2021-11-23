@@ -194,6 +194,7 @@ def test_file_c_handle(testpath, filename):
         any_xtgeo_file.cfclose()
 
 
+@pytest.mark.bigtest
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_surface_file_roundtrip_stream(testpath, filename):
     stream = io.BytesIO()

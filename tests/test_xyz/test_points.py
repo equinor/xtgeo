@@ -109,6 +109,7 @@ def test_export_load_rmsformatted_points(testpath, tmp_path):
     pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
 
 
+@pytest.mark.bigtest
 def test_import_rmsattr_format(testpath, tmp_path):
     """Import points with attributes from RMS attr format."""
 

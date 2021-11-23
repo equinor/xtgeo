@@ -755,6 +755,7 @@ def test_dataframe_simple():
     assert dfrc["X_UTME"][2] == pytest.approx(461577.5575, abs=0.01)
 
 
+@pytest.mark.bigtest
 def test_dataframe_more(tmpdir):
     """Get a pandas Dataframe object, more detailed testing"""
 
