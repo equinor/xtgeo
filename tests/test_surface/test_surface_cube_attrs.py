@@ -264,6 +264,7 @@ def test_avg_surface_large_cube_algorithm1(benchmark, algorithm):
     benchmark(run)
 
 
+@pytest.mark.bigtest
 def test_attrs_reek(tmpdir, loadsfile2):
 
     logger.info("Make cube...")
