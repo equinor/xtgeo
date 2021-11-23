@@ -1,32 +1,30 @@
 """Import Cube data via SegyIO library or XTGeo CLIB."""
-from struct import unpack
 import json
 from collections import OrderedDict
+from struct import unpack
+from typing import Dict
 
 import numpy as np
-
 import segyio
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_segy(self, sfile):
+def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
     """Import SEGY via Statoils FOSS SegyIO library.
 
     Args:
-        self (Cube): Cube object
         sfile (str): File name of SEGY file
-        undef (float): If None, dead traces (undef) are read as is, but
-            if a a value, than dead traces get this value.
     """
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-locals
+    sfile = sfile.file
 
     logger.debug("Inline sorting %s", segyio.TraceSortingFormat.INLINE_SORTING)
 
@@ -116,22 +114,24 @@ def import_segy(self, sfile):
         logger.debug("XTGeo rotation is %s", rotation)
 
     # attributes to update
-    self._ilines = ilines
-    self._xlines = xlines
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
-    self._xori = xori
-    self._xinc = xinc
-    self._yori = yori
-    self._yinc = yinc
-    self._zori = zori
-    self._zinc = zinc
-    self._rotation = rotation
-    self.values = values
-    self._yflip = yflip
-    self._segyfile = sfile
-    self._traceidcodes = traceidcodes
+    return {
+        "ilines": ilines,
+        "xlines": xlines,
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "xori": xori,
+        "xinc": xinc,
+        "yori": yori,
+        "yinc": yinc,
+        "zori": zori,
+        "zinc": zinc,
+        "rotation": rotation,
+        "values": values,
+        "yflip": yflip,
+        "segyfile": sfile,
+        "traceidcodes": traceidcodes,
+    }
 
 
 def _scan_segy_header(sfile, outfile):
@@ -230,13 +230,9 @@ def _scan_segy_trace(sfile, outfile):
     logger.debug("Scan via C wrapper... done")
 
 
-def import_rmsregular(self, sfile):
-    """Import on RMS regular format."""
-    logger.debug(self, sfile)
-    raise NotImplementedError("Sorry, not implemented yet")
-
-
-def import_stormcube(self, sfile):  # pylint: disable=too-many-statements
+def import_stormcube(
+    sfile: xtgeo._XTGeoFile,
+) -> Dict:
     """Import on StormCube format."""
     # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------
@@ -255,6 +251,7 @@ def import_stormcube(self, sfile):  # pylint: disable=too-many-statements
     # a total of ncol * nrow * nlay
 
     # Scan the header with Python; then use CLIB for the binary data
+    sfile = str(sfile.file)
     with open(sfile, "rb") as stf:
 
         iline = 0
@@ -314,24 +311,23 @@ def import_stormcube(self, sfile):  # pylint: disable=too-many-statements
             "Something when wrong in {}, code is {}".format(__name__, ier)
         )
 
-    self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
-    self._xori = xori
-    self._xinc = xinc
-    self._yori = yori
-    self._yinc = yinc
-    self._zori = zori
-    self._zinc = zinc
-    self._rotation = rotation
-    self._values = values.reshape((ncol, nrow, nlay))
-    self._yflip = yflip
-    self._traceidcodes = np.ones((ncol, nrow), dtype=np.int32)
+    return {
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "xori": xori,
+        "xinc": xinc,
+        "yori": yori,
+        "yinc": yinc,
+        "zori": zori,
+        "zinc": zinc,
+        "rotation": rotation,
+        "values": values.reshape((ncol, nrow, nlay)),
+        "yflip": yflip,
+    }
 
 
-def import_xtgregcube(self, mfile, values=True):
+def import_xtgregcube(mfile, values=True):
     """Using pure python for experimental cube import, xtgregsurf format."""
     logger.info("Importing cube on xtgregcube format...")
 
@@ -365,15 +361,12 @@ def import_xtgregcube(self, mfile, values=True):
 
     reqattrs = xtgeo.MetaDataRegularCube.REQUIRED
 
-    for myattr in reqattrs:
-        setattr(self, "_" + myattr, req[myattr])
+    results = {myattr: req[myattr] for myattr in reqattrs}
 
     # TODO: dead traces and traceidcodes
     if values:
-        self.values = vals.reshape(self.ncol, self.nrow, self.nlay)
+        results["values"] = vals.reshape(
+            results["ncol"], results["nrow"], results["nlay"]
+        )
 
-    else:
-        self._values = None
-
-    self._metadata.required = self
-    logger.info("Importing cube on xtgregcube format... done.")
+    return results

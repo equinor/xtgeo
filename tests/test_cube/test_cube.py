@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from os.path import join
 
+import hypothesis.strategies as st
 import numpy as np
 import pytest
-
 import xtgeo
+from hypothesis import HealthCheck, given, settings
 from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
 
@@ -37,6 +38,33 @@ def test_create():
     vec = xcu.values
     xdim, _ydim, _zdim = vec.shape
     assert xdim == 5, "NX from numpy shape "
+
+
+def test_import_wrong_format(tmp_path):
+    (tmp_path / "test.EGRID").write_text("hello")
+    with pytest.raises(ValueError, match="File format"):
+        xtgeo.cube_from_file(tmp_path / "test.EGRID", fformat="egrid")
+
+
+indices = st.integers(min_value=2, max_value=4)
+coordinates = st.floats(min_value=-100, max_value=100, allow_nan=False)
+increments = st.floats(min_value=1, max_value=2, allow_nan=False)
+
+cubes = st.builds(Cube, *([indices] * 3), *([increments] * 3), *([coordinates] * 3))
+
+
+@given(cubes)
+@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_import_guess_segy(tmp_path, cube):
+    filepath = tmp_path / "test.segy"
+    cube.to_file(filepath)
+    cube2 = xtgeo.cube_from_file(filepath)
+    assert cube.xori == pytest.approx(cube2.xori, abs=1)
+    assert cube.yori == pytest.approx(cube2.yori, abs=1)
+    assert cube.zori == pytest.approx(cube2.zori, abs=1)
+    assert cube.ncol == cube2.ncol
+    assert cube.nrow == cube2.nrow
+    assert cube.nlay == cube2.nlay
 
 
 def test_segy_scanheader(tmpdir):

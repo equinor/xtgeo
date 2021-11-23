@@ -40,6 +40,7 @@ SUPPORTED_FORMATS = {
     "irap_ascii": ["irap_ascii", "irap_asc", "rms_ascii", "irapasc", "fgr"],
     "hdf": ["hdf", "hdf5", "h5"],
     "segy": ["segy", "sgy", "segy.*"],
+    "storm": ["storm"],
     "zmap_ascii": ["zmap", "zmap+", "zmap_ascii", "zmap-ascii", "zmap-asc", "zmap.*"],
     "ijxyz": ["ijxyz"],
     "petromod": ["pmd", "petromod"],
