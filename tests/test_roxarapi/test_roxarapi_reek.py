@@ -12,7 +12,6 @@ from os.path import join
 
 import numpy as np
 import pytest
-
 import xtgeo
 
 try:
@@ -53,6 +52,13 @@ ZONENAME1 = "Zone"
 
 WELLSFOLDER1 = TPATH / "wells/reek/1"
 WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
+
+POLYSET1 = TPATH / "polygons/reek/1/polset2.pol"
+POLYSET1NAME = "polset2"
+
+POINTSET1 = TPATH / "points/reek/1/poi_attr.rmsattr"
+POINTSNAME_RMS = SURFNAMES1[0]
+POINTSCAT_RMS = "DP_some_points"
 
 # ======================================================================================
 # Initial tmp project
@@ -102,6 +108,17 @@ def fixture_create_project(tmp_project_path):
     por.to_roxar(project, GRIDNAME1, PORONAME1)
     zon = xtgeo.gridproperty_from_file(ZONEDATA1, name=ZONENAME1)
     zon.to_roxar(project, GRIDNAME1, ZONENAME1)
+
+    # populate with polygons to clipboard
+    pol = xtgeo.polygons_from_file(POLYSET1)
+    pol.to_roxar(project, POLYSET1NAME, "", stype="clipboard")
+
+    # populate with points to horizons category
+    poi = xtgeo.points_from_file(POINTSET1, fformat="rms_attr")
+    rox.create_horizons_category(POINTSCAT_RMS, htype="points")
+    poi.to_roxar(
+        project, POINTSNAME_RMS, POINTSCAT_RMS, stype="horizons", attributes=True
+    )
 
     # save project (both an initla version and a work version) and exit
     project.save_as(prj1)
@@ -163,7 +180,6 @@ def test_rox_wells(roxar_project):
 @pytest.mark.requires_roxar
 def test_rox_get_gridproperty(roxar_project):
     """Get a grid property from a RMS project."""
-    print("Project is {}".format(roxar_project))
 
     poro = xtgeo.gridproperty_from_roxar(roxar_project, GRIDNAME1, PORONAME1)
 
@@ -205,3 +221,34 @@ def test_rox_get_modify_set_grid(roxar_project):
     grd2 = xtgeo.grid_from_roxar(roxar_project, GRIDNAME1 + "_edit1")
 
     assert grd2.dimensions == grd1.dimensions
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_polygons(roxar_project):
+    """Get, modify and set a polygons object from a RMS project."""
+    poly = xtgeo.polygons_from_roxar(roxar_project, POLYSET1NAME, "", stype="clipboard")
+    poly2 = poly.copy()
+    poly2.dataframe[poly.zname] += 1000
+    poly2.to_roxar(roxar_project, "some", "", stype="clipboard")
+    assert (
+        poly.dataframe[poly.zname].mean() + 1000 == poly2.dataframe[poly2.zname].mean()
+    )
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_points(roxar_project):
+    """Get, modify and set a points object from a RMS project."""
+    points = xtgeo.points_from_roxar(
+        roxar_project, POINTSNAME_RMS, POINTSCAT_RMS, attributes=True
+    )
+    # check atttributes
+    print(points.dataframe)
+    points2 = points.copy()
+    points2.dataframe[points2.zname] += 1000
+    points2.to_roxar(
+        roxar_project, "somepoints", "", stype="clipboard", attributes=True
+    )
+    assert (
+        points.dataframe[points.zname].mean() + 1000
+        == points2.dataframe[points2.zname].mean()
+    )

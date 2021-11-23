@@ -634,6 +634,13 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
       something else! Use zname attribute to change name.
 
+    Note:
+        Attributes may have undefined entries. Pandas version 0.21 (which is applied
+        for RMS version up to 12.0.x) do not support NaN values for Integers. The
+        solution is store undefined values as large numbers, xtgeo.UNDEF_INT
+        (2000000000) for integers and xtgeo.UNDEF (10e32) for float values.
+        This will change from xtgeo version 3.0 where Pandas version 1 and above will
+        be required, which in turn support will pandas.NA entries.
 
     Args:
         values: Provide input values on various forms (list-like or dataframe).
@@ -938,8 +945,8 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
             incl_limit (float): Inclination limit for zones (thickness points)
             top_prefix (str): Prefix used for Tops
             zonelist (list-like): Which zone numbers to apply.
-            use_undef (bool): If True, then transition from UNDEF is also
-                used.
+            use_undef (bool): If True, then transition from UNDEF within zonelog
+                is also used.
 
         Returns:
             None if well list is empty; otherwise the number of wells.

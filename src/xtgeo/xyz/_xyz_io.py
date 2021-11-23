@@ -225,7 +225,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
        Discrete  FaultBlock
        String    FaultTag
        Float     VerticalSep
-       519427.941  6733887.914  1968.988    6  UNDEF  UNDEF
+       519427.941  6733887.914  1968.988     6  UNDEF  UNDEF
        519446.363  6732037.910  1806.782    19  UNDEF  UNDEF
        519446.379  6732137.910  1795.707    19  UNDEF  UNDEF
 
@@ -233,10 +233,15 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
         xname
         yname
         zname
-        _dataframe
-        values=None
+        values as a valid dataframe
         attributes
 
+    Important notes from RMS manual and reverse engineering:
+
+    * For discrete numbers use 'Discrete' or 'Integer', not 'Int'
+    * For Discrete/Integer/Float both UNDEF and -999 will mark as undefined
+    * For Discrete/Integer, numbers less than -999 seems to accepted by RMS
+    * For String, use UNDEF only as undefined
     """
 
     kwargs = {}
@@ -270,7 +275,9 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
                 dtyx = "str"
             elif dty == "Float":
                 dtyx = "float"
-            elif dty == "Int":
+            elif dty == "Integer":
+                dtyx = "int"
+            elif dty == "Int":  # is needed for backward compatibility?
                 dtyx = "int"
             else:
                 dtyx = "str"
@@ -289,13 +296,29 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
 
     # pylint: disable=unsubscriptable-object, unsupported-assignment-operation
     # handle undefined:
+    undef_detected = False
     for col in dfr.columns[3:]:
         if col in _attrs:
+            detect_undef = "UNDEF" in dfr[col].values or -999 in dfr[col].values
             if _attrs[col] == "float":
                 dfr[col].replace("UNDEF", xtgeo.UNDEF, inplace=True)
+                dfr[col].replace(-999.0, xtgeo.UNDEF, inplace=True)
             elif _attrs[col] == "int":
                 dfr[col].replace("UNDEF", xtgeo.UNDEF_INT, inplace=True)
+                dfr[col].replace(-999, xtgeo.UNDEF_INT, inplace=True)
         dfr[col] = dfr[col].astype(all_dtypes[col])
+        if detect_undef:
+            undef_detected = True
+
+    if undef_detected:
+        warnings.warn(
+            "Undefined values are detected in attribute columns from input! "
+            f"They are currently replaced by a large number which is "
+            f"{xtgeo.UNDEF_INT} for integer entries and {xtgeo.UNDEF} "
+            f"for float entries, while String entries will have UNDEF. "
+            "This will change in version 3 of XTGeo to `pandas.NA`",
+            FutureWarning,
+        )
 
     kwargs["values"] = _ValidDataFrame(dfr)
     kwargs["attributes"] = _attrs
@@ -356,7 +379,7 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
     This format is only supported for Points. If attributes is None, then it will
     become a simple XYZ file.
 
-    Attributes can be a bool or a list. If True, then use all attributes.
+    Attributes can be a bool or a list. If True, then use all known attributes.
 
     Filter is on the form {TopName: ['Name1', 'Name2']}
 

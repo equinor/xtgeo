@@ -5,7 +5,7 @@ import tempfile
 
 import numpy as np
 import pandas as pd
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, _XTGeoFile
 from xtgeo.roxutils import RoxUtils
 from xtgeo.xyz import _xyz_io
 
@@ -81,15 +81,15 @@ def _get_roxar():
 def _roxapi_import_xyz_viafile(
     rox, name, category, stype, realisation, is_polygons
 ):  # pragma: no cover
-    """Read XYZ from file due to amissing feature in Roxar API wrt attributes.
+    """Read XYZ from file due to a missing feature in Roxar API wrt attributes.
 
     However, attributes will be present in Roxar API from RMS version 12, and this
     routine should be replaced!
     """
 
-    roxar = _get_roxar()
+    roxar = _get_roxar()  # the roxar API top level
 
-    if not _check_category_etc(rox.project, name, category, stype, realisation):
+    if not _check_category_etc(rox, name, category, stype, realisation):
         raise RuntimeError(
             "It appears that name and or category is not present: "
             f"name={name}, category/folder={category}, stype={stype}"
@@ -111,7 +111,8 @@ def _roxapi_import_xyz_viafile(
             logger.info("Made a tmp folder: %s", tmpdir)
             tfile = os.path.join(tmpdir, "generic.rmsattr")
             rox_xyz.save(tfile, roxar.FileFormat.RMS_POINTS)
-            kwargs = _xyz_io.import_rms_attr(tfile)
+            pfile = _XTGeoFile(tfile)
+            kwargs = _xyz_io.import_rms_attr(pfile)
 
     except KeyError as kwe:
         logger.error(kwe)
@@ -198,13 +199,13 @@ def export_xyz_roxapi(
 ):  # pragma: no cover
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
 
-    rox = RoxUtils(project)
+    rox = RoxUtils(project, readonly=False)
 
     if stype == "clipboard" and not rox.version_required("1.2"):
         minimumrms = rox.rmsversion("1.2")
         msg = (
             "Not supported in this ROXAPI version. Points/polygons access "
-            "to clipboard requires RMS {}".format(minimumrms)
+            f"to clipboard requires RMS {minimumrms}"
         )
         raise NotImplementedError(msg)
 
@@ -229,6 +230,12 @@ def export_xyz_roxapi(
         _roxapi_export_xyz(
             xyzpp, rox, name, category, stype, pfilter, realisation, is_polygons
         )
+
+    if rox._roxexternal:
+        rox.project.save()
+
+    logger.info("XYZ data from xtgeo to roxapi... DONE")
+    rox.safe_close()
 
 
 def _roxapi_export_xyz_hpicks(
@@ -255,13 +262,11 @@ def _roxapi_export_xyz_viafile(
             "roxar not available, this functionality is not available"
         ) from err
 
-    proj = rox.project
-
-    if not _check_category_etc(proj, name, category, stype, realisation, mode="set"):
+    if not _check_category_etc(rox, name, category, stype, realisation, mode="set"):
         raise RuntimeError("Cannot access correct category or name in RMS")
 
     rox_xyz = _get_roxxyz(
-        proj, name, category, stype, mode="set", is_polygons=is_polygons
+        rox, name, category, stype, mode="set", is_polygons=is_polygons
     )
 
     # make a temporary folder and work within the with.. block
@@ -286,12 +291,11 @@ def _roxapi_export_xyz(
 
     logger.warning("Realisation %s not in use", realisation)
 
-    proj = rox.project
-    if not _check_category_etc(proj, name, category, stype, realisation, mode="set"):
+    if not _check_category_etc(rox, name, category, stype, realisation, mode="set"):
         raise RuntimeError("Cannot access correct category or name in RMS")
 
     rox_xyz = _get_roxxyz(
-        proj, name, category, stype, mode="set", is_polygons=is_polygons
+        rox, name, category, stype, mode="set", is_polygons=is_polygons
     )
 
     # pylint: disable=len-as-condition
@@ -306,9 +310,9 @@ def _roxapi_export_xyz(
                 df = df.loc[df[key].isin(val)]
             else:
                 raise KeyError(
-                    "The requested pfilter key {} was not "
+                    f"The requested pfilter key {key} was not "
                     "found in dataframe. Valid keys are "
-                    "{}".format(key, df.columns)
+                    f"{df.columns}"
                 )
 
     if is_polygons:
@@ -411,7 +415,7 @@ def _get_roxxyz(
                 folders.append(category)
             else:
                 raise RuntimeError(
-                    "Cannot parse category: {}, see documentation!".format(category)
+                    f"Cannot parse category: {category}, see documentation!"
                 )
 
             if mode == "get":
@@ -428,7 +432,7 @@ def _get_roxxyz(
                 rox_xyz = rox.project.clipboard.create_points(name, folders)
 
     else:
-        raise TypeError("Unsupported stype: {}".format(stype))
+        raise TypeError(f"Unsupported stype: {stype}")
 
     return rox_xyz
 
