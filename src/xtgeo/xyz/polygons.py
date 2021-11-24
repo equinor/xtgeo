@@ -8,7 +8,7 @@ import io
 import pathlib
 import warnings
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, TypeVar, Union
 
 import deprecation
 import numpy as np
@@ -17,6 +17,7 @@ import shapely.geometry as sg
 import xtgeo
 from xtgeo.common import inherit_docstring
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
+from xtgeo.xyz._xyz_io import _ValidDataFrame
 
 from . import _xyz_oper
 from ._xyz import XYZ
@@ -24,6 +25,8 @@ from ._xyz_io import _convert_idbased_xyz
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+Wells = TypeVar("Wells")
 
 
 class ValidationError(ValueError):
@@ -83,6 +86,54 @@ def _roxar_importer(
     return kwargs
 
 
+def _wells_importer(
+    wells: Union[xtgeo.Well, List[xtgeo.Well], List[Union[str, pathlib.Path]]],
+    zonelogname: Optional[str] = None,
+    zone: Optional[int] = None,
+    resample: Optional[int] = 1,
+):
+    """Get line segments from a list of wells and a single zone number.
+
+    A future extension is that zone could be a list of zone numbers and/or mechanisms
+    to retrieve well segments by other measures, e.g. >= depth.
+    """
+
+    if not wells:
+        raise ValueError("No valid input wells")
+
+    # wells in a scalar context is allowed if one well
+    if not isinstance(wells, list):
+        wells = [wells]
+
+    # wells may be just files which need to be imported, which is a bit more fragile
+    if isinstance(wells[0], (str, pathlib.Path)):
+        wells = [xtgeo.well_from_file(wll) for wll in wells]
+    dflist = []
+    maxid = 0
+    for well in wells:
+        if zonelogname is not None:
+            well.zonelogname = zonelogname
+
+        wp = well.get_zone_interval(zone, resample=resample)
+        wp["WellName"] = well.name
+        if wp is not None:
+            # as well segments may have overlapping POLY_ID:
+            wp["POLY_ID"] += maxid
+            maxid = wp["POLY_ID"].max() + 1
+            dflist.append(wp)
+
+    if dflist:
+        dfr = pd.concat(dflist, ignore_index=True)
+        dfr.reset_index(inplace=True, drop=True)
+    else:
+        return None
+    kwargs = {}
+    kwargs["values"] = _ValidDataFrame(dfr)
+    kwargs["attributes"] = {"WellName": "str"}
+    kwargs["filesrc"] = "Derived from: Well segments"
+    return kwargs
+
+
 def _allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Polygons and should be deleted once the deprecation period has expired,
@@ -130,7 +181,7 @@ def polygons_from_file(
 
     Supported formats are:
 
-        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+        * 'xyz' or 'pol': Simple XYZ format
 
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
 
@@ -185,6 +236,58 @@ def polygons_from_roxar(
     )
 
     return Polygons(**kwargs)
+
+
+def polygons_from_wells(
+    wells: Union[xtgeo.Well, List[xtgeo.Well], List[Union[str, pathlib.Path]]],
+    zonelogname: Optional[str] = None,
+    zone: Optional[int] = 1,
+    resample: Optional[int] = 1,
+) -> "Polygons":
+
+    """Get polygons from wells and a single zone number.
+
+    Args:
+        wells: List of XTGeo well objects, a single XTGeo well or a list of well files.
+            If a list of well files, the routine will try to load well based on file
+            signature and/or extension, but only default settings are applied. Hence
+            this is less flexible and more fragile.
+        zonelogname: Name of zonelog; if not given it will be taken from the well
+            property well.zonelogname
+        zone: The zone number to extract the linepiece from
+        resample: If given, resample every N'th sample to make
+            polylines smaller in terms of bits and bytes.
+            1 = No resampling, which means just use well sampling (which can be rather
+            dense; typically 15 cm).
+
+
+    Returns:
+        None if empty data, otherwise a Polygons() instance.
+
+    Example::
+
+        wells = ["w1.w", "w2.w"]
+        points = xtgeo.polygons_from_wells(wells, zonelogname="ZONELOG", zone=2)
+
+    Note:
+        This method replaces the deprecated method :py:meth:`~Polygons.from_wells`.
+        The latter returns the number of wells that contribute with polygon segments.
+        This is now implemented through the function `get_nwells()`. Hence the
+        following code::
+
+            nwells_applied = poly.from_wells(...)  # deprecated method
+            # vs
+            poly = xtgeo.polygons_from_wells(...)
+            nwells_applied = poly.get_nwells()
+
+    .. versionadded: 2.16
+    """
+    kwargs = _wells_importer(wells, zonelogname, zone, resample)
+
+    if kwargs is not None:
+        return Polygons(**kwargs)
+
+    return None
 
 
 ########################################################################################
@@ -261,7 +364,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     @property
     def attributes(self) -> dict:
         """Returns a dictionary with attribute names and type, or None."""
-        # this is not stored as state variable now, but is dynamically stored in
+        # this is not stored as state variable any more, but is dynamically stored in
         # all pandas columns after the 4 first.
         attrs = {}
         for col in self._df.columns[4:]:
@@ -406,9 +509,61 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     # from_ methods are deprecated
     # ==================================================================================
 
+    # from stuff -----------------------------------------------------------------------
+
     @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz"):
         self._reset(**_file_importer(pfile, fformat))
+
+    @inherit_docstring(inherit_from=XYZ.from_list)
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use direct Polygons() initialisation instead",
+    )
+    def from_list(self, plist):
+
+        kwargs = {}
+        kwargs["values"], kwargs["filesrc"] = _xyz_io._from_list_like(
+            plist, "Z_TVDSS", None, True
+        )
+        self._reset(**kwargs)
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.polygons_from_wells(...) instead",
+    )
+    def from_wells(self, wells, zone, resample=1):
+        """Get line segments from a list of wells and a single zone number.
+
+        Args:
+            wells (list): List of XTGeo well objects
+            zone (int): Which zone to apply
+            resample (int): If given, resample every N'th sample to make
+                polylines smaller in terms of bits and bytes.
+                1 = No resampling which means well sampling (which can be rather
+                dense; typically 15 cm).
+
+        Returns:
+            None if well list is empty; otherwise the number of wells that
+            have one or more line segments to return
+
+        """
+        kwargs = _wells_importer(wells, None, zone, resample)
+
+        if kwargs is not None:
+            self._reset(**kwargs)
+
+        nwells = self.get_nwells()
+        # as the previous versions did not have the WellName column, this is dropped
+        # here for backward compatibility:
+        self.dataframe = self.dataframe.drop("WellName", axis=1)
+        return nwells
+
+    # to... stuff ----------------------------------------------------------------------
 
     def to_file(
         self,
@@ -487,57 +642,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             None,
             True,
         )
-
-    @inherit_docstring(inherit_from=XYZ.from_list)
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=xtgeo.version,
-        details="Use direct Polygons() initialisation instead",
-    )
-    def from_list(self, plist):
-
-        kwargs = {}
-        kwargs["values"], kwargs["filesrc"] = _xyz_io._from_list_like(
-            plist, "Z_TVDSS", None, True
-        )
-        self._reset(**kwargs)
-
-    def from_wells(self, wells, zone, resample=1):
-        """Get line segments from a list of wells and a zone number.
-
-        Args:
-            wells (list): List of XTGeo well objects
-            zone (int): Which zone to apply
-            resample (int): If given, resample every N'th sample to make
-                polylines smaller in terms of bit and bytes.
-                1 = No resampling.
-
-        Returns:
-            None if well list is empty; otherwise the number of wells that
-            have one or more line segments to return
-
-        """
-        if not wells:
-            return None
-
-        dflist = []
-        maxid = 0
-        for well in wells:
-            wp = well.get_zone_interval(zone, resample=resample)
-            if wp is not None:
-                # as well segments may have overlapping POLY_ID:
-                wp[self._pname] += maxid
-                maxid = wp[self._pname].max() + 1
-                dflist.append(wp)
-
-        if dflist:
-            self._df = pd.concat(dflist, ignore_index=True)
-            self._df.reset_index(inplace=True, drop=True)
-        else:
-            return None
-
-        return len(dflist)
 
     # ==================================================================================
     # Other methods

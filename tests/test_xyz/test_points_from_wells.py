@@ -79,7 +79,7 @@ def test_get_zone_tops_one_well_w_undef(testpath):
     assert p3.dataframe["Zone"][0] == 1
 
 
-def test_get_zone_tops_some_wells(testpath, tmp_path):
+def test_get_zone_tops_some_wells(testpath):
     """Import some well and get the zone tops"""
 
     wlist = [
@@ -89,7 +89,9 @@ def test_get_zone_tops_some_wells(testpath, tmp_path):
 
     # legacy
     p1 = Points()
-    p1.from_wells(wlist)
+    nwells = p1.from_wells(wlist)
+    assert nwells == 6
+    assert p1.nrow == 28
 
     # classmethod
     p2 = xtgeo.points_from_wells(wlist)
@@ -152,7 +154,7 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path):
     assert dfr["WellName"][20] == "OP_5"
 
 
-def test_get_faciesfraction_some_wells_old(testpath, tmp_path):
+def test_get_faciesfraction_some_wells_deprecated(testpath, tmp_path):
     """Import some wells and get the facies fractions per zone."""
     wlist = [
         xtgeo.well_from_file(wpath, zonelogname="Zonelog")
@@ -182,7 +184,7 @@ def test_get_faciesfraction_some_wells_old(testpath, tmp_path):
     )
 
 
-def test_get_faciesfraction_some_wells(testpath, tmp_path):
+def test_get_faciesfraction_some_wells_classmethod(testpath, tmp_path):
     """Import some wells and get the facies fractions per zone."""
     wlist = [
         xtgeo.well_from_file(wpath, zonelogname="Zonelog")

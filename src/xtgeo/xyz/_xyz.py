@@ -303,6 +303,14 @@ class XYZ(ABC):
         """
         ...
 
+    def get_nwells(self, wellname="WellName"):
+        """Get number of wells by counting unique elements in `wellname` column."""
+
+        if wellname in self._df.columns:
+            return self._df[wellname].nunique()
+
+        return None
+
     def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for operations restricted to inside or outside polygon(s).
 

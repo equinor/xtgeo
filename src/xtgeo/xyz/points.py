@@ -163,7 +163,7 @@ def _dataframe_importer(
 
 
 def _wells_importer(
-    wells: Wells,
+    wells: Union[xtgeo.Well, List[xtgeo.Well], List[Union[str, pathlib.Path]]],
     tops: Optional[bool] = True,
     incl_limit: Optional[float] = None,
     top_prefix: Optional[str] = "Top",
@@ -506,7 +506,7 @@ def points_from_wells(
     Note:
         The deprecated method :py:meth:`~Points.from_wells` returns the number of
         wells that contribute with points. This is now implemented through the
-        property `nwells`. Hence the following code::
+        function `get_nwells()`. Hence the following code::
 
             nwells_applied = poi.from_wells(...)  # deprecated method
             # vs
@@ -521,7 +521,10 @@ def points_from_wells(
         wells, tops, incl_limit, top_prefix, zonelist, zonelogname, use_undef
     )
 
-    return Points(**kwargs)
+    if kwargs is not None:
+        return Points(**kwargs)
+
+    return None
 
 
 def points_from_wells_dfrac(
@@ -949,7 +952,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
                 is also used.
 
         Returns:
-            None if well list is empty; otherwise the number of wells.
+            None if well list is empty; otherwise the number of wells actually applied.
 
         Raises:
             Todo
@@ -961,6 +964,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
             wells, tops, incl_limit, top_prefix, zonelist, None, use_undef
         )
         self._reset(**kwargs)
+        return self.get_nwells()
 
     @deprecation.deprecated(
         deprecated_in="2.16",
@@ -1141,14 +1145,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @inherit_docstring(inherit_from=XYZ.delete_columns)
     def delete_columns(self, clist, strict=False):
         _xyz_oper.delete_columns(self, clist, strict, False)
-
-    def get_nwells(self, wellname="WellName"):
-        """Get number of wells by counting unique elements in `wellname` column."""
-
-        if wellname in self._df.columns:
-            return self._df[wellname].nunique()
-
-        return None
 
     # ==================================================================================
     # Operations vs surfaces and possibly other

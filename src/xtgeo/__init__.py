@@ -168,7 +168,11 @@ from xtgeo.xyz.points import (
     points_from_wells,
     points_from_wells_dfrac,
 )
-from xtgeo.xyz.polygons import polygons_from_file, polygons_from_roxar
+from xtgeo.xyz.polygons import (
+    polygons_from_file,
+    polygons_from_roxar,
+    polygons_from_wells,
+)
 
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 

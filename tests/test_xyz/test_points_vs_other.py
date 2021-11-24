@@ -1,7 +1,6 @@
 import pathlib
 
 import pytest
-
 import xtgeo
 
 SFILE1A = pathlib.Path("surfaces/reek/1/topupperreek.gri")
@@ -22,7 +21,7 @@ def test_snap_to_surface(testpath):
 
     assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1661.45, abs=0.01)
 
-    # repeat,using surface whithg rotaion and partial masks
+    # repeat,using surface whith rotation and partial masks
 
     mypoints = xtgeo.Points(testpath / PFILE3)
     surf2 = xtgeo.surface_from_file(testpath / SFILE2A)
