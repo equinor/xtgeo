@@ -21,7 +21,8 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
     logger.info("Export property to file %s as %s", pfile, fformat)
 
     fobj = xtgeo._XTGeoFile(pfile, mode="rb")
-    fobj.check_folder(raiseerror=OSError)
+    if not fobj.memstream:
+        fobj.check_folder(raiseerror=OSError)
 
     if name is None:
         name = self.name
