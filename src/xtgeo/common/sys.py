@@ -16,6 +16,7 @@ from typing import Optional
 
 import h5py
 import numpy as np
+
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from .xtgeo_dialog import XTGeoDialog
@@ -313,7 +314,13 @@ class _XTGeoFile(object):
         Return:
             status: True, if folder exists and is writable, False if not.
 
+        Raises:
+            ValueError: If the file is a memstream
+
         """
+        if self.memstream:
+            raise ValueError("Tried to check folder status of a in-memory file")
+
         logger.info("Checking folder...")
 
         status = True
