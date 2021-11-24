@@ -240,7 +240,6 @@ class Cube:  # pylint: disable=too-many-public-methods
         traceidcodes=None,
         segyfile=None,
         filesrc=None,
-        undef=xtgeo.UNDEF,
     ):
 
         self._filesrc = filesrc
@@ -273,8 +272,8 @@ class Cube:  # pylint: disable=too-many-public-methods
         else:
             self._traceidcodes = traceidcodes
         self._segyfile = segyfile
-        self._undef = undef
-        self.undef = undef
+        self.undef = xtgeo.UNDEF
+
         self._metadata = xtgeo.MetaDataRegularCube()
         self._metadata.required = self
 

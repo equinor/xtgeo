@@ -363,6 +363,15 @@ def import_xtgregcube(mfile, values=True):
 
     results = {myattr: req[myattr] for myattr in reqattrs}
 
+    # For backwards compatability, xtgeo outputs files with the undef field set
+    # although we do not support initializing with any other value.
+    # As xtgeo-format is only written/read by xtgeo as far as we know, this should
+    # be unproblematic for now.
+    if results.pop("undef", None) != xtgeo.UNDEF:
+        raise ValueError(
+            f"File {mfile.file} has non-standard undef, not supported by xtgeo"
+        )
+
     # TODO: dead traces and traceidcodes
     if values:
         results["values"] = vals.reshape(
