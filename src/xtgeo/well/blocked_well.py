@@ -2,9 +2,12 @@
 """XTGeo blockedwell module"""
 
 
+import deprecation
+
 import xtgeo
-from .well1 import Well
+
 from . import _blockedwell_roxapi
+from .well1 import Well
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -151,6 +154,12 @@ class BlockedWell(Well):
 
         return newbw
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.blockedwell_from_roxar() instead",
+    )
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) a single blocked well from roxar project.
 
