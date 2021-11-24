@@ -60,6 +60,7 @@ MATCHD2 = {
 # the rounding to INT...
 
 
+@pytest.mark.bigtest
 def test_report_zlog_mismatch():
     """Report zone log mismatch grid and well."""
     g1 = xtgeo.grid_from_file(GRIDFILE)

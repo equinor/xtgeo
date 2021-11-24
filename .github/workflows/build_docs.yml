@@ -1,0 +1,21 @@
+name: Build Docs
+
+on:
+  push:
+    branches: [master, "*postfix"]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build_docs:
+    name: Build docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: "./.github/actions/build-xtgeo"
+        with:
+          python-version: 3.9
+      - name: Install doc requirements
+        run: pip install -r requirements/requirements_docs.txt
+      - name: Build docs
+        run: sphinx-build -W docs tmp/docs

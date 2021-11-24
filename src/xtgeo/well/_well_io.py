@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Well input and ouput, private module"""
-
 import json
 from collections import OrderedDict
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,6 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_rms_ascii(
-    self,
     wfile,
     mdlogname=None,
     zonelogname=None,
@@ -33,7 +32,7 @@ def import_rms_ascii(
     xlognames = []
 
     lnum = 1
-    with open(wfile, "r") as fwell:
+    with open(wfile.file, "r") as fwell:
         for line in fwell:
             if lnum == 1:
                 _ffver = line.strip()  # noqa, file version
@@ -108,7 +107,7 @@ def import_rms_ascii(
     # now import all logs as pandas framework
 
     dfr = pd.read_csv(
-        wfile,
+        wfile.file,
         delim_whitespace=True,
         skiprows=lnum,
         header=None,
@@ -125,15 +124,17 @@ def import_rms_ascii(
         dfr, mdlogname, zonelogname, strict, wname
     )
 
-    self._wlogtypes = wlogtype
-    self._wlogrecords = wlogrecords
-    self._rkb = rkb
-    self._xpos = xpos
-    self._ypos = ypos
-    self._wname = wname
-    self._df = dfr
-    self._mdlogname = mdlogname
-    self._zonelogname = zonelogname
+    return {
+        "wlogtypes": wlogtype,
+        "wlogrecords": wlogrecords,
+        "rkb": rkb,
+        "xpos": xpos,
+        "ypos": ypos,
+        "wname": wname,
+        "df": dfr,
+        "mdlogname": mdlogname,
+        "zonelogname": zonelogname,
+    }
 
 
 def _trim_on_lognames(dfr, lognames, lognames_strict, wname):
@@ -268,7 +269,38 @@ def export_hdf5_well(self, wfile, compression="lzf"):
     logger.info("Export to hdf5 format... done!")
 
 
-def import_hdf5_well(self, wfile):
+def import_wlogs(wlogs: OrderedDict):
+    """
+    This converts joined wlogtypes/wlogrecords such as found in
+    the hdf5 format to the format used in the Well object.
+
+    >>> import_wlogs(OrderedDict())
+    {'wlogtypes': {}, 'wlogrecords': {}}
+    >>> import_wlogs(OrderedDict([("X_UTME", ("CONT", None))]))
+    {'wlogtypes': {'X_UTME': 'CONT'}, 'wlogrecords': {'X_UTME': None}}
+
+    Returns:
+        dictionary with "wlogtypes" and "wlogrecords" as keys
+        and corresponding values.
+    """
+    wlogtypes = dict()
+    wlogrecords = dict()
+    for key in wlogs.keys():
+        typ, rec = wlogs[key]
+
+        if typ in {"DISC", "CONT"}:
+            wlogtypes[key] = deepcopy(typ)
+        else:
+            raise ValueError(f"Invalid log type found in input: {typ}")
+
+        if rec is None or isinstance(rec, dict):
+            wlogrecords[key] = deepcopy(rec)
+        else:
+            raise ValueError(f"Invalid log record found in input: {rec}")
+    return {"wlogtypes": wlogtypes, "wlogrecords": wlogrecords}
+
+
+def import_hdf5_well(wfile):
     """Load from HDF5 format."""
     reqattrs = xtgeo.MetaDataWell.REQUIRED
 
@@ -284,14 +316,14 @@ def import_hdf5_well(self, wfile):
 
     meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
     req = meta["_required_"]
+    result = dict()
     for myattr in reqattrs:
         if myattr == "wlogs":
-            self._wlognames = req[myattr].keys()
-            self.set_wlogs(req[myattr])
+            result.update(import_wlogs(req[myattr]))
         elif myattr == "name":
-            self._wname = req[myattr]
+            result["wname"] = req[myattr]
         else:
-            setattr(self, "_" + myattr, req[myattr])
+            result[myattr] = req[myattr]
 
-    self.metadata.required = self
-    self._df = data
+    result["df"] = data
+    return result

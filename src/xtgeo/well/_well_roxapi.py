@@ -9,8 +9,8 @@ import numpy.ma as npma
 import pandas as pd
 
 import xtgeo
-from xtgeo.roxutils import RoxUtils
 from xtgeo.common import XTGeoDialog
+from xtgeo.roxutils import RoxUtils
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -21,7 +21,6 @@ logger = xtg.functionlogger(__name__)
 # Import from ROX api
 # --------------------------------------------------------------------------------------
 def import_well_roxapi(
-    xwell1,
     project,
     wname,
     trajectory="Drilled trajectory",
@@ -34,8 +33,7 @@ def import_well_roxapi(
     """Private function for loading project and ROXAPI well import."""
     rox = RoxUtils(project, readonly=True)
 
-    _roxapi_import_well(
-        xwell1,
+    result = _roxapi_import_well(
         rox,
         wname,
         trajectory,
@@ -47,10 +45,11 @@ def import_well_roxapi(
     )
 
     rox.safe_close()
+    return result
 
 
 def _roxapi_import_well(
-    xwell1, rox, wname, traj, lrun, lognames, lognames_strict, inclmd, inclsurvey
+    rox, wname, traj, lrun, lognames, lognames_strict, inclmd, inclsurvey
 ):  # pragma: no cover
     """Private function for ROXAPI well import."""
     if wname in rox.project.wells:
@@ -68,17 +67,22 @@ def _roxapi_import_well(
     else:
         raise ValueError("No such logrun present for {}: {}".format(wname, lrun))
 
+    wlogtypes = dict()
+    wlogrecords = dict()
+
     # get logs repr trajecetry
-    logs = _roxapi_traj(xwell1, roxtraj, roxlrun, inclmd, inclsurvey)
+    mdlogname, logs = _roxapi_traj(
+        wlogtypes, wlogrecords, roxtraj, roxlrun, inclmd, inclsurvey
+    )
 
     if lognames and lognames == "all":
         for logcurv in roxlrun.log_curves:
             lname = logcurv.name
-            logs[lname] = _get_roxlog(xwell1, roxlrun, lname)
+            logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
     elif lognames:
         for lname in lognames:
             if lname in roxlrun.log_curves:
-                logs[lname] = _get_roxlog(xwell1, roxlrun, lname)
+                logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
             else:
                 if lognames_strict:
                     validlogs = [logname.name for logname in roxlrun.log_curves]
@@ -88,13 +92,21 @@ def _roxapi_import_well(
                         )
                     )
 
-    xwell1._rkb = roxwell.rkb
-    xwell1._xpos, xwell1._ypos = roxwell.wellhead
-    xwell1._wname = wname
-    xwell1._df = pd.DataFrame.from_dict(logs)
+    return {
+        "rkb": roxwell.rkb,
+        "xpos": roxwell.wellhead[0],
+        "ypos": roxwell.wellhead[1],
+        "wname": wname,
+        "wlogtypes": wlogtypes,
+        "wlogrecords": wlogrecords,
+        "mdlogname": mdlogname,
+        "df": pd.DataFrame.from_dict(logs),
+    }
 
 
-def _roxapi_traj(xwell1, roxtraj, roxlrun, inclmd, inclsurvey):  # pragma: no cover
+def _roxapi_traj(
+    wlogtypes, wlogrecords, roxtraj, roxlrun, inclmd, inclsurvey
+):  # pragma: no cover
     """Get trajectory in ROXAPI."""
     # compute trajectory
 
@@ -113,34 +125,33 @@ def _roxapi_traj(xwell1, roxtraj, roxlrun, inclmd, inclsurvey):  # pragma: no co
             logger.warning("MD is %s, surveyinterpolation fails, " "CHECK RESULT!", mdv)
             geo_array[ino] = geo_array[ino - 1]
 
-    xwell1._wlogtypes = dict()
-    xwell1._wlogrecords = dict()
     logs = OrderedDict()
+    mdlogname = None
 
     logs["X_UTME"] = geo_array[:, 3]
     logs["Y_UTMN"] = geo_array[:, 4]
     logs["Z_TVDSS"] = geo_array[:, 5]
     if inclmd or inclsurvey:
         logs["M_MDEPTH"] = geo_array[:, 0]
-        xwell1._mdlogname = "M_MDEPTH"
+        mdlogname = "M_MDEPTH"
     if inclsurvey:
         logs["M_INCL"] = geo_array[:, 1]
         logs["M_AZI"] = geo_array[:, 2]
 
-    return logs
+    return mdlogname, logs
 
 
-def _get_roxlog(xwell1, roxlrun, lname):  # pragma: no cover
+def _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname):  # pragma: no cover
     roxcurve = roxlrun.log_curves[lname]
     tmplog = roxcurve.get_values().astype(np.float64)
     tmplog = npma.filled(tmplog, fill_value=np.nan)
     tmplog[tmplog == -999] = np.nan
     if roxcurve.is_discrete:
-        xwell1._wlogtypes[lname] = "DISC"
-        xwell1._wlogrecords[lname] = roxcurve.get_code_names()
+        wlogtypes[lname] = "DISC"
+        wlogrecords[lname] = roxcurve.get_code_names()
     else:
-        xwell1._wlogtypes[lname] = "CONT"
-        xwell1._wlogrecords[lname] = None
+        wlogtypes[lname] = "CONT"
+        wlogrecords[lname] = None
 
     return tmplog
 
