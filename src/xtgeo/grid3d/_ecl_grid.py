@@ -554,9 +554,8 @@ class EclGrid(ABC):
 
         if has_mapaxes and not has_axis_units:
             warnings.warn(
-                "Conversion between map and grid axes necessary,"
-                " but axis units is missing, assuming"
-                " no unit conversion necessary"
+                "Axis units specification is missing in input, assuming that no "
+                "unit conversion is necessary"
             )
 
         if relative_to == GridRelative.MAP and not self.is_map_relative:
