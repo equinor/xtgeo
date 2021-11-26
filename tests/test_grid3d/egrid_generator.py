@@ -130,16 +130,21 @@ def lgr_sections(draw, nx=st.just(2), ny=st.just(2), nz=st.just(2), zcorn=zcorns
 
 nnc_heads = st.builds(xtge.NNCHead, indices, indices)
 
-nnc_sections = st.builds(
-    xtge.NNCSection,
-    nnc_heads,
-    arrays(elements=indices, dtype="int32", shape=st.just(2)),
-    arrays(elements=indices, dtype="int32", shape=st.just(2)),
-    arrays(elements=indices, dtype="int32", shape=st.just(2)),
-    arrays(elements=indices, dtype="int32", shape=st.just(2)),
-    st.tuples(indices, indices),
-    arrays(elements=indices, dtype="int32", shape=st.just(2)),
-    arrays(elements=indices, dtype="int32", shape=st.just(2)),
+nnc_sections = st.one_of(
+    st.builds(
+        xtge.NNCSection,
+        nnc_heads,
+        arrays(elements=indices, dtype="int32", shape=st.just(2)),
+        arrays(elements=indices, dtype="int32", shape=st.just(2)),
+        arrays(elements=indices, dtype="int32", shape=st.just(2)),
+        arrays(elements=indices, dtype="int32", shape=st.just(2)),
+    ),
+    st.builds(
+        xtge.AmalgamationSection,
+        st.tuples(indices, indices),
+        arrays(elements=indices, dtype="int32", shape=st.just(2)),
+        arrays(elements=indices, dtype="int32", shape=st.just(2)),
+    ),
 )
 
 
