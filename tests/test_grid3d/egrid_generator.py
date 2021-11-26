@@ -1,8 +1,7 @@
 import hypothesis.strategies as st
 import numpy as np
-from hypothesis.extra.numpy import arrays
-
 import xtgeo.grid3d._egrid as xtge
+from hypothesis.extra.numpy import arrays
 
 from .grdecl_grid_generator import (
     coordinate_types,
@@ -131,16 +130,21 @@ def lgr_sections(draw, zcorn=zcorns):
 
 nnc_heads = st.builds(xtge.NNCHead, indecies, indecies)
 
-nnc_sections = st.builds(
-    xtge.NNCSection,
-    nnc_heads,
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    st.tuples(indecies, indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
+nnc_sections = st.one_of(
+    st.builds(
+        xtge.NNCSection,
+        nnc_heads,
+        arrays(elements=indecies, dtype="int32", shape=indecies),
+        arrays(elements=indecies, dtype="int32", shape=indecies),
+        arrays(elements=indecies, dtype="int32", shape=indecies),
+        arrays(elements=indecies, dtype="int32", shape=indecies),
+    ),
+    st.builds(
+        xtge.AmalgamationSection,
+        st.tuples(indecies, indecies),
+        arrays(elements=indecies, dtype="int32", shape=indecies),
+        arrays(elements=indecies, dtype="int32", shape=indecies),
+    ),
 )
 
 egrid_heads = st.builds(
