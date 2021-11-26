@@ -151,11 +151,9 @@ def test_conversion_warning(egrid):
     with pytest.warns(None) as warnlog:
         egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP)
 
+    axis_unit_warnings = [w for w in warnlog if "Axis units" in str(w.message)]
+
     if egrid.mapaxes is not None and egrid.map_axis_units is None:
-        assert (
-            len([w for w in warnlog if "axis units is missing" in str(w.message)]) == 1
-        )
+        assert len(axis_unit_warnings) == 1
     else:
-        assert (
-            len([w for w in warnlog if "axis units is missing" in str(w.message)]) == 0
-        )
+        assert len(axis_unit_warnings) == 0

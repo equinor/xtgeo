@@ -671,9 +671,9 @@ class EGrid(EclGrid):
         self.global_grid._check_xtgeo_compatible()
         if self.lgr_sections:
             warnings.warn(
-                "egrid file given with local grid refinements."
-                "LGR's are not directly supported,"
-                "Instead unrefined grid is imported."
+                "UserWarning: egrid file contains local grid refinements (LGR). "
+                "LGR's are not directly supported, only the global grid is "
+                "imported."
             )
 
     @property
