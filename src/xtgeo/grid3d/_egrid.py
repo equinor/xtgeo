@@ -30,6 +30,9 @@ is represented by::
 Where ``EGridHead`` is a section of the file, ``Filehead`` and ``GridUnit`` are
 keywords.
 
+Generally, the data layout of these objects map 1-to-1 with some section of an
+valid egrid file.
+
 keywords implement the `to_egrid` and `from_egrid` functions
 which should satisfy::
 
@@ -49,7 +52,18 @@ import warnings
 from dataclasses import dataclass
 from enum import Enum, unique
 from itertools import chain
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from ecl_data_io import Format, lazy_read, write
@@ -420,9 +434,19 @@ class NNCHead:
 
 @dataclass
 class NNCSection:
-    """
-    The NNCSection's describe non-neighboor connections
-    in the grid.
+    """The NNCSection's describe non-neighboor connections in the grid.
+
+    See, for instance, OPM user manual 2021-4 Rev. 1 Table D1.1 and 6.3.5.
+
+    Args:
+        nnchead: The nnc header
+        upstream_nnc: list of cells (by index) for the upstream nnc.
+        downstream_nnc: list of cells (by index) for the downstream nnc
+            to be connected to the corresponding cell in upstream_nnc.
+        nncl: list of LGR cells (by index) to be connected to the global grid.
+        nncg: list of global cells (by index) connected to the corresponding
+         LGR cells in nncl.
+
     """
 
     nnchead: NNCHead
@@ -430,9 +454,6 @@ class NNCSection:
     downstream_nnc: np.ndarray
     nncl: Optional[np.ndarray] = None
     nncg: Optional[np.ndarray] = None
-    amalgamation_idxs: Optional[Tuple[int, int]] = None
-    nna1: Optional[np.ndarray] = None
-    nna2: Optional[np.ndarray] = None
 
     def __eq__(self, other):
         if not isinstance(other, NNCSection):
@@ -443,9 +464,6 @@ class NNCSection:
             and np.array_equal(self.downstream_nnc, other.downstream_nnc)
             and np.array_equal(self.nncl, other.nncl)
             and np.array_equal(self.nncg, other.nncg)
-            and self.amalgamation_idxs == other.amalgamation_idxs
-            and np.array_equal(self.nna1, other.nna1)
-            and np.array_equal(self.nna2, other.nna2)
         )
 
     def to_egrid(self) -> List[Tuple[str, Any]]:
@@ -458,20 +476,47 @@ class NNCSection:
             result.append(("NNCL    ", self.nncl))
         if self.nncg is not None:
             result.append(("NNCG    ", self.nncg))
-        if self.amalgamation_idxs is not None:
-            result.append(("NNCHEADA", np.array(self.amalgamation_idxs, np.int32)))
-        if self.nna1 is not None:
-            result.append(("NNA1    ", self.nna1))
-        if self.nna2 is not None:
-            result.append(("NNA2    ", self.nna2))
         return result
 
 
 @dataclass
+class AmalgamationSection:
+    """The AmalgamationSection's describe the amalgamation of two LGR's.
+
+    See, for instance, OPM user manual 2021-4 Rev. 1 Table D1.1 and 6.3.5.
+
+    Args:
+    lgr_idxs: The indexes of the LGR's to be amalgamated
+    nna1: indecies in the first lgr connected in the amalgamation.
+    nna2: indecies in the second lgr connected in the amalgamation, to
+        the corresponding cell in nna1.
+
+    """
+
+    lgr_idxs: Tuple[int, int]
+    nna1: Optional[np.ndarray]
+    nna2: Optional[np.ndarray]
+
+    def __eq__(self, other):
+        if not isinstance(other, AmalgamationSection):
+            return False
+        return (
+            self.lgr_idxs == other.lgr_idxs
+            and np.array_equal(self.nna1, other.nna1)
+            and np.array_equal(self.nna2, other.nna2)
+        )
+
+    def to_egrid(self) -> List[Tuple[str, Any]]:
+        return [
+            ("NNCHEADA", np.array(self.lgr_idxs, np.int32)),
+            ("NNA1    ", self.nna1),
+            ("NNA2    ", self.nna2),
+        ]
+
+
+@dataclass
 class EGridHead:
-    """
-    The EGridHead section occurs once at the start of an EGrid file.
-    """
+    """The EGridHead section occurs once at the start of an EGrid file."""
 
     file_head: Filehead
     mapunits: Optional[Units] = None
@@ -496,14 +541,27 @@ class EGridHead:
 
 @dataclass
 class EGrid(EclGrid):
-    """
-    Contains the complete contents of an EGridFile.
+    """Contains the data of an EGRID file.
+
+    Args:
+        egrid_head: The file header starting with the FILEHEAD keyword and
+            contains optional information about units, map relative location, and
+            orientation.
+        global_grid: The global grid
+        lgr_sections: List of local grid refinements.
+        nnc_sections: Describe non-neighboring sections as a list of either
+            NNCSections or AmalgamationSection's.
     """
 
     egrid_head: EGridHead
     global_grid: GlobalGrid
     lgr_sections: List[LGRSection]
-    nnc_sections: List[NNCSection]
+    # The nnc_sections are kept as one list which can consist of both
+    # NNCSection and AmalgamationSection as these occur interspersed in the
+    # file. The order seems to be sorted by LGR index. Keeping them in
+    # one list keeps the data layout of EGrid 1-to-1 with the contents
+    # of the file.
+    nnc_sections: List[Union[NNCSection, AmalgamationSection]]
 
     @classmethod
     def default_settings_grid(
@@ -696,7 +754,7 @@ keyword_translation = {
     "NNC2    ": "downstream_nnc",
     "NNCL    ": "nncl",
     "NNCG    ": "nncg",
-    "NNCHEADA": "amalgamation_idxs",
+    "NNCHEADA": "lgr_idxs",
     "NNA1    ": "nna1",
     "NNA2    ": "nna2",
     "CORSNUM ": "corsnum",
@@ -857,6 +915,8 @@ class EGridReader:
                 lgr_sections.append(self.read_lgr_subsection())
             elif keyword == "NNCHEAD":
                 nnc_sections.append(self.read_nnc_subsection())
+            elif keyword == "NNCHEADA":
+                nnc_sections.append(self.read_amalgamation_subsection())
             else:
                 raise EGridFileFormatError(
                     f"egrid subsection started with unexpected keyword {keyword}"
@@ -902,9 +962,9 @@ class EGridReader:
 
     def read_nnc_subsection(self) -> NNCSection:
         """
-        Reads one lgr subsection from the start of the keyword generator.
-        After read_lgr_subsection is called, The keyword_generator is
-        at the next NNCHEAD or LGR keyword, or end of stream.
+        Reads one nnc subsection from the start of the keyword generator.
+        After read_nncsubsection is called, The keyword_generator is
+        at the next NNCHEAD, NNCHEADA or LGR keyword, or end of stream.
         """
         params = self.read_section(
             keyword_factories={
@@ -913,14 +973,28 @@ class EGridReader:
                 "NNC2    ": lambda x: np.array(x, dtype=np.int32),
                 "NNCL    ": lambda x: np.array(x, dtype=np.int32),
                 "NNCG    ": lambda x: np.array(x, dtype=np.int32),
+            },
+            required_keywords={"NNCHEAD ", "NNC1    ", "NNC2    "},
+            stop_keywords=["NNCHEAD ", "LGR     ", "NNCHEADA"],
+        )
+        return NNCSection(**params)
+
+    def read_amalgamation_subsection(self) -> AmalgamationSection:
+        """
+        Reads one amalgamation subsection from the start of the keyword
+        generator. After read_nncsubsection is called, The keyword_generator is
+        at the next NNCHEAD, NNCHEADA or LGR keyword, or end of stream.
+        """
+        params = self.read_section(
+            keyword_factories={
                 "NNCHEADA": lambda x: tuple(x[0:2]),
                 "NNA1    ": lambda x: np.array(x, dtype=np.int32),
                 "NNA2    ": lambda x: np.array(x, dtype=np.int32),
             },
-            required_keywords={"NNCHEAD ", "NNC1    ", "NNC2    "},
-            stop_keywords=["NNCHEAD ", "LGR     "],
+            required_keywords={"NNCHEADA", "NNA1    ", "NNA2    "},
+            stop_keywords=["NNCHEAD ", "LGR     ", "NNCHEADA"],
         )
-        return NNCSection(**params)
+        return AmalgamationSection(**params)
 
     def read(self) -> EGrid:
         header = self.read_header()
