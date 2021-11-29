@@ -198,9 +198,13 @@ from xtgeo.well.blocked_wells import blockedwells_from_files
 
 from xtgeo.xyz.polygons import polygons_from_file
 from xtgeo.xyz.polygons import polygons_from_roxar
+from xtgeo.xyz.polygons import polygons_from_wells
 
 from xtgeo.xyz.points import points_from_file
 from xtgeo.xyz.points import points_from_roxar
+from xtgeo.xyz.points import points_from_surface
+from xtgeo.xyz.points import points_from_wells
+from xtgeo.xyz.points import points_from_wells_dfrac
 
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 

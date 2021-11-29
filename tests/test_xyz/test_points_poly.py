@@ -57,13 +57,13 @@ def test_points_in_polygon(testpath):
     assert poi.nrow == 30
 
     # remove points in polygon
-    poi.operation_polygons(pol, 0, opname="eli", where=True)
+    poi.operation_polygons(pol, 0, opname="eli")
 
     assert poi.nrow == 19
 
     poi = Points(testpath / POINTSET2)
     # remove points outside polygon
-    poi.operation_polygons(pol, 0, opname="eli", inside=False, where=True)
+    poi.operation_polygons(pol, 0, opname="eli", inside=False)
     assert poi.nrow == 1
 
 

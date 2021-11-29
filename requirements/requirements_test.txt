@@ -1,4 +1,5 @@
 pytest
 hypothesis
 pytest-benchmark
+pytest-mock
 pytest-snapshot
