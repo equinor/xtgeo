@@ -17,7 +17,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
-    """Import SEGY via Statoils FOSS SegyIO library.
+    """Import SEGY via the SegyIO library.
 
     Args:
         sfile (str): File name of SEGY file
