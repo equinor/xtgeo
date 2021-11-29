@@ -1,52 +1,228 @@
 # -*- coding: utf-8 -*-
 """The XTGeo xyz.points module, which contains the Points class."""
+import functools
+import io
+import pathlib
+import warnings
 from collections import OrderedDict
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Union
 
+import deprecation
 import numpy as np
-import numpy.ma as ma
 import pandas as pd
-
 import xtgeo
+from xtgeo.common import XTGeoDialog, inherit_docstring
+from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
-# from xtgeo.common import XTGeoDialog
-# from xtgeo.surface import RegularSurface
-from xtgeo.common import inherit_docstring
-
-from ._xyz import XYZ
 from . import _xyz_oper
+from ._xyz import XYZ
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# ======================================================================================
-# METHODS as wrappers to class init + import
+
+def _data_reader_factory(file_format):
+    if file_format == "xyz":
+        return _xyz_io.import_xyz
+    if file_format == "zmap_ascii":
+        return _xyz_io.import_zmap
+    if file_format == "rms_attr":
+        return _xyz_io.import_rms_attr
+    raise ValueError(f"Unknown file format {file_format}")
 
 
-def points_from_file(wfile, fformat="xyz"):
+def _file_importer(
+    pfile: Union[str, pathlib.Path, io.BytesIO],
+    fformat: Optional[str] = None,
+):
+    """General function for points_from_file and (deprecated) method from_file."""
+    xtgeo_file = xtgeo._XTGeoFile(pfile)
+    if fformat is None or fformat == "guess":
+        fformat = xtgeo_file.detect_fformat()
+    else:
+        fformat = xtgeo_file.generic_format_by_proposal(fformat)  # default
+    kwargs = _data_reader_factory(fformat)(xtgeo_file)
+    kwargs["values"].dropna(inplace=True)
+    kwargs["filesrc"] = xtgeo_file.name
+    return kwargs
+
+
+def _surface_importer(surf, zname="Z_TVDSS"):
+    """General function for _read_surface() and (deprecated) method from_surface()."""
+    val = surf.values
+    xc, yc = surf.get_xy_values()
+
+    coord = []
+    for vv in [xc, yc, val]:
+        vv = np.ma.filled(vv.flatten(order="C"), fill_value=np.nan)
+        vv = vv[~np.isnan(vv)]
+        coord.append(vv)
+
+    return {
+        "values": pd.DataFrame(
+            {
+                "X_UTME": coord[0],
+                "Y_UTMN": coord[1],
+                zname: coord[2],
+            }
+        ),
+        "zname": zname,
+    }
+
+
+def _roxar_importer(
+    project,
+    category: str,
+    name: str,
+    stype: str = "horizons",
+    realisation: int = 0,
+    attributes: bool = False,
+):
+    stype = stype.lower()
+    valid_stypes = ["horizons", "zones", "faults", "clipboard"]
+
+    if stype not in valid_stypes:
+        raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
+
+    return _xyz_roxapi.import_xyz_roxapi(
+        project, name, category, stype, realisation, attributes, False
+    )
+
+
+def _wells_importer(
+    wells: List[xtgeo.Well],
+    tops: bool = True,
+    incl_limit: Optional[float] = None,
+    top_prefix: str = "Top",
+    zonelist: Optional[list] = None,
+    use_undef: bool = False,
+) -> Dict:
+    """General function importing from wells"""
+    dflist = []
+    for well in wells:
+        wp = well.get_zonation_points(
+            tops=tops,
+            incl_limit=incl_limit,
+            top_prefix=top_prefix,
+            zonelist=zonelist,
+            use_undef=use_undef,
+        )
+
+        if wp is not None:
+            dflist.append(wp)
+
+    dfr = pd.concat(dflist, ignore_index=True)
+
+    attrs = {}
+    for col in dfr.columns:
+        if col == "Zone":
+            attrs[col] = "int"
+        elif col == "ZoneName":
+            attrs[col] = "str"
+        elif col == "WellName":
+            attrs[col] = "str"
+        else:
+            attrs[col] = "float"
+
+    return {"values": dfr, "attributes": attrs}
+
+
+def _wells_dfrac_importer(
+    wells: List[xtgeo.Well],
+    dlogname: str,
+    dcodes: List[int],
+    incl_limit: float = 90,
+    count_limit: int = 3,
+    zonelist: list = None,
+    zonelogname: str = None,
+) -> Dict:
+
+    """General function, get fraction of discrete code(s) e.g. facies per zone."""
+
+    dflist = []
+    for well in wells:
+        wpf = well.get_fraction_per_zone(
+            dlogname,
+            dcodes,
+            zonelist=zonelist,
+            incl_limit=incl_limit,
+            count_limit=count_limit,
+            zonelogname=zonelogname,
+        )
+
+        if wpf is not None:
+            dflist.append(wpf)
+
+    dfr = pd.concat(dflist, ignore_index=True)
+
+    attrs = {}
+    for col in dfr.columns[3:]:
+        if col.lower() == "zone":
+            attrs[col] = "int"
+        elif col.lower() == "zonename":
+            attrs[col] = "str"
+        elif col.lower() == "wellname":
+            attrs[col] = "str"
+        else:
+            attrs[col] = "float"
+
+    return {
+        "values": dfr,
+        "attributes": attrs,
+        "zname": "DFRAC",
+    }
+
+
+def points_from_file(pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"):
     """Make an instance of a Points object directly from file import.
 
+    Supported formats are:
+
+        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+        * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
+        * 'rms_attr': RMS points formats with attributes (extra columns)
+        * 'guess': Try to choose file format based on extension
+
+
     Args:
-        mfile (str): Name of file
-        fformat (str): See :meth:`Points.from_file`
+        pfile: Name of file or pathlib object.
+        fformat: File format, xyz/pol/... Default is `guess` where file
+            extension or file signature is parsed to guess the correct format.
 
     Example::
 
         import xtgeo
         mypoints = xtgeo.points_from_file('somefile.xyz')
     """
-    obj = Points()
-
-    obj.from_file(wfile, fformat=fformat)
-
-    return obj
+    return Points(**_file_importer(pfile, fformat=fformat))
 
 
 def points_from_roxar(
-    project, name, category, stype="horizons", realisation=0, attributes=False
+    project,
+    name: str,
+    category: str,
+    stype: str = "horizons",
+    realisation: int = 0,
+    attributes: bool = False,
 ):
-    """This makes an instance of a Points directly from roxar input.
+    """Load a Points instance from Roxar RMS project.
 
-    For arguments, see :meth:`Points.from_roxar`.
+    The import from the RMS project can be done either within the project
+    or outside the project.
+
+    Note also that horizon/zone/faults name and category must exists
+    in advance, otherwise an Exception will be raised.
+
+    Args:
+        project: Name of project (as folder) if outside RMS, or just use the
+            magic `project` word if within RMS.
+        name: Name of points item
+        category: For horizons/zones/faults: for example 'DL_depth'
+            or use a folder notation on clipboard.
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard', etc!
+        realisation: Realisation number, default is 0
+        attributes: If True, attributes will be preserved (from RMS 11)
 
     Example::
 
@@ -55,61 +231,315 @@ def points_from_roxar(
         mypoints = xtgeo.points_from_roxar(project, 'TopEtive', 'DP_seismic')
 
     """
-    obj = Points()
 
-    obj.from_roxar(
-        project,
-        name,
-        category,
-        stype=stype,
-        realisation=realisation,
-        attributes=attributes,
+    return Points(
+        **_roxar_importer(
+            project,
+            name,
+            category,
+            stype,
+            realisation,
+            attributes,
+        )
     )
 
-    return obj
+
+def points_from_surface(
+    regular_surface,
+    zname: str = "Z_TVDSS",
+):
+    """This makes an instance of a Points directly from a RegularSurface object.
+
+    Each surface node will be stored as a X Y Z point.
+
+    Args:
+        regular_surface: XTGeo RegularSurface() instance
+        zname: Name of third column
+
+    .. versionadded:: 2.16
+       Replaces the from_surface() method.
+    """
+
+    return Points(**_surface_importer(regular_surface, zname=zname))
 
 
-class Points(XYZ):  # pylint: disable=too-many-public-methods
-    """Points: Class for a points set in the XTGeo framework.
+def points_from_wells(
+    wells: List[xtgeo.Well],
+    tops: bool = True,
+    incl_limit: Optional[float] = None,
+    top_prefix: str = "Top",
+    zonelist: Optional[list] = None,
+    use_undef: bool = False,
+):
 
-    The Points class is a subclass of the :class:`.XYZ` class,
-    and the point set itself is a `pandas <http://pandas.pydata.org>`_
+    """Get tops or zone points data from a list of wells.
+
+    Args:
+        wells: List of XTGeo well objects.
+            If a list of well files, the routine will try to load well based on file
+            signature and/or extension, but only default settings are applied. Hence
+            this is less flexible and more fragile.
+        tops: Get the tops if True (default), otherwise zone.
+        incl_limit: Inclination limit for zones (thickness points)
+        top_prefix: Prefix used for Tops.
+        zonelist: Which zone numbers to apply, None means all.
+        use_undef: If True, then transition from UNDEF is also used.
+
+    Returns:
+        None if empty data, otherwise a Points() instance.
+
+    Example::
+
+            wells = [xtgeo.Well("w1.w"), xtgeo.Well("w2.w")]
+            points = xtgeo.points_from_wells(wells)
+
+    Note:
+        The deprecated method :py:meth:`~Points.from_wells` returns the number of
+        wells that contribute with points. This is now implemented through the
+        function `get_nwells()`. Hence the following code::
+
+            nwells_applied = poi.from_wells(...)  # deprecated method
+            # vs
+            poi = xtgeo.points_from_wells(...)
+            nwells_applied = poi.get_nwells()
+
+    .. versionadded:: 2.16 Replaces :meth:`~Points.from_wells`
+
+    """
+    return Points(
+        **_wells_importer(wells, tops, incl_limit, top_prefix, zonelist, use_undef)
+    )
+
+
+def points_from_wells_dfrac(
+    wells: List[xtgeo.Well],
+    dlogname: str,
+    dcodes: List[int],
+    incl_limit: float = 90,
+    count_limit: int = 3,
+    zonelist: Optional[list] = None,
+    zonelogname: Optional[str] = None,
+):
+
+    """Get fraction of discrete code(s) e.g. facies per zone.
+
+    Args:
+        wells: List of XTGeo well objects.
+            If a list of file names, the routine will try to load well based on file
+            signature and/or extension, but only default settings are applied. Hence
+            this is less flexible and more fragile.
+        dlogname: Name of discrete log (e.g. Facies)
+        dcodes: Code(s) to get fraction for, e.g. [3]
+        incl_limit: Inclination limit for zones (thickness points)
+        count_limit: Min. no of counts per segment for valid result
+        zonelist: Which zone numbers to apply, default None means all.
+        zonelogname: If None, the zonelogname property in the well object will be
+            applied. This option is particualr useful if one uses wells directly from
+            files.
+
+    Returns:
+        None if empty data, otherwise a Points() instance.
+
+    Example::
+
+            wells = [xtgeo.Well("w1.w"), xtgeo.Well("w2.w")]
+            points = xtgeo.points_from_wells_dfrac(
+                    wells, dlogname="Facies", dcodes=[4], zonelogname="ZONELOG"
+                )
+
+    Note:
+        The deprecated method :py:meth:`~Points.dfrac_from_wells` returns the number of
+        wells that contribute with points. This is now implemented through the
+        method `get_nwells()`. Hence the following code::
+
+            nwells_applied = poi.dfrac_from_wells(...)  # deprecated method
+            # vs
+            poi = xtgeo.points_from_wells_dfrac(...)
+            nwells_applied = poi.get_nwells()
+
+    .. versionadded:: 2.16 Replaces :meth:`~Points.dfrac_from_wells`
+    """
+    return Points(
+        **_wells_dfrac_importer(
+            wells, dlogname, dcodes, incl_limit, count_limit, zonelist, zonelogname
+        )
+    )
+
+
+def _allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Points and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    # Introduced post xtgeo version 2.15
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # Checking if we are doing an initialization from file or surface and raise a
+        # deprecation warning if we are.
+        if len(args) == 1:
+            if isinstance(args[0], (str, pathlib.Path)):
+                warnings.warn(
+                    "Initializing directly from file name is deprecated and will be "
+                    "removed in xtgeo version 4.0. Use: "
+                    "poi = xtgeo.points_from_file('some_file.xx') instead!",
+                    DeprecationWarning,
+                )
+                fformat = kwargs.get("fformat", "guess")
+                return func(cls, **_file_importer(args[0], fformat))
+
+            elif isinstance(args[0], xtgeo.RegularSurface):
+                warnings.warn(
+                    "Initializing directly from RegularSurface is deprecated "
+                    "and will be removed in xtgeo version 4.0. Use: "
+                    "poi = xtgeo.points_from_surface(regsurf) instead",
+                    DeprecationWarning,
+                )
+                zname = kwargs.get("zname", "Z_TVDSS")
+                return func(cls, **_surface_importer(args[0], zname=zname))
+        return func(cls, *args, **kwargs)
+
+    return wrapper
+
+
+class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefined
+    """Class for a Points data in XTGeo.
+
+    The Points class is a subclass of the :py:class:`~xtgeo.xyz._xyz.XYZ` abstract
+    class, and the point set itself is a `pandas <http://pandas.pydata.org>`_
     dataframe object.
 
-    The instance can be made either from file or by a spesification,
-    e.g. from file::
+    For points, 3 float columns (X Y Z) are mandatory. In addition it is possible to
+    have addiotional points attribute columns, and such attributes may be integer,
+    strings or floats.
 
-        xp = Points().from_file('somefilename', fformat='xyz')
-        # or perhaps better
-        xp = xtgeo.points_from_file('somefilename', fformat='xyz')
-        # show the Pandas dataframe
-        print(xp.dataframe)
+    The instance can be made either from file (then as classmethod), from another
+    object or by a spesification, e.g. from file or a surface::
 
-    You can also make points from list of tuples in Python::
+        xp1 = xtgeo.points_from_file('somefilename', fformat='xyz')
+        # or
+        regsurf = xtgeo.surface_from_file("somefile.gri")
+        xp2 = xtgeo.points_from_surface(regsurf)
+
+    You can also initialise points from list of tuples/lists in Python, where
+    each tuple is a (X, Y, Z) coordinate::
 
         plist = [(234, 556, 12), (235, 559, 14), (255, 577, 12)]
-        mypoints = Points(plist)
+        mypoints = Points(values=plist)
+
+    The tuples can also contain point attributes which needs spesification via
+    an attributes dictionary::
+
+        plist = [
+            (234, 556, 12, "Well1", 22),
+            (235, 559, 14, "Well2", 44),
+            (255, 577, 12, "Well3", 55)]
+        attrs = {"WellName": "str", "ID", "int"}
+        mypoints = Points(values=plist, attributes=attrs)
+
+    And points can be initialised from a 2D numpy array or an existing dataframe::
+
+        >>> mypoints1 = Points(values=[(1,1,1), (2,2,2), (3,3,3)])
+        >>> mypoints2 = Points(
+        ...     values=pd.DataFrame(
+        ...          [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
+        ...          columns=["X_UTME", "Y_UTMN", "Z_TVDSS"]
+        ...     )
+        ... )
+
+
+    Similar as for lists, attributes are alse possible for numpy and dataframes.
 
     Default column names in the dataframe:
 
     * X_UTME: UTM X coordinate  as self._xname
     * Y_UTMN: UTM Y coordinate  as self._yname
     * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
-      something else! Use zname attribute
-    * M_MDEPTH: measured depth, (if present)
-    * Q_*: Quasi geometrical measures, such as Q_MDEPTH, Q_AZI, Q_INCL
+      something else! Use zname attribute to change name.
 
+    Note:
+        Attributes may have undefined entries. Pandas version 0.21 (which is applied
+        for RMS version up to 12.0.x) do not support NaN values for Integers. The
+        solution is store undefined values as large numbers, xtgeo.UNDEF_INT
+        (2000000000) for integers and xtgeo.UNDEF (10e32) for float values.
+        This will change from xtgeo version 3.0 where Pandas version 1 and
+        above will be required, which in turn support will pandas.NA
+        entries.
+
+    Args:
+        values: Provide input values on various forms (list-like or dataframe).
+        xname: Name of first (X) mandatory column, default is X_UTME.
+        yname: Name of second (Y) mandatory column, default is Y_UTMN.
+        zname: Name of third (Z) mandatory column, default is Z_TVDSS.
+        attributes: A dictionary for attribute columns as 'name: type', e.g.
+            {"WellName": "str", "IX": "int"}. This is applied when values are input
+            and is to name and type the extra attribute columns in a point set.
     """
 
-    def __init__(self, *args, **kwargs):
-        """__init__ for Points()."""
-        # instance variables listed
-        super().__init__(*args, **kwargs)
+    @_allow_deprecated_init
+    def __init__(
+        self,
+        values: Union[list, np.ndarray, pd.DataFrame] = None,
+        xname: str = "X_UTME",
+        yname: str = "Y_UTMN",
+        zname: str = "Z_TVDSS",
+        attributes: Optional[dict] = None,
+        filesrc: str = None,
+    ):
+        """Initialisation of Points()."""
+        super().__init__(xname, yname, zname)
+        if values is None:
+            values = []
+        self._reset(
+            values=values,
+            xname=xname,
+            yname=yname,
+            zname=zname,
+            attributes=attributes,
+            filesrc=filesrc,
+        )
 
-        if len(args) == 1:
-            if isinstance(args[0], xtgeo.surface.RegularSurface):
-                self.from_surface(args[0])
-        logger.info("Initiated Points")
+    def _reset(
+        self,
+        values: Union[list, np.ndarray, pd.DataFrame] = None,
+        xname: str = "X_UTME",
+        yname: str = "Y_UTMN",
+        zname: str = "Z_TVDSS",
+        attributes: Optional[dict] = None,
+        filesrc: str = None,
+    ):
+        """Used in deprecated methods."""
+        super()._reset(xname, yname, zname)
+
+        self._attrs = attributes if attributes is not None else dict()
+        self._filesrc = filesrc
+
+        if not isinstance(values, pd.DataFrame):
+            self._df = _xyz_io._from_list_like(values, self._zname, attributes, False)
+        else:
+            self._df: pd.DataFrame = values
+            self._dataframe_consistency_check()
+
+    def _dataframe_consistency_check(self):
+        if self.xname not in self.dataframe:
+            raise ValueError(
+                f"xname={self.xname} is not a column "
+                f"of dataframe {self.dataframe.columns}"
+            )
+        if self.yname not in self.dataframe:
+            raise ValueError(
+                f"yname={self.yname} is not a column "
+                f"of dataframe {self.dataframe.columns}"
+            )
+        if self.zname not in self.dataframe:
+            raise ValueError(
+                f"zname={self.zname} is not a column "
+                f"of dataframe {self.dataframe.columns}"
+            )
+        for attr in self._attrs:
+            if attr not in self.dataframe:
+                raise ValueError(
+                    f"Attribute {attr} is not a column "
+                    f"of dataframe {self.dataframe.columns}"
+                )
 
     def __repr__(self):
         # should be able to newobject = eval(repr(thisobject))
@@ -142,6 +572,15 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        """Returns or set the Pandas dataframe object."""
+        return self._df
+
+    @dataframe.setter
+    def dataframe(self, df):
+        self._df = df.apply(deepcopy)
+
     def _random(self, nrandom=10):
         """Generate nrandom random points within the range 0..1
 
@@ -158,11 +597,89 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         )
 
     @inherit_docstring(inherit_from=XYZ.from_file)
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_file() instead",
+    )
     def from_file(self, pfile, fformat="xyz"):
-        super().from_file(pfile, fformat=fformat)
+        self._reset(**_file_importer(pfile, fformat))
 
-        self._df.dropna(inplace=True)
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_roxar() instead.",
+    )
+    def from_roxar(
+        self,
+        project: Union[str, Any],
+        name: str,
+        category: str,
+        stype: str = "horizons",
+        realisation: int = 0,
+        attributes: bool = False,
+    ):  # pragma: no cover
+        """Load a points/polygons item from a Roxar RMS project (deprecated).
 
+        The import from the RMS project can be done either within the project
+        or outside the project.
+
+        Note that the preferred shortform for (use polygons as example)::
+
+          import xtgeo
+          mypoly = xtgeo.xyz.Polygons()
+          mypoly.from_roxar(project, 'TopAare', 'DepthPolys')
+
+        is now::
+
+          import xtgeo
+          mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+
+        Note also that horizon/zone/faults name and category must exists
+        in advance, otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones/faults: for example 'DL_depth'
+                or use a folder notation on clipboard.
+
+            stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
+            realisation (int): Realisation number, default is 0
+            attributes (bool): If True, attributes will be preserved (from RMS 11)
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+
+        .. deprecated:: 2.16
+           Use xtgeo.points_from_roxar() or xtgeo.polygons_from_roxar()
+        """
+        self._reset(
+            **_roxar_importer(
+                project,
+                name,
+                category,
+                stype,
+                realisation,
+                attributes,
+            )
+        )
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use "
+        "xtgeo.Points("
+        "values=dfr[[east, nort, tvdsml]], xname=east, yname=north, zname=tvdmsl"
+        ") instead",
+    )
     def from_dataframe(self, dfr, east="X", north="Y", tvdmsl="Z", attributes=None):
         """Import points/polygons from existing Pandas dataframe.
 
@@ -176,6 +693,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
                 input dataframe.
 
         .. versionadded:: 2.13
+        .. deprecated:: 2.16 Use points constructor directly instead
         """
         if not all(item in dfr.columns for item in (east, north, tvdmsl)):
             raise ValueError("One or more column names are not correct")
@@ -192,10 +710,9 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             for target, source in attributes.items():
                 input[target] = dfr[source]
 
-        self._df = pd.DataFrame(input)
-        self._filesrc = "DataFrame input"
-
-        self._df.dropna(inplace=True)
+        df = pd.DataFrame(input)
+        df.dropna(inplace=True)
+        self._reset(values=df, filesrc="DataFrame input")
 
     def to_file(
         self,
@@ -208,7 +725,37 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         mdcolumn="M_MDEPTH",
         **kwargs,
     ):  # pylint: disable=redefined-builtin
-        return super().to_file(
+        """Export Points to file.
+
+        Args:
+            pfile (str): Name of file
+            fformat (str): File format xyz/poi/pol or rms_attr
+            attributes (bool or list): List of extra columns to export (some formats)
+                or True for all attributes present
+            pfilter (dict): Filter on e.g. top name(s) with keys TopName
+                or ZoneName as {'TopName': ['Top1', 'Top2']}.
+            wcolumn (str): Name of well column (rms_wellpicks format only)
+            hcolumn (str): Name of horizons column (rms_wellpicks format only)
+            mdcolumn (str): Name of MD column (rms_wellpicks format only)
+
+        Returns:
+            Number of points exported
+
+        Note that the rms_wellpicks will try to output to:
+
+        * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
+        * HorizonName, WellName, X, Y, Z  otherwise
+
+        Note:
+            For backward compatibility, the key ``filter`` can be applied instead of
+            ``pfilter``.
+
+        Raises:
+            KeyError if pfilter is set and key(s) are invalid
+
+        """
+        return _xyz_io.to_file(
+            self,
             pfile,
             fformat=fformat,
             attributes=attributes,
@@ -219,6 +766,12 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             **kwargs,
         )
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_wells() instead.",
+    )
     def from_wells(
         self,
         wells,
@@ -237,49 +790,40 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             incl_limit (float): Inclination limit for zones (thickness points)
             top_prefix (str): Prefix used for Tops
             zonelist (list-like): Which zone numbers to apply.
-            use_undef (bool): If True, then transition from UNDEF is also
-                used.
+            use_undef (bool): If True, then transition from UNDEF within zonelog
+                is also used.
 
         Returns:
             None if well list is empty; otherwise the number of wells.
 
         Raises:
             Todo
+
+        .. deprecated:: 2.16
+           Use classmethod :py:func:`points_from_wells()` instead
         """
+        self._reset(
+            **_wells_importer(wells, tops, incl_limit, top_prefix, zonelist, use_undef)
+        )
+        return self.dataframe["WellName"].nunique()
 
-        if not wells:
-            return None
+    @inherit_docstring(inherit_from=XYZ.from_list)
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use direct Points() initialisation instead",
+    )
+    def from_list(self, plist):
 
-        dflist = []
-        for well in wells:
-            wp = well.get_zonation_points(
-                tops=tops,
-                incl_limit=incl_limit,
-                top_prefix=top_prefix,
-                zonelist=zonelist,
-                use_undef=use_undef,
-            )
+        self._reset(**_xyz_io._from_list_like(plist, "Z_TVDSS", None, False))
 
-            if wp is not None:
-                dflist.append(wp)
-
-        if dflist:
-            self._df = pd.concat(dflist, ignore_index=True)
-        else:
-            return None
-
-        for col in self._df.columns:
-            if col == "Zone":
-                self._attrs[col] = "int"
-            elif col == "ZoneName":
-                self._attrs[col] = "str"
-            elif col == "WellName":
-                self._attrs[col] = "str"
-            else:
-                self._attrs[col] = "float"
-
-        return len(dflist)
-
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_wells_dfrac() instead.",
+    )
     def dfrac_from_wells(
         self,
         wells,
@@ -309,45 +853,97 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         Raises:
             Todo
+
+        .. deprecated:: 2.16
+           Use classmethod :py:func:`points_from_wells_dfrac()` instead.
         """
 
-        if not wells:
-            return None
-
-        dflist = []  # will be a list of pandas dataframes
-        for well in wells:
-            wpf = well.get_fraction_per_zone(
-                dlogname,
-                dcodes,
-                zonelist=zonelist,
-                incl_limit=incl_limit,
-                count_limit=count_limit,
-                zonelogname=zonelogname,
+        self._reset(
+            **_wells_dfrac_importer(
+                wells, dlogname, dcodes, incl_limit, count_limit, zonelist, zonelogname
             )
+        )
 
-            if wpf is not None:
-                dflist.append(wpf)
+    def to_roxar(
+        self,
+        project,
+        name,
+        category,
+        stype="horizons",
+        pfilter=None,
+        realisation=0,
+        attributes=False,
+    ):  # pragma: no cover
+        """Export (store) a Points item to a Roxar RMS project.
 
-        if dflist:
-            self._df = pd.concat(dflist, ignore_index=True)
-            self.zname = "DFRAC"  # name of third column
-        else:
-            return None
+        The export to the RMS project can be done either within the project
+        or outside the project.
 
-        for col in self._df.columns[3:]:
-            if col == "Zone":
-                self._attrs[col] = "int"
-            elif col == "ZoneName":
-                self._attrs[col] = "str"
-            elif col == "WellName":
-                self._attrs[col] = "str"
-            else:
-                self._attrs[col] = "float"
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
 
-        return len(dflist)
+        Note:
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
 
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones/faults: for example 'DL_depth'
+            pfilter (dict): Filter on e.g. top name(s) with keys TopName
+                or ZoneName as {'TopName': ['Top1', 'Top2']}
+            stype (str): RMS folder type, 'horizons' (default), 'zones'
+                or 'faults' or 'clipboard'  (in prep: well picks)
+            realisation (int): Realisation number, default is 0
+            attributes (bool): If True, attributes will be preserved (from RMS 11)
+
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+            NotImplementedError: Not supported in this ROXAPI version
+
+        """
+
+        valid_stypes = ["horizons", "zones", "faults", "clipboard", "horizon_picks"]
+
+        if stype.lower() not in valid_stypes:
+            raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
+
+        _xyz_roxapi.export_xyz_roxapi(
+            self,
+            project,
+            name,
+            category,
+            stype.lower(),
+            pfilter,
+            realisation,
+            attributes,
+            False,
+        )
+
+    def copy(self):
+        """Returns a deep copy of an instance."""
+        mycopy = self.__class__()
+        mycopy._df = self._df.apply(deepcopy)
+        mycopy._xname = self._xname
+        mycopy._yname = self._yname
+        mycopy._zname = self._zname
+
+        return mycopy
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_surface() instead",
+    )
     def from_surface(self, surf, zname="Z_TVDSS"):
-        """Get points as X Y Value from a surface object nodes.
+        """Get points as X Y Value from a surface object nodes (deprecated).
 
         Note that undefined surface nodes will not be included.
 
@@ -365,33 +961,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             topx_aspoints = Points(topx)  # get an instance directly
 
             topx_aspoints.to_file('mypoints.poi')  # export as XYZ file
+
+        .. deprecated:: 2.16 Use xtgeo.points_from_surface() instead.
         """
 
-        # check if surf is instance from RegularSurface
-        if not isinstance(surf, xtgeo.surface.RegularSurface):
-            raise TypeError("Given surf is not a RegularSurface object")
-
-        val = surf.values
-        xc, yc = surf.get_xy_values()
-
-        coor = []
-        for vv in [xc, yc, val]:
-            vv = ma.filled(vv.flatten(order="C"), fill_value=np.nan)
-            vv = vv[~np.isnan(vv)]
-            coor.append(vv)
-
-        # now populate the dataframe:
-        xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
-        ddatas = OrderedDict()
-        ddatas[self._xname] = xc
-        ddatas[self._yname] = yc
-        ddatas[self._zname] = val
-        self._df = pd.DataFrame(ddatas)
-        self.zname = zname
-
-    # ==================================================================================
-    # Operations vs surfaces and possibly other
-    # ==================================================================================
+        self._reset(**_surface_importer(surf, zname=zname))
 
     def snap_surface(self, surf, activeonly=True):
         """Snap (transfer) the points Z values to a RegularSurface
@@ -417,82 +991,123 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # Operations restricted to inside/outside polygons
     # ==================================================================================
 
-    def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
-        """A generic function for doing points operations restricted to inside
-        or outside polygon(s).
+    def operation_polygons(self, poly, value, opname="add", inside=True):
+        """A generic function for operations restricted to inside or outside polygon(s).
+
+        The operations are performed on the Z values, while the 'inside' or 'outside'
+        of polygons are purely based on X and Y values (typically X is East and Y in
+        North coordinates).
+
+        The operations are XYZ generic i.e. done on the points that defines the
+        Polygon or the point in Points, depending on the calling instance.
+
+        Possible ``opname`` strings:
+
+        * ``add``: add the value
+        * ``sub``: substract the value
+        * ``mul``: multiply the value
+        * ``div``: divide the value
+        * ``set``: replace current values with value
+        * ``eli``: eliminate; here value is not applied
 
         Args:
-            poly (Points): A XTGeo Points instance
-            value(float or str): Value to add, subtract etc. If 'poly'
-                then use the avg Z value from each polygon.
+            poly (Polygons): A XTGeo Polygons instance
+            value(float): Value to add, subtract etc
             opname (str): Name of operation... 'add', 'sub', etc
-            inside (bool): If True do operation inside Points; else outside.
-            where (bool): A logical filter (current not implemented)
+            inside (bool): If True do operation inside polygons; else outside. Note
+                that boundary is treated as 'inside'
 
-        Examples::
-
-            # assume a point set where you want eliminate number inside
-            # Points, given that the points Z value inside this polygon is
-            # larger than 1700:
-            poi = Points(POINTSET2)
-            pol = Points(POLSET2)
-
-            poi.operation_polygons(pol, 0, opname='eli', inside=True)
-
-
-
+        Note:
+            This function works only intuitively when using one single polygon
+            in the ``poly`` instance. When having several polygons the
+            operation is done sequentially per polygon which may
+            lead to surprising results. For instance, using "add inside"
+            into two overlapping polygons, the addition will be doubled in the
+            overlapping part. Similarly using e.g. "eli, outside" will completely
+            remove all points of two non-overlapping polygons are given as input.
         """
+        _xyz_oper.operation_polygons(self, poly, value, opname=opname, inside=inside)
 
-        _xyz_oper.operation_polygons(
-            self, poly, value, opname=opname, inside=inside, where=where
-        )
+    def add_inside(self, poly, value):
+        """Add a value (scalar) to points inside polygons.
 
-    # shortforms
-    def add_inside(self, poly, value, where=True):
-        """Add a value (scalar) inside Points (see `operation_polygons`)"""
-        self.operation_polygons(poly, value, opname="add", inside=True, where=where)
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="add", inside=True)
 
-    def add_outside(self, poly, value, where=True):
-        """Add a value (scalar) outside Points"""
-        self.operation_polygons(poly, value, opname="add", inside=False, where=where)
+    def add_outside(self, poly, value):
+        """Add a value (scalar) to points outside polygons.
 
-    def sub_inside(self, poly, value, where=True):
-        """Subtract a value (scalar) inside Points"""
-        self.operation_polygons(poly, value, opname="sub", inside=True, where=where)
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="add", inside=False)
 
-    def sub_outside(self, poly, value, where=True):
-        """Subtract a value (scalar) outside Points"""
-        self.operation_polygons(poly, value, opname="sub", inside=False, where=where)
+    def sub_inside(self, poly, value):
+        """Subtract a value (scalar) to points inside polygons.
 
-    def mul_inside(self, poly, value, where=True):
-        """Multiply a value (scalar) inside Points"""
-        self.operation_polygons(poly, value, opname="mul", inside=True, where=where)
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="sub", inside=True)
 
-    def mul_outside(self, poly, value, where=True):
-        """Multiply a value (scalar) outside Points"""
-        self.operation_polygons(poly, value, opname="mul", inside=False, where=where)
+    def sub_outside(self, poly, value):
+        """Subtract a value (scalar) to points outside polygons.
 
-    def div_inside(self, poly, value, where=True):
-        """Divide a value (scalar) inside Points"""
-        self.operation_polygons(poly, value, opname="div", inside=True, where=where)
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="sub", inside=False)
 
-    def div_outside(self, poly, value, where=True):
-        """Divide a value (scalar) outside Points (value 0.0 will give
-        result 0)"""
-        self.operation_polygons(poly, value, opname="div", inside=False, where=where)
+    def mul_inside(self, poly, value):
+        """Multiply a value (scalar) to points inside polygons.
 
-    def set_inside(self, poly, value, where=True):
-        """Set a value (scalar) inside Points"""
-        self.operation_polygons(poly, value, opname="set", inside=True, where=where)
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="mul", inside=True)
 
-    def set_outside(self, poly, value, where=True):
-        """Set a value (scalar) outside Points"""
-        self.operation_polygons(poly, value, opname="set", inside=False, where=where)
+    def mul_outside(self, poly, value):
+        """Multiply a value (scalar) to points outside polygons.
 
-    def eli_inside(self, poly, where=True):
-        """Eliminate current map values inside Points"""
-        self.operation_polygons(poly, 0, opname="eli", inside=True, where=where)
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="mul", inside=False)
 
-    def eli_outside(self, poly, where=True):
-        """Eliminate current map values outside Points"""
-        self.operation_polygons(poly, 0, opname="eli", inside=False, where=where)
+    def div_inside(self, poly, value):
+        """Divide a value (scalar) to points inside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="div", inside=True)
+
+    def div_outside(self, poly, value):
+        """Divide a value (scalar) outside polygons (value 0.0 will give result 0).
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="div", inside=False)
+
+    def set_inside(self, poly, value):
+        """Set a value (scalar) to points inside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="set", inside=True)
+
+    def set_outside(self, poly, value):
+        """Set a value (scalar) to points outside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="set", inside=False)
+
+    def eli_inside(self, poly):
+        """Eliminate current points inside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, 0, opname="eli", inside=True)
+
+    def eli_outside(self, poly):
+        """Eliminate current points outside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, 0, opname="eli", inside=False)

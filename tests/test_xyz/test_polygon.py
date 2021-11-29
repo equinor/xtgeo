@@ -1,10 +1,12 @@
 import pathlib
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from xtgeo.xyz import Polygons
+import xtgeo
+from xtgeo.xyz import Points, Polygons
 
 PFILE1A = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 PFILE1B = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.xyz")
@@ -14,6 +16,88 @@ POLSET2 = pathlib.Path("polygons/reek/1/polset2.pol")
 POLSET3 = pathlib.Path("polygons/etc/outline.pol")
 POLSET4 = pathlib.Path("polygons/etc/well16.pol")
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
+
+
+@pytest.mark.parametrize(
+    "filename, fformat",
+    [
+        (PFILE1A, "zmap"),
+        (PFILE1B, "xyz"),
+        (PFILE1C, "pol"),
+    ],
+)
+def test_polygons_from_file_alternatives(testpath, filename, fformat):
+    # deprecated
+    polygons1 = Polygons(testpath / filename, fformat=fformat)
+    polygons2 = Polygons()
+    polygons2.from_file(testpath / filename, fformat=fformat)
+
+    polygons3 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
+    polygons4 = xtgeo.polygons_from_file(testpath / filename)
+
+    pd.testing.assert_frame_equal(polygons1.dataframe, polygons2.dataframe)
+    pd.testing.assert_frame_equal(polygons2.dataframe, polygons3.dataframe)
+    pd.testing.assert_frame_equal(polygons3.dataframe, polygons4.dataframe)
+
+
+def test_polygons_from_lists():
+    plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
+
+    mypol = Polygons(plist)
+
+    assert mypol.dataframe["X_UTME"].values[0] == 234
+    assert mypol.dataframe["Z_TVDSS"].values[2] == 12
+
+    plist = [
+        (234, 556, 11, 0),
+        (235, 559, 14, 1),
+        (255, 577, 12, 1),
+    ]
+
+    mypol = Polygons(plist)
+    assert mypol.dataframe["POLY_ID"].values[2] == 1
+
+    somedf = mypol.dataframe.copy()
+    mypol2 = Polygons(somedf)
+    assert mypol.dataframe.equals(mypol2.dataframe)
+
+
+def test_polygons_from_list_and_attrs():
+    plist = [
+        (234, 556, 11, 0, "some", 1.0),
+        (235, 559, 14, 1, "attr", 1.1),
+        (255, 577, 12, 1, "here", 1.2),
+    ]
+    attrs = OrderedDict()
+    attrs["sometxt"] = "str"
+    attrs["somefloat"] = "float"
+
+    mypol = Polygons(plist, attributes=attrs)
+    assert mypol.dataframe["POLY_ID"].values[2] == 1
+
+    somedf = mypol.dataframe.copy()
+    mypol2 = Polygons(somedf, attributes=attrs)
+    assert mypol.dataframe.equals(mypol2.dataframe)
+
+
+def test_polygons_from_attrs_not_ordereddict():
+    """Make polygons with attrs from list of tuples ndarray or dataframe.
+
+    It seems that python 3.6 dicts are actually ordered "but cannot be trusted"?
+    In python 3.7+ it is a feature.
+    """
+
+    plist = [
+        (234, 556, 11, 0, "some", 1.0),
+        (235, 559, 14, 1, "attr", 1.1),
+        (255, 577, 12, 1, "here", 1.2),
+    ]
+    attrs = {}
+    attrs["sometxt"] = "str"
+    attrs["somefloat"] = "float"
+
+    mypol = Polygons(plist, attributes=attrs)
+    assert mypol.dataframe["POLY_ID"].values[2] == 1
 
 
 def test_import_zmap_and_xyz(testpath):
@@ -288,31 +372,167 @@ def test_check_column_names():
 
 def test_delete_from_empty_polygon_does_not_fail(recwarn):
     pol = Polygons()
-    pol.delete_columns(pol.dtname)
+    pol.delete_columns([pol.dtname])
     assert len(recwarn) == 1
     assert "Trying to delete" in str(recwarn.list[0].message)
 
 
-@pytest.mark.parametrize("test_name", [(1), ({}), ([]), (2.3)])
-@pytest.mark.parametrize(
-    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname"), ("pname")]
-)
-def test_raise_incorrect_name_type(test_name, name_attribute):
+def test_delete_columns_protected_columns():
+    pol = Polygons([(1, 2, 3)])
+    with pytest.warns(UserWarning, match="protected and will not be deleted"):
+        pol.delete_columns([pol.xname])
+    with pytest.warns(UserWarning, match="protected and will not be deleted"):
+        pol.delete_columns([pol.yname])
+    with pytest.warns(UserWarning, match="protected and will not be deleted"):
+        pol.delete_columns([pol.zname])
+
+    assert pol.xname in pol.dataframe
+    assert pol.yname in pol.dataframe
+    assert pol.zname in pol.dataframe
+
+
+def test_delete_columns_strict_raises():
     pol = Polygons()
-    data = pd.DataFrame({"ANYTHING": [1, 2]})
+    with pytest.raises(ValueError, match="not present"):
+        pol.delete_columns([pol.tname], strict=True)
+
+
+@pytest.mark.parametrize("test_name", [(1), ({}), ([]), (2.3)])
+def test_raise_incorrect_name_type(test_name):
+    pol = Polygons()
+    data = pd.DataFrame(
+        {
+            "X_UTME": [1.0, 2.0],
+            "Y_UTMN": [2.0, 1.0],
+            "Z_TVDSS": [3.0, 3.0],
+            "POLY_ID": [3, 3],
+            "T_DELTALEN": [2.0, 1.0],
+        }
+    )
     pol.dataframe = data
+    pol._pname = "POLY_ID"
+    pol._tname = "T_DELTALEN"
 
     with pytest.raises(ValueError, match="Wrong type of input"):
-        setattr(pol, name_attribute, test_name)
+        setattr(pol, "tname", test_name)
 
 
 @pytest.mark.parametrize(
-    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname"), ("pname")]
+    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname")]
 )
-def test_raise_non_existing_name(name_attribute):
+def test_raise_special_name_name_type(name_attribute):
     pol = Polygons()
-    data = pd.DataFrame({"ANYTHING": [1, 2]})
+    data = pd.DataFrame(
+        {
+            "X_UTME": [1.0, 2.0],
+            "Y_UTMN": [2.0, 1.0],
+            "Z_TVDSS": [3.0, 3.0],
+            "POLY_ID": [3, 3],
+            "T_DELTALEN": [2.0, 1.0],
+        }
+    )
+    pol._pname = "POLY_ID"
     pol.dataframe = data
 
-    with pytest.raises(ValueError, match="does not exist"):
-        setattr(pol, name_attribute, "NON_EXISTING")
+    with pytest.raises(ValueError, match="does not exist as a column"):
+        setattr(pol, name_attribute, "anyname")
+
+
+@pytest.mark.parametrize(
+    "func, where, value, expected_result",
+    [
+        ("add", "inside", 44.0, [47.0, 47.0, 3.0]),
+        ("add", "outside", 44.0, [3.0, 3.0, 47.0]),
+        ("mul", "inside", 2.0, [6.0, 6.0, 3.0]),
+        ("div", "inside", 2.0, [1.5, 1.5, 3.0]),
+        ("sub", "outside", 3.0, [3.0, 3.0, 0.0]),
+        ("set", "outside", 88.0, [3.0, 3.0, 88.0]),
+        ("eli", "outside", 0, [3.0, 3.0]),
+    ],
+)
+@pytest.mark.parametrize("shorthand", [True, False])
+@pytest.mark.parametrize("constructor", [Points, Polygons])
+def test_polygons_operation_in_polygons(
+    func, where, value, expected_result, shorthand, constructor
+):
+    """Test what happens to point belonging to polygons for add_inside etc."""
+
+    closed_poly = Polygons(
+        pd.DataFrame(
+            {
+                "X_UTME": [0.0, 100.0, 100.0, 0.0, 0.0],
+                "Y_UTMN": [0.0, 0.0, 200.0, 200.0, 0.0],
+                "Z_TVDSS": [3.0, 3.0, 3.0, 3.0, 3.0],
+                "POLY_ID": [0, 0, 0, 0, 0],
+            }
+        )
+    )
+
+    # this set will first point on border, middle point inside and last point outside
+    # the closed_poly defined above
+    pointset = constructor(
+        pd.DataFrame(
+            {
+                "X_UTME": [0.0, 50.0, 200.0],
+                "Y_UTMN": [0.0, 100.0, 300.0],
+                "Z_TVDSS": [3.0, 3.0, 3.0],
+                "POLY_ID": [0, 0, 0],
+            }
+        )
+    )
+
+    inside = True if "inside" in where else False
+
+    if shorthand:
+        if func == "eli":
+            getattr(pointset, f"eli_{where}")(closed_poly)
+        else:
+            getattr(pointset, f"{func}_{where}")(closed_poly, value)
+    else:
+        pointset.operation_polygons(closed_poly, value, opname=func, inside=inside)
+    assert list(pointset.dataframe["Z_TVDSS"]) == expected_result
+
+
+@pytest.mark.parametrize(
+    "functionname, expected",
+    [
+        ("add_inside", [3.0, 5.0, 3.0, 1.0]),
+        ("add_outside", [3.0, 1.0, 3.0, 5.0]),
+        ("sub_inside", [-1.0, -3.0, -1.0, 1.0]),
+        ("sub_outside", [-1.0, 1.0, -1.0, -3.0]),
+        ("mul_inside", [2.0, 4.0, 2.0, 1.0]),
+        ("mul_outside", [2.0, 1.0, 2.0, 4.0]),
+        ("div_inside", [0.5, 0.25, 0.5, 1.0]),
+        ("div_outside", [0.5, 1.0, 0.5, 0.25]),
+        ("set_inside", [2.0, 2.0, 2.0, 1.0]),
+        ("set_outside", [2.0, 1.0, 2.0, 2.0]),
+        ("eli_inside", [1.0]),
+        ("eli_outside", [1.0]),
+    ],
+)
+def test_shortform_polygons_overlap(functionname, expected):
+    inner_polygon = [
+        (3.0, 3.0, 0.0, 0),
+        (5.0, 3.0, 0.0, 0),
+        (5.0, 5.0, 0.0, 0),
+        (3.0, 5.0, 0.0, 0),
+        (3.0, 3.0, 0.0, 0),
+    ]
+
+    overlap_polygon = [
+        (4.0, 4.0, 0.0, 2),
+        (6.0, 4.0, 0.0, 2),
+        (6.0, 6.0, 0.0, 2),
+        (4.0, 6.0, 0.0, 2),
+        (4.0, 4.0, 0.0, 2),
+    ]
+
+    pol = Polygons(inner_polygon + overlap_polygon)
+    # The Four points are placed: within both polygons
+    poi = Points([(3.5, 3.5, 1.0), (4.5, 4.5, 1.0), (5.5, 5.5, 1.0), (6.5, 6.5, 1.0)])
+    if "eli" in functionname:
+        getattr(poi, functionname)(pol)
+    else:
+        getattr(poi, functionname)(pol, 2.0)
+
+    assert list(poi.dataframe[poi.zname].values) == expected

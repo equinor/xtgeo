@@ -4,21 +4,44 @@ import pathlib
 import numpy as np
 import pandas as pd
 import pytest
+import xtgeo
 from hypothesis import given, settings
 from hypothesis import strategies as st
-
 from xtgeo.xyz import Points
 
 PFILE = pathlib.Path("points/eme/1/emerald_10_random.poi")
+PFILE2 = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
 POINTSET3 = pathlib.Path("points/battle/1/many.rmsattr")
 POINTSET4 = pathlib.Path("points/reek/1/poi_attr.rmsattr")
 CSV1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
 
 
-def test_custom_points():
-    """Make points from list of tuples."""
+@pytest.mark.parametrize(
+    "filename, fformat",
+    [
+        (PFILE, "poi"),
+        (POINTSET2, "poi"),
+        (PFILE2, "zmap"),
+        (POINTSET3, "rmsattr"),
+        (POINTSET4, "rmsattr"),
+    ],
+)
+def test_points_from_file_alternatives(testpath, filename, fformat):
+    # deprecated
+    points1 = Points(testpath / filename, fformat=fformat)
+    points2 = Points()
+    points2.from_file(testpath / filename, fformat=fformat)
 
+    points3 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
+    points4 = xtgeo.points_from_file(testpath / filename)
+
+    pd.testing.assert_frame_equal(points1.dataframe, points2.dataframe)
+    pd.testing.assert_frame_equal(points2.dataframe, points3.dataframe)
+    pd.testing.assert_frame_equal(points3.dataframe, points4.dataframe)
+
+
+def test_points_from_list_of_tuples():
     plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
 
     mypoints = Points(plist)
@@ -31,7 +54,7 @@ def test_custom_points():
 
 @st.composite
 def list_of_equal_length_lists(draw):
-    list_len = draw(st.integers(min_value=3, max_value=4))
+    list_len = draw(st.integers(min_value=3, max_value=3))
     fixed_len_list = st.lists(
         st.floats(allow_nan=False, allow_infinity=False),
         min_size=list_len,

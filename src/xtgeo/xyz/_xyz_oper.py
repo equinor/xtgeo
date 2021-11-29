@@ -32,7 +32,6 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
 
     The "where" filter is reserved for future use.
     """
-
     logger.warning("Where is not imeplented: %s", where)
 
     oper = {"set": 1, "add": 2, "sub": 3, "mul": 4, "div": 5, "eli": 11}
@@ -47,9 +46,9 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
-    xcor = self._df[self.xname].values
-    ycor = self._df[self.yname].values
-    zcor = self._df[self.zname].values
+    xcor = self.dataframe[self.xname].values
+    ycor = self.dataframe[self.yname].values
+    zcor = self.dataframe[self.zname].values
 
     usepoly = False
     if isinstance(value, str) and value == "poly":
@@ -75,10 +74,10 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
             raise RuntimeError("Something went wrong, code {}".format(ies))
 
     zcor[zcor > xtgeo.UNDEF_LIMIT] = np.nan
-    self._df[self.zname] = zcor
+    self.dataframe[self.zname] = zcor
     # removing rows where Z column is undefined
-    self._df.dropna(how="any", subset=[self.zname], inplace=True)
-    self._df.reset_index(inplace=True, drop=True)
+    self.dataframe.dropna(how="any", subset=[self.zname], inplace=True)
+    self.dataframe.reset_index(inplace=True, drop=True)
     logger.info("Operations of points inside polygon(s)... done")
 
 
@@ -100,9 +99,6 @@ def rescale_polygons(self, distance=10, addlen=False, kind="simple", mode2d=Fals
 
 def _rescale_v1(self, distance, addlen, mode2d):
     # version 1, simple approach, will rescale in 2D since Shapely use 2D lengths
-
-    if not self._ispolygons:
-        raise ValueError("Not a Polygons object")
 
     if not mode2d:
         raise KeyError("Cannot combine 'simple' with mode2d False")
@@ -316,11 +312,11 @@ def snap_surface(self, surf, activeonly=True):
     if not isinstance(surf, xtgeo.RegularSurface):
         raise ValueError("Input object of wrong data type, must be RegularSurface")
 
-    zval = self._df[self.zname].values.copy()
+    zval = self.dataframe[self.zname].values.copy()
 
     ier = _cxtgeo.surf_get_zv_from_xyv(
-        self._df[self.xname].values,
-        self._df[self.yname].values,
+        self.dataframe[self.xname].values,
+        self.dataframe[self.yname].values,
         zval,
         surf.ncol,
         surf.nrow,
@@ -339,12 +335,14 @@ def snap_surface(self, surf, activeonly=True):
             "Error code from C routine surf_get_zv_from_xyv is {}".format(ier)
         )
     if activeonly:
-        self._df[self.zname] = zval
-        self._df = self._df[self._df[self.zname] < xtgeo.UNDEF_LIMIT]
-        self._df.reset_index(inplace=True, drop=True)
+        self.dataframe[self.zname] = zval
+        self.dataframe = self.dataframe[self.dataframe[self.zname] < xtgeo.UNDEF_LIMIT]
+        self.dataframe.reset_index(inplace=True, drop=True)
     else:
-        out = np.where(zval < xtgeo.UNDEF_LIMIT, zval, self._df[self.zname].values)
-        self._df[self.zname] = out
+        out = np.where(
+            zval < xtgeo.UNDEF_LIMIT, zval, self.dataframe[self.zname].values
+        )
+        self.dataframe[self.zname] = out
 
 
 def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
@@ -378,7 +376,7 @@ def _generic_length(
     # delete existing self.hname and self.dhname columns
     self.delete_columns([gname, dgname])
 
-    idgroups = self._df.groupby(self.pname)
+    idgroups = self.dataframe.groupby(self.pname)
 
     gdist = np.array([])
     dgdist = np.array([])
@@ -415,8 +413,8 @@ def _generic_length(
             gdist = np.append(gdist, tlenv)
             dgdist = np.append(dgdist, dtlenv)
 
-    self._df[gname] = gdist
-    self._df[dgname] = dgdist
+    self.dataframe[gname] = gdist
+    self.dataframe[dgname] = dgdist
 
     if mode2d:
         self.hname = gname
@@ -438,8 +436,8 @@ def extend(self, distance, nsamples, addhlen=True):
     for _ in range(nsamples):
 
         # beginning of poly
-        row0 = self._df.iloc[0]
-        row1 = self._df.iloc[1]
+        row0 = self.dataframe.iloc[0]
+        row1 = self.dataframe.iloc[1]
 
         rown = row0.copy()
 
@@ -458,11 +456,11 @@ def extend(self, distance, nsamples, addhlen=True):
 
         df_to_add = rown.to_frame().T
 
-        self._df = pd.concat([df_to_add, self._df]).reset_index(drop=True)
+        self.dataframe = pd.concat([df_to_add, self.dataframe]).reset_index(drop=True)
 
         # end of poly
-        row0 = self._df.iloc[-2]
-        row1 = self._df.iloc[-1]
+        row0 = self.dataframe.iloc[-2]
+        row1 = self.dataframe.iloc[-1]
 
         rown = row1.copy()
 
@@ -476,7 +474,7 @@ def extend(self, distance, nsamples, addhlen=True):
 
         df_to_add = rown.to_frame().T
 
-        self._df = pd.concat([self._df, df_to_add]).reset_index(drop=True)
+        self.dataframe = pd.concat([self.dataframe, df_to_add]).reset_index(drop=True)
 
     if addhlen:
         self.hlen(atindex=nsamples)
