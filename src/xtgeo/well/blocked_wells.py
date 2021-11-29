@@ -56,7 +56,9 @@ def blockedwells_from_files(
     )
 
 
-def blockedwells_from_roxar(project, gname, bwname, lognames=None, ijk=True):
+def blockedwells_from_roxar(
+    project, gname, bwname, lognames=None, ijk=True
+):  # pragma: no cover
 
     """This makes an instance of a BlockedWells directly from Roxar RMS.
 
@@ -161,7 +163,7 @@ class BlockedWells(Wells):
         current_version=xtgeo.version,
         details="Use xtgeo.blockedwells_from_roxar() instead",
     )
-    def from_roxar(self, *args, **kwargs):
+    def from_roxar(self, *args, **kwargs):  # pragma: no cover
         """Import (retrieve) blocked wells from roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
