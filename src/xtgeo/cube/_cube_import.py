@@ -308,7 +308,7 @@ def import_stormcube(
 
     if ier != 0:
         raise RuntimeError(
-            "Something when wrong in {}, code is {}".format(__name__, ier)
+            "Something went wrong in {}, code is {}".format(__name__, ier)
         )
 
     return {
