@@ -517,7 +517,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @inherit_docstring(inherit_from=XYZ.from_list)
     @deprecation.deprecated(
-        deprecated_in="2.16",
+        deprecated_in="2.15",
         removed_in="4.0",
         current_version=xtgeo.version,
         details="Use direct Polygons() initialisation instead",

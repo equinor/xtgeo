@@ -3,7 +3,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
+import deprecation
 import pandas as pd
+import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
 from xtgeo.xyz import _xyz_oper
 
@@ -70,8 +72,6 @@ class XYZ(ABC):
         self._name = name
         self._filesrc = filesrc
 
-        self._df = None
-
         logger.info("Instantation of XYZ abstract class")
 
     # common dunder magics -------------------------------------------------------------
@@ -89,28 +89,18 @@ class XYZ(ABC):
 
     def _df_column_rename(self, oldname, newname):
         if isinstance(newname, str):
-            if oldname and self._df is not None:
-                self._df.rename(columns={oldname: newname}, inplace=True)
+            if oldname and self.dataframe is not None:
+                self.dataframe.rename(columns={oldname: newname}, inplace=True)
         else:
             raise ValueError(f"Wrong type of input to {newname}; must be string")
-
-    def _check_name(self, value):
-        if not isinstance(value, str):
-            raise ValueError(f"Wrong type of input; must be string, was {type(value)}")
-
-        if value not in self._df.columns:
-            raise ValueError(
-                f"{value} does not exist as a column name, must be "
-                f"one of: f{self._df.columns}"
-            )
 
     def _check_newname_is_unique(self, value):
         if not isinstance(value, str):
             raise ValueError(f"Wrong type of input; must be string, was {type(value)}")
 
-        if value in self._df.columns:
+        if value in self.dataframe.columns:
             raise ValueError(
-                f"{value} already exist as a column name: f{self._df.columns}, must be "
+                f"{value} already exist as a column name: f{self.dataframe.columns}, must be "
                 f"unique!"
             )
 
@@ -217,6 +207,12 @@ class XYZ(ABC):
         ...
 
     @abstractmethod
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use direct initialisation or xtgeo.points_from_file() instead",
+    )
     def from_list(self, plist):
         """Create Points or Polygons from a list-like input (deprecated).
 
@@ -306,8 +302,8 @@ class XYZ(ABC):
     def get_nwells(self, wellname="WellName"):
         """Get number of wells by counting unique elements in `wellname` column."""
 
-        if wellname in self._df.columns:
-            return self._df[wellname].nunique()
+        if wellname in self.dataframe.columns:
+            return self.dataframe[wellname].nunique()
 
         return None
 
