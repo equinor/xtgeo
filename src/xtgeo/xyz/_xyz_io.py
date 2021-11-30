@@ -205,7 +205,8 @@ def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
         dfr.insert(2, _zn, 0.0)  # inject as third column with values 0.0
 
     if not is_polygons:
-        dfr.drop(_pn, axis=1, inplace=True)  # allow Points, remove ID column
+        dfr.drop(_pn, axis=1, inplace=True)
+        del args["pname"]  # allow Points, remove ID column
 
     args["attributes"] = None
     args["values"] = _ValidDataFrame(dfr)
