@@ -240,3 +240,34 @@ def test_oper_points_inside_overlapping_polygon(oper, expected):
     # point is outside
     poi.operation_polygons(pol, value=2, opname=oper, inside=False)
     assert list(poi.dataframe[poi.zname].values) == expected
+
+
+@pytest.mark.parametrize(
+    "functionname, expected",
+    [
+        ("add_inside", [3.0, 5.0, 3.0, 1.0]),
+        ("add_outside", [3.0, 1.0, 3.0, 5.0]),
+        ("sub_inside", [-1.0, -3.0, -1.0, 1.0]),
+        ("sub_outside", [-1.0, 1.0, -1.0, -3.0]),
+        ("mul_inside", [2.0, 4.0, 2.0, 1.0]),
+        ("mul_outside", [2.0, 1.0, 2.0, 4.0]),
+        ("div_inside", [0.5, 0.25, 0.5, 1.0]),
+        ("div_outside", [0.5, 1.0, 0.5, 0.25]),
+        ("set_inside", [2.0, 2.0, 2.0, 1.0]),
+        ("set_outside", [2.0, 1.0, 2.0, 2.0]),
+        ("eli_inside", [1.0]),
+        ("eli_outside", [1.0]),
+    ],
+)
+def test_shortform_polygons_overlap(functionname, expected):
+    """Test shortform versions like add_inside, etc."""
+    pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
+    # The Four points are placed: within first poly, within the overlap, within the
+    # second poly, outside both poly
+    poi = Points([(3.5, 3.5, 1.0), (4.5, 4.5, 1.0), (5.5, 5.5, 1.0), (6.5, 6.5, 1.0)])
+    if "eli" in functionname:
+        getattr(poi, functionname)(pol)
+    else:
+        getattr(poi, functionname)(pol, 2.0)
+
+    assert list(poi.dataframe[poi.zname].values) == expected
