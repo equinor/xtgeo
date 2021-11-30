@@ -203,7 +203,7 @@ def _wells_importer(
     if dflist:
         dfr = pd.concat(dflist, ignore_index=True)
     else:
-        return None
+        dfr = pd.DataFrame({"X_UTME": [], "Y_UTME": [], "Z_TVDSS": []})
 
     attrs = {}
     for col in dfr.columns:
@@ -705,7 +705,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
 
     @property
     def attributes(self) -> dict:
-        """Returns a dictionary with attribute names and type, or None."""
+        """Returns a dictionary with attribute names and type."""
         # this is not stored as state variable now, but dynamically stored in
         # all pandas columns after the 3 first.
         attrs = {}
@@ -721,9 +721,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
                     dtype = "str"
                 attrs[name] = dtype
 
-        if attrs:
-            return attrs
-        return None
+        return attrs
 
     @property
     def dataframe(self) -> pd.DataFrame:
