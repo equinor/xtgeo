@@ -56,7 +56,7 @@ def _file_importer(
         fformat = pfile.detect_fformat()
     else:
         fformat = pfile.generic_format_by_proposal(fformat)  # default
-    kwargs = _data_reader_factory(fformat)(pfile)
+    kwargs = _data_reader_factory(fformat)(pfile, is_polygons=False)
 
     kwargs["name"] = "points"
     kwargs["filesrc"] = pfile.name
