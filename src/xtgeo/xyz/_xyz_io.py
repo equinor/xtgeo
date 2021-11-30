@@ -73,7 +73,7 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
     _yn = kwargs["yname"] = "Y_UTMN"
     _zn = kwargs["zname"] = zname
 
-    if assume_rms_text:
+    if assume_rms_text:  # always True for Points
         dfr = pd.read_csv(
             pfile.file,
             delim_whitespace=True,
@@ -83,8 +83,8 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
             dtype=np.float64,
             na_values=999.00,
         )
-    if not is_polygons:
-        dfr.dropna(inplace=True)
+        if not is_polygons:
+            dfr.dropna(inplace=True)
 
     # pylint: disable=unsupported-assignment-operation
     if is_polygons and assume_rms_text:
