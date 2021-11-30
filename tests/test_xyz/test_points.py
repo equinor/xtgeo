@@ -14,6 +14,7 @@ PFILE = pathlib.Path("points/eme/1/emerald_10_random.poi")
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
 POINTSET3 = pathlib.Path("points/battle/1/many.rmsattr")
 POINTSET4 = pathlib.Path("points/reek/1/poi_attr.rmsattr")
+POINTSET5 = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 CSV1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
 
 
@@ -78,6 +79,13 @@ def test_initialise_from_file(testpath):
     # old style (shall give DeprecationWarning)
     mypoints = Points(testpath / PFILE)
     assert mypoints.dataframe["X_UTME"].values[0] == pytest.approx(460842.434326)
+
+
+def test_initialise_from_file_zmap(testpath):
+    """Make points from actually a polygons file, internally a class method"""
+    sp1 = xtgeo.points_from_file(testpath / POINTSET5, fformat="zmap_ascii")
+    assert sp1.dataframe["Z_TVDSS"].values[751] == pytest.approx(1844.094849)
+    assert sp1.nrow == 754
 
 
 @st.composite
