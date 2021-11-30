@@ -215,7 +215,7 @@ def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
     return args
 
 
-def import_rms_attr(pfile, zname="Z_TVDSS"):
+def import_rms_attr(pfile, zname="Z_TVDSS", is_polygons=False):
     """The RMS ascii file Points format with attributes.
 
     It appears that the the RMS attributes format is supported for Points only,
@@ -244,6 +244,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
     * For Discrete/Integer, numbers less than -999 seems to accepted by RMS
     * For String, use UNDEF only as undefined
     """
+    logger.debug("The is_polygons flag is not applied here: %s", is_polygons)
 
     kwargs = {}
     _xn = kwargs["xname"] = "X_UTME"
