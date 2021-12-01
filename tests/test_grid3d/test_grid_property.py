@@ -2,6 +2,7 @@
 """Testing: test_grid_property"""
 
 
+import io
 import os
 import pathlib
 
@@ -65,6 +66,27 @@ def test_create():
 
     m = GridProperty(discrete=True)
     assert m.isdiscrete
+
+
+@given(grid_properties())
+def test_gridproperty_without_name(gridprop):
+    buf = io.BytesIO()
+    gridprop.to_file(buf, fformat="roff")
+
+    buf.seek(0)
+
+    gridprop2 = xtgeo.gridproperty_from_file(buf, fformat="roff")
+
+    assert gridprop2.name == gridprop.name
+    np.testing.assert_allclose(gridprop2.values, gridprop.values)
+
+    # deprecated name="unknown"
+    buf.seek(0)
+    with pytest.warns(DeprecationWarning, match="name='unknown'"):
+        gridprop3 = xtgeo.gridproperty_from_file(buf, name="unknown", fformat="roff")
+
+    assert gridprop3.name == gridprop.name
+    np.testing.assert_allclose(gridprop3.values, gridprop.values)
 
 
 def test_banal7(show_plot):

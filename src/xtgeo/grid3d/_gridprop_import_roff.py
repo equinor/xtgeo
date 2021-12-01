@@ -1,8 +1,9 @@
 """Importing grid props from ROFF, binary"""
 
 
-import numpy as np
+import warnings
 
+import numpy as np
 import xtgeo
 
 from ._roff_parameter import RoffParameter
@@ -14,6 +15,15 @@ logger = xtg.functionlogger(__name__)
 
 def import_roff(pfile, name=None, grid=None):
     """Import ROFF format"""
+
+    if name == "unknown":
+        warnings.warn(
+            "Using name='unknown' to select first property in roff file"
+            " is deprecated, use name=None instead",
+            DeprecationWarning,
+        )
+        name = None
+
     result = dict()
     roff_param = RoffParameter.from_file(pfile._file, name)
     result["codes"] = roff_param.xtgeo_codes()
