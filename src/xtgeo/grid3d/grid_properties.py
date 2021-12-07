@@ -271,12 +271,12 @@ class GridProperties(_Grid3D):
             nrow = 3
         if nlay is not None:
             warnings.warn(
-                "Initializing GridProperties with nrow is deprecated.",
+                "Initializing GridProperties with nlay is deprecated.",
                 DeprecationWarning,
             )
             dims_given = True
         else:
-            nrow = 5
+            nlay = 5
 
         if props:
             if dims_given:
