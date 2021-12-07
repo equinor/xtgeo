@@ -372,7 +372,7 @@ class Grid(_Grid3D):
         self._filesrc = filesrc
 
         if props is None:
-            self._props = GridProperties(ncol=self.ncol, nrow=self.nrow, nlay=self.nlay)
+            self._props = GridProperties(props=[])
         else:
             self._props = props
         self._name = name
