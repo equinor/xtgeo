@@ -405,6 +405,10 @@ class GridProperties(_Grid3D):
     @props.setter
     def props(self, propslist):
         self._props = propslist
+        if propslist:
+            self._ncol = propslist[0].ncol
+            self._nrow = propslist[0].nrow
+            self._nlay = propslist[0].nlay
         self._names = [p.name for p in self._props]
         self._consistency_check()
 
