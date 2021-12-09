@@ -159,14 +159,12 @@ def test_to_from_xtgeogrid_format1(xtggrid):
 
 @given(roff_grids())
 def test_to_from_roffgrid(roff_grid):
-    xtggrid = Grid()
-    xtggrid._actnumsv = roff_grid.xtgeo_actnum()
-    xtggrid._coordsv = roff_grid.xtgeo_coord()
-    xtggrid._zcornsv = roff_grid.xtgeo_zcorn()
-    xtggrid._subgrids = roff_grid.xtgeo_subgrids()
-    xtggrid._ncol = roff_grid.nx
-    xtggrid._nrow = roff_grid.ny
-    xtggrid._nlay = roff_grid.nz
+    xtggrid = Grid(
+        actnumsv=roff_grid.xtgeo_actnum(),
+        coordsv=roff_grid.xtgeo_coord(),
+        zcornsv=roff_grid.xtgeo_zcorn(),
+        subgrids=roff_grid.xtgeo_subgrids(),
+    )
 
     roffgrid2 = RoffGrid.from_xtgeo_grid(xtggrid)
     assert same_geometry(roffgrid2, roff_grid)

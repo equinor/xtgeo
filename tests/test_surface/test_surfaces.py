@@ -127,7 +127,7 @@ def test_surfaces_apply(constant_map_surfaces):
 
 def test_get_surfaces_from_3dgrid(tmpdir):
     """Create surfaces from a 3D grid."""
-    mygrid = xtgeo.Grid(TESTSETG1)
+    mygrid = xtgeo.grid_from_file(TESTSETG1)
     surfs = xtgeo.surface.surfaces.surfaces_from_grid(mygrid, rfactor=2)
     surfs.describe()
 

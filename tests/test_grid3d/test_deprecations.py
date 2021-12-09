@@ -20,10 +20,8 @@ def any_gridprop(any_grid):
 
 
 @pytest.fixture
-def any_gridproperties(any_grid, any_gridprop):
-    gps = GridProperties(*any_grid.dimensions)
-    gps.append_props([any_gridprop])
-    return gps
+def any_gridproperties(any_gridprop):
+    return GridProperties(props=[any_gridprop])
 
 
 def test_gridproperties_init_deprecations(any_gridprop):

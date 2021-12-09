@@ -7,6 +7,7 @@ import roffio
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
 
+import xtgeo
 from xtgeo.grid3d import GridProperty
 from xtgeo.grid3d._roff_parameter import RoffParameter
 
@@ -78,7 +79,7 @@ def test_roff_prop_read_xtgeo(tmp_path, xtgeo_property):
 
     xtgeo_property.to_file(filepath, name=xtgeo_property.name)
 
-    xtgeo_property2 = GridProperty().from_file(
+    xtgeo_property2 = xtgeo.gridproperty_from_file(
         filepath,
         name=xtgeo_property.name,
     )

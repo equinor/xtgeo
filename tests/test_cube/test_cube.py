@@ -27,7 +27,7 @@ SFILE4 = join(TPATH, "cubes/etc/ib_test_cube2.segy")
 @pytest.fixture()
 def loadsfile1():
     """Fixture for loading a SFILE1"""
-    return Cube(SFILE1)
+    return xtgeo.cube_from_file(SFILE1)
 
 
 def test_create():
@@ -108,10 +108,8 @@ def test_segy_export_import(tmpdir):
 def test_storm_import(tmpdir):
     """Import Cube using Storm format (case Reek)."""
 
-    acube = Cube()
-
     st1 = xtg.timer()
-    acube.from_file(SFILE3, fformat="storm")
+    acube = xtgeo.cube_from_file(SFILE3, fformat="storm")
     elapsed = xtg.timer(st1)
     logger.info("Reading Storm format took %s", elapsed)
 
@@ -165,7 +163,7 @@ def test_segyio_import_export(tmpdir, pristine):
     input_cube.to_file(join(tmpdir, "reek_cube.segy"), pristine=pristine)
 
     # reread that file
-    read_cube = Cube(join(tmpdir, "reek_cube.segy"))
+    read_cube = xtgeo.cube_from_file(join(tmpdir, "reek_cube.segy"))
     assert input_cube.dimensions == read_cube.dimensions
     assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
 
@@ -227,7 +225,7 @@ def test_cube_thinning(tmpdir, loadsfile1):
 
     incube.to_file(join(tmpdir, "cube_thinned.segy"))
 
-    incube2 = Cube(join(tmpdir, "cube_thinned.segy"))
+    incube2 = xtgeo.cube_from_file(join(tmpdir, "cube_thinned.segy"))
     logger.info(incube2)
 
 
@@ -275,7 +273,7 @@ def test_cube_swapaxes():
 
     logger.info("Import SEGY format via SEGYIO")
 
-    incube = Cube(SFILE4)
+    incube = xtgeo.cube_from_file(SFILE4)
     logger.info(incube)
     val1 = incube.values.copy()
 
@@ -292,7 +290,7 @@ def test_cube_swapaxes():
 def test_cube_randomline(show_plot):
     """Import a cube, and compute a randomline given a simple Polygon"""
 
-    incube = Cube(SFILE4)
+    incube = xtgeo.cube_from_file(SFILE4)
 
     poly = xtgeo.Polygons()
     poly.from_list([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]])

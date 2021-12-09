@@ -19,7 +19,7 @@ reekpoly = TPATH / "polygons/reek/1/mypoly.pol"
 
 def test_grid_inactivate_inside(tmpdir):
     """Inactivate a grid inside polygons"""
-    g1 = xtgeo.grid3d.Grid(reekgrid)
+    g1 = xtgeo.grid_from_file(reekgrid)
 
     p1 = xtgeo.xyz.Polygons(reekpoly)
 
@@ -41,7 +41,7 @@ def test_grid_inactivate_inside(tmpdir):
 
 def test_grid_inactivate_outside(tmpdir):
     """Inactivate a grid outside polygons"""
-    g1 = xtgeo.grid3d.Grid(reekgrid)
+    g1 = xtgeo.grid_from_file(reekgrid)
 
     p1 = xtgeo.xyz.Polygons(reekpoly)
 

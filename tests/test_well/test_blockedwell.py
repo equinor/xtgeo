@@ -4,9 +4,8 @@
 from os.path import join
 
 import pytest
-
+import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.well import BlockedWell
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -23,7 +22,7 @@ wfile = join(testpath, "wells/reek/1/OP_1.bw")
 def loadwell1():
     """Fixture for loading a well (pytest setup)"""
     logger.info("Load well 1")
-    return BlockedWell(wfile)
+    return xtgeo.blockedwell_from_file(wfile)
 
 
 def test_import(loadwell1):

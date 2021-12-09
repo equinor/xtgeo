@@ -9,7 +9,6 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.cube import Cube
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -37,7 +36,7 @@ XCUB2 = RPATH4 / "cube_w_deadtraces.segy"
 def load_cube_rsgy1():
     """Loading test cube (pytest setup fixture)"""
     logger.info("Load cube RSGY1")
-    return Cube(RSGY1)
+    return xtgeo.cube_from_file(RSGY1)
 
 
 def test_get_surface_from_cube(load_cube_rsgy1):
@@ -521,7 +520,7 @@ def test_cube_slice_auto4d_data(tmpdir, generate_plot):
 
     np.testing.assert_allclose(xs1.values, xs2.values, atol=0.0001)
 
-    kube1 = Cube(XCUB1)
+    kube1 = xtgeo.cube_from_file(XCUB1)
     kube1.describe()
 
     assert xs2.nactive == 10830
@@ -551,7 +550,7 @@ def test_cube_slice_w_ignore_dead_traces_nearest(tmpdir, generate_plot):
     """Get cube slice nearest aka Auto4D input, with scrambled data with
     dead traces, various YFLIP cases, ignore dead traces."""
 
-    cube1 = Cube(XCUB2)
+    cube1 = xtgeo.cube_from_file(XCUB2)
 
     surf1 = xtgeo.surface_from_cube(cube1, 1000.1)
 
@@ -604,7 +603,7 @@ def test_cube_slice_w_dead_traces_nearest(tmpdir, generate_plot):
     """Get cube slice nearest aka Auto4D input, with scrambled data with
     dead traces, various YFLIP cases, undef at dead traces."""
 
-    cube1 = Cube(XCUB2)
+    cube1 = xtgeo.cube_from_file(XCUB2)
 
     surf1 = xtgeo.surface_from_cube(cube1, 1000.1)
 
@@ -645,7 +644,7 @@ def test_cube_slice_w_ignore_dead_traces_trilinear(tmpdir, generate_plot):
     """Get cube slice trilinear aka Auto4D input, with scrambled data with
     dead traces to be ignored, various YFLIP cases."""
 
-    cube1 = Cube(XCUB2)
+    cube1 = xtgeo.cube_from_file(XCUB2)
 
     surf1 = xtgeo.surface_from_cube(cube1, 1000.0)
 
@@ -669,7 +668,7 @@ def test_cube_slice_w_dead_traces_trilinear(tmpdir, generate_plot):
     """Get cube slice trilinear aka Auto4D input, with scrambled data with
     dead traces to be ignored, various YFLIP cases."""
 
-    cube1 = Cube(XCUB2)
+    cube1 = xtgeo.cube_from_file(XCUB2)
 
     surf1 = xtgeo.surface_from_cube(cube1, 1000.0)
 

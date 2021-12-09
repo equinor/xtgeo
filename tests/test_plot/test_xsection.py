@@ -34,7 +34,7 @@ def test_xsection_init():
 def test_simple_plot(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot."""
 
-    mywell = xtgeo.Well(USEFILE4)
+    mywell = xtgeo.well_from_file(USEFILE4)
 
     mysurfaces = []
     mysurf = xtgeo.surface_from_file(USEFILE2)
@@ -76,8 +76,8 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
 def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot with seismic backdrop."""
 
-    mywell = xtgeo.Well(USEFILE7)
-    mycube = xtgeo.Cube(USEFILE6)
+    mywell = xtgeo.well_from_file(USEFILE7)
+    mycube = xtgeo.cube_from_file(USEFILE6)
 
     mysurfaces = []
     mysurf = xtgeo.surface_from_file(USEFILE2)
@@ -130,7 +130,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
 def test_multiple_subplots(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot."""
 
-    mywell = xtgeo.Well(USEFILE4)
+    mywell = xtgeo.well_from_file(USEFILE4)
     mysurf = xtgeo.surface_from_file(USEFILE2)
 
     myplot = XSection(zmin=1500, zmax=1800, well=mywell, surfaces=[mysurf])
@@ -151,7 +151,7 @@ def test_reek1(tmpdir, generate_plot):
     wnames = glob.glob(str(USEFILE4))
     wnames.sort()
     for wname in wnames:
-        mywell = xtgeo.Well(wname)
+        mywell = xtgeo.well_from_file(wname)
         mywells.append(mywell)
 
     logger.info("Wells are read...")

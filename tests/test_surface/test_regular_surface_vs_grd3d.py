@@ -33,12 +33,12 @@ def test_get_surface_from_grd3d_porosity(tmpdir, generate_plot):
 
     surf = xtgeo.surface_from_file(RTOP1)
     print(surf.values.min(), surf.values.max())
-    grd = xtgeo.grid3d.Grid(RGRD1, fformat="egrid")
+    grd = xtgeo.grid_from_file(RGRD1, fformat="egrid")
     surf.values = 1700
     zsurf = surf.copy()
     surfr = surf.copy()
     surf2 = surf.copy()
-    phi = xtgeo.grid3d.GridProperty(RPROP1, fformat="init", name="PORO", grid=grd)
+    phi = xtgeo.gridproperty_from_file(RPROP1, fformat="init", name="PORO", grid=grd)
 
     # slice grd3d
     surf.slice_grid3d(grd, phi)
@@ -72,9 +72,9 @@ def test_get_surface_from_grd3d_zones(tmpdir, generate_plot):
     """Sample a surface from a 3D grid, using zones"""
 
     surf = xtgeo.surface_from_file(RTOP1)
-    grd = xtgeo.grid3d.Grid(RGRD2, fformat="roff")
+    grd = xtgeo.grid_from_file(RGRD2, fformat="roff")
     surf.values = 1700
-    zone = xtgeo.grid3d.GridProperty(RPROP2, fformat="roff", name="Zone", grid=grd)
+    zone = xtgeo.gridproperty_from_file(RPROP2, fformat="roff", name="Zone", grid=grd)
 
     # slice grd3d
     surf.slice_grid3d(grd, zone, sbuffer=1)
@@ -88,8 +88,8 @@ def test_get_surface_from_grd3d_zones(tmpdir, generate_plot):
 def test_surface_from_grd3d_layer(tmpdir, generate_plot, default_surface):
     """Create a surface from a 3D grid layer"""
 
-    surf = xtgeo.surface.RegularSurface(**default_surface)
-    grd = xtgeo.grid3d.Grid(RGRD2, fformat="roff")
+    surf = xtgeo.RegularSurface(**default_surface)
+    grd = xtgeo.grid_from_file(RGRD2, fformat="roff")
     surf = xtgeo.surface_from_grid3d(grd)
 
     surf.fill()

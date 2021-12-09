@@ -29,14 +29,14 @@ TOP2B = join(TPATH, "surfaces/reek/2/04_basereek_rota.gri")
 def fixture_loadsfile1():
     """Fixture for loading a SFILE1"""
     logger.info("Load seismic file 1")
-    return xtgeo.Cube(SFILE1)
+    return xtgeo.cube_from_file(SFILE1)
 
 
 @pytest.fixture(name="loadsfile2")
 def fixture_loadsfile2():
     """Fixture for loading a SFILE2"""
     logger.info("Load seismic file 2")
-    return xtgeo.Cube(SFILE2)
+    return xtgeo.cube_from_file(SFILE2)
 
 
 def test_single_slice_yflip_snapxy_both(loadsfile1):

@@ -44,7 +44,9 @@ DUALFIL3 = TPATH / "3dgrids/etc/TEST_DPDK.EGRID"
 
 @pytest.fixture()
 def emerald_grid(testpath):
-    return xtgeo.grid3d.Grid(join(testpath, "3dgrids/eme/1/emerald_hetero_grid.roff"))
+    return xtgeo.grid_from_file(
+        join(testpath, "3dgrids/eme/1/emerald_hetero_grid.roff")
+    )
 
 
 def test_import_wrong_format(tmp_path):
@@ -193,8 +195,7 @@ def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc."""
     t0 = xtg.timer()
     for _ino in range(100):
-        grd1 = Grid()
-        grd1.from_file(REEKFIL4)
+        xtgeo.grid_from_file(REEKFIL4)
     t1 = xtg.timer(t0)
     print("100 loops with ROXAPIV 2 took: ", t1)
 
@@ -222,7 +223,7 @@ def test_roff_bin_vs_ascii_export(tmp_path):
     grd1.to_file(tmp_path / "b6_export.roffasc", fformat="roff_asc")
     grd1.to_file(tmp_path / "b6_export.roffbin", fformat="roff_bin")
 
-    grd2 = Grid(tmp_path / "b6_export.roffbin")
+    grd2 = xtgeo.grid_from_file(tmp_path / "b6_export.roffbin")
     cell1 = grd1.get_xyz_cell_corners((2, 2, 2))
     cell2 = grd2.get_xyz_cell_corners((2, 2, 2))
 
@@ -274,9 +275,7 @@ def test_import_grdecl_and_bgrdecl():
 
 def test_eclgrid_import2(tmp_path):
     """Eclipse EGRID import, also change ACTNUM."""
-    grd = Grid()
-    logger.info("Import Eclipse GRID...")
-    grd.from_file(REEKFILE, fformat="egrid")
+    grd = xtgeo.grid_from_file(REEKFILE, fformat="egrid")
 
     assert grd.ncol == 40, "EGrid NX from Eclipse"
     assert grd.nrow == 64, "EGrid NY from Eclipse"
@@ -320,7 +319,7 @@ def test_eclgrid_import3(tmp_path):
 
 def test_geometrics_reek():
     """Import Reek and test geometrics."""
-    grd = Grid(REEKFILE, fformat="egrid")
+    grd = xtgeo.grid_from_file(REEKFILE, fformat="egrid")
 
     geom = grd.get_geometrics(return_dict=True, cellcenter=False)
 
@@ -429,8 +428,7 @@ def test_xyz_cell_corners():
 
 def test_grid_layer_slice():
     """Test grid slice coordinates."""
-    grd = Grid()
-    grd.from_file(REEKFILE)
+    grd = xtgeo.grid_from_file(REEKFILE)
 
     sarr1, _ibarr = grd.get_layer_slice(1)
     sarrn, _ibarr = grd.get_layer_slice(grd.nlay, top=False)
