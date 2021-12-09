@@ -656,12 +656,12 @@ class GridProperty(_Grid3D):
             )
 
     @property
-    def date(self):
-        """Returns or rename the property date on YYYYMMDD numerical format."""
+    def date(self) -> Optional[str]:
+        """Returns or rename the property date as string on YYYYMMDD format."""
         return self._date
 
     @date.setter
-    def date(self, date):
+    def date(self, date: Optional[str]):
         self._date = date
 
     @property

@@ -242,7 +242,7 @@ def test_init_props_reading(case):
     )
 
     np.testing.assert_allclose(poro.values, case.poro)
-    assert poro.date == 20000101
+    assert poro.date == "20000101"
 
 
 @pytest.mark.requires_opm
@@ -261,4 +261,4 @@ def test_restart_prop_reading(case):
     )
 
     assert pressure.name == "PRESSURE_20010101"
-    assert pressure.date == 20010101
+    assert pressure.date == "20010101"
