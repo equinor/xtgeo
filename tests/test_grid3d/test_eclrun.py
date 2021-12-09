@@ -80,10 +80,10 @@ def test_roundtrip_satnum(fformat, tmp_path, ecl_runs):
 
 def test_first_and_last_dates(ecl_runs):
     po = ecl_runs.get_property_from_restart("PRESSURE", date="first")
-    assert po.date == min(ecl_runs.expected_dates)
+    assert int(po.date) == min(ecl_runs.expected_dates)
 
     px = ecl_runs.get_property_from_restart("PRESSURE", date="last")
-    assert px.date == max(ecl_runs.expected_dates)
+    assert int(px.date) == max(ecl_runs.expected_dates)
 
 
 def test_dual_runs_general_grid(tmpdir, dual_runs):

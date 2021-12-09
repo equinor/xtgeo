@@ -3,7 +3,7 @@ import itertools
 import operator
 import pathlib
 import warnings
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import ecl_data_io as eclio
 import numpy as np
@@ -349,7 +349,7 @@ def make_gridprop_values(values, grid, fracture):
     return np.ma.masked_where(grid.get_actnum().values < 1, values)
 
 
-def date_from_intehead(intehead):
+def date_from_intehead(intehead: InteHead) -> Optional[int]:
     """Returns date format for use in GridProperty name given intehead."""
     if any(val is None for val in [intehead.day, intehead.month, intehead.year]):
         return None
@@ -360,7 +360,7 @@ def gridprop_params(values, name, date, grid, fracture):
     """Make dictionary of GridProperty parameters from imported values."""
     result = dict()
     result["name"] = name
-    result["date"] = date
+    result["date"] = str(date) if date is not None else None
     result["fracture"] = fracture
 
     result["ncol"], result["nrow"], result["nlay"] = grid.dimensions

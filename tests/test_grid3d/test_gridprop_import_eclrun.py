@@ -243,6 +243,44 @@ def test_pick_dualporo_values():
     )
 
 
+@pytest.mark.parametrize("discrete, dtype", [(True, np.int32), (False, np.float64)])
+def test_gridprop_params(discrete, dtype):
+    grid = xtgeo.create_box_grid((2, 5, 1))
+    params = xtg_im_ecl.gridprop_params(
+        values=np.zeros(10, dtype=dtype),
+        name="myprop",
+        date=19991231,
+        grid=grid,
+        fracture=False,
+    )
+
+    assert params["name"] == "myprop"
+    assert params["date"] == "19991231"
+    assert params["dualporo"] == grid.dualporo
+    assert params["dualperm"] == grid.dualperm
+    assert params["discrete"] is discrete
+    assert params["values"].shape == (2, 5, 1)
+
+
+@pytest.mark.parametrize("discrete, dtype", [(True, np.int32), (False, np.float64)])
+def test_gridprop_params_no_date(discrete, dtype):
+    grid = xtgeo.create_box_grid((2, 5, 1))
+    params = xtg_im_ecl.gridprop_params(
+        values=np.zeros(10, dtype=dtype),
+        name="myprop",
+        grid=grid,
+        fracture=False,
+        date=None,
+    )
+
+    assert params["name"] == "myprop"
+    assert date not in params
+    assert params["dualporo"] == grid.dualporo
+    assert params["dualperm"] == grid.dualperm
+    assert params["discrete"] is discrete
+    assert params["values"].shape == (2, 5, 1)
+
+
 def test_match_dualporo():
     grid = xtgeo.Grid()
     grid._dualporo = True
@@ -442,7 +480,7 @@ def test_gridprop_unrst_date_correct(ecl_run, use_alterate_date_form, use_first)
     )
 
     assert gridprop.name == ecl_run.property_name + "_" + str(ecl_run.xtgeo_step_date)
-    assert gridprop.date == ecl_run.xtgeo_step_date
+    assert int(gridprop.date) == ecl_run.xtgeo_step_date
 
 
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
