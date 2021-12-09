@@ -121,7 +121,7 @@ def test_get_ijk_from_points_tricky():
 
 def test_get_ijk_from_points():
     """Testing getting IJK coordinates from points"""
-    g1 = xtgeo.grid3d.Grid(REEKGRID)
+    g1 = xtgeo.grid_from_file(REEKGRID)
 
     pointset = [
         (456620.790918, 5.935660e06, 1727.649124),  # 1, 1, 1
@@ -209,7 +209,7 @@ def test_get_ijk_from_points_smallcase():
 def test_get_ijk_from_points_full():
     """Testing getting IJK coordinates from points, for all cells"""
 
-    g1 = xtgeo.grid3d.Grid(REEKGRID)
+    g1 = xtgeo.grid_from_file(REEKGRID)
     df1 = g1.get_dataframe(ijk=True, xyz=False)
     df2 = g1.get_dataframe(ijk=False, xyz=True)
 

@@ -8,7 +8,6 @@ from hypothesis import HealthCheck, assume, given, settings
 from numpy.testing import assert_allclose
 
 import xtgeo
-from xtgeo.grid3d import GridProperty
 from xtgeo.grid3d._gridprop_import_grdecl import read_grdecl_3d_property
 
 from .grid_generator import xtgeo_grids as grids
@@ -22,7 +21,7 @@ def test_gridprop_to_from_file_is_identity(tmp_path, grid, data):
 
     prop = data.draw(st.sampled_from(grid.get_xyz_corners()))
     prop.to_file(filepath, fformat="grdecl")
-    prop_from_file = GridProperty().from_file(
+    prop_from_file = xtgeo.gridproperty_from_file(
         filepath, name=prop.name, fformat="grdecl", grid=grid
     )
 

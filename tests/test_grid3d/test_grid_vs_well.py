@@ -7,7 +7,6 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import GridProperty
 from xtgeo.well import Well
 
 xtg = XTGeoDialog()
@@ -109,10 +108,9 @@ def test_report_zlog_mismatch_resultformat3(tmpdir):
     """Report zone log mismatch grid and well, export updated wellsegment"""
     g1 = xtgeo.grid_from_file(GRIDFILE)
 
-    zo = GridProperty()
-    zo.from_file(ZONEFILE, name="Zone")
+    zo = xtgeo.gridproperty_from_file(ZONEFILE, name="Zone")
 
-    w1 = Well(WELL1)
+    w1 = xtgeo.well_from_file(WELL1)
 
     res = g1.report_zone_mismatch(
         well=w1,
@@ -133,7 +131,7 @@ def test_report_zlog_mismatch_perflog(tmpdir):
 
     zo = xtgeo.gridproperty_from_file(ZONEFILE, name="Zone")
 
-    w1 = Well(PWELL1)
+    w1 = xtgeo.well_from_file(PWELL1)
 
     w1.dataframe.to_csv(join(tmpdir, "testw1.csv"))
 
@@ -154,7 +152,7 @@ def test_report_zlog_mismatch_perflog(tmpdir):
     assert res["TCOUNT2"] == 57
     assert res["MCOUNT2"] == 46
 
-    w1 = Well(WELL1)
+    w1 = xtgeo.well_from_file(WELL1)
 
     # well is missing perflog; hence result shall be None
     res = g1.report_zone_mismatch(

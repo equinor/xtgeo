@@ -36,6 +36,11 @@ def test_init_from_file_warns(any_well_file):
         Well(any_well_file)
 
 
+def test_blockedwell_init_from_file_warns(any_well_file):
+    with pytest.warns(DeprecationWarning, match="from file"):
+        xtgeo.BlockedWell(any_well_file)
+
+
 def test_wells_init_warns(any_well_file):
 
     with pytest.warns(DeprecationWarning, match="directly from file"):

@@ -244,7 +244,7 @@ def test_pick_dualporo_values():
 
 
 def test_match_dualporo():
-    grid = xtgeo.Grid()
+    grid = xtgeo.create_box_grid((4, 3, 5))
     grid._dualporo = True
     grid._dualperm = True
     actnum = np.ones(grid.dimensions, dtype=np.int32)
@@ -281,14 +281,14 @@ def test_gridprop_ecl_run_empty_files():
             io.BytesIO(),
             fformat="init",
             name="PROP",
-            grid=xtgeo.Grid(),
+            grid=xtgeo.create_box_grid((2, 2, 2)),
         )
     with pytest.raises(ValueError, match="Could not find"):
         xtgeo.gridproperty_from_file(
             io.BytesIO(),
             fformat="unrst",
             name="PROP",
-            grid=xtgeo.Grid(),
+            grid=xtgeo.create_box_grid((2, 2, 2)),
             date=19991231,
         )
 
@@ -352,7 +352,7 @@ class EclRun:
 
     @property
     def logihead_array(self):
-        logihead = np.zeros(128, dtype=np.bool)
+        logihead = np.zeros(128, dtype=bool)
         logihead[6] = self.grid.dualporo
         return logihead
 
