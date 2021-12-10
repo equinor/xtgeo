@@ -1,5 +1,60 @@
 # Release notes
 
+## Version 2.16
+* Pending API changes:
+  * Warnings are now given produced for deprecated usage, except for the XYZ
+    module.
+  * See the pending API changes in version 2.15 for description of deprecated
+    useage of RegularSurface.
+  * Calling `from_file` on `Grid`, `GridProperty`, `GridProperties`, `Well`,
+    `Wells`, `BlockedWell`, `BlockedWells`, and `Cube` instances now produces
+    deprecation warnings. These are to be replaced with calling:
+    `grid_from_file`, `gridproperty_from_file`, `gridproperties_from_file`
+    `well_from_file`, `wells_from_files`, `blockedwell_from_file`,
+    `blockedwells_from_files` and `cube_from_file` respectively. Passing
+    filename to the constructor is similarly deprecated.
+
+    Ie. there are three ways of reading a file for these classes:
+
+    1) Creating an instance and then populating it by reading a file:
+
+      >> `grid = Grid()`
+      >> `grid.from_file('myfile.egrid')`
+
+    2) Providing a file (any supported file format can be given):
+
+      >> `grid = Grid('myfile.egrid')`
+
+    3) Using one of the wrapper functions:
+      >> `grid = xtgeo.grid_from_file('myfile.grid')`
+
+    Methods 1 and 2 now produce a warning that these will be removed in xtgeo
+    4.0.
+
+  * Initializing `Grid` with no parameters would produce a grid with dimensions
+    (4,3,5) and some values initialized. This usage has been deprecated in
+    favor of explicitly giving `actnum`, `coordsv` and `zcorn` values.
+
+  * The `Grid().create_box` function, akin to `grid_from_file`, has been deprecated
+    in favor of calling `xtgeo.create_box_grid`.
+
+  * The names setter of `GridProperties` has been deprecated as its behavior
+    was inconsistent.
+
+
+# New features
+* Grid can now be imported from FEGRID (text formatted EGRID) files. #602
+* Introduced unit parameter to Grid #602
+* Grid get_dx and get_dy introduced as replacement for get_dxdy. #624
+* Added explicit close function to plots. #632
+
+
+## Bugfixes
+* Fixed conversion of grid mapaxes when grid is already relative to map. #602
+* Fixed inconsistent gridproperty initialization #659
+* Fixed inconsistent behavoir with namestyle=1 for eclrun import #688
+* Fixed an issue with multiple LGR amalgamations when importing egrid files #728
+
 ## Version 2.15
 
 * Pending API changes:
