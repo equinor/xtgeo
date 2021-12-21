@@ -39,6 +39,11 @@ TESTSET6C = TPATH / "surfaces/etc/seabed_p_v2.pmd"
 FENCE1 = TPATH / "polygons/reek/1/fence.pol"
 
 
+def test_surface_from_file_missing(tmp_path):
+    with pytest.raises(ValueError, match="missing"):
+        xtgeo.surface_from_file(tmp_path / "nosuchfile", fformat="irap_binary")
+
+
 @pytest.mark.filterwarnings("ignore:Default values*")
 def test_values(default_surface):
     """Test behaviour of values attribute."""

@@ -1082,6 +1082,7 @@ class RegularSurface:
 
         """
         mfile = xtgeosys._XTGeoFile(mfile)
+        mfile.check_file(raiseerror=ValueError)
         if fformat is None or fformat == "guess":
             fformat = mfile.detect_fformat()
         else:
