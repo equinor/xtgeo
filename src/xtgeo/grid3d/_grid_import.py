@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Grid import functions for various formats."""
 
-import os
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _grid_import_ecl, _grid_import_roff
@@ -27,50 +25,14 @@ def from_file(gfile, fformat=None, **kwargs):  # pylint: disable=too-many-branch
 
     result["filesrc"] = gfile.name
 
-    if fformat is None:
-        fformat = "guess"
-
-    # note .grid is currently disabled; need to work at C backend
-    fflist = set(
-        [
-            "egrid",
-            "fegrid",
-            "grdecl",
-            "bgrdecl",
-            "roff",
-            "eclipserun",
-            "guess",
-            "hdf",
-            "xtgf",
-        ]
-    )
-    if fformat not in fflist:
-        raise ValueError(
-            "Invalid fformat: <{}>, options are {}".format(fformat, fflist)
-        )
-
-    # work on file extension
-    _, fext = gfile.splitext(lower=True)
-
-    if fformat == "guess":
-        logger.info("Format is <guess>")
-        if fext and fext in fflist:
-            fformat = fext
-        elif fext and fext not in fflist:
-            fformat = "roff"  # try to assume binary ROFF...
-
-    logger.info("File name to be used is %s", gfile.name)
-
-    test_gfile = gfile.name
-    if fformat == "eclipserun":
-        test_gfile = gfile.name + ".EGRID"
-
-    if os.path.isfile(test_gfile):
-        logger.info("File %s exists OK", test_gfile)
+    if fformat is None or fformat == "guess":
+        fformat = gfile.detect_fformat()
     else:
-        raise OSError("No such file: {}".format(test_gfile))
+        fformat = gfile.generic_format_by_proposal(fformat)  # default
 
-    if fformat == "roff":
+    gfile.check_file(raiseerror=IOError, raisetext=f"Cannot access file {gfile.name}")
+
+    if fformat in ["roff_binary", "roff_ascii"]:
         result.update(_grid_import_roff.import_roff(gfile, **kwargs))
     elif fformat in ["egrid", "fegrid"]:
         result.update(
@@ -80,13 +42,16 @@ def from_file(gfile, fformat=None, **kwargs):  # pylint: disable=too-many-branch
         result.update(_grid_import_ecl.import_ecl_grdecl(gfile, **kwargs))
     elif fformat == "bgrdecl":
         result.update(_grid_import_ecl.import_ecl_bgrdecl(gfile, **kwargs))
-    elif fformat == "xtgf":
+    elif fformat == "xtg":
         result.update(_grid_import_xtgcpgeom.import_xtgcpgeom(gfile, **kwargs))
     elif fformat == "hdf":
         result.update(_grid_import_xtgcpgeom.import_hdf5_cpgeom(gfile, **kwargs))
     else:
-        raise ValueError("Invalid file format")
+        raise ValueError(f"Invalid file format: {fformat}")
 
-    result["name"] = gfile.file.stem
+    if gfile.memstream:
+        result["name"] = "unknown"
+    else:
+        result["name"] = gfile.file.stem
 
     return result
