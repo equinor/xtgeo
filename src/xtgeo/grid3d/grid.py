@@ -11,7 +11,6 @@ from typing import Optional, Tuple, Union
 import deprecation
 import numpy as np
 import numpy.ma as ma
-
 import xtgeo
 from xtgeo.common import XTGDescription, _XTGeoFile
 
@@ -77,7 +76,7 @@ def _handle_import(grid_constructor, gfile, fformat=None, **kwargs):
 
 
 def grid_from_file(gfile, fformat=None, **kwargs):
-    """Read a grid (cornerpoint) from file and an returns a Grid() instance.
+    """Read a grid (cornerpoint) from filelike and an returns a Grid() instance.
 
     See :meth:`Grid.from_file` method for details on keywords.
 
@@ -768,7 +767,8 @@ class Grid(_Grid3D):
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb")
 
-        gfile.check_folder(raiseerror=OSError)
+        if not gfile.memstream:
+            gfile.check_folder(raiseerror=OSError)
 
         valid_formats = {
             "roff": ["roff", "roff_binary", "roff_bin", "roffbin"],

@@ -98,9 +98,12 @@ def handle_deprecated_xtgeo_roff_file(filelike):
                 inhandle.seek(goback)
 
     else:
-        yield filelike
         if close:
             inhandle.close()
+        else:
+            inhandle.seek(goback)
+
+        yield filelike
 
 
 def import_roff(gfile):

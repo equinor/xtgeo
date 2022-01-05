@@ -16,7 +16,6 @@ from typing import Optional
 
 import h5py
 import numpy as np
-
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from .xtgeo_dialog import XTGeoDialog
@@ -30,6 +29,7 @@ SUPPORTED_FORMATS = {
     "roff_binary": ["roff_binary", "roff", "roff_bin", "roff-bin", "roffbin", "roff.*"],
     "roff_ascii": ["roff_ascii", "roff_asc", "roff-asc", "roffasc", "asc"],
     "egrid": ["egrid"],
+    "fegrid": ["fegrid"],
     "init": ["init"],
     "finit": ["finit"],
     "unrst": ["unrst"],
