@@ -62,12 +62,11 @@ def _handle_import(grid_constructor, gfile, fformat=None, **kwargs):
     resulting arguments.
 
     """
-
-    gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+    gfile = xtgeo._XTGeoFile(gfile, mode="rb")
     if fformat == "eclipserun":
         ecl_grid = grid_constructor(
             **_grid_import.from_file(
-                xtgeo._XTGeoFile(gfile.name + ".EGRID", mode="wb"), fformat="egrid"
+                xtgeo._XTGeoFile(gfile.name + ".EGRID", mode="rb"), fformat="egrid"
             )
         )
         _grid_import_ecl.import_ecl_run(gfile.name, ecl_grid=ecl_grid, **kwargs)
