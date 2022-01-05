@@ -618,7 +618,11 @@ class _XTGeoFile(object):
         # ...
         # The signature here is one float in first line with values 1.0; one string
         # in second line; and 3 or 4 items in the next (sometimes RKB is missing)
-        xbuf = buf.decode().split("\n")
+        try:
+            xbuf = buf.decode().split("\n")
+        except UnicodeDecodeError:
+            return None
+
         if (
             len(xbuf) >= 3
             and xbuf[0] == "1.0"
