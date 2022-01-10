@@ -505,7 +505,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         zname: str = "Z_TVDSS",
         attributes: Optional[dict] = None,
         filesrc: str = None,
-    ):
+    ):  # pylint: disable=arguments-differ
         """Used in deprecated methods."""
         super()._reset(xname, yname, zname)
 
@@ -923,7 +923,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
             pfilter,
             realisation,
             attributes,
-            False,
         )
 
     def copy(self):
