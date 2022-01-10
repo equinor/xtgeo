@@ -1,26 +1,25 @@
 import pathlib
 
 import pytest
-from packaging import version
-
 import xtgeo
+from packaging import version
 from xtgeo import GridProperties, GridProperty
 from xtgeo import version as xtgeo_version
 
 
-@pytest.fixture
-def any_grid():
+@pytest.fixture(name="any_grid")
+def fixture_any_grid():
     grd = xtgeo.create_box_grid((5, 5, 5))
     return grd
 
 
-@pytest.fixture
-def any_gridprop(any_grid):
+@pytest.fixture(name="any_gridprop")
+def fixture_any_gridprop(any_grid):
     return any_grid.get_dz()
 
 
-@pytest.fixture
-def any_gridproperties(any_gridprop):
+@pytest.fixture(name="any_gridproperties")
+def fixture_any_gridproperties(any_gridprop):
     return GridProperties(props=[any_gridprop])
 
 
