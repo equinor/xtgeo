@@ -326,7 +326,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         dtname: str = "T_DELTALEN",
         name: str = "poly",
         attributes: Optional[dict] = None,
-    ):
+    ):  # pylint: disable=arguments-differ
         """Used in deprecated methods."""
 
         super()._reset(xname, yname, zname)
