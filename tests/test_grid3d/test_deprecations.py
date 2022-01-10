@@ -35,34 +35,34 @@ def test_gridproperties_init_deprecations(any_gridprop):
         GridProperties(nlay=10, props=[any_gridprop])
 
 
-def test_grid_from_file_warns(any_grid):
+def test_grid_from_file_warns(tmp_path, any_grid):
     if version.parse(xtgeo_version) < version.parse("2.16"):
         pytest.skip()
 
-    any_grid.to_file("grid.roff", fformat="roff")
+    any_grid.to_file(tmp_path / "grid.roff", fformat="roff")
 
     with pytest.warns(DeprecationWarning, match="from_file is deprecated"):
-        any_grid.from_file("grid.roff", fformat="roff")
+        any_grid.from_file(tmp_path / "grid.roff", fformat="roff")
 
 
-def test_grid_from_hdf_warns(any_grid):
+def test_grid_from_hdf_warns(tmp_path, any_grid):
     if version.parse(xtgeo_version) < version.parse("2.16"):
         pytest.skip()
 
-    any_grid.to_hdf("grid.hdf")
+    any_grid.to_hdf(tmp_path / "grid.hdf")
 
     with pytest.warns(DeprecationWarning, match="from_hdf is deprecated"):
-        any_grid.from_hdf("grid.hdf")
+        any_grid.from_hdf(tmp_path / "grid.hdf")
 
 
-def test_grid_from_xtgf_warns(any_grid):
+def test_grid_from_xtgf_warns(tmp_path, any_grid):
     if version.parse(xtgeo_version) < version.parse("2.16"):
         pytest.skip()
 
-    any_grid.to_xtgf("grid.xtg")
+    any_grid.to_xtgf(tmp_path / "grid.xtg")
 
     with pytest.warns(DeprecationWarning, match="from_xtgf is deprecated"):
-        any_grid.from_xtgf("grid.xtg")
+        any_grid.from_xtgf(tmp_path / "grid.xtg")
 
 
 def test_grid_numpify_warns(any_grid):
