@@ -816,7 +816,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     )
     def from_list(self, plist):
 
-        self._reset(**_xyz_io._from_list_like(plist, "Z_TVDSS", None, False))
+        self._reset(_xyz_io._from_list_like(plist, "Z_TVDSS", None, False))
 
     @deprecation.deprecated(
         deprecated_in="2.16",
