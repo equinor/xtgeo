@@ -41,6 +41,15 @@ def test_points_from_file_alternatives(testpath, filename, fformat):
     pd.testing.assert_frame_equal(points3.dataframe, points4.dataframe)
 
 
+def test_points_from_list_deprecated():
+    plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
+
+    mypoints = Points(plist)
+    old_points = Points()
+    old_points.from_list(plist)
+    assert mypoints.dataframe.equals(old_points.dataframe)
+
+
 def test_points_from_list_of_tuples():
     plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
 
