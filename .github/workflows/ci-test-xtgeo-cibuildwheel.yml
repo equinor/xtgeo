@@ -2,7 +2,7 @@ name: cibuildwheel
 
 on:
   pull_request:
-      branches: [master, "*postfix"]
+    branches: [master, "*postfix"]
   release:
     types: [created]
 
@@ -11,20 +11,22 @@ jobs:
     name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os.runs_on }}
     runs-on: ${{ matrix.os.runs_on }}
     strategy:
-     matrix:
+      matrix:
         cibw_python: [cp36, cp37, cp38, cp39]
         os:
-           - runs_on: ubuntu-latest
-             cibw_image: manylinux_x86_64
-           - runs_on: windows-latest
-             cibw_image: win_amd64
-           - runs_on: macos-latest
-             cibw_image: macosx_x86_64
+          - runs_on: ubuntu-latest
+            cibw_image: manylinux_x86_64
+          - runs_on: windows-latest
+            cibw_image: win_amd64
+          - runs_on: macos-latest
+            cibw_image: macosx_x86_64
 
     env:
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+      # pillow < 8.4 required for CIBW build
       CIBW_BEFORE_TEST: >
         pushd {project} &&
+        pip install "pillow<8.4.0"
         pip install -r requirements/requirements_test.txt &&
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
       # Ignore forking tests as they do not work well with CIBW
