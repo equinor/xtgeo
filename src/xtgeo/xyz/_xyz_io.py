@@ -330,7 +330,9 @@ def _convert_idbased_xyz(self, df):
 
     idgroups = df.groupby(self._pname)
 
-    newdf = pd.DataFrame(columns=[self._xname, self._yname, self._zname])
+    newdf = pd.DataFrame(
+        columns=[self._xname, self._yname, self._zname], dtype="float64"
+    )
     udef = pd.DataFrame(
         [[999.0, 999.0, 999.0]], columns=[self._xname, self._yname, self._zname]
     )
