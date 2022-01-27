@@ -7,9 +7,8 @@ from typing import Dict, List, Optional, Union
 
 import ecl_data_io as eclio
 import numpy as np
-from typing_extensions import Literal
-
 import xtgeo
+from typing_extensions import Literal
 
 from ._ecl_inte_head import InteHead
 from ._ecl_logi_head import LogiHead
