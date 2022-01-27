@@ -340,9 +340,11 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         self._name = name
 
         if not isinstance(values, pd.DataFrame):
-            self._df = _xyz_io._from_list_like(values, self._zname, attributes, True)
+            self.dataframe = _xyz_io._from_list_like(
+                values, self._zname, attributes, True
+            )
         else:
-            self._df = values
+            self.dataframe = values
 
     @property
     def name(self):
@@ -425,6 +427,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @dataframe.setter
     def dataframe(self, df):
+        super()._validate_df([self.xname, self.yname, self.zname, self.pname], df)
         self._df = df.apply(deepcopy)
         self._name_to_none_if_missing()
 

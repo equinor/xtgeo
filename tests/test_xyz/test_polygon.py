@@ -536,3 +536,32 @@ def test_shortform_polygons_overlap(functionname, expected):
         getattr(poi, functionname)(pol, 2.0)
 
     assert list(poi.dataframe[poi.zname].values) == expected
+
+
+def test_polygon_from_pd_fails():
+    with pytest.raises(
+        ValueError, match=r"Expected \['some_other_x_name'\] in dataframe header"
+    ):
+        xtgeo.xyz.Polygons(
+            values=pd.DataFrame(
+                {
+                    "some_other_x_name": [1, 2, 3],
+                    "Y_UTMN": [4, 5, 6],
+                    "Z_TVDSS": [7, 8, 9],
+                    "POLY_ID": [0, 0, 0],
+                }
+            )
+        )
+
+
+def test_polygon_from_pd():
+    df = pd.DataFrame(
+        {
+            "some_other_x_name": [1, 2, 3],
+            "Y_UTMN": [4, 5, 6],
+            "Z_TVDSS": [7, 8, 9],
+            "POLY_ID": [0, 0, 0],
+        }
+    )
+    poly = xtgeo.xyz.Polygons(values=df, xname="some_other_x_name")
+    assert poly.dataframe.equals(df)

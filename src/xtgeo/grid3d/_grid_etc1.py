@@ -868,8 +868,8 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
     # get dataframe where each polygon is ended by a 999 value
     dfxyz = poly.get_xyz_dataframe()
 
-    xc = dfxyz["X_UTME"].values.copy()
-    yc = dfxyz["Y_UTMN"].values.copy()
+    xc = dfxyz[poly.xname].values.copy()
+    yc = dfxyz[poly.yname].values.copy()
 
     ier = _cxtgeo.grd3d_inact_outside_pol(
         xc,

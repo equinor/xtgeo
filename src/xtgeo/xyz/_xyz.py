@@ -110,6 +110,17 @@ class XYZ(ABC):
                 f"one of: f{self.dataframe.columns}"
             )
 
+    @classmethod
+    def _validate_df(cls, required_properties, df):
+        missing_properties = []
+        for prop in required_properties:
+            if prop not in df:
+                missing_properties.append(prop)
+        if missing_properties:
+            raise ValueError(
+                f"Expected {missing_properties} in dataframe header: {df.keys()}"
+            )
+
     @abstractmethod
     def copy(self):
         """Returns a deep copy of an instance"""
