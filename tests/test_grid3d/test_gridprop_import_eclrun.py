@@ -193,6 +193,12 @@ def test_read_values():
             Phases.OIL_WATER_GAS,
             0.25,
         ),
+        (
+            iter([MockEntry("SWAT", 0.5), MockEntry("SGAS", 0.25)]),
+            "SOIL",
+            Phases.E300_GENERIC,
+            0.25,
+        ),
     ],
 )
 def test_read_values_phases(generator, keyword, phases, expected):

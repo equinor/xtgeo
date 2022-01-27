@@ -65,6 +65,7 @@ DEFAULT_SATURATIONS = {
         "SOIL": 0.0,
     },
     Phases.OIL_WATER_GAS: dict(),
+    Phases.E300_GENERIC: dict(),
 }
 
 
