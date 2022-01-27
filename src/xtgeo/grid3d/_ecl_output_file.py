@@ -59,6 +59,7 @@ class UnitSystem(Enum):
 
 @unique
 class Phases(Enum):
+    E300_GENERIC = 0
     OIL = 1
     WATER = 2
     OIL_WATER = 3

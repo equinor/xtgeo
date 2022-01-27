@@ -696,3 +696,50 @@ def test_gridprop_export_bgrdecl_double(tmp_path, grid):
 
     with open(tmp_path / "actnum.DATA", "rb") as fh:
         assert b"DOUB" in fh.read()
+
+
+@pytest.mark.parametrize(
+    "simcase, props",
+    [
+        (
+            pytest.param(
+                "E100_BO",
+                ["SOIL", "PRESSURE"],
+                id="E100 blackoil",
+            )
+        ),
+        (
+            pytest.param(
+                "E300_BO",
+                ["SOIL", "PRESSURE"],
+                id="E300 blackoil",
+            )
+        ),
+        (
+            pytest.param(
+                "E300_COMP",
+                ["SOIL", "PRESSURE"],
+                id="E300 composite",
+            )
+        ),
+    ],
+)
+def test_simpleb8_case(simcase, props, snapshot):
+    """Test a very small case that is actually ran through E100, E300, IX."""
+
+    folder = TPATH / "3dgrids" / "simpleb8"
+
+    grd = xtgeo.grid_from_file(folder / str(simcase + ".EGRID"), fformat="egrid")
+
+    assert grd.dimensions == (4, 2, 3)
+
+    for prop in props:
+        gprop = xtgeo.gridproperty_from_file(
+            folder / str(simcase + ".UNRST"),
+            name=prop,
+            fformat="unrst",
+            date="20220101",
+            grid=grd,
+        )
+
+        snapshot.assert_match(str(gprop.values.round(10)), f"{prop}_{simcase}")
