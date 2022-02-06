@@ -5,11 +5,10 @@ from unittest.mock import mock_open, patch
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
-
 import xtgeo
 import xtgeo.grid3d._ecl_grid as ecl_grid
 import xtgeo.grid3d._grdecl_grid as ggrid
+from hypothesis import HealthCheck, assume, given, settings
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d._grdecl_format import open_grdecl
 from xtgeo.grid3d._grid_import_ecl import grid_from_ecl_grid
