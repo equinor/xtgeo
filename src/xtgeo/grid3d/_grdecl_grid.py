@@ -330,12 +330,16 @@ class GrdeclGrid(EclGrid):
             for kw, values in keywords:
                 if values is None:
                     continue
-                filestream.write(kw)
-                if values is not None:
-                    filestream.write("\n")
-                    for value in values:
-                        filestream.write(" ")
-                        filestream.write(str(value))
+                filestream.write(f"{kw}\n")
+                numcolumns = 0
+                for value in values:
+                    numcolumns += 1
+                    filestream.write(f" {value}")
+
+                    if numcolumns >= 6:  # 6 should ensure < 128 character width total
+                        filestream.write("\n")
+                        numcolumns = 0
+
                 filestream.write("\n /\n")
 
     def _to_bgrdecl_file(self, filename, fileformat=Format.UNFORMATTED):

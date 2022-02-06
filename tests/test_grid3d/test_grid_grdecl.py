@@ -1,4 +1,5 @@
 import logging
+import math
 from unittest.mock import mock_open, patch
 
 import hypothesis.strategies as st
@@ -319,3 +320,33 @@ def test_duplicate_insignificant_values_property(grid):
     assert np.all(xtgeo_zcorn[0, ny, :, :] == xtgeo_zcorn[0, ny, :, 1, np.newaxis])
     assert np.all(xtgeo_zcorn[nx, 0, :, :] == xtgeo_zcorn[nx, 0, :, 2, np.newaxis])
     assert np.all(xtgeo_zcorn[0, 0, :, :] == xtgeo_zcorn[0, 0, :, 3, np.newaxis])
+
+
+def test_grdecl_ascii_layout(tmp_path):
+    """Test that grdecl files produce proper formatted layout.
+
+    No line wider than 128 chars (Eclipse limit)
+    """
+
+    # use math.pi by purpose to generate 'noisy' numbers for the test
+    grd = xtgeo.create_box_grid(
+        (3, 5, 2),
+        origin=(672221.0 + math.pi, 234422.2 + math.pi, 2500.0 + math.pi),
+        increment=(10 * math.pi, 11 * math.pi, math.pi),
+        rotation=33.2 + math.pi,
+    )
+    grd.to_file(tmp_path / "some.grdecl", fformat="grdecl")
+
+    with open(tmp_path / "some.grdecl", "r", encoding="utf8") as stream:
+        for line in stream.readlines():
+            assert len(line) < 128  # eclipse will not read beyond char 128
+
+    newgrd = xtgeo.grid_from_file(tmp_path / "some.grdecl")
+
+    np.testing.assert_array_almost_equal(newgrd._zcornsv, grd._zcornsv, decimal=7)
+    np.testing.assert_array_almost_equal(newgrd._coordsv, grd._coordsv, decimal=1)
+
+    gm1 = grd.get_geometrics(return_dict=True)
+    gm2 = newgrd.get_geometrics(return_dict=True)
+    assert gm2["avg_dx"] == pytest.approx(gm1["avg_dx"], rel=0.01)
+    assert gm2["avg_dz"] == pytest.approx(gm1["avg_dz"], rel=0.01)
