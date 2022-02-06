@@ -91,3 +91,14 @@ def test_read_write_bad_name(tmp_path, fformat, grid_property, keyword):
         xtgeo.gridproperty_from_file(
             filename, fformat=fformat, name=keyword, grid=grid_property.geometry
         )
+
+
+@pytest.mark.parametrize("fmt", ["%12.10f", "%15.12f", "%.10f", "%e"])
+def test_grdecl_ascii_layout(fmt, tmp_path):
+    """Test that property output to grdecl file is limited to < 128 width."""
+    grd = xtgeo.create_box_grid((4, 5, 7))
+    poro = xtgeo.GridProperty(grd, name="PORO", values=0.12345618282884882828)
+    poro.to_file(tmp_path / "some_poro.grdecl", fformat="grdecl", fmt=fmt)
+    with open(tmp_path / "some_poro.grdecl", "r", encoding="utf8") as stream:
+        for line in stream.readlines():
+            assert len(line) < 128
