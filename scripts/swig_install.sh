@@ -9,14 +9,22 @@ rm -fr _tmp_swig
 mkdir -p _tmp_swig
 
 INST=$(pwd)
-SWIGURL="https://ftp.osuosl.org/pub/blfs/conglomeration/swig"
+
 SWIG="swig-3.0.12"
+SWIG_ALT1="https://ftp.osuosl.org/pub/blfs/conglomeration/swig/${SWIG}.tar.gz"
+SWIG_ALT2="/project/res/etc/swig_install/${SWIG}.tar.gz"  # fallback in Equinor
+
+PCRE_ALT1="https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.gz"
+PCRE_ALT2="/project/res/etc/swig_install/pcre-8.45.tar.gz"  # fallback in Equinor
 
 pushd _tmp_swiginstall
-curl -O ${SWIGURL}/${SWIG}.tar.gz
+curl -O ${SWIG_ALT1} || cp -v ${SWIG_ALT2} .
+
 tar xf ${SWIG}.tar.gz
 pushd ${SWIG}
-curl -L https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.gz > pcre-8.45.tar.gz
+
+curl -L ${PCRE_ALT1} > pcre-8.45.tar.gz || cp -v ${PCRE_ALT2} .
+
 sh Tools/pcre-build.sh
 echo "Running configure..."
 ./configure --prefix="$INST/_tmp_swig"  > swiginstall.log
