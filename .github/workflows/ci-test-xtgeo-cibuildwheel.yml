@@ -27,7 +27,7 @@ jobs:
       CIBW_BEFORE_TEST: >
         pushd {project} &&
         pip install 'pillow<8.4.0; python_version=="3.6"'
-        pip install 'pillow>9.0.0; python_version>="3.6"'
+        pip install 'pillow>9.0.0; python_version>"3.6"'
         pip install -r requirements/requirements_test.txt &&
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
       # Ignore forking tests as they do not work well with CIBW
