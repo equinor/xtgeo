@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os.runs_on }}
     strategy:
       matrix:
-        cibw_python: [cp36, cp37, cp38, cp39]
+        cibw_python: [cp36, cp37, cp38, cp39, cp310]
         os:
           - runs_on: ubuntu-latest
             cibw_image: manylinux_x86_64
