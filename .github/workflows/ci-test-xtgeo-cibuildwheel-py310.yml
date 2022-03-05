@@ -1,0 +1,53 @@
+name: cibuildwheel py310
+
+on:
+  pull_request:
+    branches: [master, "*postfix"]
+  release:
+    types: [created]
+
+jobs:
+  build_and_upload_with_cibw:
+    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os.runs_on }}
+    runs-on: ${{ matrix.os.runs_on }}
+    strategy:
+      matrix:
+        cibw_python: [cp310]
+        os:
+          - runs_on: ubuntu-latest
+            cibw_image: manylinux_x86_64
+          # - runs_on: windows-latest
+          #   cibw_image: win_amd64
+          # - runs_on: macos-latest
+          #   cibw_image: macosx_x86_64
+
+    env:
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+      # pillow < 8.4 required for CIBW build
+      CIBW_TEST_COMMAND: >
+        echo "Skip test for python 10 due to technical problems with requirements on this platform
+        # python -m xtgeo "print(xtgeo.__version__)"
+      CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os.cibw_image }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v2
+
+      - name: Install cibuildwheel
+        run: >
+          python -m pip install pip -U &&
+          python -m pip install wheel &&
+          python -m pip install cibuildwheel
+      - name: Run cibuildwheel
+        run: python -m cibuildwheel --output-dir wheelhouse
+      - name: Publish
+        if: ${{ github.event_name == 'release' }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
+        run: >
+          pip install twine &&
+          twine upload wheelhouse/*
