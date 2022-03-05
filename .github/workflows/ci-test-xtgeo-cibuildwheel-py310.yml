@@ -24,9 +24,7 @@ jobs:
     env:
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
       # pillow < 8.4 required for CIBW build
-      CIBW_TEST_COMMAND: >
-        echo "Skip test for python 10 due to technical problems with requirements on this platform
-        # python -m xtgeo "print(xtgeo.__version__)"
+      CIBW_TEST_SKIP: "*-*"
       CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os.cibw_image }}
 
     steps:
