@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os.runs_on }}
     strategy:
       matrix:
-        cibw_python: [cp36, cp37, cp38, cp39]
+        cibw_python: [cp36, cp37, cp38, cp39, cp310]
         os:
           - runs_on: ubuntu-latest
             cibw_image: manylinux_x86_64
@@ -36,6 +36,10 @@ jobs:
         pytest  --disable-warnings -x -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"
       CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os.cibw_image }}
 
+      # Need to skip testing for 3.10 due to technical trouble with one or more
+      # requirements in this machine setup. But all tests w/ req. works in general
+      # testing; cf. test.yml
+      CIBW_TEST_SKIP: "cp310*"
     steps:
       - uses: actions/checkout@v2
         with:
