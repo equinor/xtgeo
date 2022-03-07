@@ -39,7 +39,7 @@ jobs:
       # Need to skip testing for 3.10 due to technical trouble with one or more
       # requirements in this machine setup. But all tests w/ req. works in general
       # testing; cf. test.yml
-      CIBW_TEST_SKIP: "cp310*linux* cp310*macosx*"
+      CIBW_TEST_SKIP: "cp310*linux*"
     steps:
       - uses: actions/checkout@v2
         with:
