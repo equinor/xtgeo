@@ -4,10 +4,15 @@ from os.path import join
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+import segyio
 import xtgeo
 from hypothesis import HealthCheck, given, settings
 from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
+from xtgeo.cube._cube_import import (
+    _import_segy_all_traces,
+    _import_segy_incomplete_traces,
+)
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -20,6 +25,8 @@ TPATH = xtg.testpathobj
 SFILE1 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
 SFILE3 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.storm")
 SFILE4 = join(TPATH, "cubes/etc/ib_test_cube2.segy")
+SFILE5 = join(TPATH, "cubes/etc/ex2_complete_3d_75x71x26.segy")
+SFILE6 = join(TPATH, "cubes/etc/ex1_missing_traces_75x71x26.segy")
 
 # pylint: disable=redefined-outer-name
 
@@ -153,6 +160,49 @@ def test_segyio_import(loadsfile1):
 
     assert dim == (408, 280, 70), "Dimensions 3D"
     assert xcu.values.max() == pytest.approx(7.42017, 0.001)
+
+
+def test_internal_segy_import_full_vs_partial():
+    """Test variants of private internal import of segy for compatibility.
+
+    Most prominent, a full SEGY cube should be possible to parse using the same routine
+    as used for cubes with missing traces.
+    """
+    segyfile = xtgeo._XTGeoFile(SFILE5)
+
+    with segyio.open(SFILE5, "r") as segyfile:
+        attrs1 = _import_segy_all_traces(segyfile)
+
+    with segyio.open(SFILE5, "r") as segyfile:
+        attrs2 = _import_segy_incomplete_traces(segyfile)
+
+    for key, val in attrs1.items():
+        if isinstance(val, np.ndarray):
+            np.testing.assert_array_equal(val, attrs2[key])
+        else:
+            assert val == attrs2[key]
+
+
+def test_segyio_import_ex2():
+    """Import small SEGY (ex2 case) via segyio library."""
+
+    cube = xtgeo.cube_from_file(SFILE5)
+    assert cube.ncol == 75
+    assert list(cube.ilines)[0:4] == [10750, 10752, 10754, 10756]
+    assert cube.rotation == pytest.approx(90.0)
+    assert cube.xinc == pytest.approx(12.5, abs=0.01)
+    assert cube.yinc == pytest.approx(12.5, abs=0.01)
+
+
+def test_segyio_import_ex1():
+    """Import small SEGY (ex1 case with missing traces!) via segyio library."""
+
+    cube = xtgeo.cube_from_file(SFILE6)
+    assert cube.ncol == 75
+    assert list(cube.ilines)[0:4] == [11352, 11354, 11356, 11358]
+    assert cube.rotation == pytest.approx(90.0)
+    assert cube.xinc == pytest.approx(12.5, abs=0.01)
+    assert cube.yinc == pytest.approx(12.5, abs=0.01)
 
 
 @pytest.mark.parametrize("pristine", [True, False])
