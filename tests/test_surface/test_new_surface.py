@@ -88,7 +88,7 @@ def test_wrong_size_input_lists(data):
 @given(data=st.one_of(st.floats(allow_nan=False), st.integers()))
 def test_input_numbers(data):
     surf = RegularSurface(10, 10, 0.0, 0.0, values=data)
-    assert set(surf.values.data.flatten().tolist()) == pytest.approx({data})
+    assert list(set(surf.values.data.flatten().tolist())) == pytest.approx([data])
 
 
 def test_read_grid3d():
