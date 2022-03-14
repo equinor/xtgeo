@@ -167,7 +167,9 @@ def test_read_cube(data):
     }
     cube = Cube(**cube_input)
     surf_from_cube = RegularSurface._read_cube(cube, data)
-    assert set(surf_from_cube.values.data.flatten().tolist()) == pytest.approx({data})
+    assert list(set(surf_from_cube.values.data.flatten().tolist())) == pytest.approx(
+        [data]
+    )
 
     cube_input.pop("zinc")
     cube_input.pop("nlay")
