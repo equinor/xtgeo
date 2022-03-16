@@ -1,11 +1,10 @@
 """Some common XTGEO calculation routines."""
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-
-from xtgeo.common import XTGeoDialog
 from xtgeo import XTGeoCLibError
+from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
@@ -52,6 +51,57 @@ def ijk_to_ib(i, j, k, nx, ny, nz, ibbase=0, forder=True):
         )
 
     return ib
+
+
+def xyori_from_ij(
+    iind: int,
+    jind: int,
+    xcor: float,
+    ycor: float,
+    xinc: float,
+    yinc: float,
+    ncol: int,
+    nrow: int,
+    yflip: int,
+    rotation: float,
+) -> Tuple[float, float]:
+    """Get xori and yori given X Y, geometrics and indices for regular maps/cubes.
+
+    Args:
+        iind: I index (zero based)
+        jind: J index (zero based)
+        xcor: X coordinate
+        ycor: Y coordinate
+        xinc: X increment (in non-rotated space)
+        yinc: Y increment (in non-rotated space)
+        ncol: Number of columns
+        nrow: Number of rows
+        yflip: YFLIP (handedness) indicator, 1 og -1
+        rotation: Rotation in degrees, anticlock from X axis
+
+    """
+
+    if iind >= ncol or iind < 0 or jind >= nrow or jind < 0:
+        raise ValueError("Indices out of range, exceeding ncol or nrow")
+
+    # the C library and indices with base 1; hence ned to add 1
+    ier, xori, yori = _cxtgeo.surf_xyori_from_ij(
+        iind + 1,
+        jind + 1,
+        xcor,
+        ycor,
+        xinc,
+        yinc,
+        ncol,
+        nrow,
+        yflip,
+        rotation,
+        0,
+    )
+    if ier != 0:
+        raise RuntimeError(f"Error code {ier} from _cxtgeo.surf_xyori_from_ij")
+
+    return xori, yori
 
 
 def vectorinfo2(x1, x2, y1, y2, option=1):

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import math
-import pytest
-import numpy as np
 
+import numpy as np
+import pytest
 import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -43,6 +43,59 @@ def test_diffangle():
     assert xcalc.diffangle(10, 350) == 20.0
     assert xcalc.diffangle(360, 340) == 20.0
     assert xcalc.diffangle(360, 170) == -170.0
+
+
+@pytest.mark.parametrize(
+    "iin, jin, xcor, ycor, xinc, yinc, ncol, nrow, yflip, rota, exp_xori, exp_yori, ok",
+    [
+        (0, 0, 0.0, 0.0, 50.0, 50.0, 2, 2, 1, 0.0, 0.0, 0.0, True),
+        (0, 0, 0.0, 0.0, 50.0, 50.0, 2, 2, 1, 90.0, 0.0, 0.0, True),
+        (0, 0, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 0.0, 100.0, 300.0, True),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 0.0, 50.0, 250.0, True),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 360.0, 50.0, 250.0, True),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 90.0, 150.0, 250.0, True),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 180.0, 150.0, 350.0, True),
+        (2, 2, 100.0, 300.0, 50.0, 50.0, 3, 3, 1, 0.0, 0.0, 200.0, True),
+        (2, 2, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 0.0, 0.0, 100.0, True),
+        (2, 2, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 360.0, 0.0, 100.0, True),
+        (2, 2, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 720.0, 0.0, 100.0, True),
+        (0, 2, 0.0, 0.0, 50.0, 50.0, 3, 3, 1, 45.0, 70.7107, -70.7107, True),
+        (0, 2, 0.0, 0.0, 50.0, 50.0, 3, 3, 1, 225.0, -70.7107, 70.7107, True),
+        (2, 2, 0.0, 0.0, 100.0, 50.0, 3, 3, 1, 30.0, -123.2051, -186.6025, True),
+        (2, 0, 0.0, 0.0, 50.0, 50.0, 3, 3, 1, 45.0, -70.7107, -70.7107, True),
+        (3, 3, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 0.0, 0.0, 100.0, False),
+    ],
+)
+def test_xyori_from_ij(
+    iin,
+    jin,
+    xcor,
+    ycor,
+    xinc,
+    yinc,
+    ncol,
+    nrow,
+    yflip,
+    rota,
+    exp_xori,
+    exp_yori,
+    ok,
+):
+    """Testing correct origin given a XY point with indices and geometrics."""
+
+    if not ok:  # expect an exception
+        with pytest.raises(ValueError):
+            xori, yori = xcalc.xyori_from_ij(
+                iin, jin, xcor, ycor, xinc, yinc, ncol, nrow, yflip, rota
+            )
+        return
+
+    xori, yori = xcalc.xyori_from_ij(
+        iin, jin, xcor, ycor, xinc, yinc, ncol, nrow, yflip, rota
+    )
+
+    assert xori == pytest.approx(exp_xori, rel=0.001)
+    assert yori == pytest.approx(exp_yori, rel=0.001)
 
 
 def test_ijk_to_ib():
