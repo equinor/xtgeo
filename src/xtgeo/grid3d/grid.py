@@ -1196,6 +1196,26 @@ class Grid(_Grid3D):
     def dataframe(self, *args, **kwargs):
         return self.get_dataframe(*args, **kwargs)
 
+    def get_vtk_geometries(self):
+        """Get necessary arrays on correct layout for VTK ExplicitStructuredGrid usage.
+
+        Example::
+
+            import pyvista as pv
+            dim, crn, inactind = grd.get_vtk_geometries()
+            grid = pv.ExplicitStructuredGrid(dim, crn)
+            grid.flip_z(inplace=True)
+            grid.hide_cells(inactind, inplace=True)
+            grid.plot(show_edges=True)
+
+        Returns:
+            dims, corners, inactive_indices
+
+        .. versionadded:: 2.18
+        """
+
+        return _grid_etc1.get_vtk_geometries(self)
+
     def append_prop(self, prop):
         """Append a single property to the grid."""
         if prop.dimensions != self.dimensions:
@@ -1378,15 +1398,23 @@ class Grid(_Grid3D):
         """Make a XTGeo GridProperty instance for a Zone property subgrid index."""
         raise NotImplementedError("Not yet; todo")
 
-    def get_actnum_indices(self, order="C"):
+    def get_actnum_indices(self, order="C", inverse=False):
         """Returns the 1D ndarray which holds the indices for active cells.
 
         Args:
             order (str): "Either 'C' (default) or 'F' order).
+            inverse (bool): Default is False, returns indices for inactive cells
+                if True.
+
+        .. versionchanged:: 2.18 Added inverse option
         """
         actnumv = self.get_actnum().values.copy(order=order)
         actnumv = np.ravel(actnumv, order="K")
-        return np.flatnonzero(actnumv)
+        if inverse:
+            actnumv -= 1
+            return np.flatnonzero(actnumv)
+        else:
+            return np.flatnonzero(actnumv)
 
     def get_dualactnum_indices(self, order="C", fracture=False):
         """Returns the 1D ndarray which holds the indices for matrix/fracture cases.

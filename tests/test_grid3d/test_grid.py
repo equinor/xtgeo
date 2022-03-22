@@ -1,13 +1,13 @@
 """Tests for 3D grid."""
 import math
+import warnings
 from collections import OrderedDict
 from os.path import join
 
 import numpy as np
 import pytest
-from hypothesis import given
-
 import xtgeo
+from hypothesis import given
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid
 
@@ -35,6 +35,9 @@ GRIDQC2 = TPATH / "3dgrids/etc/gridqc_negthick_twisted.roff"
 
 DUALFIL1 = TPATH / "3dgrids/etc/dual_grid.roff"
 DUALFIL3 = TPATH / "3dgrids/etc/TEST_DPDK.EGRID"
+
+EME1 = TPATH / "3dgrids/eme/2/eme_small_w_hole_grid_params.roff"
+EME1PROP = TPATH / "3dgrids/eme/2/eme_small_w_hole_grid_params.roff"
 
 # =============================================================================
 # Do tests
@@ -741,3 +744,57 @@ def test_grid_bad_dimensions_construction(
             np.zeros(zcornsv_dimensions, dtype=np.float32),
             np.zeros(actnumsv_dimensions, dtype=np.int32),
         )
+
+
+def test_get_vtk_geometries_box(show_plot):
+    grd = xtgeo.create_box_grid((2, 6, 4), increment=(20, 10, 7))
+    grd._actnumsv[0, 0, 0] = 0
+    grd._actnumsv[1, 0, 0] = 0
+    grd._actnumsv[1, 2, 0] = 0
+    grd._actnumsv[0, 0, 1] = 0
+
+    dims, corners, indi = grd.get_vtk_geometries()
+
+    assert list(dims) == [3, 7, 5]
+    assert list(indi) == [0, 1, 5, 12]
+    assert list(corners.flatten()[0:5]) == [0.0, 0.0, 0.0, 20.0, 0.0]
+
+    if show_plot:
+        try:
+            import pyvista as pv
+        except ImportError:
+            warnings.warn("show_plot is active but no pyvista installed")
+            return
+        grid = pv.ExplicitStructuredGrid(dims, corners)
+        grid = grid.compute_connectivity()
+        grid.flip_z(inplace=True)
+
+        grid = grid.hide_cells(indi)
+        grid.plot(show_edges=True)
+
+
+def test_get_vtk_geometries_emerald(show_plot):
+    grd = xtgeo.grid_from_file(EME1)
+
+    dims, corners, indi = grd.get_vtk_geometries()
+    assert corners.mean() == pytest.approx(2132426.94, abs=0.01)
+
+    poro = xtgeo.gridproperty_from_file(EME1PROP, name="PORO")
+    porov = poro.get_npvalues1d(order="F")
+
+    if show_plot:
+        try:
+            import pyvista as pv
+        except ImportError:
+            warnings.warn("show_plot is active but no pyvista installed")
+            return
+        grid = pv.ExplicitStructuredGrid(dims, corners)
+        grid.flip_z(inplace=True)
+        grid = grid.hide_cells(indi)
+        grid.cell_data["PORO"] = porov
+        pv.global_theme.show_edges = True
+        plt = pv.Plotter()
+        plt.add_mesh(grid, clim=[0, 0.4])
+        plt.set_scale(1, 1, 5)
+        plt.show_axes()
+        plt.show()
