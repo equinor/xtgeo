@@ -3,6 +3,7 @@
 from collections import OrderedDict
 from copy import deepcopy
 from math import atan2, degrees
+from typing import Tuple
 
 import numpy as np
 import numpy.ma as ma
@@ -573,6 +574,31 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
     # return the 24 objects (x1, y1, z1, ... x8, y8, z8)
     return tuple(grid_props)
+
+
+def get_vtk_geometries(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return actnum, corners and dims arrays for VTK ExplicitStructuredGrid usage."""
+    self._xtgformat2()
+
+    narr = 8 * self.ncol * self.nrow * self.nlay
+    xarr, yarr, zarr = _cxtgeo.grdcp3d_get_vtk_grid_arrays(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        narr,
+        narr,
+        narr,
+    )
+    corners = np.stack((xarr, yarr, zarr))
+    corners = corners.transpose()
+
+    dims = np.asarray((self.ncol, self.nrow, self.nlay)) + 1
+
+    actindices = self.get_actnum_indices(order="F", inverse=True)
+
+    return dims, corners, actindices
 
 
 def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2):

@@ -1064,21 +1064,67 @@ cube_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,
  *======================================================================================
  */
 
+typedef double (*metric)(const double,
+                         const double,
+                         const double,
+                         const double,
+                         const double,
+                         const double);
+double
+euclid_length(const double x1,
+              const double y1,
+              const double z1,
+              const double x2,
+              const double y2,
+              const double z2);
 
-typedef double (*metric)(const double, const double, const double, const double, const double, const double);
-double euclid_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+double
+horizontal_length(const double x1,
+                  const double y1,
+                  const double z1,
+                  const double x2,
+                  const double y2,
+                  const double z2);
 
-double horizontal_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+double
+east_west_vertical_length(const double x1,
+                          const double y1,
+                          const double z1,
+                          const double x2,
+                          const double y2,
+                          const double z2);
 
-double east_west_vertical_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+double
+north_south_vertical_length(const double x1,
+                            const double y1,
+                            const double z1,
+                            const double x2,
+                            const double y2,
+                            const double z2);
 
-double north_south_vertical_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+double
+x_projection(const double x1,
+             const double y1,
+             const double z1,
+             const double x2,
+             const double y2,
+             const double z2);
 
-double x_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+double
+y_projection(const double x1,
+             const double y1,
+             const double z1,
+             const double x2,
+             const double y2,
+             const double z2);
 
-double y_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
-
-double z_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+double
+z_projection(const double x1,
+             const double y1,
+             const double z1,
+             const double x2,
+             const double y2,
+             const double z2);
 
 int
 grdcp3d_calc_dx(int nx,
@@ -1089,9 +1135,8 @@ grdcp3d_calc_dx(int nx,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
                 double *swig_np_dbl_inplace_v1,  // *dx,
-                long n_swig_np_dbl_inplace_v1,    // ntot,
-                metric m
-                );
+                long n_swig_np_dbl_inplace_v1,   // ntot,
+                metric m);
 int
 grdcp3d_calc_dy(int nx,
                 int ny,
@@ -1101,9 +1146,8 @@ grdcp3d_calc_dy(int nx,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
                 double *swig_np_dbl_inplace_v1,  // *dy,
-                long n_swig_np_dbl_inplace_v1,    // ntot,
-                metric m
-                );
+                long n_swig_np_dbl_inplace_v1,   // ntot,
+                metric m);
 
 int
 grdcp3d_calc_dz(int nx,
@@ -1114,9 +1158,8 @@ grdcp3d_calc_dz(int nx,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
                 double *swig_np_dbl_inplace_v1,  // *dz,
-                long n_swig_np_dbl_inplace_v1,    // ntot,
-                metric m
-                );
+                long n_swig_np_dbl_inplace_v1,   // ntot,
+                metric m);
 
 void
 grd3d_calc_xyz(int nx,
@@ -1184,17 +1227,16 @@ grd3d_read_eclrecord(FILE *fc,
                      long n_swig_np_dbl_inplace_v1);
 
 int
-grd3d_roff2xtgeo_splitenz(
-                       int nz,
-                       float zoffset,
-                       float zscale,
-                       char *swig_bytes, // *splitenz
-                       long swig_bytes_len, // nsplitenz
-                       float *swig_np_flt_inplace_v1,    // *zdata
-                       long n_swig_np_flt_inplace_v1,    // nzdata
-                       float *swig_np_flt_inplace_v2,  // *zcornsv
-                       long n_swig_np_flt_inplace_v2    // nzcorn
-                       );
+grd3d_roff2xtgeo_splitenz(int nz,
+                          float zoffset,
+                          float zscale,
+                          char *swig_bytes,               // *splitenz
+                          long swig_bytes_len,            // nsplitenz
+                          float *swig_np_flt_inplace_v1,  // *zdata
+                          long n_swig_np_flt_inplace_v1,  // nzdata
+                          float *swig_np_flt_inplace_v2,  // *zcornsv
+                          long n_swig_np_flt_inplace_v2   // nzcorn
+);
 
 void
 grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
@@ -1760,8 +1802,6 @@ grdcp3d_import_xtgeo_grid(int mode,
                           char *swig_bnd_char_100k,            // metadata
                           FILE *fc);
 
-
-
 int
 grd3cp3d_xtgformat1to2_geom(long ncol,
                             long nrow,
@@ -1815,6 +1855,23 @@ grdcp3d_corners(long ic,
                 float *swig_np_flt_inplaceflat_v1,  // zcornsv
                 long n_swig_np_flt_inplaceflat_v1,
                 double corners[]);
+
+void
+grdcp3d_get_vtk_grid_arrays(long ncol,
+                            long nrow,
+                            long nlay,
+
+                            double *swig_np_dbl_inplaceflat_v1,  // coordsv
+                            long n_swig_np_dbl_inplaceflat_v1,
+                            float *swig_np_flt_inplaceflat_v1,  // zcornsv
+                            long n_swig_np_flt_inplaceflat_v1,
+
+                            double *swig_np_dbl_aout_v1,  // xarr
+                            long n_swig_np_dbl_aout_v1,
+                            double *swig_np_dbl_aout_v2,  // yarr
+                            long n_swig_np_dbl_aout_v2,
+                            double *swig_np_dbl_aout_v3,  // zarr
+                            long n_swig_np_dbl_aout_v3);
 
 int
 grdcp3d_conv_grid_roxapi(long ncol,
@@ -1937,12 +1994,11 @@ well_mask_shoulder(double *swig_np_dbl_inplaceflat_v1,  // lvec
                    long n_swig_np_int_inplaceflat_v2,   // nmask
                    double distance);
 
-
 void
 throw_exception(char *msg);
 
 void
 clear_exception();
 
-char
-*check_exception();
+char *
+check_exception();
