@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_upload_with_cibw:
-    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os.runs_on }}
+    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os.runs_on }} (${{ matrix.os.cibw_image }})
     runs-on: ${{ matrix.os.runs_on }}
     strategy:
       matrix:
@@ -20,9 +20,12 @@ jobs:
             cibw_image: win_amd64
           - runs_on: macos-latest
             cibw_image: macosx_x86_64
+          - runs_on: ubuntu-latest
+            cibw_image: manylinux_aarch64
 
     env:
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+      CIBW_ARCHS_LINUX: "auto aarch64"
       # pillow < 8.4 required for CIBW build
       CIBW_BEFORE_TEST: >
         pushd {project} &&
@@ -46,13 +49,29 @@ jobs:
           fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v2
+      - name: Set up QEMU
+        if: ${{ matrix.os.cibw_image == 'manylinux_aarch64' }}
+        uses: docker/setup-qemu-action@v1
 
       - name: Install cibuildwheel
         run: >
           python -m pip install pip -U &&
           python -m pip install wheel &&
           python -m pip install cibuildwheel
+      - name: Run cibuildwheel for Linux AArch64
+        if: ${{ matrix.os.cibw_image == 'manylinux_aarch64' }}
+        env:
+          CIBW_BEFORE_TEST_LINUX: >
+            pushd {project} &&
+            pip install "pillow<8.4.0" &&
+            pip install -r requirements/requirements_test.txt &&
+            git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata &&
+            yum install -y epel-release &&
+            yum-config-manager --enable epel &&
+            yum install -y geos-devel hdf5-devel
+        run: python -m cibuildwheel --output-dir wheelhouse
       - name: Run cibuildwheel
+        if: ${{ matrix.os.cibw_image != 'manylinux_aarch64' }}
         run: python -m cibuildwheel --output-dir wheelhouse
       - name: Publish
         if: ${{ github.event_name == 'release' }}
