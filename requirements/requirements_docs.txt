@@ -3,9 +3,10 @@ setuptools>=30.3.0
 cmake>=3.13.3
 scikit-build
 ninja
+
 setuptools_scm
 pydocstyle
-Sphinx<4.0 # Due to sphinx-toolbox
+Sphinx
 sphinx-rtd-theme
 sphinx-toolbox
 autoclasstoc
