@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import math
-import pytest
-import numpy as np
 
+import numpy as np
+import pytest
 import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -45,8 +45,79 @@ def test_diffangle():
     assert xcalc.diffangle(360, 170) == -170.0
 
 
+@pytest.mark.parametrize(
+    "iin, jin, xcor, ycor, xinc, yinc, ncol, nrow, yflip, rota, exp_xori, exp_yori",
+    [
+        (0, 0, 0.0, 0.0, 50.0, 50.0, 2, 2, 1, 0.0, 0.0, 0.0),
+        (0, 0, 0.0, 0.0, 50.0, 50.0, 2, 2, 1, 90.0, 0.0, 0.0),
+        (0, 0, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 0.0, 100.0, 300.0),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 0.0, 50.0, 250.0),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 360.0, 50.0, 250.0),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 90.0, 150.0, 250.0),
+        (1, 1, 100.0, 300.0, 50.0, 50.0, 2, 2, 1, 180.0, 150.0, 350.0),
+        (2, 2, 100.0, 300.0, 50.0, 50.0, 3, 3, 1, 0.0, 0.0, 200.0),
+        (2, 2, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 0.0, 0.0, 100.0),
+        (2, 2, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 360.0, 0.0, 100.0),
+        (2, 2, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 720.0, 0.0, 100.0),
+        (0, 2, 0.0, 0.0, 50.0, 50.0, 3, 3, 1, 45.0, 70.7107, -70.7107),
+        (0, 2, 0.0, 0.0, 50.0, 50.0, 3, 3, 1, 225.0, -70.7107, 70.7107),
+        (2, 2, 0.0, 0.0, 100.0, 50.0, 3, 3, 1, 30.0, -123.2051, -186.6025),
+        (2, 0, 0.0, 0.0, 50.0, 50.0, 3, 3, 1, 45.0, -70.7107, -70.7107),
+    ],
+)
+def test_xyori_from_ij(
+    iin,
+    jin,
+    xcor,
+    ycor,
+    xinc,
+    yinc,
+    ncol,
+    nrow,
+    yflip,
+    rota,
+    exp_xori,
+    exp_yori,
+):
+    """Testing correct origin given a XY point with indices and geometrics."""
+    xori, yori = xcalc.xyori_from_ij(
+        iin, jin, xcor, ycor, xinc, yinc, ncol, nrow, yflip, rota
+    )
+
+    assert xori == pytest.approx(exp_xori, rel=0.001)
+    assert yori == pytest.approx(exp_yori, rel=0.001)
+
+
+@pytest.mark.parametrize(
+    "iin, jin, xcor, ycor, xinc, yinc, ncol, nrow, yflip, rota",
+    [
+        (3, 3, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 0.0),
+        (-1, 3, 100.0, 300.0, 50.0, 100.0, 3, 3, 1, 0.0),
+    ],
+)
+def test_xyori_from_ij_fails(
+    iin,
+    jin,
+    xcor,
+    ycor,
+    xinc,
+    yinc,
+    ncol,
+    nrow,
+    yflip,
+    rota,
+):
+    """Correct origin given a XY point with indices and geometrics will fail."""
+
+    with pytest.raises(ValueError):
+        _, _ = xcalc.xyori_from_ij(
+            iin, jin, xcor, ycor, xinc, yinc, ncol, nrow, yflip, rota
+        )
+    return
+
+
 def test_ijk_to_ib():
-    """Convert I J K to IB index (F or C order)"""
+    """Convert I J K to IB index (F or C order)."""
 
     ib = xcalc.ijk_to_ib(2, 2, 2, 3, 4, 5)
     assert ib == 16

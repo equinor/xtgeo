@@ -1,8 +1,37 @@
-"""Import Cube data via SegyIO library or XTGeo CLIB."""
+"""Import Cube data via SegyIO library or XTGeo CLIB.
+
+Data model in XTGeo illustrated by example: ncol=3, nrow=4 (non-rotated):
+
+                    3              7                    ^ "J, ~NORTH" direction
+  xline=1022       +--------------+--------------+11    |     (if unrotated)
+                   |              |              |      |
+                   |              |              |      |
+                   |              |              |
+                   |2             |6             |10
+  xline=1020       +--------------+--------------+      Rotation is school angle of
+                   |              |              |      "I east" vs X axis
+                   |              |              |
+                   |              |              |
+                   |1             |5             |9
+  xline=1018       +--------------+--------------+
+                   |              |              |
+                   |              |              |
+                   |              |              |
+                   |0             |4             |8
+  xline=1016       +--------------+--------------+      ------> "I, ~EAST" direction
+
+                iline=4400     iline=4401     iline=4402
+
+Indices is fastest along "J" (C order), and xlines and ilines spacing may vary (2 for
+xline, 1 for iline in this example) but shall be constant per axis
+
+"""
 import json
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
+from copy import deepcopy
 from struct import unpack
-from typing import Dict
+from typing import Dict, List, Tuple
+from warnings import warn
 
 import numpy as np
 import segyio
@@ -10,6 +39,7 @@ import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from segyio import TraceField as TF
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -20,103 +50,109 @@ def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
     """Import SEGY via the SegyIO library.
 
     Args:
-        sfile (str): File name of SEGY file
+        sfile: File object for SEGY file
     """
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
     sfile = sfile.file
 
-    logger.debug("Inline sorting %s", segyio.TraceSortingFormat.INLINE_SORTING)
+    attributes = dict()
 
-    with segyio.open(sfile, "r") as segyfile:
-        segyfile.mmap()
-
-        values = segyio.tools.cube(segyfile)
-
-        logger.info(values.dtype)
-        if values.dtype != np.float32:
-            xtg.warnuser(
-                "Values are converted from {} to {}".format(values.dtype, "float32")
+    try:
+        # cube with all traces present
+        with segyio.open(sfile, "r") as segyfile:
+            attributes = _import_segy_all_traces(segyfile)
+    except ValueError as verr:
+        if any([word in str(verr) for word in ["Invalid dimensions", "inconsistent"]]):
+            # cube with missing traces is now handled but his is complex, hence users
+            # shall be warned. With more experience, this warning can be removed.
+            warn(
+                "Missing or inconsistent traces in SEGY detected, xtgeo will try "
+                "to import by infilling, but please check result carefully!",
+                UserWarning,
             )
 
-            values = values.astype(np.float32)
+            with segyio.open(sfile, "r", ignore_geometry=True) as segyfile:
+                attributes = _import_segy_incomplete_traces(segyfile)
+        else:
+            raise
+    except Exception as anyerror:  # catch the rest
+        raise IOError(f"Cannot parse SEGY file: {str(anyerror)}") from anyerror
 
-        if np.isnan(np.sum(values)):
-            raise ValueError("The input contains NaN values which is trouble!")
+    if not attributes:
+        raise ValueError("Could not get attributes for segy file")
 
-        ilines = segyfile.ilines
-        xlines = segyfile.xlines
+    attributes["segyfile"] = sfile
+    return attributes
 
-        ncol, nrow, nlay = values.shape
 
-        trcode = segyio.TraceField.TraceIdentificationCode
-        traceidcodes = segyfile.attributes(trcode)[:].reshape(ncol, nrow)
+def _import_segy_all_traces(segyfile: segyio.segy.SegyFile) -> Dict:
+    """Import a a full cube SEGY via the SegyIO library to xtgeo format spec.
 
-        logger.info("NRCL  %s %s %s", ncol, nrow, nlay)
+    Here, the segyio.tools.cube function can be applied
 
-        # need positions for all 4 corners
-        c1v = xcalc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)
-        c2v = xcalc.ijk_to_ib(ncol, 1, 1, ncol, nrow, 1, forder=False)
-        c3v = xcalc.ijk_to_ib(1, nrow, 1, ncol, nrow, 1, forder=False)
-        c4v = xcalc.ijk_to_ib(ncol, nrow, 1, ncol, nrow, 1, forder=False)
+    Args:
+        segyfile: Filehandle from segyio
+    """
+    segyfile.mmap()
 
-        clist = [c1v, c2v, c3v, c4v]
+    values = _process_cube_values(segyio.tools.cube(segyfile))
 
-        xori = yori = zori = 0.999
-        xvv = rotation = 0.999
-        xinc = yinc = zinc = 0.999
-        yflip = 1
+    ilines = segyfile.ilines
+    xlines = segyfile.xlines
 
-        for inum, cox in enumerate(clist):
-            logger.debug(inum)
-            origin = segyfile.header[cox][
-                segyio.su.cdpx,
-                segyio.su.cdpy,
-                segyio.su.scalco,
-                segyio.su.delrt,
-                segyio.su.dt,
-                segyio.su.iline,
-                segyio.su.xline,
-            ]
-            # get the data on SU (seismic unix) format
-            cdpx = origin[segyio.su.cdpx]
-            cdpy = origin[segyio.su.cdpy]
-            scaler = origin[segyio.su.scalco]
-            if scaler < 0:
-                cdpx = -1 * float(cdpx) / scaler
-                cdpy = -1 * float(cdpy) / scaler
-            else:
-                cdpx = cdpx * scaler
-                cdpy = cdpy * scaler
+    ncol, nrow, nlay = values.shape
 
-            if inum == 0:
-                xori = cdpx
-                yori = cdpy
-                zori = origin[segyio.su.delrt]
-                zinc = origin[segyio.su.dt] / 1000.0
+    # get additional but required geometries for xtgeo; xori, yori, xinc, ..., rotation
+    attrs = _segy_all_traces_attributes(segyfile, ncol, nrow, nlay)
 
-            if inum == 1:
-                slen, _, rot1 = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
-                xinc = slen / (ncol - 1)
+    attrs["ilines"] = ilines
+    attrs["xlines"] = xlines
+    attrs["values"] = values
 
-                rotation = rot1
-                xvv = (cdpx - xori, cdpy - yori, 0)
+    return attrs
 
-            if inum == 2:
-                slen, _, _ = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
-                yinc = slen / (nrow - 1)
 
-                # find YFLIP by cross products
-                yvv = (cdpx - xori, cdpy - yori, 0)
+def _process_cube_values(values: np.ndarray) -> np.ndarray:
+    """Helper function to validate/check values."""
+    if values.dtype != np.float32:
+        xtg.warnuser(f"Values are converted from {values.dtype} to float32")
+        values = values.astype(np.float32)
+    if np.any(np.isnan(values)):
+        raise ValueError(
+            f"The input values: {values} contains NaN values which is currently "
+            "not handled!"
+        )
 
-                yflip = xcalc.find_flip(xvv, yvv)
+    return values
 
-        logger.debug("XTGeo rotation is %s", rotation)
 
-    # attributes to update
+def _segy_all_traces_attributes(
+    segyfile: segyio.segy.SegyFile, ncol, nrow, nlay
+) -> Dict:
+    """Get the geometrical values xtgeo needs for a cube definition."""
+    trcode = segyio.TraceField.TraceIdentificationCode
+    traceidcodes = segyfile.attributes(trcode)[:].reshape(ncol, nrow)
+
+    # need positions in corners for making vectors to compute geometries
+    c1v = xcalc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)
+    c2v = xcalc.ijk_to_ib(ncol, 1, 1, ncol, nrow, 1, forder=False)
+    c3v = xcalc.ijk_to_ib(1, nrow, 1, ncol, nrow, 1, forder=False)
+
+    xori, yori, zori, zinc = _get_coordinate(segyfile, c1v)
+    point_x1, point_y1, _, _ = _get_coordinate(segyfile, c2v)
+    point_x2, point_y2, _, _ = _get_coordinate(segyfile, c3v)
+
+    slen1, _, rotation = xcalc.vectorinfo2(xori, point_x1, yori, point_y1)
+    xinc = slen1 / (ncol - 1)
+
+    slen2, _, _ = xcalc.vectorinfo2(xori, point_x2, yori, point_y2)
+    yinc = slen2 / (nrow - 1)
+
+    # find YFLIP by cross products
+    yflip = xcalc.find_flip(
+        (point_x1 - xori, point_y1 - yori, 0), (point_x2 - xori, point_y2 - yori, 0)
+    )
+
     return {
-        "ilines": ilines,
-        "xlines": xlines,
         "ncol": ncol,
         "nrow": nrow,
         "nlay": nlay,
@@ -127,11 +163,218 @@ def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
         "zori": zori,
         "zinc": zinc,
         "rotation": rotation,
-        "values": values,
         "yflip": yflip,
-        "segyfile": sfile,
         "traceidcodes": traceidcodes,
     }
+
+
+def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> Dict:
+    """Import a a cube SEGY with incomplete traces via the SegyIO library.
+
+    Note that the undefined value will be xtgeo.UNDEF (large number)!
+
+    It is also logical to treat missing traces as dead traces, i.e. the should
+    get value 2 in traceidcodes
+
+    Args:
+        segyfile: Filehandle from segyio
+    """
+    segyfile.mmap()
+    # get data (which will need padding later for missing traces)
+    data = segyfile.trace.raw[:]
+
+    trcode = segyio.TraceField.TraceIdentificationCode
+    traceidcodes_input = segyfile.attributes(trcode)[:]
+
+    ilines_case = np.array([h[TF.INLINE_3D] for h in segyfile.header])
+    xlines_case = np.array([h[TF.CROSSLINE_3D] for h in segyfile.header])
+
+    # detect minimum inline and xline spacing (e.g.sampling could be every second)
+    idiff = np.diff(ilines_case)
+    xdiff = np.diff(xlines_case)
+    ispacing = int(np.abs(idiff[idiff != 0]).min())
+    xspacing = int(np.abs(xdiff[xdiff != 0]).min())
+
+    ncol = int(abs(ilines_case.min() - ilines_case.max()) / ispacing) + 1
+    nrow = int(abs(xlines_case.min() - xlines_case.max()) / xspacing) + 1
+    nlay = data.shape[1]
+
+    values = np.full((ncol, nrow, nlay), xtgeo.UNDEF, dtype=np.float32)
+    traceidcodes = np.full((ncol, nrow), 2, dtype=np.int64)
+
+    ilines_shifted = (ilines_case / ispacing).astype(np.int64)
+    ilines_shifted -= ilines_shifted.min()
+    xlines_shifted = (xlines_case / xspacing).astype(np.int64)
+    xlines_shifted -= xlines_shifted.min()
+
+    values[ilines_shifted, xlines_shifted, :] = data
+    values = _process_cube_values(values)
+    traceidcodes[ilines_shifted, xlines_shifted] = traceidcodes_input
+
+    # generate new ilines, xlines vector with unique values
+    ilines = np.array(
+        range(ilines_case.min(), ilines_case.max() + ispacing, ispacing), dtype=np.int32
+    )
+    xlines = np.array(
+        range(xlines_case.min(), xlines_case.max() + xspacing, xspacing), dtype=np.int32
+    )
+
+    attrs = _geometry_incomplete_traces(
+        segyfile,
+        ncol,
+        nrow,
+        ilines,
+        xlines,
+        ilines_case,
+        xlines_case,
+        ispacing,
+        xspacing,
+    )
+
+    attrs["ncol"] = ncol
+    attrs["nrow"] = nrow
+    attrs["nlay"] = nlay
+    attrs["ilines"] = ilines
+    attrs["xlines"] = xlines
+    attrs["values"] = values
+    attrs["traceidcodes"] = traceidcodes
+    return attrs
+
+
+def _inverse_anyline_map(anylines: List[int]) -> Dict:
+    """Small helper function to get e.g. inline 2345: [0, 1, 2, .., 70].
+
+    I.e. to get a mapping between inline number and a list of possible indices
+
+    """
+    anyll = defaultdict(list)
+    for ind, key in enumerate(anylines):
+        anyll[key].append(ind)
+
+    return anyll
+
+
+def _find_long_line(anyll: dict, nany: int) -> List:
+    """Helper function; get index of vectors indices to be used for calculations.
+
+    Look for a "sufficiently" long inline/xline, as long distance between points
+    increases accuracy.
+
+    """
+    minimumlen = int(nany * 0.8)  # get at least 80% length if possible
+    maxlenfound = -1
+
+    keepresult = []
+    for indices in anyll.values():
+        result = [indices[0], indices[-1]]
+        indlen = len(indices)
+        if indlen > maxlenfound:
+            maxlenfound = indlen
+            keepresult = deepcopy(result)
+
+        if indlen >= minimumlen:
+            break
+
+    if not keepresult or abs(keepresult[1] - keepresult[0]) == 0:
+        raise RuntimeError("Not able to get inline or xline vector for geometry")
+    return keepresult
+
+
+def _geometry_incomplete_traces(
+    segyfile: segyio.segy.SegyFile,
+    ncol: int,
+    nrow: int,
+    ilines: List[int],
+    xlines: List[int],
+    ilines_case: List[int],
+    xlines_case: List[int],
+    ispacing: int,
+    xspacing: int,
+) -> List:
+    """Compute xtgeo attributes (mostly geometries) for incomplete trace cube."""
+    attrs = dict()
+
+    ill = _inverse_anyline_map(ilines_case)
+    xll = _inverse_anyline_map(xlines_case)
+
+    # need both partial and full reverse lookup of indices vs (iline, xxline)
+    # for computing cube origin later
+    index_case = {
+        ind: (h[TF.INLINE_3D], h[TF.CROSSLINE_3D])
+        for ind, h in enumerate(segyfile.header)
+    }
+
+    reverseindex_full = {
+        (il, xl): (ind, xnd)
+        for ind, il in enumerate(ilines)
+        for xnd, xl in enumerate(xlines)
+    }
+
+    jnd1, jnd2 = _find_long_line(ill, ncol)  # 2 indices along constant iline, aka JY
+    ind1, ind2 = _find_long_line(xll, nrow)  # 2 indices along constant xline, aka IX
+
+    il1x, il1y, zori, zinc = _get_coordinate(segyfile, ind1)
+    il2x, il2y, _, _ = _get_coordinate(segyfile, ind2)
+
+    jl1x, jl1y, _, _ = _get_coordinate(segyfile, jnd1)
+    jl2x, jl2y, _, _ = _get_coordinate(segyfile, jnd2)
+
+    xslen, _, rot1 = xcalc.vectorinfo2(il1x, il2x, il1y, il2y)
+    xinc = ispacing * xslen / (abs(ilines_case[ind1] - ilines_case[ind2]))
+    yslen, _, _ = xcalc.vectorinfo2(jl1x, jl2x, jl1y, jl2y)
+    yinc = xspacing * yslen / (abs(xlines_case[jnd1] - xlines_case[jnd2]))
+
+    yflip = xcalc.find_flip(
+        (il2x - il1x, il2y - il1y, 0), (jl2x - jl1x, jl2y - jl1y, 0)
+    )
+
+    # need to compute xori and yori from 'case' I J indices with known x y and
+    # (iline, xline); use ind1 with assosiated coordinates il1x il1y
+    i_use, j_use = reverseindex_full[index_case[ind1]]
+    xori, yori = xcalc.xyori_from_ij(
+        i_use, j_use, il1x, il1y, xinc, yinc, ncol, nrow, yflip, rot1
+    )
+
+    attrs["xori"] = xori
+    attrs["yori"] = yori
+    attrs["zori"] = zori
+    attrs["xinc"] = xinc
+    attrs["yinc"] = yinc
+    attrs["zinc"] = zinc
+    attrs["yflip"] = yflip
+    attrs["rotation"] = rot1
+
+    return attrs
+
+
+def _get_coordinate(
+    segyfile: segyio.segy.SegyFile, segyindex: int
+) -> Tuple[float, float, float, float]:
+    """Helper function to get coordinates given a index."""
+    origin = segyfile.header[segyindex][
+        segyio.su.cdpx,
+        segyio.su.cdpy,
+        segyio.su.scalco,
+        segyio.su.delrt,
+        segyio.su.dt,
+        segyio.su.iline,
+        segyio.su.xline,
+    ]
+
+    point_x = origin[segyio.su.cdpx]
+    point_y = origin[segyio.su.cdpy]
+    scaler = origin[segyio.su.scalco]
+    if scaler < 0:
+        point_x = -1 * float(point_x) / scaler
+        point_y = -1 * float(point_y) / scaler
+    else:
+        point_x = point_x * scaler
+        point_y = point_y * scaler
+
+    zori = origin[segyio.su.delrt]
+    zinc = origin[segyio.su.dt] / 1000.0
+
+    return point_x, point_y, zori, zinc
 
 
 def _scan_segy_header(sfile, outfile):
