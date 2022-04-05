@@ -22,7 +22,7 @@ jobs:
             cibw_image: macosx_x86_64
 
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       # pillow < 8.4 required for CIBW build
       CIBW_BEFORE_TEST: >
         pushd {project} &&
@@ -35,7 +35,6 @@ jobs:
         pushd {project} &&
         pytest  --disable-warnings -x -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"
       CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os.cibw_image }}
-
       # Need to skip testing for 3.10 on linux and macosx due to technical trouble with one or more
       # requirements (notably h5py) in the machine setup. But all tests w/ req. works in general
       # testing; cf. test.yml
