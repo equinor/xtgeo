@@ -7,12 +7,13 @@ from distutils.version import StrictVersion
 # from pkg_resources import parse_version as pver (ALT)
 
 try:
-    import roxar
     import _roxar
+    import roxar
 except ImportError:
     pass
 
 from xtgeo.common import XTGeoDialog
+
 from . import _roxutils_etc
 
 xtg = XTGeoDialog()
@@ -65,6 +66,8 @@ class RoxUtils(object):
             "1.3": ["11.1.0", "11.1.1", "11.1.2"],
             "1.4": ["12.0.0", "12.0.1", "12.0.2"],
             "1.5": ["12.1"],
+            "1.6": ["13.0"],
+            "1.7": ["13.1"],
         }
 
         if project is not None and isinstance(project, str):
