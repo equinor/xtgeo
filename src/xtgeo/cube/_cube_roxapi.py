@@ -15,9 +15,8 @@ Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering
 """
 
 import numpy as np
-
-from xtgeo.common import XTGeoDialog
 from xtgeo import RoxUtils
+from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
@@ -158,7 +157,7 @@ def _roxapi_export_cube(
     rcube = proj.seismic.data.create_cube(name, path=path)
 
     # populate
-    origin = (self.xori, self.yori)
+    origin = (float(self.xori), float(self.yori))
     first_z = self.zori
     increment = (self.xinc, self.yinc)
     sample_rate = self.zinc
