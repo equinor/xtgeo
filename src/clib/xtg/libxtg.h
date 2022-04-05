@@ -418,9 +418,9 @@ surf_xyori_from_ij(int i,
                    int j,
                    double x,
                    double y,
-                   double *xori,
+                   double *swig_dbl_out_p1,  //  *xori
                    double xinc,
-                   double *yori,
+                   double *swig_dbl_out_p2,  //  *yori
                    double yinc,
                    int nx,
                    int ny,
