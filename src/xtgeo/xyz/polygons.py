@@ -557,7 +557,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             None,
             realisation,
             None,
-            True,
         )
 
     def copy(self):
