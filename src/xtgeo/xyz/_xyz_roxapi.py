@@ -292,7 +292,7 @@ def _roxapi_export_xyz(
 
 def _check_category_etc(
     proj, name, category, stype, realisation, mode="get"
-):  # pylint: disable=too-many-branches  pragma: no cover
+):  # pylint: disable=too-many-branches  # pragma: no cover
 
     """Helper to check if valid placeholder' whithin RMS."""
 
