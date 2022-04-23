@@ -166,7 +166,7 @@ def _roxapi_xyz_to_dataframe(roxxyz, is_polygons=False):  # pragma: no cover
     else:
         raise RuntimeError(f"Unknown error in getting data from Roxar: {type(roxxyz)}")
 
-    dfr.reset_index(inplace=True)
+    dfr.reset_index(drop=True, inplace=True)
     return dfr
 
 
