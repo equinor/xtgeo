@@ -73,8 +73,8 @@ def _surface_importer(surf, zname="Z_TVDSS"):
 
 def _roxar_importer(
     project,
-    category: str,
     name: str,
+    category: str,
     stype: str = "horizons",
     realisation: int = 0,
     attributes: bool = False,
