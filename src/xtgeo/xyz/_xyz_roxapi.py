@@ -5,6 +5,7 @@ import tempfile
 
 import numpy as np
 import pandas as pd
+import xtgeo
 from xtgeo.common import XTGeoDialog, _XTGeoFile
 from xtgeo.roxutils import RoxUtils
 from xtgeo.xyz import _xyz_io
@@ -268,7 +269,7 @@ def _roxapi_export_xyz(
                     "{}".format(key, df.columns)
                 )
 
-    if self._ispolygons:
+    if isinstance(self, xtgeo.Polygons):
         arrxyz = []
         polys = df.groupby(self.pname)
         for _id, grp in polys:
@@ -373,7 +374,7 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
         elif mode == "set":
 
             # clipboard folders will be created if not present, and overwritten else
-            if self._ispolygons:
+            if isinstance(self, xtgeo.Polygons):
                 roxxyz = proj.clipboard.create_polylines(name, folders)
             else:
                 roxxyz = proj.clipboard.create_points(name, folders)
