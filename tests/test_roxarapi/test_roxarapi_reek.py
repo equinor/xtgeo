@@ -53,6 +53,13 @@ ZONENAME1 = "Zone"
 WELLSFOLDER1 = TPATH / "wells/reek/1"
 WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
 
+POLYDATA1 = TPATH / "polygons/reek/1/polset2.pol"
+POINTSDATA1 = TPATH / "points/reek/1/pointset3.poi"
+POINTSDATA2 = TPATH / "points/reek/1/poi_attr.rmsattr"
+POLYNAME1 = "Polys"
+POINTSNAME1 = "Points"
+POINTSNAME2 = "PointsAttrs"
+
 # ======================================================================================
 # Initial tmp project
 
@@ -101,6 +108,18 @@ def fixture_create_project(tmp_project_path):
     por.to_roxar(project, GRIDNAME1, PORONAME1)
     zon = xtgeo.gridproperty_from_file(ZONEDATA1, name=ZONENAME1)
     zon.to_roxar(project, GRIDNAME1, ZONENAME1)
+
+    # populate with points and polygons (XYZ data)
+    poly = xtgeo.polygons_from_file(POLYDATA1)
+    poly.to_roxar(project, POLYNAME1, "", stype="clipboard")
+
+    poi = xtgeo.points_from_file(POINTSDATA1)
+    poi.to_roxar(project, POINTSNAME1, "", stype="clipboard")
+    logger.info("Initialised RMS project, done!")
+
+    poi = xtgeo.points_from_file(POINTSDATA2, fformat="rms_attr")
+    poi.to_roxar(project, POINTSNAME2, "", stype="clipboard", attributes=True)
+    logger.info("Initialised RMS project, done!")
 
     # save project (both an initla version and a work version) and exit
     project.save_as(prj1)
@@ -204,3 +223,51 @@ def test_rox_get_modify_set_grid(roxar_project):
     grd2 = xtgeo.grid_from_roxar(roxar_project, GRIDNAME1 + "_edit1")
 
     assert grd2.dimensions == grd1.dimensions
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_polygons(roxar_project):
+    """Get, modify and set a polygons from a RMS project."""
+    poly = xtgeo.polygons_from_roxar(roxar_project, POLYNAME1, "", stype="clipboard")
+    assert poly.dataframe.iloc[-1, 2] == pytest.approx(1595.161377)
+    assert poly.dataframe.shape[0] == 25
+    assert poly.dataframe.shape[1] == 4
+
+    poly.rescale(300)
+    # store in RMS
+    poly.to_roxar(roxar_project, "RESCALED", "", stype="clipboard")
+    assert poly.dataframe.shape[0] == 127
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_points(roxar_project):
+    """Get, modify and set a points from a RMS project."""
+    poi = xtgeo.points_from_roxar(roxar_project, POINTSNAME1, "", stype="clipboard")
+    print(poi.dataframe)
+    assert poi.dataframe.iloc[-1, 1] == pytest.approx(5.932977e06)
+    assert poi.dataframe.shape[0] == 20
+    assert poi.dataframe.shape[1] == 3
+
+    # snap to a surface as operation and store in RMS
+    surf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
+    poi.snap_surface(surf, activeonly=False)
+    print(poi.dataframe)
+    poi.to_roxar(roxar_project, "SNAPPED", "", stype="clipboard")
+    assert poi.dataframe.iloc[-1, 2] == pytest.approx(1651.805261)
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_points_with_attrs(roxar_project):
+    """Get, modify and set a points with attributes from a RMS project."""
+    poi = xtgeo.points_from_roxar(
+        roxar_project, POINTSNAME2, "", stype="clipboard", attributes=True
+    )
+    assert poi.dataframe["Well"].values[-1] == "WI_3"
+    assert poi.dataframe.shape[0] == 8
+    assert poi.dataframe.shape[1] == 7
+
+    # snap to a surface as operation and store in RMS
+    surf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
+    poi.snap_surface(surf, activeonly=False)
+    poi.to_roxar(roxar_project, "SNAPPED2", "", stype="clipboard")
+    assert poi.dataframe.iloc[-1, 2] == pytest.approx(1706.146835)
