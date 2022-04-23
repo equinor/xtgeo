@@ -36,7 +36,7 @@ def import_xyz_roxapi(
         filesrc
     """
 
-    rox = RoxUtils(project)
+    rox = RoxUtils(project, readonly=True)
 
     if stype == "clipboard" and not rox.version_required("1.2"):
         minimumrms = rox.rmsversion("1.2")
@@ -47,11 +47,16 @@ def import_xyz_roxapi(
         raise NotImplementedError(msg)
 
     if attributes:
-        return _roxapi_import_xyz_viafile(
+        result = _roxapi_import_xyz_viafile(
             rox, name, category, stype, realisation, is_polygons
         )
     else:
-        return _roxapi_import_xyz(rox, name, category, stype, realisation, is_polygons)
+        result = _roxapi_import_xyz(
+            rox, name, category, stype, realisation, is_polygons
+        )
+
+    rox.safe_close()
+    return result
 
 
 def _roxapi_import_xyz_viafile(
@@ -70,7 +75,7 @@ def _roxapi_import_xyz_viafile(
             "roxar not available, this functionality is not available"
         ) from err
 
-    if not _check_category_etc(rox, name, category, stype, realisation):
+    if not _check_category_etc(rox.project, name, category, stype, realisation):
         raise RuntimeError(
             "It appears that name and or category is not present: "
             "name={}, category/folder={}, stype={}".format(name, category, stype)
@@ -106,7 +111,7 @@ def _roxapi_import_xyz(
     """From RMS to XTGeo"""
     kwargs = {}
 
-    if not _check_category_etc(rox, name, category, stype, realisation):
+    if not _check_category_etc(rox.project, name, category, stype, realisation):
         raise RuntimeError(
             "It appears that name and or category is not present: "
             "name={}, category/folder={}, stype={}".format(name, category, stype)
@@ -169,8 +174,7 @@ def export_xyz_roxapi(
     self, project, name, category, stype, pfilter, realisation, attributes
 ):  # pragma: no cover
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
-
-    rox = RoxUtils(project)
+    rox = RoxUtils(project, readonly=False)
 
     if stype == "clipboard" and not rox.version_required("1.2"):
         minimumrms = rox.rmsversion("1.2")
@@ -191,6 +195,8 @@ def export_xyz_roxapi(
         )
     else:
         _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation)
+
+    rox.safe_close()
 
 
 def _roxapi_export_xyz_hpicks(
