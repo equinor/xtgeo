@@ -1,5 +1,47 @@
 # Release notes
 
+
+## Version 2.18
+
+### Enhancements
+* 3D grids: Added a method to get grid geometries on pyvista/vtk format, #770
+* Cubes: Support for Segy with missing traces (#768). Hence SEGY files with incomplete
+  3D (cube) sepssification can now be read.
+
+### Bug fixes
+* Fixed several bugs regarding Points/Polygon when using Roxar API.
+
+## Version 2.17
+
+### Pending API changes
+* The parameters to the Points and Polygons constructor has changed and old usage
+  deprecated, see the docs of the classes for details.
+
+### Bug fixes
+* Fixed a bug in surface_from_file where not found files would cause a segfault (#740)
+* Fixed a bug where importing grid via a memory stream does not work for roff binary
+  grid (#743)
+
+### Version 2.17.1
+* Fix security alert and requirements inconsistencies (#748)
+
+### Version 2.17.2
+* Points.from_list was not working, #750
+* Convert to required type, #752
+* Fix e300 ix unrst phases, #754
+
+### Version 2.17.3
+* Fix a bug in output grdecl file formatting which gave files that were unreadable for
+  Eclipse and some other tools, #758
+* Add python 3.10
+
+### Version 2.17.4
+* Add python 3.10 for pypi, #762
+
+### Version 2.17.5
+* Solve compatibility with pytest 7.1, #763
+
+
 ## Version 2.16
 * Pending API changes:
   * Warnings are now given produced for deprecated usage, except for the XYZ
