@@ -116,6 +116,7 @@ def grid_from_roxar(
             project, gname, realisation, dimensions_only, info
         )
     )
+    print("XXXX Hello test")
 
 
 def create_box_grid(
