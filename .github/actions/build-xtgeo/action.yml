@@ -4,7 +4,7 @@ description: builds xtgeo
 inputs:
   python-version:
     required: true
-  matrix.os:
+  os:
     required: true
 
 
@@ -19,7 +19,6 @@ runs:
     - name: Upgrade pip
       run: python -m pip install pip
       shell: bash
-      if: matrix.os != windows-latest
 
     - name: install xtgeo
       run: pip install .
