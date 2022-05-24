@@ -20,7 +20,7 @@ runs:
       run: python -m pip install pip -U
       shell: bash
       with:
-        os: windows-latest macos-latest
+        os: ubuntu-latest macos-latest
 
     - name: install xtgeo
       run: pip install .
