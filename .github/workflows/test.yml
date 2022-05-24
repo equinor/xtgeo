@@ -19,8 +19,8 @@ jobs:
             python-version: 3.8
           # - os: windows-latest
           #   python-version: 3.6
-          # - os: windows-latest
-          #   python-version: 3.8
+          - os: windows-latest
+            python-version: 3.8
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v1
