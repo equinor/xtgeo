@@ -19,7 +19,8 @@
  * ARGUMENTS:
  *    fc              i     Filehandle (stream) to read from
  *    swap            o     SWAP status, 0 of False, 1 if True
- *    tags            o     A long *char where the tags are separated by a |
+ *    tagletters      o     A long *char where the tags are separated by a |
+ *    ntagletters     i     For SWIG bindings
  *    rectypes        o     An array with record types: 1 = INT, 2 = FLOAT,
  *                          3 = DOUBLE, 4 = CHAR(STRING), 5 = BOOL, 6 = BYTE
  *    reclengths      o     An array with record lengths (no of elements)
@@ -49,6 +50,7 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 #include "logger.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -316,7 +318,8 @@ _scan_roff_bin_record(FILE *fc,
 long
 grd3d_scan_roffbinary(FILE *fc,
                       int *swap,
-                      char *tags,
+                      char *tagletters,
+                      int ntagletters,
                       int *rectypes,
                       long *reclengths,
                       long *recstarts,
@@ -330,12 +333,15 @@ grd3d_scan_roffbinary(FILE *fc,
     long npos1, npos2, bytepos[ROFFARRLEN], reclen[ROFFARRLEN];
     long nrec = 0;
 
+    if (ntagletters > INT_MAX) {
+        throw_exception("Unreverable error, number of requested keyword letters "
+                        "exceeds system limit (grd3d_scan_eclbinary)");
+        return -3;
+    }
+
     npos1 = 0;
-
     ios = 0;
-
-    tags[0] = '\0';
-
+    tagletters[0] = '\0';
     rewind(fc);
 
     for (i = 0; i < maxkw; i++) {
@@ -354,18 +360,18 @@ grd3d_scan_roffbinary(FILE *fc,
             break;
 
         for (j = 0; j < numrec; j++) {
-            strcat(tags, tagname);
-            strcat(tags, "!");
-            strcat(tags, cname[j]);
+            strcat(tagletters, tagname);
+            strcat(tagletters, "!");
+            strcat(tagletters, cname[j]);
 
             /* add a third item if parameter name */
             if (strncmp(cname[j], "name", 4) == 0 &&
                 strncmp(pname[j], "NAxxx", 2) != 0) {
 
-                strcat(tags, "!");
-                strcat(tags, pname[j]);
+                strcat(tagletters, "!");
+                strcat(tagletters, pname[j]);
             }
-            strcat(tags, "|");
+            strcat(tagletters, "|");
             rectypes[nrec] = cntype[j];
             reclengths[nrec] = reclen[j];
             recstarts[nrec] = bytepos[j];

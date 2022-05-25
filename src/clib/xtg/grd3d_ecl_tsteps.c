@@ -59,7 +59,7 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
     float *xfloat = NULL;
     double *xdouble = NULL;
 
-    int maxkw = 1000000;
+    int maxkw = MAXKEYWORDS;
 
     keywords = (char *)calloc(maxkw * 10, sizeof(char));
     rectypes = (int *)calloc(maxkw, sizeof(int));
@@ -69,7 +69,8 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
     rewind(fc);
 
     /* do scan */
-    nkeys = grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw);
+    nkeys = grd3d_scan_eclbinary(fc, keywords, 10 * maxkw, rectypes, maxkw, reclengths,
+                                 maxkw, recstarts, maxkw);
 
     if (nkeys <= 0) {
         throw_exception("No keys received");

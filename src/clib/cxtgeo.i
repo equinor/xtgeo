@@ -34,6 +34,7 @@ typedef uint8_t mbool;
 %cstring_bounded_output(char *swig_bnd_char_10k, 10000);
 %cstring_bounded_output(char *swig_bnd_char_100k, 100000);
 %cstring_bounded_output(char *swig_bnd_char_1m, 1000000);
+%cstring_output_maxsize(char *swig_out_char_msize, int nswig_out_char_msize);
 
 
 /* Create some functions for working with "int *" etc */
@@ -250,6 +251,9 @@ PyDict_SetItemString(d, "XTGeoCLibError", PY_XTGeoCLibError);
 // ARGOUT long no 1
 %apply (long* ARGOUT_ARRAY1, long DIM1) {(long *swig_np_lng_aout_v1,
                                           long n_swig_np_lng_aout_v1)};
+// ARGOUT long no 2
+%apply (long* ARGOUT_ARRAY1, long DIM1) {(long *swig_np_lng_aout_v2,
+                                          long n_swig_np_lng_aout_v2)};
 
 //======================================================================================
 // Inline tranforms

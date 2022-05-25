@@ -8,9 +8,9 @@ from typing import List, Optional
 import deprecation
 import numpy as np
 import pandas as pd
-
 import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 from . import _grid3d_utils as utils
 from . import _grid_etc1, _gridprops_import_eclrun
@@ -86,6 +86,7 @@ def gridproperties_from_file(
                 grid=grid,
                 names=names,
                 strict=strict[0],
+                maxkeys=MAXKEYWORDS,
             )
         )
     elif fformat.lower() == "unrst":
@@ -97,6 +98,7 @@ def gridproperties_from_file(
                 names=names,
                 namestyle=namestyle,
                 strict=strict,
+                maxkeys=MAXKEYWORDS,
             )
         )
     else:
@@ -731,7 +733,7 @@ class GridProperties(_Grid3D):
 
     @staticmethod
     def scan_keywords(
-        pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False
+        pfile, fformat="xecl", maxkeys=MAXKEYWORDS, dataframe=False, dates=False
     ):
         """Quick scan of keywords in Eclipse binary files, or ROFF binary files.
 
@@ -774,7 +776,7 @@ class GridProperties(_Grid3D):
 
     @staticmethod
     def scan_dates(
-        pfile, fformat="unrst", maxdates=1000, dataframe=False, datesonly=False
+        pfile, fformat="unrst", maxdates=MAXDATES, dataframe=False, datesonly=False
     ):
         """Quick scan dates in a simulation restart file.
 
