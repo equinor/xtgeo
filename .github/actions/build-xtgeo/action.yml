@@ -17,7 +17,6 @@ runs:
     - name: Upgrade pip
       run: python -m pip install pip==21.3.1
       shell: bash
-      if: ${{ inputs.os }} != windows-latest
 
     - name: install xtgeo
       run: pip install .
