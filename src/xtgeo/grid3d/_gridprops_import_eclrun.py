@@ -1,9 +1,9 @@
 from copy import deepcopy
 from typing import List, Tuple, Union
 
-from typing_extensions import Literal
-
 import xtgeo
+from typing_extensions import Literal
+from xtgeo.common.constants import MAXKEYWORDS
 
 from . import _grid3d_utils as utils
 from ._find_gridprop_in_eclrun import (
@@ -71,6 +71,7 @@ def import_ecl_init_gridproperties(
     names: Union[List[str], Literal["all"]],
     grid,
     strict=True,
+    maxkeys: int = MAXKEYWORDS,
 ) -> List[GridProperty]:
     """Imports list of properties from an init file.
 
@@ -83,6 +84,7 @@ def import_ecl_init_gridproperties(
         names: List of names to fetch, can also be "all" to fetch all properties.
         grid: The grid used by the simulator to produce the restart file.
         strict: If strict=True, will raise error if key is not found.
+        maxkeys: Maximum number of keywords allocated
     Returns:
         List of GridProperty objects fetched from the init file.
     """
@@ -97,7 +99,11 @@ def import_ecl_init_gridproperties(
 
     # scan valid keywords
     kwlist = utils.scan_keywords(
-        pfile, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+        pfile,
+        fformat="xecl",
+        dataframe=True,
+        dates=True,
+        maxkeys=maxkeys,
     )
 
     validnames = list()
@@ -149,6 +155,7 @@ def import_ecl_restart_gridproperties(
     grid,
     strict: Tuple[bool, bool],
     namestyle: Literal[0, 1],
+    maxkeys: int = MAXKEYWORDS,
 ) -> List[GridProperty]:
     """Imports list of gridproperties from a restart file.
 
@@ -173,6 +180,7 @@ def import_ecl_restart_gridproperties(
             are missing an exception will be raised
         namestyle : 0 (default) for style SWAT_20110223,
             1 for SWAT--2011_02_23 (applies to restart only)
+        maxkeys: Maximum number of keywords allocated
     Returns:
         List of GridProperty objects fetched from the restart file.
     """
@@ -188,7 +196,11 @@ def import_ecl_restart_gridproperties(
 
     # scan valid keywords with dates
     kwlist = utils.scan_keywords(
-        pfile, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+        pfile,
+        fformat="xecl",
+        dataframe=True,
+        dates=True,
+        maxkeys=maxkeys,
     )
 
     validnamedatepairs, validdates = _process_valid_namesdates(kwlist, grid)

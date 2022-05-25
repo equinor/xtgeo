@@ -80,6 +80,10 @@
 #define UNDEF_ECLINT 0
 #define UNDEF_ECLFLOAT 0
 
+/* eclipse and roff binary read max keywords and dates */
+#define MAXKEYWORDS 1000000
+#define MAXDATES 1000
+
 /*
  *======================================================================================
  * GENERAL XTGEO
@@ -1181,8 +1185,9 @@ grd3d_calc_xyz(int nx,
 
 long
 grd3d_scan_roffbinary(FILE *fc,
-                      int *swig_int_out_p1,    // *swap,
-                      char *swig_bnd_char_1m,  // *tags,
+                      int *swig_int_out_p1,       // *swap,
+                      char *swig_out_char_msize,  // tagletters
+                      int nswig_out_char_msize,
                       int *rectypes,
                       long *reclengths,
                       long *recstarts,
@@ -1209,11 +1214,14 @@ grd3d_conv_roxapi_grid(int nx,
 
 long
 grd3d_scan_eclbinary(FILE *fc,
-                     char *swig_bnd_char_1m,  // *keywords,
-                     int *rectype,
-                     long *reclengths,
-                     long *recstarts,
-                     long maxkw);
+                     char *swig_out_char_msize,  // keywords (as one long string)
+                     int nswig_out_char_msize,
+                     int *swig_np_int_aout_v1,  // rectype
+                     long n_swig_np_int_aout_v1,
+                     long *swig_np_lng_aout_v1,  // reclengths
+                     long n_swig_np_lng_aout_v1,
+                     long *swig_np_lng_aout_v2,  // recstarts
+                     long n_swig_np_lng_aout_v2);
 
 int
 grd3d_read_eclrecord(FILE *fc,

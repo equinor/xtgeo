@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 
 """Some grid utilities, file scanning etc (methods with no class)"""
-
-
 import pandas as pd
-
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import XTGeoCLibError
+from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False):
+def scan_keywords(
+    pfile, fformat="xecl", maxkeys=MAXKEYWORDS, dataframe=False, dates=False
+):
     """Quick scan of keywords in Eclipse binary restart/init/... file,
     or ROFF binary files.
 
@@ -37,7 +38,7 @@ def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=
     return data
 
 
-def scan_dates(pfile, maxdates=1000, dataframe=False):
+def scan_dates(pfile, maxdates=MAXDATES, dataframe=False):
     """Quick scan dates in a simulation restart file.
 
     Cf. grid_properties.py description
@@ -77,52 +78,45 @@ def scan_dates(pfile, maxdates=1000, dataframe=False):
     return zdates
 
 
-def _scan_ecl_keywords(pfile, maxkeys=100000, dataframe=False):
-
-    ultramax = int(1000000 / 9)  # cf *swig_bnd_char_1m in cxtgeo.i
-    if maxkeys > ultramax:
-        raise ValueError("maxkeys value is too large, must be < {}".format(ultramax))
-
-    rectypes = _cxtgeo.new_intarray(maxkeys)
-    reclens = _cxtgeo.new_longarray(maxkeys)
-    recstarts = _cxtgeo.new_longarray(maxkeys)
-
+def _scan_ecl_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
+    logger.info("Scanning ECL keywords...")
     cfhandle = pfile.get_cfhandle()
 
-    nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(
-        cfhandle, rectypes, reclens, recstarts, maxkeys
+    # maxkeys*10 is used for 1D kewords; 10 => max 8 letters in eclipse +
+    # "|" + "extra buffer"
+    nkeys, keywords, rectypes, reclens, recstarts = _cxtgeo.grd3d_scan_eclbinary(
+        cfhandle, maxkeys * 10, maxkeys, maxkeys, maxkeys
     )
 
-    if nkeys < 0:
-        raise ValueError(f"scanning ecl keywords exited with error code {nkeys}")
-
     pfile.cfclose()
+
+    if nkeys == -1:
+        raise XTGeoCLibError(f"scanning ecl keywords exited with error code {nkeys}")
+
+    if nkeys == -2:
+        raise XTGeoCLibError(
+            f"Number of keywords seems greater than {maxkeys} which is currently a "
+            "hard limit"
+        )
 
     keywords = keywords.replace(" ", "")
     keywords = keywords.split("|")
 
     # record types translation (cf: grd3d_scan_eclbinary.c in cxtgeo)
     rct = {
-        "1": "INTE",
-        "2": "REAL",
-        "3": "DOUB",
-        "4": "CHAR",
-        "5": "LOGI",
-        "6": "MESS",
-        "-1": "????",
+        1: "INTE",
+        2: "REAL",
+        3: "DOUB",
+        4: "CHAR",
+        5: "LOGI",
+        6: "MESS",
+        -1: "????",
     }
 
-    rc = []
-    rl = []
-    rs = []
-    for i in range(nkeys):
-        rc.append(rct[str(_cxtgeo.intarray_getitem(rectypes, i))])
-        rl.append(_cxtgeo.longarray_getitem(reclens, i))
-        rs.append(_cxtgeo.longarray_getitem(recstarts, i))
-
-    _cxtgeo.delete_intarray(rectypes)
-    _cxtgeo.delete_longarray(reclens)
-    _cxtgeo.delete_longarray(recstarts)
+    rectypes = rectypes.tolist()
+    rc = [rct[key] for nn, key in enumerate(rectypes) if nn < nkeys]
+    rl = reclens[0:nkeys].tolist()
+    rs = recstarts[0:nkeys].tolist()
 
     result = list(zip(keywords, rc, rl, rs))
 
@@ -134,13 +128,13 @@ def _scan_ecl_keywords(pfile, maxkeys=100000, dataframe=False):
     return result
 
 
-def _scan_ecl_keywords_w_dates(pfile, maxkeys=100000, dataframe=False):
+def _scan_ecl_keywords_w_dates(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
     """Add a date column to the keyword"""
 
     logger.info("Scan keywords with dates...")
     xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
 
-    xdates = scan_dates(pfile, maxdates=maxkeys, dataframe=False)
+    xdates = scan_dates(pfile, maxdates=MAXDATES, dataframe=False)
 
     result = []
     # now merge these two:
@@ -163,11 +157,7 @@ def _scan_ecl_keywords_w_dates(pfile, maxkeys=100000, dataframe=False):
     return result
 
 
-def _scan_roff_keywords(pfile, maxkeys=100000, dataframe=False):
-
-    ultramax = int(1000000 / 9)  # cf *swig_bnd_char_1m in cxtgeo.i
-    if maxkeys > ultramax:
-        raise ValueError("maxkeys value is too large, must be < {}".format(ultramax))
+def _scan_roff_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
 
     rectypes = _cxtgeo.new_intarray(maxkeys)
     reclens = _cxtgeo.new_longarray(maxkeys)
@@ -175,8 +165,9 @@ def _scan_roff_keywords(pfile, maxkeys=100000, dataframe=False):
 
     cfhandle = pfile.get_cfhandle()
 
+    # maxkeys*32 is just to give sufficient allocated character space
     nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
-        cfhandle, rectypes, reclens, recstarts, maxkeys
+        cfhandle, maxkeys * 32, rectypes, reclens, recstarts, maxkeys
     )
 
     pfile.cfclose()

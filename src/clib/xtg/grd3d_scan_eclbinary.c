@@ -33,12 +33,14 @@
  * ARGUMENTS:
  *    fc              i     Filehandle (stream) to read from
  *    keywords        o     A *char where the keywords are separated by a |
+ *    nkey.._x_let..  i     No. of kwords * letters (10 letters per keyword) > SWIG
  *    rectypes        o     An array with record types: 1 = INT, 2 = FLOAT,
- *                          3 = DOUBLE, 4 = CHAR (8), ...
+ *                             3 = DOUBLE, 4 = CHAR (8), ...
+ *    nrectypes       i     For SWIG interface
  *    reclengths      o     An array with record lengths (no of elements)
+ *    nreclengths     i     For SWIG interface
  *    recstarts       o     An array with record starts (in bytes)
- *    maxkw           i     Max number of kwords (allocated length of arrays)
- *    debug           i     Debug level
+ *    nrecstarts      i     For SWIG allocation
  *
  * RETURNS:
  *    Function: Number of keywords read. If problems, a negative value
@@ -50,10 +52,10 @@
  *    cf. XTGeo LICENSE
  ***************************************************************************************
  */
-
 #include "libxtg.h"
 #include "libxtg_.h"
-
+#include "logger.h"
+#include <limits.h>
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * local function(s)
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -177,10 +179,13 @@ _scan_ecl_bin_record(FILE *fc,
 long
 grd3d_scan_eclbinary(FILE *fc,
                      char *keywords,
+                     int nkeywords_x_letters,
                      int *rectypes,
+                     long nrectypes,
                      long *reclengths,
+                     long nreclengths,
                      long *recstarts,
-                     long maxkw)
+                     long nrecstarts)
 {
 
     char cname[9] = "unset";
@@ -189,20 +194,28 @@ grd3d_scan_eclbinary(FILE *fc,
     const int FAIL = -99;
     const int _FAIL = -88;
 
+    if (nkeywords_x_letters > INT_MAX) {
+        throw_exception("Unrecoverable error, number of requested keyword letters "
+                        "exceeds system limit (grd3d_scan_eclbinary)");
+        return -3;
+    }
+
     npos1 = 0;
-
     ios = 0;
-
     keywords[0] = '\0';
-
     rewind(fc);
+
+    if (nkeywords_x_letters > INT_MAX) {
+        throw_exception("Unreverable error, number of requested keyword letters "
+                        "exceeds system limit (grd3d_scan_eclbinary)");
+        return -3;
+    }
 
     while (ios == 0) {
         ios = _scan_ecl_bin_record(fc, cname, &cntype, &rnlen, npos1, &npos2);
 
         if (ios != 0)
             break;
-
         strcat(keywords, cname);
         strcat(keywords, "|");
 
@@ -210,7 +223,8 @@ grd3d_scan_eclbinary(FILE *fc,
         rectypes[i] = cntype;
         recstarts[i] = npos1;
 
-        if (i >= maxkw) {
+        if (i >= nreclengths) {
+            /* treat this return code in the Python client */
             return -2;
         }
 
@@ -219,6 +233,7 @@ grd3d_scan_eclbinary(FILE *fc,
     }
 
     if (ios == FAIL || ios == _FAIL) {
+        throw_exception("Error in reading Eclipse file (grd_scan_eclbinary)");
         return -1;
     }
 
