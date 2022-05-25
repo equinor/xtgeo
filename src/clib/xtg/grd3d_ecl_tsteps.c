@@ -22,10 +22,10 @@
  *    cf. XTGeo LICENSE
  ***************************************************************************************
  */
-
 #include "libxtg.h"
 #include "libxtg_.h"
 #include "logger.h"
+#include <stdbool.h>
 
 /* since windows is missing strsep() */
 char *
@@ -80,7 +80,10 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
     tofree = keywords;
     ic = 0;
     nc = 0;
-    //    while ((token = strsep(&keywords, "|")) != NULL) {
+
+    // with LGR's, multiple INTEHEAD may occurs; need here to ensure first
+    // INTEHEAD after SEQNUM
+    bool look_for_intehead = false;
     while ((token = _mystrsep(&keywords, "|")) != NULL) {
 
         if (strcmp(token, "SEQNUM  ") == 0) {
@@ -94,9 +97,10 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
             seqnums[nc] = intrecord[0];
 
             free(intrecord);
+            look_for_intehead = true;
         }
 
-        if (strcmp(token, "INTEHEAD") == 0) {
+        if (strcmp(token, "INTEHEAD") == 0 && look_for_intehead == true) {
             keytype = 1;
             rlen = reclengths[ic];
             rstart = recstarts[ic];
@@ -121,6 +125,7 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
                 throw_exception("Fail in dimensions in: grd3d_ecl_tsteps, nc >= nmax");
                 return EXIT_FAILURE;
             }
+            look_for_intehead = false;
         }
 
         ic++;
