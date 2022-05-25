@@ -1,5 +1,5 @@
 deprecation
-numpy>=1.13
+numpy>=1.20
 shapely>=1.6.2
 matplotlib>=1.5
 scipy>=0.17
