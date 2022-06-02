@@ -36,7 +36,7 @@ from ._ecl_grid import (
     MapAxes,
     Units,
 )
-from ._grdecl_format import open_grdecl
+from ._grdecl_format import IGNORE_ALL, open_grdecl
 
 
 @dataclass
@@ -288,7 +288,8 @@ class GrdeclGrid(EclGrid):
             keywords=["MAPAXES", "MAPUNITS", "GRIDUNIT", "SPECGRID", "GDORIENT"],
             simple_keywords=["COORD", "ZCORN", "ACTNUM"],
             max_len=8,
-            ignore=["ECHO", "NOECHO"],
+            ignore=IGNORE_ALL,
+            strict=False,
         ) as keyword_generator:
             for kw, values in keyword_generator:
                 if len(results) == len(keyword_factories):

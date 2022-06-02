@@ -349,3 +349,25 @@ def test_grdecl_ascii_layout(tmp_path):
     gm2 = newgrd.get_geometrics(return_dict=True)
     assert gm2["avg_dx"] == pytest.approx(gm1["avg_dx"], rel=0.01)
     assert gm2["avg_dz"] == pytest.approx(gm1["avg_dz"], rel=0.01)
+
+
+def test_grdecl_ascii_mixed_content(tmp_path):
+    """Test grdecl files with a combination of grid and 'random' properties."""
+
+    grd = xtgeo.create_box_grid((3, 5, 2))
+    gfile = tmp_path / "xsome.grdecl"
+    grd.to_file(gfile, fformat="grdecl")
+
+    prop1 = xtgeo.GridProperty(grd, values=1.0, name="xsome")
+    prop1.to_file(gfile, append=True, fformat="grdecl")
+
+    prop2 = xtgeo.GridProperty(grd, values=2.0, name="a_quite_long_name")
+    prop2.to_file(gfile, append=True, fformat="grdecl")
+
+    grd2 = xtgeo.grid_from_file(gfile)
+
+    np.testing.assert_array_almost_equal(grd2._zcornsv, grd._zcornsv, decimal=5)
+    np.testing.assert_array_almost_equal(grd2._coordsv, grd._coordsv, decimal=5)
+
+    prop = xtgeo.gridproperty_from_file(gfile, name="a_quite_long_name", grid=grd2)
+    assert prop.values.mean() == pytest.approx(2.0)
