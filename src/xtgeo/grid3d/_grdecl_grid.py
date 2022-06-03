@@ -287,7 +287,7 @@ class GrdeclGrid(EclGrid):
             filename,
             keywords=["MAPAXES", "MAPUNITS", "GRIDUNIT", "SPECGRID", "GDORIENT"],
             simple_keywords=["COORD", "ZCORN", "ACTNUM"],
-            max_len=8,
+            max_len=None,
             ignore=IGNORE_ALL,
             strict=False,
         ) as keyword_generator:
