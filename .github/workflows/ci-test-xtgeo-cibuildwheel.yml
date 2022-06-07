@@ -39,6 +39,7 @@ jobs:
       # requirements (notably h5py) in the machine setup. But all tests w/ req. works in general
       # testing; cf. test.yml
       CIBW_TEST_SKIP: "cp310*linux* cp310*macos*"
+      CIBW_BEFORE_BUILD: python -m pip install "pip<=22.0.4"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -48,7 +49,6 @@ jobs:
 
       - name: Install cibuildwheel
         run: >
-          python -m pip install pip -U &&
           python -m pip install wheel &&
           python -m pip install cibuildwheel
       - name: Run cibuildwheel
