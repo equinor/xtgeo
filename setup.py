@@ -2,12 +2,6 @@
 """Setup for XTGeo - subsurface reservoir tool for maps, 3D grids etc."""
 import os
 import sys
-import pip
-
-MINIMUMPIP = 20
-if int(pip.__version__.split(".")[0]) < MINIMUMPIP:
-    print("Too old pip: ", pip.__version__)
-    print("Need at least version ", MINIMUMPIP)
 
 try:
     import setuptools
@@ -25,7 +19,6 @@ except ImportError:
     raise
 
 from scripts import setup_utilities as setuputils
-
 
 CMD = sys.argv[1]
 
