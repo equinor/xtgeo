@@ -30,7 +30,7 @@ exclude = '''
 # For cmake, cmake >= 3.6 is tested to be OK actually but versions are linked to pip versions and
 [build-system]
 requires = [
-  "pip>=19.1.1",
+  "pip>=19.1.1,<=22.0.4",
   "setuptools>=30.3.0",
   "scikit-build",
   'cmake==3.13.3; python_version < "3.7" and platform_system == "Linux"',
