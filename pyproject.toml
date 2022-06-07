@@ -32,7 +32,6 @@ exclude = '''
 requires = [
   "pip>=19.1.1",
   "setuptools>=30.3.0",
-  "wheel",
   "scikit-build",
   'cmake==3.13.3; python_version < "3.7" and platform_system == "Linux"',
   'cmake==3.15.3; python_version >= "3.7" and platform_system == "Linux"',
@@ -43,7 +42,7 @@ requires = [
   'numpy==1.19.2; python_version == "3.8"',
   'numpy>=1.19; python_version == "3.7"',
   'numpy>=1.19; python_version >= "3.9"',
-  'Sphinx<4.0', # Due to sphinx-toolbox
+  'Sphinx<4.0',                                                            # Due to sphinx-toolbox
   'sphinx-rtd-theme',
   'sphinx-toolbox',
   'autoclasstoc',
