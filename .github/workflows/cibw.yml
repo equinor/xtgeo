@@ -101,6 +101,7 @@ jobs:
 
     env:
       CIBW_BEFORE_ALL: python -m pip install "pip<=22.0.4"
+      CIBW_BEFORE_BUILD: python -m pip install "pip<=22.0.4"
       CIBW_BEFORE_TEST: >
         pushd {project} &&
         pip install "pip<=22.0.4" &&
