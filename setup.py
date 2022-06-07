@@ -2,6 +2,7 @@
 """Setup for XTGeo - subsurface reservoir tool for maps, 3D grids etc."""
 import os
 import sys
+
 import pip
 
 MINIMUMPIP = 20
@@ -26,13 +27,10 @@ except ImportError:
 
 from scripts import setup_utilities as setuputils
 
-
 CMD = sys.argv[1]
 
 README = setuputils.readmestuff("README.md")
 HISTORY = setuputils.readmestuff("HISTORY.md")
-
-setuputils.check_swig()  # Detect if swig is present and if case not, try a tmp install
 
 REQUIREMENTS = setuputils.parse_requirements("requirements/requirements.txt")
 
