@@ -21,3 +21,5 @@ UNDEF_MAP_IRAPA = 9999900.0000
 
 MAXKEYWORDS = cx.MAXKEYWORDS  # maximum keywords for ECL and ROFF scanning
 MAXDATES = cx.MAXDATES  # maximum keywords for ECL scanning
+
+DUMMY = 9999
