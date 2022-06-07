@@ -123,22 +123,24 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
 
-      - name: Install cibuildwheel
-        run: >
-          python -m pip install 'pip<=22.0.4' &&
-          python -m pip install wheel &&
-          python -m pip install cibuildwheel
-      - name: Build wheels and test python < 3.9
-        if: matrix.cibw_python != 'cp39'
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-      - name: Build wheels and test python 3.9
-        if: matrix.cibw_python == 'cp39'
-        # note tests are a bit restricted due to missing pytables wheel
-        env:
-          CIBW_TEST_COMMAND: >
-            pushd {project} &&
-            pytest tests --disable-warnings --ignore tests/test_well
-            --ignore-glob="*forks.py" -x
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.6.1
+      #         - name: Install cibuildwheel
+      #   run: >
+      #     python -m pip install 'pip<=22.0.4' &&
+      #     python -m pip install wheel &&
+      #     python -m pip install cibuildwheel
+      # - name: Build wheels and test python < 3.9
+      #   if: matrix.cibw_python != 'cp39'
+      #   run: |
+      #     python -m cibuildwheel --output-dir wheelhouse
+      # - name: Build wheels and test python 3.9
+      #   if: matrix.cibw_python == 'cp39'
+      #   # note tests are a bit restricted due to missing pytables wheel
+      #   env:
+      #     CIBW_TEST_COMMAND: >
+      #       pushd {project} &&
+      #       pytest tests --disable-warnings --ignore tests/test_well
+      #       --ignore-glob="*forks.py" -x
+      #   run: |
+      #     python -m cibuildwheel --output-dir wheelhouse
