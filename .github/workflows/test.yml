@@ -1,10 +1,10 @@
 name: Tests
 
 on:
-  push:
-    branches: [master, "*postfix"]
+  # push:
+  #   branches: [master, "*postfix"]
   pull_request:
-    branches: [master]
+    branches: [dummy]
 
 jobs:
   fast:

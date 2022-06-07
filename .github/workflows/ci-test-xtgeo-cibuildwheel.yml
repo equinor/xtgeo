@@ -1,8 +1,8 @@
 name: cibuildwheel
 
 on:
-  pull_request:
-    branches: [master, "*postfix"]
+  # pull_request:
+  #   branches: [master, "*postfix"]
   release:
     types: [created]
 
