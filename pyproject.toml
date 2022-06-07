@@ -26,11 +26,10 @@ exclude = '''
 # numpy version scheme to fulfill Roxar API compatibility:
 # RMS 11.* 12.0.*  --> numpy == 1.13.3 with python 3.6
 # RMS 12.1.*  -->  numpy == 1.19.2 with python 3.8
-#
-# For cmake, cmake >= 3.6 is tested to be OK actually but versions are linked to pip versions and
+
 [build-system]
 requires = [
-  "pip>=19.1.1",
+  "pip>=20",
   "setuptools>=30.3.0",
   "wheel",
   "scikit-build",
@@ -43,7 +42,7 @@ requires = [
   'numpy==1.19.2; python_version == "3.8"',
   'numpy>=1.19; python_version == "3.7"',
   'numpy>=1.19; python_version >= "3.9"',
-  'Sphinx<4.0', # Due to sphinx-toolbox
+  'Sphinx<4.0',
   'sphinx-rtd-theme',
   'sphinx-toolbox',
   'autoclasstoc',
