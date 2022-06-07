@@ -29,13 +29,11 @@ target_compile_options(xtg PRIVATE ${XTGFLAGS})
 # Find Python and SWIG
 # ======================================================================================
 
-LIST(APPEND CMAKE_PROGRAM_PATH "${PROJECT_SOURCE_DIR}/scripts/_tmp_swig/bin")
-
-# in case SWIG is still missing for cryptical reason (this is a last workaround)
-if ((DEFINED ENV{SWIG_INSTALL_KOMODO}) AND (EXISTS "${PROJECT_SOURCE_DIR}/.swigtmp"))
-  set(SWIG_EXECUTABLE "/project/res/x86_64_RH_6/bin/swig")
-  message(STATUS "Using Swig from /project/res")
-  file(REMOVE "${PROJECT_SOURCE_DIR}/.swigtmp")
+# in case required SWIG is missing or too old and we are within Equinor, need a path to
+# a SWIG version that works (RHEL7 have SWIG 2 by default which is too old)
+if("$ENV{HOSTNAME}" MATCHES "statoil" AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+  LIST(APPEND CMAKE_PROGRAM_PATH "/prog/res/opt/rhel7/swig_4.0.2/bin")
+  message(STATUS "Using Swig from /prog/res")
 endif()
 
 # These policies are related to SWIG python libraries naming

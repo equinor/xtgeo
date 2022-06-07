@@ -10,7 +10,8 @@ from distutils.spawn import find_executable
 from distutils.version import LooseVersion
 from glob import glob
 from os.path import dirname, exists
-from shutil import rmtree
+from pathlib import Path
+from shutil import rmtree, which
 
 from setuptools_scm import get_version
 from skbuild.command import set_build_base_mixin
@@ -133,56 +134,6 @@ def readmestuff(filename):
     except OSError:
         pass
     return response
-
-
-# ======================================================================================
-# Detect if swig is present (and if case not, do a tmp install on some platforms)
-# ======================================================================================
-
-SWIGMINIMUM = "3.0.1"
-
-
-def check_swig():
-    """Check if swig is installed; if not try a tmp install if linux."""
-
-    def swigok():
-        """Check swig version."""
-        if CMD == "clean":
-            return True
-        swigexe = find_executable("swig")
-        if not swigexe:
-            print("Cannot find swig in system")
-            return False
-        sout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")  # nosec
-        swigver = re.findall(r"SWIG Version ([0-9.]+)", sout)[0]
-        if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
-            print(
-                "OK, found swig in system, version is >= {} ({})".format(
-                    SWIGMINIMUM, swigexe
-                )
-            )
-            return True
-
-        print(
-            "Found swig in system but version is < {} ({})".format(SWIGMINIMUM, swigexe)
-        )
-        return False
-
-    if not swigok():
-        if "SWIG_INSTALL_KOMODO" in os.environ:
-            print("Hmm KOMODO setup but still cannot find swig... workaround required!")
-            with open(".swigtmp", "w") as tmpfile:
-                tmpfile.write("SWIG")
-
-        elif "Linux" in platform.system():
-            print("Installing swig from source (tmp workaround) ...")
-            print("It is strongly recommended that SWIG>=3 is installed permanent!")
-            subprocess.check_call(  # nosec
-                ["bash", "swig_install.sh"],
-                cwd="scripts",
-            )
-        else:
-            raise SystemExit("Cannot find valid swig install")
 
 
 # ======================================================================================
