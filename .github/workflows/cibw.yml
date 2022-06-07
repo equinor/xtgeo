@@ -103,6 +103,7 @@ jobs:
       # CIBW_BEFORE_ALL: choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
       CIBW_BEFORE_TEST: >
         pushd {project} &&
+        pip install "pip<=22.0.4" &&
         pip install -r requirements/requirements.txt &&
         pip install -r requirements/requirements_test.txt &&
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
