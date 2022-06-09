@@ -38,6 +38,7 @@ endif()
 
 # These policies are related to SWIG python libraries naming
 if (CMAKE_VERSION VERSION_GREATER 3.12)
+  cmake_policy(SET CMP0074 NEW)
   if (POLICY CMP0078)
     cmake_policy(SET CMP0078 OLD)
   endif()
