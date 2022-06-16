@@ -3,17 +3,16 @@
 
 import json
 from collections import OrderedDict
+from struct import unpack
 
+import h5py
 import numpy as np
 import numpy.ma as ma
-from struct import unpack
-import h5py
-
-from xtgeo.common.constants import UNDEF_MAP_IRAPB, UNDEF_MAP_IRAPA
 import xtgeo
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.surface._zmap_parser import parse_zmap
 
 xtg = XTGeoDialog()
@@ -331,9 +330,19 @@ def _import_ijxyz_tmpl(mfile, template):
         raise ValueError("Template is of wrong type: {}".format(type(template)))
 
     nxy = template.ncol * template.nrow
-    _, val = _cxtgeo.surf_import_ijxyz_tmpl(
+    ier, val = _cxtgeo.surf_import_ijxyz_tmpl(
         cfhandle, template.ilines, template.xlines, nxy, 0
     )
+
+    if ier == -1:
+        raise ValueError(
+            f"The file {mfile.name} and template map or cube has inconsistent "
+            "inline and/or xlines numbering. Try importing without template "
+            "and use e.g. resampling instead."
+        )
+
+    elif ier != 0:
+        raise RuntimeError(f"Unknown error when trying to import the IJXYZ based file!")
 
     val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 

@@ -114,8 +114,7 @@ surf_import_ijxyz_tmpl(FILE *fd,
         /* some sanity tests first */
         if (iline < ilines[0] || iline > ilines[nncol - 1] || xline < xlines[0] ||
             xline > xlines[nnrow - 1]) {
-            logger_error(LI, FI, FU, "ILINE or XLINE in file outside template ranges");
-            return -1;
+            return -1;  // handle this code as error in client
         }
 
         found = 0;
