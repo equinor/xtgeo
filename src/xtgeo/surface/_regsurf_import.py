@@ -342,7 +342,7 @@ def _import_ijxyz_tmpl(mfile, template):
         )
 
     elif ier != 0:
-        raise RuntimeError(f"Unknown error when trying to import the IJXYZ based file!")
+        raise RuntimeError("Unknown error when trying to import the IJXYZ based file!")
 
     val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
