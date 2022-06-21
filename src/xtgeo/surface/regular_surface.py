@@ -34,39 +34,37 @@ or::
 
 # pylint: disable=too-many-public-methods
 
-import sys
-import pathlib
-import io
-from typing import Tuple, Union, Optional, List
 import functools
-
-import numbers
-from copy import deepcopy
+import io
 import math
-from types import FunctionType
+import numbers
+import pathlib
+import sys
 import warnings
-
 from collections import OrderedDict
+from copy import deepcopy
+from types import FunctionType
+from typing import List, Optional, Tuple, Union
 
 import deprecation
 import numpy as np
 import numpy.ma as ma
-
 import pandas as pd
-
 import xtgeo
-from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 import xtgeo.common.sys as xtgeosys
+from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
-from . import _regsurf_import
-from . import _regsurf_export
-from . import _regsurf_cube
-from . import _regsurf_cube_window
-from . import _regsurf_grid3d
-from . import _regsurf_roxapi
-from . import _regsurf_gridding
-from . import _regsurf_oper
-from . import _regsurf_utils
+from . import (
+    _regsurf_cube,
+    _regsurf_cube_window,
+    _regsurf_export,
+    _regsurf_grid3d,
+    _regsurf_gridding,
+    _regsurf_import,
+    _regsurf_oper,
+    _regsurf_roxapi,
+    _regsurf_utils,
+)
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
