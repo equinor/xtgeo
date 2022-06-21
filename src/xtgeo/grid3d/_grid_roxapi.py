@@ -422,15 +422,7 @@ def _export_grid_cornerpoint_roxapi_v1(
     geom.set_defined_cells(self.get_actnum().values.astype(np.bool))
     grid.set_geometry(geom)
 
-    # this does not work as subgrid zonation is read only!! :-(
-    # indexer = grid.grid_indexer
-    # if self.subgrids is not None and len(self.subgrids) > 1:
-    #     subs = self.subgrids
-    #     for inum, sub in enumerate(subs.items()):
-    #         name, arr = sub
-    #         thesub = [subitem - 1 for subitem in arr]
-    #         indexer.zonation[inum] = thesub
-    #         # grid.zone_names.append(name)
+    _set_subgrids(self, rox, grid)
 
 
 def _export_grid_cornerpoint_roxapi_v2(
@@ -492,7 +484,37 @@ def _export_grid_cornerpoint_roxapi_v2(
 
     geom.set_defined_cells(self._actnumsv.astype(np.bool))
     grid.set_geometry(geom)
+    _set_subgrids(self, rox, grid)
+
     del scopy
+
+
+def _set_subgrids(self, rox, grid):
+    """Export the subgrid index (zones) to Roxar API.
+
+    From roxar API:
+        set_zonation(zone_dict)
+
+            zone_dict A dictionary with start-layer (zero based) and name for each zone.
+
+    """
+
+    if not self.subgrids:
+        return
+
+    if rox.version_required("1.6"):
+        subs = self.subgrids
+        roxar_subs = {}
+        for name, zrange in subs.items():
+            roxar_subs[int(zrange[0] - 1)] = name
+
+        grid.set_zonation(roxar_subs)
+
+    else:
+        xtg.warnuser(
+            "Implementation of subgrids is lacking in Roxar API for this "
+            "RMS version. Will continue to store in RMS but without subgrid index."
+        )
 
 
 def _export_grid_viaroff_roxapi(self, rox, gname, realisation):  # pragma: no cover
