@@ -15,6 +15,38 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # pylint: disable=protected-access
+VALID_STYPES = ["horizons", "zones", "clipboard", "general2d_data"]
+VALID_STYPES_EXPORT = VALID_STYPES + ["horizon_picks"]
+
+
+def _check_stypes_names_category(roxutils, stype, name, category, export=False):
+    """General check of some input values."""
+    stype = stype.lower()
+
+    valid_stypes = VALID_STYPES_EXPORT if export else VALID_STYPES
+
+    if stype not in valid_stypes:
+        raise ValueError(
+            f"Invalid stype value! For key <stype> the value {stype} is not supported, "
+            f"legal stype values are: {valid_stypes}"
+        )
+
+    if not name:
+        raise ValueError("The name is missing or empty.")
+
+    logger.info("The stype is: %s", stype)
+    if stype in ("horizons", "zones") and (name is None or not category):
+        raise ValueError(
+            "Need to spesify both name and category for horizons and zones"
+        )
+
+    # note: check of clipboard va Roxar API 1.2 is now removed as usage of
+    # such old API versions is obsolute.
+    if stype == "general2d_data" and not roxutils.version_required("1.6"):
+        raise NotImplementedError(
+            "API Support for general2d_data is missing in this RMS version"
+            f"(current API version is {roxutils.roxversion} - required is 1.6"
+        )
 
 
 def import_xyz_roxapi(
@@ -38,21 +70,15 @@ def import_xyz_roxapi(
 
     rox = RoxUtils(project, readonly=True)
 
-    if stype == "clipboard" and not rox.version_required("1.2"):
-        minimumrms = rox.rmsversion("1.2")
-        msg = (
-            "Not supported in this ROXAPI version. Points/polygons access "
-            "to clipboard requires RMS {}".format(minimumrms)
-        )
-        raise NotImplementedError(msg)
+    _check_stypes_names_category(rox, stype, name, category)
 
-    if attributes:
+    if attributes and not rox.version_required("1.6"):
         result = _roxapi_import_xyz_viafile(
             rox, name, category, stype, realisation, is_polygons
         )
     else:
         result = _roxapi_import_xyz(
-            rox, name, category, stype, realisation, is_polygons
+            rox, name, category, stype, realisation, is_polygons, attributes
         )
 
     rox.safe_close()
@@ -106,7 +132,7 @@ def _roxapi_import_xyz_viafile(
 
 
 def _roxapi_import_xyz(
-    rox, name, category, stype, realisation, is_polygons
+    rox, name, category, stype, realisation, is_polygons, attributes
 ):  # pragma: no cover
     """From RMS to XTGeo"""
     kwargs = {}
@@ -135,12 +161,22 @@ def _roxapi_import_xyz(
 
     values = _get_roxvalues(roxxyz, realisation=realisation)
 
-    kwargs["values"] = _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
+    dfr = _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
+
+    # handling attributes for points, from Roxar API version 1.6
+    if attributes and not is_polygons:
+        attr_names = roxxyz.get_attributes_names(realisation=realisation)
+        logger.info("XYZ attribute names are: %s", attr_names)
+        attr_dict = _get_rox_attrvalues(roxxyz, attr_names, realisation=realisation)
+        dfr, datatypes = _add_attributes_to_dataframe(dfr, attr_dict)
+        kwargs["attributes"] = datatypes
+
+    kwargs["values"] = dfr
     return kwargs
 
 
 def _roxapi_xyz_to_dataframe(roxxyz, is_polygons=False):  # pragma: no cover
-    """Tranforming some XYZ from ROXAPI to a Pandas dataframe."""
+    """Transforming some XYZ from ROXAPI to a Pandas dataframe."""
 
     # In ROXAPI, polygons/polylines are a list of numpies, while
     # points is just a numpy array. Hence a polyg* may be identified
@@ -170,31 +206,54 @@ def _roxapi_xyz_to_dataframe(roxxyz, is_polygons=False):  # pragma: no cover
     return dfr
 
 
+def _add_attributes_to_dataframe(dfr, attributes: dict):  # pragma: no cover
+    """Add attributes to dataframe (points only) for Roxar API ver 1.6+"""
+
+    logger.info("Attributes adding to dataframe...")
+    newdfr = dfr.copy()
+
+    datatypes = {}
+    for name, values in attributes.items():
+        dtype = str(values.dtype)
+        if "int" in dtype:
+            datatypes[name] = "int"
+            values = np.ma.filled(values, fill_value=xtgeo.UNDEF_INT)
+        elif "float" in dtype:
+            datatypes[name] = "float"
+            values = np.ma.filled(values, fill_value=xtgeo.UNDEF)
+        else:
+            datatypes[name] = "str"
+            values = np.ma.filled(values, fill_value="UNDEF")
+
+        newdfr[name] = values
+
+    return newdfr, datatypes
+
+
 def export_xyz_roxapi(
     self, project, name, category, stype, pfilter, realisation, attributes
 ):  # pragma: no cover
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
     rox = RoxUtils(project, readonly=False)
 
-    if stype == "clipboard" and not rox.version_required("1.2"):
-        minimumrms = rox.rmsversion("1.2")
-        msg = (
-            "Not supported in this ROXAPI version. Points/polygons access "
-            "to clipboard requires RMS {}".format(minimumrms)
-        )
-        raise NotImplementedError(msg)
+    _check_stypes_names_category(rox, stype, name, category, export=True)
 
     if stype == "horizon_picks":
         _roxapi_export_xyz_hpicks(
             self, rox, name, category, stype, realisation, attributes
         )
 
-    if attributes:
+    if attributes and not rox.version_required("1.6"):
         _roxapi_export_xyz_viafile(
             self, rox, name, category, stype, pfilter, realisation, attributes
         )
     else:
-        _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation)
+        _roxapi_export_xyz(
+            self, rox, name, category, stype, pfilter, realisation, attributes
+        )
+
+    if rox._roxexternal:
+        rox.project.save()
 
     rox.safe_close()
 
@@ -247,7 +306,7 @@ def _roxapi_export_xyz_viafile(
 
 
 def _roxapi_export_xyz(
-    self, rox, name, category, stype, pfilter, realisation
+    self, rox, name, category, stype, pfilter, realisation, attributes
 ):  # pragma: no cover
 
     logger.warning("Realisation %s not in use", realisation)
@@ -284,10 +343,41 @@ def _roxapi_export_xyz(
     else:
         xyz = df
         arrxyz = np.stack([xyz[self.xname], xyz[self.yname], xyz[self.zname]], axis=1)
-    try:
-        roxxyz.set_values(arrxyz)
-    except KeyError as kwe:
-        logger.error(kwe)
+
+    roxxyz.set_values(arrxyz)
+
+    if attributes and isinstance(self, xtgeo.Points) and len(self.dataframe) > 3:
+        dfr = _cast_dataframe_attrs_to_numeric(self.dataframe)
+        for name in dfr[3:]:
+            values = dfr[name].values
+            if "float" in str(values.dtype):
+                values = np.ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
+            elif "int" in str(values.dtype):
+                values = np.ma.masked_greater(values, xtgeo.UNDEF_INT_LIMIT)
+            else:
+                # masking has no meaning for strings?
+                values = values.astype(str)
+                values = np.char.replace(values, "UNDEF", "")
+
+            logger.info("Store Point attribute %s to Roxar API", name)
+            roxxyz.set_attribute_values(name, values)
+
+
+def _cast_dataframe_attrs_to_numeric(dfr):
+    """Cast the attribute dataframe columns to numerical datatypes if possible.
+
+    In some case, attribute columns get dtype 'object' while they clearly
+    represents a numerical property (int or float). Here the pandas to_numerics()
+    function is applied per attribute column, and will do a conversion if possible;
+    otherwise the 'object' dtype will be preserved.
+    """
+    if len(dfr) <= 3:
+        return dfr
+
+    newdfr = dfr.copy()
+    for name in dfr.columns[3:]:
+        newdfr[name] = pd.to_numeric(dfr[name], errors="ignore")
+    return newdfr
 
 
 def _check_category_etc(
@@ -308,7 +398,7 @@ def _check_category_etc(
             logger.error("Cannot access category in stype=%s: %s", stype, category)
             return False
 
-    elif stype == "clipboard" and mode == "get":
+    elif stype in ("clipboard", "general2d_data") and mode == "get":
         folders = None
         if category:
             if isinstance(category, list):
@@ -325,7 +415,7 @@ def _check_category_etc(
                     "Cannot parse category: {}, see documentation!".format(category)
                 )
             try:
-                roxxyz = proj.clipboard.folders[folders]
+                roxxyz = getattr(proj, stype).folders[folders]
             except KeyError as keyerr:
                 logger.error(
                     "Cannot access clipboards folder (not existing?): %s", keyerr
@@ -337,10 +427,10 @@ def _check_category_etc(
         if name not in roxxyz.keys():
             raise ValueError("Name {} is not within Clipboard...".format(name))
 
-    elif stype == "clipboard" and mode == "set":
+    elif stype in ("clipboard", "general2d_data") and mode == "set":
         logger.info("No need to check clipboard while setting data")
     else:
-        raise ValueError("Invalid stype")
+        raise ValueError(f"Invalid stype: {stype}")
 
     return True
 
@@ -353,9 +443,9 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
         roxxyz = proj.zones[name][category]
     elif stype == "faults":
         roxxyz = proj.faults[name][category]
-    elif stype == "clipboard":
+    elif stype in ["clipboard", "general2d_data"]:
         folders = None
-        roxxyz = proj.clipboard
+        roxxyz = getattr(proj, stype)
         if category:
             if isinstance(category, list):
                 folders = category
@@ -372,7 +462,7 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
                 )
 
             if mode == "get":
-                roxxyz = proj.clipboard.folders[folders]
+                roxxyz = roxxyz.folders[folders]
 
         if mode == "get":
             roxxyz = roxxyz[name]
@@ -381,9 +471,9 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
 
             # clipboard folders will be created if not present, and overwritten else
             if isinstance(self, xtgeo.Polygons):
-                roxxyz = proj.clipboard.create_polylines(name, folders)
+                roxxyz = roxxyz.create_polylines(name, folders)
             else:
-                roxxyz = proj.clipboard.create_points(name, folders)
+                roxxyz = roxxyz.create_points(name, folders)
 
     else:
         raise ValueError("Unsupported stype: {}".format(stype))
@@ -402,9 +492,9 @@ def _get_roxxyz(
         rox_xyz = rox.project.zones[name][category]
     elif stype == "faults":
         rox_xyz = rox.project.faults[name][category]
-    elif stype == "clipboard":
+    elif stype in ["clipboard", "general2d_data"]:
         folders = None
-        rox_xyz = rox.project.clipboard
+        rox_xyz = getattr(rox.project, stype)
         if category:
             if isinstance(category, list):
                 folders = category
@@ -422,7 +512,7 @@ def _get_roxxyz(
                 )
 
             if mode == "get":
-                rox_xyz = rox.project.clipboard.folders[folders]
+                rox_xyz = rox_xyz.folders[folders]
 
         if mode == "get":
             rox_xyz = rox_xyz[name]
@@ -430,18 +520,18 @@ def _get_roxxyz(
         elif mode == "set":
             # clipboard folders will be created if not present, and overwritten else
             if is_polygons:
-                rox_xyz = rox.project.clipboard.create_polylines(name, folders)
+                rox_xyz = rox_xyz.create_polylines(name, folders)
             else:
-                rox_xyz = rox.project.clipboard.create_points(name, folders)
+                rox_xyz = rox_xyz.create_points(name, folders)
 
     else:
-        raise TypeError(f"Unsupported stype: {stype}")
+        raise TypeError(f"Unsupported stype: {stype}")  # shall never get this far...
 
     return rox_xyz
 
 
 def _get_roxvalues(rox_xyz, realisation=0):  # pragma: no cover
-    """Return the values from the Roxar API, either numpy (Points) or list(Polygons)."""
+    """Return primary values from the Roxar API, numpy (Points) or list (Polygons)."""
     try:
         roxitem = rox_xyz.get_values(realisation)
         logger.info(roxitem)
@@ -449,3 +539,14 @@ def _get_roxvalues(rox_xyz, realisation=0):  # pragma: no cover
         logger.error(kwe)
 
     return roxitem
+
+
+def _get_rox_attrvalues(rox_xyz, attrnames, realisation=0) -> dict:  # pragma: no cover
+    """Return attribute values from the Roxar API, numpy (Points) or list (Polygons)."""
+
+    roxitems = {}
+    for attrname in attrnames:
+        values = rox_xyz.get_attribute_values(attrname, realisation=realisation)
+        roxitems[attrname] = values
+
+    return roxitems

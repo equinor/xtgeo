@@ -111,8 +111,12 @@ def surface_from_roxar(project, name, category, stype="horizons", realisation=0)
         project (str or special): Name of project (as folder) if
             outside RMS, og just use the magic project word if within RMS.
         name (str): Name of surface/map
-        category (str): For horizons/zones or clipboard: for example 'DS_extracted'
-        stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
+        category (str): For horizons/zones or clipboard/general2d_data:
+            for example 'DS_extracted'. For clipboard/general2d_data this can
+            be empty or None, or use '/' for multiple folder levels (e.g. 'fld/subfld').
+            For 'trends', the category is not applied.
+        stype (str): RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+            'general2d_data' or 'trends'
         realisation (int): Realisation number, default is 0
 
     Example::
@@ -120,6 +124,14 @@ def surface_from_roxar(project, name, category, stype="horizons", realisation=0)
         # inside RMS:
         import xtgeo
         mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
+
+    Note::
+
+        When dealing with surfaces to and from ``stype="trends"``, the surface must
+        exist in advance, i.e. the Roxar API do not allow creating new surfaces.
+        Actually trends are read only, but a workaround using ``load()`` in Roxar
+        API makes it possible to overwrite existing surface trends. In addition,
+        ``realisation`` is not applied in trends.
 
     """
 
@@ -1320,19 +1332,12 @@ class RegularSurface:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of surface/map
-            category (str): For horizons/zones or clipboard: for example 'DS_extracted'
+            category (str): For horizons/zones or clipboard/general2d_data: for
+                example 'DS_extracted'
             stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
             realisation (int): Realisation number, default is 0
 
         """
-        stype = stype.lower()
-        valid_stypes = ["horizons", "zones", "clipboard"]
-
-        if stype not in valid_stypes:
-            raise ValueError(
-                "Invalid stype, only {} stypes is supported.".format(valid_stypes)
-            )
-
         kwargs = _regsurf_roxapi.import_horizon_roxapi(
             project, name, category, stype, realisation
         )
@@ -1371,8 +1376,10 @@ class RegularSurface:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of surface/map
-            category (str): For horizons/zones or clipboard: for example 'DS_extracted'
-            stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
+            category (str): For horizons/zones or clipboard/general2d_data: for
+                example 'DS_extracted'
+            stype (str): RMS folder type, 'horizons' (default), 'zones', 'clipboard'
+                or 'general2d_data'
             realisation (int): Realisation number, default is 0
 
         Returns:
@@ -1390,13 +1397,6 @@ class RegularSurface:
 
 
         """
-        valid_stypes = ["horizons", "zones", "clipboard"]
-
-        if stype.lower() not in valid_stypes:
-            raise ValueError(
-                "Invalid stype, only {} stypes is supported.".format(valid_stypes)
-            )
-
         kwargs = _regsurf_roxapi.import_horizon_roxapi(
             project, name, category, stype, realisation
         )
@@ -1425,8 +1425,13 @@ class RegularSurface:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of surface/map
-            category (str): For horizons/zones only: e.g. 'DS_extracted'.
-            stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
+            category (str): Required for horizons/zones: e.g. 'DS_extracted'. For
+                clipboard/general2d_data is reperesent the folder(s), where "" or None
+                means no folder, while e.g. "myfolder/subfolder" means that folders
+                myfolder/subfolder will be created if not already present. For
+                stype = 'trends', the category will not be applied
+            stype (str): RMS folder type, 'horizons' (default), 'zones', 'clipboard'
+                'general2d_data', 'trends'
             realisation (int): Realisation number, default is 0
 
         Raises:
@@ -1447,17 +1452,19 @@ class RegularSurface:
               # store in project
               topupperreek.to_roxar(project, 'TopUpperReek', 'DS_something')
 
+        Note::
+
+            When dealing with surfaces to and from ``stype="trends"``, the surface must
+            exist in advance, i.e. the Roxar API do not allow creating new surfaces.
+            Actually trends are read only, but a workaround using ``load()`` in Roxar
+            API makes it possible to overwrite existing surface trends. In addition,
+            ``realisation`` is not applied in trends.
+
+
         .. versionadded:: 2.1 clipboard support
+        .. versionadded:: 2.19 general2d_data and trends support
 
         """
-        stype = stype.lower()
-        valid_stypes = ["horizons", "zones", "clipboard"]
-
-        if stype in valid_stypes and name is None or category is None:
-            logger.error("Need to spesify name and category for " "horizon")
-        elif stype not in valid_stypes:
-            raise ValueError("Only {} stype is supported per now".format(valid_stypes))
-
         _regsurf_roxapi.export_horizon_roxapi(
             self, project, name, category, stype, realisation
         )
