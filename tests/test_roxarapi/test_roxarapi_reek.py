@@ -8,6 +8,7 @@ Then run tests in Roxar API which focus on IO.
 
 This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if Equinor.
 """
+from collections import OrderedDict
 from os.path import join
 
 import numpy as np
@@ -15,6 +16,7 @@ import pytest
 import xtgeo
 
 try:
+    import _roxar
     import roxar
 except ImportError:
     pass
@@ -181,7 +183,7 @@ def test_rox_wells(roxar_project):
 @pytest.mark.requires_roxar
 def test_rox_get_gridproperty(roxar_project):
     """Get a grid property from a RMS project."""
-    print("Project is {}".format(roxar_project))
+    logger.info("Project is %s", roxar_project)
 
     poro = xtgeo.gridproperty_from_roxar(roxar_project, GRIDNAME1, PORONAME1)
 
