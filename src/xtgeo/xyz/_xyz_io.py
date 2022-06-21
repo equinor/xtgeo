@@ -164,6 +164,8 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
                 dfr[col].replace("UNDEF", xtgeo.UNDEF, inplace=True)
             elif _attrs[col] == "int":
                 dfr[col].replace("UNDEF", xtgeo.UNDEF_INT, inplace=True)
+            # cast to numerical if possible
+        dfr[col] = pd.to_numeric(dfr[col], errors="ignore")
 
     kwargs["values"] = dfr
     kwargs["attributes"] = _attrs
@@ -314,9 +316,7 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
                         df[col].replace(xtgeo.UNDEF, "UNDEF", inplace=True)
 
     with open(pfile, mode) as fc:
-        df.to_csv(
-            fc, sep=" ", header=None, columns=columns, index=False, float_format="%.3f"
-        )
+        df.to_csv(fc, sep=" ", header=None, columns=columns, index=False)
 
     return len(df.index)
 
