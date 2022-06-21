@@ -79,12 +79,6 @@ def _roxar_importer(
     realisation: int = 0,
     attributes: bool = False,
 ):
-    stype = stype.lower()
-    valid_stypes = ["horizons", "zones", "faults", "clipboard"]
-
-    if stype not in valid_stypes:
-        raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
-
     return _xyz_roxapi.import_xyz_roxapi(
         project, name, category, stype, realisation, attributes, False
     )
@@ -219,8 +213,9 @@ def points_from_roxar(
             magic `project` word if within RMS.
         name: Name of points item
         category: For horizons/zones/faults: for example 'DL_depth'
-            or use a folder notation on clipboard.
-        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard', etc!
+            or use a folder notation on clipboard/general2d_data.
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+            'general2d_data'
         realisation: Realisation number, default is 0
         attributes: If True, attributes will be preserved (from RMS 11)
 
@@ -230,6 +225,7 @@ def points_from_roxar(
         import xtgeo
         mypoints = xtgeo.points_from_roxar(project, 'TopEtive', 'DP_seismic')
 
+    .. versionadded:: 2.19 general2d_data support is added
     """
 
     return Points(
@@ -645,7 +641,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of polygons item
             category (str): For horizons/zones/faults: for example 'DL_depth'
-                or use a folder notation on clipboard.
+                or use a folder notation on clipboard/general2d_data.
 
             stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
             realisation (int): Realisation number, default is 0
@@ -895,7 +891,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
             pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
             stype (str): RMS folder type, 'horizons' (default), 'zones'
-                or 'faults' or 'clipboard'  (in prep: well picks)
+                or 'faults' or 'clipboard', general2d_data (in prep: well picks)
             realisation (int): Realisation number, default is 0
             attributes (bool): If True, attributes will be preserved (from RMS 11)
 
@@ -907,9 +903,17 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
             ValueError: Various types of invalid inputs.
             NotImplementedError: Not supported in this ROXAPI version
 
+        .. versionadded:: 2.19 general2d_data support is added
         """
 
-        valid_stypes = ["horizons", "zones", "faults", "clipboard", "horizon_picks"]
+        valid_stypes = [
+            "horizons",
+            "zones",
+            "faults",
+            "clipboard",
+            "general2d_data",
+            "horizon_picks",
+        ]
 
         if stype.lower() not in valid_stypes:
             raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
@@ -919,7 +923,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
             project,
             name,
             category,
-            stype.lower(),
+            stype,
             pfilter,
             realisation,
             attributes,

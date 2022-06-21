@@ -63,12 +63,6 @@ def _roxar_importer(
     stype: Optional[str] = "horizons",
     realisation: Optional[int] = 0,
 ):  # pragma: no cover
-    stype = stype.lower()
-    valid_stypes = ["horizons", "zones", "faults", "clipboard"]
-
-    if stype not in valid_stypes:
-        raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
-
     kwargs = _xyz_roxapi.import_xyz_roxapi(
         project, name, category, stype, realisation, None, True
     )
@@ -147,15 +141,17 @@ def polygons_from_roxar(
             `project` word if within RMS.
         name: Name of polygons item
         category: For horizons/zones/faults: for example 'DL_depth'
-            or use a folder notation on clipboard.
+            or use a folder notation on clipboard/general2d_data.
         stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
-            'faults', ...
+            'faults', 'general2d_data'
         realisation: Realisation number, default is 0
 
     Example::
 
         import xtgeo
         mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+
+    .. versionadded:: 2.19 general2d_data support is added
     """
 
     return Polygons(
@@ -528,7 +524,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of polygons item
-            category (str): For horizons/zones/faults: for example 'DL_depth'
+            category (str): For horizons/zones/faults: for example 'DL_depth' and use
+                a folder notation for clipboard/general2d_data
             stype (str): RMS folder type, 'horizons' (default), 'zones'
                 or 'faults' or 'clipboard'  (in prep: well picks)
             realisation (int): Realisation number, default is 0
@@ -541,19 +538,15 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             ValueError: Various types of invalid inputs.
             NotImplementedError: Not supported in this ROXAPI version
 
+        .. versionadded:: 2.19 general2d_data support is added
         """
-
-        valid_stypes = ["horizons", "zones", "faults", "clipboard"]
-
-        if stype.lower() not in valid_stypes:
-            raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
 
         _xyz_roxapi.export_xyz_roxapi(
             self,
             project,
             name,
             category,
-            stype.lower(),
+            stype,
             None,
             realisation,
             None,

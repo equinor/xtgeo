@@ -161,11 +161,17 @@ def test_import_rmsattr_format(testpath, tmp_path):
 def test_export_points_rmsattr(testpath, tmp_path):
     """Export XYZ points to file, as rmsattr."""
 
-    mypoints = Points(testpath / POINTSET4)  # should guess based on extesion
+    mypoints = xtgeo.points_from_file(
+        testpath / POINTSET4
+    )  # should guess based on extesion
     output_path = tmp_path / "poi_export.rmsattr"
 
     mypoints.to_file(output_path, fformat="rms_attr")
-    mypoints2 = Points(output_path)
+    mypoints2 = xtgeo.points_from_file(output_path)
 
     assert mypoints.dataframe["Seg"].equals(mypoints2.dataframe["Seg"])
-    assert mypoints.dataframe["MyNum"].equals(mypoints2.dataframe["MyNum"])
+
+    np.testing.assert_array_almost_equal(
+        mypoints.dataframe["MyNum"].values,
+        mypoints2.dataframe["MyNum"].values,
+    )
