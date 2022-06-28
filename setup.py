@@ -3,13 +3,6 @@
 import os
 import sys
 
-import pip
-
-MINIMUMPIP = 20
-if int(pip.__version__.split(".")[0]) < MINIMUMPIP:
-    print("Too old pip: ", pip.__version__)
-    print("Need at least version ", MINIMUMPIP)
-
 try:
     import setuptools
     from setuptools import setup as setuptools_setup
