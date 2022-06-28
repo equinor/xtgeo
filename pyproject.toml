@@ -29,8 +29,7 @@ exclude = '''
 
 [build-system]
 requires = [
-  "pip>=20",
-  "setuptools>=30.3.0",
+  "setuptools>=43",
   "wheel",
   "scikit-build",
   'cmake==3.13.3; python_version < "3.7" and platform_system == "Linux"',
