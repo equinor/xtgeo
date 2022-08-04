@@ -1,11 +1,19 @@
-from functools import wraps
+"""ZMAP plus parsing.
+
+cf https://saurabhkukade.com/posts/2020/07/understanding-zmap-file-format/
+
+Note also from example here:
+https://raw.githubusercontent.com/abduhbm/zmapio/main/examples/NSLCU.dat
+that header lines may end with trailing comma!
+"""
+
+import dataclasses
 import inspect
+from functools import wraps
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
-from pathlib import Path
-
-import dataclasses
 
 
 @dataclasses.dataclass
@@ -55,6 +63,8 @@ def parse_header(zmap_data):
             continue
         try:
             line = [entry.strip() for entry in line.split(",")]
+            if not line[-1]:
+                line.pop()  # deal with input lines ending with comma ','
             if line_nr == 0:
                 _, identifier, keys["nr_nodes_per_line"] = line
                 if identifier != "GRID":
@@ -103,6 +113,11 @@ def is_comment(line):
 
 
 def parse_values(zmap_data, nan_value):
+    """Parse actual values in zmap plus ascii files.
+
+    Note that header's node_width and nr_nodes_per_line in ZMAP header are not applied,
+    meaning that values import here is more tolerant than original zmap spec.
+    """
     values = []
     for line in zmap_data:
         if is_comment(line):
