@@ -2,12 +2,11 @@
 import sys
 from os.path import join
 from pathlib import Path
-from packaging import version
 
 import numpy as np
 import pytest
-
 import xtgeo
+from packaging import version
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
 
@@ -309,6 +308,41 @@ def test_zmap_import_export(tmpdir, default_surface):
     zmap3 = xtgeo.surface_from_file(join(tmpdir, "zmap2.zmap"), fformat="zmap_ascii")
     one3 = zmap3.values.ravel()
     assert one1.all() == one3.all()
+
+
+@pytest.mark.filterwarnings("ignore:Default values*")
+def test_zmap_larger_case_engine_integration(tmp_path, larger_surface):
+    """Export ZMAP with various engines and check integration and detailed specs."""
+    surf = RegularSurface(**larger_surface)
+
+    surf.to_file(tmp_path / "cxtgeo.zmap", fformat="zmap")
+    surf.to_file(tmp_path / "py.zmap", fformat="zmap", engine="python")
+    surf.to_file(tmp_path / "irap.gri")
+
+    isurf1 = xtgeo.surface_from_file(tmp_path / "cxtgeo.zmap")
+    isurf2 = xtgeo.surface_from_file(tmp_path / "py.zmap")
+    isurf3 = xtgeo.surface_from_file(tmp_path / "irap.gri")
+
+    assert isurf1.values.tolist() == isurf2.values.tolist() == isurf3.values.tolist()
+
+    # check values formatting in zmap files; the ZMAP format actually have a strict
+    # setting spec where field width is hardcoded in header; here as fwidth * nfield
+    # and less for incomplete lines. Also check number of decimals (fractional part)
+    for fname in ["cxtgeo.zmap", "py.zmap"]:
+        with open(tmp_path / fname, "r", encoding="ascii") as stream:
+            buf = stream.readlines()
+            _, _, nfield = [entry.strip() for entry in buf[1].split(",")]
+            fwidth, _, _, ndeci, _ = [entry.strip() for entry in buf[2].split(",")]
+            nrow, _, _, _, _, _ = [entry.strip() for entry in buf[3].split(",")]
+
+            assert len(buf[12].rstrip()) == int(fwidth) * int(nfield)
+            # incomplete line (in this particular case):
+            assert len(buf[13].rstrip()) == (int(nrow) - int(nfield)) * int(fwidth)
+
+            # check length of decimals (mantissa, fractional part) for first value
+            firstnumber = buf[6].split()[0]
+            _, fpart = firstnumber.split(".")
+            assert len(fpart) == int(ndeci)
 
 
 def test_swapaxes(tmpdir):

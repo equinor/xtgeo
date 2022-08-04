@@ -76,6 +76,11 @@ surf_export_zmap_ascii(FILE *fc,
         fcode = 8;
     }
 
+    int nfrow = 5;
+    if (my < nfrow) {
+        nfrow = my;
+    }
+
     xmax = xori + (mx - 1) * xinc;
     ymax = yori + (my - 1) * yinc;
 
@@ -83,7 +88,7 @@ surf_export_zmap_ascii(FILE *fc,
         return -1;
     /* header */
     fprintf(fc, "! Export from XTGeo (cxtgeo engine)\n");
-    fprintf(fc, "@ GRIDFILE, GRID, 5\n");
+    fprintf(fc, "@ GRIDFILE, GRID, %d\n", nfrow);
     fprintf(fc, "20, %f,  , %d, 1\n", UNDEF_MAP_ZMAP, fcode);
     fprintf(fc, "%d, %d, %lf, %lf, %lf, %lf\n", my, mx, xori, xmax, yori, ymax);
     fprintf(fc, "0.0, 0.0, 0.0\n");
@@ -115,13 +120,13 @@ surf_export_zmap_ascii(FILE *fc,
                 node_value = UNDEF_MAP_ZMAP;
 
             if (fcode == 4) {
-                fprintf(fc, " %20.4f", node_value);
+                fprintf(fc, " %19.4f", node_value);
             } else {
-                fprintf(fc, " %20.8f", node_value);
+                fprintf(fc, " %19.8f", node_value);
             }
             nn++;
 
-            if (nn > 6 || j == 1) {
+            if (nn >= nfrow || j == 1) {
                 fprintf(fc, "\n");
                 nn = 0;
             }

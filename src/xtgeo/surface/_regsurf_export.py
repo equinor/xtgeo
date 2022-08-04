@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 """Export RegularSurface data."""
 
+import json
+
 # pylint: disable=protected-access
 # import hashlib
 import struct
-import json
-import numpy as np
+
 import h5py
 import hdf5plugin
-
+import numpy as np
 import xtgeo
-from xtgeo.common.constants import UNDEF_MAP_IRAPB, UNDEF_MAP_IRAPA
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 
 xtg = XTGeoDialog()
 
@@ -264,12 +265,17 @@ def _export_zmap_ascii_purepy(self, mfile):
     xmax = scopy.xori + (scopy.ncol - 1) * scopy.xinc
     ymax = scopy.yori + (scopy.nrow - 1) * yinc
 
+    fcode = 8
+    if scopy.values.min() > -10 and scopy.values.max() < 10:
+        fcode = 4
+
+    nfrow = scopy.nrow if scopy.nrow < 5 else 5
+
     buf = "! Export from XTGeo (python engine)\n"
-    buf += "@ GRIDFILE, GRID, 5\n"
-    buf += "20, {}, , 8, 1\n".format(undef)
-    buf += "{}, {}, {}, {}, {}, {}\n".format(
-        scopy.nrow, scopy.ncol, scopy.xori, xmax, scopy.yori, ymax
-    )
+    buf += f"@ GRIDFILE, GRID, {nfrow}\n"
+    buf += f"20, {undef}, , {fcode}, 1\n"
+    buf += f"{scopy.nrow}, {scopy.ncol}, {scopy.xori}, {xmax}, {scopy.yori}, {ymax}\n"
+
     buf += "0.0, 0.0, 0.0\n"
     buf += "@\n"
 
@@ -278,7 +284,7 @@ def _export_zmap_ascii_purepy(self, mfile):
     for icol in range(scopy.ncol):
         for jrow in range(scopy.nrow - 1, -1, -1):
             ic = icol * scopy.nrow + jrow
-            buf += " {0:20.8f}".format(vals[ic])
+            buf += f" {vals[ic]:19.{fcode}f}"
             ncol += 1
             if ncol == 5 or jrow == 0:
                 buf += "\n"
