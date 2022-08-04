@@ -2,10 +2,8 @@ from io import StringIO
 from pathlib import Path
 
 import pytest
-
 import xtgeo
-
-from xtgeo.surface._zmap_parser import parse_zmap, ZMAPSurface, ZMAPFormatException
+from xtgeo.surface._zmap_parser import ZMAPFormatException, ZMAPSurface, parse_zmap
 
 
 @pytest.mark.parametrize(
@@ -20,6 +18,20 @@ from xtgeo.surface._zmap_parser import parse_zmap, ZMAPSurface, ZMAPFormatExcept
 @zmap_example.zmap HEADER                     ,      GRID, 5
       15,    -99999.0000,       ,      4,      1
        5,      4,    459218.9063,    460718.9063,   5924787.0000,   5925787.0000
+         0.0000,         0.0000,         0.0000
+@
++ Grid data starts after this line
+        41.8596        43.1112        44.5115        45.6861        46.5453
+        42.3947        42.8493        44.9472        47.2538        49.0361
+        40.1785        51.0874        54.6339        55.6271        55.9614
+    -99999.0000    -99999.0000    -99999.0000        68.1617        63.9811"""
+        ),
+        StringIO(
+            """! Accept header values ending with comma which may occur
+! Cf: https://github.com/abduhbm/zmapio/blob/main/examples/NSLCU.dat
+@zmap_example.zmap HEADER                     ,      GRID, 5
+      15,    -99999.0000,       ,      4,      1
+       5,      4,    459218.9063,    460718.9063,   5924787.0000,   5925787.0000,
          0.0000,         0.0000,         0.0000
 @
 + Grid data starts after this line
@@ -129,6 +141,13 @@ def test_integration_values(values_flag, expected_result):
 """,
             "End reached without complete header",
         ),
+    ],
+    ids=[
+        "Miss last hdr line",
+        "Miss item in hdr line 3",
+        "Miss @ after hdr",
+        "GRID key is missing",
+        "Incomplete hdr",
     ],
 )
 def test_not_complete_header(zmap_input, expected_error):
