@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import collections as mc
 from matplotlib.lines import Line2D
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import Polygons
