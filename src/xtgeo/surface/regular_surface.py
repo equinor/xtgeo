@@ -79,7 +79,7 @@ def surface_from_file(mfile, fformat=None, template=None, values=True, engine="c
 
     Args:
         mfile (str): Name of file
-        fformat: File format, None/guess/irap_binary/irap_ascii/ijxyz is currently
+        fformat: File format, None/guess/irap_binary/irap_ascii/ijxyz/petromod/zmap_ascii/xtg/hdf is currently
             supported. If None or guess, the file 'signature' is used to guess format
             first, then file extension.
         template: Only valid if ``ijxyz`` format, where an existing Cube or
