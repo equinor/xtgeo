@@ -86,13 +86,15 @@ def _wells_importer(
     maxid = 0
     for well in wells:
         wp = well.get_zone_interval(zone, resample=resample)
-        wp["WellName"] = well.name
         if wp is not None:
+            wp["WellName"] = well.name
             # as well segments may have overlapping POLY_ID:
             wp["POLY_ID"] += maxid
             maxid = wp["POLY_ID"].max() + 1
             dflist.append(wp)
 
+    if not dflist:
+        return {}
     dfr = pd.concat(dflist, ignore_index=True)
     dfr.reset_index(inplace=True, drop=True)
     return {
