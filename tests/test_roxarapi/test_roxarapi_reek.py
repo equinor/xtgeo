@@ -372,4 +372,30 @@ def test_rox_get_modify_set_points_with_attrs(roxar_project):
     surf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
     poi.to_roxar(roxar_project, "SNAPPED2", "", stype="clipboard")
-    assert poi.dataframe.iloc[-1, 2] == pytest.approx(1706.1741)
+    assert poi.dataframe.iloc[-1, 2] == pytest.approx(1706.1469, abs=0.01)
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_points_with_attrs_pfilter(roxar_project):
+    """Get, modify and set a points with attributes from a RMS project incl. pfilter."""
+    poi = xtgeo.points_from_roxar(
+        roxar_project, POINTSNAME2, "", stype="clipboard", attributes=True
+    )
+    # store to roxar with attributes using a 'pfilter'
+    poi.to_roxar(
+        roxar_project,
+        "PFILTER_POINTS",
+        "",
+        stype="clipboard",
+        pfilter={"Well": ["OP_1", "OP_2"]},
+        attributes=True,
+    )
+
+    # reread from roxar; shall now have only 2 rows
+    poi2 = xtgeo.points_from_roxar(
+        roxar_project, "PFILTER_POINTS", "", stype="clipboard", attributes=True
+    )
+
+    assert "OP_4" in poi.dataframe["Well"].values.tolist()
+    assert "OP_4" not in poi2.dataframe["Well"].values.tolist()
+    assert poi2.dataframe.shape[0] == 2

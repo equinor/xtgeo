@@ -321,34 +321,42 @@ def _roxapi_export_xyz(
     if self.dataframe is None or len(self.dataframe.index) == 0:
         return
 
-    df = self.dataframe.copy()
+    dfrcopy = self.dataframe.copy()
     # apply pfilter if any
     if pfilter:
         for key, val in pfilter.items():
-            if key in df.columns:
-                df = df.loc[df[key].isin(val)]
+            if key in dfrcopy.columns:
+                dfrcopy = dfrcopy.loc[dfrcopy[key].isin(val)]
             else:
                 raise KeyError(
                     "The requested pfilter key {} was not "
                     "found in dataframe. Valid keys are "
-                    "{}".format(key, df.columns)
+                    "{}".format(key, dfrcopy.columns)
                 )
 
     if isinstance(self, xtgeo.Polygons):
         arrxyz = []
-        polys = df.groupby(self.pname)
+        polys = dfrcopy.groupby(self.pname)
         for _id, grp in polys:
             arr = np.stack([grp[self.xname], grp[self.yname], grp[self.zname]], axis=1)
             arrxyz.append(arr)
     else:
-        xyz = df
+        xyz = dfrcopy
         arrxyz = np.stack([xyz[self.xname], xyz[self.yname], xyz[self.zname]], axis=1)
+
+    if (
+        isinstance(arrxyz, np.ndarray)
+        and arrxyz.size == 0
+        or isinstance(arrxyz, list)
+        and len(arrxyz) == 0
+    ):
+        return
 
     roxxyz.set_values(arrxyz)
 
     if attributes and isinstance(self, xtgeo.Points) and len(self.dataframe) > 3:
-        dfr = _cast_dataframe_attrs_to_numeric(self.dataframe)
-        for name in dfr[3:]:
+        dfr = _cast_dataframe_attrs_to_numeric(dfrcopy)
+        for name in dfr.columns[3:]:
             values = dfr[name].values
             if "float" in str(values.dtype):
                 values = np.ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
