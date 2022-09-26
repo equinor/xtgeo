@@ -1196,6 +1196,52 @@ class Grid(_Grid3D):
     def dataframe(self, *args, **kwargs):
         return self.get_dataframe(*args, **kwargs)
 
+    def get_vtk_esg_geometry_data(self):
+        """Get grid geometry data suitable for use with VTK's vtkExplicitStructuredGrid.
+
+        Builds and returns grid geometry data in a format tailored for use with VTK's
+        explicit structured grid (ESG). Essentially this entails building an
+        unstructured grid representation where all the grid cells are represented as
+        hexahedrons with explicit connectivities. The cell connectivity array refers
+        into the accompanying vertex array.
+
+        In VTK, cell order increases in I fastest, then J, then K.
+
+        The returned tuple contains:
+        - numpy array with dimensions in terms of points (not cells)
+        - vertex array, numpy array with vertex coordinates
+        - connectivity array for all the cells, numpy array with integer indices
+        - inactive cell indices, numpy array with integer indices
+
+        This function also tries to remove/weld duplicate vertices, but this is still
+        a work in progress.
+
+        Example usage with VTK::
+
+            dims, vert_arr, conn_arr, inact_arr = xtg_grid.get_vtk_esg_geometry_data()
+
+            vert_arr = vert_arr.reshape(-1, 3)
+            vtk_points = vtkPoints()
+            vtk_points.SetData(numpy_to_vtk(vert_arr, deep=1))
+
+            vtk_cell_array = vtkCellArray()
+            vtk_cell_array.SetData(8, numpy_to_vtkIdTypeArray(conn_arr, deep=1))
+
+            vtk_esgrid = vtkExplicitStructuredGrid()
+            vtk_esgrid.SetDimensions(dims)
+            vtk_esgrid.SetPoints(vtk_points)
+            vtk_esgrid.SetCells(vtk_cell_array)
+
+            vtk_esgrid.ComputeFacesConnectivityFlagsArray()
+
+            ghost_arr_vtk = vtk_esgrid.AllocateCellGhostArray()
+            ghost_arr_np = vtk_to_numpy(ghost_arr_vtk)
+            ghost_arr_np[inact_arr] = vtkDataSetAttributes.HIDDENCELL
+
+        .. versionadded:: 2.20
+        """
+        return _grid_etc1.get_vtk_esg_geometry_data(self)
+
     def get_vtk_geometries(self):
         """Get necessary arrays on correct layout for VTK ExplicitStructuredGrid usage.
 

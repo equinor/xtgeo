@@ -798,3 +798,52 @@ def test_get_vtk_geometries_emerald(show_plot):
         plt.set_scale(1, 1, 5)
         plt.show_axes()
         plt.show()
+
+
+def test_get_vtk_esg_geometry_data_four_cells():
+    """Test that extracted VTK ESG connectivity and vertex coordinates are correct
+    for simple grid with only four cells in a single layer"""
+    grd = xtgeo.create_box_grid((2, 2, 1), increment=(1, 3, 10))
+
+    # Note that returned dims is in terms of points
+    dims, vertex_arr, conn_arr, inactive_cell_indices = grd.get_vtk_esg_geometry_data()
+
+    assert list(dims) == [3, 3, 2]
+    assert len(vertex_arr) == 3 * 3 * 2
+    assert len(conn_arr) == 8 * 4
+    assert len(inactive_cell_indices) == 0
+
+    # Bounding box of first cell should be min/max x=[0,1] y=[0,3], z[0,10]
+    assert vertex_arr[conn_arr[0]] == pytest.approx([0, 0, 0])
+    assert vertex_arr[conn_arr[1]] == pytest.approx([1, 0, 0])
+    assert vertex_arr[conn_arr[2]] == pytest.approx([1, 3, 0])
+    assert vertex_arr[conn_arr[3]] == pytest.approx([0, 3, 0])
+    assert vertex_arr[conn_arr[4]] == pytest.approx([0, 0, 10])
+    assert vertex_arr[conn_arr[5]] == pytest.approx([1, 0, 10])
+    assert vertex_arr[conn_arr[6]] == pytest.approx([1, 3, 10])
+    assert vertex_arr[conn_arr[7]] == pytest.approx([0, 3, 10])
+
+    # Bounding box of fourth cell should be min/max x=[1,2] y=[3,6], z[0,10]
+    assert vertex_arr[conn_arr[24]] == pytest.approx([1, 3, 0])
+    assert vertex_arr[conn_arr[25]] == pytest.approx([2, 3, 0])
+    assert vertex_arr[conn_arr[26]] == pytest.approx([2, 6, 0])
+    assert vertex_arr[conn_arr[27]] == pytest.approx([1, 6, 0])
+    assert vertex_arr[conn_arr[28]] == pytest.approx([1, 3, 10])
+    assert vertex_arr[conn_arr[29]] == pytest.approx([2, 3, 10])
+    assert vertex_arr[conn_arr[30]] == pytest.approx([2, 6, 10])
+    assert vertex_arr[conn_arr[31]] == pytest.approx([1, 6, 10])
+
+
+def test_get_vtk_esg_geometry_data_box():
+    """Test that extracted VTK ESG geometry looks sensible for small test grid with
+    incative cells"""
+    grd = xtgeo.create_box_grid((2, 6, 4), increment=(20, 10, 7))
+    grd._actnumsv[0, 0, 0] = 0
+    grd._actnumsv[1, 0, 0] = 0
+
+    dims, vertex_arr, conn_arr, inactive_cell_indices = grd.get_vtk_esg_geometry_data()
+
+    assert list(dims) == [3, 7, 5]
+    assert len(vertex_arr) == 3 * 7 * 5
+    assert len(conn_arr) == 8 * 2 * 6 * 4
+    assert len(inactive_cell_indices) == 2
