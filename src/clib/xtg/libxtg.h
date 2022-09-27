@@ -1864,6 +1864,21 @@ grdcp3d_corners(long ic,
                 long n_swig_np_flt_inplaceflat_v1,
                 double corners[]);
 
+long
+grdcp3d_get_vtk_esg_geometry_data(long ncol,
+                                  long nrow,
+                                  long nlay,
+
+                                  double *swig_np_dbl_inplaceflat_v1,  // coordsv
+                                  long n_swig_np_dbl_inplaceflat_v1,
+                                  float *swig_np_flt_inplaceflat_v1,   // zcornsv
+                                  long n_swig_np_flt_inplaceflat_v1,
+
+                                  double *swig_np_dbl_aout_v1,         // output vertex arr
+                                  long n_swig_np_dbl_aout_v1,          // allocated length of vertex arr
+                                  long *swig_np_lng_aout_v1,           // hex connectivity array (out)
+                                  long n_swig_np_lng_aout_v1);         // allocated length of hex conn arr
+
 void
 grdcp3d_get_vtk_grid_arrays(long ncol,
                             long nrow,

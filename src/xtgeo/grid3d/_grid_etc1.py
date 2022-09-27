@@ -576,6 +576,48 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     return tuple(grid_props)
 
 
+def get_vtk_esg_geometry_data(
+    self,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Get geometry data consisting of vertices and cell connectivities suitable for
+    use with VTK's vtkExplicitStructuredGrid.
+
+    Returned tuple contains:
+    - numpy array with dimensions in terms of points (not cells)
+    - vertex array, numpy array with vertex coordinates
+    - connectivity array for all the cells, numpy array with integer indices
+    - inactive cell indices, numpy array with integer indices
+    """
+
+    self._xtgformat2()
+
+    # Number of elements to allocate in the vertex and connectivity arrays
+    num_cells = self.ncol * self.nrow * self.nlay
+    n_vertex_arr = 3 * 8 * num_cells
+    n_conn_arr = 8 * num_cells
+
+    # Note first value in return tuple which is the actual number of vertices that
+    # was written into vertex_arr and which we'll use to shrink the array.
+    vertex_count, vertex_arr, conn_arr = _cxtgeo.grdcp3d_get_vtk_esg_geometry_data(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        n_vertex_arr,
+        n_conn_arr,
+    )
+
+    # Need to shrink the vertex array
+    vertex_arr = np.resize(vertex_arr, 3 * vertex_count)
+    vertex_arr = vertex_arr.reshape(-1, 3)
+
+    point_dims = np.asarray((self.ncol, self.nrow, self.nlay)) + 1
+    inact_indices = self.get_actnum_indices(order="F", inverse=True)
+
+    return point_dims, vertex_arr, conn_arr, inact_indices
+
+
 def get_vtk_geometries(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return actnum, corners and dims arrays for VTK ExplicitStructuredGrid usage."""
     self._xtgformat2()
