@@ -1209,8 +1209,12 @@ def test_genhash_same_mask():
     """
     xsurf = xtgeo.surface_from_file(TESTSET7A)
     ysurf = xtgeo.surface_from_file(TESTSET7B)
+    zsurf = xtgeo.surface_from_file(TESTSET6A)
 
     xhash = xsurf.generate_hash()
     yhash = ysurf.generate_hash()
+    zhash = zsurf.generate_hash()
 
     assert xhash != yhash
+    assert xhash != zhash
+    assert yhash != zhash
