@@ -2,8 +2,8 @@
 
 
 from os.path import join
-import pytest
 
+import pytest
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -21,7 +21,7 @@ SFILE = join(TPATH, "surfaces/etc/battle_1330.gri")
 def test_get_well_x_surf():
     """Getting XYZ, MD for well where crossing a surface"""
 
-    wll = xtgeo.Well(WFILE, mdlogname="Q_MDEPTH")
+    wll = xtgeo.well_from_file(WFILE, mdlogname="Q_MDEPTH")
     surf = xtgeo.surface_from_file(SFILE)
     top = wll.get_surface_picks(surf)
 
