@@ -12,28 +12,6 @@ WFILES1 = pathlib.Path("wells/reek/1/OP_1.w")
 WFILES2 = pathlib.Path("wells/reek/1/OP_[1-5]*.w")
 
 
-def test_get_zone_tops_one_well_old(testpath, tmp_path):
-    """Import a well and get the zone tops, old method to be depr."""
-
-    wlist = [xtgeo.well_from_file(testpath / WFILES1, zonelogname="Zonelog")]
-
-    mypoints = Points()
-    mypoints.from_wells(wlist)
-
-    mypoints.to_file(
-        tmp_path / "points_w1.rmsasc",
-        fformat="rms_attr",
-        attributes=["WellName", "TopName"],
-    )
-
-    mypoints.to_file(
-        tmp_path / "points_w1.rmswpicks",
-        fformat="rms_wellpicks",
-        wcolumn="WellName",
-        hcolumn="TopName",
-    )
-
-
 def test_get_zone_tops_one_well_classmethod(testpath, tmp_path):
     """Import a well and get the zone tops"""
 
@@ -64,11 +42,7 @@ def test_get_zone_tops_one_well_w_undef(testpath):
     single = xtgeo.well_from_file((testpath / WFILES1), zonelogname="Zonelog")
     wlist = [single]
 
-    # legacy
-    p1 = Points()
-    p1.from_wells(wlist, use_undef=True)
-
-    # new
+    p1 = xtgeo.points_from_wells(wlist, use_undef=True)
     p2 = xtgeo.points_from_wells(wlist, use_undef=True)
     p3 = xtgeo.points_from_wells(wlist, use_undef=False)
 
@@ -76,24 +50,6 @@ def test_get_zone_tops_one_well_w_undef(testpath):
 
     assert p2.dataframe["Zone"][0] == 0
     assert p3.dataframe["Zone"][0] == 1
-
-
-def test_get_zone_tops_some_wells(testpath):
-    """Import some well and get the zone tops"""
-
-    wlist = [
-        xtgeo.well_from_file(wpath, zonelogname="Zonelog")
-        for wpath in glob.glob(str(testpath / WFILES2))
-    ]
-
-    # legacy
-    p1 = Points()
-    p1.from_wells(wlist)
-    assert p1.nrow == 28
-
-    # classmethod
-    p2 = xtgeo.points_from_wells(wlist)
-    assert p1.dataframe.equals(p2.dataframe)
 
 
 def test_get_zone_thickness_one_well(testpath):
@@ -137,28 +93,6 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot):
         dfr.head(10).round().to_csv(index=False, line_terminator="\n"),
         "zpoints_w_so622.csv",
     )
-
-
-def test_get_faciesfraction_some_wells_deprecated(testpath, tmp_path):
-    """Import some wells and get the facies fractions per zone."""
-    wlist = [
-        xtgeo.well_from_file(wpath, zonelogname="Zonelog")
-        for wpath in glob.glob(str(testpath / WFILES2))
-    ]
-
-    mypoints = Points()
-    facname = "Facies"
-    fcode = [1]
-
-    mypoints.dfrac_from_wells(wlist, facname, fcode, zonelist=None, incl_limit=70)
-
-    # rename column
-    mypoints.zname = "FACFRAC"
-
-    myquery = 'WELLNAME == "OP_1" and ZONE == 1'
-    usedf = mypoints.dataframe.query(myquery)
-
-    assert abs(usedf[mypoints.zname].values[0] - 0.86957) < 0.001
 
 
 def test_get_faciesfraction_some_wells_classmethod(testpath, tmp_path):

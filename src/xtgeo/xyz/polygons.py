@@ -267,7 +267,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             in dataframe otherwise None.
         dhname: Name of delta horizontal length, defaults to "H_DELTALEN" if in
             dataframe otherwise None.
-        tname: str = "T_CUMLEN",
         tname: Name of cumulative total length, defaults to "T_CUMLEN" if in
             dataframe otherwise None.
         dtname: Name of delta total length, defaults to "T_DELTALEN" if in
@@ -291,11 +290,15 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         dtname: str = "T_DELTALEN",
         name: str = "poly",
         attributes: Optional[dict] = None,
+        # from legacy initialization, remove in 4.0, undocumented by purpose:
+        fformat: str = "guess",
     ):
         super().__init__(xname, yname, zname)
 
         if values is None:
             values = []
+
+        logger.info("Legacy fformat key with value %s shall be removed in 4.0", fformat)
 
         self._reset(
             values=values,
@@ -444,6 +447,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return super().protected_columns() + [self.pname]
 
     @inherit_docstring(inherit_from=XYZ.from_file)
+    @deprecation.deprecated(
+        deprecated_in="2.21",  # should have been 2.16, but was forgotten until 2.21
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.polygons_from_file() instead",
+    )
     def from_file(self, pfile, fformat="xyz"):
         self._reset(**_file_importer(pfile, fformat))
 
