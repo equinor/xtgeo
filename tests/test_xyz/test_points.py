@@ -29,9 +29,8 @@ CSV1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
 )
 def test_points_from_file_alternatives(testpath, filename, fformat):
     # deprecated
-    points1 = Points(testpath / filename, fformat=fformat)
-    points2 = Points()
-    points2.from_file(testpath / filename, fformat=fformat)
+    points1 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
+    points2 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
 
     points3 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
     points4 = xtgeo.points_from_file(testpath / filename)
@@ -39,15 +38,6 @@ def test_points_from_file_alternatives(testpath, filename, fformat):
     pd.testing.assert_frame_equal(points1.dataframe, points2.dataframe)
     pd.testing.assert_frame_equal(points2.dataframe, points3.dataframe)
     pd.testing.assert_frame_equal(points3.dataframe, points4.dataframe)
-
-
-def test_points_from_list_deprecated():
-    plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
-
-    mypoints = Points(plist)
-    old_points = Points()
-    old_points.from_list(plist)
-    assert mypoints.dataframe.equals(old_points.dataframe)
 
 
 def test_points_from_list_of_tuples():
@@ -89,7 +79,9 @@ def test_create_pointset(points):
 def test_import(testpath):
     """Import XYZ points from file."""
 
-    mypoints = Points(testpath / PFILE)  # should guess based on extesion
+    mypoints = xtgeo.points_from_file(
+        testpath / PFILE
+    )  # should guess based on extesion
 
     x0 = mypoints.dataframe["X_UTME"].values[0]
     assert x0 == pytest.approx(460842.434326, 0.001)
@@ -98,17 +90,17 @@ def test_import(testpath):
 def test_import_from_dataframe(testpath):
     """Import Points via Pandas dataframe."""
 
-    mypoints = Points()
     dfr = pd.read_csv(testpath / CSV1, skiprows=3)
-    attr = {"IX": "I", "JY": "J", "KZ": "K"}
-    mypoints.from_dataframe(dfr, east="X", north="Y", tvdmsl="Z", attributes=attr)
 
-    assert mypoints.dataframe.X_UTME.mean() == dfr.X.mean()
+    attr = {"I": "int", "J": "int", "K": "int"}
+    mypoints = xtgeo.Points(
+        values=dfr, xname="X", yname="Y", zname="Z", attributes=attr
+    )
+
+    assert mypoints.dataframe.X.mean() == dfr.X.mean()
 
     with pytest.raises(ValueError):
-        mypoints.from_dataframe(
-            dfr, east="NOTTHERE", north="Y", tvdmsl="Z", attributes=attr
-        )
+        mypoints = Points(dfr, xname="NOTTHERE", yname="Y", zname="Z", attributes=attr)
 
 
 def test_export_and_load_points(tmp_path):
@@ -119,7 +111,7 @@ def test_export_and_load_points(tmp_path):
     export_path = tmp_path / "test_points.xyz"
     test_points.to_file(export_path)
 
-    exported_points = Points(export_path)
+    exported_points = xtgeo.points_from_file(export_path)
 
     pd.testing.assert_frame_equal(test_points.dataframe, exported_points.dataframe)
     assert list(itertools.chain.from_iterable(plist)) == list(
@@ -131,12 +123,14 @@ def test_export_load_rmsformatted_points(testpath, tmp_path):
     """Export XYZ points to file, various formats."""
 
     test_points_path = testpath / POINTSET4
-    orig_points = Points(test_points_path)  # should guess based on extesion
+    orig_points = xtgeo.points_from_file(
+        test_points_path
+    )  # should guess based on extesion
 
     export_path = tmp_path / "attrs.rmsattr"
     orig_points.to_file(export_path, fformat="rms_attr")
 
-    reloaded_points = Points(export_path)
+    reloaded_points = xtgeo.points_from_file(export_path)
 
     pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
 

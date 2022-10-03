@@ -4,7 +4,6 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import pytest
-
 import xtgeo
 from xtgeo.xyz import Points, Polygons
 
@@ -27,17 +26,11 @@ POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
     ],
 )
 def test_polygons_from_file_alternatives(testpath, filename, fformat):
-    # deprecated
-    polygons1 = Polygons(testpath / filename, fformat=fformat)
-    polygons2 = Polygons()
-    polygons2.from_file(testpath / filename, fformat=fformat)
 
-    polygons3 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
-    polygons4 = xtgeo.polygons_from_file(testpath / filename)
+    polygons1 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
+    polygons2 = xtgeo.polygons_from_file(testpath / filename)
 
     pd.testing.assert_frame_equal(polygons1.dataframe, polygons2.dataframe)
-    pd.testing.assert_frame_equal(polygons2.dataframe, polygons3.dataframe)
-    pd.testing.assert_frame_equal(polygons3.dataframe, polygons4.dataframe)
 
 
 def test_polygons_from_lists():
@@ -103,13 +96,9 @@ def test_polygons_from_attrs_not_ordereddict():
 def test_import_zmap_and_xyz(testpath):
     """Import XYZ polygons on ZMAP and XYZ format from file"""
 
-    mypol2a = Polygons()
-    mypol2b = Polygons()
-    mypol2c = Polygons()
-
-    mypol2a.from_file(testpath / PFILE1A, fformat="zmap")
-    mypol2b.from_file(testpath / PFILE1B)
-    mypol2c.from_file(testpath / PFILE1C)
+    mypol2a = xtgeo.polygons_from_file(testpath / PFILE1A, fformat="zmap")
+    mypol2b = xtgeo.polygons_from_file(testpath / PFILE1B)
+    mypol2c = xtgeo.polygons_from_file(testpath / PFILE1C)
 
     assert mypol2a.nrow == mypol2b.nrow
     assert mypol2b.nrow == mypol2c.nrow
@@ -121,9 +110,7 @@ def test_import_zmap_and_xyz(testpath):
 def test_import_export_polygons(testpath, tmp_path):
     """Import XYZ polygons from file. Modify, and export."""
 
-    mypoly = Polygons()
-
-    mypoly.from_file(testpath / PFILE, fformat="xyz")
+    mypoly = xtgeo.polygons_from_file(testpath / PFILE, fformat="xyz")
 
     z0 = mypoly.dataframe["Z_TVDSS"].values[0]
 
@@ -134,7 +121,7 @@ def test_import_export_polygons(testpath, tmp_path):
     mypoly.to_file(tmp_path / "polygon_export.xyz", fformat="xyz")
 
     # reimport and check
-    mypoly2 = Polygons(tmp_path / "polygon_export.xyz")
+    mypoly2 = xtgeo.polygons_from_file(tmp_path / "polygon_export.xyz")
 
     assert z0 + 100 == pytest.approx(mypoly2.dataframe["Z_TVDSS"].values[0], 0.001)
 
@@ -142,9 +129,7 @@ def test_import_export_polygons(testpath, tmp_path):
 def test_polygon_boundary(testpath):
     """Import XYZ polygons from file and test boundary function."""
 
-    mypoly = Polygons()
-
-    mypoly.from_file(testpath / PFILE, fformat="xyz")
+    mypoly = xtgeo.polygons_from_file(testpath / PFILE, fformat="xyz")
 
     boundary = mypoly.get_boundary()
 
@@ -156,7 +141,7 @@ def test_polygon_boundary(testpath):
 def test_polygon_filter_byid(testpath):
     """Filter a Polygon by a list of ID's"""
 
-    pol = Polygons(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testpath / POLSET3)
 
     assert pol.dataframe["POLY_ID"].iloc[0] == 0
     assert pol.dataframe["POLY_ID"].iloc[-1] == 3
@@ -164,19 +149,19 @@ def test_polygon_filter_byid(testpath):
     pol.filter_byid()
     assert pol.dataframe["POLY_ID"].iloc[-1] == 0
 
-    pol = Polygons(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testpath / POLSET3)
     pol.filter_byid([1, 3])
 
     assert pol.dataframe["POLY_ID"].iloc[0] == 1
     assert pol.dataframe["POLY_ID"].iloc[-1] == 3
 
-    pol = Polygons(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testpath / POLSET3)
     pol.filter_byid(2)
 
     assert pol.dataframe["POLY_ID"].iloc[0] == 2
     assert pol.dataframe["POLY_ID"].iloc[-1] == 2
 
-    pol = Polygons(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testpath / POLSET3)
     pol.filter_byid(99)  # not present; should remove all rows
     assert pol.nrow == 0
 
@@ -184,7 +169,7 @@ def test_polygon_filter_byid(testpath):
 def test_polygon_tlen_hlen(testpath):
     """Test the tlen and hlen operations"""
 
-    pol = Polygons(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testpath / POLSET3)
     pol.tlen()
     pol.hlen()
 
@@ -200,7 +185,7 @@ def test_polygon_tlen_hlen(testpath):
 def test_rescale_polygon(testpath):
     """Take a polygons set and rescale/resample"""
 
-    pol = Polygons(testpath / POLSET4)
+    pol = xtgeo.polygons_from_file(testpath / POLSET4)
 
     oldpol = pol.copy()
     oldpol.name = "ORIG"
@@ -208,7 +193,7 @@ def test_rescale_polygon(testpath):
     pol.rescale(100)
     pol.hlen()
 
-    pol2 = Polygons(testpath / POLSET4)
+    pol2 = xtgeo.polygons_from_file(testpath / POLSET4)
 
     pol2.rescale(100, kind="slinear")
     pol2.name = "slinear"
@@ -222,7 +207,7 @@ def test_rescale_polygon(testpath):
 def test_fence_from_polygon(testpath):
     """Test polygons get_fence method"""
 
-    pol = Polygons(testpath / POLSET2)
+    pol = xtgeo.polygons_from_file(testpath / POLSET2)
 
     df = pol.dataframe[0:3]
 
@@ -342,7 +327,7 @@ def test_fence_from_more_slanted_polygon():
 def test_rename_columns(testpath):
     """Renaming xname, yname, zname"""
 
-    pol = Polygons(testpath / POLSET2)
+    pol = xtgeo.polygons_from_file(testpath / POLSET2)
     assert pol.xname == "X_UTME"
 
     pol.xname = "NEWX"
@@ -370,11 +355,10 @@ def test_check_column_names():
     assert pol.dhname is None
 
 
-def test_delete_from_empty_polygon_does_not_fail(recwarn):
+def test_delete_from_empty_polygon_shall_not_fail(recwarn):
     pol = Polygons()
     pol.delete_columns([pol.dtname])
-    assert len(recwarn) == 1
-    assert "Trying to delete" in str(recwarn.list[0].message)
+    assert len(recwarn) == 0
 
 
 def test_delete_columns_protected_columns():

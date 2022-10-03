@@ -1,7 +1,6 @@
 import pathlib
 
 import pytest
-
 import xtgeo
 
 SFILE1A = pathlib.Path("surfaces/reek/1/topupperreek.gri")
@@ -12,7 +11,7 @@ PFILE3 = pathlib.Path("points/reek/1/pointset3.poi")
 def test_snap_to_surface(testpath):
     """Import XYZ points from file."""
 
-    mypoints = xtgeo.Points(testpath / PFILE3)
+    mypoints = xtgeo.points_from_file(testpath / PFILE3)
     assert mypoints.nrow == 20
 
     surf1 = xtgeo.surface_from_file(testpath / SFILE1A)
@@ -24,7 +23,7 @@ def test_snap_to_surface(testpath):
 
     # repeat,using surface whithg rotaion and partial masks
 
-    mypoints = xtgeo.Points(testpath / PFILE3)
+    mypoints = xtgeo.points_from_file(testpath / PFILE3)
     surf2 = xtgeo.surface_from_file(testpath / SFILE2A)
 
     mypoints.snap_surface(surf2)
@@ -32,7 +31,7 @@ def test_snap_to_surface(testpath):
     assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1687.45, abs=0.01)
 
     # alternative; keep values as is using activeobnly=False
-    mypoints = xtgeo.Points(testpath / PFILE3)
+    mypoints = xtgeo.points_from_file(testpath / PFILE3)
     mypoints.snap_surface(surf2, activeonly=False)
     assert mypoints.nrow == 20
     assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1012.47, abs=0.01)

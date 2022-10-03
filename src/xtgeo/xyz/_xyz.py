@@ -196,7 +196,14 @@ class XYZ(ABC):
             Columns not deleted by :meth:`delete_columns`, for
             instance the coordinate columns.
         """
-        return [self.xname, self.yname, self.zname]
+        return [self.xname, self.yname, self.zname, self.pname]
+
+    def geometry_columns(self):
+        """
+        Returns:
+            Columns can be deleted silently by :meth:`delete_columns`
+        """
+        return [self.hname, self.dhname, self.tname, self.dtname]
 
     def delete_columns(self, clist, strict=False):
         """Delete one or more columns by name.
@@ -225,11 +232,21 @@ class XYZ(ABC):
                 )
                 continue
 
+            if cname in self.geometry_columns():
+                if strict:
+                    raise ValueError(f"The column {cname} is not present.")
+                else:
+                    logger.info(
+                        "The column %s is a geometry and will not be deleted.", cname
+                    )
+                continue
+
             if cname not in self.dataframe:
                 if strict:
                     raise ValueError(f"The column {cname} is not present.")
                 else:
-                    xtg.warnuser(f"Trying to delete {cname}, but it is not present.")
+                    logger.info("Trying to delete %s, but it is not present.", cname)
+                    # xtg.warnuser(f"Trying to delete {cname}, but it is not present.")
             else:
                 self.dataframe.drop(cname, axis=1, inplace=True)
 
