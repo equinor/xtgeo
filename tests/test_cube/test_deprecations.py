@@ -1,25 +1,19 @@
 import pytest
-from packaging import version
-
 import xtgeo
-from xtgeo import version as xtgeo_version
 
 
-@pytest.fixture
-def any_cube():
-    return xtgeo.Cube()
+@pytest.fixture(name="any_cube")
+def fixture_any_cube():
+    return xtgeo.Cube(ncol=2, nrow=3, nlay=5, xinc=12, yinc=12, zinc=1)
 
 
-@pytest.fixture
-def any_cube_file(any_cube, tmp_path):
+@pytest.fixture(name="any_cube_file")
+def fixture_any_cube_file(any_cube, tmp_path):
     any_cube.to_file(tmp_path / "cube.segy")
     return tmp_path / "cube.segy"
 
 
 def test_cube_from_file_warns(any_cube, any_cube_file):
-    if version.parse(xtgeo_version) < version.parse("2.16"):
-        pytest.skip()
-
     with pytest.warns(DeprecationWarning, match="from_file is deprecated"):
         any_cube.from_file(any_cube_file)
 
@@ -31,7 +25,7 @@ def test_cube_from_file_engine_warns(any_cube, any_cube_file):
 
 def test_cube_file_in_init_warns(any_cube_file):
     with pytest.warns(DeprecationWarning, match="directly from file"):
-        xtgeo.Cube(any_cube_file)
+        xtgeo.Cube(any_cube_file)  # type: ignore # noqa # pylint: disable=undefined-variable
 
 
 @pytest.mark.parametrize(

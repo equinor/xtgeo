@@ -28,18 +28,22 @@ SFILE4 = join(TPATH, "cubes/etc/ib_test_cube2.segy")
 SFILE5 = join(TPATH, "cubes/etc/ex2_complete_3d_75x71x26.segy")
 SFILE6 = join(TPATH, "cubes/etc/ex1_missing_traces_75x71x26.segy")
 
-# pylint: disable=redefined-outer-name
+
+@pytest.fixture(name="smallcube")
+def fixture_smallcube():
+    """Fixture for making a small cube"""
+    return xtgeo.Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
 
 
-@pytest.fixture()
-def loadsfile1():
+@pytest.fixture(name="loadsfile1")
+def fixture_loadsfile1():
     """Fixture for loading a SFILE1"""
     return xtgeo.cube_from_file(SFILE1)
 
 
 def test_create():
     """Create default cube instance."""
-    xcu = Cube()
+    xcu = Cube(ncol=5, nrow=3, nlay=4, xinc=10, yinc=10, zinc=1)
     assert xcu.ncol == 5, "NCOL"
     assert xcu.nrow == 3, "NROW"
     vec = xcu.values
@@ -74,19 +78,19 @@ def test_import_guess_segy(tmp_path, cube):
     assert cube.nlay == cube2.nlay
 
 
-def test_segy_scanheader(tmpdir):
+def test_segy_scanheader(tmpdir, smallcube):
     """Scan SEGY and report header, using XTGeo internal reader."""
-    Cube().scan_segy_header(SFILE1, outfile=join(tmpdir, "cube_scanheader"))
+    smallcube.scan_segy_header(SFILE1, outfile=join(tmpdir, "cube_scanheader"))
 
 
-def test_segy_scantraces(tmpdir):
+def test_segy_scantraces(tmpdir, smallcube):
     """Scan and report SEGY first and last trace (internal reader)."""
-    Cube().scan_segy_traces(SFILE1, outfile=join(tmpdir, "cube_scantraces"))
+    smallcube.scan_segy_traces(SFILE1, outfile=join(tmpdir, "cube_scantraces"))
 
 
-def test_segy_no_file_exception():
+def test_segy_no_file_exception(smallcube):
     with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file"):
-        Cube().scan_segy_traces("not_a_file", outfile="not_relevant")
+        smallcube.scan_segy_traces("not_a_file", outfile="not_relevant")
 
 
 def test_segy_export_import(tmpdir):
@@ -112,7 +116,7 @@ def test_segy_export_import(tmpdir):
     assert cube.ilines.all() == cube2.ilines.all()
 
 
-def test_storm_import(tmpdir):
+def test_storm_import():
     """Import Cube using Storm format (case Reek)."""
 
     st1 = xtg.timer()
@@ -197,18 +201,19 @@ def test_segyio_import_ex2():
 def test_segyio_import_ex1():
     """Import small SEGY (ex1 case with missing traces!) via segyio library."""
 
-    cube = xtgeo.cube_from_file(SFILE6)
-    assert cube.ncol == 75
-    assert list(cube.ilines)[0:4] == [11352, 11354, 11356, 11358]
-    assert cube.rotation == pytest.approx(90.0)
-    assert cube.xinc == pytest.approx(12.5, abs=0.01)
-    assert cube.yinc == pytest.approx(12.5, abs=0.01)
+    with pytest.warns(UserWarning, match=r"Missing or inconsistent"):
+        cube = xtgeo.cube_from_file(SFILE6)
+        assert cube.ncol == 75
+        assert list(cube.ilines)[0:4] == [11352, 11354, 11356, 11358]
+        assert cube.rotation == pytest.approx(90.0)
+        assert cube.xinc == pytest.approx(12.5, abs=0.01)
+        assert cube.yinc == pytest.approx(12.5, abs=0.01)
 
 
 @pytest.mark.parametrize("pristine", [True, False])
-def test_segyio_import_export(tmpdir, pristine):
+def test_segyio_import_export(tmpdir, pristine, smallcube):
     """Import and export SEGY (case 1 Reek) via SegIO library."""
-    input_cube = Cube()
+    input_cube = smallcube
     input_cube.values = list(range(30))
     input_cube.to_file(join(tmpdir, "reek_cube.segy"), pristine=pristine)
 
@@ -218,8 +223,8 @@ def test_segyio_import_export(tmpdir, pristine):
     assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
 
 
-def test_segy_cube_scan(tmpdir, loadsfile1, capsys, snapshot):
-    xcu = Cube()
+def test_segy_cube_scan(tmpdir, capsys, snapshot):
+    xcu = Cube(ncol=5, nrow=3, nlay=2, xinc=25.0, yinc=25.0, zinc=2.0)
 
     xcu.values += 200
 
@@ -342,8 +347,7 @@ def test_cube_randomline(show_plot):
 
     incube = xtgeo.cube_from_file(SFILE4)
 
-    poly = xtgeo.Polygons()
-    poly.from_list([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]])
+    poly = xtgeo.Polygons([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]])
 
     logger.info("Generate random line...")
     hmin, hmax, vmin, vmax, random = incube.get_randomline(poly)
