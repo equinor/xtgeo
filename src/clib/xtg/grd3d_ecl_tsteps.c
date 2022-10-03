@@ -61,6 +61,11 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
 
     int maxkw = MAXKEYWORDS;
 
+    if (fc == NULL) {
+        throw_exception("NULL file descriptor received");
+        return EXIT_FAILURE;
+    }
+
     keywords = (char *)calloc(maxkw * 10, sizeof(char));
     rectypes = (int *)calloc(maxkw, sizeof(int));
     reclengths = (long *)calloc(maxkw, sizeof(long));
