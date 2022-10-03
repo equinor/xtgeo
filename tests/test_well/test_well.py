@@ -7,7 +7,6 @@ from os.path import join
 import numpy as np
 import pandas as pd
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Well
@@ -39,17 +38,17 @@ SURF2 = TPATH / "surfaces/reek/1/basereek_rota.gri"
 @pytest.fixture(name="loadwell1")
 def fixture_loadwell1():
     """Fixture for loading a well (pytest setup)."""
-    return Well(WFILE)
+    return xtgeo.well_from_file(WFILE)
 
 
 @pytest.fixture(name="loadwell3")
 def fixture_loadwell3():
     """Fixture for loading a well (pytest setup)."""
-    return Well(WELL3)
+    return xtgeo.well_from_file(WELL3)
 
 
-@pytest.fixture()
-def simple_well(string_to_well):
+@pytest.fixture(name="simple_well")
+def fixture_simple_well(string_to_well):
     wellstring = """1.01
 Unknown
 OP_1 0 0 0
@@ -66,6 +65,18 @@ Facies DISC 0 Background 1 Channel 2 Crevasse
 5 5 5 3 0.5 0.05 2"""
     well = string_to_well(wellstring)
     yield well
+
+
+@pytest.fixture(name="create_well")
+def fixture_create_well():
+    dfr = pd.DataFrame(
+        {
+            "X_UTME": [444.00, 444.00],
+            "Y_UTMN": [464.00, 464.00],
+            "Z_TVDSS": [1000.00, 1001.00],
+        }
+    )
+    return Well(25.0, 444.1, 464.1, "91/99-1", dfr)
 
 
 def test_import(loadwell1, snapshot):
@@ -128,32 +139,31 @@ def test_import_long_well(loadwell3):
 def test_import_well_selected_logs():
     """Import a well but restrict on lognames"""
 
-    mywell = Well()
-    mywell.from_file(WELL1, lognames="all")
+    mywell = xtgeo.well_from_file(WELL1, lognames="all")
     assert "ZONELOG" in mywell.dataframe
 
-    mywell.from_file(WELL1, lognames="GR")
+    mywell = xtgeo.well_from_file(WELL1, lognames="GR")
     assert "ZONELOG" not in mywell.dataframe
 
-    mywell.from_file(WELL1, lognames=["GR"])
+    mywell = xtgeo.well_from_file(WELL1, lognames=["GR"])
     assert "ZONELOG" not in mywell.dataframe
 
-    mywell.from_file(WELL1, lognames=["DUMMY"])
+    mywell = xtgeo.well_from_file(WELL1, lognames=["DUMMY"])
     assert "ZONELOG" not in mywell.dataframe
     assert "GR" not in mywell.dataframe
 
     with pytest.raises(ValueError) as msg:
         logger.info(msg)
-        mywell.from_file(WELL1, lognames=["DUMMY"], lognames_strict=True)
+        mywell = xtgeo.well_from_file(WELL1, lognames=["DUMMY"], lognames_strict=True)
 
-    mywell.from_file(WELL1, mdlogname="GR")
+    mywell = xtgeo.well_from_file(WELL1, mdlogname="GR")
     assert mywell.mdlogname == "GR"
 
     with pytest.raises(ValueError) as msg:
-        mywell.from_file(WELL1, mdlogname="DUMMY", strict=True)
+        mywell = xtgeo.well_from_file(WELL1, mdlogname="DUMMY", strict=True)
         logger.info(msg)
 
-    mywell.from_file(WELL1, mdlogname="DUMMY", strict=False)
+    mywell = xtgeo.well_from_file(WELL1, mdlogname="DUMMY", strict=False)
     assert mywell.mdlogname is None
 
 
@@ -236,9 +246,9 @@ def test_loadwell1_properties(simple_well):
     }
 
 
-def test_shortwellname():
+def test_shortwellname(create_well):
     """Test that shortwellname gives wanted result."""
-    mywell = Well()
+    mywell = create_well
 
     mywell._wname = "31/2-A-14 2H"
     short = mywell.shortwellname
@@ -253,12 +263,12 @@ def test_shortwellname():
 
 def test_hdf_io_single(tmp_path):
     """Test HDF io, single well."""
-    mywell = Well(WELL1)
+    mywell = xtgeo.well_from_file(WELL1)
 
     wname = (tmp_path / "hdfwell").with_suffix(".hdf")
     mywell.to_hdf(wname)
-    mywell2 = Well()
-    mywell2.from_hdf(wname)
+    mywell2 = xtgeo.well_from_file(wname, fformat="hdf")
+    assert mywell2.nrow == mywell.nrow
 
 
 def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
@@ -269,7 +279,7 @@ def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
     print("Time for save HDF: ", xtg.timer(t0))
 
     t0 = xtg.timer()
-    result = Well().from_hdf(wuse)
+    result = xtgeo.well_from_file(wuse, fformat="hdf5")
     assert result.dataframe.equals(simple_well.dataframe)
     print("Time for load HDF: ", xtg.timer(t0))
 
@@ -281,7 +291,7 @@ def test_import_export_rmsasc(tmp_path, simple_well):
     print("Time for save RMSASC: ", xtg.timer(t0))
 
     t0 = xtg.timer()
-    result = Well().from_file(wuse)
+    result = xtgeo.well_from_file(wuse)
     assert result.dataframe.equals(result.dataframe)
     print("Time for load RMSASC: ", xtg.timer(t0))
 
@@ -617,7 +627,7 @@ def test_rescale_well(loadwell1):
 def test_rescale_well_tvdrange(tmpdir):
     """Rescale (resample) a well to a finer increment within a TVD range"""
 
-    mywell = Well(WELL1)
+    mywell = xtgeo.well_from_file(WELL1)
     mywell.to_file(join(tmpdir, "wll1_pre_rescale.w"))
     gr_avg1 = mywell.dataframe["GR"].mean()
     mywell.rescale(delta=2, tvdrange=(1286, 1333))
@@ -625,10 +635,10 @@ def test_rescale_well_tvdrange(tmpdir):
     gr_avg2 = mywell.dataframe["GR"].mean()
     assert gr_avg1 == pytest.approx(gr_avg2, abs=0.9)
 
-    mywell1 = Well(WELL1)
+    mywell1 = xtgeo.well_from_file(WELL1)
     mywell1.rescale(delta=2)
 
-    mywell2 = Well(WELL1)
+    mywell2 = xtgeo.well_from_file(WELL1)
     mywell2.rescale(delta=2, tvdrange=(0, 9999))
     assert mywell1.dataframe["GR"].mean() == mywell2.dataframe["GR"].mean()
     assert mywell1.dataframe["GR"].all() == mywell2.dataframe["GR"].all()
@@ -637,7 +647,7 @@ def test_rescale_well_tvdrange(tmpdir):
 def test_rescale_well_tvdrange_coarsen_upper(tmpdir):
     """Rescale (resample) a well to a coarser increment in top part"""
 
-    mywell = Well(WELL1)
+    mywell = xtgeo.well_from_file(WELL1)
     mywell.rescale(delta=20, tvdrange=(0, 1200))
     mywell.to_file(join(tmpdir, "wll1_rescale_coarsen.w"))
     assert mywell.dataframe.iat[10, 3] == pytest.approx(365.8254, abs=0.1)
@@ -646,16 +656,15 @@ def test_rescale_well_tvdrange_coarsen_upper(tmpdir):
 def test_fence():
     """Return a resampled fence."""
 
-    mywell = Well(WFILE)
+    mywell = xtgeo.well_from_file(WFILE)
     pline = mywell.get_fence_polyline(nextend=10, tvdmin=1000)
-
-    logger.debug(pline)
+    assert pline.shape == (31, 5)
 
 
 def test_fence_as_polygons():
     """Return a resampled fence as Polygons."""
 
-    mywell = Well(WFILE)
+    mywell = xtgeo.well_from_file(WFILE)
     pline = mywell.get_fence_polyline(nextend=3, tvdmin=1000, asnumpy=False)
 
     assert isinstance(pline, Polygons)
@@ -666,7 +675,7 @@ def test_fence_as_polygons():
 def test_fence_as_polygons_drogon():
     """Return a resampled fence as Polygons for a 100% vertical."""
 
-    mywell = Well(WELL4)
+    mywell = xtgeo.well_from_file(WELL4)
     pline = mywell.get_fence_polyline(
         nextend=3, tvdmin=1000, sampling=20, asnumpy=False
     )
@@ -679,19 +688,16 @@ def test_fence_as_polygons_drogon():
 def test_get_zonation_points():
     """Get zonations points (zone tops)"""
 
-    mywell = Well(WFILE, zonelogname="Zonelog")
-    mywell.get_zonation_points()
+    mywell = xtgeo.well_from_file(WFILE, zonelogname="Zonelog")
+    ppx = mywell.get_zonation_points()
+    assert ppx.loc[2, "TopName"] == "TopBelow_TopLowerReek"
 
 
 def test_get_zone_interval():
     """Get zonations points (zone tops)"""
 
-    mywell = Well(WFILE, zonelogname="Zonelog")
+    mywell = xtgeo.well_from_file(WFILE, zonelogname="Zonelog")
     line = mywell.get_zone_interval(3)
-
-    print(line)
-
-    logger.info(type(line))
 
     assert line.iat[0, 0] == pytest.approx(462698.33299, abs=0.001)
     assert line.iat[-1, 2] == pytest.approx(1643.1618, abs=0.001)
@@ -700,21 +706,19 @@ def test_get_zone_interval():
 def test_remove_parallel_parts():
     """Remove the part of the well thst is parallel with some other"""
 
-    well1 = Well(WELL1)
-    well2 = Well(WELL2)
+    well1 = xtgeo.well_from_file(WELL1)
+    well2 = xtgeo.well_from_file(WELL2)
 
     well1.truncate_parallel_path(well2)
 
-    print(well1.dataframe)
+    assert well1.nrow == 3290
 
 
 def test_get_zonation_holes():
     """get a report of holes in the zonation, some samples with -999"""
 
-    mywell = Well(WFILE_HOLES, zonelogname="Zonelog")
+    mywell = xtgeo.well_from_file(WFILE_HOLES, zonelogname="Zonelog")
     report = mywell.report_zonation_holes()
-
-    logger.info("\n%s", report)
 
     assert report.iat[0, 0] == 4193  # first value for INDEX
     assert report.iat[1, 3] == 1609.5800  # second value for Z
@@ -723,7 +727,7 @@ def test_get_zonation_holes():
 def test_get_filled_dataframe():
     """Get a filled DataFrame"""
 
-    mywell = Well(WFILE)
+    mywell = xtgeo.well_from_file(WFILE)
 
     df1 = mywell.dataframe
 

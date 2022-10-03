@@ -1,18 +1,18 @@
 import pytest
-from packaging import version
-
 import xtgeo
+from packaging import version
 from xtgeo import Well
 from xtgeo import version as xtgeo_version
 
 
-@pytest.fixture
-def any_well():
-    return Well()
+@pytest.fixture(name="any_well")
+def fixture_any_well():
+    with pytest.warns(DeprecationWarning, match="empty"):
+        return Well()
 
 
-@pytest.fixture
-def any_well_file(any_well, tmp_path):
+@pytest.fixture(name="any_well_file")
+def fixture_any_well_file(any_well, tmp_path):
     any_well.to_file(tmp_path / "mywell.w")
     return tmp_path / "mywell.w"
 

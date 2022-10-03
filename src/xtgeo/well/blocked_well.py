@@ -3,7 +3,6 @@
 
 
 import deprecation
-
 import xtgeo
 
 from . import _blockedwell_roxapi
@@ -35,9 +34,16 @@ def blockedwell_from_file(
         >>> well3 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
     """
 
-    obj = BlockedWell()
+    # obj = BlockedWell()
 
-    obj.from_file(
+    # obj.from_file(
+    #     bwfile,
+    #     fformat=fformat,
+    #     mdlogname=mdlogname,
+    #     zonelogname=zonelogname,
+    #     strict=strict,
+    # )
+    return Well._read_file(
         bwfile,
         fformat=fformat,
         mdlogname=mdlogname,
@@ -45,7 +51,7 @@ def blockedwell_from_file(
         strict=strict,
     )
 
-    return obj
+    # return obj
 
 
 def blockedwell_from_roxar(project, gname, bwname, wname, lognames=None, ijk=True):

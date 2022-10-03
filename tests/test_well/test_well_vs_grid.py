@@ -4,10 +4,8 @@
 from os.path import join
 
 import pytest
-
+import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid, GridProperty
-from xtgeo.well import Well
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -26,26 +24,26 @@ GFILE = join(TPATH, "3dgrids/reek/REEK.EGRID")
 PFILE = join(TPATH, "3dgrids/reek/REEK.INIT")
 
 
-@pytest.fixture()
-def loadwell1():
+@pytest.fixture(name="loadwell1")
+def fixture_loadwell1():
     """Fixture for loading a well (pytest setup)"""
     logger.info("Load well 1")
-    return Well(WFILE)
+    return xtgeo.well_from_file(WFILE)
 
 
-@pytest.fixture()
-def loadgrid1():
+@pytest.fixture(name="loadgrid1")
+def fixture_loadgrid1():
     """Fixture for loading a grid (pytest setup)"""
     logger.info("Load grid 1")
-    return Grid(GFILE)
+    return xtgeo.grid_from_file(GFILE)
 
 
-@pytest.fixture()
-def loadporo1(loadgrid1):
+@pytest.fixture(name="loadporo1")
+def fixture_loadporo1(loadgrid1):
     """Fixture for loading a grid poro values (pytest setup)"""
     logger.info("Load PORO 1")
     grd = loadgrid1
-    return GridProperty(PFILE, name="PORO", grid=grd)
+    return xtgeo.gridproperty_from_file(PFILE, name="PORO", grid=grd)
 
 
 def test_make_ijk_grid(loadwell1, loadgrid1):

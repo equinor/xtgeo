@@ -18,8 +18,8 @@ testpath = xtg.testpathobj
 wfile = join(testpath, "wells/reek/1/OP_1.bw")
 
 
-@pytest.fixture()
-def loadwell1():
+@pytest.fixture(name="loadwell1")
+def fixture_loadwell1():
     """Fixture for loading a well (pytest setup)"""
     logger.info("Load well 1")
     return xtgeo.blockedwell_from_file(wfile)
@@ -32,7 +32,6 @@ def test_import(loadwell1):
 
     print(mywell.dataframe)
 
-    logger.debug("True well name:", mywell.truewellname)
     assert mywell.xpos == 461809.6, "XPOS"
     assert mywell.ypos == 5932990.4, "YPOS"
     assert mywell.wellname == "OP_1", "WNAME"

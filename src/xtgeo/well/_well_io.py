@@ -6,7 +6,6 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -300,8 +299,9 @@ def import_wlogs(wlogs: OrderedDict):
     return {"wlogtypes": wlogtypes, "wlogrecords": wlogrecords}
 
 
-def import_hdf5_well(wfile):
+def import_hdf5_well(wfile, **kwargs):
     """Load from HDF5 format."""
+    logger.info("The kwargs may be unused: %s", kwargs)
     reqattrs = xtgeo.MetaDataWell.REQUIRED
 
     with pd.HDFStore(wfile.file, "r") as store:

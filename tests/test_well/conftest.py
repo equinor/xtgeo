@@ -1,6 +1,5 @@
 import pytest
-
-from xtgeo import Well
+import xtgeo
 
 
 @pytest.fixture()
@@ -13,8 +12,6 @@ def string_to_well(setup_tmpdir):
         with open(fpath, "w") as fh:
             fh.write(wellstring)
 
-        well = Well(fpath, **kwargs)
-
-        return well
+        return xtgeo.well_from_file(fpath, **kwargs)
 
     yield wrapper
