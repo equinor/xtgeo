@@ -1266,7 +1266,7 @@ class Well:
         dfr = self._df[::interval]
 
         if keeplast:
-            dfr = dfr.append(self._df.iloc[-1])
+            dfr = pd.concat([dfr, self._df.iloc[-1:]], ignore_index=True)
 
         self._df = dfr.reset_index(drop=True)
 
