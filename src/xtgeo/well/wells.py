@@ -222,20 +222,20 @@ class Wells:
         """
         logger.info("Ask for big dataframe for all wells")
 
-        bigdf = []
+        bigdflist = []
         for well in self._wells:
             dfr = well.dataframe.copy()
             dfr["WELLNAME"] = well.name
             logger.info(well.name)
             if filled:
                 dfr = dfr.fillna(fill_value1)
-            bigdf.append(dfr)
+            bigdflist.append(dfr)
 
         if StrictVersion(pd.__version__) > StrictVersion("0.23.0"):
             # pylint: disable=unexpected-keyword-arg
-            dfr = pd.concat(bigdf, ignore_index=True, sort=True)
+            dfr = pd.concat(bigdflist, ignore_index=True, sort=True)
         else:
-            dfr = pd.concat(bigdf, ignore_index=True)
+            dfr = pd.concat(bigdflist, ignore_index=True)
 
         # the concat itself may lead to NaN's:
         if filled:

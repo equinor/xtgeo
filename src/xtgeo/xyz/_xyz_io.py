@@ -339,7 +339,7 @@ def _convert_idbased_xyz(self, df):
 
     for _id, gr in idgroups:
         dfx = gr.drop(self._pname, axis=1)
-        newdf = newdf.append([dfx, udef], ignore_index=True)
+        newdf = pd.concat([newdf, dfx, udef], ignore_index=True)
 
     return newdf
 
