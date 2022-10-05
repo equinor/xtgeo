@@ -2,7 +2,6 @@
 from os.path import join
 
 import pytest
-
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -234,14 +233,14 @@ def test_avg_surface2(loadsfile1):
         algorithm=2,
     )
 
-    for name in attributes.keys():
-        assert attributes[name] == pytest.approx(attrs[name].values.mean(), abs=0.001)
+    for name, value in attributes.items():
+        assert value == pytest.approx(attrs[name].values.mean(), abs=0.001)
 
 
 @pytest.mark.benchmark(group="cube slicing")
 @pytest.mark.parametrize("algorithm", [pytest.param(1, marks=pytest.mark.bigtest), 2])
 def test_avg_surface_large_cube_algorithm1(benchmark, algorithm):
-    cube1 = xtgeo.Cube(ncol=120, nrow=120, nlay=100, zori=200, zinc=4)
+    cube1 = xtgeo.Cube(ncol=120, nrow=120, nlay=100, zori=200, xinc=12, yinc=12, zinc=4)
 
     cube1.values[400:80, 400:80, :] = 12
 

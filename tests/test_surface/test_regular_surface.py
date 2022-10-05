@@ -17,7 +17,6 @@ if not xtg.testsetup():
     raise SystemExit
 
 TPATH = xtg.testpathobj
-
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -592,7 +591,7 @@ def test_irapbin_io(tmpdir):
     assert x.ncol == 554
 
     # get the 1D numpy
-    v1d = x.get_zval()
+    v1d = x.get_values1d()
 
     logger.info("Mean VALUES are: %s", np.nanmean(v1d))
 
@@ -1064,7 +1063,7 @@ def test_fence_sampling(infence, sampling, expected, default_surface):
 
 def test_get_randomline_frompolygon(show_plot):
     """Test randomline with both bilinear and nearest sampling for surfaces."""
-    fence = xtgeo.Polygons(FENCE1)
+    fence = xtgeo.polygons_from_file(FENCE1)
     xs = xtgeo.surface_from_file(TESTSET1)
 
     # get the polygon
@@ -1137,7 +1136,7 @@ def test_smoothing():
     assert mean1 != mean2  # but not exacly same
 
 
-def test_loadvalues_before_remove(default_surface):
+def test_loadvalues_before_remove_deprecated(default_surface):
     """Test that load_values() has the claimed effect before deprecating __init__"""
     if version.parse(xtgeo.version) >= version.parse("4.0"):
         pytest.skip("Not relevant after deprecated __init__ is removed")
@@ -1149,12 +1148,15 @@ def test_loadvalues_before_remove(default_surface):
     assert (correct == srf).all(), "Surface should not have been modified"
 
     # Remove any "values"-parameter and let deprecated __init__ add one
-    default_surface.pop("values", None)
-    srf = xtgeo.RegularSurface(filesrc=TESTSET1, **default_surface)
-    srf.load_values()
-    assert (correct == srf).all(), "Surface should not have been modified"
+    values = default_surface.pop("values", None)
+
+    with pytest.warns(DeprecationWarning, match=r"Default values"):
+        srf = xtgeo.RegularSurface(filesrc=TESTSET1, **default_surface)
+        srf.load_values()
+        assert (correct == srf).all(), "Surface should not have been modified"
 
     # Also specify the format - see test for after-remove where it behaves differently
+    default_surface["values"] = values
     srf = xtgeo.RegularSurface(
         filesrc=TESTSET1, fformat="irap_binary", **default_surface
     )

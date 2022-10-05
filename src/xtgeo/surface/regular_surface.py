@@ -2028,7 +2028,7 @@ class RegularSurface:
 
             >>> import xtgeo
             >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
-            >>> dfr = surf.dataframe()
+            >>> dfr = surf.get_dataframe()
             >>> dfr.to_csv('somecsv.csv')
 
         Returns:
