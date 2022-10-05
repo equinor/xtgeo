@@ -34,6 +34,8 @@ TESTSET5 = TPATH / "surfaces/reek/2/02_midreek_rota.gri"
 TESTSET6A = TPATH / "surfaces/etc/seabed_p.pmd"
 TESTSET6B = TPATH / "surfaces/etc/seabed_p.gri"
 TESTSET6C = TPATH / "surfaces/etc/seabed_p_v2.pmd"
+TESTSET7A = TPATH / "surfaces/etc/topvolantis_genhash.gri"
+TESTSET7B = TPATH / "surfaces/etc/toptherys_genhash.gri"
 
 FENCE1 = TPATH / "polygons/reek/1/fence.pol"
 
@@ -1187,3 +1189,32 @@ def test_loadvalues_after_remove(default_surface):
         ValueError, match="Can only load values into object initialised from file"
     ):
         srf.load_values()
+
+
+def test_genhash_deterministic():
+    """Check that generate_hash() is deterministic"""
+    xsurf = xtgeo.surface_from_file(TESTSET7A)
+    ysurf = xtgeo.surface_from_file(TESTSET7A)
+
+    xhash = xsurf.generate_hash()
+    yhash = ysurf.generate_hash()
+
+    assert xhash == yhash
+
+
+def test_genhash_same_mask():
+    """
+    Check if generate_hash() returns the same hash when properties are the
+    same, actual values differ, but the masked values are equivalent.
+    """
+    xsurf = xtgeo.surface_from_file(TESTSET7A)
+    ysurf = xtgeo.surface_from_file(TESTSET7B)
+    zsurf = xtgeo.surface_from_file(TESTSET6A)
+
+    xhash = xsurf.generate_hash()
+    yhash = ysurf.generate_hash()
+    zhash = zsurf.generate_hash()
+
+    assert xhash != yhash
+    assert xhash != zhash
+    assert yhash != zhash

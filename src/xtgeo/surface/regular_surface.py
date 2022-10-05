@@ -39,7 +39,6 @@ import io
 import math
 import numbers
 import pathlib
-import sys
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
@@ -898,15 +897,13 @@ class RegularSurface:
             "yinc",
             "yflip",
             "rotation",
-            "values",
         )
-        opt = np.get_printoptions()
-        np.set_printoptions(threshold=sys.maxsize)
         gid = ""
         for req in required:
             gid += f"{getattr(self, '_' + req)}"
+        # Ignore the mask
+        gid += self._values.data.tobytes().hex()
 
-        np.set_printoptions(**opt)
         hash_ = xtgeosys.generic_hash(gid, hashmethod=hashmethod)
         return hash_
 
