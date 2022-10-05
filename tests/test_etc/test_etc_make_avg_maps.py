@@ -2,11 +2,9 @@ from os.path import join
 
 import numpy as np
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
-from xtgeo.xyz import Polygons
 
 # set default level
 xtg = XTGeoDialog()
@@ -75,7 +73,7 @@ def test_avg02(tmpdir, generate_plot):
     )
 
     # add the faults in plot
-    fau = Polygons(FFILE1, fformat="zmap")
+    fau = xtgeo.polygons_from_file(FFILE1, fformat="zmap")
     fspec = {"faults": fau}
 
     if generate_plot:
@@ -138,7 +136,7 @@ def test_avg03(tmpdir, generate_plot):
     )
 
     # add the faults in plot
-    fau = Polygons(FFILE1, fformat="zmap")
+    fau = xtgeo.polygons_from_file(FFILE1, fformat="zmap")
     fspec = {"faults": fau}
 
     if generate_plot:

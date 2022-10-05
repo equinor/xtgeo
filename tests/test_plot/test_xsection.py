@@ -144,8 +144,7 @@ def test_multiple_subplots(tmpdir, show_plot, generate_plot):
 def test_reek1(tmpdir, generate_plot):
     """Test XSect for a Reek well."""
 
-    myfield = xtgeo.Polygons()
-    myfield.from_file(USEFILE3, fformat="xyz")
+    myfield = xtgeo.polygons_from_file(USEFILE3, fformat="xyz")
 
     mywells = []
     wnames = glob.glob(str(USEFILE4))
