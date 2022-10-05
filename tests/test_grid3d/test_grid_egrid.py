@@ -4,10 +4,9 @@ import ecl_data_io as eclio
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
-
 import xtgeo as xtg
 import xtgeo.grid3d._egrid as xtge
+from hypothesis import HealthCheck, assume, given, settings
 
 from .egrid_generator import (
     egrids,
@@ -213,7 +212,8 @@ def test_egrid_read_write(tmp_path, egrid):
 def test_egrid_from_xtgeo(tmp_path, egrid):
     tmp_file = tmp_path / "grid.EGRID"
     egrid.to_file(tmp_file)
-    xtgeo_grid = xtg.grid_from_file(tmp_file, relative_to=xtge.GridRelative.ORIGIN)
+    with pytest.warns(UserWarning):
+        xtgeo_grid = xtg.grid_from_file(tmp_file, relative_to=xtge.GridRelative.ORIGIN)
     roundtrip_grid = xtge.EGrid.from_xtgeo_grid(xtgeo_grid)
     assert roundtrip_grid.zcorn.tolist() == egrid.zcorn.tolist()
     assert roundtrip_grid.coord.tolist() == egrid.coord.tolist()
@@ -365,25 +365,28 @@ def test_read_unexpected_section():
 
 def test_read_multiple_amalgamations():
     buf = io.BytesIO()
-    eclio.write(
-        buf,
-        [
-            ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
-            ("GRIDUNIT", ["METRES  ", "MAP     "]),
-            ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
-            ("ZCORN   ", np.ones((8,), dtype=np.int32)),
-            ("COORD   ", np.ones((4,), dtype=np.int32)),
-            ("ENDGRID ", []),
-            ("NNCHEADA", [1, 2]),
-            ("NNA1    ", []),
-            ("NNA2    ", []),
-            ("NNCHEADA", [1, 3]),
-            ("NNA1    ", []),
-            ("NNA2    ", []),
-        ],
-    )
+
+    with pytest.warns(UserWarning):
+        eclio.write(
+            buf,
+            [
+                ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
+                ("GRIDUNIT", ["METRES  ", "MAP     "]),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
+                ("ZCORN   ", np.ones((8,), dtype=np.int32)),
+                ("COORD   ", np.ones((4,), dtype=np.int32)),
+                ("ENDGRID ", []),
+                ("NNCHEADA", [1, 2]),
+                ("NNA1    ", []),
+                ("NNA2    ", []),
+                ("NNCHEADA", [1, 3]),
+                ("NNA1    ", []),
+                ("NNA2    ", []),
+            ],
+        )
     buf.seek(0)
     reader = xtge.EGridReader(buf)
+
     egrid = reader.read()
     assert len(egrid.nnc_sections) == 2
 
@@ -428,7 +431,8 @@ def test_zero_numres_backwards_compatibility(tmp_path, egrid):
     egrid.global_grid.grid_head.numres = 0
     egrid.to_file(tmp_path / "grid2.egrid")
 
-    grid1 = xtg.grid_from_file(tmp_path / "grid1.egrid")
+    with pytest.warns(UserWarning):
+        grid1 = xtg.grid_from_file(tmp_path / "grid1.egrid")
     with pytest.warns(UserWarning, match="EGrid file given with numres < 1"):
         grid2 = xtg.grid_from_file(tmp_path / "grid2.egrid")
 

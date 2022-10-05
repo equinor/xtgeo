@@ -21,7 +21,7 @@ def test_grid_inactivate_inside(tmpdir):
     """Inactivate a grid inside polygons"""
     g1 = xtgeo.grid_from_file(reekgrid)
 
-    p1 = xtgeo.xyz.Polygons(reekpoly)
+    p1 = xtgeo.polygons_from_file(reekpoly)
 
     act1 = g1.get_actnum().values3d
     n1 = act1[7, 55, 1]
@@ -43,7 +43,7 @@ def test_grid_inactivate_outside(tmpdir):
     """Inactivate a grid outside polygons"""
     g1 = xtgeo.grid_from_file(reekgrid)
 
-    p1 = xtgeo.xyz.Polygons(reekpoly)
+    p1 = xtgeo.polygons_from_file(reekpoly)
 
     act1 = g1.get_actnum().values3d
     n1 = act1[3, 56, 1]

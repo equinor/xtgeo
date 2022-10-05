@@ -49,19 +49,22 @@ def import_ecl_run(
 
     # import the init properties unless list is empty
     if initprops:
-        grdprops.from_file(
+        initprops = xtgeo.gridproperties_from_file(
             ecl_init.name, names=initprops, fformat="init", dates=None, grid=ecl_grid
         )
+        grdprops.append_props(initprops.props)
 
     # import the restart properties for dates unless lists are empty
     if restartprops and restartdates:
-        grdprops.from_file(
+        restartprops = xtgeo.gridproperties_from_file(
             ecl_rsta.name,
             names=restartprops,
             fformat="unrst",
             dates=restartdates,
             grid=ecl_grid,
         )
+        grdprops.append_props(restartprops.props)
+
     ecl_grid.gridprops = grdprops
 
 

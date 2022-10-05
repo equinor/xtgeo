@@ -2,7 +2,6 @@
 
 import pandas as pd
 import pytest
-
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -279,16 +278,17 @@ def test_point_in_cell_compare_rms():
     # from RMS
     pointset = pd.read_csv(QCFIL1, skiprows=3)
 
-    p1 = xtgeo.Points()
-    attrs = {"IX": "I", "JY": "J", "KZ": "K"}
-    p1.from_dataframe(pointset, east="X", north="Y", tvdmsl="Z", attributes=attrs)
+    attrs = {"I": "int", "J": "int", "K": "int"}
+    p1 = xtgeo.Points(
+        values=pointset, xname="X", yname="Y", zname="Z", attributes=attrs
+    )
 
     grd = xtgeo.grid_from_file(QCGRID)
     dfr = grd.get_ijk_from_points(p1)
 
-    for cname in ("IX", "JY", "KZ"):
+    for cname, cxname in {"I": "IX", "J": "JY", "K": "KZ"}.items():
         list1 = p1.dataframe[cname].tolist()
-        list2 = dfr[cname].tolist()
+        list2 = dfr[cxname].tolist()
 
         nall = len(list1)
         suc = 0

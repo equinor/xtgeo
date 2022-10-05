@@ -77,12 +77,40 @@ def _handle_import(grid_constructor, gfile, fformat=None, **kwargs):
 def grid_from_file(gfile, fformat=None, **kwargs):
     """Read a grid (cornerpoint) from filelike and an returns a Grid() instance.
 
-    See :meth:`Grid.from_file` method for details on keywords.
+    Args:
+        gfile (str or Path): File name to be imported. If fformat="eclipse_run"
+            then a fileroot name shall be input here, see example below.
+        fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun/xtgcpgeom
+            (None is default and means "guess")
+        initprops (str list): Optional, and only applicable for file format
+            "eclipserun". Provide a list the names of the properties here. A
+            special value "all" can be get all properties found in the INIT file
+        restartprops (str list): Optional, see initprops
+        restartdates (int list): Optional, required if restartprops
+        ijkrange (list-like): Optional, only applicable for hdf files, see
+            :meth:`Grid.from_hdf`.
+        zerobased (bool): Optional, only applicable for hdf files, see
+            :meth:`Grid.from_hdf`.
+        mmap (bool): Optional, only applicable for xtgf files, see
+            :meth:`Grid.from_xtgf`.
 
     Example::
 
         >>> import xtgeo
         >>> mygrid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+
+    Example using "eclipserun"::
+
+        >>> mycase = "REEK"  # meaning REEK.EGRID, REEK.INIT, REEK.UNRST
+        >>> xg = xtgeo.grid_from_file(
+        ...     reek_dir + "/" + mycase,
+        ...     fformat="eclipserun",
+        ...     initprops="all",
+        ... )
+        Grid ... filesrc='.../REEK.EGRID'
+
+    Raises:
+        OSError: if file is not found etc
 
     """
     return _handle_import(Grid, gfile, fformat, **kwargs)
@@ -1161,11 +1189,9 @@ class Grid(_Grid3D):
 
             >>> import xtgeo
             >>> grd = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID", fformat="egrid")
-            >>> xpr = xtgeo.GridProperties()
-
             >>> names = ["SOIL", "SWAT", "PRESSURE"]
             >>> dates = [19991201]
-            >>> xpr.from_file(
+            >>> xpr = xtgeo.gridproperties_from_file(
             ...     reek_dir + "/REEK.UNRST",
             ...     fformat="unrst",
             ...     names=names,
@@ -1174,12 +1200,12 @@ class Grid(_Grid3D):
             ... )
             >>> grd.gridprops = xpr  # attach properties to grid
 
-            >>> df = grd.dataframe()
+            >>> df = grd.get_dataframe()
 
             >>> # save as CSV file
             >>> df.to_csv(outdir + "/mygrid.csv")
         """
-        return self.gridprops.dataframe(
+        return self.gridprops.get_dataframe(
             grid=self,
             activeonly=activeonly,
             ijk=ijk,
@@ -2020,8 +2046,7 @@ class Grid(_Grid3D):
 
             Return two arrays forr cell corner for bottom layer::
 
-                grd = Grid()
-                grd.from_file(REEKFILE)
+                grd = xtgeo.grid_from_file(REEKFILE)
 
                 parr, ibarr = grd.get_layer_slice(grd.nlay, top=False)
 

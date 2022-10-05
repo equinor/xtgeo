@@ -17,6 +17,7 @@ be shown.
 
 import pathlib
 import tempfile
+
 import xtgeo
 
 EXPATH = pathlib.Path("../../xtgeo-testdata/3dgrids/reek")
@@ -34,7 +35,7 @@ def extractdf():
 
     # gete dataframe from the grid only
     grd = xtgeo.grid_from_file(GRIDFILEROOT.with_suffix(".EGRID"))
-    dataframe = grd.dataframe()  # will not have any grid props
+    dataframe = grd.get_dataframe()  # will not have any grid props
     print(dataframe)
 
     # load as Eclipse run; this will automatically look for EGRID, INIT, UNRST
@@ -47,18 +48,18 @@ def extractdf():
     )
 
     # dataframe from a GridProperties instance, in this case grd.gridprops
-    dataframe = grd.gridprops.dataframe()  # properties for all cells
+    dataframe = grd.gridprops.get_dataframe()  # properties for all cells
 
     print(dataframe)
 
     # Get a dataframe for all cells, with ijk and xyz. In this case
     # a grid key input is required:
-    dataframe = grd.dataframe()
+    dataframe = grd.get_dataframe()
 
     print(dataframe)  # default is for all cells
 
     # For active cells only:
-    dataframe = grd.dataframe(activeonly=True)
+    dataframe = grd.get_dataframe(activeonly=True)
 
     print(dataframe)
 

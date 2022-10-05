@@ -21,7 +21,7 @@ def all_init_as_csv():
     print("Loading Eclipse data {}".format(GRIDFILEROOT))
     grd = xtgeo.grid_from_file(GRIDFILEROOT, fformat="eclipserun", initprops=INITPROPS)
     print("Get dataframes...")
-    dfr = grd.dataframe(activeonly=True)
+    dfr = grd.get_dataframe(activeonly=True)
 
     print(dfr.head())
     print("Filter out columns with constant values...")

@@ -1,7 +1,6 @@
 from os.path import join
 
 import pytest
-
 import xtgeo
 
 
@@ -52,9 +51,8 @@ class EclRun:
             self.restart_path, grid=self.grid, date=date, name=name, **kwargs
         )
 
-    def get_restart_properties(self, names, dates, *args, **kwargs):
-        gps = xtgeo.GridProperties()
-        gps.from_file(
+    def get_restart_properties(self, names, dates, **kwargs):
+        gps = xtgeo.gridproperties_from_file(
             self.restart_path,
             fformat="unrst",
             grid=self.grid,
@@ -64,43 +62,42 @@ class EclRun:
         )
         return gps
 
-    def get_init_properties(self, names, *args, **kwargs):
-        gps = xtgeo.GridProperties()
-        gps.from_file(
+    def get_init_properties(self, names, **kwargs):
+        gps = xtgeo.gridproperties_from_file(
             self.init_path, grid=self.grid, fformat="init", names=names, **kwargs
         )
         return gps
 
 
-@pytest.fixture
-def grids_etc_path(testpath):
+@pytest.fixture(name="grids_etc_path")
+def fixture_grids_etc_path(testpath):
     return join(testpath, "3dgrids", "etc")
 
 
-@pytest.fixture
-def single_poro_path(grids_etc_path):
+@pytest.fixture(name="single_poro_path")
+def fixture_single_poro_path(grids_etc_path):
     return join(grids_etc_path, "TEST_SP")
 
 
-@pytest.fixture
-def dual_poro_path(grids_etc_path):
+@pytest.fixture(name="dual_poro_path")
+def fixture_dual_poro_path(grids_etc_path):
     return join(grids_etc_path, "TEST_DP")
 
 
-@pytest.fixture
-def dual_poro_dual_perm_path(dual_poro_path):
+@pytest.fixture(name="dual_poro_dual_perm_path")
+def fixture_dual_poro_dual_perm_path(dual_poro_path):
     return dual_poro_path + "DK"
 
 
-@pytest.fixture
-def dual_poro_dual_perm_wg_path(grids_etc_path):
+@pytest.fixture(name="dual_poro_dual_perm_wg_path")
+def fixture_dual_poro_dual_perm_wg_path(grids_etc_path):
     # same as dual_poro_dual_perm but with water/gas
     # instead of oil/water
     return join(grids_etc_path, "TEST2_DPDK_WG")
 
 
-@pytest.fixture
-def reek_run(testpath):
+@pytest.fixture(name="reek_run")
+def fixture_reek_run(testpath):
     return EclRun(
         join(testpath, "3dgrids", "reek", "REEK"),
         (40, 64, 14),
@@ -193,8 +190,8 @@ def reek_run(testpath):
     )
 
 
-@pytest.fixture
-def dual_poro_run(dual_poro_path):
+@pytest.fixture(name="dual_poro_run")
+def fixture_dual_poro_run(dual_poro_path):
     return EclRun(
         dual_poro_path,
         (5, 3, 1),
@@ -255,8 +252,8 @@ def dual_poro_run(dual_poro_path):
     )
 
 
-@pytest.fixture
-def single_poro_run(single_poro_path):
+@pytest.fixture(name="single_poro_run")
+def fixture_single_poro_run(single_poro_path):
     return EclRun(
         single_poro_path,
         (5, 3, 1),
@@ -310,8 +307,8 @@ def single_poro_run(single_poro_path):
     )
 
 
-@pytest.fixture
-def dual_poro_dual_perm_run(dual_poro_dual_perm_path):
+@pytest.fixture(name="dual_poro_dual_perm_run")
+def fixture_dual_poro_dual_perm_run(dual_poro_dual_perm_path):
     return EclRun(
         dual_poro_dual_perm_path,
         (5, 3, 1),
@@ -372,8 +369,8 @@ def dual_poro_dual_perm_run(dual_poro_dual_perm_path):
     )
 
 
-@pytest.fixture
-def dual_poro_dual_perm_wg_run(dual_poro_dual_perm_wg_path):
+@pytest.fixture(name="dual_poro_dual_perm_wg_run")
+def fixture_dual_poro_dual_perm_wg_run(dual_poro_dual_perm_wg_path):
     return EclRun(
         dual_poro_dual_perm_wg_path,
         (5, 3, 1),
@@ -426,8 +423,8 @@ def dual_poro_dual_perm_wg_run(dual_poro_dual_perm_wg_path):
     )
 
 
-@pytest.fixture
-def dual_props_run(testpath):
+@pytest.fixture(name="dual_props_run")
+def fixture_dual_props_run(testpath):
     return EclRun(
         join(testpath, "3dgrids/etc/DUAL"),
         (5, 3, 1),
@@ -517,9 +514,10 @@ def dual_props_run(testpath):
         "dual_poro_run",
         "dual_poro_dual_perm_run",
         "dual_poro_dual_perm_wg_run",
-    ]
+    ],
+    name="ecl_runs",
 )
-def ecl_runs(request):
+def fixture_ecl_runs(request):
     return request.getfixturevalue(request.param)
 
 
@@ -528,7 +526,8 @@ def ecl_runs(request):
         "dual_poro_run",
         "dual_poro_dual_perm_run",
         "dual_poro_dual_perm_wg_run",
-    ]
+    ],
+    name="dual_runs",
 )
-def dual_runs(request):
+def fixture_dual_runs(request):
     return request.getfixturevalue(request.param)

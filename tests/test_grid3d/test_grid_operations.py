@@ -4,9 +4,8 @@ from collections import OrderedDict
 from os.path import join
 
 import pytest
-from hypothesis import given
-
 import xtgeo
+from hypothesis import given
 from xtgeo.common import XTGeoDialog
 
 from .grid_generator import xtgeo_grids
@@ -55,12 +54,18 @@ def test_hybridgrid1(tmpdir, snapshot):
     nhdiv = 40
     newnlay = grd.nlay * 2 + nhdiv
     snapshot.assert_match(
-        grd.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
+        grd.get_dataframe(activeonly=False)
+        .tail(50)
+        .round()
+        .to_csv(line_terminator="\n"),
         "grid_pre_hybrid.csv",
     )
     grd.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
     snapshot.assert_match(
-        grd.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
+        grd.get_dataframe(activeonly=False)
+        .tail(50)
+        .round()
+        .to_csv(line_terminator="\n"),
         "grid_post_hybrid.csv",
     )
 
@@ -73,7 +78,10 @@ def test_hybridgrid1(tmpdir, snapshot):
 
     grd2 = xtgeo.grid_from_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"))
     snapshot.assert_match(
-        grd2.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
+        grd2.get_dataframe(activeonly=False)
+        .tail(50)
+        .round()
+        .to_csv(line_terminator="\n"),
         "grid_pre_hybrid.csv",
     )
 

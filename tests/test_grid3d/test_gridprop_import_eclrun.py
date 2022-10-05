@@ -8,10 +8,9 @@ import ecl_data_io as eclio
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
-
 import xtgeo
 import xtgeo.grid3d._find_gridprop_in_eclrun as xtg_im_ecl
+from hypothesis import HealthCheck, assume, given, settings
 from xtgeo.grid3d._ecl_inte_head import InteHead
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Phases
@@ -79,19 +78,20 @@ def test_filter_lgr():
 
 
 def test_read_headers():
-    intehead, logihead, _ = xtg_im_ecl.peek_headers(
-        iter(
-            [
-                MockEntry("INTEHEAD", np.zeros(411, dtype=np.int32)),
-                MockEntry("LOGIHEAD", np.zeros(128, dtype=bool)),
-            ]
+    with pytest.warns(UserWarning, match="Unknown simulator code"):
+        intehead, logihead, _ = xtg_im_ecl.peek_headers(
+            iter(
+                [
+                    MockEntry("INTEHEAD", np.zeros(411, dtype=np.int32)),
+                    MockEntry("LOGIHEAD", np.zeros(128, dtype=bool)),
+                ]
+            )
         )
-    )
 
-    assert intehead == InteHead(np.zeros(411, dtype=np.int32))
-    assert logihead == LogiHead.from_file_values(
-        np.zeros(128, dtype=bool), simulator=intehead.simulator
-    )
+        assert intehead == InteHead(np.zeros(411, dtype=np.int32))
+        assert logihead == LogiHead.from_file_values(
+            np.zeros(128, dtype=bool), simulator=intehead.simulator
+        )
 
 
 def test_section_generator():
