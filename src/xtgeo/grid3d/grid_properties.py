@@ -766,8 +766,11 @@ class GridProperties(_Grid3D):
             >>> dlist = GridProperties.scan_keywords(reek_dir + "/REEK.UNRST")
 
         """
+        pfile = xtgeo._XTGeoFile(pfile)
+        pfile.check_file(raiseerror=ValueError)
+
         return utils.scan_keywords(
-            xtgeo._XTGeoFile(pfile),
+            pfile,
             fformat=fformat,
             maxkeys=maxkeys,
             dataframe=dataframe,
@@ -803,9 +806,10 @@ class GridProperties(_Grid3D):
         """
         logger.info("Format supported as default is %s", fformat)
 
-        dlist = utils.scan_dates(
-            xtgeo._XTGeoFile(pfile), maxdates=maxdates, dataframe=dataframe
-        )
+        pfile = xtgeo._XTGeoFile(pfile)
+        pfile.check_file(raiseerror=ValueError)
+
+        dlist = utils.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
 
         if datesonly and dataframe:
             dlist.drop("SEQNUM", axis=1, inplace=True)

@@ -194,6 +194,12 @@ grd3d_scan_eclbinary(FILE *fc,
     const int FAIL = -99;
     const int _FAIL = -88;
 
+    if (fc == NULL) {
+        throw_exception("Unrecoverable error, NULL file pointer received "
+                        "(grd3d_scan_eclbinary)");
+        return EXIT_FAILURE;
+    }
+
     if (nkeywords_x_letters > INT_MAX) {
         throw_exception("Unrecoverable error, number of requested keyword letters "
                         "exceeds system limit (grd3d_scan_eclbinary)");

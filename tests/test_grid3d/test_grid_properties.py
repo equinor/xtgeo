@@ -138,6 +138,12 @@ def test_scan_dates():
     assert dl[2][1] == 20000201
 
 
+def test_scan_dates_invalid_file():
+    """Raise an error before trying to scan a non-existent file."""
+    with pytest.raises(ValueError, match="does not exist"):
+        GridProperties.scan_dates(TPATH / "notafile.UNRST")
+
+
 def test_dates_from_restart():
     """A simpler static method to scan dates in a RESTART file"""
     t1 = xtg.timer()
@@ -159,6 +165,12 @@ def test_scan_keywords():
     assert df.loc[12, "KEYWORD"] == "SWAT"  # pylint: disable=no-member
 
 
+def test_scan_keywords_invalid_file():
+    """Raise an error before trying to scan a non-existent file."""
+    with pytest.raises(ValueError, match="does not exist"):
+        GridProperties.scan_keywords(TPATH / "notafile.UNRST")
+
+
 def test_scan_keywords_roff():
     """A static method to scan quickly keywords in a ROFF file"""
     t1 = xtg.timer()
@@ -166,9 +178,6 @@ def test_scan_keywords_roff():
     t2 = xtg.timer(t1)
     logger.info("Dates scanned in {} seconds".format(t2))
     logger.info(df)
-
-
-#    assert df.loc[12, 'KEYWORD'] == 'SWAT'
 
 
 def test_get_dataframe():
