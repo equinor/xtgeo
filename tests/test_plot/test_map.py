@@ -4,7 +4,6 @@ from os.path import join
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
-from xtgeo.xyz import Points, Polygons
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -46,8 +45,7 @@ def test_map_plot_with_points(tmpdir, generate_plot):
 
     mysurf = xtgeo.surface_from_file(SFILE1)
 
-    mypoints = Points()
-    mypoints.from_surface(mysurf)
+    mypoints = xtgeo.points_from_surface(mysurf)
 
     df = mypoints.dataframe.copy()
     df = df[::20]
@@ -71,7 +69,7 @@ def test_more_features_plot(tmpdir, generate_plot):
 
     mysurf = xtgeo.surface_from_file(SFILE1)
 
-    myfaults = Polygons(PFILE1)
+    myfaults = xtgeo.polygons_from_file(PFILE1)
 
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()

@@ -3,7 +3,6 @@
 from os.path import join
 
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -30,7 +29,7 @@ def test_operations_inside_outside_polygon_generic():
 
     surf = xtgeo.surface_from_file(SURF1)
     assert surf.values.mean() == pytest.approx(1698.65, abs=0.01)
-    poly = xtgeo.xyz.Polygons(POLY1)
+    poly = xtgeo.polygons_from_file(POLY1)
 
     surf.operation_polygons(poly, 100.0)  # add 100 inside poly
     assert surf.values.mean() == pytest.approx(1728.85, abs=0.01)
@@ -42,7 +41,7 @@ def test_operations_inside_outside_polygon_shortforms(tmpdir):
     # assert values are checked in RMS
 
     zurf = xtgeo.surface_from_file(SURF1)
-    poly = xtgeo.xyz.Polygons(POLY1)
+    poly = xtgeo.polygons_from_file(POLY1)
 
     surf = zurf.copy()
     surf.add_inside(poly, 200)
