@@ -6,10 +6,9 @@ from os.path import join
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+import xtgeo
 from hypothesis import HealthCheck, given, settings
 from numpy.testing import assert_allclose
-
-import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -25,15 +24,22 @@ BIGBOX_DIMENSIONS = (100, 100, 20)
 
 
 def create_box(testpath):
-    grid = xtgeo.Grid()
-    grid.create_box(BIGBOX_DIMENSIONS)
+    # grid = xtgeo.Grid()
+    grid = xtgeo.create_box_grid(
+        BIGBOX_DIMENSIONS,
+        origin=(10.0, 20.0, 1000.0),
+        oricenter=False,
+        increment=(100, 150, 5),
+        rotation=30.0,
+        flip=1,
+    )
     return grid
 
 
 @pytest.fixture(
     name="benchmark_grid",
     params=[
-        lambda tp: xtgeo.Grid(join(tp, "3dgrids/reek/reek_geo_grid.roff")),
+        lambda tp: xtgeo.grid_from_file(join(tp, "3dgrids/reek/reek_geo_grid.roff")),
         create_box,
     ],
     ids=["reek_grid", "big_box"],
@@ -297,7 +303,9 @@ def create_small_prop(testpath):
 @pytest.fixture(
     name="benchmark_gridprop",
     params=[
-        lambda tp: xtgeo.GridProperty(join(tp, "3dgrids/reek2/geogrid--poro.roff")),
+        lambda tp: xtgeo.gridproperty_from_file(
+            join(tp, "3dgrids/reek2/geogrid--poro.roff")
+        ),
         create_big_prop,
         create_small_prop,
     ],

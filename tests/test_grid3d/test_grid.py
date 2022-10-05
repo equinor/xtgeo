@@ -70,11 +70,16 @@ def test_create_shoebox(tmp_path):
     grd = xtgeo.create_box_grid((4, 3, 5))
     grd.to_file(tmp_path / "shoebox_default.roff")
 
-    grd.create_box(flip=-1)
+    with pytest.warns(DeprecationWarning, match="create_box is deprecated"):
+        grd = Grid()
+        grd.create_box((4, 3, 5))
+        grd.to_file(tmp_path / "shoebox_default2.roff")
+
+    grd = xtgeo.create_box_grid((2, 3, 4), flip=-1)
     grd.to_file(tmp_path / "shoebox_default_flipped.roff")
 
     timer1 = xtg.timer()
-    grd.create_box(
+    grd = xtgeo.create_box_grid(
         origin=(0, 0, 1000), dimension=(300, 200, 30), increment=(20, 20, 1), flip=-1
     )
     logger.info("Making a a 1,8 mill cell grid took %5.3f secs", xtg.timer(timer1))
@@ -84,7 +89,7 @@ def test_create_shoebox(tmp_path):
     assert dx.values.mean() == pytest.approx(20.0, abs=0.0001)
     assert dy.values.mean() == pytest.approx(20.0, abs=0.0001)
 
-    grd.create_box(
+    grd = xtgeo.create_box_grid(
         origin=(0, 0, 1000), dimension=(30, 30, 3), rotation=45, increment=(20, 20, 1)
     )
 
@@ -94,7 +99,7 @@ def test_create_shoebox(tmp_path):
     assert y.values1d[0] == pytest.approx(20 * math.cos(45 * math.pi / 180), abs=0.001)
     assert z.values1d[0] == pytest.approx(1000.5, abs=0.001)
 
-    grd.create_box(
+    grd = xtgeo.create_box_grid(
         origin=(0, 0, 1000),
         dimension=(30, 30, 3),
         rotation=45,
@@ -152,14 +157,16 @@ def test_emerald_grid_values(emerald_grid):
 
 
 def test_roffbin_get_dataframe_for_grid(emerald_grid):
-    df = emerald_grid.dataframe()
+
+    df = emerald_grid.get_dataframe()
+
     assert len(df) == emerald_grid.nactive
 
     assert df["X_UTME"][0] == pytest.approx(459176.7937727844, abs=0.1)
 
     assert len(df.columns) == 6
 
-    df = emerald_grid.dataframe(activeonly=False)
+    df = emerald_grid.get_dataframe(activeonly=False)
     assert len(df.columns) == 7
     assert len(df) != emerald_grid.nactive
 

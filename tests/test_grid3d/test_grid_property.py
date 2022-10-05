@@ -15,7 +15,6 @@ from hypothesis import HealthCheck, example, given, settings
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
 from xtgeo.grid3d import Grid, GridProperty
-from xtgeo.xyz import Polygons
 
 from .grid_generator import dimensions, xtgeo_grids
 from .gridprop_generator import grid_properties
@@ -59,12 +58,9 @@ BANAL7 = TPATH / "3dgrids/etc/banal7_grid_params.roff"
 def test_create():
     """Create a simple property"""
 
-    x = GridProperty()
+    x = GridProperty(ncol=4, nrow=3, nlay=1, values=np.array(range(12)), discrete=True)
     assert x.ncol == 4, "NCOL"
     assert x.nrow == 3, "NROW"
-
-    m = GridProperty(discrete=True)
-    assert m.isdiscrete
 
 
 @given(grid_properties())
@@ -142,20 +138,16 @@ def test_assign():
 
 def test_create_actnum():
     """Test creating ACTNUM"""
-    x = GridProperty()
+    values = npma.array([1, 2, 3, 4, 5, 6], mask=[0, 0, 1, 1, 1, 1])
+    x = GridProperty(ncol=3, nrow=2, nlay=1, values=values)
     act = x.get_actnum()
-
-    print(x.values)
-    print(act.values)
-    print(x.nactive)
-    print(x.ntotal)
-
+    assert act.values.mean() == pytest.approx(0.33333, abs=0.001)
     assert x.nactive < x.ntotal
 
 
 def test_undef():
     """Test getting UNDEF value"""
-    xx = GridProperty()
+    xx = GridProperty(ncol=3, nrow=2, nlay=1, values=np.array([1, 2, 3, 4, 5, 6]))
     act = xx.get_actnum()
 
     assert xx.undef == xtgeo.UNDEF
@@ -170,17 +162,24 @@ def test_class_methods():
 
 def test_describe():
     """Test getting the describe text"""
-    xx = GridProperty()
+    xx = GridProperty(ncol=3, nrow=2, nlay=1, values=np.array([1, 2, 3, 4, 5, 6]))
     desc = xx.describe(flush=False)
     assert "Name" in desc
 
 
 def test_npvalues3d():
     """Test getting numpy values as 3d"""
-    xx = GridProperty()
+
+    xx = GridProperty(
+        ncol=3,
+        nrow=2,
+        nlay=1,
+        values=np.ma.array([1, 2, 3, 4, 5, 6], mask=[1, 1, 1, 0, 0, 0]),
+    )
+
     mynp = xx.get_npvalues3d()
 
-    assert mynp.shape == (4, 3, 5)
+    assert mynp.shape == (3, 2, 1)
     assert mynp[0, 0, 0] == xtgeo.UNDEF
 
     xx.isdiscrete = True
@@ -193,7 +192,7 @@ def test_npvalues3d():
 
 def test_dtype():
     """Test dtype property"""
-    xx = GridProperty()
+    xx = GridProperty(ncol=3, nrow=2, nlay=1, values=np.array(range(6)))
     act = xx.get_actnum()
 
     if not xx.isdiscrete:
@@ -491,7 +490,7 @@ def test_values_in_polygon():
     xprop = xtgeo.gridproperty_from_file(
         TESTFILE1, fformat="roff", name="PORO", grid=grid
     )
-    poly = Polygons(POLYFILE)
+    poly = xtgeo.polygons_from_file(POLYFILE)
     xprop.geometry = grid
     xorig = xprop.copy()
 
@@ -589,7 +588,13 @@ def test_gridprop_grid_and_dim_init(dim, grid, discrete):
 
 @pytest.mark.parametrize("discrete", [True, False])
 def test_gridprop_default(discrete):
-    prop = GridProperty(discrete=discrete)
+
+    default_values = np.ma.MaskedArray(np.full((4, 3, 5), 99), False)
+    default_values[0:4, 0, 0:2] = np.ma.masked
+
+    prop = GridProperty(
+        ncol=4, nrow=3, nlay=5, values=default_values, discrete=discrete
+    )
 
     if discrete:
         assert prop.dtype == np.int32
@@ -597,9 +602,6 @@ def test_gridprop_default(discrete):
     else:
         assert prop.dtype == np.float64
         assert prop.values.dtype == np.float64
-
-    default_values = np.ma.MaskedArray(np.full((4, 3, 5), 99), False)
-    default_values[0:4, 0, 0:2] = np.ma.masked
 
     np.testing.assert_allclose(prop.values, default_values)
 
@@ -638,10 +640,34 @@ def test_gridprop_no_override_roxar_dtype(roxar_dtype, discrete, val):
 
 
 def test_gridprop_init_roxar_dtype():
-    assert GridProperty(discrete=True).roxar_dtype == np.uint8
-    assert GridProperty(discrete=False).roxar_dtype == np.float32
+    assert (
+        GridProperty(
+            ncol=3,
+            nrow=2,
+            nlay=1,
+            values=np.array(range(6)),
+            discrete=True,
+        ).roxar_dtype
+        == np.uint8
+    )
+    assert (
+        GridProperty(
+            ncol=3,
+            nrow=2,
+            nlay=1,
+            values=np.array(range(6)),
+            discrete=False,
+        ).roxar_dtype
+        == np.float32
+    )
     with pytest.raises(ValueError, match="roxar_dtype"):
-        GridProperty(roxar_dtype=np.int64)
+        GridProperty(
+            ncol=3,
+            nrow=2,
+            nlay=1,
+            values=np.array(range(6)),
+            roxar_dtype=np.int64,
+        )
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)

@@ -1,10 +1,15 @@
+import io
 import pathlib
 
+import numpy as np
 import pytest
 import xtgeo
+from hypothesis import given
 from packaging import version
 from xtgeo import GridProperties, GridProperty
 from xtgeo import version as xtgeo_version
+
+from .gridprop_generator import grid_properties
 
 
 @pytest.fixture(name="any_grid")
@@ -32,7 +37,8 @@ def test_gridproperties_init_deprecations(any_gridprop):
         GridProperties(nlay=10)
 
     with pytest.raises(ValueError, match="Giving both ncol/nrow/nlay and props"):
-        GridProperties(nlay=10, props=[any_gridprop])
+        with pytest.warns(DeprecationWarning):
+            GridProperties(nlay=10, props=[any_gridprop])
 
 
 def test_grid_from_file_warns(tmp_path, any_grid):
@@ -95,6 +101,27 @@ def test_grid_mask_warns(any_grid):
 
     with pytest.warns(DeprecationWarning, match="mask"):
         any_grid.get_xyz(mask=True)
+
+
+@given(grid_properties())
+def test_unknown_name_deprecate(gridprop):
+    buf = io.BytesIO()
+    gridprop.to_file(buf, fformat="roff")
+
+    buf.seek(0)
+
+    gridprop2 = xtgeo.gridproperty_from_file(buf, fformat="roff")
+
+    assert gridprop2.name == gridprop.name
+    np.testing.assert_allclose(gridprop2.values, gridprop.values)
+
+    # deprecated name="unknown"
+    buf.seek(0)
+
+    with pytest.warns(DeprecationWarning, match="name='unknown'"):
+        gridprop3 = xtgeo.gridproperty_from_file(buf, name="unknown", fformat="roff")
+
+    assert gridprop3.name == gridprop.name
 
 
 def test_gridprop_mask_warns(any_gridprop):

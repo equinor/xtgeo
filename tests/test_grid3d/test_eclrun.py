@@ -3,9 +3,9 @@ from os.path import basename, join
 
 import numpy as np
 import pytest
-
 import xtgeo
 
+# pylint: disable=wildcard-import, unused-wildcard-import
 from .eclrun_fixtures import *  # noqa: F401, F403
 
 
@@ -37,24 +37,24 @@ def test_import_saturations(ecl_runs):
     gps = ecl_runs.get_restart_properties(names=["SGAS", "SWAT", "SOIL"], dates="all")
 
     if not ecl_runs.grid.dualporo:
-        for d in gps.dates:
+        for date in gps.dates:
             np.testing.assert_allclose(
-                gps["SGAS_" + str(d)].values
-                + gps["SWAT_" + str(d)].values
-                + gps["SOIL_" + str(d)].values,
+                gps["SGAS_" + str(date)].values
+                + gps["SWAT_" + str(date)].values
+                + gps["SOIL_" + str(date)].values,
                 1.0,
             )
 
 
 @pytest.mark.parametrize("fformat", ["grdecl", "roff", "bgrdecl"])
 def test_roundtrip_properties(fformat, tmp_path, ecl_runs):
-    for p in ecl_runs.expected_restart_props:
-        prop = ecl_runs.get_property_from_restart(p, date="last")
-        prop.to_file(tmp_path / f"{p}.{fformat}", name=p, fformat=fformat)
+    for pname in ecl_runs.expected_restart_props:
+        prop = ecl_runs.get_property_from_restart(pname, date="last")
+        prop.to_file(tmp_path / f"{pname}.{fformat}", name=pname, fformat=fformat)
 
         prop2 = xtgeo.gridproperty_from_file(
-            tmp_path / f"{p}.{fformat}",
-            name=p,
+            tmp_path / f"{pname}.{fformat}",
+            name=pname,
             fformat=fformat,
             grid=ecl_runs.grid,
         )

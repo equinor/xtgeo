@@ -2,7 +2,6 @@
 
 
 import pytest
-
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -61,7 +60,7 @@ def test_randomline_fence_from_polygon(show_plot):
     grd = xtgeo.grid_from_file(
         REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"]
     )
-    fence = xtgeo.Polygons(FENCE1)
+    fence = xtgeo.polygons_from_file(FENCE1)
 
     # get the polygons
     fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
@@ -105,11 +104,9 @@ def test_randomline_fence_calczminzmax():
     grd = xtgeo.grid_from_file(
         REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"]
     )
-    fence = xtgeo.Polygons(FENCE1)
+    fence = xtgeo.polygons_from_file(FENCE1)
 
     fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
 
-    hmin, hmax, vmin, vmax, por = grd.get_randomline(
-        fspec, "PORO", zmin=None, zmax=None
-    )
+    _, _, vmin, _, _ = grd.get_randomline(fspec, "PORO", zmin=None, zmax=None)
     assert vmin == pytest.approx(1548.10098, abs=0.0001)

@@ -1,12 +1,11 @@
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
-from numpy.testing import assert_allclose
-
 import xtgeo
 import xtgeo.grid3d._egrid as xtg_egrid
 import xtgeo.grid3d._grdecl_grid as ggrid
+from hypothesis import HealthCheck, assume, given, settings
+from numpy.testing import assert_allclose
 from xtgeo.grid3d._ecl_grid import (
     inverse_transform_xtgeo_coord_by_mapaxes,
     transform_xtgeo_coord_by_mapaxes,
@@ -126,24 +125,26 @@ def test_inverse_transform_property(egrid, axes):
 
 @given(xtgeo_compatible_egrids(head=xtgeo_compatible_egridheads(mpaxes=good_axes)))
 def test_transform_map_relative(egrid):
-    assert_allclose(
-        egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP),
-        transform_xtgeo_coord_by_mapaxes(
-            egrid.mapaxes, egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.ORIGIN)
-        ),
-        atol=1e-7,
-    )
+    with pytest.warns(UserWarning):
+        assert_allclose(
+            egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP),
+            transform_xtgeo_coord_by_mapaxes(
+                egrid.mapaxes, egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.ORIGIN)
+            ),
+            atol=1e-7,
+        )
 
 
 @given(xtgeo_compatible_egrids(head=xtgeo_compatible_egridheads(mpaxes=good_axes)))
 def test_transform_map_relative_no_double(egrid):
-    egrid.egrid_head.gridunit.grid_relative = xtgeo.GridRelative.MAP
-    coord1 = egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP)
+    with pytest.warns(UserWarning):
+        egrid.egrid_head.gridunit.grid_relative = xtgeo.GridRelative.MAP
+        coord1 = egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP)
 
-    egrid.egrid_head.gridunit.grid_relative = xtgeo.GridRelative.ORIGIN
-    coord2 = egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.ORIGIN)
+        egrid.egrid_head.gridunit.grid_relative = xtgeo.GridRelative.ORIGIN
+        coord2 = egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.ORIGIN)
 
-    assert_allclose(coord1, coord2)
+        assert_allclose(coord1, coord2)
 
 
 @given(xtgeo_compatible_egrids())

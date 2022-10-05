@@ -17,7 +17,7 @@ def make_map():
 
     _ = xtgeo.gridproperty_from_file(GNAMEROOT + ".INIT", name="PORO", grid=grd)
 
-    df = grd.dataframe()
+    df = grd.get_dataframe()
 
     # make a map from the grid geometry to be used as a template
 

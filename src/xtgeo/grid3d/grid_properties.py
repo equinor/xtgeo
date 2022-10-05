@@ -689,15 +689,14 @@ class GridProperties(_Grid3D):
 
             >>> import xtgeo
             >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> props = GridProperties()
-            >>> props.from_file(
+            >>> pps.grid_properties_from_file(
             ...     reek_dir + "/REEK.UNRST",
             ...     fformat="unrst",
             ...     names=['SOIL', 'SWAT', 'PRESSURE'],
             ...     dates=[19991201],
             ...     grid=grid,
             ... )
-            >>> df = props.dataframe(activeonly=False, ijk=True, xyz=True, grid=grid)
+            >>> df = pps.get_dataframe(activeonly=False, ijk=True, xyz=True, grid=grid)
             >>> print(df)
                    ACTNUM  IX  JY  ...  SOIL_19991201  SWAT_19991201  PRESSURE_19991201
             0           1   1   1  ...            0.0            1.0         341.694183
