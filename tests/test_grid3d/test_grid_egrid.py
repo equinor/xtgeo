@@ -1,4 +1,5 @@
 import io
+import sys
 
 import ecl_data_io as eclio
 import hypothesis.strategies as st
@@ -363,6 +364,7 @@ def test_read_unexpected_section():
         reader.read()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="No warning in Windows")
 def test_read_multiple_amalgamations():
     buf = io.BytesIO()
 

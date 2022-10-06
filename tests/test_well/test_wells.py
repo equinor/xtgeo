@@ -4,7 +4,6 @@
 from os.path import join
 
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Wells
@@ -60,13 +59,10 @@ def test_well_names(testwells):
         assert testwells.get_well(well.name) is well
 
 
-def test_get_dataframe_allwells(testwells, snapshot):
+def test_get_dataframe_allwells(testwells, snapshot, helpers):
     """Get a single dataframe for all wells"""
     snapshot.assert_match(
-        testwells.get_dataframe(filled=True)
-        .head(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(testwells.get_dataframe(filled=True).head(50).round()),
         "wells.csv",
     )
 
@@ -78,26 +74,26 @@ def test_quickplot_wells(tmpdir, testwells, generate_plot):
     testwells.quickplot(filename=join(tmpdir, "quickwells.png"))
 
 
-def test_wellintersections(tmpdir, testwells, snapshot):
+def test_wellintersections(testwells, snapshot, helpers):
     """Find well crossing"""
     snapshot.assert_match(
-        testwells.wellintersections().head(50).round().to_csv(line_terminator="\n"),
+        helpers.df2csv(testwells.wellintersections().head(50).round()),
         "wellintersections.csv",
     )
 
 
-def test_wellintersections_tvdrange_nowfilter(tmpdir, snapshot, testwells):
+def test_wellintersections_tvdrange_nowfilter(snapshot, testwells, helpers):
     """Find well crossing using coarser sampling to Fence"""
     testwells.limit_tvd(1300, 1400)
     testwells.downsample(interval=6)
 
     snapshot.assert_match(
-        testwells.wellintersections().head(50).round().to_csv(line_terminator="\n"),
+        helpers.df2csv(testwells.wellintersections().head(50).round()),
         "tvd_wellintersections.csv",
     )
 
 
-def test_wellintersections_tvdrange_wfilter(tmpdir, snapshot, testwells):
+def test_wellintersections_tvdrange_wfilter(snapshot, testwells, helpers):
     """Find well crossing using coarser sampling to Fence, with
     wfilter settings.
     """
@@ -110,9 +106,6 @@ def test_wellintersections_tvdrange_wfilter(tmpdir, snapshot, testwells):
     testwells.downsample(interval=6)
 
     snapshot.assert_match(
-        testwells.wellintersections(wfilter=wfilter)
-        .head(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(testwells.wellintersections(wfilter=wfilter).head(50).round()),
         "filtered_wellintersections.csv",
     )

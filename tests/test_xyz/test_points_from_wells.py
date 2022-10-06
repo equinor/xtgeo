@@ -63,7 +63,7 @@ def test_get_zone_thickness_one_well(testpath):
     assert mypoints.dataframe["THICKNESS"][0] == pytest.approx(16.8397)
 
 
-def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot):
+def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot, helpers):
     """Import some wells and get the zone thicknesses"""
 
     wlist = [
@@ -90,7 +90,7 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot):
     # not the order in the dataframe may vary randomly so do a sort
     dfr = mypoints.dataframe.sort_values(["WellName", "Zone", "Z_TVDSS"])
     snapshot.assert_match(
-        dfr.head(10).round().to_csv(index=False, line_terminator="\n"),
+        helpers.df2csv(dfr.head(10).round(), index=False),
         "zpoints_w_so622.csv",
     )
 

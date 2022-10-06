@@ -4,7 +4,6 @@
 from os.path import join
 
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import BlockedWells
@@ -48,13 +47,10 @@ def test_well_names(testblockedwells):
         assert testblockedwells.get_blocked_well(well.name) is well
 
 
-def test_get_dataframe_allblockedwells(testblockedwells, snapshot):
+def test_get_dataframe_allblockedwells(testblockedwells, snapshot, helpers):
     """Get a single dataframe for all blockedwells"""
     snapshot.assert_match(
-        testblockedwells.get_dataframe(filled=True)
-        .head(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(testblockedwells.get_dataframe(filled=True).head(50).round()),
         "blockedwells.csv",
     )
 
@@ -66,32 +62,26 @@ def test_quickplot_blockedwells(tmpdir, testblockedwells, generate_plot):
     testblockedwells.quickplot(filename=join(tmpdir, "quickblockedwells.png"))
 
 
-def test_wellintersections(tmpdir, snapshot, testblockedwells):
+def test_wellintersections(snapshot, testblockedwells, helpers):
     """Find well crossing"""
     snapshot.assert_match(
-        testblockedwells.wellintersections()
-        .head(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(testblockedwells.wellintersections().head(50).round()),
         "blockedwells_intersections.csv",
     )
 
 
-def test_wellintersections_tvdrange_nowfilter(tmpdir, snapshot, testblockedwells):
+def test_wellintersections_tvdrange_nowfilter(snapshot, testblockedwells, helpers):
     """Find well crossing using coarser sampling to Fence"""
     testblockedwells.limit_tvd(1300, 1400)
     testblockedwells.downsample(interval=6)
 
     snapshot.assert_match(
-        testblockedwells.wellintersections()
-        .head(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(testblockedwells.wellintersections().head(50).round()),
         "tvdrange_blockedwells_intersections.csv",
     )
 
 
-def test_wellintersections_tvdrange_wfilter(tmpdir, snapshot, testblockedwells):
+def test_wellintersections_tvdrange_wfilter(snapshot, testblockedwells, helpers):
     """Find well crossing using coarser sampling to Fence, with
     wfilter settings.
     """
@@ -104,9 +94,8 @@ def test_wellintersections_tvdrange_wfilter(tmpdir, snapshot, testblockedwells):
     testblockedwells.downsample(interval=6)
 
     snapshot.assert_match(
-        testblockedwells.wellintersections(wfilter=wfilter)
-        .head(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(
+            testblockedwells.wellintersections(wfilter=wfilter).head(50).round()
+        ),
         "filtered_blockedwells_intersections.csv",
     )

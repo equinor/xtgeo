@@ -79,7 +79,7 @@ def fixture_create_well():
     return Well(25.0, 444.1, 464.1, "91/99-1", dfr)
 
 
-def test_import(loadwell1, snapshot):
+def test_import(loadwell1, snapshot, helpers):
     """Import well from file."""
 
     mywell = loadwell1
@@ -106,7 +106,8 @@ def test_import(loadwell1, snapshot):
     }
 
     snapshot.assert_match(
-        mywell.dataframe.head(10).round().to_csv(line_terminator="\n"), "loadwell1.csv"
+        helpers.df2csv(mywell.dataframe.head(10).round()),
+        "loadwell1.csv",
     )
 
     assert {

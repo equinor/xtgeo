@@ -34,15 +34,6 @@ def blockedwell_from_file(
         >>> well3 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
     """
 
-    # obj = BlockedWell()
-
-    # obj.from_file(
-    #     bwfile,
-    #     fformat=fformat,
-    #     mdlogname=mdlogname,
-    #     zonelogname=zonelogname,
-    #     strict=strict,
-    # )
     return Well._read_file(
         bwfile,
         fformat=fformat,
