@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 from copy import deepcopy
+from distutils.version import LooseVersion
 from math import atan2, degrees
 from typing import Tuple
 
@@ -1277,11 +1278,17 @@ def estimate_design(self, nsubname):
     dzavg = np.nanmean(dzcum2) / dzv.shape[2]
 
     # find the I J indices for the median value
-    argmed = np.stack(
-        np.nonzero(dzcum == np.percentile(dzcum, 50, interpolation="nearest")), axis=1
-    )
-    im, jm = argmed[0]
+    if LooseVersion(np.__version__) < LooseVersion("1.22"):
+        argmed = np.stack(
+            np.nonzero(dzcum == np.percentile(dzcum, 50, interpolation="nearest")),
+            axis=1,
+        )
+    else:
+        argmed = np.stack(
+            np.nonzero(dzcum == np.percentile(dzcum, 50, method="nearest")), axis=1
+        )
 
+    im, jm = argmed[0]
     # find the dz stack of the median
     dzmedian = dzv[im, jm, :]
     logger.info("DZ median column is %s", dzmedian)

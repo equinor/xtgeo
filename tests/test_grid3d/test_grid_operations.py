@@ -35,7 +35,7 @@ DUAL = TPATH / "3dgrids/etc/dual_distorted2.grdecl"
 DUALPROPS = TPATH / "3dgrids/etc/DUAL"
 
 
-def test_hybridgrid1(tmpdir, snapshot):
+def test_hybridgrid1(tmpdir, snapshot, helpers):
     grd = xtgeo.create_box_grid(
         (4, 3, 5),
         flip=1,
@@ -54,18 +54,12 @@ def test_hybridgrid1(tmpdir, snapshot):
     nhdiv = 40
     newnlay = grd.nlay * 2 + nhdiv
     snapshot.assert_match(
-        grd.get_dataframe(activeonly=False)
-        .tail(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(grd.get_dataframe(activeonly=False).tail(50).round()),
         "grid_pre_hybrid.csv",
     )
     grd.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
     snapshot.assert_match(
-        grd.get_dataframe(activeonly=False)
-        .tail(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(grd.get_dataframe(activeonly=False).tail(50).round()),
         "grid_post_hybrid.csv",
     )
 
@@ -78,10 +72,7 @@ def test_hybridgrid1(tmpdir, snapshot):
 
     grd2 = xtgeo.grid_from_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"))
     snapshot.assert_match(
-        grd2.get_dataframe(activeonly=False)
-        .tail(50)
-        .round()
-        .to_csv(line_terminator="\n"),
+        helpers.df2csv(grd2.get_dataframe(activeonly=False).tail(50).round()),
         "grid_pre_hybrid.csv",
     )
 
@@ -124,7 +115,7 @@ def test_inactivate_thin_cells(tmpdir):
     grd.to_file(join(tmpdir, "test_hybridgrid2_inact_thin.roff"))
 
 
-def test_refine_vertically(tmpdir):
+def test_refine_vertically():
     """Do a grid refinement vertically."""
 
     logger.info("Read grid...")

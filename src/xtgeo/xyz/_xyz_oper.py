@@ -4,13 +4,11 @@
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d, UnivariateSpline
-
 import shapely.geometry as sg
-
 import xtgeo
-from xtgeo.common import XTGeoDialog
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from scipy.interpolate import UnivariateSpline, interp1d
+from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
@@ -99,7 +97,6 @@ def rescale_polygons(self, distance=10, addlen=False, kind="simple", mode2d=Fals
 
 def _rescale_v1(self, distance, addlen, mode2d):
     # version 1, simple approach, will rescale in 2D since Shapely use 2D lengths
-
     if not mode2d:
         raise KeyError("Cannot combine 'simple' with mode2d False")
 
@@ -118,9 +115,8 @@ def _rescale_v1(self, distance, addlen, mode2d):
         spoly = sg.LineString(np.stack([pxcor, pycor, pzcor], axis=1))
 
         new_spoly = _redistribute_vertices(spoly, distance)
-
         dfr = pd.DataFrame(
-            np.array(new_spoly), columns=[self.xname, self.yname, self.zname]
+            np.array(new_spoly.coords), columns=[self.xname, self.yname, self.zname]
         )
 
         dfr[self.pname] = idx

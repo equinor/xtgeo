@@ -1,22 +1,22 @@
 """Module for fast XSection plots of wells/surfaces etc, using matplotlib."""
 
 
+import math
+import warnings
 from collections import OrderedDict
 
-import math
-import numpy.ma as ma
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import numpy.ma as ma
+import pandas as pd
 from matplotlib import collections as mc
 from matplotlib.lines import Line2D
 from scipy.ndimage import gaussian_filter
-
 from xtgeo.common import XTGeoDialog
-from xtgeo.xyz import Polygons
 from xtgeo.well import Well
+from xtgeo.xyz import Polygons
 
-from .baseplot import BasePlot
+from .baseplot import BasePlot, _get_colormap
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -93,7 +93,8 @@ class XSection(BasePlot):
         self._colorlegend_grid = False
 
         if colormap is None:
-            self._colormap = plt.cm.get_cmap("viridis")
+            self._colormap = _get_colormap("viridis")
+
         else:
             self.define_colormap(colormap)
 
@@ -279,6 +280,8 @@ class XSection(BasePlot):
         self._allfigs.append(self._fig)
         ax1 = OrderedDict()
 
+        # since the plan is to at some point remove plotting from xtgeo:
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
         ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
 
         ax2 = plt.subplot2grid(

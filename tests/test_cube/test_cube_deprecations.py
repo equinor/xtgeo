@@ -25,7 +25,7 @@ def test_cube_from_file_engine_warns(any_cube, any_cube_file):
 
 def test_cube_file_in_init_warns(any_cube_file):
     with pytest.warns(DeprecationWarning, match="directly from file"):
-        xtgeo.Cube(any_cube_file)  # type: ignore # noqa # pylint: disable=undefined-variable
+        xtgeo.Cube(any_cube_file)
 
 
 @pytest.mark.parametrize(

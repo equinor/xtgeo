@@ -1,15 +1,25 @@
 """The baseplot module."""
-import deprecation
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+from distutils.version import LooseVersion
 
+import deprecation
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import xtgeo
+from matplotlib.colors import LinearSegmentedColormap
 from xtgeo.common import XTGeoDialog
 
 from . import _colortables as _ctable
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+
+def _get_colormap(name):
+    """For matplotlib compatibility."""
+    if LooseVersion(mpl.__version__) < LooseVersion("3.6"):
+        return plt.cm.get_cmap(name)
+    else:
+        return mpl.colormaps[name]
 
 
 class BasePlot(object):
@@ -21,7 +31,7 @@ class BasePlot(object):
         logger.info(clsname)
 
         self._contourlevels = 3
-        self._colormap = plt.cm.get_cmap("viridis")
+        self._colormap = _get_colormap("viridis")
 
         self._ax = None
         self._tight = False
@@ -84,11 +94,11 @@ class BasePlot(object):
 
         colors = []
 
-        cmap = plt.get_cmap("rainbow")
+        cmap = _get_colormap("rainbow")
 
         if cfile is None:
             cfile = "rainbow"
-            cmap = plt.get_cmap("rainbow")
+            cmap = _get_colormap("rainbow")
 
         elif cfile == "xtgeo":
             colors = _ctable.xtgeocolors()
@@ -109,7 +119,7 @@ class BasePlot(object):
             cmap = LinearSegmentedColormap.from_list("rms", colors, N=len(colors))
             cmap.name = cfile
         elif cfile in valid_maps:
-            cmap = plt.get_cmap(cfile)
+            cmap = _get_colormap(cfile)
             for i in range(cmap.N):
                 colors.append(cmap(i))
         else:
@@ -117,7 +127,7 @@ class BasePlot(object):
                 "Trying to access as color map not installed in "
                 "this version of matplotlib: <{}>. Revert to <rainbow>".format(cfile)
             )
-            cmap = plt.get_cmap("rainbow")
+            cmap = _get_colormap("rainbow")
             for i in range(cmap.N):
                 colors.append(cmap(i))
 
