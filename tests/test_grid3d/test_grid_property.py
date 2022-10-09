@@ -54,6 +54,9 @@ DUALROFF = TPATH / "3dgrids/etc/dual_grid_w_props.roff"
 
 BANAL7 = TPATH / "3dgrids/etc/banal7_grid_params.roff"
 
+INTERSECTGRID = TPATH / "3dgrids/simpleb8/IX_BO.EGRID"
+INTERSECTINIT = TPATH / "3dgrids/simpleb8/IX_BO.INIT"
+
 
 def test_create():
     """Create a simple property"""
@@ -374,6 +377,18 @@ def test_grdecl_import_reek(tmpdir):
         exportfile, name="PORO", fformat="bgrdecl", grid=rgrid
     )
     assert poro.values.mean() == pytest.approx(porox.values.mean(), abs=0.001)
+
+
+def test_egrid_read_intersect():
+    """
+    Test reading properties from intersect export egrid and init
+    The ACTNUM should be updated based on PORV from init file
+    """
+    grid = xtgeo.grid_from_file(INTERSECTGRID, fformat="egrid")
+    actnum = grid.get_actnum_indices()
+    xtgeo.gridproperty_from_file(INTERSECTINIT, fformat="init", name="PORO", grid=grid)
+    new_actnum = grid.get_actnum_indices()
+    assert not np.array_equal(actnum, new_actnum)
 
 
 def test_io_roff_discrete(tmpdir):
