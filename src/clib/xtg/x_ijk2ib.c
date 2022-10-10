@@ -1,9 +1,34 @@
-// Notice: I, J, K are "one based" as in common cell counting
+/*
+ ***************************************************************************************
+ *
+ * NAME:
+ *   x_ijk2ib.c
+ *
+ * DESCRIPTION:
+ *    Convert (i, j, k) coordinates to a 1-dimensional index
+ *
+ *    x_ijk2ib()    Fortran order
+ *    x_ijk2ic()    C order
+ *
+ * ARGUMENTS:
+ *     i, j, k      cell indices
+ *     nx, ny, nz   grid dimensions
+ *     ia_start     1-dimensional array index to start from
+ *
+ * RETURNS:
+ *    The (i, j, k) cell's 1-dimensional array index
+ *
+ * LICENCE:
+ *    cf. XTGeo LICENSE
+ ***************************************************************************************
+ */
+
 
 #include "libxtg.h"
 #include "libxtg_.h"
 #include "logger.h"
 
+/* Fortran order counting (column major order: i loops fastest, then j, then k) */
 long
 x_ijk2ib(long i, long j, long k, long nx, long ny, long nz, int ia_start)
 {
@@ -24,7 +49,7 @@ x_ijk2ib(long i, long j, long k, long nx, long ny, long nz, int ia_start)
     return ib;
 }
 
-/* c order counting, where K is looping fastest, them J, then I */
+/* C order counting (row major order: k loops fastest, then j, then i) */
 long
 x_ijk2ic(long i, long j, long k, long nx, long ny, long nz, int ia_start)
 {
