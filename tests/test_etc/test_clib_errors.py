@@ -36,8 +36,8 @@ def test_grdcp3d_get_xyz():
             np.array([0.0]),
             np.array([1.0], dtype=np.float32),
             np.array([1], dtype=np.int32),
-            0, # option
-            1, # len(xv) / yv / zv
+            0,  # option
+            1,  # len(xv) / yv / zv
             1,
             1,
         )

@@ -398,7 +398,7 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
         self._zcornsv.ravel(),
         self._actnumsv.ravel(),
         option,
-        self.ntotal, # sizes of xv, yv, zv
+        self.ntotal,  # sizes of xv, yv, zv
         self.ntotal,
         self.ntotal,
     )
