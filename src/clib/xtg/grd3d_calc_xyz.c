@@ -9,9 +9,8 @@
  *
  * ARGUMENTS:
  *     nx..nz           grid dimensions
- *     coordsv        Coordinates
- *     zcornsv        ZCORN array (pointer) of input
- *     coordsv
+ *     coordsv          Coordinates
+ *     zcornsv          ZCORN array (pointer) of input
  *     p_x_v .. p_z_v   Return arrays for X Y Z
  *     option           0: use all cells, 1: make undef if ACTNUM=0
  *     debug            debug/verbose flag
@@ -52,7 +51,7 @@ grd3d_calc_xyz(int nx,
 {
 
     long ntotv[4] = { nact, npx, npy, npz };
-    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntotv, 4) != 0) {
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntotv, 4, XTGFORMAT1) != 0) {
         throw_exception("Errors in array lengths checks in grd3d_calc_xyz");
         return;
     }
