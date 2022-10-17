@@ -38,15 +38,15 @@ grdcp3d_calc_xyz(long ncol,
                long nzcorn,
                int *actnumsv,
                long nact,
-               double *p_x_v,
-               long npx,
-               double *p_y_v,
-               long npy,
-               double *p_z_v,
-               long npz,
-               int option)
+               int option,
+               double *xarr,  // xarr
+               long nxarr,
+               double *yarr,  // yarr
+               long nyarr,
+               double *zarr,  // zarr
+               long nzarr)
 {
-    long ntotv[4] = { nact, npx, npy, npz };
+    long ntotv[4] = { nact, nxarr, nyarr, nzarr };
     if (x_verify_vectorlengths(ncol, nrow, nlay, ncoord, nzcorn, ntotv, 4,
                 XTGFORMAT2) != 0) {
         throw_exception("Errors in array lengths checks in grdcp3d_calc_xyz");
@@ -67,18 +67,18 @@ grdcp3d_calc_xyz(long ncol,
 
                 /* If we want to mask inactive cells */
                 if (option == 1 && actnumsv[ic] == 0) {
-                    p_x_v[ic] = UNDEF;
-                    p_y_v[ic] = UNDEF;
-                    p_z_v[ic] = UNDEF;
+                    xarr[ic] = UNDEF;
+                    yarr[ic] = UNDEF;
+                    zarr[ic] = UNDEF;
                     continue;
                 }
 
                 grdcp3d_midpoint(i, j, k, ncol, nrow, nlay, coordsv, ncoord, zcornsv,
                         nzcorn, &xv, &yv, &zv);
 
-                p_x_v[ic] = xv;
-                p_y_v[ic] = yv;
-                p_z_v[ic] = zv;
+                xarr[ic] = xv;
+                yarr[ic] = yv;
+                zarr[ic] = zv;
             }
         }
     }

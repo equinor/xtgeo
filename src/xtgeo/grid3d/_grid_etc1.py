@@ -386,25 +386,25 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     # TODO: May be issues with asmasked vs activeonly here?
     self._xtgformat2()
 
-    xv = np.zeros(self.ntotal, dtype=np.float64)
-    yv = np.zeros(self.ntotal, dtype=np.float64)
-    zv = np.zeros(self.ntotal, dtype=np.float64)
+    # xv = np.zeros(self.ntotal, dtype=np.float64)
+    # yv = np.zeros(self.ntotal, dtype=np.float64)
+    # zv = np.zeros(self.ntotal, dtype=np.float64)
 
     option: int = 0
     if asmasked:
         option = 1
 
-    _cxtgeo.grdcp3d_calc_xyz(
+    xv, yv, zv = _cxtgeo.grdcp3d_calc_xyz(
         self._ncol,
         self._nrow,
         self._nlay,
         self._coordsv.ravel(),
         self._zcornsv.ravel(),
         self._actnumsv.ravel(),
-        xv,
-        yv,
-        zv,
         option,
+        self.ntotal, # sizes of xv, yv, zv
+        self.ntotal,
+        self.ntotal,
     )
 
     xv = np.ma.masked_greater(xv, xtgeo.UNDEF_LIMIT)

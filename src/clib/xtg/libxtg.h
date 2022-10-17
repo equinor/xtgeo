@@ -1177,14 +1177,20 @@ grdcp3d_calc_xyz(long ncol,
                int *swig_np_int_in_v1,    // *actnumsv,
                long n_swig_np_int_in_v1,  // nactnum,
 
-               double *swig_np_dbl_inplace_v1,  // *p_x_v,
-               long n_swig_np_dbl_inplace_v1,   // npx,
-               double *swig_np_dbl_inplace_v2,  // *p_y_v,
-               long n_swig_np_dbl_inplace_v2,   // npy,
-               double *swig_np_dbl_inplace_v3,  // *p_z_v,
-               long n_swig_np_dbl_inplace_v3,   // npz,
+               int option,
 
-               int option);
+               /* double *swig_np_dbl_inplace_v1,  // *p_x_v, */
+               /* long n_swig_np_dbl_inplace_v1,   // npx, */
+               /* double *swig_np_dbl_inplace_v2,  // *p_y_v, */
+               /* long n_swig_np_dbl_inplace_v2,   // npy, */
+               /* double *swig_np_dbl_inplace_v3,  // *p_z_v, */
+               /* long n_swig_np_dbl_inplace_v3,   // npz, */
+               double *swig_np_dbl_aout_v1,  // xarr
+               long n_swig_np_dbl_aout_v1,
+               double *swig_np_dbl_aout_v2,  // yarr
+               long n_swig_np_dbl_aout_v2,
+               double *swig_np_dbl_aout_v3,  // zarr
+               long n_swig_np_dbl_aout_v3);
 
 long
 grd3d_scan_roffbinary(FILE *fc,
