@@ -386,10 +386,6 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     # TODO: May be issues with asmasked vs activeonly here?
     self._xtgformat2()
 
-    # xv = np.zeros(self.ntotal, dtype=np.float64)
-    # yv = np.zeros(self.ntotal, dtype=np.float64)
-    # zv = np.zeros(self.ntotal, dtype=np.float64)
-
     option: int = 0
     if asmasked:
         option = 1
