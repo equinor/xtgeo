@@ -23,10 +23,7 @@
  ***************************************************************************************
  */
 
-
-#include "libxtg.h"
 #include "libxtg_.h"
-#include "logger.h"
 
 /* Fortran order counting (column major order: i loops fastest, then j, then k) */
 long
