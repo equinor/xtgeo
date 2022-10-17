@@ -384,24 +384,23 @@ def get_ijk_from_points(
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     """Get X Y Z as properties."""
     # TODO: May be issues with asmasked vs activeonly here?
-
-    self._xtgformat1()
+    self._xtgformat2()
 
     xv = np.zeros(self.ntotal, dtype=np.float64)
     yv = np.zeros(self.ntotal, dtype=np.float64)
     zv = np.zeros(self.ntotal, dtype=np.float64)
 
-    option = 0
+    option: int = 0
     if asmasked:
         option = 1
 
-    _cxtgeo.grd3d_calc_xyz(
+    _cxtgeo.grdcp3d_calc_xyz(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        self._actnumsv.ravel(),
         xv,
         yv,
         zv,
