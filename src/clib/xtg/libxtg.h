@@ -1166,21 +1166,24 @@ grdcp3d_calc_dz(int nx,
                 metric m);
 
 void
-grd3d_calc_xyz(int nx,
-               int ny,
-               int nz,
-               double *swig_np_dbl_in_v1,       // *coordsv,
-               long n_swig_np_dbl_in_v1,        // ncoord,
-               double *swig_np_dbl_in_v2,       // *zcornsv,
-               long n_swig_np_dbl_in_v2,        // nzcorn,
-               int *swig_np_int_in_v1,          // *actnumsv,
-               long n_swig_np_int_in_v1,        // nactnum,
+grdcp3d_calc_xyz(long ncol,
+               long nrow,
+               long nlay,
+
+               double *swig_np_dbl_in_v1, // *coordsv,
+               long n_swig_np_dbl_in_v1,  // ncoord,
+               float *swig_np_flt_in_v1,  // *zcornsv,
+               long n_swig_np_flt_in_v1,  // nzcorn,
+               int *swig_np_int_in_v1,    // *actnumsv,
+               long n_swig_np_int_in_v1,  // nactnum,
+
                double *swig_np_dbl_inplace_v1,  // *p_x_v,
                long n_swig_np_dbl_inplace_v1,   // npx,
                double *swig_np_dbl_inplace_v2,  // *p_y_v,
                long n_swig_np_dbl_inplace_v2,   // npy,
                double *swig_np_dbl_inplace_v3,  // *p_z_v,
                long n_swig_np_dbl_inplace_v3,   // npz,
+
                int option);
 
 long
@@ -1563,6 +1566,21 @@ grd3d_collapse_inact(int nx,
                      int *swig_np_int_inplace_v1,     // *actnumsv
                      long n_swig_np_int_inplace_v1    // nactnum
 );
+
+void
+grdcp3d_midpoint(long i,
+               long j,
+               long k,
+               long ncol,
+               long nrow,
+               long nlay,
+               double *coordsv,
+               long ncoord,
+               float *zcornsv,
+               long nzcorn,
+               double *x,
+               double *y,
+               double *z);
 
 void
 grd3d_midpoint(int i,

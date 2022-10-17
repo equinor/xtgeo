@@ -8,11 +8,12 @@
  *    Verify typical grid vector lengths
  *
  * ARGUMENTS:
- *    ncol, nrow, nz     i     Dimensions
- *    ncoord         i     Lenghts of coord vector (use 0 or less to skip)
- *    nzcorn         i     Lenghts of zcorn vector (use 0 or less to skip)
- *    ntot           i     Array: Lenghts of ntot vector (use 0 or less to skip)
- *    ntotlen        i     Length of ntot array
+ *    ncol, nrow, nlay  i     Dimensions
+ *    ncoord            i     Lenghts of coord vector (use 0 or less to skip)
+ *    nzcorn            i     Lenghts of zcorn vector (use 0 or less to skip)
+ *    ntot              i     Array: Lenghts of ntot vector (use 0 or less to skip)
+ *    ntotlen           i     Length of ntot array
+ *    format            i     XTG format 1 or 2
  *
  * RETURNS:
  *    Status, EXIT_FAILURE or EXIT_SUCCESS
@@ -41,7 +42,6 @@ x_verify_vectorlengths(long ncol,
     long ncoordtrue = (ncol + 1) * (nrow + 1) * 6;
     long ntottrue = ncol * nrow * nlay;
     long nzcorntrue = (ncol + 1) * (nrow + 1) * (nlay + 1) * 4;
-
     /* Default to XTG format 2. */
     if (format == XTGFORMAT1) {
         nzcorntrue = ncol * nrow * (nlay + 1) * 4;
