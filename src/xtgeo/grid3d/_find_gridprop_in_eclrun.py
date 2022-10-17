@@ -3,6 +3,7 @@ import itertools
 import operator
 import pathlib
 import warnings
+from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import ecl_data_io as eclio
@@ -383,6 +384,39 @@ def gridprop_params(values, name, date, grid, fracture):
     return result
 
 
+def get_actnum_from_porv(init_filelike, grid):
+    """Override actnum value based on the cell pore volume
+    Args:
+        init_filelike: The init file
+        grid: The grid used by the simulator to produce the init file.
+    Returns:
+        None
+    """
+    generator = filter_lgr(eclio.lazy_read(init_filelike))
+    intehead, logihead, generator = peek_headers(generator)
+
+    check_grid_match(intehead, logihead, grid)
+    porv = read_values(
+        generator, intehead, ["PORV"], lengths=valid_gridprop_lengths(grid)
+    )
+    if porv:
+        if grid.dualporo:
+            num_cells = np.prod(grid.dimensions)
+            actnum_matrix = np.where(
+                porv["PORV"][:num_cells].reshape(grid.dimensions, order="F") > 0.0, 1, 0
+            )
+            actnum_fracture = np.where(
+                porv["PORV"][num_cells:].reshape(grid.dimensions, order="F") > 0.0, 2, 0
+            )
+            grid._dualactnum.values = actnum_matrix + actnum_fracture
+        else:
+            acttmp = grid.get_actnum().copy()
+            acttmp.values = np.where(
+                porv["PORV"].reshape(grid.dimensions, order="F") > 0.0, 1, 0
+            )
+            grid.set_actnum(acttmp)
+
+
 def find_gridprop_from_init_file(
     init_filelike,
     names: Union[List[str], Literal["all"]],
@@ -404,6 +438,12 @@ def find_gridprop_from_init_file(
         List of GridProperty parameters matching the names.
 
     """
+    init_stream = not isinstance(init_filelike, (str, Path))
+    if init_stream:
+        orig_pos = init_filelike.tell()
+    get_actnum_from_porv(init_filelike, grid)
+    if init_stream:
+        init_filelike.seek(orig_pos, 0)
     generator = filter_lgr(eclio.lazy_read(init_filelike))
     intehead, logihead, generator = peek_headers(generator)
 
