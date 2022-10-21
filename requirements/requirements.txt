@@ -2,7 +2,7 @@ deprecation
 numpy>=1.13
 shapely>=1.6.2
 matplotlib>=1.5
-scipy==1.9.3
+scipy
 segyio>1.8.0
 pandas>=0.18
 h5py>=3
