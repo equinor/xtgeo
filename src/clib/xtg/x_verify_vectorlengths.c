@@ -8,11 +8,12 @@
  *    Verify typical grid vector lengths
  *
  * ARGUMENTS:
- *    nx, ny, nz     i     Dimensions
- *    ncoord         i     Lenghts of coord vector (use 0 or less to skip)
- *    nzcorn         i     Lenghts of zcorn vector (use 0 or less to skip)
- *    ntot           i     Array: Lenghts of ntot vector (use 0 or less to skip)
- *    ntotlen        i     Length of ntot array
+ *    ncol, nrow, nlay  i     Dimensions
+ *    ncoord            i     Lenghts of coord vector (use 0 or less to skip)
+ *    nzcorn            i     Lenghts of zcorn vector (use 0 or less to skip)
+ *    ntot              i     Array: Lenghts of ntot vector (use 0 or less to skip)
+ *    ntotlen           i     Length of ntot array
+ *    format            i     XTG format 1 or 2
  *
  * RETURNS:
  *    Status, EXIT_FAILURE or EXIT_SUCCESS
@@ -29,18 +30,22 @@
 #include "logger.h"
 
 int
-x_verify_vectorlengths(int nx,
-                       int ny,
-                       int nz,
+x_verify_vectorlengths(long ncol,
+                       long nrow,
+                       long nlay,
                        long ncoord,
                        long nzcorn,
                        long *ntot,
-                       int ntotlen)
+                       int ntotlen,
+                       int format)
 {
-
-    long ncoordtrue = (nx + 1) * (ny + 1) * 6;
-    long nzcorntrue = nx * ny * (nz + 1) * 4;
-    long ntottrue = nx * ny * nz;
+    long ncoordtrue = (ncol + 1) * (nrow + 1) * 6;
+    long ntottrue = ncol * nrow * nlay;
+    long nzcorntrue = (ncol + 1) * (nrow + 1) * (nlay + 1) * 4;
+    /* Default to XTG format 2. */
+    if (format == XTGFORMAT1) {
+        nzcorntrue = ncol * nrow * (nlay + 1) * 4;
+    }
 
     if (ncoord > 0 && (ncoord != ncoordtrue)) {
         throw_exception("Error in ncoord check: ncoord > 0 and ncoord != ncoordtrue");
@@ -50,8 +55,7 @@ x_verify_vectorlengths(int nx,
         throw_exception("Error in ncoord check: nzcorn > 0 and nzcorn != nzcoordtrue");
         return EXIT_FAILURE;
     }
-    int i;
-    for (i = 0; i < ntotlen; i++) {
+    for (int i = 0; i < ntotlen; i++) {
         if (ntot[i] > 0 && (ntot[i] != ntottrue)) {
             logger_error(LI, FI, FU, "Error in ntot check %d: %ld vs %ld (true)", i,
                          ntot[i], ntottrue);

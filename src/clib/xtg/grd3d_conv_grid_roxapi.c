@@ -51,7 +51,8 @@ grd3d_conv_grid_roxapi(int ncol,
 {
 
     long ntotv[1] = { nactin };
-    if (x_verify_vectorlengths(ncol, nrow, nlay, ncoordin, nzcornin, ntotv, 1) != 0) {
+    if (x_verify_vectorlengths(ncol, nrow, nlay, ncoordin, nzcornin, ntotv, 1,
+                XTGFORMAT1) != 0) {
         memset(tpillars, 0, sizeof(double) * ntpillars);
         memset(bpillars, 0, sizeof(double) * nbpillars);
         memset(zcorners, 0, sizeof(double) * nzcorners);

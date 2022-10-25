@@ -79,7 +79,8 @@ surf_sample_grd3d_lay(int nx,
 
     long ntot[1] = { nact };
 
-    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 1) != 0) {
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 1,
+                XTGFORMAT1) != 0) {
         throw_exception("Errors in array lengths checks in: surf_sample_grd3d_lay");
         return;
     }

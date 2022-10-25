@@ -39,7 +39,6 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 #include "logger.h"
-#include <math.h>
 
 void
 grdcp3d_corners(long ic,

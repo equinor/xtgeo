@@ -7,6 +7,8 @@
 #include <string.h>
 
 #define FORTRANRECLEN 4000 /* Max record length of Fortran files */
+#define XTGFORMAT1 1
+#define XTGFORMAT2 2
 
 void
 x_fgets(char *, int, FILE *);
@@ -60,13 +62,14 @@ x_mapaxes(int mode,
           int option);
 
 int
-x_verify_vectorlengths(int nx,
-                       int ny,
-                       int nz,
+x_verify_vectorlengths(long ncol,
+                       long nrow,
+                       long nlay,
                        long ncoord,
                        long nzcorn,
                        long *ntot,
-                       int ntlen);
+                       int ntotlen,
+                       int format);
 
 void
 x_basicstats(int n, double undef, double *v, double *min, double *max, double *avg);
