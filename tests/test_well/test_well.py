@@ -683,7 +683,7 @@ def test_fence_as_polygons_drogon():
 
     assert isinstance(pline, Polygons)
     dfr = pline.dataframe
-    assert dfr.H_CUMLEN.max() == pytest.approx(60, abs=0.01)
+    assert dfr.H_CUMLEN.max() == pytest.approx(62.858, abs=0.01)
 
 
 def test_get_zonation_points():

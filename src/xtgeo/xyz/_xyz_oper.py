@@ -150,6 +150,33 @@ def _redistribute_vertices(geom, distance):
     raise ValueError("Unhandled geometry {}".format(geom.geom_type))
 
 
+def _handle_vertical_input(self, inframe):
+    """Treat the special vertical case.
+
+    A special case occurs for e.g. a 100% vertical well. Here the trick is distort
+    first and last row with a relative small number so that numerical problems are
+    avoided.
+    """
+
+    result = inframe.copy().reset_index()
+
+    # e.g. tvd.mean is 2000, then tolerance will be 0.002, and edit will be 2
+    tolerance = self.dataframe[self.zname].mean() * 0.000001
+    edit = tolerance * 1000
+    pseudo = self.copy()
+
+    if inframe[self.dhname].max() < tolerance:
+
+        result.at[0, self.xname] -= edit
+        result.at[result.index[-1], self.xname] += edit
+        pseudo.dataframe = result
+        pseudo.hlen()
+        pseudo.tlen()
+        result = pseudo.dataframe
+
+    return result
+
+
 def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
 
     # Rescaling to constant increment is perhaps impossible, but this is
@@ -162,6 +189,12 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
 
     dfrlist = []
     for idx, grp in idgroups:
+
+        grp = _handle_vertical_input(self, grp)
+
+        # avoid duplicates when *_DELTALEN are 0.0 (makes scipy interp1d() fail
+        # when scipy >= 1.9)
+        grp = grp.drop(grp[(grp[self.dhname] == 0.0) | (grp[self.dtname] == 0.0)].index)
 
         if len(grp.index) < 2:
             logger.warning("Cannot rescale polygons with less than two points. Skip")
