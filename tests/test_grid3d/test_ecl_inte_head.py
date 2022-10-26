@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
-
-from xtgeo.grid3d._ecl_inte_head import InteHead
+from xtgeo.grid3d._ecl_inte_head import InteHead, Phases
 from xtgeo.grid3d._ecl_output_file import Simulator, TypeOfGrid, UnitSystem
 
 
@@ -23,6 +22,23 @@ def test_intehead_non_standard_simulator():
     intehead = InteHead(np.full(shape=411, fill_value=100, dtype=np.int32))
 
     assert intehead.simulator == Simulator.ECLIPSE_100
+
+
+def test_intehead_iphs_when_e300():
+    intehead_values = [0] * 100
+    intehead_values[94] = 300  # simulator is Ecl 300
+    intehead_values[14] = 8  # 14 is IPHS code in E100 but no. tracers in E300, here 8
+    assert (
+        InteHead(intehead_values).phases == Phases.OIL_WATER_GAS
+    ), "phases always OIL_WATER_GAS in Eclipse 300"
+
+
+def test_intehead_iphs_fail_when_outsiderange_e100():
+    intehead_values = [0] * 100
+    intehead_values[94] = 100  # simulator is Ecl 100
+    intehead_values[14] = 8  # 14 is IPHS code in E100 but 8 is not a valid code
+    with pytest.raises(ValueError, match="not a valid Phases"):
+        InteHead(intehead_values).phases
 
 
 def test_intehead_type_of_grid():
