@@ -16,7 +16,6 @@ from shutil import rmtree, which
 from setuptools_scm import get_version
 from skbuild.command import set_build_base_mixin
 from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
-from skbuild.utils import new_style
 
 CMD = sys.argv[1]
 
@@ -24,7 +23,7 @@ CMD = sys.argv[1]
 # ======================================================================================
 # Overriding and extending setup commands
 # ======================================================================================
-class CleanUp(set_build_base_mixin, new_style(_clean)):
+class CleanUp(set_build_base_mixin):
     """Custom implementation of ``clean`` setuptools command.
 
     Overriding clean in order to get rid if "dist" folder and etc
