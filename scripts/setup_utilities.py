@@ -1,17 +1,11 @@
 """Functions/classes for use in setup.py in order to make the latter clean and lean."""
 import fnmatch
 import os
-import platform
-import re
-import subprocess  # nosec
 import sys
 from distutils.command.clean import clean as _clean
-from distutils.spawn import find_executable
-from distutils.version import LooseVersion
 from glob import glob
 from os.path import dirname, exists
-from pathlib import Path
-from shutil import rmtree, which
+from shutil import rmtree
 
 from setuptools_scm import get_version
 from skbuild.command import set_build_base_mixin
@@ -20,10 +14,22 @@ from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
 CMD = sys.argv[1]
 
 
+def new_style(klass):
+    """This function is stolen from scikit-build <= 0.15, as it is gone in >= 0.16.
+
+    The distutils/setuptools command classes are old-style classes, which won't work
+    with mixins. To work around this limitation, we dynamically convert them to new
+    style classes by creating a new class that inherits from them and also <object>.
+    This ensures that <object> is always at the end of the MRO, even after being mixed
+    in with other classes.
+    """
+    return type(f"NewStyleClass<{klass.__name__}>", (klass, object), {})
+
+
 # ======================================================================================
 # Overriding and extending setup commands
 # ======================================================================================
-class CleanUp(set_build_base_mixin):
+class CleanUp(set_build_base_mixin, new_style(_clean)):
     """Custom implementation of ``clean`` setuptools command.
 
     Overriding clean in order to get rid if "dist" folder and etc
@@ -84,23 +90,23 @@ class CleanUp(set_build_base_mixin):
 
         for dir_ in CleanUp.CLEANFOLDERS:
             if exists(dir_):
-                print("Removing: {}".format(dir_))
+                print(f"Removing: {dir_}")
             if exists(dir_):
                 rmtree(dir_)
 
         for dir_ in CleanUp.CLEANFOLDERSRECURSIVE:
             for pd in self.dfind(dir_, "."):
-                print("Remove folder {}".format(pd))
+                print(f"Remove folder {pd}")
                 rmtree(pd)
 
         for fil_ in CleanUp.CLEANFILESRECURSIVE:
             for pf in self.ffind(fil_, "."):
-                print("Remove file {}".format(pf))
+                print(f"Remove file {pf}")
                 os.unlink(pf)
 
         for fil_ in CleanUp.CLEANFILES:
             if exists(fil_):
-                print("Removing: {}".format(fil_))
+                print(f"Removing: {fil_}")
             if exists(fil_):
                 os.remove(fil_)
 
@@ -128,7 +134,7 @@ def readmestuff(filename):
     """For README, HISTORY etc."""
     response = "See " + filename
     try:
-        with open(filename) as some_file:
+        with open(filename, encoding="utf-8") as some_file:
             response = some_file.read()
     except OSError:
         pass
@@ -143,7 +149,7 @@ def readmestuff(filename):
 def parse_requirements(filename):
     """Load requirements from a pip requirements file."""
     try:
-        lineiter = (line.strip() for line in open(filename))
+        lineiter = (line.strip() for line in open(filename, encoding="utf-8"))
         return [line for line in lineiter if line and not line.startswith("#")]
     except OSError:
         return []
