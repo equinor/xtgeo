@@ -665,21 +665,27 @@ class GridProperty(_Grid3D):
         self._date = date
 
     @property
-    def codes(self):
+    def codes(self) -> dict:
         """The property codes as a dictionary."""
         return self._codes
 
     @codes.setter
     def codes(self, cdict):
-        self._codes = cdict.copy()
+        if isinstance(cdict, dict):
+            self._codes = copy.deepcopy(cdict)
+        else:
+            raise ValueError(
+                "The codes must be a python dictionary, current input "
+                f"is type: {type(cdict)}"
+            )
 
     @property
-    def ncodes(self):
+    def ncodes(self) -> int:
         """Number of codes if discrete grid property (read only)."""
         return len(self._codes)
 
     @property
-    def values(self):
+    def values(self) -> np.ma.MaskedArray:
         """Return or set the grid property as a masked 3D numpy array"""
         return self._values
 
@@ -691,7 +697,7 @@ class GridProperty(_Grid3D):
         self._values = values
 
     @property
-    def ntotal(self):
+    def ntotal(self) -> int:
         """Returns total number of cells ncol*nrow*nlay (read only)"""
         return self._ncol * self._nrow * self._nlay
 
@@ -1219,8 +1225,8 @@ class GridProperty(_Grid3D):
         )
 
         xprop.geometry = self._geometry
-        xprop.codes = copy.deepcopy(self._codes)
         xprop.isdiscrete = self._isdiscrete
+        xprop.codes = self._codes
         xprop.date = self._date
         xprop.roxorigin = self._roxorigin
         xprop.roxar_dtype = self._roxar_dtype

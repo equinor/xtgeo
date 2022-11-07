@@ -10,8 +10,9 @@ import hypothesis.strategies as st
 import numpy as np
 import numpy.ma as npma
 import pytest
-import xtgeo
 from hypothesis import HealthCheck, example, given, settings
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
 from xtgeo.grid3d import Grid, GridProperty
@@ -168,6 +169,16 @@ def test_describe():
     xx = GridProperty(ncol=3, nrow=2, nlay=1, values=np.array([1, 2, 3, 4, 5, 6]))
     desc = xx.describe(flush=False)
     assert "Name" in desc
+
+
+def test_discrete_copy():
+    """Copy a discrete grid_property with codes."""
+    gprop = GridProperty(
+        ncol=3, nrow=2, nlay=1, values=np.array([1, 1, 1, 6, 6, 6]), discrete=True
+    )
+    gprop.codes = {1: "FOO", 6: "BAH"}
+    gpcopy = gprop.copy()
+    assert gpcopy.codes == gprop.codes
 
 
 def test_npvalues3d():
