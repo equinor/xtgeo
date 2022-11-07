@@ -183,7 +183,7 @@ def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no c
     rprop.set_values(pvalues.astype(dtype, casting=casting), realisation=realisation)
 
     if self.isdiscrete:
-        rprop.code_names = self.codes.copy()
+        rprop.code_names = _rox_compatible_codes(self.codes)
 
 
 def _fix_codes(active_values, codes):  # pragma: no cover
@@ -207,4 +207,24 @@ def _fix_codes(active_values, codes):  # pragma: no cover
 
         newcodes[code] = name
 
+    return newcodes
+
+
+def _rox_compatible_codes(codes: dict) -> dict:  # pragma: no cover
+    """Ensure that keys in codes are int's prior to storage in RMS."""
+
+    newcodes = {}
+    for code, name in codes.items():
+        if code is None:
+            continue  # skip codes of type None; assumed to be spurious
+        if not isinstance(code, int):
+            try:
+                code = int(code)
+            except ValueError:
+                raise ValueError(
+                    "The keys in codes must be an integer prior to RMS "
+                    f"storage. Actual key found here is '{code}' of type {type(code)}"
+                )
+
+        newcodes[code] = name
     return newcodes
