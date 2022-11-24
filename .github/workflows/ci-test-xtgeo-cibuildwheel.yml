@@ -14,7 +14,7 @@ jobs:
       matrix:
         cibw_python: [cp36, cp37, cp38, cp39, cp310]
         os:
-          - runs_on: ubuntu-latest
+          - runs_on: ubuntu-20.04  # upgrade to u-latest when 3.6 is deprecated in xtgeo
             cibw_image: manylinux_x86_64
           - runs_on: windows-latest
             cibw_image: win_amd64
