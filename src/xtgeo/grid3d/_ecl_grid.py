@@ -617,7 +617,15 @@ class EclGrid(ABC):
             zcorn[:, :, :, :, 1, : nz - 1], zcorn[:, :, :, :, 0, 1:], atol=1e-2
         ):
 
-            raise ValueError("xtgeo does not support grids with horizontal split.")
+            warnings.warn(
+                "An Eclipse style grid with vertical ZCORN splits "
+                "or overlaps between vertical neighbouring cells is detected. XTGeo "
+                "will import the grid as if the cell layers are connected, "
+                "hence check result carefully. "
+                "(Note also that this check both active and inactive cells!)",
+                UserWarning,
+            )
+
         result = np.zeros((nx + 1, ny + 1, nz + 1, 4), dtype=np.float32)
 
         # xtgeo uses 4 z values per i,j,k to mean the 4 z values of
