@@ -215,16 +215,22 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
         nstep = int(leng / distance)
         alpha = np.linspace(0, leng, num=nstep, endpoint=True)
 
-        if kind == "slinear":
+        if kind in ("slinear"):
             points = np.array(points).T
             interpolator = interp1d(
-                grp[gname], points, kind="slinear", axis=0, assume_sorted=True
+                grp[gname],
+                points,
+                kind="slinear",
+                axis=0,
+                assume_sorted=True,
+                bounds_error=False,
+                fill_value="extrapolate",
             )
             ip = interpolator(alpha)
         elif kind == "cubic":
             splines = [UnivariateSpline(grp[gname], crd) for crd in points]
 
-            ip = np.vstack(spl(alpha) for spl in splines).T
+            ip = np.vstack(list(spl(alpha) for spl in splines)).T
         else:
             raise ValueError("Invalid kind chosen: {}".format(kind))
 
@@ -309,8 +315,7 @@ def get_fence(
     fence.dataframe.drop_duplicates(
         subset=[fence.xname, fence.yname], keep="first", inplace=True
     )
-
-    fence.dataframe.reset_index(inplace=True)
+    fence.dataframe.reset_index(inplace=True, drop=True)
 
     if name:
         fence.name = name
