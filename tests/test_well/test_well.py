@@ -7,6 +7,7 @@ from os.path import join
 import numpy as np
 import pandas as pd
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Well
@@ -21,6 +22,7 @@ if not xtg.testsetup():
 TPATH = xtg.testpathobj
 
 WFILE = join(TPATH, "wells/reek/1/OP_1.w")
+WFILE2 = join(TPATH, "wells/reek/2/OP_6a.w")
 WFILE_HOLES = join(TPATH, "wells/reek/1/OP_1_zholes.w")
 WFILES = str(TPATH / "wells/reek/1/*")
 
@@ -660,6 +662,14 @@ def test_fence():
     mywell = xtgeo.well_from_file(WFILE)
     pline = mywell.get_fence_polyline(nextend=10, tvdmin=1000)
     assert pline.shape == (31, 5)
+
+
+def test_fence2():
+    """Return a resampled fence, another dataset that troubled in scipy interpd."""
+    mywell = xtgeo.well_from_file(WFILE2)
+    pline = mywell.get_fence_polyline(tvdmin=0, asnumpy=False)
+    assert pline.dataframe.shape == (137, 6)
+    assert pline.dataframe.at[136, "H_CUMLEN"] == pytest.approx(2713.7405)
 
 
 def test_fence_as_polygons():

@@ -4,6 +4,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import pytest
+
 import xtgeo
 from xtgeo.xyz import Points, Polygons
 
@@ -182,26 +183,30 @@ def test_polygon_tlen_hlen(testpath):
     assert (abs(pol.dataframe[pol.dhname].iloc[0] - 1761.148)) < 0.01
 
 
-def test_rescale_polygon(testpath):
-    """Take a polygons set and rescale/resample"""
+@pytest.mark.parametrize(
+    "dorescale, kind, expectmax, expectlen",
+    [
+        (False, None, 5335, 5429),
+        (True, None, 5335, 54),
+        (True, "slineaer", 5335, 54),
+        (True, "cubic", 5335, 53),
+    ],
+)
+def test_rescale_polygon(testpath, dorescale, kind, expectmax, expectlen):
+    """Take a polygons set and rescale/resample."""
 
     pol = xtgeo.polygons_from_file(testpath / POLSET4)
 
-    oldpol = pol.copy()
-    oldpol.name = "ORIG"
-    oldpol.hlen()
-    pol.rescale(100)
-    pol.hlen()
+    if not dorescale:
+        pol.name = "ORIG"
+        pol.hlen()
+    else:
+        pol.rescale(100, kind=kind)
+        pol.name = kind if kind else "none"
+        pol.hlen()
 
-    pol2 = xtgeo.polygons_from_file(testpath / POLSET4)
-
-    pol2.rescale(100, kind="slinear")
-    pol2.name = "slinear"
-    pol2.hlen()
-
-    assert oldpol.dataframe.H_CUMLEN.max() == pytest.approx(5335, rel=0.02)
-    assert pol.dataframe.H_CUMLEN.max() == pytest.approx(5335, rel=0.02)
-    assert pol2.dataframe.H_CUMLEN.max() == pytest.approx(5335, rel=0.02)
+    assert pol.dataframe.H_CUMLEN.max() == pytest.approx(expectmax, rel=0.02)
+    assert pol.dataframe.shape == (expectlen, 6)
 
 
 def test_fence_from_polygon(testpath):
