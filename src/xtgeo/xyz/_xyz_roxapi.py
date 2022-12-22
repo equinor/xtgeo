@@ -15,7 +15,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # pylint: disable=protected-access
-VALID_STYPES = ["horizons", "zones", "clipboard", "general2d_data"]
+VALID_STYPES = ["horizons", "zones", "clipboard", "general2d_data", "faults"]
 VALID_STYPES_EXPORT = VALID_STYPES + ["horizon_picks"]
 
 
