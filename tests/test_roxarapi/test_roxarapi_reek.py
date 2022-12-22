@@ -359,6 +359,19 @@ def test_rox_get_modify_set_points(roxar_project):
 
 
 @pytest.mark.requires_roxar
+def test_rox_set_empty_points(roxar_project):
+    """Setting empty points shall empty the present data icon if in zones/horizons"""
+    poi = xtgeo.points_from_roxar(roxar_project, POINTSNAME1, "", stype="clipboard")
+    poi.dataframe = poi.dataframe[poi.dataframe.X_UTME == -8888]
+    assert poi.dataframe.empty is True
+    poi.to_roxar(roxar_project, "SNAPPED", "", stype="clipboard")
+
+    prj = xtgeo.RoxUtils(roxar_project, readonly=True)
+    points = prj.project.clipboard["SNAPPED"]
+    assert points.is_empty() is True
+
+
+@pytest.mark.requires_roxar
 def test_rox_get_modify_set_points_with_attrs(roxar_project):
     """Get, modify and set a points with attributes from a RMS project."""
     poi = xtgeo.points_from_roxar(
