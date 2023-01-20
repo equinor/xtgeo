@@ -10,7 +10,7 @@ import struct
 import uuid
 from os.path import join
 from platform import system as plfsys
-from tempfile import mkstemp
+from tempfile import mkstemp, SpooledTemporaryFile
 from types import BuiltinFunctionType
 from typing import Optional
 
@@ -160,6 +160,9 @@ class _XTGeoFile(object):
             self._file = fobj
             self._memstream = True
         elif isinstance(fobj, io.StringIO):
+            self._file = fobj
+            self._memstream = True
+        elif isinstance(fobj, SpooledTemporaryFile):
             self._file = fobj
             self._memstream = True
         elif isinstance(fobj, _XTGeoFile):
