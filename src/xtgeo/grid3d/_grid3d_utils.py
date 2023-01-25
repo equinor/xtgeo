@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """Some grid utilities, file scanning etc (methods with no class)"""
+import re
+
 import pandas as pd
+
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import XTGeoCLibError
@@ -99,7 +102,7 @@ def _scan_ecl_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
             "hard limit"
         )
 
-    keywords = keywords.replace(" ", "")
+    keywords = re.sub(r"\s+\|", "|", keywords)
     keywords = keywords.split("|")
 
     # record types translation (cf: grd3d_scan_eclbinary.c in cxtgeo)
