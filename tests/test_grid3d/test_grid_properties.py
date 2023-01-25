@@ -7,8 +7,9 @@ import sys
 
 import hypothesis.strategies as st
 import pytest
-import xtgeo
 from hypothesis import assume, given
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import GridProperties
 
@@ -215,6 +216,41 @@ def test_get_dataframe_active_only():
 
     df2 = xtgeo.gridproperties_dataframe(gps, activeonly=True, ijk=True, xyz=False)
     assert (df == df2).all().all()
+
+
+def test_gridproperties_all_roff():
+    """Read all gridproperties from ROFF binary format."""
+
+    gps = xtgeo.gridproperties_from_file(
+        XFILE2,
+        fformat="roff",
+        names="all",
+    )
+
+    for name in ("PORV", "PORO", "EQLNUM", "FIPNUM"):
+        assert name in gps.names
+
+
+def test_gridproperties_read_roff_missing_name():
+    """Read gridproperties from ROFF binary format, with one key not present."""
+
+    with pytest.raises(ValueError):
+        gps = xtgeo.gridproperties_from_file(
+            XFILE2,
+            fformat="roff",
+            names=["PORO", "EQLNUM", "NOTPRESENT"],
+            strict=True,
+        )
+
+    gps = xtgeo.gridproperties_from_file(
+        XFILE2,
+        fformat="roff",
+        names=["PORO", "EQLNUM", "NOTPRESENT"],
+        strict=False,
+    )
+
+    assert "PORO" in gps.names
+    assert "NOTPRESENT" not in gps.names
 
 
 @given(gridproperties())

@@ -8,12 +8,13 @@ from typing import List, Optional
 import deprecation
 import numpy as np
 import pandas as pd
+
 import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 from . import _grid3d_utils as utils
-from . import _grid_etc1, _gridprops_import_eclrun
+from . import _grid_etc1, _gridprops_import_eclrun, _gridprops_import_roff
 from ._grid3d import _Grid3D
 from .grid_property import GridProperty
 
@@ -70,14 +71,11 @@ def gridproperties_from_file(
         fformat = pfile.generic_format_by_proposal(fformat)  # default
 
     if fformat.lower() in ["roff_ascii", "roff_binary"]:
-        return GridProperties(
-            props=[
-                xtgeo.gridproperty_from_file(
-                    pfile.file, fformat="roff", name=name, grid=grid
-                )
-                for name in names
-            ]
+
+        props = _gridprops_import_roff.import_roff_gridproperties(
+            pfile, names, strict=strict
         )
+        return GridProperties(props=props)
 
     elif fformat.lower() == "init":
         return GridProperties(
