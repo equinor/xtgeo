@@ -7,8 +7,9 @@ import sys
 
 import hypothesis.strategies as st
 import pytest
-import xtgeo
 from hypothesis import assume, given
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import GridProperties
 
@@ -28,6 +29,7 @@ logger = xtg.basiclogger(__name__)
 GFILE1 = TPATH / "3dgrids/reek/REEK.EGRID"
 IFILE1 = TPATH / "3dgrids/reek/REEK.INIT"
 RFILE1 = TPATH / "3dgrids/reek/REEK.UNRST"
+RFILE2 = TPATH / "3dgrids/simpleb8/E100_3LETTER_TRACER.UNRST"  # has kword with spaces
 
 XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
 
@@ -163,6 +165,13 @@ def test_scan_keywords():
     logger.info(df)
 
     assert df.loc[12, "KEYWORD"] == "SWAT"  # pylint: disable=no-member
+
+
+def test_scan_ecl_keywords_with_spaces():
+    """Allow and preserve spacing in keywords from Eclipse RESTART file"""
+    df = GridProperties.scan_keywords(RFILE2, dataframe=True)
+
+    assert df.loc[12, "KEYWORD"] == "W2 F"  # pylint: disable=no-member
 
 
 def test_scan_keywords_invalid_file():
