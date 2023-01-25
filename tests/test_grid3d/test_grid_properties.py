@@ -226,6 +226,41 @@ def test_get_dataframe_active_only():
     assert (df == df2).all().all()
 
 
+def test_gridproperties_all_roff():
+    """Read all gridproperties from ROFF binary format."""
+
+    gps = xtgeo.gridproperties_from_file(
+        XFILE2,
+        fformat="roff",
+        names="all",
+    )
+
+    for name in ("PORV", "PORO", "EQLNUM", "FIPNUM"):
+        assert name in gps.names
+
+
+def test_gridproperties_read_roff_missing_name():
+    """Read gridproperties from ROFF binary format, with one key not present."""
+
+    with pytest.raises(ValueError):
+        gps = xtgeo.gridproperties_from_file(
+            XFILE2,
+            fformat="roff",
+            names=["PORO", "EQLNUM", "NOTPRESENT"],
+            strict=True,
+        )
+
+    gps = xtgeo.gridproperties_from_file(
+        XFILE2,
+        fformat="roff",
+        names=["PORO", "EQLNUM", "NOTPRESENT"],
+        strict=False,
+    )
+
+    assert "PORO" in gps.names
+    assert "NOTPRESENT" not in gps.names
+
+
 @given(gridproperties())
 def test_get_dataframe_no_grid(gridproperties):
     with pytest.raises(ValueError, match="no Grid is present"):
