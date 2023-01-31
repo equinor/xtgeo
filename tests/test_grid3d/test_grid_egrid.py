@@ -184,6 +184,22 @@ from .grid_generator import xtgeo_grids
             ],
             "ENDLGR",
         ),
+        (
+            [
+                ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
+                ("COORD   ", []),
+                ("ZCORN   ", []),
+                ("ACTNUM  ", []),
+                ("ENDGRID ", []),
+                ("LGR     ", ["name"]),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
+                ("COORD   ", []),
+                ("ZCORN   ", []),
+                ("HOSTNUM ", []),
+            ],
+            "ENDLGR",
+        ),
     ],
 )
 def test_bad_keywords_raises(file_contents, bad_keyword):

@@ -856,7 +856,7 @@ class EGridReader:
                 "GRIDUNIT": GridUnit.from_bgrdecl,
                 "GDORIENT": GdOrient.from_bgrdecl,
             },
-            required_keywords={"FILEHEAD"},
+            required_keywords={"FILEHEAD", "GRIDUNIT"},
             stop_keywords=["GRIDHEAD"],
         )
         return EGridHead(**params)
