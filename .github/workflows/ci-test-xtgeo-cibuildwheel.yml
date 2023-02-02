@@ -38,7 +38,7 @@ jobs:
       # Need to skip testing for 3.10 on linux and macosx due to technical trouble with one or more
       # requirements (notably h5py) in the machine setup. But all tests w/ req. works in general
       # testing; cf. test.yml
-      CIBW_TEST_SKIP: "cp310*linux* cp310*macos*"
+      CIBW_TEST_SKIP: "cp312*linux* cp312*macos*"
       CIBW_BEFORE_BUILD: python -m pip install "pip<=22.0.4"
     steps:
       - uses: actions/checkout@v2
