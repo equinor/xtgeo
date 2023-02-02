@@ -241,7 +241,6 @@ class Cube:  # pylint: disable=too-many-public-methods
         segyfile=None,
         filesrc=None,
     ):
-
         self._filesrc = filesrc
         self._xori = xori
         self._yori = yori

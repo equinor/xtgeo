@@ -46,7 +46,6 @@ def blockedwell_from_file(
 
 
 def blockedwell_from_roxar(project, gname, bwname, wname, lognames=None, ijk=True):
-
     """This makes an instance of a BlockedWell directly from Roxar RMS.
 
     For arguments, see :meth:`BlockedWell.from_roxar`.
@@ -128,7 +127,6 @@ class BlockedWell(Well):
     VALID_LOGTYPES = {"DISC", "CONT"}
 
     def __init__(self, *args, **kwargs):
-
         super().__init__(*args, **kwargs)
 
         self._gridname = None
@@ -144,7 +142,6 @@ class BlockedWell(Well):
         self._gridname = newname
 
     def copy(self):
-
         newbw = super().copy()
 
         newbw._gridname = self._gridname

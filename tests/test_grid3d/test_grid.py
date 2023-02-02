@@ -157,7 +157,6 @@ def test_emerald_grid_values(emerald_grid):
 
 
 def test_roffbin_get_dataframe_for_grid(emerald_grid):
-
     df = emerald_grid.get_dataframe()
 
     assert len(df) == emerald_grid.nactive

@@ -1217,7 +1217,7 @@ def test_get_polygons(string_to_well):
         1
         Zonelog DISC 1 zone1 2 zone2 3 zone3"""
 
-    for (x, y, z) in zip(
+    for x, y, z in zip(
         np.random.random(10), np.random.random(10), np.random.random(10)
     ):
         well_definition += f"\n        {x} {y} {z} 1"

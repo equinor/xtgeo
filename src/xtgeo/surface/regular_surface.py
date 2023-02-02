@@ -1117,7 +1117,6 @@ class RegularSurface:
         """
 
         if not self._isloaded:
-
             if self.filesrc is None:
                 raise ValueError(
                     "Can only load values into object initialised from file"

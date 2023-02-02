@@ -23,7 +23,6 @@ def blockedwells_from_files(
     zonelogname=None,
     strict=True,
 ):
-
     """Import blocked wells from a list of files (filelist).
 
     Args:
@@ -59,7 +58,6 @@ def blockedwells_from_files(
 def blockedwells_from_roxar(
     project, gname, bwname, lognames=None, ijk=True
 ):  # pragma: no cover
-
     """This makes an instance of a BlockedWells directly from Roxar RMS.
 
     For arguments, see :meth:`BlockedWells.from_roxar`.
@@ -115,7 +113,6 @@ class BlockedWells(Wells):
         strict=True,
         append=True,
     ):
-
         """Import blocked wells from a list of files (filelist).
 
         Args:

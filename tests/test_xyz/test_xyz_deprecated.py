@@ -69,7 +69,6 @@ def test_import_from_dataframe_deprecated(testpath):
     ],
 )
 def test_polygons_from_file_alternatives_with_deprecated(testpath, filename, fformat):
-
     if version.parse(xtgeo_version) < version.parse("2.21"):
         # to avoid test failure before tag is actually set
         pytest.skip()

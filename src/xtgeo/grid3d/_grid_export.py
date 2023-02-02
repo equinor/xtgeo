@@ -117,7 +117,6 @@ def export_hdf5_cpgeom(self, gfile, compression=None, chunks=False, subformat=84
     jmeta = json.dumps(meta).encode()
 
     with h5py.File(gfile.name, "w") as fh5:
-
         grp = fh5.create_group("CornerPointGeometry")
         grp.create_dataset(
             "coord",
@@ -172,7 +171,6 @@ def _define_dtypes(self, fmt, meta):
 
 
 def _transform_vectors(self, meta, dtypecoo, dtypezco, dtypeact):
-
     logger.debug("Transform vectors...")
 
     xshift = meta["_required_"]["xshift"]

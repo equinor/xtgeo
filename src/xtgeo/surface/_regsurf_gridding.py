@@ -68,7 +68,6 @@ def avgsum_from_3dprops_gridding(
     zone_avg=False,
     mask_outside=False,
 ):
-
     """Get surface average from a 3D grid prop."""
     # NOTE:
     # This do _either_ averaging _or_ sum gridding (if summing is True)
@@ -121,7 +120,6 @@ def avgsum_from_3dprops_gridding(
     zoneprop = ma.masked_greater(zoneprop, zone_minmax[1])
 
     for klay0 in range(gnlay):
-
         k1lay = klay0 + 1
 
         if k1lay == 1:
@@ -212,7 +210,6 @@ def avgsum_from_3dprops_gridding(
 def _zone_averaging(
     xprop, yprop, zoneprop, zone_minmax, coarsen, zone_avg, dzprop, mprop, summing=False
 ):
-
     # General preprocessing, and...
     # Change the 3D numpy array so they get layers by
     # averaging across zones. This may speed up a lot,
@@ -318,7 +315,6 @@ def surf_fill(self, fill_value=None):
         else:
             raise ValueError("Keyword fill_value must be int or float")
     else:
-
         invalid = ma.getmaskarray(self.values)
 
         ind = scipy.ndimage.distance_transform_edt(

@@ -8,6 +8,7 @@ from typing import List, Optional
 import deprecation
 import numpy as np
 import pandas as pd
+
 import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS

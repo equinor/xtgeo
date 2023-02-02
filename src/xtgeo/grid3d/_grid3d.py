@@ -11,7 +11,6 @@ class _Grid3D(object):
     """Abstract base class for Grid3D."""
 
     def __init__(self, ncol=4, nrow=3, nlay=5):
-
         self._ncol = ncol
         self._nrow = nrow
         self._nlay = nlay

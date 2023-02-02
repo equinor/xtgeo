@@ -179,7 +179,6 @@ class Map(BasePlot):
         aff = fpoly.dataframe.groupby(idname)
 
         for name, _group in aff:
-
             # make a dataframe sorted on faults (groupname)
             myfault = aff.get_group(name)
 
@@ -207,7 +206,6 @@ class Map(BasePlot):
         aff = fpoly.dataframe.groupby(idname)
 
         for _name, group in aff:
-
             # make a dataframe sorted on groupname
             pname = fpoly.name
 

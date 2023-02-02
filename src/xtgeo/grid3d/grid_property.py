@@ -542,7 +542,6 @@ class GridProperty(_Grid3D):
 
     @geometry.setter
     def geometry(self, geom):
-
         if geom is None:
             self._geometry = None
         elif isinstance(geom, xtgeo.grid3d.Grid) and geom.dimensions == self.dimensions:
@@ -574,7 +573,6 @@ class GridProperty(_Grid3D):
 
     @isdiscrete.setter
     def isdiscrete(self, flag):
-
         if not isinstance(flag, bool):
             raise ValueError("Input to {__name__} must be a bool")
 
@@ -691,7 +689,6 @@ class GridProperty(_Grid3D):
 
     @values.setter
     def values(self, values):
-
         values = self.ensure_correct_values(self.ncol, self.nrow, self.nlay, values)
 
         self._values = values

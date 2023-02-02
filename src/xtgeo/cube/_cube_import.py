@@ -378,7 +378,6 @@ def _get_coordinate(
 
 
 def _scan_segy_header(sfile, outfile):
-
     ptr_gn_bitsheader = _cxtgeo.new_intpointer()
     ptr_gn_formatcode = _cxtgeo.new_intpointer()
     ptr_gf_segyformat = _cxtgeo.new_floatpointer()
@@ -400,7 +399,6 @@ def _scan_segy_header(sfile, outfile):
 
 
 def _scan_segy_trace(sfile, outfile):
-
     ptr_gn_bitsheader = _cxtgeo.new_intpointer()
     ptr_gn_formatcode = _cxtgeo.new_intpointer()
     ptr_gf_segyformat = _cxtgeo.new_floatpointer()
@@ -496,7 +494,6 @@ def import_stormcube(
     # Scan the header with Python; then use CLIB for the binary data
     sfile = str(sfile.file)
     with open(sfile, "rb") as stf:
-
         iline = 0
 
         ncol = nrow = nlay = nlines = 1

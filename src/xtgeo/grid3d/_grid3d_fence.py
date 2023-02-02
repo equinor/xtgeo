@@ -143,7 +143,6 @@ def _update_tmpvars(self, force=False):
 def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
     """Compute a resampled fence from a Polygons instance."""
     if hincrement is None:
-
         geom = self.get_geometrics()
 
         avgdxdy = 0.5 * (geom[10] + geom[11])

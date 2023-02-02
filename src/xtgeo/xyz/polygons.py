@@ -172,7 +172,6 @@ def polygons_from_wells(
     zone: Optional[int] = 1,
     resample: Optional[int] = 1,
 ):
-
     """Get polygons from wells and a single zone number.
 
     Args:
@@ -586,7 +585,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         details="Use direct Polygons() initialisation instead",
     )
     def from_list(self, plist):
-
         kwargs = {}
         kwargs["values"] = _xyz_io._from_list_like(plist, "Z_TVDSS", None, True)
         self._reset(**kwargs)

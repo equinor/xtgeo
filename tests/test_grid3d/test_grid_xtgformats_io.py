@@ -317,7 +317,6 @@ def benchmark_gridprop_fixture(request, testpath):
 
 @pytest.mark.benchmark(group="import/export grid property")
 def test_benchmark_gridprop_export(benchmark, tmp_path, benchmark_gridprop):
-
     fname = tmp_path / "benchmark.xtgcpprop"
 
     def write():

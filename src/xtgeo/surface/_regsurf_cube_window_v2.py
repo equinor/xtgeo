@@ -46,7 +46,6 @@ def slice_cube_window(
     showprogress=False,
     deadtraces=True,
 ):
-
     if not snapxy:
         attrs = _slice_cube_window_resample(
             self,
@@ -65,7 +64,6 @@ def slice_cube_window(
         )
 
     else:
-
         attrs = _slice_cube_window(
             self,
             cube,
@@ -85,7 +83,6 @@ def slice_cube_window(
     # if attribute is str, self shall be updated and None returned, otherwise a dict
     # of attributes objects shall be returned
     if isinstance(attrs, dict) and len(attrs) == 1 and isinstance(attribute, str):
-
         self.values = attrs[attribute].values
         return None
 
@@ -107,7 +104,6 @@ def _slice_cube_window(
     showprogress,
     deadtraces,
 ):  # pylint: disable=too-many-branches, too-many-statements
-
     """Slice Cube between surfaces to find attributes
 
     New from May 2020, to provide a much faster algorithm and correct some issues

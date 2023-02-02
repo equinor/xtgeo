@@ -199,7 +199,6 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
         logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
         subz = OrderedDict()
         for inum, zrange in indexer.zonation.items():
-
             logger.debug("inum: %s, zrange: %s", inum, zrange)
             zname = roxgrid.zone_names[inum]
             logger.debug("zname is: %s", zname)
@@ -293,7 +292,6 @@ def _convert_to_xtgeo_grid_v2(roxgrid, gname):
         logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
         subz = OrderedDict()
         for inum, zrange in indexer.zonation.items():
-
             logger.debug("inum: %s, zrange: %s", inum, zrange)
             zname = roxgrid.zone_names[inum]
             logger.debug("zname is: %s", zname)

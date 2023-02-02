@@ -106,7 +106,6 @@ def rsg_grid_mock():
 
 def test_simbox_index():
     with patch("xtgeo.grid3d._grid_roxapi.RoxUtils") as mock_rox_utils:
-
         mock_grid_getter = MagicMock()
         mock_grid_getter.get_grid.return_value = rsg_grid_mock()
         mock_rox_utils.return_value.project.grid_models = {

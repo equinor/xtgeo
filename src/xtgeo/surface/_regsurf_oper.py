@@ -434,7 +434,6 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
     """Compute a resampled fence from a Polygons instance"""
 
     if hincrement is None:
-
         avgdxdy = 0.5 * (self.xinc + self.yinc)
         distance = 0.5 * avgdxdy
     else:

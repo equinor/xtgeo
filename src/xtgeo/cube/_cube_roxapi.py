@@ -138,7 +138,6 @@ def export_cube_roxapi(
 def _roxapi_export_cube(
     self, proj, rox, name, folder=None, domain="time", compression=("wavelet", 5)
 ):  # type: ignore # pragma: no cover
-
     roxar = None
     try:
         import roxar  # type: ignore

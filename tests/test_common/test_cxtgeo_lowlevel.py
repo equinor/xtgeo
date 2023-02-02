@@ -142,7 +142,6 @@ def test_well_mask_shoulder(depth, logseries, distance, expected):
     ],
 )
 def test_x_interp_map_nodes(xcoords, ycoords, zcoords, xval, yval, method, zexpected):
-
     xv = _cxtgeo.new_doublearray(4)
     yv = _cxtgeo.new_doublearray(4)
     zv = _cxtgeo.new_doublearray(4)

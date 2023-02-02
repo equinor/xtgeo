@@ -784,7 +784,6 @@ class XSection(BasePlot):
         )
 
     def _drawlegend(self, ax, bba, title=None):
-
         leg = ax.legend(
             loc="upper left",
             bbox_to_anchor=bba,
@@ -1151,7 +1150,6 @@ class XSection(BasePlot):
         ax = self._ax2
 
         if self.fence is not None:
-
             xwellarray = self._well.dataframe["X_UTME"].values
             ywellarray = self._well.dataframe["Y_UTMN"].values
 
@@ -1194,7 +1192,6 @@ class XSection(BasePlot):
 
         ax = self._ax3
         if self.fence is not None:
-
             xp = self._outline.dataframe["X_UTME"].values
             yp = self._outline.dataframe["Y_UTMN"].values
             ip = self._outline.dataframe["POLY_ID"].values

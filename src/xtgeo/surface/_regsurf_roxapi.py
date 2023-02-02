@@ -99,7 +99,6 @@ def _roxapi_import_surface(
         args.update(_roxapi_horizon_to_xtgeo(roxsurf))
 
     elif stype == "trends":
-
         if name not in proj.trends.surfaces:
             logger.info("Name %s is not present in trends", name)
             raise ValueError(f"Name {name} is not within Trends")

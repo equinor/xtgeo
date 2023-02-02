@@ -58,7 +58,6 @@ class BasePlot(object):
 
     @colormap.setter
     def colormap(self, cmap):
-
         if isinstance(cmap, LinearSegmentedColormap):
             self._colormap = cmap
         elif isinstance(cmap, str):
