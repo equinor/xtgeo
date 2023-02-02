@@ -38,7 +38,6 @@ def wellintersections(
     progress = XTGShowProgress(wlen, show=showprogress, leadtext="progress: ", skip=5)
 
     for iwell, well in enumerate(self.wells):
-
         progress.flush(iwell)
 
         logger.info("Work with %s", well.name)
@@ -64,7 +63,6 @@ def wellintersections(
         nox[well.name] = list()
         # loop over other wells
         for other in self.wells:
-
             if other.name == well.name:
                 continue  # same well
 

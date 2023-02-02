@@ -616,7 +616,6 @@ class EclGrid(ABC):
         if not np.allclose(
             zcorn[:, :, :, :, 1, : nz - 1], zcorn[:, :, :, :, 0, 1:], atol=1e-2
         ):
-
             warnings.warn(
                 "An Eclipse style grid with vertical ZCORN splits "
                 "or overlaps between vertical neighbouring cells is detected. XTGeo "

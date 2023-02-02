@@ -49,7 +49,6 @@ def slice_cube_window(
     algorithm=1,
 ):
     if algorithm == 1:
-
         if sampling == "cube":
             sampling = "nearest"
 
@@ -106,7 +105,6 @@ def _slice_cube_window_v1(
     showprogress=False,
     deadtraces=True,
 ):
-
     """Slice Cube with a window and extract attribute(s)
 
     This is legacy version algorithm 1 and will removed later.
@@ -279,7 +277,6 @@ def _slice_between_surfaces(
     showprogress=False,
     deadtraces=True,
 ):
-
     """Slice and find values between two surfaces."""
 
     npcollect = []

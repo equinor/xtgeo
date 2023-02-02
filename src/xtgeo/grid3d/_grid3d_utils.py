@@ -161,7 +161,6 @@ def _scan_ecl_keywords_w_dates(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
 
 
 def _scan_roff_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
-
     rectypes = _cxtgeo.new_intarray(maxkeys)
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)

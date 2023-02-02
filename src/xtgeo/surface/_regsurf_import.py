@@ -100,7 +100,6 @@ def _import_irap_binary_purepy(mfile, values=True):
 
 
 def _import_irap_binary(mfile, values=True):
-
     logger.info("Enter function %s", __name__)
 
     cfhandle = mfile.get_cfhandle()
@@ -507,7 +506,6 @@ def import_hdf5_regsurf(mfile, values=True, **_):
 
     invalues = None
     with h5py.File(mfile.name, "r") as h5h:
-
         grp = h5h["RegularSurface"]
         idcode = grp.attrs["format-idcode"]
         provider = grp.attrs["provider"]

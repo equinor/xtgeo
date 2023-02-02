@@ -37,7 +37,6 @@ if os.environ.get("XTG_DEBUG_DEV") is None:
 
 
 def _xprint(msg):
-
     difftime = _timer(TIME0)
 
     if DEBUG:
@@ -66,7 +65,6 @@ if not ROXAR:
     ertbool = "LSB_JOBID" in os.environ
 
     if display == "" or "grid" in dhost or "lgc" in dhost or ertbool:
-
         _xprint("")
         _xprint("=" * 79)
 

@@ -44,7 +44,6 @@ def convert_subgrids(sdict):
 
 
 def handle_metadata(result, meta, ncol, nrow, nlay):
-
     # meta _optional_ *may* contain xshift, xscale etc which in case must be taken
     # into account
     coordsv = result["coordsv"]
@@ -137,7 +136,6 @@ def import_hdf5_cpgeom(mfile, ijkrange=None, zerobased=False):
     """Experimental grid geometry import using hdf5."""
     #
     with h5py.File(mfile.name, "r") as h5h:
-
         grp = h5h["CornerPointGeometry"]
 
         idcode = grp.attrs["format-idcode"]

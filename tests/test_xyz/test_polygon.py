@@ -27,7 +27,6 @@ POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
     ],
 )
 def test_polygons_from_file_alternatives(testpath, filename, fformat):
-
     polygons1 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
     polygons2 = xtgeo.polygons_from_file(testpath / filename)
 

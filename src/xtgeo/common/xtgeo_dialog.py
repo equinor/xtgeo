@@ -194,7 +194,6 @@ class _Formatter(logging.Formatter):
     # https://stackoverflow.com/questions/14429724/
     # python-logging-how-do-i-truncate-the-pathname-to-just-the-last-few-characters
     def format(self, record):
-
         filename = "unset_filename"
 
         if "pathname" in record.__dict__.keys():
@@ -257,7 +256,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
     @testpath.setter
     def testpath(self, newtestpath):
-
         if not os.path.isdir(newtestpath):
             raise RuntimeError(
                 "Proposed test path is not valid: {}".format(newtestpath)
@@ -584,7 +582,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         return None
 
     def _output(self, idx, level, string):
-
         prefix = ""
         endfix = ""
 

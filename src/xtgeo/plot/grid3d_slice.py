@@ -152,7 +152,6 @@ class Grid3DSlice(BasePlot):
     #     # plt.gca().set_aspect("equal", adjustable="box")
 
     def _plot_layer(self):
-
         xyc, ibn = self._grid.get_layer_slice(self._index, activeonly=self._active)
 
         xval = xyc[:, :, 0]

@@ -179,7 +179,6 @@ def export_well_roxapi(
 
 
 def _roxapi_export_well(xwell1, rox, wname, lognames, logrun, trajectory, realisation):
-
     if wname in rox.project.wells:
         _roxapi_update_well(
             xwell1, rox, wname, lognames, logrun, trajectory, realisation
@@ -210,7 +209,6 @@ def _roxapi_update_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
         uselognames = lognames
 
     for lname in uselognames:
-
         isdiscrete = False
         xtglimit = xtgeo.UNDEF_LIMIT
         if xwell1._wlogtypes[lname] == "DISC":

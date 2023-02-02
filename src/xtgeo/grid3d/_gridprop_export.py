@@ -28,7 +28,6 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
         name = self.name
 
     if "roff" in fformat:
-
         binary = True
         if "asc" in fformat:
             binary = False
@@ -59,7 +58,6 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
 
 
 def export_roff(self, pfile, name, binary=True):
-
     logger.info("Export roff to %s", pfile)
     roff_param = RoffParameter.from_xtgeo_grid_property(self)
     roff_param.name = name

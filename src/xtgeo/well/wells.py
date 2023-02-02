@@ -21,7 +21,6 @@ logger = xtg.functionlogger(__name__)
 
 
 def wells_from_files(filelist, *args, **kwargs):
-
     """Import wells from a list of files (filelist).
 
     Creates a Wells object from a list of filenames. Remaining arguments are
@@ -103,7 +102,6 @@ class Wells:
 
     @wells.setter
     def wells(self, well_list):
-
         for well in well_list:
             if not isinstance(well, xtgeo.well.Well):
                 raise ValueError("Well in list not valid Well object")
@@ -157,7 +155,6 @@ class Wells:
         strict=True,
         append=True,
     ):
-
         """Deprecated see :func:`wells_from_files`"""
 
         if not append:

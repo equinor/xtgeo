@@ -309,7 +309,6 @@ def _roxapi_export_xyz_viafile(
 def _roxapi_export_xyz(
     self, rox, name, category, stype, pfilter, realisation, attributes
 ):  # pragma: no cover
-
     logger.warning("Realisation %s not in use", realisation)
 
     proj = rox.project
@@ -392,7 +391,6 @@ def _cast_dataframe_attrs_to_numeric(dfr):
 def _check_category_etc(
     proj, name, category, stype, realisation, mode="get"
 ):  # pylint: disable=too-many-branches  # pragma: no cover
-
     """Helper to check if valid placeholder' whithin RMS."""
 
     logger.warning("Realisation %s not in use", realisation)
@@ -477,7 +475,6 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
             roxxyz = roxxyz[name]
 
         elif mode == "set":
-
             # clipboard folders will be created if not present, and overwritten else
             if isinstance(self, xtgeo.Polygons):
                 roxxyz = roxxyz.create_polylines(name, folders)

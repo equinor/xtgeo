@@ -49,6 +49,7 @@ logger = xtg.functionlogger(__name__)
 # For functions with mask=... ,they should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
 
+
 # METHODS as wrappers to class init + import
 def _handle_import(grid_constructor, gfile, fformat=None, **kwargs):
     """Handles the import given a constructor.
@@ -314,7 +315,6 @@ class Grid(_Grid3D):
         roxgrid=None,
         roxindexer=None,
     ):
-
         coordsv = np.asarray(coordsv)
         zcornsv = np.asarray(zcornsv)
         actnumsv = np.asarray(actnumsv)
@@ -559,7 +559,6 @@ class Grid(_Grid3D):
 
     @subgrids.setter
     def subgrids(self, sgrids):
-
         if sgrids is None:
             self._subgrids = None
             return
@@ -646,7 +645,6 @@ class Grid(_Grid3D):
 
     @gridprops.setter
     def gridprops(self, gprops):
-
         if not isinstance(gprops, GridProperties):
             raise ValueError("Input must be a GridProperties instance")
 
@@ -678,7 +676,6 @@ class Grid(_Grid3D):
 
     @props.setter
     def props(self, plist):
-
         if not isinstance(plist, list):
             raise ValueError("Input to props must be a list")
 

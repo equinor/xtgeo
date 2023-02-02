@@ -614,7 +614,6 @@ def test_gridprop_grid_and_dim_init(dim, grid, discrete):
 
 @pytest.mark.parametrize("discrete", [True, False])
 def test_gridprop_default(discrete):
-
     default_values = np.ma.MaskedArray(np.full((4, 3, 5), 99), False)
     default_values[0:4, 0, 0:2] = np.ma.masked
 

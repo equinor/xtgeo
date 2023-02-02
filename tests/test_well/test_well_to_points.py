@@ -166,7 +166,6 @@ def test_simple_points(well_spec, expected_result, string_to_well, zonelist, use
 
 
 def test_simple_points_two(string_to_well):
-
     wellstring = """1.01
 Unknown
 name 0 0 0

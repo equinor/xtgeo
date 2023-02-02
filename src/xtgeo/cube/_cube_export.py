@@ -61,7 +61,6 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
     cvalues = self.values
 
     if template is not None and not pristine:
-
         try:
             shutil.copyfile(self._segyfile, sfile)
         except Exception as errormsg:
@@ -71,7 +70,6 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         logger.debug("Input segy file copied ...")
 
         with segyio.open(sfile, "r+") as segyfile:
-
             logger.debug("Output segy file is now open...")
 
             if segyfile.sorting == 1:
@@ -103,7 +101,6 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         spec.xlines = np.arange(self.nrow)
 
         with segyio.create(sfile, spec) as fseg:
-
             # write the line itself to the file and the inline number
             # in all this line's headers
             for ill, ilno in enumerate(spec.ilines):

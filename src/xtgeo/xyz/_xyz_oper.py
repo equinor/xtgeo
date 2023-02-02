@@ -104,7 +104,6 @@ def _rescale_v1(self, distance, addlen, mode2d):
 
     dfrlist = []
     for idx, grp in idgroups:
-
         if len(grp.index) < 2:
             logger.warning("Cannot rescale polygons with less than two points. Skip")
             continue
@@ -166,7 +165,6 @@ def _handle_vertical_input(self, inframe):
     pseudo = self.copy()
 
     if inframe[self.dhname].max() < tolerance:
-
         result.at[0, self.xname] -= edit
         result.at[result.index[-1], self.xname] += edit
         pseudo.dataframe = result
@@ -178,7 +176,6 @@ def _handle_vertical_input(self, inframe):
 
 
 def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
-
     # Rescaling to constant increment is perhaps impossible, but this is
     # perhaps quite close
 
@@ -189,7 +186,6 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
 
     dfrlist = []
     for idx, grp in idgroups:
-
         grp = _handle_vertical_input(self, grp)
 
         # avoid duplicates when *_DELTALEN are 0.0 (makes scipy interp1d() fail
@@ -468,7 +464,6 @@ def extend(self, distance, nsamples, addhlen=True):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
     for _ in range(nsamples):
-
         # beginning of poly
         row0 = self.dataframe.iloc[0]
         row1 = self.dataframe.iloc[1]

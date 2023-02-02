@@ -555,7 +555,6 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     )
 
     for i in range(0, 24, 3):
-
         _gridprop_lowlevel.update_values_from_carray(
             grid_props[i], ptr_coord[i], np.float64, delete=True
         )
@@ -742,7 +741,6 @@ def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False, _ve
 
 
 def _get_geometrics_v1(self, allcells=False, cellcenter=True, return_dict=False):
-
     ptr_x = []
     for i in range(13):
         ptr_x.append(_cxtgeo.new_doublepointer())
@@ -1021,7 +1019,6 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
         or kc1 < 1
         or kc2 > self.nlay
     ):
-
         raise ValueError("Boundary for tuples not matching grid" "NCOL, NROW, NLAY")
 
     oldnlay = self._nlay

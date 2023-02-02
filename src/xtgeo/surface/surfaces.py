@@ -219,7 +219,6 @@ class Surfaces:
         result["std"] = template.copy()
 
         if percentiles is not None:
-
             # nan on a axis tends to give warnings that are not a worry; suppress:
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")

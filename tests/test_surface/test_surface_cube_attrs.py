@@ -98,7 +98,6 @@ def test_single_slice_yflip_positive_snapxy(loadsfile1):
     samplings = ["nearest", "trilinear"]
 
     for sampling in samplings:
-
         surf1 = xtgeo.surface_from_cube(cube1, 1000.0)
 
         surf1.slice_cube(cube1, sampling=sampling, snapxy=True, algorithm=2)
@@ -265,7 +264,6 @@ def test_avg_surface_large_cube_algorithm1(benchmark, algorithm):
 
 @pytest.mark.bigtest
 def test_attrs_reek(tmpdir, loadsfile2):
-
     logger.info("Make cube...")
     cube2 = loadsfile2
 

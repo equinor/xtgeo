@@ -19,7 +19,7 @@ myst-parser
 bandit
 segyio>=1.8.6
 shapely>=1.6.2
-black
+black>=23.1
 autopep8
 pylint
 pytest>=2.9.2

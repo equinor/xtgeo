@@ -157,7 +157,6 @@ def _extract_ztops(
         pzone = usezonerange[0] - 1
 
     for ind, zone in np.ndenumerate(zlog):
-
         ino = ind[0]  # since ind is a tuple...
 
         if pzone != zone and pzone < iundeflimit and zone < iundeflimit:
@@ -299,7 +298,6 @@ def get_fraction_per_zone(
     count_limit=3,
     zonelogname=None,
 ):  # pylint: disable=too-many-branches, too-many-statements
-
     """Fraction of e.g. a facies in a zone segment.
 
         X_UTME       Y_UTMN    Z_TVDSS  Zonelog  Facies  M_INCL

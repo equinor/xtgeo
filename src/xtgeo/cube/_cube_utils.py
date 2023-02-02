@@ -31,7 +31,6 @@ def swapaxes(self):
 
 
 def thinning(self, icol, jrow, klay):
-
     inputs = [icol, jrow, klay]
     ranges = [self.nrow, self.ncol, self.nlay]
 
@@ -176,7 +175,6 @@ def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
         juse = jlst.index(jloc) + 1
 
     if 1 <= iuse <= self.ncol and 1 <= juse <= self.nrow:
-
         ier, xval, yval = _cxtgeo.cube_xy_from_ij(
             iuse,
             juse,

@@ -131,7 +131,6 @@ def _wells_dfrac_importer(
     zonelist: list = None,
     zonelogname: str = None,
 ) -> Dict:
-
     """General function, get fraction of discrete code(s) e.g. facies per zone."""
 
     dflist = []
@@ -267,7 +266,6 @@ def points_from_wells(
     zonelist: Optional[list] = None,
     use_undef: bool = False,
 ):
-
     """Get tops or zone points data from a list of wells.
 
     Args:
@@ -316,7 +314,6 @@ def points_from_wells_dfrac(
     zonelist: Optional[list] = None,
     zonelogname: Optional[str] = None,
 ):
-
     """Get fraction of discrete code(s) e.g. facies per zone.
 
     Args:
@@ -777,7 +774,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         zonelist=None,
         use_undef=False,
     ):
-
         """Get tops or zone points data from a list of wells.
 
         Args:
@@ -811,7 +807,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         details="Use direct Points() initialisation instead",
     )
     def from_list(self, plist):
-
         self._reset(_xyz_io._from_list_like(plist, "Z_TVDSS", None, False))
 
     @deprecation.deprecated(
@@ -830,7 +825,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         zonelist=None,
         zonelogname=None,
     ):
-
         """Get fraction of discrete code(s) (e.g. facies) per zone.
 
         Args:

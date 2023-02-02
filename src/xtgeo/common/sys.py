@@ -136,7 +136,6 @@ class _XTGeoFile(object):
     """
 
     def __init__(self, fobj, mode="rb", obj=None):
-
         self._file = None  # Path instance or BytesIO memory stream
         self._tmpfile = None
         self._delete_after = False  # delete file (e.g. tmp) afterwards
@@ -402,7 +401,6 @@ class _XTGeoFile(object):
             return self._cfhandle
 
         if isinstance(self._file, io.BytesIO) and self._mode == "rb" and islinux:
-
             fobj = self._file.getvalue()  # bytes type in Python3, str in Python2
 
             # note that the typemap in swig computes the length for the buf/fobj!
