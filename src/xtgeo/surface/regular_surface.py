@@ -49,6 +49,7 @@ import deprecation
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
+
 import xtgeo
 import xtgeo.common.sys as xtgeosys
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
