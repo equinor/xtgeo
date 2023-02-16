@@ -542,7 +542,8 @@ surf_resample(int nx1,
               double rota2,
               double *swig_np_dbl_inplaceflat_v2,
               long n_swig_np_dbl_inplaceflat_v2,
-              int option);
+              int option,
+              int samplingoption);
 
 int
 surf_get_dist_values(double xori,

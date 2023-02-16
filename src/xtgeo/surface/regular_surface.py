@@ -2315,7 +2315,7 @@ class RegularSurface:
     # Interacion with other surface
     # ==================================================================================
 
-    def resample(self, other, mask=True):
+    def resample(self, other, mask=True, sampling="bilinear"):
         """Resample an instance surface values from another surface instance.
 
         Note that there may be some 'loss' of nodes at the edges of the
@@ -2331,6 +2331,8 @@ class RegularSurface:
             other (RegularSurface): Surface to resample from.
             mask (bool): If True (default) nodes outside will be made undefined,
                 if False then values will be kept as original
+            sampling (str): Either 'bilinear' interpolation (default) or, 'nearest' for
+                nearest node. The latter can be useful for resampling discrete maps.
 
         Example::
 
@@ -2348,13 +2350,16 @@ class RegularSurface:
         .. versionchanged:: 2.9
            Added ``mask`` keyword, default is True for backward compatibility.
 
+        .. versionchanged:: 2.21
+           Added ``sampling`` keyword option.
+
         """
         if not isinstance(other, RegularSurface):
             raise ValueError("Argument not a RegularSurface " "instance")
 
         logger.info("Do resampling...")
 
-        _regsurf_oper.resample(self, other, mask=mask)
+        _regsurf_oper.resample(self, other, mask=mask, sampling=sampling)
 
     # ==================================================================================
     # Change a surface more fundamentally
