@@ -2,14 +2,15 @@
 """Various operations"""
 
 import numbers
+
 import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-from xtgeo import XTGeoCLibError
-from xtgeo.xyz import Polygons
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
+from xtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog
+from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
 
@@ -112,7 +113,7 @@ def _check_other(self, other):
     return other
 
 
-def resample(self, other, mask=True):
+def resample(self, other, mask=True, sampling="bilinear"):
     """Resample from other surface object to this surf."""
 
     logger.info("Resampling...")
@@ -146,6 +147,7 @@ def resample(self, other, mask=True):
         self._rotation,
         svalues,
         0 if not mask else 1,
+        2 if sampling == "nearest" else 0,
     )
 
     self.values = np.ma.masked_greater(svalues, xtgeo.UNDEF_LIMIT)

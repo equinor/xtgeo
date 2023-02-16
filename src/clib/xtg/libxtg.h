@@ -1168,24 +1168,24 @@ grdcp3d_calc_dz(int nx,
 
 void
 grdcp3d_calc_xyz(long ncol,
-               long nrow,
-               long nlay,
+                 long nrow,
+                 long nlay,
 
-               double *swig_np_dbl_in_v1, // *coordsv,
-               long n_swig_np_dbl_in_v1,  // ncoord,
-               float *swig_np_flt_in_v1,  // *zcornsv,
-               long n_swig_np_flt_in_v1,  // nzcorn,
-               int *swig_np_int_in_v1,    // *actnumsv,
-               long n_swig_np_int_in_v1,  // nactnum,
+                 double *swig_np_dbl_in_v1,  // *coordsv,
+                 long n_swig_np_dbl_in_v1,   // ncoord,
+                 float *swig_np_flt_in_v1,   // *zcornsv,
+                 long n_swig_np_flt_in_v1,   // nzcorn,
+                 int *swig_np_int_in_v1,     // *actnumsv,
+                 long n_swig_np_int_in_v1,   // nactnum,
 
-               int option,
+                 int option,
 
-               double *swig_np_dbl_aout_v1,  // xarr
-               long n_swig_np_dbl_aout_v1,
-               double *swig_np_dbl_aout_v2,  // yarr
-               long n_swig_np_dbl_aout_v2,
-               double *swig_np_dbl_aout_v3,  // zarr
-               long n_swig_np_dbl_aout_v3);
+                 double *swig_np_dbl_aout_v1,  // xarr
+                 long n_swig_np_dbl_aout_v1,
+                 double *swig_np_dbl_aout_v2,  // yarr
+                 long n_swig_np_dbl_aout_v2,
+                 double *swig_np_dbl_aout_v3,  // zarr
+                 long n_swig_np_dbl_aout_v3);
 
 long
 grd3d_scan_roffbinary(FILE *fc,
@@ -1570,18 +1570,18 @@ grd3d_collapse_inact(int nx,
 
 void
 grdcp3d_midpoint(long i,
-               long j,
-               long k,
-               long ncol,
-               long nrow,
-               long nlay,
-               double *coordsv,
-               long ncoord,
-               float *zcornsv,
-               long nzcorn,
-               double *x,
-               double *y,
-               double *z);
+                 long j,
+                 long k,
+                 long ncol,
+                 long nrow,
+                 long nlay,
+                 double *coordsv,
+                 long ncoord,
+                 float *zcornsv,
+                 long nzcorn,
+                 double *x,
+                 double *y,
+                 double *z);
 
 void
 grd3d_midpoint(int i,
@@ -1884,19 +1884,20 @@ grdcp3d_corners(long ic,
                 double corners[]);
 
 long
-grdcp3d_get_vtk_esg_geometry_data(long ncol,
-                                  long nrow,
-                                  long nlay,
+grdcp3d_get_vtk_esg_geometry_data(
+  long ncol,
+  long nrow,
+  long nlay,
 
-                                  double *swig_np_dbl_inplaceflat_v1,  // coordsv
-                                  long n_swig_np_dbl_inplaceflat_v1,
-                                  float *swig_np_flt_inplaceflat_v1,   // zcornsv
-                                  long n_swig_np_flt_inplaceflat_v1,
+  double *swig_np_dbl_inplaceflat_v1,  // coordsv
+  long n_swig_np_dbl_inplaceflat_v1,
+  float *swig_np_flt_inplaceflat_v1,  // zcornsv
+  long n_swig_np_flt_inplaceflat_v1,
 
-                                  double *swig_np_dbl_aout_v1,         // output vertex arr
-                                  long n_swig_np_dbl_aout_v1,          // allocated length of vertex arr
-                                  long *swig_np_lng_aout_v1,           // hex connectivity array (out)
-                                  long n_swig_np_lng_aout_v1);         // allocated length of hex conn arr
+  double *swig_np_dbl_aout_v1,  // output vertex arr
+  long n_swig_np_dbl_aout_v1,   // allocated length of vertex arr
+  long *swig_np_lng_aout_v1,    // hex connectivity array (out)
+  long n_swig_np_lng_aout_v1);  // allocated length of hex conn arr
 
 void
 grdcp3d_get_vtk_grid_arrays(long ncol,
