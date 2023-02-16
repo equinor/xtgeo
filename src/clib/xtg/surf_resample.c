@@ -8,17 +8,18 @@
 *    Resample from one grid to another via bilinear interpolation
 *
 * ARGUMENTS:
-*    nx1,ny1        i     Dimensions of first grid (origin)
-*    xori1,xinc1    i     Maps X settings origin grid
-*    yori1,yinc1    i     Maps Y settings origin grid
-*    rot1           i     Rotation of origin
-*    mapv1          i     Map array (origin)
-*    nx2,ny2        i     Dimensions of second grid (result)
-*    xori2,xinc2    i     Maps X settings result grid
-*    yori2,yinc2    i     Maps Y settings result grid
-*    rot2           i     Rotation of result
-*    mapv2         i/o    Result grid
-*    option         i     If 1 then outside nodes will be UNDEF (masked)
+*    nx1,ny1          i     Dimensions of first grid (origin)
+*    xori1,xinc1      i     Maps X settings origin grid
+*    yori1,yinc1      i     Maps Y settings origin grid
+*    rot1             i     Rotation of origin
+*    mapv1            i     Map array (origin)
+*    nx2,ny2          i     Dimensions of second grid (result)
+*    xori2,xinc2      i     Maps X settings result grid
+*    yori2,yinc2      i     Maps Y settings result grid
+*    rot2             i     Rotation of result
+*    mapv2           i/o    Result grid
+*    optmask          i     If 1 then outside nodes will be UNDEF (masked)
+*    sampling_option  i     Method for sampling (0 is default bilinear, 2 is nearest)
 *
 * RETURNS:
 *    Int + Changed pointer to result map
@@ -56,7 +57,8 @@ surf_resample(int nx1,
               double rota2,
               double *mapv2,
               long nn2,
-              int optmask)
+              int optmask,
+              int sampling_method)
 
 {
     /* locals */
@@ -85,7 +87,7 @@ surf_resample(int nx1,
             /* based on this X Y, need to find Z value from original: */
             if (ier2 == 0) {
                 zc = surf_get_z_from_xy(xc2, yc2, nx1, ny1, xori1, yori1, xinc1, yinc1,
-                                        yflip1, rota1, mapv1, nn1, 0);
+                                        yflip1, rota1, mapv1, nn1, sampling_method);
                 mapv2[ib2] = zc;
 
             } else {

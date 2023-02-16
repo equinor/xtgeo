@@ -106,6 +106,66 @@ def test_resample_small():
     ]
 
 
+def test_resample_small_nearest_sampling():
+    """Do resampling with minimal dataset to test resmapling with nearest option."""
+    xs1 = RegularSurface(
+        xori=0,
+        yori=0,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=np.array([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        yflip=1,
+    )
+    xs2 = RegularSurface(
+        xori=0,
+        yori=0,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=np.array([0, 0, 0, 444, 0, 0, 0, 0, 0]),
+        yflip=1,
+    )
+    xs3 = RegularSurface(
+        xori=100,
+        yori=100,
+        ncol=3,
+        nrow=3,
+        xinc=50,
+        yinc=50,
+        values=888.0,
+        yflip=1,
+    )
+    xsx = xs1.copy()
+    xsx.resample(xs2, sampling="nearest")
+    assert list(xsx.values.data.flatten()) == [
+        0.0,
+        0.0,
+        0.0,
+        444.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+    ]
+    xsx = xs1.copy()
+    xsx.resample(xs3, sampling="nearest")
+    assert list(xsx.values.data.flatten()) == [
+        1e33,
+        1e33,
+        1e33,
+        1e33,
+        888.0,
+        888.0,
+        1e33,
+        888.0,
+        888.0,
+    ]
+
+
 def test_resample(tmpdir, reek_map):
     """Do resampling from one surface to another."""
     xs = reek_map
@@ -138,6 +198,37 @@ def test_resample(tmpdir, reek_map):
     # check that the "other" in snew.resample(other) is unchanged:
     assert xs.xinc == xs_copy.xinc
     np.testing.assert_allclose(xs.values, xs_copy.values, atol=1e-4)
+
+
+def test_resample_nearest(reek_map):
+    """Do resampling from one surface to another, using nearest node."""
+    xs = reek_map
+    assert xs.ncol == 554
+
+    xs_copy = xs.copy()
+
+    # turn into a discrete map
+    xs_copy.values[xs.values > 1700] = 888.0
+    xs_copy.values[xs.values <= 1700] = 0.0
+
+    # create a new map instance, unrotated, based on this map with corase sampling
+    ncol = int((xs.xmax - xs.xmin) / 200)
+    nrow = int((xs.ymax - xs.ymin) / 200)
+    values = np.zeros((nrow, ncol))
+    snew = RegularSurface(
+        xori=xs.xmin,
+        xinc=200,
+        yori=xs.ymin,
+        yinc=200,
+        nrow=nrow,
+        ncol=ncol,
+        values=values,
+    )
+
+    snew.resample(xs_copy, sampling="nearest")
+
+    assert list(np.unique(snew.values))[0:-1] == [0.0, 888.0]  # 2 values only
+    assert snew.values.mean() == pytest.approx(xs_copy.values.mean(), abs=2)
 
 
 def test_resample_partial_sample(tmp_path, reek_map, generate_plot):
