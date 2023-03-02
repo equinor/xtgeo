@@ -7,7 +7,7 @@ import math
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
-from distutils.version import StrictVersion
+from packaging.version import parse as versionparse
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -1080,7 +1080,7 @@ class Well:
         newdf = newdf.fillna(dfill)
 
         # now cast to dtype (dep on Pandas version)
-        if StrictVersion(pd.__version__) >= StrictVersion("0.19.0"):
+        if versionparse(pd.__version__) >= versionparse("0.19.0"):
             newdf = newdf.astype(dtype)
         else:
             for k, var in dtype.items():

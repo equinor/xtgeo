@@ -1,7 +1,7 @@
 """Operations along a well, private module."""
 
 import copy
-from distutils.version import StrictVersion
+from packaging.version import parse as versionparse
 
 import numpy as np
 import pandas as pd
@@ -94,7 +94,7 @@ def rescale(self, delta=0.15, tvdrange=None):
         np.linspace(startt, stopt, num=nentry)
     ]
 
-    if StrictVersion(pd.__version__) > StrictVersion("0.23.0"):
+    if versionparse(pd.__version__) > versionparse("0.23.0"):
         dfr = pd.concat([dfr1, dfr, dfr2], sort=False)
     else:
         dfr = pd.concat([dfr1, dfr, dfr2])
