@@ -1674,6 +1674,7 @@ class RegularSurface:
 
         return xsurf
 
+
     def get_values1d(
         self, order="C", asmasked=False, fill_value=xtgeo.UNDEF, activeonly=False
     ):

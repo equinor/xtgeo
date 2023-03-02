@@ -1,5 +1,5 @@
 """The baseplot module."""
-from distutils.version import LooseVersion
+from packaging.version import parse as versionparse
 
 import deprecation
 import matplotlib as mpl
@@ -16,7 +16,7 @@ logger = xtg.functionlogger(__name__)
 
 def _get_colormap(name):
     """For matplotlib compatibility."""
-    if LooseVersion(mpl.__version__) < LooseVersion("3.6"):
+    if versionparse(mpl.__version__) < versionparse("3.6"):
         return plt.cm.get_cmap(name)
     else:
         return mpl.colormaps[name]

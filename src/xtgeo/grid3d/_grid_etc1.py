@@ -2,7 +2,7 @@
 
 from collections import OrderedDict
 from copy import deepcopy
-from distutils.version import LooseVersion
+from packaging.version import parse as versionparse
 from math import atan2, degrees
 from typing import Tuple
 
@@ -1270,7 +1270,7 @@ def estimate_design(self, nsubname):
     dzavg = np.nanmean(dzcum2) / dzv.shape[2]
 
     # find the I J indices for the median value
-    if LooseVersion(np.__version__) < LooseVersion("1.22"):
+    if versionparse(np.__version__) < versionparse("1.22"):
         argmed = np.stack(
             np.nonzero(dzcum == np.percentile(dzcum, 50, interpolation="nearest")),
             axis=1,

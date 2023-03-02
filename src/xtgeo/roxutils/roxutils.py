@@ -2,7 +2,7 @@
 """Module for simplifying various operation in the Roxar python interface."""
 
 
-from distutils.version import StrictVersion
+from packaging.version import parse as versionparse
 
 # from pkg_resources import parse_version as pver (ALT)
 
@@ -132,7 +132,7 @@ class RoxUtils(object):
                 print('Not supported in this version')
 
         """
-        return StrictVersion(self._version) >= StrictVersion(targetversion)
+        return versionparse(self._version) >= versionparse(targetversion)
 
     def rmsversion(self, apiversion):
         """Get the actual RMS version(s) given an API version.
