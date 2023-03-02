@@ -340,8 +340,8 @@ def get_xy_values1d(self, order="C", activeonly=True):
 
     xvals, yvals = self.get_xy_values(order=order, asmasked=asmasked)
 
-    xvals = xvals.ravel(order="K")
-    yvals = yvals.ravel(order="K")
+    xvals = xvals.ravel(order=order)
+    yvals = yvals.ravel(order=order)
 
     if activeonly:
         xvals = xvals[~xvals.mask]

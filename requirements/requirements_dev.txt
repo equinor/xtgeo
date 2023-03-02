@@ -17,7 +17,7 @@ sphinx-toolbox
 autoclasstoc
 myst-parser
 bandit
-numpy>1.13.1, <1.24
+numpy>1.13.1
 pandas>=0.21.0
 segyio>=1.8.6
 matplotlib>=1.5
