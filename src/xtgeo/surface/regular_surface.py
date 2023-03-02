@@ -1695,11 +1695,9 @@ class RegularSurface:
         val = self.values.copy()
 
         if order == "F":
-            val = ma.filled(val, fill_value=np.nan)
-            val = np.array(val, order="F")
-            val = ma.masked_invalid(val)
+            val = ma.array(val.data, mask=val.mask, order="F")
 
-        val = val.ravel(order="K")
+        val = val.ravel(order=order)
 
         if activeonly:
             val = val[~val.mask]
