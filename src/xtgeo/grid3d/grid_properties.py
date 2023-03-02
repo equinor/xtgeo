@@ -71,7 +71,6 @@ def gridproperties_from_file(
         fformat = pfile.generic_format_by_proposal(fformat)  # default
 
     if fformat.lower() in ["roff_ascii", "roff_binary"]:
-
         props = _gridprops_import_roff.import_roff_gridproperties(
             pfile, names, strict=strict
         )
