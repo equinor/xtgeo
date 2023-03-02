@@ -263,7 +263,7 @@ def get_ij_values(self, zero_based=False, order="C", asmasked=False):
 
     if asmasked:
         ixn = ixn[~self.values.mask]
-        jyn = ixn[~self.values.mask]
+        jyn = jyn[~self.values.mask]
 
     return ixn, jyn
 
