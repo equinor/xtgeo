@@ -91,9 +91,11 @@ class InteHead:
     @property
     def phases(self):
         """The phase system used for simulation"""
-        if "300" in str(self.simulator):
+        if any([ids in str(self.simulator) for ids in ["300", "INTERSECT"]]):
             # item 14 in E300 runs is number of tracers, not IPHS; assume oil/wat/gas
+            # item 14 in INTERSECT is always(?) undef., not IPHS; assume oil/wat/gas
             return Phases.OIL_WATER_GAS
+
         return self._optional_index_lookup(14, Phases)
 
     @property
