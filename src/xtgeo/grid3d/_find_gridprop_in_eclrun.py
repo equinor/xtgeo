@@ -8,8 +8,9 @@ from typing import Dict, List, Optional, Union
 
 import ecl_data_io as eclio
 import numpy as np
-import xtgeo
 from typing_extensions import Literal
+
+import xtgeo
 
 from ._ecl_inte_head import InteHead
 from ._ecl_logi_head import LogiHead
@@ -298,7 +299,6 @@ def match_values_to_active_cells(
         Array of input values, but guaranteed num_cells length.
 
     """
-
     if len(values) != len(actind):
         raise ValueError(
             f"Unexpected shape of values in init file: {np.asarray(values).shape}, "
@@ -385,7 +385,8 @@ def gridprop_params(values, name, date, grid, fracture):
 
 
 def get_actnum_from_porv(init_filelike, grid):
-    """Override actnum value based on the cell pore volume
+    """Override actnum value based on the cell pore volume.
+
     Args:
         init_filelike: The init file
         grid: The grid used by the simulator to produce the init file.
@@ -395,10 +396,16 @@ def get_actnum_from_porv(init_filelike, grid):
     generator = filter_lgr(eclio.lazy_read(init_filelike))
     intehead, logihead, generator = peek_headers(generator)
 
+    if "INTERSECT" not in str(intehead.simulator):
+        # no need to continue if other simulators than INTERSECT
+        return
+
     check_grid_match(intehead, logihead, grid)
     porv = read_values(
         generator, intehead, ["PORV"], lengths=valid_gridprop_lengths(grid)
     )
+
+    original_active = grid.nactive
     if porv:
         if grid.dualporo:
             num_cells = np.prod(grid.dimensions)
@@ -415,6 +422,14 @@ def get_actnum_from_porv(init_filelike, grid):
                 porv["PORV"].reshape(grid.dimensions, order="F") > 0.0, 1, 0
             )
             grid.set_actnum(acttmp)
+
+    new_active = grid.nactive
+    if new_active != original_active:
+        warnings.warn(
+            "The original active cells (ACTNUM) has been overrided by PORV criteria "
+            "from INIT file (purpose: fix simulator INTERSECT issue)",
+            UserWarning,
+        )
 
 
 def find_gridprop_from_init_file(
@@ -583,11 +598,20 @@ def find_gridprops_from_restart_file(
         if fformat == eclio.Format.UNFORMATTED:
             filehandle = open(restart_filelike, "rb")
             close = True
+            assume_init_file = (str(restart_filelike)).replace(".UNRST", ".INIT")
         elif fformat == eclio.Format.FORMATTED:
-            filehandle = open(restart_filelike, "rt")
+            filehandle = open(restart_filelike, "rt", encoding="ascii")
             close = True
+            assume_init_file = (str(restart_filelike)).replace(".FUNRST", ".FINIT")
         else:
             raise ValueError(f"Unsupported restart file format {fformat}")
+
+        # for INTERSECT, the ACTNUM in the grid is unreliable (bug); hence the ACTNUM is
+        # overriden by reading PORV from the INIT file; note that this will not work
+        # if input is a stream
+        if (Path(assume_init_file)).is_file():
+            get_actnum_from_porv(assume_init_file, grid)
+
     else:
         # If restart_filelike is not a filename/path we assume
         # its a stream
