@@ -11,6 +11,7 @@ from typing import Optional, Tuple, Union
 import deprecation
 import numpy as np
 import numpy.ma as ma
+
 import xtgeo
 from xtgeo.common import XTGDescription, _XTGeoFile
 
@@ -427,9 +428,8 @@ class Grid(_Grid3D):
         """The __repr__ method."""
         logger.info("Invoke __repr__ for grid")
         myrp = (
-            "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
-            "nrow={0._nrow!r}, nlay={0._nlay!r}, "
-            "filesrc={0._filesrc!r}".format(self, id(self))
+            f"{self.__class__.__name__} (id={id(self)}) ncol={self._ncol!r}, "
+            f"nrow={self._nrow!r}, nlay={self._nlay!r}, filesrc={self._filesrc!r}"
         )
         return myrp
 
@@ -581,12 +581,11 @@ class Grid(_Grid3D):
 
         if set(zarr) != set(range(1, self._nlay + 1)):
             raise ValueError(
-                "Arrays are not valid as the do not sum to "
-                "vertical range, {}".format(zarr)
+                f"Arrays are not valid as the do not sum to vertical range, {zarr}"
             )
 
         if len(keys) != len(set(keys)):
-            raise ValueError("Subgrid keys are not unique: {}".format(keys))
+            raise ValueError(f"Subgrid keys are not unique: {keys}")
 
         self._subgrids = sgrids
 
@@ -682,7 +681,7 @@ class Grid(_Grid3D):
         for litem in plist:
             if litem.dimensions != self.dimensions:
                 raise IndexError(
-                    "Property NX NY NZ <{}> does not match grid!".format(litem.name)
+                    f"Property NX NY NZ <{litem.name}> does not match grid!"
                 )
 
         self._props.props = plist  # self._props is a GridProperties instance
@@ -1124,22 +1123,22 @@ class Grid(_Grid3D):
 
             prp1 = []
             for prp in ("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"):
-                prp1.append("{:10.3f}".format(geom[prp]))
+                prp1.append(f"{geom[prp]:10.3f}")
 
             prp2 = []
             for prp in ("avg_dx", "avg_dy", "avg_dz", "avg_rotation"):
-                prp2.append("{:7.4f}".format(geom[prp]))
+                prp2.append(f"{geom[prp]:7.4f}")
 
             geox = self.get_geometrics(
                 cellcenter=False, allcells=True, return_dict=True
             )
             prp3 = []
             for prp in ("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"):
-                prp3.append("{:10.3f}".format(geox[prp]))
+                prp3.append(f"{geox[prp]:10.3f}")
 
             prp4 = []
             for prp in ("avg_dx", "avg_dy", "avg_dz", "avg_rotation"):
-                prp4.append("{:7.4f}".format(geox[prp]))
+                prp4.append(f"{geox[prp]:7.4f}")
 
             dsc.txt("For active cells, using cell centers:")
             dsc.txt("Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:", *prp1)

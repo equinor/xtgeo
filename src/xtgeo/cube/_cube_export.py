@@ -64,7 +64,7 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         try:
             shutil.copyfile(self._segyfile, sfile)
         except Exception as errormsg:
-            xtg.warn("Error message: {}".format(errormsg))
+            xtg.warn(f"Error message: {errormsg}")
             raise
 
         logger.debug("Input segy file copied ...")

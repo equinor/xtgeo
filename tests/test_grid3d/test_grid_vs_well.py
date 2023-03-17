@@ -85,7 +85,7 @@ def test_report_zlog_mismatch():
             depthrange=[1300, 9999],
         )
 
-        match = int(float("{0:.4f}".format(response[0])))
+        match = int(float(f"{response[0]:.4f}"))
         logger.info("Match for %s is %s", wll.wellname, match)
         # assert match == MATCHD1[wll.name]
 
@@ -99,7 +99,7 @@ def test_report_zlog_mismatch():
             resultformat=2,
         )
 
-        match = int(float("{0:.4f}".format(res["MATCH2"])))
+        match = int(float(f"{res['MATCH2']:.4f}"))
         logger.info("Match for %s is %s", wll.wellname, match)
         # assert match == MATCHD2[wll.name]
 

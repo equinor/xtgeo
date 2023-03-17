@@ -2,6 +2,7 @@
 from typing import List, Tuple
 
 import numpy as np
+
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog
@@ -46,9 +47,7 @@ def ijk_to_ib(i, j, k, nx, ny, nz, ibbase=0, forder=True):
         raise IndexError(f"Negative index: {ib}")
     if ibbase == 0 and ib > nx * ny * nz - 1:
         xtg.warn("Something is wrong with IJK conversion")
-        xtg.warn(
-            "I J K, NX, NY, NZ IB: {} {} {} {} {} {} {}".format(i, j, k, nx, ny, nz, ib)
-        )
+        xtg.warn(f"I J K, NX, NY, NZ IB: {i} {j} {k} {nx} {ny} {nz} {ib}")
 
     return ib
 

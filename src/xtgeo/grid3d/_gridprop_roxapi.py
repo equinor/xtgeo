@@ -40,9 +40,9 @@ def _get_gridprop_data(rox, gname, pname, realisation, faciescodes):  # pragma: 
     # inside a RMS project
 
     if gname not in rox.project.grid_models:
-        raise ValueError("No gridmodel with name {}".format(gname))
+        raise ValueError(f"No gridmodel with name {gname}")
     if pname not in rox.project.grid_models[gname].properties:
-        raise ValueError("No property in {} with name {}".format(gname, pname))
+        raise ValueError(f"No property in {gname} with name {pname}")
 
     try:
         return _convert_to_xtgeo_prop(rox, gname, pname, realisation, faciescodes)

@@ -5,9 +5,10 @@
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
+from scipy.interpolate import UnivariateSpline, interp1d
+
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from scipy.interpolate import UnivariateSpline, interp1d
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -69,7 +70,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
         logger.info("C function for polygon %s... done", id_)
 
         if ies != 0:
-            raise RuntimeError("Something went wrong, code {}".format(ies))
+            raise RuntimeError(f"Something went wrong, code {ies}")
 
     zcor[zcor > xtgeo.UNDEF_LIMIT] = np.nan
     self.dataframe[self.zname] = zcor
@@ -146,7 +147,7 @@ def _redistribute_vertices(geom, distance):
         parts = [_redistribute_vertices(part, distance) for part in geom]
         return type(geom)([p for p in parts if not p.is_empty])
 
-    raise ValueError("Unhandled geometry {}".format(geom.geom_type))
+    raise ValueError(f"Unhandled geometry {geom.geom_type}")
 
 
 def _handle_vertical_input(self, inframe):
@@ -228,7 +229,7 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
 
             ip = np.vstack(list(spl(alpha) for spl in splines)).T
         else:
-            raise ValueError("Invalid kind chosen: {}".format(kind))
+            raise ValueError(f"Invalid kind chosen: {kind}")
 
         dfr = pd.DataFrame(np.array(ip), columns=[self.xname, self.yname, self.zname])
 
@@ -271,9 +272,7 @@ def get_fence(
     fence.hlen()
 
     if len(fence.dataframe) < 2:
-        xtg.warn(
-            "Too few points in polygons for fence, return False (name: {})".format(name)
-        )
+        xtg.warn(f"Too few points in polygons for fence, return False (name: {name})")
         return False
 
     fence.filter_byid(polyid)
@@ -361,9 +360,7 @@ def snap_surface(self, surf, activeonly=True):
     )
 
     if ier != 0:
-        raise RuntimeError(
-            "Error code from C routine surf_get_zv_from_xyv is {}".format(ier)
-        )
+        raise RuntimeError(f"Error code from C routine surf_get_zv_from_xyv is {ier}")
     if activeonly:
         self.dataframe[self.zname] = zval
         self.dataframe = self.dataframe[self.dataframe[self.zname] < xtgeo.UNDEF_LIMIT]
@@ -421,9 +418,7 @@ def _generic_length(
             len(grp),
         )
         if ier != 0:
-            raise RuntimeError(
-                "Error code from _cxtgeo.pol_geometrics is {}".format(ier)
-            )
+            raise RuntimeError(f"Error code from _cxtgeo.pol_geometrics is {ier}")
 
         if mode2d:
             dhlenv[0] = dhlenv[1]
@@ -476,9 +471,7 @@ def extend(self, distance, nsamples, addhlen=True):
         )
 
         if ier != 0:
-            raise RuntimeError(
-                "Error code from _cxtgeo.x_vector_linint2 is {}".format(ier)
-            )
+            raise RuntimeError(f"Error code from _cxtgeo.x_vector_linint2 is {ier}")
 
         rown[self.xname] = newx
         rown[self.yname] = newy

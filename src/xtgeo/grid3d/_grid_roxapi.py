@@ -5,6 +5,7 @@ import tempfile
 from collections import OrderedDict
 
 import numpy as np
+
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import RoxUtils
@@ -48,7 +49,7 @@ def _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info):  # pragma: n
     logger.info("Loading grid with realisation %s...", realisation)
     try:
         if gname not in proj.grid_models:
-            raise KeyError("No such gridmodel: {}".format(gname))
+            raise KeyError(f"No such gridmodel: {gname}")
 
         logger.info("Get roxgrid...")
         roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
@@ -87,16 +88,16 @@ def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
         xtg.say("ROXAPI with support for CornerPointGeometry")
         geom = roxgrid.get_geometry()
         defined_cells = geom.get_defined_cells()
-        xtg.say("Defined cells \n{}".format(defined_cells))
+        xtg.say(f"Defined cells \n{defined_cells}")
 
-        xtg.say("IJK handedness: {}".format(geom.ijk_handedness))
+        xtg.say(f"IJK handedness: {geom.ijk_handedness}")
         for ipi in range(ncol + 1):
             for jpi in range(nrow + 1):
                 tpi, bpi, zco = geom.get_pillar_data(ipi, jpi)
-                xtg.say("For pillar {}, {}\n".format(ipi, jpi))
-                xtg.say("Tops\n{}".format(tpi))
-                xtg.say("Bots\n{}".format(bpi))
-                xtg.say("Depths\n{}".format(zco))
+                xtg.say(f"For pillar {ipi}, {jpi}\n")
+                xtg.say(f"Tops\n{tpi}")
+                xtg.say(f"Bots\n{bpi}")
+                xtg.say(f"Depths\n{zco}")
 
 
 def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
@@ -223,7 +224,7 @@ def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
     logger.info("Loading grid with realisation %s...", realisation)
     try:
         if gname not in proj.grid_models:
-            raise KeyError("No such gridmodel: {}".format(gname))
+            raise KeyError(f"No such gridmodel: {gname}")
 
         logger.info("Get roxgrid...")
         roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
@@ -330,13 +331,13 @@ def export_grid_roxapi(
         minimumrms = rox.rmsversion("1.2")
         raise NotImplementedError(
             "Not supported in this ROXAPI version. Grid load/import requires "
-            "RMS version {}".format(minimumrms)
+            f"RMS version {minimumrms}"
         )
 
     if method == "cpg" and not rox.version_required("1.3"):
         xtg.warn(
             "Export method=cpg is not implemented for ROXAPI "
-            "version {}. Change to workaround...".format(rox.roxversion)
+            f"version {rox.roxversion}. Change to workaround..."
         )
         method = "other"
 
@@ -412,10 +413,10 @@ def _export_grid_cornerpoint_roxapi_v1(
             if info and ipi < 5 and jpi < 5:
                 if ipi == 0 and jpi == 0:
                     xtg.say("Showing info for i<5 and j<5 only!")
-                xtg.say("XTGeo pillar {}, {}\n".format(ipi, jpi))
-                xtg.say("XTGeo Tops\n{}".format(tpi[ipi, jpi]))
-                xtg.say("XTGeo Bots\n{}".format(bpi[ipi, jpi]))
-                xtg.say("XTGeo Depths\n{}".format(zzco))
+                xtg.say(f"XTGeo pillar {ipi}, {jpi}\n")
+                xtg.say(f"XTGeo Tops\n{tpi[ipi, jpi]}")
+                xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
+                xtg.say(f"XTGeo Depths\n{zzco}")
 
     geom.set_defined_cells(self.get_actnum().values.astype(np.bool))
     grid.set_geometry(geom)
@@ -475,10 +476,10 @@ def _export_grid_cornerpoint_roxapi_v2(
             if info and ipi < 5 and jpi < 5:
                 if ipi == 0 and jpi == 0:
                     xtg.say("Showing info for i<5 and j<5 only!")
-                xtg.say("XTGeo pillar {}, {}\n".format(ipi, jpi))
-                xtg.say("XTGeo Tops\n{}".format(tpi[ipi, jpi]))
-                xtg.say("XTGeo Bots\n{}".format(bpi[ipi, jpi]))
-                xtg.say("XTGeo Depths\n{}".format(zzco))
+                xtg.say(f"XTGeo pillar {ipi}, {jpi}\n")
+                xtg.say(f"XTGeo Tops\n{tpi[ipi, jpi]}")
+                xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
+                xtg.say(f"XTGeo Depths\n{zzco}")
 
     geom.set_defined_cells(self._actnumsv.astype(np.bool))
     grid.set_geometry(geom)

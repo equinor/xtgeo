@@ -116,7 +116,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             1,
         )
         if ier == -9:
-            print("## Polygon no {} is not closed".format(id_ + 1))
+            print(f"## Polygon no {id_ + 1} is not closed")
 
     gl.update_values_from_carray(proxy, cvals, np.float64, delete=True)
 

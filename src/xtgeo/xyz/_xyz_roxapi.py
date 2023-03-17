@@ -104,8 +104,8 @@ def _roxapi_import_xyz_viafile(
 
     if not _check_category_etc(rox.project, name, category, stype, realisation):
         raise RuntimeError(
-            "It appears that name and or category is not present: "
-            "name={}, category/folder={}, stype={}".format(name, category, stype)
+            f"It appears that name and or category is not present: name={name}, "
+            f"category/folder={category}, stype={stype}"
         )
 
     rox_xyz = _get_roxxyz(
@@ -140,8 +140,8 @@ def _roxapi_import_xyz(
 
     if not _check_category_etc(rox.project, name, category, stype, realisation):
         raise RuntimeError(
-            "It appears that name and or category is not present: "
-            "name={}, category/folder={}, stype={}".format(name, category, stype)
+            f"It appears that name and or category is not present: name={name}, "
+            f"category/folder={category}, stype={stype}"
         )
 
     kwargs["xname"] = "X_UTME"
@@ -329,9 +329,8 @@ def _roxapi_export_xyz(
                 dfrcopy = dfrcopy.loc[dfrcopy[key].isin(val)]
             else:
                 raise KeyError(
-                    "The requested pfilter key {} was not "
-                    "found in dataframe. Valid keys are "
-                    "{}".format(key, dfrcopy.columns)
+                    f"The requested pfilter key {key} was not found in dataframe. "
+                    f"Valid keys are {dfrcopy.columns}"
                 )
 
     if isinstance(self, xtgeo.Polygons):
@@ -419,7 +418,7 @@ def _check_category_etc(
                 folders.append(category)
             else:
                 raise RuntimeError(
-                    "Cannot parse category: {}, see documentation!".format(category)
+                    f"Cannot parse category: {category}, see documentation!"
                 )
             try:
                 roxxyz = getattr(proj, stype).folders[folders]
@@ -432,7 +431,7 @@ def _check_category_etc(
             roxxyz = proj.clipboard
 
         if name not in roxxyz.keys():
-            raise ValueError("Name {} is not within Clipboard...".format(name))
+            raise ValueError(f"Name {name} is not within Clipboard...")
 
     elif stype in ("clipboard", "general2d_data") and mode == "set":
         logger.info("No need to check clipboard while setting data")
@@ -465,7 +464,7 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
                 folders.append(category)
             else:
                 raise RuntimeError(
-                    "Cannot parse category: {}, see documentation!".format(category)
+                    f"Cannot parse category: {category}, see documentation!"
                 )
 
             if mode == "get":
@@ -482,7 +481,7 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
                 roxxyz = roxxyz.create_points(name, folders)
 
     else:
-        raise ValueError("Unsupported stype: {}".format(stype))
+        raise ValueError(f"Unsupported stype: {stype}")
 
     return roxxyz
 

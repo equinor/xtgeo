@@ -119,7 +119,7 @@ class XYZ(ABC):
         """Describe an instance by printing to stdout"""
 
         dsc = XTGDescription()
-        dsc.title("Description of {} instance".format(self.__class__.__name__))
+        dsc.title(f"Description of {self.__class__.__name__} instance")
         dsc.txt("Object ID", id(self))
         dsc.txt("xname, yname, zname", self._xname, self._yname, self._zname)
 

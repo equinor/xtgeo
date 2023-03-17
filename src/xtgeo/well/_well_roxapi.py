@@ -55,17 +55,17 @@ def _roxapi_import_well(
     if wname in rox.project.wells:
         roxwell = rox.project.wells[wname]
     else:
-        raise ValueError("No such well name present: {}".format(wname))
+        raise ValueError(f"No such well name present: {wname}")
 
     if traj in roxwell.wellbore.trajectories:
         roxtraj = roxwell.wellbore.trajectories[traj]
     else:
-        raise ValueError("No such well traj present for {}: {}".format(wname, traj))
+        raise ValueError(f"No such well traj present for {wname}: {traj}")
 
     if lrun in roxtraj.log_runs:
         roxlrun = roxtraj.log_runs[lrun]
     else:
-        raise ValueError("No such logrun present for {}: {}".format(wname, lrun))
+        raise ValueError(f"No such logrun present for {wname}: {lrun}")
 
     wlogtypes = dict()
     wlogrecords = dict()
@@ -87,9 +87,7 @@ def _roxapi_import_well(
                 if lognames_strict:
                     validlogs = [logname.name for logname in roxlrun.log_curves]
                     raise ValueError(
-                        "Could not get log name {}, validlogs are {}".format(
-                            lname, validlogs
-                        )
+                        f"Could not get log name {lname}, validlogs are {validlogs}"
                     )
 
     return {

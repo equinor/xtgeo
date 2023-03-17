@@ -84,13 +84,13 @@ class Surfaces:
                     sobj = xtgeo.surface_from_file(item, fformat="guess")
                     self.surfaces.append(sobj)
                 except OSError:
-                    xtg.warnuser("Cannot read as file, skip: {}".format(item))
+                    xtg.warnuser(f"Cannot read as file, skip: {item}")
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
         dsc = xtgeo.common.XTGDescription()
-        dsc.title("Description of {} instance".format(self.__class__.__name__))
+        dsc.title(f"Description of {self.__class__.__name__} instance")
         dsc.txt("Object ID", id(self))
 
         for inum, surf in enumerate(self.surfaces):

@@ -71,7 +71,7 @@ def test_timer(capsys):
     for inum in range(100000):
         inum += 1
 
-    xtg.say("Used time was {}".format(xtg.timer(time1)))
+    xtg.say(f"Used time was {xtg.timer(time1)}")
     # captured = capsys.readouterr()
     # assert 'Used time was' in captured[0]
     # # repeat to see on screen

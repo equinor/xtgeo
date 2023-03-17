@@ -38,7 +38,7 @@ def test_slice_simple_layer(tmpdir, show_plot, generate_plot):
 
     wd = None  # [457000, 464000, 1650, 1800]
     for lay in range(1, mygrid.nlay + 1):
-        layslice.canvas(title="My Grid Layer plot for layer {}".format(lay))
+        layslice.canvas(title=f"My Grid Layer plot for layer {lay}")
         layslice.plot_gridslice(
             mygrid,
             prop=myprop,

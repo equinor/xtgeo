@@ -15,6 +15,7 @@ Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering
 """
 
 import numpy as np
+
 from xtgeo import RoxUtils
 from xtgeo.common import XTGeoDialog
 
@@ -51,9 +52,7 @@ def _roxapi_import_cube(self, rox, proj, name, folder):  # pragma: no cover
         path = fld + path
 
     if path not in proj.seismic.data.keys():
-        raise ValueError(
-            "Path {} is not within RMS Seismic Cube container".format(path)
-        )
+        raise ValueError(f"Path {path} is not within RMS Seismic Cube container")
     try:
         rcube = proj.seismic.data[path]
         _roxapi_cube_to_xtgeo(self, rox, rcube)

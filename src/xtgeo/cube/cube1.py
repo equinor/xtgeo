@@ -280,10 +280,9 @@ class Cube:  # pylint: disable=too-many-public-methods
         """The __repr__ method."""
         avg = self.values.mean()
         dsc = (
-            "{0.__class__} (ncol={0.ncol!r}, "
-            "nrow={0.nrow!r}, nlay={0.nlay!r}, "
-            "original file: {0._filesrc}), "
-            "average {1}, ID=<{2}>".format(self, avg, id(self))
+            f"{self.__class__} (ncol={self.ncol!r}, nrow={self.nrow!r}, "
+            f"nlay={self.nlay!r}, original file: {self._filesrc}), "
+            f"average {avg}, ID=<{id(self)}>"
         )
         return dsc
 
@@ -818,7 +817,7 @@ class Cube:  # pylint: disable=too-many-public-methods
         if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
             raise ValueError(
                 "fencespec must be a numpy or a Polygons() object. "
-                "Current type is {}".format(type(fencespec))
+                f"Current type is {type(fencespec)}"
             )
         logger.info("Getting randomline...")
         res = _cube_utils.get_randomline(

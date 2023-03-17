@@ -1,11 +1,11 @@
 """The baseplot module."""
-from packaging.version import parse as versionparse
-
 import deprecation
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import xtgeo
 from matplotlib.colors import LinearSegmentedColormap
+from packaging.version import parse as versionparse
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 
 from . import _colortables as _ctable
@@ -27,7 +27,7 @@ class BasePlot(object):
 
     def __init__(self):
         """Init method."""
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
+        clsname = f"{type(self).__module__}.{type(self).__name__}"
         logger.info(clsname)
 
         self._contourlevels = 3
@@ -123,8 +123,8 @@ class BasePlot(object):
                 colors.append(cmap(i))
         else:
             xtg.warnuser(
-                "Trying to access as color map not installed in "
-                "this version of matplotlib: <{}>. Revert to <rainbow>".format(cfile)
+                "Trying to access as color map not installed in this version "
+                f"of matplotlib: <{cfile}>. Revert to <rainbow>"
             )
             cmap = _get_colormap("rainbow")
             for i in range(cmap.N):

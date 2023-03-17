@@ -5,8 +5,8 @@ import numpy as np
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo import XTGeoCLibError
+from xtgeo.common import XTGeoDialog
 from xtgeo.common.calc import _swap_axes
 
 xtg = XTGeoDialog()
@@ -36,11 +36,11 @@ def thinning(self, icol, jrow, klay):
 
     for inum, ixc in enumerate(inputs):
         if not isinstance(ixc, int):
-            raise ValueError("Some input is not integer: {}".format(inputs))
+            raise ValueError(f"Some input is not integer: {inputs}")
         if ixc > ranges[inum] / 2:
             raise ValueError(
-                "Input numbers <{}> are too large compared to "
-                "existing ranges <{}>".format(inputs, ranges)
+                f"Input numbers <{inputs}> are too large compared to existing "
+                f"ranges <{ranges}>"
             )
 
     # just simple numpy operations, and changing some cube props
@@ -103,7 +103,7 @@ def cropping(self, icols, jrows, klays):
     )
 
     if ier != 0:
-        raise RuntimeError("Unexpected error, code is {}".format(ier))
+        raise RuntimeError(f"Unexpected error, code is {ier}")
 
     # get new X Y origins
     self._xori = xpp

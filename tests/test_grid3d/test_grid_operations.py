@@ -4,8 +4,9 @@ from collections import OrderedDict
 from os.path import join
 
 import pytest
-import xtgeo
 from hypothesis import given
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 
 from .grid_generator import xtgeo_grids
@@ -82,7 +83,7 @@ def test_hybridgrid2(tmpdir):
 
     logger.info("Read grid...")
     grd = xtgeo.create_box_grid((4, 3, 5))
-    logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
+    logger.info(f"Read grid... done, NLAY is {grd.nlay}")
 
     reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
 
@@ -100,7 +101,7 @@ def test_inactivate_thin_cells(tmpdir):
 
     logger.info("Read grid...")
     grd = xtgeo.grid_from_file(EMEGFILE)
-    logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
+    logger.info(f"Read grid... done, NLAY is {grd.nlay}")
 
     reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
 
@@ -267,10 +268,8 @@ def test_crop_grid(tmpdir):
     grd = xtgeo.grid_from_file(EMEGFILE2)
     zprop = xtgeo.gridproperty_from_file(EMEZFILE2, name="Zone", grid=grd)
 
-    logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
-    logger.info(
-        "Read grid...NCOL, NROW, NLAY is {} {} {}".format(grd.ncol, grd.nrow, grd.nlay)
-    )
+    logger.info(f"Read grid... done, NLAY is {grd.nlay}")
+    logger.info(f"Read grid...NCOL, NROW, NLAY is {grd.ncol} {grd.nrow} {grd.nlay}")
 
     grd.crop((30, 60), (20, 40), (1, 46), props=[zprop])
 

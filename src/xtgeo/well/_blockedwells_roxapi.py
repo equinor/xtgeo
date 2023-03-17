@@ -34,13 +34,13 @@ def _roxapi_import_bwells(
         gmodel = rox.project.grid_models[gname]
         logger.info("RMS grid model <%s> OK", gname)
     else:
-        raise ValueError("No such grid name present: {}".format(gname))
+        raise ValueError(f"No such grid name present: {gname}")
 
     if bwname in gmodel.blocked_wells_set:
         bwset = gmodel.blocked_wells_set[bwname]
         logger.info("Blocked well set <%s> OK", bwname)
     else:
-        raise ValueError("No such blocked well set: {}".format(bwname))
+        raise ValueError(f"No such blocked well set: {bwname}")
 
     wnames = bwset.get_well_names()
 

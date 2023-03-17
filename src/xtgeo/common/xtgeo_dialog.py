@@ -34,17 +34,17 @@ In addition there are other classes:
 """
 
 
-import os
-import sys
-import re
-from datetime import datetime as dtime
 import getpass
-import platform
 import inspect
 import logging
-import warnings
-import timeit
+import os
 import pathlib
+import platform
+import re
+import sys
+import timeit
+import warnings
+from datetime import datetime as dtime
 
 import xtgeo
 
@@ -96,13 +96,13 @@ class XTGShowProgress(object):
             return
         progress = int(float(step) / float(self._max) * 100.0)
         if progress >= self._next:
-            print("{0}{1}% {2}".format(self._leadtext, progress, self._info))
+            print(f"{self._leadtext}{progress}% {self._info}")
             self._next += self._skip
 
     def finished(self):
         if not self._show:
             return
-        print("{0}{1}% {2}".format(self._leadtext, 100, self._info))
+        print(f"{self._leadtext}{100}% {self._info}")
 
 
 class XTGDescription(object):
@@ -114,7 +114,7 @@ class XTGDescription(object):
     def title(self, atitle):
         fmt = "=" * 99
         self._txt.append(fmt)
-        fmt = "{}".format(atitle)
+        fmt = f"{atitle}"
         self._txt.append(fmt)
         fmt = "=" * 99
         self._txt.append(fmt)
@@ -143,6 +143,7 @@ class XTGDescription(object):
 
     @staticmethod
     def _smartfmt(atxt):
+        # pylint: disable=consider-using-f-string  # f-string does not work with starred
         alen = len(atxt)
         atxt.insert(1, "=>")
         if alen == 1:
@@ -182,7 +183,7 @@ class _TimeFilter(logging.Filter):  # pylint: disable=too-few-public-methods
             record.relativeCreated / 1000.0
         ) - dtime.fromtimestamp(last / 1000.0)
 
-        record.relative = "{0:7.3f}".format(dlt.seconds + dlt.microseconds / MLS)
+        record.relative = f"{dlt.seconds + dlt.microseconds / MLS:7.3f}"
 
         self.last = record.relativeCreated
         return True
@@ -257,9 +258,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
     @testpath.setter
     def testpath(self, newtestpath):
         if not os.path.isdir(newtestpath):
-            raise RuntimeError(
-                "Proposed test path is not valid: {}".format(newtestpath)
-            )
+            raise RuntimeError(f"Proposed test path is not valid: {newtestpath}")
 
         self._testpath = newtestpath
 
@@ -277,9 +276,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         if level in validlevels:
             self._logginglevel = level
         else:
-            raise ValueError(
-                "Invalid level given, must be " "in {}".format(validlevels)
-            )
+            raise ValueError(f"Invalid level given, must be in {validlevels}")
 
     @property
     def numericallogginglevel(self):
@@ -345,10 +342,9 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         """
 
         if variant == "clibinfo":
-            return "XTGeo version {} (Python {} on {})".format(
-                xtgeo.__version__,
-                platform.python_version(),
-                platform.system(),
+            return (
+                f"XTGeo version {xtgeo.__version__} (Python "
+                f"{platform.python_version()} on {platform.system()})"
             )
 
         return "Invalid"
@@ -376,15 +372,13 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         print("")
         print(HEADER)
         print("#" * 79)
-        print("#{}#".format(app.center(77)))
+        print(f"#{app.center(77)}#")
         print("#" * 79)
         nowtime = dtime.now().strftime("%Y-%m-%d %H:%M:%S")
         ver = "Using XTGeo version " + xtgeo.__version__
-        cur_version += " @ {} on {} by {}".format(
-            nowtime, platform.node(), getpass.getuser()
-        )
-        print("#{}#".format(ver.center(77)))
-        print("#{}#".format(cur_version.center(77)))
+        cur_version += f" @ {nowtime} on {platform.node()} by {getpass.getuser()}"
+        print(f"#{ver.center(77)}#")
+        print(f"#{cur_version.center(77)}#")
         print("#" * 79)
         print(ENDC)
         print("")
@@ -403,9 +397,8 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         self._loggingname = name
         if info:
             print(
-                "Logginglevel is {}, formatlevel is {}, and format is {}".format(
-                    self.logginglevel, self._lformatlevel, fmt
-                )
+                f"Logginglevel is {self.logginglevel}, formatlevel is "
+                f"{self._lformatlevel}, and format is {fmt}"
             )
         self._rootlogger.setLevel(self.numericallogginglevel)
 
@@ -426,7 +419,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
         tstpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
         if not os.path.isdir(tstpath):
-            raise RuntimeError("Test path is not valid: {}".format(tstpath))
+            raise RuntimeError(f"Test path is not valid: {tstpath}")
 
         self._test_env = True
         self._testpath = tstpath
@@ -609,7 +602,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         if level == -9:
             ulevel = "W"
         print(
-            "{0} <{1}> [{2:23s}->{3:>33s}] {4}{5}".format(
-                prefix, ulevel, self._callclass, self._caller, string, endfix
-            )
+            f"{prefix} <{ulevel}> [{self._callclass:23s}-> "
+            f"{self._caller:>33s}] {string}{endfix}"
         )

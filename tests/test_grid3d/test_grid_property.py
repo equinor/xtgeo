@@ -281,36 +281,36 @@ def test_pathlib(tmp_path):
 def test_roffbin_import1():
     """Test of import of ROFF binary"""
 
-    logger.info("Name is {}".format(__name__))
+    logger.info(f"Name is {__name__}")
 
     x = xtgeo.gridproperty_from_file(TESTFILE1, fformat="roff", name="PORO")
 
     logger.info(repr(x.values))
     logger.info(x.values.dtype)
-    logger.info("Porosity is {}".format(x.values))
-    logger.info("Mean porosity is {}".format(x.values.mean()))
+    logger.info(f"Porosity is {x.values}")
+    logger.info(f"Mean porosity is {x.values.mean()}")
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
 def test_roffbin_import1_new():
     """Test ROFF import, new code May 2018"""
-    logger.info("Name is {}".format(__name__))
+    logger.info(f"Name is {__name__}")
 
     x = xtgeo.gridproperty_from_file(TESTFILE1, fformat="roff", name="PORO")
-    logger.info("Porosity is {}".format(x.values))
-    logger.info("Mean porosity is {}".format(x.values.mean()))
+    logger.info(f"Porosity is {x.values}")
+    logger.info(f"Mean porosity is {x.values.mean()}")
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
 def test_roffbin_import2():
     """Import roffbin, with several props in one file."""
 
-    logger.info("Name is {}".format(__name__))
+    logger.info(f"Name is {__name__}")
     dz = xtgeo.gridproperty_from_file(TESTFILE2, fformat="roff", name="Z_increment")
 
     logger.info(repr(dz.values))
     logger.info(dz.values.dtype)
-    logger.info("Mean DZ is {}".format(dz.values.mean()))
+    logger.info(f"Mean DZ is {dz.values.mean()}")
 
     hc = xtgeo.gridproperty_from_file(TESTFILE2, fformat="roff", name="Oil_HCPV")
 
@@ -321,7 +321,7 @@ def test_roffbin_import2():
 
     assert nrow == 100, "NROW from shape (Emerald)"
 
-    logger.info("Mean HCPV is {}".format(hc.values.mean()))
+    logger.info(f"Mean HCPV is {hc.values.mean()}")
     assert hc.values.mean() == pytest.approx(1446.4611912446985, abs=0.0001)
 
 
@@ -389,10 +389,10 @@ def test_grdecl_import_reek(tmpdir):
 def test_io_roff_discrete(tmpdir):
     """Import ROFF discrete property; then export to ROFF int."""
 
-    logger.info("Name is {}".format(__name__))
+    logger.info(f"Name is {__name__}")
     po = xtgeo.gridproperty_from_file(TESTFILE8, fformat="roff", name="Zone")
 
-    logger.info("\nCodes ({})\n{}".format(po.ncodes, po.codes))
+    logger.info(f"\nCodes ({po.ncodes})\n{po.codes}")
 
     # tests:
     assert po.ncodes == 3
@@ -464,22 +464,22 @@ def test_get_xy_values_for_webportal():
     start = xtg.timer()
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
     elapsed = xtg.timer(start)
-    logger.info("Elapsed {}".format(elapsed))
-    logger.info("Coords {}".format(coord))
+    logger.info(f"Elapsed {elapsed}")
+    logger.info(f"Coords {coord}")
 
     grid = xtgeo.grid_from_file(TESTFILE10)
     prop = xtgeo.gridproperty_from_file(TESTFILE11, grid=grid, name="PORO")
 
     coord, valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
 
-    logger.info("Cell 1 1 1 coords\n{}.".format(coord[0][0]))
+    logger.info(f"Cell 1 1 1 coords\n{coord[0][0]}.")
     assert coord[0][0][0] == (454.875, 318.5)
     assert valuelist[0][0] == -999.0
 
 
 def test_get_values_by_ijk():
     """Test getting values for given input arrays for I J K"""
-    logger.info("Name is {}".format(__name__))
+    logger.info(f"Name is {__name__}")
 
     x = xtgeo.gridproperty_from_file(TESTFILE1, fformat="roff", name="PORO")
 

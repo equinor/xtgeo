@@ -53,7 +53,7 @@ def import_bgrdecl_prop(pfile, name, grid):
             return result
 
     raise xtgeo.KeywordNotFoundError(
-        "Cannot find property name {} in file {}".format(name, pfile.name)
+        f"Cannot find property name {name} in file {pfile.name}"
     )
 
 

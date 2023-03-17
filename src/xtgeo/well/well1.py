@@ -7,13 +7,13 @@ import math
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
-from packaging.version import parse as versionparse
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import deprecation
 import numpy as np
 import pandas as pd
+from packaging.version import parse as versionparse
 
 import xtgeo
 import xtgeo.common.constants as const
@@ -323,8 +323,8 @@ class Well:
     def __repr__(self):  # noqa: D105
         # should be able to newobject = eval(repr(thisobject))
         myrp = (
-            "{0.__class__.__name__} (filesrc={0._filesrc!r}, "
-            "name={0._wname!r},  ID={1})".format(self, id(self))
+            f"{self.__class__.__name__} (filesrc={self._filesrc!r}, "
+            f"name={self._wname!r},  ID={id(self)})"
         )
         return myrp
 
@@ -560,11 +560,11 @@ class Well:
                 nlen = len(rec)
                 for idx, (code, val) in enumerate(rec.items()):
                     if idx < 2:
-                        string += "{}: {} ".format(code, val)
+                        string += f"{code}: {val} "
                     elif idx == nlen - 1:
-                        string += "...  {}: {})".format(code, val)
+                        string += f"...  {code}: {val})"
             else:
-                string = "{}".format(rec)
+                string = f"{rec}"
             dsc.txt("Logname", wlog, self.get_logtype(wlog), string)
 
         if flush:
@@ -988,7 +988,7 @@ class Well:
         if ltype in valid:
             self._wlogtypes[lname] = ltype
         else:
-            raise ValueError("Try to set invalid log type: {}".format(ltype))
+            raise ValueError(f"Try to set invalid log type: {ltype}")
 
     def get_logrecord(self, lname):
         """Returns the record (dict) of a given log name, None if not exists."""
@@ -1001,7 +1001,7 @@ class Well:
         """Sets the record (dict) of a given discrete log."""
         self._ensure_consistency()
         if lname not in self.lognames:
-            raise ValueError("No such logname: {}".format(lname))
+            raise ValueError(f"No such logname: {lname}")
 
         if self._wlogtypes[lname] == "CONT":
             raise ValueError("Cannot set a log record for a continuous log")

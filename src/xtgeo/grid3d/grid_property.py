@@ -487,9 +487,8 @@ class GridProperty(_Grid3D):
 
     def __repr__(self):
         myrp = (
-            "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
-            "nrow={0._nrow!r}, nlay={0._nlay!r}, "
-            "filesrc={0._filesrc!r}".format(self, id(self))
+            f"{self.__class__.__name__} (id={id(self)}) ncol={self._ncol!r}, "
+            f"nrow={self._nrow!r}, nlay={self._nlay!r}, filesrc={self._filesrc!r}"
         )
         return myrp
 
@@ -612,17 +611,13 @@ class GridProperty(_Grid3D):
                 self.values = self.values.astype(dtype)
             else:
                 okv = False
-                msg = "{}: Wrong input for dtype. Use one of {}!".format(
-                    __name__, allowedint
-                )
+                msg = f"{__name__}: Wrong input for dtype. Use one of {allowedint}!"
         else:
             if dtype in allowedfloat:
                 self.values = self.values.astype(dtype)
             else:
                 okv = False
-                msg = "{}: Wrong input for dtype. Use one of {}!".format(
-                    __name__, allowedfloat
-                )
+                msg = f"{__name__}: Wrong input for dtype. Use one of {allowedfloat}!"
 
         if not okv:
             raise ValueError(msg)
@@ -648,9 +643,7 @@ class GridProperty(_Grid3D):
             self._roxar_dtype = dtype
         else:
             raise ValueError(
-                "{}: Wrong input for roxar_dtype. Use one of {}!".format(
-                    __name__, allowed
-                )
+                f"{__name__}: Wrong input for roxar_dtype. Use one of {allowed}!"
             )
 
     @property
@@ -765,15 +758,8 @@ class GridProperty(_Grid3D):
         """
 
         mhash = hashlib.sha256()
-        gid = "{}{}{}{}{}{}{}".format(
-            self._filesrc,
-            self._ncol,
-            self._nrow,
-            self._nlay,
-            self._values.mean(),
-            self._values.min(),
-            self._values.max(),
-        )
+        gid = f"{self._filesrc}{self._ncol}{self._nrow}{self._nlay}"
+        f"{self._values.mean()}{self._values.min()}{self._values.max()}"
 
         mhash.update(gid.encode())
         return mhash.hexdigest()
@@ -833,7 +819,7 @@ class GridProperty(_Grid3D):
             try:
                 values = np.ma.reshape(values, (ncol, nrow, nlay), order="C")
             except ValueError as emsg:
-                xtg.error("Cannot reshape array: {}".format(emsg))
+                xtg.error(f"Cannot reshape array: {emsg}")
                 raise
 
         # replace any undef or nan with mask
@@ -1326,7 +1312,7 @@ class GridProperty(_Grid3D):
             return np.ma.filled(res, fill_value=np.nan)
 
         except IndexError as ier:
-            xtg.warn("Error {}, return None".format(ier))
+            xtg.warn(f"Error {ier}, return None")
             return None
         except:  # noqa
             xtg.warn("Unexpected error")

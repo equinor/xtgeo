@@ -536,9 +536,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
 
     def __repr__(self):
         # should be able to newobject = eval(repr(thisobject))
-        myrp = "{0.__class__.__name__} (filesrc={0._filesrc!r}, " "ID={1})".format(
-            self, id(self)
-        )
+        myrp = f"{self.__class__.__name__} (filesrc={self._filesrc!r}, ID={id(self)})"
         return myrp
 
     def __str__(self):

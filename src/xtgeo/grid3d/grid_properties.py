@@ -296,9 +296,8 @@ class GridProperties(_Grid3D):
 
     def __repr__(self):  # noqa: D105
         myrp = (
-            "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
-            "nrow={0._nrow!r}, nlay={0._nlay!r}, "
-            "filesrc={0.names!r}".format(self, id(self))
+            f"{self.__class__.__name__} (id={id(self)}) ncol={self._ncol!r}, "
+            f"nrow={self._nrow!r}, nlay={self._nlay!r}, filesrc={self.names!r}"
         )
         return myrp
 
@@ -481,13 +480,9 @@ class GridProperties(_Grid3D):
 
         hashinput = ""
         for prop in self._props:
-            gid = "{}{}{}{}{}{}".format(
-                prop.ncol,
-                prop.nrow,
-                prop.nlay,
-                prop.values.mean(),
-                prop.values.min(),
-                prop.values.max(),
+            gid = (
+                f"{prop.ncol}{prop.nrow}{prop.nlay}{prop.values.mean()}"
+                f"{prop.values.min()}{prop.values.max()}"
             )
             hashinput += gid
 
@@ -510,7 +505,7 @@ class GridProperties(_Grid3D):
                 return prop
 
         if raiseserror:
-            raise ValueError("Cannot find property with name <{}>".format(name))
+            raise ValueError(f"Cannot find property with name <{name}>")
 
         return None
 

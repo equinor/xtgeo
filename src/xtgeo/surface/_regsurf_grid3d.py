@@ -85,7 +85,7 @@ def from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
         klayer, what = where.split("_")
         klayer = int(klayer)
         if grid.nlay < klayer < 0:
-            raise ValueError("Klayer out of range in where={}".format(where))
+            raise ValueError(f"Klayer out of range in where={where}")
         option = 0
         if what == "base":
             option = 1

@@ -916,14 +916,14 @@ def test_irapbin_export_py(tmpdir):
     for _ in range(10):
         x.to_file(join(tmpdir, "purecx.gri"), fformat="irap_binary", engine="cxtgeo")
     t1 = xtg.timer(t0)
-    print("CXTGeo based write: {:3.4f}".format(t1))
+    print(f"CXTGeo based write: {t1:3.4f}")
 
     t0 = xtg.timer()
     for _ in range(10):
         x.to_file(join(tmpdir, "purepy.gri"), fformat="irap_binary", engine="python")
     t2 = xtg.timer(t0)
-    print("Python based write: {:3.4f}".format(t2))
-    print("Ratio python based / cxtgeo based {:3.4f}".format(t2 / t1))
+    print(f"Python based write: {t2:3.4f}")
+    print(f"Ratio python based / cxtgeo based {t2 / t1:3.4f}")
 
     s1 = xtgeo.surface_from_file(join(tmpdir, "purecx.gri"))
     s2 = xtgeo.surface_from_file(join(tmpdir, "purepy.gri"))

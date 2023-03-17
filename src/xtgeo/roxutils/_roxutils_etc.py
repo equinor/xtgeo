@@ -51,18 +51,18 @@ def create_whatever_category(
                 try:
                     project.horizons.representations.create(catg, geom, dom)
                 except Exception as exmsg:  # pylint: disable=broad-except
-                    print("Error: {}".format(exmsg))
+                    print(f"Error: {exmsg}")
             else:
-                print("Category <{}> already exists".format(catg))
+                print(f"Category <{catg}> already exists")
 
         elif stype.lower() == "zones":
             if catg not in project.zones.representations:
                 try:
                     project.zones.representations.create(catg, geom, dom)
                 except Exception as exmsg:  # pylint: disable=broad-except
-                    print("Error: {}".format(exmsg))
+                    print(f"Error: {exmsg}")
             else:
-                print("Category <{}> already exists".format(catg))
+                print(f"Category <{catg}> already exists")
 
 
 def delete_whatever_category(self, category, stype="horizons"):
@@ -89,13 +89,13 @@ def delete_whatever_category(self, category, stype="horizons"):
                 del project.horizons.representations[catg]
             except KeyError as kerr:
                 if kerr == catg:
-                    print("Cannot delete {}, does not exist".format(kerr))
+                    print(f"Cannot delete {kerr}, does not exist")
         elif stype.lower() == "zones":
             try:
                 del project.horizons.representations[catg]
             except KeyError as kerr:
                 if kerr == catg:
-                    print("Cannot delete {}, does not exist".format(kerr))
+                    print(f"Cannot delete {kerr}, does not exist")
         else:
             raise ValueError("Wrong stype applied")
 
