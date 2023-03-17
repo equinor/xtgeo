@@ -639,7 +639,7 @@ class _XTGeoFile(object):
 
         for fmt, variants in SUPPORTED_FORMATS.items():
             if suffix in variants:
-                logger.info(f"Extension hints {fmt}")
+                logger.info("Extension hints: %s", fmt)
                 return fmt
 
         # if none of these above are accepted, check regular expression
@@ -649,7 +649,7 @@ class _XTGeoFile(object):
                 if "*" in var:
                     pattern = re.compile(var)
                     if pattern.match(suffix):
-                        logger.info(f"Extension by regexp hints {fmt}")
+                        logger.info("Extension by regexp hints %s", fmt)
                         return fmt
 
         return "unknown"

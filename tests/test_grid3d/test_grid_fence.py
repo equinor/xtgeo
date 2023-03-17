@@ -6,7 +6,6 @@ import pytest
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
     raise SystemExit
@@ -36,7 +35,6 @@ def test_randomline_fence_from_well(show_plot):
     print(fspec.dataframe)
 
     assert fspec.dataframe[fspec.dhname][4] == pytest.approx(12.6335, abs=0.001)
-    logger.info(fspec.dataframe)
 
     fspec = wll.get_fence_polyline(sampling=10, nextend=2, asnumpy=True, tvdmin=1200)
 
@@ -70,18 +68,15 @@ def test_randomline_fence_from_polygon(show_plot):
     fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
 
     # get the "image", which is a 2D numpy that can be plotted with e.g. imgshow
-    logger.info("Getting randomline...")
     timer1 = xtg.timer()
     hmin, hmax, vmin, vmax, por = grd.get_randomline(
         fspec, "PORO", zmin=1680, zmax=1750, zincrement=0.5
     )
-    logger.info(f"Getting randomline... took {xtg.timer(timer1):5.3f} secs")
 
     timer1 = xtg.timer()
     hmin, hmax, vmin, vmax, perm = grd.get_randomline(
         fspec, "PERMX", zmin=1680, zmax=1750, zincrement=0.5
     )
-    logger.info(f"Getting randomline (2 time)... took {xtg.timer(timer1):5.3f} secs")
 
     if show_plot:
         import matplotlib.pyplot as plt

@@ -12,7 +12,6 @@ from xtgeo.common import XTGeoDialog
 from .grid_generator import xtgeo_grids
 
 xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
     raise SystemExit
@@ -48,10 +47,7 @@ def test_hybridgrid1(tmpdir, snapshot, helpers):
     grd.subgrids = OrderedDict({"name1": [1], "name2": [2, 3], "name3": [4, 5]})
     assert grd.subgrids is not None  # initially, prior to subgrids
 
-    logger.info("Read grid... done, NZ is %s", grd.nlay)
     grd.to_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"), fformat="bgrdecl")
-
-    logger.info("Convert...")
     nhdiv = 40
     newnlay = grd.nlay * 2 + nhdiv
     snapshot.assert_match(
@@ -81,9 +77,7 @@ def test_hybridgrid1(tmpdir, snapshot, helpers):
 def test_hybridgrid2(tmpdir):
     """Making a hybridgrid for Emerald case in region"""
 
-    logger.info("Read grid...")
     grd = xtgeo.create_box_grid((4, 3, 5))
-    logger.info(f"Read grid... done, NLAY is {grd.nlay}")
 
     reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
 
@@ -99,9 +93,7 @@ def test_hybridgrid2(tmpdir):
 def test_inactivate_thin_cells(tmpdir):
     """Make hybridgrid for Emerald case in region, and inactive thin cells"""
 
-    logger.info("Read grid...")
     grd = xtgeo.grid_from_file(EMEGFILE)
-    logger.info(f"Read grid... done, NLAY is {grd.nlay}")
 
     reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
 
@@ -118,8 +110,6 @@ def test_inactivate_thin_cells(tmpdir):
 
 def test_refine_vertically():
     """Do a grid refinement vertically."""
-
-    logger.info("Read grid...")
 
     emerald_grid = xtgeo.grid_from_file(EMEGFILE)
     assert emerald_grid.get_subgrids() == OrderedDict(
@@ -143,8 +133,6 @@ def test_refine_vertically():
 
 def test_refine_vertically_per_zone(tmpdir):
     """Do a grid refinement vertically, via a dict per zone."""
-
-    logger.info("Read grid...")
 
     emerald2_grid = xtgeo.grid_from_file(EMEGFILE2)
     grd = emerald2_grid.copy()
@@ -209,7 +197,6 @@ def test_reverse_row_axis_dualprops():
     )
 
     poro = grd.gridprops.props[0]
-    logger.info(grd.gridprops.describe())
     porowas = poro.copy()
     assert poro.values[1, 0, 0] == pytest.approx(0.17777, abs=0.01)
     assert grd.ijk_handedness == "left"
@@ -263,13 +250,8 @@ def test_copy_grid(tmpdir):
 def test_crop_grid(tmpdir):
     """Crop a grid."""
 
-    logger.info("Read grid...")
-
     grd = xtgeo.grid_from_file(EMEGFILE2)
     zprop = xtgeo.gridproperty_from_file(EMEZFILE2, name="Zone", grid=grd)
-
-    logger.info(f"Read grid... done, NLAY is {grd.nlay}")
-    logger.info(f"Read grid...NCOL, NROW, NLAY is {grd.ncol} {grd.nrow} {grd.nlay}")
 
     grd.crop((30, 60), (20, 40), (1, 46), props=[zprop])
 
@@ -283,25 +265,17 @@ def test_crop_grid(tmpdir):
 def test_crop_grid_after_copy():
     """Copy a grid, then crop and check number of active cells."""
 
-    logger.info("Read grid...")
-
     grd = xtgeo.grid_from_file(EMEGFILE2)
     grd.describe()
     zprop = xtgeo.gridproperty_from_file(EMEZFILE2, name="Zone", grid=grd)
     grd.describe(details=True)
 
-    logger.info(grd.dimensions)
-
     grd2 = grd.copy()
     grd2.describe(details=True)
 
-    logger.info("GRD2 props: %s", grd2.props)
     assert grd.propnames == grd2.propnames
 
-    logger.info("GRD2 number of active cells: %s", grd2.nactive)
     act = grd.get_actnum()
-    logger.info(act.values.shape)
-    logger.info("ZPROP: %s", zprop.values.shape)
 
     grd2.crop((1, 30), (40, 80), (23, 46))
 
