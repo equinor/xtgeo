@@ -12,6 +12,7 @@ import pandas as pd
 from matplotlib import collections as mc
 from matplotlib.lines import Line2D
 from scipy.ndimage import gaussian_filter
+
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Well
 from xtgeo.xyz import Polygons
@@ -1017,15 +1018,14 @@ class XSection(BasePlot):
         slegend = []
         if surfacenames is None:
             for i in range(nlen):
-                slegend.append("Surf {}".format(i))
+                slegend.append(f"Surf {i}")
 
         else:
             # do a check
             if len(surfacenames) != nlen:
                 msg = (
-                    "Wrong number of entries in surfacenames! "
-                    "Number of names is {} while number of files "
-                    "is {}".format(len(surfacenames), nlen)
+                    "Wrong number of entries in surfacenames! Number of names "
+                    f"is {len(surfacenames)} while number of files is {nlen}"
                 )
                 raise ValueError(msg)
 
@@ -1170,10 +1170,7 @@ class XSection(BasePlot):
         if otherwells:
             for poly in otherwells:
                 if not isinstance(poly, Polygons):
-                    xtg.warn(
-                        "<otherw> not a Polygons instance, but "
-                        "a {}".format(type(poly))
-                    )
+                    xtg.warn(f"<otherw> not a Polygons instance, but a {type(poly)}")
                     continue
                 if poly.name == self._well.xwellname:
                     continue

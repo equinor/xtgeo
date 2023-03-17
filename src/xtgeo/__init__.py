@@ -40,7 +40,7 @@ def _xprint(msg):
     difftime = _timer(TIME0)
 
     if DEBUG:
-        print("({0:4.3f})  {1}".format(difftime, msg))
+        print(f"({difftime:4.3f})  {msg}")
 
 
 _xprint("XTGEO __init__ ...")

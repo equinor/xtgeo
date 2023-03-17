@@ -232,7 +232,7 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
     )
 
     if cstatus != 0:
-        raise RuntimeError("Error from C routine, code is {}".format(cstatus))
+        raise RuntimeError(f"Error from C routine, code is {cstatus}")
 
     indarray = _cxtgeo.swig_carr_to_numpy_i1d(nlen, wivec).astype("float")
     jndarray = _cxtgeo.swig_carr_to_numpy_i1d(nlen, wjvec).astype("float")

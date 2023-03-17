@@ -61,11 +61,11 @@ def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
 
     t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=True)
-    logger.info("Slicing alg 1...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 1...done in {xtg.timer(t1)} seconds")
 
     t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=True)
-    logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 2...done in {xtg.timer(t1)} seconds")
 
     if generate_plot:
         xs1.quickplot(
@@ -98,11 +98,11 @@ def test_slice_trilinear_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
 
     t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=True, sampling="trilinear")
-    logger.info("Slicing alg 1...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 1...done in {xtg.timer(t1)} seconds")
 
     t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=True, sampling="trilinear")
-    logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 2...done in {xtg.timer(t1)} seconds")
 
     if generate_plot:
         xs1.quickplot(
@@ -139,11 +139,11 @@ def test_slice_nearest_nosnapxy(tmpdir, load_cube_rsgy1, generate_plot):
 
     t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=False)
-    logger.info("Slicing alg 1...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 1...done in {xtg.timer(t1)} seconds")
 
     t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=False)
-    logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 2...done in {xtg.timer(t1)} seconds")
 
     if generate_plot:
         xs1.quickplot(
@@ -180,11 +180,11 @@ def test_slice_trilinear_nosnapxy(tmpdir, load_cube_rsgy1, generate_plot):
 
     t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=False, sampling="trilinear")
-    logger.info("Slicing alg 1...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 1...done in {xtg.timer(t1)} seconds")
 
     t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=False, sampling="trilinear")
-    logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing alg 2...done in {xtg.timer(t1)} seconds")
 
     if generate_plot:
         xs1.quickplot(
@@ -217,7 +217,7 @@ def test_slice_nearest(tmpdir, load_cube_rsgy1, generate_plot):
 
     t1 = xtg.timer()
     xs.slice_cube(kube, algorithm=1)
-    logger.info("Slicing...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing...done in {xtg.timer(t1)} seconds")
 
     xs.to_file(join(tmpdir, "surf_slice_cube_v1.gri"), fformat="irap_binary")
 
@@ -241,7 +241,7 @@ def test_slice_nearest_v2(tmpdir, load_cube_rsgy1, generate_plot):
     t1 = xtg.timer()
 
     xs.slice_cube(kube, algorithm=2)
-    logger.info("Slicing...done in {} seconds".format(xtg.timer(t1)))
+    logger.info(f"Slicing...done in {xtg.timer(t1)} seconds")
 
     xs.to_file(join(tmpdir, "surf_slice_cube_alg2.gri"), fformat="irap_binary")
 
@@ -267,7 +267,7 @@ def test_slice_various_reek(tmpdir, load_cube_rsgy1, generate_plot):
     t1 = xtg.timer()
     xs.slice_cube(kube)
     t2 = xtg.timer(t1)
-    logger.info("Slicing... nearest, done in {} seconds".format(t2))
+    logger.info(f"Slicing... nearest, done in {t2} seconds")
 
     xs.to_file(join(tmpdir, "surf_slice_cube_reek_interp.gri"))
 
@@ -288,7 +288,7 @@ def test_slice_various_reek(tmpdir, load_cube_rsgy1, generate_plot):
     t1 = xtg.timer()
     xs.slice_cube(kube, sampling="trilinear")
     t2 = xtg.timer(t1)
-    logger.info("Slicing... trilinear, done in {} seconds".format(t2))
+    logger.info(f"Slicing... trilinear, done in {t2} seconds")
 
     xs.to_file(join(tmpdir, "surf_slice_cube_reek_trilinear.gri"))
 
@@ -343,7 +343,7 @@ def test_slice_attr_window_max_w_plotting(tmpdir, load_cube_rsgy1, generate_plot
     t1 = xtg.timer()
     xs1.slice_cube_window(kube, attribute="min", sampling="trilinear")
     t2 = xtg.timer(t1)
-    logger.info("Window slicing... {} secs".format(t2))
+    logger.info(f"Window slicing... {t2} secs")
 
     if generate_plot:
         xs1.quickplot(
@@ -382,11 +382,11 @@ def test_slice_attr_window_max_w_plotting(tmpdir, load_cube_rsgy1, generate_plot
 def test_cube_attr_mean_two_surfaces(tmpdir, load_cube_rsgy1, generate_plot):
     """Get cube attribute (mean) between two surfaces."""
 
-    logger.info("Loading surfaces {} {}".format(RTOP1, RBAS1))
+    logger.info(f"Loading surfaces {RTOP1} {RBAS1}")
     xs1 = xtgeo.surface_from_file(RTOP1)
     xs2 = xtgeo.surface_from_file(RBAS1)
 
-    logger.info("Loading cube {}".format(RSGY1))
+    logger.info(f"Loading cube {RSGY1}")
     kube = load_cube_rsgy1
 
     xss = xs1.copy()
@@ -405,7 +405,7 @@ def test_cube_attr_mean_two_surfaces(tmpdir, load_cube_rsgy1, generate_plot):
             infotext="Method: trilinear, 2 surfs",
         )
 
-    logger.info("Mean is {}".format(xss.values.mean()))
+    logger.info(f"Mean is {xss.values.mean()}")
 
 
 def test_cube_attr_rms_two_surfaces_compare_window(load_cube_rsgy1):
@@ -436,12 +436,12 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(
     """Get cube attribute (rms) between two surfaces, and compare with
     window, and show plots."""
 
-    logger.info("Loading surfaces {} {}".format(RTOP1, RBAS1))
+    logger.info(f"Loading surfaces {RTOP1} {RBAS1}")
     xs1 = xtgeo.surface_from_file(RTOP1)
     xs2 = xs1.copy()
     xs2.values += 30
 
-    logger.info("Loading cube {}".format(RSGY1))
+    logger.info(f"Loading cube {RSGY1}")
     kube = load_cube_rsgy1
 
     xss1 = xs1.copy()
@@ -458,7 +458,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(
             infotext="Method: trilinear, 2 surfs, 30ms apart",
         )
 
-    print("\n\n{}\n".format("=" * 100))
+    print(f"\n\n{'=' * 100}\n")
 
     xss2 = xs1.copy()
     xss2.values += 15
@@ -481,11 +481,11 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(
 ):
     """Get cube attribute between two surfaces with partly zero isochore."""
 
-    logger.info("Loading surfaces {} {}".format(RTOP1, RBAS1))
+    logger.info(f"Loading surfaces {RTOP1} {RBAS1}")
     xs1 = xtgeo.surface_from_file(RTOP1)
     xs2 = xtgeo.surface_from_file(RBAS2)
 
-    logger.info("Loading cube {}".format(RSGY1))
+    logger.info(f"Loading cube {RSGY1}")
     kube = load_cube_rsgy1
 
     xss = xs1.copy()
@@ -504,7 +504,7 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(
             infotext="Method: trilinear, 2 surfs, partly zero isochore",
         )
 
-    logger.info("Mean is {}".format(xss.values.mean()))
+    logger.info(f"Mean is {xss.values.mean()}")
 
 
 def test_cube_slice_auto4d_data(tmpdir, generate_plot):
@@ -708,11 +708,11 @@ def test_cube_attr_mean_two_surfaces_multiattr(tmpdir, load_cube_rsgy1, generate
     time.
     """
 
-    logger.info("Loading surfaces {} {}".format(RTOP1, RBAS1))
+    logger.info(f"Loading surfaces {RTOP1} {RBAS1}")
     xs1 = xtgeo.surface_from_file(RTOP1)
     xs2 = xtgeo.surface_from_file(RBAS1)
 
-    logger.info("Loading cube {}".format(RSGY1))
+    logger.info(f"Loading cube {RSGY1}")
     kube = load_cube_rsgy1
 
     xss = xs1.copy()

@@ -42,7 +42,7 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
     for i in range(10):
         xsurf = mysurf.copy()
         xsurf.values = xsurf.values + i * 20
-        xsurf.name = "Surface_{}".format(i)
+        xsurf.name = f"Surface_{i}"
         mysurfaces.append(xsurf)
 
     myplot = XSection(zmin=1500, zmax=1800, well=mywell, surfaces=mysurfaces)
@@ -85,7 +85,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     for i in range(10):
         xsurf = mysurf.copy()
         xsurf.values = xsurf.values + i * 20
-        xsurf.name = "Surface_{}".format(i)
+        xsurf.name = f"Surface_{i}"
         mysurfaces.append(xsurf)
 
     myplot = XSection(

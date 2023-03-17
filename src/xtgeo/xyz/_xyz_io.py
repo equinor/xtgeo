@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -285,9 +286,8 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
                 df = df.loc[df[key].isin(val)]
             else:
                 raise KeyError(
-                    "The requested pfilter key {} was not "
-                    "found in dataframe. Valid keys are "
-                    "{}".format(key, df.columns)
+                    f"The requested pfilter key {key} was not found in dataframe. "
+                    f"Valid keys are {df.columns}"
                 )
 
     if ispolygons:
@@ -371,14 +371,12 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
     if hcolumn in df.columns:
         columns.append(hcolumn)
     else:
-        raise ValueError(
-            "Column for horizons/zones <{}> " "not present".format(hcolumn)
-        )
+        raise ValueError(f"Column for horizons/zones <{hcolumn}> not present")
 
     if wcolumn in df.columns:
         columns.append(wcolumn)
     else:
-        raise ValueError("Column for wells <{}> " "not present".format(wcolumn))
+        raise ValueError(f"Column for wells <{wcolumn}> not present")
 
     if mdcolumn in df.columns:
         columns.append(mdcolumn)

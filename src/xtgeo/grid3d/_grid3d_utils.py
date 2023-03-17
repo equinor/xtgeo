@@ -65,7 +65,7 @@ def scan_dates(pfile, maxdates=MAXDATES, dataframe=False):
         dday = _cxtgeo.intarray_getitem(day, i)
         dmon = _cxtgeo.intarray_getitem(mon, i)
         dyer = _cxtgeo.intarray_getitem(yer, i)
-        date = "{0:4}{1:02}{2:02}".format(dyer, dmon, dday)
+        date = f"{dyer:4}{dmon:02}{dday:02}"
         da.append(int(date))
 
     for item in [seq, day, mon, yer]:

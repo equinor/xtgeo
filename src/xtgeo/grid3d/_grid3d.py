@@ -32,8 +32,8 @@ class _Grid3D(object):
 
     def _evaluate_mask(self, mask) -> bool:
         xtg.warn(
-            "Use of keyword 'mask' in argument list is deprecated, "
-            "use alternative specified in API instead! In: {}".format(self)
+            f"Use of keyword 'mask' in argument list is deprecated, use alternative "
+            f"specified in API instead! In: {self}"
         )
 
         if not isinstance(mask, bool):

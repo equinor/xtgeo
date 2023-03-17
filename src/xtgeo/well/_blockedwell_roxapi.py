@@ -62,18 +62,18 @@ def _roxapi_import_bwell(
         gmodel = rox.project.grid_models[gname]
         logger.info("RMS grid model <%s> OK", gname)
     else:
-        raise ValueError("No such grid name present: {}".format(gname))
+        raise ValueError(f"No such grid name present: {gname}")
 
     if bwname in gmodel.blocked_wells_set:
         bwset = gmodel.blocked_wells_set[bwname]
         logger.info("Blocked well set <%s> OK", bwname)
     else:
-        raise ValueError("No such blocked well set: {}".format(bwname))
+        raise ValueError(f"No such blocked well set: {bwname}")
 
     if wname in bwset.get_well_names():
         self._wname = wname
     else:
-        raise WellNotFoundError("No such well in blocked well set: {}".format(wname))
+        raise WellNotFoundError(f"No such well in blocked well set: {wname}")
 
     # pylint: disable=unnecessary-comprehension
     bwprops = [item for item in bwset.properties]
@@ -145,19 +145,19 @@ def _roxapi_export_bwell(
         gmodel = rox.project.grid_models[gname]
         logger.info("RMS grid model <%s> OK", gname)
     else:
-        raise ValueError("No such grid name present: {}".format(gname))
+        raise ValueError(f"No such grid name present: {gname}")
 
     if bwname in gmodel.blocked_wells_set:
         bwset = gmodel.blocked_wells_set[bwname]
         logger.info("Blocked well set <%s> OK", bwname)
         bwprops = bwset.properties
     else:
-        raise ValueError("No such blocked well set: {}".format(bwname))
+        raise ValueError(f"No such blocked well set: {bwname}")
 
     if wname in bwset.get_well_names():
         self._wname = wname
     else:
-        raise WellNotFoundError("No such well in blocked well set: {}".format(wname))
+        raise WellNotFoundError(f"No such well in blocked well set: {wname}")
 
     bwnames = [item.name for item in bwset.properties]
 

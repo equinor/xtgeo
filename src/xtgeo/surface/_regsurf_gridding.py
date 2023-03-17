@@ -38,8 +38,7 @@ def points_gridding(self, points, method="linear", coarsen=1):
     validmethods = ["linear", "nearest", "cubic"]
     if method not in set(validmethods):
         raise ValueError(
-            "Invalid method for gridding: {}, valid "
-            "options are {}".format(method, validmethods)
+            f"Invalid method for gridding: {method}, valid options are {validmethods}"
         )
 
     try:
@@ -47,7 +46,7 @@ def points_gridding(self, points, method="linear", coarsen=1):
             (xcv, ycv), zcv, (xiv, yiv), method=method, fill_value=np.nan
         )
     except ValueError as verr:
-        raise RuntimeError("Could not do gridding: {}".format(verr))
+        raise RuntimeError(f"Could not do gridding: {verr}")
 
     logger.info("Gridding point ... DONE")
 

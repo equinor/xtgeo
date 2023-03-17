@@ -21,7 +21,7 @@ class Map(BasePlot):
         """The constructor method for a Map object."""
         super().__init__()
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
+        clsname = f"{type(self).__module__}.{type(self).__name__}"
         logger.info(clsname)
 
         self._wells = None
@@ -78,7 +78,7 @@ class Map(BasePlot):
             step = (maxv - minv) / 10.0
             legendticks = []
             for i in range(10 + 1):
-                llabel = float("{0:9.4f}".format(minv + step * i))
+                llabel = float(f"{minv + step * i:9.4f}")
                 legendticks.append(llabel)
 
             zi.unshare_mask()

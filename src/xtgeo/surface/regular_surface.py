@@ -269,21 +269,21 @@ def allow_deprecated_default_init(func):
         # corner cases where we provide some positional arguments
         # as keyword arguments.
         _deprecation_msg = (
-            "{} is a required argument, will no "
+            "X is a required argument, will no "
             "longer be defaulted in xtgeo version 4.0"
         )
         if len(args) != 4:
             if "ncol" not in kwargs and len(args) != 1:
-                warnings.warn(_deprecation_msg.format("ncol"), DeprecationWarning)
+                warnings.warn(_deprecation_msg.replace("X", "ncol"), DeprecationWarning)
                 kwargs["ncol"] = 5
             if "nrow" not in kwargs and len(args) != 2:
-                warnings.warn(_deprecation_msg.format("nrow"), DeprecationWarning)
+                warnings.warn(_deprecation_msg.replace("X", "nrow"), DeprecationWarning)
                 kwargs["nrow"] = 3
             if "xinc" not in kwargs and len(args) != 3:
-                warnings.warn(_deprecation_msg.format("xinc"), DeprecationWarning)
+                warnings.warn(_deprecation_msg.replace("X", "xinc"), DeprecationWarning)
                 kwargs["xinc"] = 25.0
             if "yinc" not in kwargs:
-                warnings.warn(_deprecation_msg.format("yinc"), DeprecationWarning)
+                warnings.warn(_deprecation_msg.replace("X", "yinc"), DeprecationWarning)
                 kwargs["yinc"] = 25.0
             default = (
                 kwargs.get("ncol", 5) == 5
@@ -434,13 +434,13 @@ class RegularSurface:
     def __repr__(self):
         """Magic method __repr__."""
         myrp = (
-            "{0.__class__.__name__} (xori={0._xori!r}, yori={0._yori!r}, "
-            "xinc={0._xinc!r}, yinc={0._yinc!r}, ncol={0._ncol!r}, "
-            "nrow={0._nrow!r}, rotation={0._rotation!r}, "
-            "yflip={0._yflip!r}, masked={0._masked!r}, "
-            "filesrc={0._filesrc!r}, name={0._name!r}, "
-            "ilines={0.ilines.shape!r}, xlines={0.xlines.shape!r}, "
-            "values={0.values.shape!r}) ID={1}.".format(self, id(self))
+            f"{self.__class__.__name__} (xori={self._xori!r}, yori={self._yori!r}, "
+            f"xinc={self._xinc!r}, yinc={self._yinc!r}, ncol={self._ncol!r}, "
+            f"nrow={self._nrow!r}, rotation={self._rotation!r}, yflip={self._yflip!r}, "
+            f"masked={self._masked!r}, filesrc={self._filesrc!r}, "
+            f"name={self._name!r}, ilines={self.ilines.shape!r}, "
+            f"xlines={self.xlines.shape!r}, values={self.values.shape!r}) "
+            f"ID={id(self)}."
         )
         return myrp
 
@@ -604,7 +604,7 @@ class RegularSurface:
             try:
                 values = ma.reshape(values, (ncol, nrow), order="C")
             except ValueError as emsg:
-                xtg.error("Cannot reshape array: {}".format(emsg))
+                xtg.error(f"Cannot reshape array: {emsg}")
                 raise
 
         # replace any undef or nan with mask
@@ -2099,10 +2099,10 @@ class RegularSurface:
 
                 if vcv is not None:
                     if xyfmt is not None:
-                        xcv = float("{:{width}}".format(xcv, width=xyfmt))
-                        ycv = float("{:{width}}".format(ycv, width=xyfmt))
+                        xcv = float(f"{xcv:{xyfmt}}")
+                        ycv = float(f"{ycv:{xyfmt}}")
                     if valuefmt is not None:
-                        vcv = float("{:{width}}".format(vcv, width=valuefmt))
+                        vcv = float(f"{vcv:{valuefmt}}")
                     valuelist.append(vcv)
                     xylist.append((xcv, ycv))
 
@@ -2918,10 +2918,8 @@ class RegularSurface:
         for inum, myprop in enumerate([xprop, yprop, hcpfzprop, zoneprop]):
             if isinstance(myprop, ma.MaskedArray):
                 raise ValueError(
-                    "Property input {} with avg {} to {} is a "
-                    "masked array, not a plain numpy ndarray".format(
-                        inum, myprop.mean(), __name__
-                    )
+                    f"Property input {inum} with avg {myprop.mean()} to {__name__} "
+                    "is a masked array, not a plain numpy ndarray"
                 )
 
         status = _regsurf_gridding.avgsum_from_3dprops_gridding(
@@ -2976,10 +2974,8 @@ class RegularSurface:
         for inum, myprop in enumerate([xprop, yprop, mprop, dzprop, zoneprop]):
             if isinstance(myprop, ma.MaskedArray):
                 raise ValueError(
-                    "Property input {} with avg {} to {} is a "
-                    "masked array, not a plain numpy ndarray".format(
-                        inum, myprop.mean(), __name__
-                    )
+                    f"Property input {inum} with avg {myprop.mean()} to {__name__} "
+                    "is a masked array, not a plain numpy ndarray"
                 )
 
         _regsurf_gridding.avgsum_from_3dprops_gridding(
@@ -3034,10 +3030,7 @@ class RegularSurface:
 
         ncount = self.values.count()
         if ncount < 5:
-            xtg.warn(
-                "None or too few map nodes for plotting. Skip "
-                "output {}!".format(filename)
-            )
+            xtg.warn(f"None or too few map nodes for plotting. Skip output {filename}!")
             return
 
         mymap = xtgeo.plot.Map()
@@ -3195,7 +3188,7 @@ class RegularSurface:
             self._values = vals
 
         else:
-            raise ValueError("Input values are in invalid format: {}".format(values))
+            raise ValueError(f"Input values are in invalid format: {values}")
 
         if self._values.mask is ma.nomask:
             self._values = ma.array(self._values, mask=ma.getmaskarray(self._values))

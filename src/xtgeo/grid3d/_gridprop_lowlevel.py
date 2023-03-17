@@ -117,7 +117,7 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
         carray = _cxtgeo.new_intarray(self.ntotal)
         _cxtgeo.swig_numpy_to_carr_i1d(values1d, carray)
     else:
-        raise RuntimeError("Unsupported dtype, probable bug in {}".format(__name__))
+        raise RuntimeError(f"Unsupported dtype, probable bug in {__name__}")
     return carray
 
 

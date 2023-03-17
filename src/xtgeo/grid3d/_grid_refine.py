@@ -104,8 +104,7 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     if ier != 0:
         raise RuntimeError(
-            "An error occured in the C routine "
-            "grd3d_refine_vert, code {}".format(ier)
+            f"An error occured in the C routine grd3d_refine_vert, code {ier}"
         )
 
     # update instance:

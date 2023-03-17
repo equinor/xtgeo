@@ -35,11 +35,12 @@ from warnings import warn
 
 import numpy as np
 import segyio
+from segyio import TraceField as TF
+
 import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from segyio import TraceField as TF
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -547,9 +548,7 @@ def import_stormcube(
     ier, values = _cxtgeo.cube_import_storm(ncol, nrow, nlay, sfile, nlines, nrcl, 0)
 
     if ier != 0:
-        raise RuntimeError(
-            "Something went wrong in {}, code is {}".format(__name__, ier)
-        )
+        raise RuntimeError(f"Something went wrong in {__name__}, code is {ier}")
 
     return {
         "ncol": ncol,

@@ -51,7 +51,7 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
         export_xtgcpprop(self, fobj.name)
 
     else:
-        raise ValueError("Cannot export, invalid fformat: {}".format(fformat))
+        raise ValueError(f"Cannot export, invalid fformat: {fformat}")
 
 
 # Export ascii or binary ROFF format
@@ -101,7 +101,7 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt
                 elif self.isdiscrete:
                     fh.write(str(v))
                 else:
-                    fh.write("{:3e}".format(v))
+                    fh.write(f"{v:3e}")
                 if i % 6 == 5:
                     fh.write("\n")
 

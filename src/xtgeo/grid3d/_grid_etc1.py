@@ -1159,7 +1159,7 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         self._zcornsv,
     )
     if ier != 0:
-        raise RuntimeError("Something went wrong in translate, code: {}".format(ier))
+        raise RuntimeError(f"Something went wrong in translate, code: {ier}")
 
     logger.info("Translation of coords done")
 
@@ -1181,7 +1181,7 @@ def reverse_row_axis(self, ijk_handedness=None):
     )
 
     if ier != 0:
-        raise RuntimeError("Something went wrong in jswapping, code: {}".format(ier))
+        raise RuntimeError(f"Something went wrong in jswapping, code: {ier}")
 
     if self._props is None:
         return

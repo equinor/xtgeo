@@ -60,11 +60,9 @@ def _roxapi_import_surface(
 
     if stype == "horizons":
         if name not in proj.horizons:
-            raise ValueError("Name {} is not within Horizons".format(name))
+            raise ValueError(f"Name {name} is not within Horizons")
         if category not in proj.horizons.representations:
-            raise ValueError(
-                "Category {} is not within Horizons categories".format(category)
-            )
+            raise ValueError(f"Category {category} is not within Horizons categories")
         try:
             rox = proj.horizons[name][category].get_grid(realisation)
             args.update(_roxapi_horizon_to_xtgeo(rox))
@@ -73,11 +71,9 @@ def _roxapi_import_surface(
 
     elif stype == "zones":
         if name not in proj.zones:
-            raise ValueError("Name {} is not within Zones".format(name))
+            raise ValueError(f"Name {name} is not within Zones")
         if category not in proj.zones.representations:
-            raise ValueError(
-                "Category {} is not within Zones categories".format(category)
-            )
+            raise ValueError(f"Category {category} is not within Zones categories")
         try:
             rox = proj.zones[name][category].get_grid(realisation)
             args.update(_roxapi_horizon_to_xtgeo(rox))
@@ -150,11 +146,9 @@ def _roxapi_export_surface(
 ):  # pragma: no cover
     if stype == "horizons":
         if name not in proj.horizons:
-            raise ValueError("Name {} is not within Horizons".format(name))
+            raise ValueError(f"Name {name} is not within Horizons")
         if category not in proj.horizons.representations:
-            raise ValueError(
-                "Category {} is not within Horizons categories".format(category)
-            )
+            raise ValueError(f"Category {category} is not within Horizons categories")
         try:
             roxroot = proj.horizons[name][category]
             roxg = _xtgeo_to_roxapi_grid(self)
@@ -165,11 +159,9 @@ def _roxapi_export_surface(
 
     elif stype == "zones":
         if name not in proj.zones:
-            raise ValueError("Name {} is not within Zones".format(name))
+            raise ValueError(f"Name {name} is not within Zones")
         if category not in proj.zones.representations:
-            raise ValueError(
-                "Category {} is not within Zones categories".format(category)
-            )
+            raise ValueError(f"Category {category} is not within Zones categories")
         try:
             roxroot = proj.zones[name][category]
             roxg = _xtgeo_to_roxapi_grid(self)

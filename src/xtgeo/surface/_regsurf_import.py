@@ -133,7 +133,7 @@ def _import_irap_binary(mfile, values=True):
         xlist = _cxtgeo.surf_import_irap_bin(cfhandle, 1, nval, 0)
         if xlist[0] != 0:
             mfile.cfclose()
-            raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
+            raise RuntimeError(f"Problem in {__name__}, code {ier}")
 
         val = xlist[-1]
 
@@ -219,7 +219,7 @@ def _import_irap_ascii(mfile):
 
     if ier != 0:
         mfile.cfclose()
-        raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
+        raise RuntimeError(f"Problem in {__name__}, code {ier}")
 
     val = np.reshape(val, (ncol, nrow), order="C")
 
@@ -326,7 +326,7 @@ def _import_ijxyz_tmpl(mfile, template):
     if isinstance(template, (xtgeo.cube.Cube, xtgeo.surface.RegularSurface)):
         logger.info("OK template")
     else:
-        raise ValueError("Template is of wrong type: {}".format(type(template)))
+        raise ValueError(f"Template is of wrong type: {type(template)}")
 
     nxy = template.ncol * template.nrow
     ier, val = _cxtgeo.surf_import_ijxyz_tmpl(

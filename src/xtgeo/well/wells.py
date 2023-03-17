@@ -112,7 +112,7 @@ class Wells:
         """Describe an instance by printing to stdout"""
 
         dsc = xtgeo.common.XTGDescription()
-        dsc.title("Description of {} instance".format(self.__class__.__name__))
+        dsc.title(f"Description of {self.__class__.__name__} instance")
         dsc.txt("Object ID", id(self))
 
         dsc.txt("Wells", self.names)
@@ -173,7 +173,7 @@ class Wells:
                     )
                 )
             except ValueError as err:
-                xtg.warn("SKIP this well: {}".format(err))
+                xtg.warn(f"SKIP this well: {err}")
                 continue
         if not self._wells:
             xtg.warn("No wells imported!")

@@ -10,6 +10,7 @@ import struct
 import h5py
 import hdf5plugin
 import numpy as np
+
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
@@ -57,9 +58,9 @@ def _export_irap_ascii_purepy(self, mfile):
     xmax = self.xori + (self.ncol - 1) * self.xinc
     ymax = self.yori + (self.nrow - 1) * self.yinc
 
-    buf = "-996 {} {} {}\n".format(self.nrow, self.xinc, self.yinc)
-    buf += "{} {} {} {}\n".format(self.xori, xmax, self.yori, ymax)
-    buf += "{} {} {} {}\n".format(self.ncol, self.rotation, self.xori, self.yori)
+    buf = f"-996 {self.nrow} {self.xinc} {self.yinc}\n"
+    buf += f"{self.xori} {xmax} {self.yori} {ymax}\n"
+    buf += f"{self.ncol} {self.rotation} {self.xori} {self.yori}\n"
     buf += "0  0  0  0  0  0  0\n"
     vals = vals.astype("str").tolist()
     nrow = 0
@@ -104,7 +105,7 @@ def _export_irap_ascii(self, mfile):
         0,
     )
     if ier != 0:
-        raise RuntimeError("Export to Irap Ascii went wrong, code is {}".format(ier))
+        raise RuntimeError(f"Export to Irap Ascii went wrong, code is {ier}")
 
     del vals
 
@@ -168,7 +169,7 @@ def _export_irap_binary_python(self, mfile):
     start = 0
     for chunk in chunks:
         ap += struct.pack(">i", chunk * 4)
-        ap += struct.pack(">{:d}f".format(chunk), *vals[start : start + chunk])
+        ap += struct.pack(f">{chunk:d}f", *vals[start : start + chunk])
         ap += struct.pack(">i", chunk * 4)
         start += chunk
 
@@ -204,7 +205,7 @@ def _export_irap_binary_cxtgeo(self, mfile):
 
     if ier != 0:
         mfile.cfclose(strict=False)  # strict False as C routine may have closed
-        raise RuntimeError("Export to Irap Binary went wrong, code is {}".format(ier))
+        raise RuntimeError(f"Export to Irap Binary went wrong, code is {ier}")
 
     mfile.cfclose()
 
@@ -229,9 +230,7 @@ def export_ijxyz_ascii(self, mfile):
     )
 
     if ier != 0:
-        raise RuntimeError(
-            "Export to IJXYZ format went wrong, " "code is {}".format(ier)
-        )
+        raise RuntimeError(f"Export to IJXYZ format went wrong, code is {ier}")
 
     mfile.cfclose()
 
@@ -331,7 +330,7 @@ def _export_zmap_ascii(self, mfile):
         0,
     )
     if ier != 0:
-        raise RuntimeError("Export to ZMAP Ascii went wrong, " "code is {}".format(ier))
+        raise RuntimeError(f"Export to ZMAP Ascii went wrong, code is {ier}")
     del scopy
 
     mfile.cfclose()
@@ -368,9 +367,7 @@ def export_storm_binary(self, mfile):
         0,
     )
     if ier != 0:
-        raise RuntimeError(
-            "Export to Storm binary went wrong, " "code is {}".format(ier)
-        )
+        raise RuntimeError(f"Export to Storm binary went wrong, code is {ier}")
     del scopy
 
     mfile.cfclose()
@@ -393,25 +390,25 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
     if not validunits:
         UserWarning(
             "Format or values for pmd_dataunits out of range: Pair should be in ranges "
-            "{} and {}".format(PMD_DATAUNITDISTANCE, PMD_DATAUNITZ)
+            f"{PMD_DATAUNITDISTANCE} and {PMD_DATAUNITZ}"
         )
 
     undef = 99999
 
     dsc = "Content=Map,"
-    dsc += "DataUnitDistance={},".format(unitd)
-    dsc += "DataUnitZ={},".format(unitz)
-    dsc += "GridNoX={},".format(self.ncol)
-    dsc += "GridNoY={},".format(self.nrow)
-    dsc += "GridStepX={},".format(self.xinc)
-    dsc += "GridStepY={},".format(self.yinc)
+    dsc += f"DataUnitDistance={unitd},"
+    dsc += f"DataUnitZ={unitz},"
+    dsc += f"GridNoX={self.ncol},"
+    dsc += f"GridNoY={self.nrow},"
+    dsc += f"GridStepX={self.xinc},"
+    dsc += f"GridStepY={self.yinc},"
     dsc += "MapType=GridMap,"
-    dsc += "OriginX={},".format(self.xori)
-    dsc += "OriginY={},".format(self.yori)
-    dsc += "RotationAngle={},".format(self.rotation)
-    dsc += "RotationOriginX={},".format(self.xori)
-    dsc += "RotationOriginY={},".format(self.yori)
-    dsc += "Undefined={},".format(undef)
+    dsc += f"OriginX={self.xori},"
+    dsc += f"OriginY={self.yori},"
+    dsc += f"RotationAngle={self.rotation},"
+    dsc += f"RotationOriginX={self.xori},"
+    dsc += f"RotationOriginY={self.yori},"
+    dsc += f"Undefined={undef},"
     dsc += "Version=1.0"
 
     values = np.ma.filled(self.values1d, fill_value=undef)

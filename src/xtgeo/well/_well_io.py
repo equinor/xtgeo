@@ -6,6 +6,7 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -153,7 +154,7 @@ def _trim_on_lognames(dfr, lognames, lognames_strict, wname):
             newdf[lname] = dfr[lname]
         else:
             if lognames_strict:
-                msg = "Logname <{0}> is not present for <{1}>".format(lname, wname)
+                msg = f"Logname <{lname}> is not present for <{wname}>"
                 msg += " (required log under condition lognames_strict=True)"
                 raise ValueError(msg)
 
@@ -169,8 +170,8 @@ def _check_special_logs(dfr, mdlogname, zonelogname, strict, wname):
     if mdlogname is not None:
         if mdlogname not in dfr.columns:
             msg = (
-                "mdlogname={} was requested but no such log "
-                "found for well {}".format(mdlogname, wname)
+                f"mdlogname={mdlogname} was requested but no such log found for "
+                f"well {wname}"
             )
             mname = None
             if strict:
@@ -182,8 +183,8 @@ def _check_special_logs(dfr, mdlogname, zonelogname, strict, wname):
     if zonelogname is not None:
         if zonelogname not in dfr.columns:
             msg = (
-                "zonelogname={} was requested but no such log "
-                "found for well {}".format(zonelogname, wname)
+                f"zonelogname={zonelogname} was requested but no such log found "
+                f"for well {wname}"
             )
             zname = None
             if strict:
@@ -198,16 +199,16 @@ def export_rms_ascii(self, wfile, precision=4):
     """Export to RMS well format."""
 
     with open(wfile, "w") as fwell:
-        print("{}".format("1.0"), file=fwell)
-        print("{}".format("Unknown"), file=fwell)
+        print("1.0", file=fwell)
+        print("Unknown", file=fwell)
         if self._rkb is None:
-            print("{} {} {}".format(self._wname, self._xpos, self._ypos), file=fwell)
+            print(f"{self._wname} {self._xpos} {self._ypos}", file=fwell)
         else:
             print(
-                "{} {} {} {}".format(self._wname, self._xpos, self._ypos, self._rkb),
+                f"{self._wname} {self._xpos} {self._ypos} {self._rkb}",
                 file=fwell,
             )
-        print("{}".format(len(self.lognames)), file=fwell)
+        print(f"{len(self.lognames)}", file=fwell)
         for lname in self.lognames:
             usewrec = "linear"
             wrec = []
@@ -217,7 +218,7 @@ def export_rms_ascii(self, wfile, precision=4):
                     wrec.append(self._wlogrecords[lname][key])
                 usewrec = " ".join(str(x) for x in wrec)
 
-            print("{} {} {}".format(lname, self._wlogtypes[lname], usewrec), file=fwell)
+            print(f"{lname} {self._wlogtypes[lname]} {usewrec}", file=fwell)
 
     # now export all logs as pandas framework
     tmpdf = self._df.copy()

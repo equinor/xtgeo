@@ -2,6 +2,7 @@
 
 
 import pytest
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -74,15 +75,13 @@ def test_randomline_fence_from_polygon(show_plot):
     hmin, hmax, vmin, vmax, por = grd.get_randomline(
         fspec, "PORO", zmin=1680, zmax=1750, zincrement=0.5
     )
-    logger.info("Getting randomline... took {0:5.3f} secs".format(xtg.timer(timer1)))
+    logger.info(f"Getting randomline... took {xtg.timer(timer1):5.3f} secs")
 
     timer1 = xtg.timer()
     hmin, hmax, vmin, vmax, perm = grd.get_randomline(
         fspec, "PERMX", zmin=1680, zmax=1750, zincrement=0.5
     )
-    logger.info(
-        "Getting randomline (2 time)... took {0:5.3f} secs".format(xtg.timer(timer1))
-    )
+    logger.info(f"Getting randomline (2 time)... took {xtg.timer(timer1):5.3f} secs")
 
     if show_plot:
         import matplotlib.pyplot as plt

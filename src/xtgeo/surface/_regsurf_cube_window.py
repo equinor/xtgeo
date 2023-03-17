@@ -367,7 +367,7 @@ def _attvalues(attribute, stacked):  # pylint: disable=too-many-branches
         stacked = ma.masked_greater_equal(stacked, 0.0, copy=True)
         attvalues = ma.mean(stacked, axis=2)
     else:
-        etxt = "Invalid attribute applied: {}".format(attribute)
+        etxt = f"Invalid attribute applied: {attribute}"
         raise ValueError(etxt)
 
     if not attvalues.flags["C_CONTIGUOUS"]:

@@ -16,6 +16,7 @@ from typing import Optional
 
 import h5py
 import numpy as np
+
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from .xtgeo_dialog import XTGeoDialog
@@ -165,9 +166,8 @@ class _XTGeoFile(object):
             raise RuntimeError("Reinstancing object, not allowed", self.__class__)
         else:
             raise RuntimeError(
-                "Illegal input, cannot continue ({}) {}: {}".format(
-                    self.__class__, fobj, type(fobj)
-                )
+                f"Illegal input, cannot continue ({self.__class__}) "
+                f"{fobj}: {type(fobj)}"
             )
 
         if obj and not self._memstream:
@@ -292,7 +292,7 @@ class _XTGeoFile(object):
             return True
 
         if raisetext is None:
-            raisetext = "File {} does not exist or cannot be accessed".format(self.name)
+            raisetext = f"File {self.name} does not exist or cannot be accessed"
 
         if "r" in self._mode:
             if not self._file.is_file() or not self.exists():
@@ -328,9 +328,7 @@ class _XTGeoFile(object):
         status = True
         folder = self._file.parent
         if raisetext is None:
-            raisetext = "Folder {} does not exist or cannot be accessed".format(
-                folder.name
-            )
+            raisetext = f"Folder {folder.name} does not exist or cannot be accessed"
 
         if not folder.exists():
             if raiseerror:
@@ -477,7 +475,7 @@ class _XTGeoFile(object):
 
         ier = _cxtgeo.xtg_fclose(self._cfhandle)
         if ier != 0:
-            raise RuntimeError("Could not close C file, code {}".format(ier))
+            raise RuntimeError(f"Could not close C file, code {ier}")
 
         logger.info("File is now closed for C io: %s", self.name)
 

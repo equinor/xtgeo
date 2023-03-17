@@ -180,7 +180,7 @@ def distance_from_point(self, point=(0, 0), azimuth=0.0):
 
     if ier != 0:
         logger.error("Something went wrong...")
-        raise RuntimeError("Something went wrong in {}".format(__name__))
+        raise RuntimeError(f"Something went wrong in {__name__}")
 
     self.set_values1d(svalues)
 

@@ -149,7 +149,7 @@ class BlockedWells(Wells):
                 )
                 self._wells.append(wll)
             except ValueError as err:
-                xtg.warn("SKIP this well: {}".format(err))
+                xtg.warn(f"SKIP this well: {err}")
                 continue
         if not self._wells:
             xtg.warn("No wells imported!")
