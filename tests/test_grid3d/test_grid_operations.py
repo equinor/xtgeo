@@ -267,15 +267,12 @@ def test_crop_grid_after_copy():
 
     grd = xtgeo.grid_from_file(EMEGFILE2)
     grd.describe()
-    zprop = xtgeo.gridproperty_from_file(EMEZFILE2, name="Zone", grid=grd)
     grd.describe(details=True)
 
     grd2 = grd.copy()
     grd2.describe(details=True)
 
     assert grd.propnames == grd2.propnames
-
-    act = grd.get_actnum()
 
     grd2.crop((1, 30), (40, 80), (23, 46))
 

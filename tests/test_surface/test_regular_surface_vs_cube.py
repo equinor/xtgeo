@@ -57,10 +57,8 @@ def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
     xs1 = xtgeo.surface_from_cube(kube, 1670)
     xs2 = xtgeo.surface_from_cube(kube, 1670)
 
-    t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=True)
 
-    t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=True)
 
     if generate_plot:
@@ -91,10 +89,8 @@ def test_slice_trilinear_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
     xs1 = xtgeo.surface_from_cube(kube, 1670)
     xs2 = xtgeo.surface_from_cube(kube, 1670)
 
-    t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=True, sampling="trilinear")
 
-    t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=True, sampling="trilinear")
 
     if generate_plot:
@@ -129,10 +125,8 @@ def test_slice_nearest_nosnapxy(tmpdir, load_cube_rsgy1, generate_plot):
     )
     xs2 = xs1.copy()
 
-    t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=False)
 
-    t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=False)
 
     if generate_plot:
@@ -167,10 +161,8 @@ def test_slice_trilinear_nosnapxy(tmpdir, load_cube_rsgy1, generate_plot):
     )
     xs2 = xs1.copy()
 
-    t1 = xtg.timer()
     xs1.slice_cube(kube, algorithm=1, snapxy=False, sampling="trilinear")
 
-    t1 = xtg.timer()
     xs2.slice_cube(kube, algorithm=2, snapxy=False, sampling="trilinear")
 
     if generate_plot:
@@ -201,7 +193,6 @@ def test_slice_nearest(tmpdir, load_cube_rsgy1, generate_plot):
 
     kube = load_cube_rsgy1
 
-    t1 = xtg.timer()
     xs.slice_cube(kube, algorithm=1)
 
     xs.to_file(join(tmpdir, "surf_slice_cube_v1.gri"), fformat="irap_binary")
@@ -222,8 +213,6 @@ def test_slice_nearest_v2(tmpdir, load_cube_rsgy1, generate_plot):
     xs = xtgeo.surface_from_file(RTOP1)
 
     kube = load_cube_rsgy1
-
-    t1 = xtg.timer()
 
     xs.slice_cube(kube, algorithm=2)
 
@@ -246,9 +235,7 @@ def test_slice_various_reek(tmpdir, load_cube_rsgy1, generate_plot):
 
     kube = load_cube_rsgy1
 
-    t1 = xtg.timer()
     xs.slice_cube(kube)
-    t2 = xtg.timer(t1)
 
     xs.to_file(join(tmpdir, "surf_slice_cube_reek_interp.gri"))
 
@@ -265,9 +252,7 @@ def test_slice_various_reek(tmpdir, load_cube_rsgy1, generate_plot):
 
     xs = xtgeo.surface_from_file(RTOP1)
 
-    t1 = xtg.timer()
     xs.slice_cube(kube, sampling="trilinear")
-    t2 = xtg.timer(t1)
 
     xs.to_file(join(tmpdir, "surf_slice_cube_reek_trilinear.gri"))
 
@@ -314,9 +299,7 @@ def test_slice_attr_window_max_w_plotting(tmpdir, load_cube_rsgy1, generate_plot
 
     kube = load_cube_rsgy1
 
-    t1 = xtg.timer()
     xs1.slice_cube_window(kube, attribute="min", sampling="trilinear")
-    t2 = xtg.timer(t1)
 
     if generate_plot:
         xs1.quickplot(

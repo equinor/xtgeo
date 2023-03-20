@@ -17,7 +17,7 @@ from typing import Optional
 import h5py
 import numpy as np
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo.cxtgeo import _cxtgeo
 
 from .xtgeo_dialog import XTGeoDialog
 

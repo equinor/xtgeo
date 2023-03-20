@@ -92,4 +92,4 @@ def test_user_msg():
     xtg.warn("This is a warning")
     xtg.warning("This is also a warning")
     xtg.error("This is an error")
-    xtg.critical("This is a critical error", sysexit=False)
+    xtg.critical("This is a critical error")

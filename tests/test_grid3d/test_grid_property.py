@@ -304,6 +304,7 @@ def test_roffbin_import2():
     assert nrow == 100, "NROW from shape (Emerald)"
 
     assert hc.values.mean() == pytest.approx(1446.4611912446985, abs=0.0001)
+    assert dz.values.mean() == pytest.approx(2.6352321, abs=0.0001)
 
 
 def test_eclinit_simple_importexport(tmpdir):
@@ -345,7 +346,7 @@ def test_grdecl_import_reek(tmpdir):
     assert poro.values.std() == pytest.approx(poro2.values.std(), abs=0.001)
 
     with pytest.raises(KeywordNotFoundError):
-        poro3 = xtgeo.gridproperty_from_file(
+        _ = xtgeo.gridproperty_from_file(
             TESTFILE12B, name="XPORO", fformat="grdecl", grid=rgrid
         )
 
@@ -436,9 +437,7 @@ def test_get_xy_values_for_webportal():
     grid = xtgeo.grid_from_file(TESTFILE8A)
     prop = xtgeo.gridproperty_from_file(TESTFILE9, grid=grid, name="PORO")
 
-    start = xtg.timer()
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
-    elapsed = xtg.timer(start)
 
     grid = xtgeo.grid_from_file(TESTFILE10)
     prop = xtgeo.gridproperty_from_file(TESTFILE11, grid=grid, name="PORO")
