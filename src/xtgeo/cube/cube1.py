@@ -56,7 +56,7 @@ def cube_from_roxar(project, name, folder=None):
         mycube = xtgeo.cube_from_roxar(project, "DepthCube")
 
     """
-    obj = Cube()
+    obj = Cube(ncol=9, nrow=9, nlay=9, xinc=9.99, yinc=9.99, zinc=9.99)
 
     obj.from_roxar(project, name, folder=folder)
 

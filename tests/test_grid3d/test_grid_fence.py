@@ -68,12 +68,10 @@ def test_randomline_fence_from_polygon(show_plot):
     fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
 
     # get the "image", which is a 2D numpy that can be plotted with e.g. imgshow
-    timer1 = xtg.timer()
     hmin, hmax, vmin, vmax, por = grd.get_randomline(
         fspec, "PORO", zmin=1680, zmax=1750, zincrement=0.5
     )
 
-    timer1 = xtg.timer()
     hmin, hmax, vmin, vmax, perm = grd.get_randomline(
         fspec, "PERMX", zmin=1680, zmax=1750, zincrement=0.5
     )

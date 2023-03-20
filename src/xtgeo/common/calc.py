@@ -3,9 +3,9 @@ from typing import List, Tuple
 
 import numpy as np
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog
+from xtgeo.cxtgeo import _cxtgeo
 
 xtg = XTGeoDialog()
 

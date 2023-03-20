@@ -35,7 +35,6 @@ disable=
     fixme,
     missing-docstring,
     protected-access,
-    C0330,
     useless-object-inheritance,
     import-outside-toplevel,
     import-error,
