@@ -67,38 +67,26 @@ def split_line_no_string(line):
         yield w
 
 
-def until_space(string):
-    """
-    returns the given string until the first space.
-    Similar to string.split(max_split=1)[0] except
-    initial spaces are not ignored:
-    >>> until_space(" hello")
-    ''
-    >>> until_space("hello world")
-    'hello'
-
-    """
-    result = ""
-    for w in string:
-        if w.isspace():
-            return result
-        result += w
-    return result
-
-
 def match_keyword(kw1, kw2):
     """
     Perhaps surprisingly, the eclipse input format considers keywords
     as 8 character strings with space denoting end. So PORO, 'PORO ', and
     'PORO    ' are all considered the same keyword.
 
+    Note that spaces may also occur inside e.g. tracer keywords, hence 'G1 F' vs 'G1 S'
+    are different keywords.
+
     >>> match_keyword("PORO", "PORO ")
     True
     >>> match_keyword("PORO", "PERM")
     False
+    >>> match_keyword("MORETHAN8LETTERS1)", "MORETHAN8LETTER2")
+    True
+    >>> match_keyword("G1 F", "G1 S")
+    False
 
     """
-    return until_space(kw1) == until_space(kw2)
+    return kw1[0:8].rstrip() == kw2[0:8].rstrip()
 
 
 def interpret_token(val):
