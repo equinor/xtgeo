@@ -353,7 +353,7 @@ def _roxapi_export_xyz(
 
     roxxyz.set_values(arrxyz)
 
-    if attributes and isinstance(self, xtgeo.Points) and len(self.dataframe) > 3:
+    if attributes and isinstance(self, xtgeo.Points) and len(self.dataframe) >= 1:
         dfr = _cast_dataframe_attrs_to_numeric(dfrcopy)
         for name in dfr.columns[3:]:
             values = dfr[name].values
@@ -378,7 +378,7 @@ def _cast_dataframe_attrs_to_numeric(dfr):
     function is applied per attribute column, and will do a conversion if possible;
     otherwise the 'object' dtype will be preserved.
     """
-    if len(dfr) <= 3:
+    if len(dfr) < 1:
         return dfr
 
     newdfr = dfr.copy()
