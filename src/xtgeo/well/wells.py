@@ -5,7 +5,6 @@
 
 import functools
 import warnings
-from packaging.version import parse as versionparse
 from typing import List
 
 import deprecation
@@ -228,12 +227,7 @@ class Wells:
                 dfr = dfr.fillna(fill_value1)
             bigdflist.append(dfr)
 
-        if versionparse(pd.__version__) > versionparse("0.23.0"):
-            # pylint: disable=unexpected-keyword-arg
-            dfr = pd.concat(bigdflist, ignore_index=True, sort=True)
-        else:
-            dfr = pd.concat(bigdflist, ignore_index=True)
-
+        dfr = pd.concat(bigdflist, ignore_index=True, sort=True)
         # the concat itself may lead to NaN's:
         if filled:
             dfr = dfr.fillna(fill_value2)

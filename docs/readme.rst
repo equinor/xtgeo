@@ -14,7 +14,7 @@ XTGeo main environment is as stand-alone Python script or notebook, but can
 Feature summary
 ---------------
 
--  Python 3.6+ (Linux, Windows and MacOS).
+-  Python 3.7+ (Linux, Windows and MacOS).
 -  Focus on high speed, using `numpy`_ and `pandas`_ with C backend
 -  Regular surfaces, i.e. 2D maps with regular sampling and rotation
 -  3D grids (corner-point), supporting several formats such as RMS and
