@@ -13,7 +13,6 @@ from typing import Dict, List, Optional, Union
 import deprecation
 import numpy as np
 import pandas as pd
-from packaging.version import parse as versionparse
 
 import xtgeo
 import xtgeo.common.constants as const
@@ -1078,13 +1077,7 @@ class Well:
 
         # now first fill Nan's (because int cannot be converted if Nan)
         newdf = newdf.fillna(dfill)
-
-        # now cast to dtype (dep on Pandas version)
-        if versionparse(pd.__version__) >= versionparse("0.19.0"):
-            newdf = newdf.astype(dtype)
-        else:
-            for k, var in dtype.items():
-                newdf[k] = newdf[k].astype(var)
+        newdf = newdf.astype(dtype)
 
         return newdf
 

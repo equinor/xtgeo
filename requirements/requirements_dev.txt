@@ -17,11 +17,11 @@ sphinx-toolbox
 autoclasstoc
 myst-parser
 bandit
-numpy>1.13.1
-pandas>=0.21.0
+numpy>1.19
+pandas>=1.1
 segyio>=1.8.6
-matplotlib>=1.5
-scipy>=0.17
+matplotlib>=3.3
+scipy>=1.5
 shapely>=1.6.2
 black>=23.1
 autopep8
