@@ -1,11 +1,9 @@
 """The baseplot module."""
-import deprecation
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from packaging.version import parse as versionparse
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
 
 from . import _colortables as _ctable
@@ -150,22 +148,6 @@ class BasePlot(object):
         """Returns the given color map cmap as a list of RGB tuples."""
         cmaplist = [cmap(i) for i in range(cmap.N)]
         return cmaplist
-
-    @deprecation.deprecated(
-        deprecated_in="1.16",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details=(
-            "set_colortable is deprecated, use the colormap"
-            " property or define_colormap instead"
-        ),
-    )
-    def set_colortable(self, cname, colorlist=None):
-        """Deprecated function, use define_colormap or the colormap property instead"""
-        if colorlist is None:
-            self.colormap = cname
-        else:
-            self.define_colormap(cname, colorlist=colorlist)
 
     def get_colormap_as_table(self):
         """Get the current color map as a list of RGB tuples."""

@@ -1,7 +1,7 @@
 import functools
 
-import pytest
 import deprecation
+import pytest
 from packaging import version
 
 import xtgeo
@@ -41,27 +41,11 @@ def test_default_init_deprecation(missing_arg, expected_warning):
         assert len(record) == 1
 
 
-@fail_if_not_removed(version_limit="3")
+@fail_if_not_removed(version_limit="4")
 def test_default_values_deprecation():
     with pytest.warns(DeprecationWarning, match="Default values") as record:
         xtgeo.RegularSurface(**{"ncol": 5, "nrow": 3, "xinc": 25.0, "yinc": 25.0})
         assert len(record) == 1
-
-
-@fail_if_not_removed(version_limit="3", msg="nx as input has passed deprecation period")
-def test_nx_deprecation(default_surface):
-    default_surface.pop("ncol")
-    default_surface["nx"] = 5
-    with pytest.warns(DeprecationWarning, match="nx is deprecated"):
-        xtgeo.RegularSurface(**default_surface)
-
-
-@fail_if_not_removed(version_limit="3", msg="ny as input has passed deprecation period")
-def test_ny_deprecation(default_surface):
-    default_surface.pop("nrow")
-    default_surface["ny"] = 3
-    with pytest.warns(DeprecationWarning, match="ny is deprecated"):
-        xtgeo.RegularSurface(**default_surface)
 
 
 @deprecation.fail_if_not_removed
