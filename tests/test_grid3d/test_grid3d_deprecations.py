@@ -3,9 +3,10 @@ import pathlib
 
 import numpy as np
 import pytest
-import xtgeo
 from hypothesis import given
 from packaging import version
+
+import xtgeo
 from xtgeo import GridProperties, GridProperty
 from xtgeo import version as xtgeo_version
 
@@ -69,25 +70,6 @@ def test_grid_from_xtgf_warns(tmp_path, any_grid):
 
     with pytest.warns(DeprecationWarning, match="from_xtgf is deprecated"):
         any_grid.from_xtgf(tmp_path / "grid.xtg")
-
-
-def test_grid_numpify_warns(any_grid):
-    if version.parse(xtgeo_version) < version.parse("2.7"):
-        pytest.skip()
-
-    with pytest.warns(DeprecationWarning, match="numpify_carrays is deprecated"):
-        any_grid.numpify_carrays()
-
-    with pytest.warns(DeprecationWarning, match="get_cactnum is deprecated"):
-        any_grid.get_cactnum()
-
-
-def test_grid_get_indices_warns(any_grid):
-    if version.parse(xtgeo_version) < version.parse("1.16"):
-        pytest.skip()
-
-    with pytest.warns(DeprecationWarning, match="get_indices is deprecated"):
-        any_grid.get_indices()
 
 
 def test_grid_mask_warns(any_grid):

@@ -361,7 +361,7 @@ def export_storm_binary(self, mfile):
         scopy._yori,
         scopy._xinc,
         yinc,
-        scopy.get_zval(),
+        scopy.get_values1d(order="F", asmasked=False, fill_value=self.undef),
         zmin,
         zmax,
         0,

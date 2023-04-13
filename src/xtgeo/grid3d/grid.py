@@ -1084,15 +1084,6 @@ class Grid(_Grid3D):
     # Various public methods
     # ==================================================================================
 
-    @deprecation.deprecated(
-        deprecated_in="2.7",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details="Method numpify_carrays is deprecated and can be removed",
-    )
-    def numpify_carrays(self):
-        """Numpify pointers from C (SWIG) arrays so instance is easier to pickle."""
-
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
 
@@ -1531,15 +1522,6 @@ class Grid(_Grid3D):
 
         return None
 
-    @deprecation.deprecated(
-        deprecated_in="2.7",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details="Method get_cactnum is deprecated and can be removed",
-    )
-    def get_cactnum(self):
-        """Returns the C pointer object reference to the ACTNUM array (deprecated)."""
-
     def get_actnum(self, name="ACTNUM", asmasked=False, mask=None, dual=False):
         """Return an ACTNUM GridProperty object.
 
@@ -1808,30 +1790,6 @@ class Grid(_Grid3D):
         return _grid_etc1.get_bulk_volume(
             self, name=name, asmasked=asmasked, precision=precision
         )
-
-    @deprecation.deprecated(
-        deprecated_in="1.16",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details="Use method get_ijk() instead",
-    )
-    def get_indices(self, names=("I", "J", "K")):
-        """Return 3 GridProperty objects for column, row, and layer index.
-
-        Note that the indexes starts with 1, not zero (i.e. upper
-        cell layer is K=1)
-
-        This method is deprecated, use :meth:`get_ijk()` instead.
-
-        Args:
-            names (tuple): Names of the columns (as property names)
-
-        Examples::
-
-            i_index, j_index, k_index = grd.get_indices()
-
-        """
-        return self.get_ijk(names=names, asmasked=False)
 
     def get_ijk(
         self, names=("IX", "JY", "KZ"), asmasked=True, mask=None, zerobased=False

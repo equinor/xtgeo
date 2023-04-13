@@ -232,26 +232,6 @@ def allow_deprecated_init(func):
             kwargs["fformat"] = fformat
             return func(cls, **kwargs)
 
-        if "nx" in kwargs:
-            warnings.warn(
-                (
-                    "nx is deprecated and will be removed "
-                    "in xtgeo version 3.0. Use ncol instead"
-                ),
-                DeprecationWarning,
-            )
-            kwargs["ncol"] = kwargs["nx"]
-            kwargs.pop("nx")
-        if "ny" in kwargs:
-            warnings.warn(
-                (
-                    "ny is deprecated and will be removed "
-                    "in xtgeo version 3.0. Use nrow instead"
-                ),
-                DeprecationWarning,
-            )
-            kwargs["nrow"] = kwargs["ny"]
-            kwargs.pop("ny")
         return func(cls, *args, **kwargs)
 
     return wrapper
@@ -551,74 +531,6 @@ class RegularSurface:
 
         return txt
 
-    @deprecation.deprecated(
-        deprecated_in="1.16",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details="method 'ensure_correct_values' is obsolete and will removed soon",
-    )
-    def ensure_correct_values(self, ncol, nrow, values):
-        """Ensures that values is a 2D masked numpy (ncol, nrol), C order.
-
-        This function is deprecated
-
-        Args:
-            ncol (int): Number of columns.
-            nrow (int): Number of rows.
-            values (array or scalar): Values to process.
-
-        Return:
-            values (MaskedArray): Array on correct format.
-
-        Example::
-
-            >>> mysurf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
-            >>> # a 1D numpy array in C order by default
-            >>> vals = np.ones((mysurf.ncol*mysurf.nrow))
-
-            >>> # secure that the values are masked, in correct format and shape:
-            >>> mysurf.values = mysurf.ensure_correct_values(
-            ...     mysurf.ncol,
-            ...     mysurf.nrow,
-            ...     vals
-            ... )
-        """
-
-        if not self._isloaded:
-            return None
-
-        currentmask = None
-        if self._values is not None:
-            if isinstance(self._values, ma.MaskedArray):
-                currentmask = ma.getmaskarray(self._values)
-
-        if isinstance(values, numbers.Number):
-            vals = ma.zeros((ncol, nrow), order="C", dtype=np.float64)
-            vals = ma.array(vals, mask=currentmask)
-            values = vals + float(values)
-
-        if not isinstance(values, ma.MaskedArray):
-            values = ma.array(values, order="C")
-
-        if values.shape != (ncol, nrow):
-            try:
-                values = ma.reshape(values, (ncol, nrow), order="C")
-            except ValueError as emsg:
-                xtg.error(f"Cannot reshape array: {emsg}")
-                raise
-
-        # replace any undef or nan with mask
-        values = ma.masked_greater(values, self.undef_limit)
-        values = ma.masked_invalid(values)
-
-        if not values.flags.c_contiguous:
-            mask = ma.getmaskarray(values)
-            mask = np.asanyarray(mask, order="C")
-            values = np.asanyarray(values, order="C")
-            values = ma.array(values, mask=mask, order="C")
-
-        return values
-
     # ==================================================================================
     # Properties
     # ==================================================================================
@@ -651,28 +563,6 @@ class RegularSurface:
     def dimensions(self):
         """2-tuple: The surface dimensions as a tuple of 2 integers (read only)."""
         return (self._ncol, self._nrow)
-
-    @property
-    @deprecation.deprecated(
-        deprecated_in="1.6",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details="nx is deprecated; use ncol instead,",
-    )
-    def nx(self):  # pylint: disable=C0103
-        """The NX (or N-Idir) number, as property (deprecated, use ncol)."""
-        return self._ncol
-
-    @property
-    @deprecation.deprecated(
-        deprecated_in="1.6",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details="ny is deprecated; use ncol instead,",
-    )
-    def ny(self):  # pylint: disable=C0103
-        """The NY (or N-Jdir) number, as property (deprecated, use nrow)."""
-        return self._nrow
 
     @property
     def nactive(self):
@@ -1729,47 +1619,6 @@ class RegularSurface:
         val = ma.masked_invalid(val)
 
         self.values = val
-
-    @deprecation.deprecated(
-        deprecated_in="2.0",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details=(
-            "The get_zval() method is deprecated, use values.ravel() "
-            "or get_values1d() instead"
-        ),
-    )
-    def get_zval(self):
-        """Get an an 1D, numpy array, F order of the map values (not masked).
-
-        Note that undef values are very large numbers (see undef property).
-        Also, this will reorder a 2D values array to column fastest, i.e.
-        get stuff into Fortran order.
-
-        This routine exists for historical reasons and prefer using
-        property 'values', or alternatively get_values1d()
-        instead (with order='F').
-        """
-        return self.get_values1d(order="F", asmasked=False, fill_value=self.undef)
-
-    @deprecation.deprecated(
-        deprecated_in="2.0",
-        removed_in="3.0",
-        current_version=xtgeo.version,
-        details=(
-            "The set_zval() method is deprecated, use values "
-            "or set_values1d() instead"
-        ),
-    )
-    def set_zval(self, vals):
-        """Set a 1D (unmasked) numpy array (kept for historical reasons).
-
-        The numpy array must be in Fortran order (i columns (ncol) fastest).
-
-        This routine exists for historical reasons and prefer 'values or
-        set_values1d instead (with option order='F').
-        """
-        self.set_values1d(vals, order="F")
 
     def get_rotation(self):
         """Returns the surface roation, in degrees, from X, anti-clock."""

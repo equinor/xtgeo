@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 import deprecation
 import numpy as np
 import pandas as pd
+
 import xtgeo
 from xtgeo.common import XTGeoDialog, inherit_docstring
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
@@ -453,7 +454,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         for RMS version up to 12.0.x) do not support NaN values for Integers. The
         solution is store undefined values as large numbers, xtgeo.UNDEF_INT
         (2000000000) for integers and xtgeo.UNDEF (10e32) for float values.
-        This will change from xtgeo version 3.0 where Pandas version 1 and
+        This will change from xtgeo version 3.x where Pandas version 1 and
         above will be required, which in turn support will pandas.NA
         entries.
 
