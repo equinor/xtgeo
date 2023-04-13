@@ -55,6 +55,10 @@ class RoxUtils(object):
         self._project = None
 
         self._version = roxar.__version__
+
+        if versionparse(self._version) < versionparse("1.5"):
+            raise RuntimeError("XTGeo >= 3.0 requires Roxar API >= 1.5")
+
         self._roxexternal = True
 
         self._versions = {
@@ -126,7 +130,7 @@ class RoxUtils(object):
         Example::
 
             rox = RoxUtils(project)
-            if rox.version_required('1.2'):
+            if rox.version_required('1.5'):
                 somefunction()
             else:
                 print('Not supported in this version')
@@ -147,7 +151,7 @@ class RoxUtils(object):
         Example::
 
             rox = RoxUtils(project)
-            rmsver = rox.rmsversion('1.2')
+            rmsver = rox.rmsversion('1.5')
             print('The supported RMS version are {}'.format(rmsver))
 
         """
