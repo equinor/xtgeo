@@ -35,7 +35,7 @@ def import_grid_roxapi(
 
     """
     rox = RoxUtils(projectname, readonly=True)
-    if dimonly or not rox.version_required("1.3"):
+    if dimonly:
         return _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info)
     else:
         return _import_grid_roxapi_v2(rox, gname, realisation, info)
@@ -76,28 +76,24 @@ def _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info):  # pragma: n
 
 
 def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
-    """Push info to screen (mostly for debugging), expermental."""
-    cpgeom = False
-    if rox.version_required("1.3"):
-        cpgeom = True
+    """Push info to screen (mostly for debugging), experimental."""
 
     indexer = roxgrid.grid_indexer
     ncol, nrow, _ = indexer.dimensions
 
-    if cpgeom:
-        xtg.say("ROXAPI with support for CornerPointGeometry")
-        geom = roxgrid.get_geometry()
-        defined_cells = geom.get_defined_cells()
-        xtg.say(f"Defined cells \n{defined_cells}")
+    xtg.say("ROXAPI with support for CornerPointGeometry")
+    geom = roxgrid.get_geometry()
+    defined_cells = geom.get_defined_cells()
+    xtg.say(f"Defined cells \n{defined_cells}")
 
-        xtg.say(f"IJK handedness: {geom.ijk_handedness}")
-        for ipi in range(ncol + 1):
-            for jpi in range(nrow + 1):
-                tpi, bpi, zco = geom.get_pillar_data(ipi, jpi)
-                xtg.say(f"For pillar {ipi}, {jpi}\n")
-                xtg.say(f"Tops\n{tpi}")
-                xtg.say(f"Bots\n{bpi}")
-                xtg.say(f"Depths\n{zco}")
+    xtg.say(f"IJK handedness: {geom.ijk_handedness}")
+    for ipi in range(ncol + 1):
+        for jpi in range(nrow + 1):
+            tpi, bpi, zco = geom.get_pillar_data(ipi, jpi)
+            xtg.say(f"For pillar {ipi}, {jpi}\n")
+            xtg.say(f"Tops\n{tpi}")
+            xtg.say(f"Bots\n{bpi}")
+            xtg.say(f"Depths\n{zco}")
 
 
 def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
@@ -139,10 +135,7 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
 
     actnum = mybuffer
 
-    if rox.version_required("1.3"):
-        logger.info("Handedness (new) %s", indexer.ijk_handedness)
-    else:
-        logger.info("Handedness (old) %s", indexer.handedness)
+    logger.info("Handedness (new) %s", indexer.ijk_handedness)
 
     corners = corners.ravel(order="K")
     actnum = actnum.ravel(order="K")
@@ -217,9 +210,6 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
 def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
     proj = rox.project
-
-    if not rox.version_required("1.3"):
-        raise NotImplementedError("Functionality to implemented for Roxar API < 1.3")
 
     logger.info("Loading grid with realisation %s...", realisation)
     try:
@@ -326,20 +316,6 @@ def export_grid_roxapi(
 
     """
     rox = RoxUtils(projectname, readonly=False)
-
-    if method != "cpg" and not rox.version_required("1.2"):
-        minimumrms = rox.rmsversion("1.2")
-        raise NotImplementedError(
-            "Not supported in this ROXAPI version. Grid load/import requires "
-            f"RMS version {minimumrms}"
-        )
-
-    if method == "cpg" and not rox.version_required("1.3"):
-        xtg.warn(
-            "Export method=cpg is not implemented for ROXAPI "
-            f"version {rox.roxversion}. Change to workaround..."
-        )
-        method = "other"
 
     if method == "cpg":
         if self._xtgformat == 1:

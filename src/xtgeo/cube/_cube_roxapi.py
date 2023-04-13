@@ -66,10 +66,7 @@ def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
     logger.info("Cube from roxapi to xtgeo...")
 
     # roxrotation is cube rotation clockwise from azimuth but not consistent
-    if rox.version_required("1.4"):
-        roxrotation = rcube.orientation
-    else:
-        roxrotation = rcube.rotation * -1
+    roxrotation = rcube.orientation
 
     roxhandedness = str(rcube.handedness)
 
@@ -176,29 +173,15 @@ def _roxapi_export_cube(
     ilincr = self.ilines[1] - self.ilines[0]
     xlincr = self.xlines[1] - self.xlines[0]
 
-    if rox.version_required("1.4"):
-        rcube.set_seismic(
-            values,
-            origin,
-            increment,
-            first_z,
-            sample_rate,
-            rotation * -1,
-            vertical_domain=vertical_domain,
-            handedness=handedness,
-            inline_crossline_start=(ilstart, xlstart),
-            inline_crossline_increment=(ilincr, xlincr),
-        )
-    else:
-        rcube.set_cube(
-            values,
-            origin,
-            increment,
-            first_z,
-            sample_rate,
-            rotation,
-            vertical_domain=vertical_domain,
-            handedness=handedness,
-            inline_crossline_start=(ilstart, xlstart),
-            inline_crossline_increment=(ilincr, xlincr),
-        )
+    rcube.set_seismic(
+        values,
+        origin,
+        increment,
+        first_z,
+        sample_rate,
+        rotation * -1,
+        vertical_domain=vertical_domain,
+        handedness=handedness,
+        inline_crossline_start=(ilstart, xlstart),
+        inline_crossline_increment=(ilincr, xlincr),
+    )

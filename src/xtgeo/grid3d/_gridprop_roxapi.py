@@ -66,10 +66,7 @@ def _convert_to_xtgeo_prop(
     indexer = roxgrid.get_grid(realisation=realisation).grid_indexer
     result["ncol"], result["nrow"], result["nlay"] = indexer.dimensions
 
-    if rox.version_required("1.3"):
-        logger.info(indexer.ijk_handedness)
-    else:
-        logger.info(indexer.handedness)
+    logger.info(indexer.ijk_handedness)
 
     pvalues = roxprop.get_values(realisation=realisation)
 
