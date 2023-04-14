@@ -1,5 +1,7 @@
 # Release notes
 
+For version 2.21 and later, see https://github.com/equinor/xtgeo/releases !
+
 ## Version 2.20
 
 ### Enhancements
