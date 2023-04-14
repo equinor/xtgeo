@@ -73,7 +73,7 @@ def test_grid_from_xtgf_warns(tmp_path, any_grid):
 
 
 def test_grid_mask_warns(any_grid):
-    if version.parse(xtgeo_version) >= version.parse("3.0"):
+    if version.parse(xtgeo_version) >= version.parse("4.0"):
         pytest.fail(reason="mask option should be removed")
     with pytest.warns(DeprecationWarning, match="mask"):
         any_grid.get_actnum(mask=True)
@@ -107,14 +107,14 @@ def test_unknown_name_deprecate(gridprop):
 
 
 def test_gridprop_mask_warns(any_gridprop):
-    if version.parse(xtgeo_version) >= version.parse("3.0"):
+    if version.parse(xtgeo_version) >= version.parse("4.0"):
         pytest.fail(reason="mask option should be removed")
     with pytest.warns(DeprecationWarning, match="mask"):
         any_gridprop.get_actnum(mask=True)
 
 
 def test_gridprops_mask_warns(any_gridproperties):
-    if version.parse(xtgeo_version) >= version.parse("3.0"):
+    if version.parse(xtgeo_version) >= version.parse("4.0"):
         pytest.fail(reason="mask option should be removed")
     with pytest.warns(DeprecationWarning, match="mask"):
         any_gridproperties.get_actnum(mask=True)
