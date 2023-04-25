@@ -30,7 +30,7 @@ exclude = '''
 requires = [
   "setuptools>=43",
   "wheel",
-  "scikit-build",
+  "scikit-build<0.17",
   'cmake==3.15.3; python_version >= "3.7" and platform_system == "Linux"',
   'cmake==3.18.0; platform_system != "Linux"',
   "ninja",

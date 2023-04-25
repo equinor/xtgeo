@@ -4,7 +4,7 @@ requires = [
          "pip>=19.1.1",
          "setuptools>=30.3.0",
          "wheel",
-         "scikit-build",
+         "scikit-build<0.17",
          'cmake>=3.6.0',
          "ninja",
          "setuptools_scm>=3.2.0",
