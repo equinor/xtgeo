@@ -1,6 +1,6 @@
 setuptools>=43
 setuptools_scm>=3.2.0
-scikit-build
+scikit-build<0.17
 ninja>=1.9.0.post1
 cmake>3.13.3
 pip>=20
