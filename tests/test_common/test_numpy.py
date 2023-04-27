@@ -25,11 +25,16 @@ def test_order_change_variant1():
     val1d = val.ravel(order="F")
     assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 -- 4.0 8.0]"
 
-    # if versionparse(np.__version__) < versionparse("1.24"):
-    #     assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 -- 4.0 8.0]"
-    # else:
-    #     # this may actually be a bug;
-    #     assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 nan -- 8.0]"
+    # Tests for earlier usage of order="K", where it appears to be bugs in some
+    # versions of numpy. However, using order="K" is probably something that in general
+    # should be avoided.
+    val1d_k = val.ravel(order="K")
+    if versionparse(np.__version__).public in ("1.24.0", "1.24.1", "1.24.2"):
+        assert str(val1d_k) == "[1.0 5.0 2.0 6.0 3.0 nan -- 8.0]"  # probable bug
+    elif versionparse(np.__version__).public in ("1.24.3"):
+        assert str(val1d_k) == "[1.0 2.0 3.0 4.0 5.0 6.0 -- 8.0]"  # probable bug
+    else:
+        assert str(val1d_k) == "[1.0 5.0 2.0 6.0 3.0 -- 4.0 8.0]"
 
 
 def test_order_change_variant2():
