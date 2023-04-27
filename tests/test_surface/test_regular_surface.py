@@ -5,8 +5,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import xtgeo
 from packaging import version
+
+import xtgeo
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
 
@@ -732,22 +733,23 @@ def test_get_xy_values(default_surface):
     xmap = xtgeo.RegularSurface(**default_surface)
 
     xcv, _ycv = xmap.get_xy_values(order="C")
+    print(type(xcv))
 
-    xxv = xcv.ravel(order="K")
+    xxv = xcv.ravel()
     assert xxv[1] == pytest.approx(0.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values(order="F")
-    xxv = xcv.ravel(order="K")
+    xxv = xcv.ravel(order="F")
     assert xxv[1] == pytest.approx(25.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values(order="C", asmasked=True)
 
-    xxv = xcv.ravel(order="K")
+    xxv = xcv.ravel(order="C")
     assert xxv[1] == pytest.approx(0.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values(order="F", asmasked=True)
 
-    xxv = xcv.ravel(order="K")
+    xxv = xcv.ravel(order="F")
     assert xxv[1] == pytest.approx(25.0, abs=0.001)
 
 

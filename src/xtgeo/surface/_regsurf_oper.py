@@ -280,8 +280,8 @@ def get_ij_values1d(self, zero_based=False, activeonly=True, order="C"):
 
     ixn, jyn = self.get_ij_values(zero_based=zero_based, order=order)
 
-    ixn = ixn.ravel(order="K")
-    jyn = jyn.ravel(order="K")
+    ixn = ixn.ravel(order=order)
+    jyn = jyn.ravel(order=order)
 
     if activeonly:
         tmask = ma.getmaskarray(self.get_values1d(order=order, asmasked=True))

@@ -137,8 +137,8 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
 
     logger.info("Handedness (new) %s", indexer.ijk_handedness)
 
-    corners = corners.ravel(order="K")
-    actnum = actnum.ravel(order="K")
+    corners = corners.ravel()
+    actnum = actnum.ravel()
 
     ntot = ncol * nrow * nlay
     ncoord = (ncol + 1) * (nrow + 1) * 2 * 3
