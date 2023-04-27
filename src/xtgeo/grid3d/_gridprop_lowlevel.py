@@ -19,7 +19,7 @@ def f2c_order(obj, values1d):
     """
     val = np.reshape(values1d, (obj.ncol, obj.nrow, obj.nlay), order="F")
     val = np.asanyarray(val, order="C")
-    val = val.ravel(order="K")
+    val = val.ravel()
     return val
 
 
@@ -29,7 +29,7 @@ def c2f_order(obj, values1d):
     """
     val = np.reshape(values1d, (obj.ncol, obj.nrow, obj.nlay), order="C")
     val = np.asanyarray(val, order="F")
-    val = val.ravel(order="K")
+    val = val.ravel(order="F")
     return val
 
 
@@ -98,7 +98,7 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
 
     if order == "F":
         values = np.asfortranarray(values)
-        values1d = np.ravel(values, order="K")
+        values1d = np.ravel(values, order="F")
 
     if values1d.dtype == "float64" and dstatus and not dtype:
         values1d = values1d.astype("int32")

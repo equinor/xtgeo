@@ -97,7 +97,7 @@ def from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
     args["rotation"] = 0.0
     # call C function to make a map
     val = args["values"]
-    val = val.ravel(order="K")
+    val = val.ravel()
     val = ma.filled(val, fill_value=xtgeo.UNDEF)
 
     svalues = val * 0.0 + xtgeo.UNDEF

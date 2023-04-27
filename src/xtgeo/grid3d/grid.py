@@ -1468,7 +1468,7 @@ class Grid(_Grid3D):
         .. versionchanged:: 2.18 Added inverse option
         """
         actnumv = self.get_actnum().values.copy(order=order)
-        actnumv = np.ravel(actnumv, order="K")
+        actnumv = np.ravel(actnumv, order=order)
         if inverse:
             actnumv -= 1
             return np.flatnonzero(actnumv)
@@ -1486,7 +1486,7 @@ class Grid(_Grid3D):
             return None
 
         actnumv = self._dualactnum.values.copy(order=order)
-        actnumv = np.ravel(actnumv, order="K")
+        actnumv = np.ravel(actnumv, order=order)
 
         if not fracture:
             actnumvm = actnumv.copy()
@@ -1594,7 +1594,7 @@ class Grid(_Grid3D):
             >>> act.values[:, :, 4] = 0
             >>> mygrid.set_actnum(act)
         """
-        val1d = actnum.values.ravel(order="K")
+        val1d = actnum.values.ravel()
 
         if self._xtgformat == 1:
             self._actnumsv = _gridprop_lowlevel.c2f_order(self, val1d)

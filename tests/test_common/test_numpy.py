@@ -22,13 +22,14 @@ def test_order_change_variant1():
 
     val = np.ma.masked_invalid(val)
 
-    val1d = val.ravel(order="K")
+    val1d = val.ravel(order="F")
+    assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 -- 4.0 8.0]"
 
-    if versionparse(np.__version__) < versionparse("1.24"):
-        assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 -- 4.0 8.0]"
-    else:
-        # this may actually be a bug;
-        assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 nan -- 8.0]"
+    # if versionparse(np.__version__) < versionparse("1.24"):
+    #     assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 -- 4.0 8.0]"
+    # else:
+    #     # this may actually be a bug;
+    #     assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 nan -- 8.0]"
 
 
 def test_order_change_variant2():
@@ -42,6 +43,6 @@ def test_order_change_variant2():
 
     val = np.ma.array(arrdata, mask=arrmask)
 
-    val1d = val.ravel(order="K")
+    val1d = val.ravel(order="F")
 
     assert str(val1d) == "[1.0 5.0 2.0 6.0 3.0 -- 4.0 8.0]"
