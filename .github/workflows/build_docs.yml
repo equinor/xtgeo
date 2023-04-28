@@ -2,9 +2,9 @@ name: Build Docs
 
 on:
   push:
-    branches: [master, "*postfix"]
+    branches: [main, "*postfix"]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   build_docs:
