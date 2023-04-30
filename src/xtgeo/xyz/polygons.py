@@ -614,8 +614,9 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         return spolys
 
+    @inherit_docstring(inherit_from=XYZ.get_boundary)
     def get_boundary(self):
-        """Get the XYZ window (boundaries) of the instance.
+        return super().get_boundary()
 
         Returns:
             (xmin, xmax, ymin, ymax, zmin, zmax)
