@@ -2,7 +2,9 @@
 """XTGeo XYZ module (abstract base class)"""
 from abc import ABC, abstractmethod
 
+import numpy as np
 import pandas as pd
+
 from xtgeo.common import XTGDescription, XTGeoDialog
 
 from . import _xyz_oper

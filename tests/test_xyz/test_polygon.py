@@ -524,3 +524,41 @@ def test_shortform_polygons_overlap(functionname, expected):
         getattr(poi, functionname)(pol, 2.0)
 
     assert list(poi.dataframe[poi.zname].values) == expected
+
+
+def test_polygons_simplify_preserve_topology():
+    polygon = [
+        (3.0, 3.0, 0.0, 0),
+        (5.0, 3.0, 0.0, 0),
+        (5.0, 5.0, 0.0, 0),
+        (4.9, 5.0, 0.0, 0),
+        (5.0, 5.0, 0.0, 0),
+        (3.0, 5.0, 0.0, 0),
+        (3.0, 3.0, 0.0, 0),
+    ]
+    pol = Polygons(polygon)
+
+    status = pol.simplify(tolerance=0.3)
+    print(pol.dataframe)
+    assert status is True
+
+    assert pol.dataframe[pol.xname].values.tolist() == [3.0, 5.0, 5.0, 3.0, 3.0]
+
+
+def test_polygons_simplify_not_preserve_topology():
+    polygon = [
+        (3.0, 3.0, 0.0, 0),
+        (5.0, 3.0, 0.0, 0),
+        (5.0, 5.0, 0.0, 0),
+        (4.9, 5.0, 0.0, 0),
+        (5.0, 5.0, 0.0, 0),
+        (3.0, 5.0, 0.0, 0),
+        (3.0, 3.0, 0.0, 0),
+    ]
+    pol = Polygons(polygon)
+
+    status = pol.simplify(tolerance=0.3, preserve_topology=False)
+    print(pol.dataframe)
+    assert status is True
+
+    assert pol.dataframe[pol.xname].values.tolist() == [3.0, 5.0, 5.0, 3.0, 3.0]

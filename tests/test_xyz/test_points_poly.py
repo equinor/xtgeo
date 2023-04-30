@@ -1,6 +1,8 @@
 import pathlib
+import sys
 
 import pytest
+
 import xtgeo
 from xtgeo.xyz import Points, Polygons
 
@@ -235,3 +237,99 @@ def test_oper_points_inside_overlapping_polygon(oper, expected):
     # point is outside
     poi.operation_polygons(pol, value=2, opname=oper, inside=False)
     assert list(poi.dataframe[poi.zname].values) == expected
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="Different order in python 3.7")
+def test_boundary_from_points_simple():
+    """Test deriving a boundary around points (classmethod)."""
+
+    points = Points(
+        [
+            (0.0, 0.0, 10.0),
+            (4.5, 4.5, 10.0),
+            (2.5, 2.5, 10.0),
+            (1.5, 8.5, 10.0),
+            (12.5, 1.5, 10.0),
+            (1.5, 1.5, 10.0),
+            (11.5, 12.5, 10.0),
+        ]
+    )
+    boundary = xtgeo.Polygons.boundary_from_points(points, alpha_factor=0.75)
+    assert boundary.dataframe[boundary.xname].values.tolist() == [
+        1.5,
+        2.5,
+        2.5,
+        4.5,
+        4.5,
+        11.5,
+        11.5,
+        1.5,
+        1.5,
+        1.5,
+    ]
+
+
+def test_boundary_from_points_simple_estimate_alpha():
+    """Test deriving a boundary around points (classmethod)."""
+
+    points = Points(
+        [
+            (0.0, 0.0, 10.0),
+            (4.5, 4.5, 10.0),
+            (2.5, 2.5, 10.0),
+            (1.5, 8.5, 10.0),
+            (12.5, 1.5, 10.0),
+            (1.5, 1.5, 10.0),
+            (11.5, 12.5, 10.0),
+        ]
+    )
+    boundary = xtgeo.Polygons.boundary_from_points(points, alpha=None)
+    assert len(boundary.dataframe) == 10
+
+
+def test_boundary_from_points_too_few():
+    """Test deriving a boundary around points (classmethod), too few points."""
+
+    points = Points(
+        [
+            (0.0, 0.0, 10.0),
+            (4.5, 4.5, 10.0),
+            (2.5, 2.5, 10.0),
+        ]
+    )
+    with pytest.raises(ValueError, match="Too few points"):
+        xtgeo.Polygons.boundary_from_points(points, alpha_factor=1, alpha=None)
+
+
+def test_boundary_from_points_more_data(testpath):
+    """Test deriving a boundary around points (classmethod)."""
+
+    points = xtgeo.points_from_file(testpath / POINTSET2)
+    boundary = xtgeo.Polygons.boundary_from_points(points, alpha=2000)
+    assert boundary.dataframe[boundary.xname].values[0:5].tolist() == pytest.approx(
+        [
+            460761.571,
+            461325.128,
+            461325.128,
+            462452.241,
+            462452.241,
+        ]
+    )
+    assert len(boundary.dataframe) == 28
+
+
+def test_boundary_from_points_more_data_guess_alpha(testpath):
+    """Test deriving a boundary around points (classmethod)."""
+
+    points = xtgeo.points_from_file(testpath / POINTSET2)
+    boundary = xtgeo.Polygons.boundary_from_points(points, alpha=None)
+
+    assert len(boundary.dataframe) == 28
+
+
+def test_boundary_from_points_more_data_convex_alpha0(testpath):
+    """Test deriving a boundary around points, convex."""
+
+    points = xtgeo.points_from_file(testpath / POINTSET2)
+    with pytest.raises(ValueError, match="The alpha value must be greater than 0.0"):
+        boundary = xtgeo.Polygons.boundary_from_points(points, alpha=0)
