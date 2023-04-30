@@ -982,3 +982,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
 
         """
         _xyz_oper.snap_surface(self, surf, activeonly=activeonly)
+
+    @inherit_docstring(inherit_from=XYZ.get_boundary)
+    def get_boundary(self):
+        return super().get_boundary()

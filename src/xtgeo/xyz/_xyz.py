@@ -250,6 +250,25 @@ class XYZ(ABC):
             else:
                 self.dataframe.drop(cname, axis=1, inplace=True)
 
+    def get_boundary(self):
+        """Get the square XYZ window (boundaries) of the instance.
+
+        Returns:
+            (xmin, xmax, ymin, ymax, zmin, zmax)
+
+        See also:
+            The class method :func:`Polygons.boundary_from_points()`
+
+        """
+        xmin = np.nanmin(self.dataframe[self.xname].values)
+        xmax = np.nanmax(self.dataframe[self.xname].values)
+        ymin = np.nanmin(self.dataframe[self.yname].values)
+        ymax = np.nanmax(self.dataframe[self.yname].values)
+        zmin = np.nanmin(self.dataframe[self.zname].values)
+        zmax = np.nanmax(self.dataframe[self.zname].values)
+
+        return (xmin, xmax, ymin, ymax, zmin, zmax)
+
     def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for operations restricted to inside or outside polygon(s).
 
