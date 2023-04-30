@@ -663,17 +663,28 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def get_boundary(self):
         return super().get_boundary()
 
-        Returns:
-            (xmin, xmax, ymin, ymax, zmin, zmax)
-        """
-        xmin = np.nanmin(self.dataframe[self.xname].values)
-        xmax = np.nanmax(self.dataframe[self.xname].values)
-        ymin = np.nanmin(self.dataframe[self.yname].values)
-        ymax = np.nanmax(self.dataframe[self.yname].values)
-        zmin = np.nanmin(self.dataframe[self.zname].values)
-        zmax = np.nanmax(self.dataframe[self.zname].values)
+    def simplify(
+        self, tolerance: Optional[float] = 0.1, preserve_topology: Optional[bool] = True
+    ) -> bool:
+        """Simply a polygon, i.e. remove unneccesary points.
 
-        return (xmin, xmax, ymin, ymax, zmin, zmax)
+        This is based on `Shapely's simplify() method
+        <https://shapely.readthedocs.io/en/latest/manual.html#object.simplify>`_
+
+        Args:
+            tolerance: Cf. Shapely's documentation
+            preserve_topology: Default is True, if False a faster algorithm is applied
+
+        Returns:
+            True if simplification is achieved. The polygons instance is
+            updated in-place.
+
+        .. versionadded: 3.1
+
+
+        """
+
+        return _polygons_oper.simplify_polygons(self, tolerance, preserve_topology)
 
     def filter_byid(self, polyid=None):
         """Remove all line segments not in polyid.

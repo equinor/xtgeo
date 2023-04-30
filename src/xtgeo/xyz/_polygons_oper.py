@@ -229,3 +229,54 @@ def _sort_edges_and_split_in_polygons(edges):
     return sorted(sorted_pol_lines.values(), key=len, reverse=True)
 
 
+def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
+    """Use Shapely's 'simplify' method to reduce points.
+
+    Note that attributes are not yet supported (perhaps impossible?)
+
+    For Args, see Shapely
+    """
+    try:
+        if self.attributes:
+            raise UserWarning(
+                "Attributes are present, but they will be lost when simplifying"
+            )
+    except AttributeError:
+        pass
+
+    recompute_hlen = True if self.hname in self.dataframe else False
+    recompute_tlen = True if self.tname in self.dataframe else False
+
+    orig_len = len(self.dataframe)
+
+    idgroups = self.dataframe.groupby(self.pname)
+    dfrlist = []
+    for idx, grp in idgroups:
+        if len(grp.index) < 2:
+            logger.warning("Cannot simplify polygons with less than two points. Skip")
+            continue
+
+        pxcor = grp[self.xname].values
+        pycor = grp[self.yname].values
+        pzcor = grp[self.zname].values
+        spoly = sg.LineString(np.stack([pxcor, pycor, pzcor], axis=1))
+
+        new_spoly = spoly.simplify(tolerance, preserve_topology=preserve_topology)
+        dfr = pd.DataFrame(
+            np.array(new_spoly.coords), columns=[self.xname, self.yname, self.zname]
+        )
+
+        dfr[self.pname] = idx
+        dfrlist.append(dfr)
+
+    dfr = pd.concat(dfrlist)
+    self.dataframe = dfr.reset_index(drop=True)
+
+    if recompute_hlen:
+        self.hlen()
+    if recompute_tlen:
+        self.tlen()
+
+    new_len = len(self.dataframe)
+
+    return True if new_len < orig_len else False
