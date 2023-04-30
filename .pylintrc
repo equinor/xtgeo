@@ -39,4 +39,5 @@ disable=
     import-outside-toplevel,
     import-error,
     no-name-in-module,
-    raise-missing-from
+    raise-missing-from,
+    too-many-lines

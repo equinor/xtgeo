@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module/class for regular surfaces with XTGeo.
 
 Regular surfaces have a constant distance between nodes (xinc, yinc),
@@ -2203,7 +2202,7 @@ class RegularSurface:
 
         """
         if not isinstance(other, RegularSurface):
-            raise ValueError("Argument not a RegularSurface " "instance")
+            raise ValueError("Argument not a RegularSurface instance")
 
         logger.info("Do resampling...")
 
@@ -2235,7 +2234,7 @@ class RegularSurface:
             return
 
         if factor < 1:
-            raise ValueError("Unrotate refinement factor cannot be be " "less than 1")
+            raise ValueError("Unrotate refinement factor cannot be be less than 1")
 
         if not isinstance(factor, int):
             raise ValueError("Refinementfactor must an integer")
@@ -2348,7 +2347,7 @@ class RegularSurface:
 
         if ncol < 4 or nrow < 4:
             raise ValueError(
-                "Coarsen is too large, giving ncol or nrow less " "than 4 nodes"
+                "Coarsen is too large, giving ncol or nrow less than 4 nodes"
             )
 
         self._ncol = ncol
@@ -2409,7 +2408,7 @@ class RegularSurface:
 
         if ier != 0:
             raise RuntimeError(
-                "Wrong status from routine; something went " "wrong. Contact the author"
+                "Wrong status from routine; something went wrong. Contact the author"
             )
 
     # ==================================================================================
@@ -2474,9 +2473,7 @@ class RegularSurface:
         )
 
         if ier == -4:
-            xtg.warnuser(
-                "Number of sampled surface nodes < 10 percent of " "Cube nodes"
-            )
+            xtg.warnuser("Number of sampled surface nodes < 10 percent of Cube nodes")
             print("Number of sampled surface nodes < 10 percent of Cube nodes")
         elif ier == -5:
             xtg.warn("No nodes sampled: map is 100 percent outside of cube?")
