@@ -54,6 +54,7 @@ import xtgeo.common.sys as xtgeosys
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
 from . import (
+    _regsurf_boundary,
     _regsurf_cube,
     _regsurf_cube_window,
     _regsurf_export,
@@ -2624,6 +2625,62 @@ class RegularSurface:
     # Special methods
     # ==================================================================================
 
+    def get_boundary_polygons(
+        self,
+        alpha_factor: Optional[float] = 1.0,
+        convex: Optional[bool] = False,
+        simplify: Optional[bool] = True,
+    ):
+        """Extract boundary polygons from the surface.
+
+        A regular surface may often contain areas of undefined (masked) entries which
+        makes the surface appear 'ragged' and/or 'patchy'.
+
+        This method extracts boundaries around the surface patches, and the
+        precision depends on the keyword settings. As default, the ``alpha_factor``
+        of 1 makes a precise boundary, while a larger alpha_factor makes more rough
+        polygons.
+
+        .. image:: images/regsurf_boundary_polygons.png
+           :width: 600
+           :align: center
+
+        |
+
+        Args:
+            alpha_factor: An alpha multiplier, where lowest allowed value is 1.0.
+                A higher number will produce smoother and less accurate polygons. Not
+                applied if convex is set to True.
+            convex: The default is False, which means that a "concave hull" algorithm
+                is used. If convex is True, the alpha factor is overridden to a large
+                number, producing a 'convex' shape boundary instead.
+            simplify: If True, a simplification is done in order to reduce the number
+                of points in the polygons, where tolerance is 0.1. Another
+                alternative to True is to input a Dict on the form
+                ``{"tolerance": 2.0, "preserve_topology": True}``, cf. the
+                :func:`Polygons.simplify()` method. For details on e.g. tolerance, see
+                Shapely's simplify() method.
+
+        Returns:
+            A XTGeo Polygons instance
+
+        Example::
+
+            surf = xtgeo.surface_from_file("mytop.gri")
+            # eliminate all values below a depth, e.g. a fluid contact
+            surf.values = np.ma.masked_greater(surf.values, 2100.0)
+            boundary = surf.get_boundary_polygons()
+            # the boundary may contain several smaller polygons; keep only the
+            # largest (first) polygon which is number 0:
+            boundary.filter_byid([0])  # polygon is updated in-place
+
+        See also:
+            The :func:`Polygons.boundary_from_points()` class method.
+
+        .. versionadded:: 3.1
+        """
+        return _regsurf_boundary.create_boundary(self, alpha_factor, convex, simplify)
+
     def get_fence(
         self, xyfence: np.ndarray, sampling: Optional[str] = "bilinear"
     ) -> np.ma.MaskedArray:
@@ -2904,7 +2961,8 @@ class RegularSurface:
             logarithmic=logarithmic,
         )
         if faults:
-            mymap.plot_faults(faults["faults"])
+            poly = faults.pop("faults")
+            mymap.plot_faults(poly, **faults)
 
         if filename is None:
             mymap.show()

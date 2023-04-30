@@ -332,4 +332,4 @@ def test_boundary_from_points_more_data_convex_alpha0(testpath):
 
     points = xtgeo.points_from_file(testpath / POINTSET2)
     with pytest.raises(ValueError, match="The alpha value must be greater than 0.0"):
-        boundary = xtgeo.Polygons.boundary_from_points(points, alpha=0)
+        xtgeo.Polygons.boundary_from_points(points, alpha=0)

@@ -1222,3 +1222,84 @@ def test_genhash_same_mask():
     assert xhash != yhash
     assert xhash != zhash
     assert yhash != zhash
+
+
+def test_get_boundary_polygons_simple(show_plot):
+    """Test getting a boundary for a surface (very simple)."""
+    values = np.ma.array([1, 2, 3, 4, 5, 6, 7, 8, 9], mask=[0, 1, 0, 1, 0, 0, 1, 0, 0])
+    xs = xtgeo.RegularSurface(ncol=3, nrow=3, xinc=10, yinc=10, values=values)
+
+    boundary = xs.get_boundary_polygons(alpha_factor=1.0, convex=False, simplify=False)
+
+    if show_plot:
+        # for debugging
+        xs.quickplot(
+            filename="/tmp/test.png",
+            faults={
+                "faults": boundary,
+                "color": "red",
+                "alpha": 0.1,
+                "edgecolor": "black",
+                "linewidth": 2,
+            },
+        )
+    assert boundary.dataframe[boundary.yname].values.tolist() == pytest.approx(
+        [
+            20,
+            20,
+            20,
+            20,
+            20,
+            10,
+            10,
+            10,
+            10,
+            20,
+        ]
+    )
+
+
+def test_get_boundary_polygons_complex(show_plot):
+    """Test getting a boundary for a surface."""
+    xs = xtgeo.surface_from_file(TESTSET1)
+    xs.values = np.ma.masked_less(xs.values, 1700)
+    xs.values = np.ma.masked_greater(xs.values, 1800)
+
+    boundary = xs.get_boundary_polygons(alpha_factor=1, convex=False, simplify=False)
+
+    if show_plot:
+        # for debugging
+        xs.quickplot(
+            filename="/tmp/test.png",
+            faults={
+                "faults": boundary,
+                "color": "red",
+                "alpha": 0.1,
+                "edgecolor": "black",
+                "linewidth": 2,
+            },
+        )
+
+    # reveal any major issues by asserting averages (polygons are checked visually)
+    # for some reasons, macos tests gives slightly different result; that is why a large
+    # tolerance is given
+    assert boundary.dataframe[boundary.xname].mean() == pytest.approx(462208.0, abs=2.5)
+    assert boundary.dataframe[boundary.yname].mean() == pytest.approx(
+        5933427.0, abs=4.0
+    )
+
+    # get the first (largest) polygon
+    boundary.filter_byid([0])
+
+    if show_plot:
+        # for debugging
+        xs.quickplot(
+            filename="/tmp/test2.png",
+            faults={
+                "faults": boundary,
+                "color": "red",
+                "alpha": 0.1,
+                "edgecolor": "black",
+                "linewidth": 2,
+            },
+        )
