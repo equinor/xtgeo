@@ -273,7 +273,7 @@ class Grid(_Grid3D):
     Args:
         coordsv: numpy array of dtype float64 and dimensions (nx + 1, ny + 1, 6)
             Giving the x,y,z values of the upper and lower corners in the grid.
-        coorsv: numpy array of dtype float32 and dimensions (nx + 1, ny + 1, nz + 1, 4)
+        zcornsv: numpy array of dtype float32 and dimensions (nx + 1, ny + 1, nz + 1, 4)
             giving the sw, se, nw, ne corners along the i,jth corner line for
             the kth layer.
         actnumsv: numpy array of dtype int32 and dimensions (nx, ny, nz) giving
