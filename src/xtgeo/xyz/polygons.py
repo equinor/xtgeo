@@ -14,11 +14,12 @@ import deprecation
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
+
 import xtgeo
 from xtgeo.common import inherit_docstring
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
-from . import _xyz_oper
+from . import _polygons_oper, _xyz_oper
 from ._xyz import XYZ
 from ._xyz_io import _convert_idbased_xyz
 
@@ -313,7 +314,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             attributes=attributes,
         )
 
-    def _reset(
+    def _reset(  # pylint: disable=arguments-renamed
         self,
         values: Union[list, np.ndarray, pd.DataFrame],
         xname: str = "X_UTME",
@@ -439,7 +440,51 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             self._hname = None
 
     # ----------------------------------------------------------------------------------
-    # Methods
+    # Class methods
+    # ----------------------------------------------------------------------------------
+
+    @classmethod
+    def boundary_from_points(
+        cls,
+        points,
+        alpha_factor: Optional[float] = 1.0,
+        alpha: Optional[float] = None,
+        convex: bool = False,
+    ):
+        """Instantiate polygons from detecting the boundary around points.
+
+        .. image:: images/boundary_polygons.png
+           :width: 600
+           :align: center
+
+        |
+
+        Args:
+            points: The XTGeo Points instance to estimate boundary/boundaries around.
+            alpha_factor: The alpha factor is a multiplier to alpha. Normally it will
+                be around 1, but can be increased to get a looser boundary. Dependent
+                on the points topology, it can also be decreased to some extent.
+            alpha: The alpha factor for determine the 'precision' in how to delineate
+                the polygon. A large value will produce a smoother polygon. The default
+                is to detect the value from the data, but note that this default may be
+                far from optimal for you needs. Usually use the ``alpha_factor`` to tune
+                the best value. The actual alpha applied in the concave hull algorithm
+                is alpha_factor multiplied with alpha.
+            convex: If True, then compute a maximum boundary (convex), and note that
+                alpha_factor and alpha are not applied in ths case. Default is False.
+
+        Returns:
+            A Polygons instance.
+
+        .. versionadded: 3.1.0
+        """
+
+        return cls(
+            _polygons_oper.boundary_from_points(points, alpha_factor, alpha, convex)
+        )
+
+    # ----------------------------------------------------------------------------------
+    # Instance methods
     # ----------------------------------------------------------------------------------
     @inherit_docstring(inherit_from=XYZ.protected_columns)
     def protected_columns(self):
