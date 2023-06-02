@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os.runs_on }}
     strategy:
       matrix:
-        cibw_python: [cp37, cp38, cp39, cp310, cp311]
+        cibw_python: [cp38, cp39, cp310, cp311]
         os:
           - runs_on: ubuntu-latest
             cibw_image: manylinux_x86_64
@@ -36,11 +36,11 @@ jobs:
       # CIBW_TEST_SKIP: "cp312*linux* cp312*macos*"
       CIBW_BEFORE_BUILD: python -m pip install "pip<=22.0.4"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
 
       - name: Install cibuildwheel
         run: >
