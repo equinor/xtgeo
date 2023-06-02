@@ -1,7 +1,7 @@
 # requirements for setup on localhost
 # see also ...setup_ci.txt and pyproject.toml
 setuptools>=43
-wheel
+wheel>=0.38
 numpy
 cmake
 setuptools_scm

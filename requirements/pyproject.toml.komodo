@@ -1,16 +1,15 @@
 # version to be runnable by older pips in Komodo bleeding (Equinor)
 [build-system]
 requires = [
-         "pip>=19.1.1",
-         "setuptools>=30.3.0",
-         "wheel",
-         "scikit-build<0.17",
-         'cmake>=3.6.0',
-         "ninja",
-         "setuptools_scm>=3.2.0",
-         'numpy>=1.19,
-         'Sphinx<4.0', # Due to sphinx-toolbox
-         'sphinx-rtd-theme',
-         'sphinxcontrib-apidoc',
-         'sphinx-autodoc-typehints',
-         ]
+     "pip>=19.1.1",
+     "setuptools>=30.3.0",
+     "scikit-build<0.17",
+     "cmake>=3.6.0",
+     "ninja",
+     "setuptools_scm>=3.2.0",
+     "numpy>=1.19",
+     "Sphinx<4.0", # Due to sphinx-toolbox
+     "sphinx-rtd-theme",
+     "sphinxcontrib-apidoc",
+     "sphinx-autodoc-typehints",
+ ]

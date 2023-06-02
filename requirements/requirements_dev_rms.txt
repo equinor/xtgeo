@@ -5,7 +5,7 @@ setuptools_scm>=3.2.0
 scikit-build
 ninja>=1.9.0.post1
 cmake==3.15.3
-wheel>=0.29.0
+wheel>=0.38
 flake8
 pydocstyle
 coverage>=4.1
