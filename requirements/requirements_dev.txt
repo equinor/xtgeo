@@ -4,7 +4,7 @@ scikit-build<0.17
 ninja>=1.9.0.post1
 cmake>3.13.3
 pip>=20
-wheel>=0.29.0
+wheel>=0.38
 flake8
 pydocstyle
 coverage>=4.1
