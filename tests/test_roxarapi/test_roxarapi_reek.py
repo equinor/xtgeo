@@ -13,6 +13,7 @@ from os.path import join
 
 import numpy as np
 import pytest
+
 import xtgeo
 
 try:
@@ -399,3 +400,22 @@ def test_rox_get_modify_set_points_with_attrs_pfilter(roxar_project):
     assert "OP_4" in poi.dataframe["Well"].values.tolist()
     assert "OP_4" not in poi2.dataframe["Well"].values.tolist()
     assert poi2.dataframe.shape[0] == 2
+
+
+@pytest.mark.requires_roxar
+def test_rox_well_with_added_logs(roxar_project):
+    """Operations on discrete well logs"""
+    well = xtgeo.well_from_roxar(
+        roxar_project,
+        WELLS1[1].replace(".w", ""),
+        logrun="log",
+        trajectory="My trajectory",
+    )
+    assert well.dataframe["Facies"].mean() == pytest.approx(0.357798165)
+    well.to_roxar(roxar_project, "dummy1", logrun="log", trajectory="My trajectory")
+    well.dataframe["Facies"] = np.nan
+    assert np.isnan(well.dataframe["Facies"].values).all()
+    well.to_roxar(roxar_project, "dummy2", logrun="log", trajectory="My trajectory")
+    # check that export with set codes
+    well.set_logrecord("Facies", {1: "name"})
+    well.to_roxar(roxar_project, "dummy3", logrun="log", trajectory="My trajectory")

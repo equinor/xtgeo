@@ -232,10 +232,13 @@ def _roxapi_update_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
 
         if isdiscrete:
             # roxarapi requires keys to int, while xtgeo can accept any, e.g. strings
-            codedict = {
-                int(key): str(value)
-                for key, value in xwell1._wlogrecords[lname].items()
-            }
+            if vals.mask.all():
+                codedict = {0: "unset"}
+            else:
+                codedict = {
+                    int(key): str(value)
+                    for key, value in xwell1._wlogrecords[lname].items()
+                }
             thelog.set_code_names(codedict)
 
 
