@@ -17,7 +17,6 @@ import pytest
 import xtgeo
 
 try:
-    import _roxar
     import roxar
 except ImportError:
     pass
@@ -178,7 +177,7 @@ def test_rox_surfaces_alternative_open(roxar_project):
 
     rox = xtgeo.RoxUtils(roxar_project)
 
-    assert isinstance(rox.project, _roxar.Project)
+    assert isinstance(rox.project, roxar.Project)
 
     srf = xtgeo.surface_from_roxar(rox.project, "TopReek", SURFCAT1)
     assert srf.ncol == 554

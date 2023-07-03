@@ -7,7 +7,6 @@ from packaging.version import parse as versionparse
 # from pkg_resources import parse_version as pver (ALT)
 
 try:
-    import _roxar
     import roxar
 except ImportError:
     pass
@@ -35,7 +34,7 @@ class RoxUtils(object):
     or a file path to a RMS project (for external access).
 
     Args:
-        project (_roxar.Project or str): Reference to a RMS project
+        project (roxar.Project or str): Reference to a RMS project
             either an existing instance or a RMS project folder path.
         readonly (bool). Default is False. If readonly, then it cannot be
             saved to this project (which is the case for "secondary" projects).
@@ -82,7 +81,7 @@ class RoxUtils(object):
                 self._project = roxar.Project.open(projectname)
             logger.info("Open RMS project from %s", projectname)
 
-        elif isinstance(project, _roxar.Project):
+        elif isinstance(project, roxar.Project):
             # this will happen for _current_ project inside RMS or if
             # project is opened already e.g. by roxar.Project.open(). In the latter
             # case, the user should also close the project by project.close() as
