@@ -486,6 +486,10 @@ def section_generator(generator):
     """
     try:
         first_seq = next(generator)
+        # for a few (rare?) cases, restarts start with TNAVHEAD, not SEQNUM
+        if match_keyword(first_seq.read_keyword(), "TNAVHEAD"):
+            first_seq = next(generator)
+
         if not match_keyword(first_seq.read_keyword(), "SEQNUM"):
             raise ValueError("Restart file did not start with SEQNUM.")
     except StopIteration:
