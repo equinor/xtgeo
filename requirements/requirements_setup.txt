@@ -8,3 +8,4 @@ setuptools_scm
 scikit-build
 ninja
 pytest-runner
+swig
