@@ -5,6 +5,7 @@
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
+from matplotlib.path import Path as MPath
 from scipy.interpolate import UnivariateSpline, interp1d
 
 import xtgeo
@@ -19,7 +20,37 @@ logger = xtg.functionlogger(__name__)
 # pylint: disable=protected-access
 
 
-def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
+def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
+    """Make column to mark if XYZ df is inside/outside polygons, using matplotlib."""
+    points = np.array(
+        [self.dataframe[self.xname].values, self.dataframe[self.yname].values]
+    ).T
+
+    if name in self.protected_columns():
+        raise ValueError("The proposed name: {name}, is protected and cannot be used")
+
+    # allow a single Polygons instance or a list of Polygons instances
+    if isinstance(poly, xtgeo.Polygons):
+        usepolys = [poly]
+    elif isinstance(poly, list) and all(
+        isinstance(pol, xtgeo.Polygons) for pol in poly
+    ):
+        usepolys = poly
+    else:
+        raise ValueError("The poly values is not a Polygons or a list of Polygons")
+
+    self.dataframe[name] = outside_value
+
+    for pol in usepolys:
+        idgroups = pol.dataframe.groupby(pol.pname)
+        for _, grp in idgroups:
+            singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
+            poly_path = MPath(singlepoly)
+            is_inside = poly_path.contains_points(points)
+            self.dataframe.loc[is_inside, name] = inside_value
+
+
+def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=True):
     """
     Operations re restricted to closed polygons, for points or polyline points.
 
@@ -30,8 +61,10 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     will be the intersection.
 
     The "where" filter is reserved for future use.
+
+    This is now the legacy version, which will be deprecated later.
     """
-    logger.warning("Where is not imeplented: %s", where)
+    logger.warning("Where is not implemented: %s", where)
 
     oper = {"set": 1, "add": 2, "sub": 3, "mul": 4, "div": 5, "eli": 11}
 
@@ -41,7 +74,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
 
     logger.info("Operations of points inside polygon(s)...")
     if not isinstance(poly, xtgeo.xyz.Polygons):
-        raise ValueError("The poly input is not a Polygons instance")
+        raise ValueError("The poly input is not a single Polygons instance")
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
@@ -77,6 +110,56 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     # removing rows where Z column is undefined
     self.dataframe.dropna(how="any", subset=[self.zname], inplace=True)
     self.dataframe.reset_index(inplace=True, drop=True)
+    logger.info("Operations of points inside polygon(s)... done")
+
+
+def operation_polygons_v2(self, poly, value, opname="add", inside=True, where=True):
+    """
+    Operations re restricted to closed polygons, for points or polyline points.
+
+    This (from v1) is NOT implemented here: "If value is not float but 'poly', then the
+    avg of each polygon Z value will be used instead."
+
+    NOTE! Both 'inside' and "outside" several polygons will become a union. Hence v2
+    it will TREAT OUTSIDE POINTS DIFFERENT than v1!
+
+    The "where" filter is reserved for future use.
+
+    The version v2 uses mark_in_polygons_mpl(), and should be much faster.
+    """
+    logger.info("Operations of points inside polygon(s), version 2")
+
+    allowed_opname = ("set", "add", "sub", "mul", "div", "eli")
+
+    logger.warning("Where is not implemented: %s", where)
+    if not isinstance(poly, xtgeo.xyz.Polygons):
+        raise ValueError("The poly input is not a Polygons instance")
+
+    tmp = self.copy()
+    tmpdf = tmp.dataframe
+    ivalue = 1 if inside else 0
+    ovalue = 0 if inside else 1
+    mark_in_polygons_mpl(tmp, poly, "_TMP", inside_value=ivalue, outside_value=ovalue)
+
+    if opname == "add":
+        self.dataframe[self.zname][tmpdf._TMP == 1] += value
+    elif opname == "sub":
+        self.dataframe[self.zname][tmpdf._TMP == 1] -= value
+    elif opname == "mul":
+        self.dataframe[self.zname][tmpdf._TMP == 1] *= value
+    elif opname == "div":
+        if value != 0.0:
+            self.dataframe[self.zname][tmpdf._TMP == 1] /= value
+        else:
+            self.dataframe[self.zname][tmpdf._TMP == 1] = 0.0
+    elif opname == "set":
+        self.dataframe[self.zname][tmpdf._TMP == 1] = value
+    elif opname == "eli":
+        self.dataframe = self.dataframe[tmpdf._TMP == 0]
+        self.dataframe.reset_index(inplace=True, drop=True)
+    else:
+        raise KeyError(f"The opname={opname} is not one of {allowed_opname}")
+
     logger.info("Operations of points inside polygon(s)... done")
 
 
