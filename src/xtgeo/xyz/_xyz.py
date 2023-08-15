@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """XTGeo XYZ module (abstract base class)"""
 from abc import ABC, abstractmethod
+from typing import List, Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -198,7 +200,7 @@ class XYZ(ABC):
             Columns not deleted by :meth:`delete_columns`, for
             instance the coordinate columns.
         """
-        return [self.xname, self.yname, self.zname, self.pname]
+        return [self.xname, self.yname, self.zname]
 
     def geometry_columns(self):
         """
@@ -271,7 +273,36 @@ class XYZ(ABC):
 
         return (xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def operation_polygons(self, poly, value, opname="add", inside=True):
+    def mark_in_polygons(
+        self,
+        poly: Union["Polygons", List["Polygons"]],  # noqa: F821
+        name: str = "pstatus",
+        inside_value: int = 1,
+        outside_value: int = 0,
+    ):
+        """Add a column that assign values if points are inside or outside polygons.
+
+        This is a generic function that adds a column in the points dataframe with
+        a flag for values being inside or outside polygons in a Polygons instance.
+
+        Args:
+            poly: One single xtgeo Polgons instance, or a list of Polygons instances.
+            name: Name of column that flags inside or outside status
+            inside_value: Flag value for being inside polygons
+            outside_value: Flag value for being outside polygons
+
+        ..versionadded:: 3.2
+        """
+        _xyz_oper.mark_in_polygons_mpl(self, poly, name, inside_value, outside_value)
+
+    def operation_polygons(
+        self,
+        poly: Union["Polygons", List["Polygons"]],  # noqa: F821
+        value: float,
+        opname: str = "add",
+        inside: bool = True,
+        version: int = 1,
+    ):
         """A generic function for operations restricted to inside or outside polygon(s).
 
         The operations are performed on the Z values, while the 'inside' or 'outside'
@@ -291,103 +322,397 @@ class XYZ(ABC):
         * ``eli``: eliminate; here value is not applied
 
         Args:
-            poly (Polygons): A XTGeo Polygons instance
-            value(float): Value to add, subtract etc
-            opname (str): Name of operation... 'add', 'sub', etc
-            inside (bool): If True do operation inside polygons; else outside. Note
+            poly: A single Polygons instance or a list of Polygons instances.
+                The list option is only allowed when version = 2
+            value: Value to add, subtract etc
+            opname: Name of operation... 'add', 'sub', etc
+            inside: If True do operation inside polygons; else outside. Note
                 that boundary is treated as 'inside'
+            version: The algorithm version, see notes below. Although version 1
+                is default, version 2 is recommended as it is much faster and works
+                intuitively when have multiple polygons and/or using the
+                `is_inside=False` (i.e. outside)
 
         Note:
-            This function works only intuitively when using one single polygon
-            in the ``poly`` instance. When having several polygons the
+            ``version=1``: This function works only intuitively when using one single
+            polygon in the ``poly`` instance. When having several polygons the
             operation is done sequentially per polygon which may
             lead to surprising results. For instance, using "add inside"
             into two overlapping polygons, the addition will be doubled in the
-            overlapping part. Similarly using e.g. "eli, outside" will completely
+            overlapping part. Similarly, using e.g. "eli, outside" will completely
             remove all points of two non-overlapping polygons are given as input.
+
+            ``version=2``: This is a new and recommended implemenation. It works
+            much faster and intuitively for both inside and outside, overlapping and
+            multiple polygons within a Polygons instance.
+
+        .. versionchanged:: 3.2 Add ``version`` option which defaults to 1.
+                            Also allow that ``poly`` option can be a list of Polygons
+                            when version is 2.
+
         """
-        _xyz_oper.operation_polygons(self, poly, value, opname=opname, inside=inside)
+        if version == 2:
+            _xyz_oper.operation_polygons_v2(
+                self, poly, value, opname=opname, inside=inside
+            )
+        else:
+            _xyz_oper.operation_polygons_v1(
+                self, poly, value, opname=opname, inside=inside
+            )
+            if version == 0:
+                # using version 0 INTERNALLY to mark that "add_inside" etc has been
+                # applied, and now raise a generic deprecation warning:
+                itxt = "inside" if inside else "outside"
+                warn(
+                    f"You are using the method '{opname}_{itxt}()'; this will "
+                    "be deprecated in future versions. Consider using "
+                    f"'{opname}_{itxt}_polygons()' instead which is both faster "
+                    "and works intuitively when several and/or overlapping polygons",
+                    DeprecationWarning,
+                )
 
     def add_inside(self, poly, value):
-        """Add a value (scalar) to points inside polygons.
+        """Add a value (scalar) to points inside polygons (old behaviour).
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to add to Z values inside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`add_inside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="add", inside=True)
+        self.operation_polygons(poly, value, opname="add", inside=True, version=0)
+
+    def add_inside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Add a value (scalar) to points inside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`add_inside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to add to Z values inside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="add", inside=True, version=2)
 
     def add_outside(self, poly, value):
-        """Add a value (scalar) to points outside polygons.
+        """Add a value (scalar) to points outside polygons (old behaviour).
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to add to Z values outside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`add_outside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="add", inside=False)
+        self.operation_polygons(poly, value, opname="add", inside=False, version=0)
+
+    def add_outside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Add a value (scalar) to points outside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`add_outside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to add to Z values outside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="add", inside=False, version=2)
 
     def sub_inside(self, poly, value):
         """Subtract a value (scalar) to points inside polygons.
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to subtract to Z values inside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`sub_inside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="sub", inside=True)
+        self.operation_polygons(poly, value, opname="sub", inside=True, version=1)
+
+    def sub_inside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Subtract a value (scalar) for points inside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`sub_inside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to subtract to Z values inside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="sub", inside=True, version=2)
 
     def sub_outside(self, poly, value):
         """Subtract a value (scalar) to points outside polygons.
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to subtract to Z values outside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`sub_outside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="sub", inside=False)
+        self.operation_polygons(poly, value, opname="sub", inside=False, version=0)
+
+    def sub_outside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Subtract a value (scalar) for points outside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`sub_outside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to subtract to Z values outside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="sub", inside=False, version=2)
 
     def mul_inside(self, poly, value):
         """Multiply a value (scalar) to points inside polygons.
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to multiply to Z values inside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`mul_inside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="mul", inside=True)
+        self.operation_polygons(poly, value, opname="mul", inside=True, version=0)
+
+    def mul_inside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Multiply a value (scalar) for points inside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`mul_inside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to multiply to Z values inside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="mul", inside=True, version=2)
 
     def mul_outside(self, poly, value):
         """Multiply a value (scalar) to points outside polygons.
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to multiply to Z values outside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`mul_outside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="mul", inside=False)
+        self.operation_polygons(poly, value, opname="mul", inside=False, version=0)
+
+    def mul_outside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Multiply a value (scalar) for points outside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`mul_outside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to multiply to Z values outside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="mul", inside=False, version=2)
 
     def div_inside(self, poly, value):
         """Divide a value (scalar) to points inside polygons.
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to divide Z values inside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`div_inside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="div", inside=True)
+        self.operation_polygons(poly, value, opname="div", inside=True, version=0)
+
+    def div_inside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Divide a value (scalar) for points inside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`div_inside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to divide to Z values inside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="div", inside=True, version=2)
 
     def div_outside(self, poly, value):
         """Divide a value (scalar) outside polygons (value 0.0 will give result 0).
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to divide Z values outside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`div_outside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="div", inside=False)
+        self.operation_polygons(poly, value, opname="div", inside=False, version=0)
+
+    def div_outside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Divide a value (scalar) for points outside polygons (new behaviour).
+
+        Note if input value is 0.0 (division on zero), the result will be 0.0.
+
+        This is an improved implementation than :meth:`div_outside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to divide to Z values outside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="div", inside=False, version=2)
 
     def set_inside(self, poly, value):
         """Set a value (scalar) to points inside polygons.
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to set Z values inside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`set_inside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="set", inside=True)
+        self.operation_polygons(poly, value, opname="set", inside=True, version=0)
+
+    def set_inside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Set a value (scalar) for points inside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`set_inside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to set as Z values inside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="set", inside=True, version=2)
 
     def set_outside(self, poly, value):
         """Set a value (scalar) to points outside polygons.
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+            value: Value to set Z values outside polygons.
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`set_outside polygons()`.
         """
-        self.operation_polygons(poly, value, opname="set", inside=False)
+        self.operation_polygons(poly, value, opname="set", inside=False, version=0)
+
+    def set_outside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]], value: float  # noqa: F821
+    ):
+        """Set a value (scalar) for points outside polygons (new behaviour).
+
+        This is an improved implementation than :meth:`set_outside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+            value: Value to set as Z values inside polygons.
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, value, opname="set", inside=False, version=2)
 
     def eli_inside(self, poly):
-        """Eliminate current points inside polygons.
+        """Eliminate current points inside polygons (old implentation).
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`eli_inside polygons()`.
         """
-        self.operation_polygons(poly, 0, opname="eli", inside=True)
+        self.operation_polygons(poly, 0, opname="eli", inside=True, version=0)
+
+    def eli_inside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]]  # noqa: F821
+    ):
+        """Remove points inside polygons.
+
+        This is an improved implementation than :meth:`eli_inside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, 0, opname="eli", inside=True, version=2)
 
     def eli_outside(self, poly):
-        """Eliminate current points outside polygons.
+        """Eliminate current points outside polygons (old implentation).
 
-        See notes under :meth:`operation_polygons`.
+        Args:
+            poly: A xtgeo Polygons instance
+
+        See notes under :meth:`operation_polygons()` and consider instead
+        :meth:`eli_outside polygons()`.
         """
-        self.operation_polygons(poly, 0, opname="eli", inside=False)
+        self.operation_polygons(poly, 0, opname="eli", inside=False, version=0)
+
+    def eli_outside_polygons(
+        self, poly: Union["Polygons", List["Polygons"]]  # noqa: F821
+    ):
+        """Remove points outside polygons.
+
+        This is an improved implementation than :meth:`eli_outside()`, and is now the
+        recommended method, as it is both faster and works similar for all single
+        and overlapping sub-polygons within one or more Polygons instances.
+
+        Args:
+            poly: A xtgeo Polygons instance, or a list of xtgeo Polygons instances
+
+        .. versionadded:: 3.2
+        """
+        self.operation_polygons(poly, 0, opname="eli", inside=False, version=2)

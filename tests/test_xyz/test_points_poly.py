@@ -50,44 +50,101 @@ LARGE_POLY_SHIFTED = [
 ]
 
 
-def test_points_in_polygon(testpath):
-    """Import XYZ points and do operations if inside or outside"""
-
+@pytest.fixture(name="reekset")
+def fixture_reekset(testpath):
+    """Read a test set from disk."""
     poi = xtgeo.points_from_file(testpath / POINTSET2)
     pol = xtgeo.polygons_from_file(testpath / POLSET2)
+    return poi, pol
+
+
+def test_mark_points_polygon(reekset):
+    """Import XYZ points and get marks of points inside or outside"""
+    poi, pol = reekset
+    poi2 = poi.copy()
+    # remove points in polygons
+    poi2.mark_in_polygons(pol, name="_ptest", inside_value=1, outside_value=0)
+    assert poi2.dataframe["_ptest"].values.sum() == 11
+
+    # a.a, but allow multiple polygons (reuse same here)
+    poi3 = poi.copy()
+    poi3.mark_in_polygons([pol, pol], name="_ptest", inside_value=1, outside_value=0)
+    assert poi3.dataframe["_ptest"].values.sum() == 11
+
+
+def test_mark_points_polygon_protected(reekset):
+    """Raise a ValuError if a protected name is attempted"""
+    poi, pol = reekset
+    poi2 = poi.copy()
+    with pytest.raises(ValueError, match="is protected and cannot be used"):
+        poi2.mark_in_polygons(pol, name=poi.xname, inside_value=1, outside_value=0)
+
+
+def test_points_in_polygon(reekset):
+    """Import XYZ points and do operations if inside or outside"""
+
+    _poi, pol = reekset
+    poi = _poi.copy()
     assert poi.nrow == 30
 
     # remove points in polygon
-    poi.operation_polygons(pol, 0, opname="eli")
+    poi.operation_polygons(pol, 0, opname="eli", version=2)
 
     assert poi.nrow == 19
 
-    poi = xtgeo.points_from_file(testpath / POINTSET2)
     # remove points outside polygon
-    poi.operation_polygons(pol, 0, opname="eli", inside=False)
-    assert poi.nrow == 1
+    poi.operation_polygons(pol, 0, opname="eli", inside=False, version=1)
+    assert poi.nrow == 0
+
+    # new behaviour with version = 2:
+    poi = _poi.copy()  # refresh
+    poi.operation_polygons(pol, 0, opname="eli", inside=False, version=2)
+    print(poi.dataframe)
+    assert poi.nrow == 11
+
+
+def test_add_inside_old_new_behaviour(reekset):
+    """Add inside using old and new class behaviour"""
+    _poi, pol = reekset
+    poi1 = _poi.copy()
+    poi1.dataframe.Z_TVDSS = 0.0
+    poi2 = _poi.copy()
+    poi2.dataframe.Z_TVDSS = 0.0
+
+    poi1.add_inside(pol, 1)
+    print(poi1.dataframe)
+    zvec = poi1.dataframe["Z_TVDSS"].values
+    assert 2.0 in zvec.tolist()  # will be doubling where polygons overlap!
+    zvec = zvec[zvec < 1]
+    assert zvec.size == 19
+
+    poi2.add_inside_polygons(pol, 1)
+    zvec = poi2.dataframe["Z_TVDSS"].values
+    assert 2.0 not in zvec.tolist()  # here NO doubling where polygons overlap!
+    zvec = zvec[zvec < 1]
+    print(poi2.dataframe)
+    assert zvec.size == 19
 
 
 def test_check_single_point_in_polygon():
-    pol = Polygons(SMALL_POLY_INNER)
-    poi = Points([(4.0, 4.0, 4.0)])
-    poi.operation_polygons(pol, value=1, opname="eli", inside=False)
-    assert len(poi.dataframe) == 1
-
-    poi.operation_polygons(pol, value=1, opname="eli", inside=True)
-    assert len(poi.dataframe) == 0
+    for ver in (1, 2):
+        pol = Polygons(SMALL_POLY_INNER)
+        poi = Points([(4.0, 4.0, 4.0)])
+        poi.operation_polygons(pol, value=1, opname="eli", inside=False, version=ver)
+        assert len(poi.dataframe) == 1
 
 
 def test_check_multi_point_single_polygon():
-    pol = Polygons(SMALL_POLY_INNER)
-    poi = Points([(6.0, 4.0, 4.0), (4.0, 4.0, 4.0), (4.0, 6.0, 4.0)])
-    assert len(poi.dataframe) == 3
+    for ver in (1, 2):
+        pol = Polygons(SMALL_POLY_INNER)
+        poi = Points([(6.0, 4.0, 4.0), (4.0, 4.0, 4.0), (4.0, 6.0, 4.0)])
+        assert len(poi.dataframe) == 3
 
-    poi.operation_polygons(pol, value=1, opname="eli", inside=False)
-    assert len(poi.dataframe) == 1
+        poi.operation_polygons(pol, value=1, opname="eli", inside=False, version=ver)
+        assert len(poi.dataframe) == 1
 
-    poi.operation_polygons(pol, value=1, opname="eli", inside=True)
-    assert len(poi.dataframe) == 0
+        poi.operation_polygons(pol, value=1, opname="eli", inside=True, version=ver)
+        assert len(poi.dataframe) == 0
 
 
 def test_check_multi_point_single_polygon_zdir():
@@ -103,15 +160,20 @@ def test_check_multi_point_single_polygon_zdir():
 def test_check_multi_point_multi_polyon_inside_op():
     pol = Polygons(SMALL_POLY_INNER + LARGE_POLY_SHIFTED)
     # Two points in small cube, one in large cube, one outside
-    poi = Points([(4.0, 4.0, 0.0), (4.5, 4.0, 0.0), (7.0, 7.0, 0.0), (20.0, 5.0, 0.0)])
-    assert len(poi.dataframe) == 4
+    for ver in (1, 2):
+        poi = Points(
+            [(4.0, 4.0, 0.0), (4.5, 4.0, 0.0), (7.0, 7.0, 0.0), (20.0, 5.0, 0.0)]
+        )
+        assert len(poi.dataframe) == 4
 
-    poi.operation_polygons(pol, value=1, opname="eli", inside=True)
-    assert len(poi.dataframe) == 1
+        poi.operation_polygons(pol, value=1, opname="eli", inside=True, version=ver)
+        assert len(poi.dataframe) == 1
 
-    poi = Points([(4.0, 4.0, 0.0), (4.5, 4.0, 0.0), (7.0, 7.0, 0.0), (20.0, 5.0, 0.0)])
-    poi.operation_polygons(pol, value=1, opname="eli", inside=False)
-    assert len(poi.dataframe) == 0
+        poi = Points(
+            [(4.0, 4.0, 0.0), (4.5, 4.0, 0.0), (7.0, 7.0, 0.0), (20.0, 5.0, 0.0)]
+        )
+        poi.operation_polygons(pol, value=1, opname="eli", inside=False, version=ver)
+        assert len(poi.dataframe) == 0 if ver == 1 else 3  # dependent on version!
 
 
 def test_check_multi_point_multi_polyon_outside_op():
@@ -120,72 +182,94 @@ def test_check_multi_point_multi_polyon_outside_op():
     poi = Points([(4.0, 4.0, 0.0), (4.5, 4.0, 0.0), (7.0, 7.0, 0.0), (20.0, 5.0, 0.0)])
     assert len(poi.dataframe) == 4
 
-    # Note the operation will loop over the polygons, and hence remove the points
-    # in the small polygon when considering the large polygon, and vice versa
-    poi.operation_polygons(pol, value=1, opname="eli", inside=False)
+    # Note the operation will loop over the polygons if version 1, and hence remove the
+    # points in the small polygon when considering the large polygon, and vice versa
+    poi.operation_polygons(pol, value=1, opname="eli", inside=False, version=1)
     assert len(poi.dataframe) == 0
+
+    # Fixed in version 2
+    poi = Points([(4.0, 4.0, 0.0), (4.5, 4.0, 0.0), (7.0, 7.0, 0.0), (20.0, 5.0, 0.0)])
+    poi.operation_polygons(pol, value=1, opname="eli", inside=False, version=2)
+    assert len(poi.dataframe) == 3
 
 
 def test_check_single_polygon_in_single_polygon():
-    inner_pol = Polygons(SMALL_POLY_INNER)
-    outer_pol = Polygons(SMALL_POLY_OUTER)
+    for ver in (1, 2):
+        inner_pol = Polygons(SMALL_POLY_INNER)
+        outer_pol = Polygons(SMALL_POLY_OUTER)
 
-    # Do not delete inner_pol when specified to delete polygons inside inner polygon
-    inner_pol.operation_polygons(outer_pol, value=1, opname="eli", inside=False)
-    assert len(inner_pol.dataframe) == 5
+        # Do not delete inner_pol when specified to delete poly outside outer polygon
+        inner_pol.operation_polygons(
+            outer_pol, value=1, opname="eli", inside=False, version=ver
+        )
+        assert len(inner_pol.dataframe) == 5
 
-    # Do not delete outer_pol when specified to delete polygons outside outer polygon
-    outer_pol.operation_polygons(inner_pol, value=1, opname="eli", inside=True)
-    assert len(outer_pol.dataframe) == 5
+        # Do not delete outer_pol when specified to delete polygons inside inner polygon
+        outer_pol.operation_polygons(
+            inner_pol, value=1, opname="eli", inside=True, version=ver
+        )
+        assert len(outer_pol.dataframe) == 5
 
-    inner_pol.operation_polygons(outer_pol, value=1, opname="eli", inside=True)
-    assert len(inner_pol.dataframe) == 0
+        inner_pol.operation_polygons(
+            outer_pol, value=1, opname="eli", inside=True, version=ver
+        )
+        assert len(inner_pol.dataframe) == 0
 
-    inner_pol = Polygons(SMALL_POLY_INNER)
+        inner_pol = Polygons(SMALL_POLY_INNER)
 
-    outer_pol.operation_polygons(inner_pol, value=1, opname="eli", inside=False)
-    assert len(outer_pol.dataframe) == 0
+        outer_pol.operation_polygons(
+            inner_pol, value=1, opname="eli", inside=False, version=ver
+        )
+        assert len(outer_pol.dataframe) == 0
 
 
 def test_check_multi_polygon_in_single_polygon():
-    inner_pols = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
-    outer_pol = Polygons(SMALL_POLY_OUTER)
+    for ver in (1, 2):
+        inner_pols = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
+        outer_pol = Polygons(SMALL_POLY_OUTER)
 
-    inner_pols.operation_polygons(outer_pol, value=1, opname="eli", inside=True)
-    assert len(inner_pols.dataframe) == 0
+        inner_pols.operation_polygons(
+            outer_pol, value=1, opname="eli", inside=True, version=ver
+        )
+        assert len(inner_pols.dataframe) == 0
 
 
 def test_operation_inclusive_polygon():
-    pol = Polygons(SMALL_POLY_INNER)
-    # We place a point on the edge of a polygon
-    poi = Points([(4.0, 4.0, 0.0)])
-    poi.operation_polygons(pol, value=1, opname="eli", inside=True)
-    assert len(poi.dataframe) == 0
+    for ver in (1, 2):
+        pol = Polygons(SMALL_POLY_INNER)
+        # We place a point on the edge of a polygon
+        poi = Points([(4.0, 4.0, 0.0)])
+        poi.operation_polygons(pol, value=1, opname="eli", inside=True, version=ver)
+        assert len(poi.dataframe) == 0
 
-    # We place a point on a corner of a polygon
-    poi = Points([(3.0, 3.0, 0.0)])
-    poi.operation_polygons(pol, value=1, opname="eli", inside=True)
-    assert len(poi.dataframe) == 0
+        # We place a point on a corner of a polygon
+        poi = Points([(3.0, 3.0, 0.0)])
+        poi.operation_polygons(pol, value=1, opname="eli", inside=True)
+        assert len(poi.dataframe) == 0
 
 
 def test_polygons_overlap():
-    pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
-    # The Four points are placed: within first poly, within the overlap, within the
-    # second poly, outside both poly
-    poi = Points([(3.5, 3.5, 0.0), (4.5, 4.5, 0.0), (5.5, 5.5, 0.0), (6.5, 6.5, 0.0)])
-    poi.operation_polygons(pol, value=1, opname="eli", inside=True)
-    assert len(poi.dataframe) == 1
+    for ver in (1, 2):
+        pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
+        # The Four points are placed: within first poly, within the overlap, within the
+        # second poly, outside both poly
+        poi = Points(
+            [(3.5, 3.5, 0.0), (4.5, 4.5, 0.0), (5.5, 5.5, 0.0), (6.5, 6.5, 0.0)]
+        )
+        poi.operation_polygons(pol, value=1, opname="eli", inside=True, version=ver)
+        assert len(poi.dataframe) == 1
 
 
 @pytest.mark.parametrize(
     "oper, expected", [("add", 12), ("sub", 8), ("div", 5), ("mul", 20), ("set", 2)]
 )
 def test_oper_single_point_in_polygon(oper, expected):
-    pol = Polygons(SMALL_POLY_INNER)
-    poi = Points([(4.0, 4.0, 10.0)])
-    # operators work on z-values
-    poi.operation_polygons(pol, value=2, opname=oper, inside=True)
-    assert poi.dataframe[poi.zname].values[0] == expected
+    for ver in (1, 2):
+        pol = Polygons(SMALL_POLY_INNER)
+        poi = Points([(4.0, 4.0, 10.0)])
+        # operators work on z-values
+        poi.operation_polygons(pol, value=2, opname=oper, inside=True, version=ver)
+        assert poi.dataframe[poi.zname].values[0] == expected
 
 
 @pytest.mark.parametrize(
@@ -198,7 +282,7 @@ def test_oper_single_point_in_polygon(oper, expected):
         ("set", [2, 2, 2, 10]),
     ],
 )
-def test_oper_points_outside_overlapping_polygon(oper, expected):
+def test_oper_points_outside_overlapping_polygon_v1(oper, expected):
     pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
     # The Four points are placed: within first poly, within the overlap, within the
     # second poly, outside both poly
@@ -212,7 +296,36 @@ def test_oper_points_outside_overlapping_polygon(oper, expected):
     )
     # Operations are performed n times, where n reflects the number of polygons a
     # point is within
-    poi.operation_polygons(pol, value=2, opname=oper, inside=True)
+    poi.operation_polygons(pol, value=2, opname=oper, inside=True, version=1)
+    assert list(poi.dataframe[poi.zname].values) == expected
+
+
+@pytest.mark.parametrize(
+    "oper, expected",
+    [
+        ("add", [12, 12, 12, 10]),
+        ("sub", [8, 8, 8, 10]),
+        ("div", [5, 5, 5, 10]),
+        ("mul", [20, 20, 20, 10]),
+        ("set", [2, 2, 2, 10]),
+    ],
+)
+def test_oper_points_outside_overlapping_polygon_v2(oper, expected):
+    # different expected values her for version 2, compared with version 1
+    pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
+    # The Four points are placed: within first poly, within the overlap, within the
+    # second poly, outside both poly
+    poi = Points(
+        [
+            (3.5, 3.5, 10.0),
+            (4.5, 4.5, 10.0),
+            (5.5, 5.5, 10.0),
+            (6.5, 6.5, 10.0),
+        ]
+    )
+    # Operations are performed n times, where n reflects the number of polygons a
+    # point is within
+    poi.operation_polygons(pol, value=2, opname=oper, inside=True, version=2)
     assert list(poi.dataframe[poi.zname].values) == expected
 
 
@@ -226,7 +339,7 @@ def test_oper_points_outside_overlapping_polygon(oper, expected):
         ("set", [2, 10, 2, 2]),
     ],
 )
-def test_oper_points_inside_overlapping_polygon(oper, expected):
+def test_oper_points_inside_overlapping_polygon_v1(oper, expected):
     pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
     # The Four points are placed: within first poly, within the overlap, within the
     # second poly, outside both poly
@@ -235,8 +348,89 @@ def test_oper_points_inside_overlapping_polygon(oper, expected):
     )
     # Operations are performed n times, where n reflects the number of polygons a
     # point is outside
-    poi.operation_polygons(pol, value=2, opname=oper, inside=False)
+    poi.operation_polygons(pol, value=2, opname=oper, inside=False, version=1)
     assert list(poi.dataframe[poi.zname].values) == expected
+
+
+@pytest.mark.parametrize(
+    "oper, expected",
+    [
+        ("add", [10, 10, 10, 12]),
+        ("sub", [10, 10, 10, 8]),
+        ("div", [10, 10, 10, 5]),
+        ("mul", [10, 10, 10, 20]),
+        ("set", [10, 10, 10, 2]),
+    ],
+)
+def test_oper_points_inside_overlapping_polygon_v2(oper, expected):
+    pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
+    # The Four points are placed: within first poly, within the overlap, within the
+    # second poly, outside both poly
+    poi = Points(
+        [(3.5, 3.5, 10.0), (4.5, 4.5, 10.0), (5.5, 5.5, 10.0), (6.5, 6.5, 10.0)]
+    )
+    # Operations are performed n times, where n reflects the number of polygons a
+    # point is outside
+    poi.operation_polygons(pol, value=2, opname=oper, inside=False, version=2)
+    assert list(poi.dataframe[poi.zname].values) == expected
+
+
+def test_add_inside_polygons_etc():
+    pol = Polygons(SMALL_POLY_INNER + SMALL_POLY_OVERLAP_INNER)
+    # The Four points are placed: within first poly, within the overlap, within the
+    # second poly, outside both poly
+    _poi = Points(
+        [(3.5, 3.5, 10.0), (4.5, 4.5, 10.0), (5.5, 5.5, 10.0), (6.5, 6.5, 10.0)]
+    )
+    poi = _poi.copy()
+    poi.add_inside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [20.0, 20.0, 20.0, 10.0]
+
+    poi = _poi.copy()
+    poi.add_outside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [10.0, 10.0, 10.0, 20.0]
+
+    poi = _poi.copy()
+    poi.sub_inside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [0.0, 0.0, 0.0, 10.0]
+
+    poi = _poi.copy()
+    poi.sub_outside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [10.0, 10.0, 10.0, 0.0]
+
+    poi = _poi.copy()
+    poi.mul_inside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [100.0, 100.0, 100.0, 10.0]
+
+    poi = _poi.copy()
+    poi.mul_outside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [10.0, 10.0, 10.0, 100.0]
+
+    poi = _poi.copy()
+    poi.div_inside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [1.0, 1.0, 1.0, 10.0]
+
+    poi = _poi.copy()
+    poi.div_outside_polygons(pol, 10.0)
+    assert list(poi.dataframe[poi.zname].values) == [10.0, 10.0, 10.0, 1.0]
+
+    # zero division
+    poi = _poi.copy()
+    poi.div_outside_polygons(pol, 0.0)
+    assert list(poi.dataframe[poi.zname].values) == [10.0, 10.0, 10.0, 0.0]
+
+    # close to zero division
+    poi = _poi.copy()
+    poi.div_outside_polygons(pol, 1e-10)
+    assert list(poi.dataframe[poi.zname].values) == [10.0, 10.0, 10.0, 1e11]
+
+    poi = _poi.copy()
+    poi.eli_inside_polygons(pol)
+    assert list(poi.dataframe[poi.zname].values) == [10.0]
+
+    poi = _poi.copy()
+    poi.eli_outside_polygons(pol)
+    assert list(poi.dataframe[poi.zname].values) == [10.0, 10.0, 10.0]
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Different order in python 3.7")
