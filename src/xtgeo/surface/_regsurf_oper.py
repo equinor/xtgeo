@@ -2,9 +2,11 @@
 """Various operations"""
 
 import numbers
+from typing import Any, Union
 
 import numpy as np
 import numpy.ma as ma
+from matplotlib.path import Path as MPath
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
@@ -452,6 +454,7 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
 def operation_polygons(self, poly, value, opname="add", inside=True):
     """Operations restricted to polygons"""
 
+    # keep this for a while (e.g. mid 2024), and then replace it with _v2 below.
     if not isinstance(poly, Polygons):
         raise ValueError("The poly input is not a Polygons instance")
     if opname not in VALID_OPER_POLYS:
@@ -469,7 +472,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     if isinstance(value, type(self)):
         if not self.compare_topology(value):
-            raise ValueError("Input is RegularSurface, but not same map " "topology")
+            raise ValueError("Input is RegularSurface, but not same map topology")
         value = value.values.copy()
     else:
         # turn scalar value into numpy array
@@ -518,7 +521,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
         # as result in these cases
         if 0.0 in value:
             xtg.warn(
-                "Dividing a surface with value or surface with zero "
+                "Dividing a surface with value=0.0 or surface with zero "
                 "elements; may get unexpected results, try to "
                 "achieve zero values as result!"
             )
@@ -539,3 +542,95 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
     del tmp
+
+
+def _proxy_map_polygons(surf, poly, inside=True):
+    """Return a proxy map where on one to do operations, as 0 and 1."""
+    inside_value = 1 if inside else 0
+    outside_value = 0 if inside else 1
+
+    proxy = surf.copy()
+
+    # allow a single Polygons instance or a list of Polygons instances
+    if isinstance(poly, xtgeo.Polygons):
+        usepolys = [poly]
+    elif isinstance(poly, list) and all(
+        isinstance(pol, xtgeo.Polygons) for pol in poly
+    ):
+        usepolys = poly
+    else:
+        raise ValueError("The poly values is not a Polygons or a list of Polygons")
+
+    proxy.values = outside_value
+    xvals, yvals = proxy.get_xy_values(asmasked=False)
+    points = np.array([xvals.ravel(), yvals.ravel()]).T
+
+    for pol in usepolys:
+        idgroups = pol.dataframe.groupby(pol.pname)
+        for _, grp in idgroups:
+            singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
+            poly_path = MPath(singlepoly)
+            is_inside = poly_path.contains_points(points)
+            is_inside = is_inside.reshape(proxy.ncol, proxy.nrow)
+            proxy.values = np.where(is_inside, inside_value, proxy.values)
+
+    return proxy
+
+
+def operation_polygons_v2(
+    self, poly, value: Union[float, Any], opname="add", inside=True
+):
+    """Operations restricted to polygons, using matplotlib (much faster).
+
+    The 'value' can be a number or another regular surface (with same design)
+
+    """
+
+    proxy = _proxy_map_polygons(self, poly, inside=inside)
+    result = self.copy()
+
+    if isinstance(value, type(result)):
+        if not result.compare_topology(value):
+            raise ValueError("Input is RegularSurface, but not same map topology")
+        value = value.values.copy()
+    else:
+        # turn scalar value into numpy array
+        value = result.values.copy() * 0 + value
+
+    if opname == "add":
+        result.values = np.ma.where(
+            proxy.values == 1, result.values + value, result.values
+        )
+    elif opname == "sub":
+        result.values = np.ma.where(
+            proxy.values == 1, result.values - value, result.values
+        )
+    elif opname == "mul":
+        result.values = np.ma.where(
+            proxy.values == 1, result.values * value, result.values
+        )
+    elif opname == "div":
+        # Dividing a map of zero is always a hazzle; try to obtain 0.0
+        # as result in these cases
+        if 0.0 in value:
+            xtg.warn(
+                "Dividing a surface with value = 0.0 or surface with zero "
+                "elements; may get unexpected results, will try to "
+                "achieve zero values as result!"
+            )
+
+        result.values = np.ma.where(value == 0.0, 0.0, result.values)
+        proxy.values = np.ma.where(value == 0.0, 0, proxy.values)
+        result.values = np.ma.where(
+            proxy.values == 1, result.values / value, result.values
+        )
+
+    elif opname == "set":
+        result.values = np.ma.where(proxy.values == 1, value, result.values)
+    elif opname == "eli":
+        result.values = np.ma.where(proxy.values == 1, xtgeo.UNDEF, result.values)
+        result.values = ma.masked_greater(result.values, xtgeo.UNDEF_LIMIT)
+    else:
+        raise KeyError(f"The opname={opname} is not one of {VALID_OPER_POLYS}")
+
+    self.values = result.values

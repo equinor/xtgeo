@@ -521,4 +521,39 @@ be input to Equinor's APS module.
 Line point data
 ---------------
 
-Examples to come...
+Add to or remove points inside or outside polygons
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the following example, remove or add to points being inside or outside polygons on clipboard.
+
+.. code-block:: python
+
+    import xtgeo
+
+    PRJ = project
+
+    POLYGONS = ["mypolygons", "myfolder"]  # mypolygons in folder myfolder on clipboard
+    POINTSET1 = ["points1", "myfolder"]
+    POINTSET2 = ["points2", "myfolder"]
+
+    POINTSET1_UPDATED = ["points1_edit", "myfolder"]
+    POINTSET2_UPDATED = ["points2_edit", "myfolder"]
+
+    def main():
+        """Operations on points inside or outside polygons."""
+
+        poly = xtgeo.polygons_from_roxar(PRJ, *POLYGONS, stype="clipboard")
+        po1 = xtgeo.points_from_roxar(PRJ, *POINTSET1, stype="clipboard")
+        po2 = xtgeo.points_from_roxar(PRJ, *POINTSET2, stype="clipboard")
+
+        po1.eli_inside_polygons(poly)
+        po1.to_roxar(PRJ, *POINTSET1_UPDATED, stype="clipboard")  # store
+
+        # now add 100 inside polugons for POINTSET2, and then remove all points outside
+        po2.add_inside_polygons(poly, 100)
+        po2.eli_outside_polygons(poly)
+        po2.to_roxar(PRJ, *POINTSET2_UPDATED, stype="clipboard")  # store
+
+
+    if __name__ == "__main__":
+        main()

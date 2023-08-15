@@ -2,7 +2,10 @@
 
 from os.path import join
 
+import numpy as np
+import numpy.ma as ma
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -21,18 +24,129 @@ TPATH = xtg.testpathobj
 SURF1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 POLY1 = TPATH / "polygons/reek/1/closedpoly1.pol"
 
+# a surface with nodes in X position 0.0 3.0 6.0 and Y 0.0 3.0 6.0
+# and 12 values
+SF1 = xtgeo.RegularSurface(
+    xori=0,
+    yori=0,
+    ncol=3,
+    nrow=3,
+    xinc=3.0,
+    yinc=3.0,
+    values=np.array([10, 10, 10, 20, 0, 10, 10, 10, 1]),
+)
 
-def test_operations_inside_outside_polygon_generic():
-    """Do perations in relation to polygons in a generic way"""
+SF2 = xtgeo.RegularSurface(
+    xori=0,
+    yori=0,
+    ncol=3,
+    nrow=3,
+    xinc=3.0,
+    yinc=3.0,
+    values=np.array([100, 200, 300, 400, 0, 500, 600, 700, 800]),
+)
+
+SMALL_POLY = [
+    (2.9, 2.9, 0.0, 0),
+    (4.9, 2.9, 0.0, 0),
+    (6.1, 6.1, 0.0, 0),
+    (2.9, 4.0, 0.0, 0),
+    (2.9, 2.9, 0.0, 0),
+]
+
+SMALL_POLY_OVERLAP = [
+    (3.0, 0.0, 0.0, 2),
+    (6.1, -1.0, 0.0, 2),
+    (6.1, 3.2, 0.0, 2),
+    (2.0, 4.0, 0.0, 2),
+    (3.0, 0.0, 0.0, 2),
+]
+
+
+@pytest.fixture(name="reekset")
+def fixture_reekset():
+    """Read a test set from disk."""
+    srf = xtgeo.surface_from_file(SURF1)
+    pol = xtgeo.polygons_from_file(POLY1)
+    return srf, pol
+
+
+@pytest.mark.parametrize(
+    "oper, value, inside, expected",
+    [
+        #                           O   O   O   I  I   O   I   I  I
+        #                orig     [10, 10, 10, 20, 0, 10, 10, 10, 1]
+        ("add", 1, True, ma.array([10, 10, 10, 21, 1, 10, 11, 11, 2])),
+        ("add", 1, False, ma.array([11, 11, 11, 20, 0, 11, 10, 10, 1])),
+        ("add", SF2, True, ma.array([10, 10, 10, 420, 0, 10, 610, 710, 801])),
+        ("add", SF2, False, ma.array([110, 210, 310, 20, 0, 510, 10, 10, 1])),
+        ("sub", 1, True, ma.array([10, 10, 10, 19, -1, 10, 9, 9, 0])),
+        ("sub", 1, False, ma.array([9, 9, 9, 20, 0, 9, 10, 10, 1])),
+        ("sub", SF2, True, ma.array([10, 10, 10, -380, 0, 10, -590, -690, -799])),
+        ("sub", SF2, False, ma.array([-90, -190, -290, 20, 0, -490, 10, 10, 1])),
+        ("mul", 2, True, ma.array([10, 10, 10, 40, 0, 10, 20, 20, 2])),
+        ("mul", 2, False, ma.array([20, 20, 20, 20, 0, 20, 10, 10, 1])),
+        ("div", 2, True, ma.array([10, 10, 10, 10, 0, 10, 5, 5, 0.5])),
+        ("div", 2, False, ma.array([5, 5, 5, 20, 0, 5, 10, 10, 1])),
+        (
+            "eli",
+            0,
+            True,
+            ma.array([False, False, False, True, True, False, True, True, True]),
+        ),
+        (
+            "eli",
+            0,
+            False,
+            ma.array([True, True, True, False, False, True, False, False, False]),
+        ),
+    ],
+)
+def test_operations_inside_outside_polygon_minimal(oper, value, inside, expected):
+    """Do operations in relation to polygons, minimal example"""
+
+    poly = xtgeo.Polygons(SMALL_POLY + SMALL_POLY_OVERLAP)
+
+    for ver in (1, 2):
+        surf = SF1.copy()
+        surf.operation_polygons(poly, value, inside=inside, opname=oper, _version=ver)
+        if oper == "eli":
+            np.testing.assert_array_equal(surf.values.mask.ravel(), expected)
+        else:
+            np.testing.assert_array_equal(surf.values.ravel(), expected)
+
+
+@pytest.mark.parametrize(
+    "oper, inside, expected",
+    [
+        ("add", True, 31.2033),
+        ("add", False, 70.7966),
+        ("sub", True, -29.2033),
+        ("sub", False, -68.7966),
+        ("mul", True, 30.9013),
+        ("mul", False, 70.0988),
+        ("div", True, 0.7010),
+        ("div", False, 0.3090),
+        ("set", True, 30.9013),
+        ("set", False, 70.0987),
+        ("eli", True, 1.0),
+        ("eli", False, 1.0),
+    ],
+)
+def test_operations_inside_outside_polygon_generic(reekset, oper, inside, expected):
+    """Do operations in relation to polygons in a generic way"""
 
     logger.info("Simple case...")
 
-    surf = xtgeo.surface_from_file(SURF1)
-    assert surf.values.mean() == pytest.approx(1698.65, abs=0.01)
-    poly = xtgeo.polygons_from_file(POLY1)
+    _surf, poly = reekset
+    _surf.values = 1.0
 
-    surf.operation_polygons(poly, 100.0)  # add 100 inside poly
-    assert surf.values.mean() == pytest.approx(1728.85, abs=0.01)
+    for version in (1, 2):
+        surf = _surf.copy()
+        surf.operation_polygons(
+            poly, 100.0, inside=inside, opname=oper, _version=version
+        )
+        assert surf.values.mean() == pytest.approx(expected, abs=0.001)
 
 
 def test_operations_inside_outside_polygon_shortforms(tmpdir):
