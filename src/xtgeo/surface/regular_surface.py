@@ -2043,7 +2043,7 @@ class RegularSurface:
     # Operations restricted to inside/outside polygons
     # ==================================================================================
 
-    def operation_polygons(self, poly, value, opname="add", inside=True):
+    def operation_polygons(self, poly, value, opname="add", inside=True, _version=2):
         """A generic function for map operations inside or outside polygon(s).
 
         Args:
@@ -2051,10 +2051,18 @@ class RegularSurface:
             value(float or RegularSurface): Value to add, subtract etc
             opname (str): Name of operation... 'add', 'sub', etc
             inside (bool): If True do operation inside polygons; else outside.
+            _version (int): Algorithm version, 2 will be much faster when many points
+                on polygons (this key will be removed in later versions and shall not
+                be applied)
         """
-        _regsurf_oper.operation_polygons(
-            self, poly, value, opname=opname, inside=inside
-        )
+        if _version == 2:
+            _regsurf_oper.operation_polygons_v2(
+                self, poly, value, opname=opname, inside=inside
+            )
+        else:
+            _regsurf_oper.operation_polygons(
+                self, poly, value, opname=opname, inside=inside
+            )
 
     # shortforms
     def add_inside(self, poly, value):
