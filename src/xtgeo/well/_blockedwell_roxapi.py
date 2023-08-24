@@ -70,7 +70,7 @@ def _roxapi_import_bwell(
     else:
         raise ValueError(f"No such blocked well set: {bwname}")
 
-    if wname in bwset.get_well_names():
+    if wname in bwset.get_well_names(realisation=realisation):
         self._wname = wname
     else:
         raise WellNotFoundError(f"No such well in blocked well set: {wname}")
@@ -79,8 +79,8 @@ def _roxapi_import_bwell(
     bwprops = [item for item in bwset.properties]
     bwnames = [item.name for item in bwset.properties]
 
-    bw_cellindices = bwset.get_cell_numbers()
-    dind = bwset.get_data_indices([wname])
+    bw_cellindices = bwset.get_cell_numbers(realisation=realisation)
+    dind = bwset.get_data_indices([wname], realisation=realisation)
 
     cind = bw_cellindices[dind]
     xyz = np.transpose(gmodel.get_grid(realisation=realisation).get_cell_centers(cind))
@@ -154,7 +154,7 @@ def _roxapi_export_bwell(
     else:
         raise ValueError(f"No such blocked well set: {bwname}")
 
-    if wname in bwset.get_well_names():
+    if wname in bwset.get_well_names(realisation=realisation):
         self._wname = wname
     else:
         raise WellNotFoundError(f"No such well in blocked well set: {wname}")
@@ -162,7 +162,7 @@ def _roxapi_export_bwell(
     bwnames = [item.name for item in bwset.properties]
 
     # get the current indices for the well
-    dind = bwset.get_data_indices([self._wname])
+    dind = bwset.get_data_indices([self._wname], realisation=realisation)
 
     for lname in self.lognames:
         if not ijk and "_INDEX" in lname:
@@ -190,7 +190,7 @@ def _roxapi_export_bwell(
             bwprop = bwlog.get_values(realisation=realisation)
 
         usedtype = bwprop.dtype
-        dind = bwset.get_data_indices([self._wname])
+        dind = bwset.get_data_indices([self._wname], realisation=realisation)
 
         if self.dataframe[lname].values.size != dind.size:
             raise ValueError(
@@ -202,4 +202,4 @@ def _roxapi_export_bwell(
         )
 
         bwprop[dind] = maskedvalues
-        bwlog.set_values(bwprop)
+        bwlog.set_values(bwprop, realisation=realisation)

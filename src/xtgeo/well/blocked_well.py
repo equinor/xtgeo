@@ -3,6 +3,8 @@
 
 
 import deprecation
+import pandas as pd
+
 import xtgeo
 
 from . import _blockedwell_roxapi
@@ -45,7 +47,9 @@ def blockedwell_from_file(
     # return obj
 
 
-def blockedwell_from_roxar(project, gname, bwname, wname, lognames=None, ijk=True):
+def blockedwell_from_roxar(
+    project, gname, bwname, wname, lognames=None, ijk=True, realisation=0
+):
     """This makes an instance of a BlockedWell directly from Roxar RMS.
 
     For arguments, see :meth:`BlockedWell.from_roxar`.
@@ -60,9 +64,23 @@ def blockedwell_from_roxar(project, gname, bwname, wname, lognames=None, ijk=Tru
 
     """
 
-    obj = BlockedWell()
+    # TODO: replace this with proper class method
+    obj = BlockedWell(
+        *([0.0] * 3), "", pd.DataFrame({"X_UTME": [], "Y_UTMN": [], "Z_TVDSS": []})
+    )
 
-    obj.from_roxar(project, gname, bwname, wname, ijk=ijk, lognames=lognames)
+    _blockedwell_roxapi.import_bwell_roxapi(
+        obj,
+        project,
+        gname,
+        bwname,
+        wname,
+        lognames=lognames,
+        ijk=ijk,
+        realisation=realisation,
+    )
+
+    obj._ensure_consistency()
 
     return obj
 
