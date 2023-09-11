@@ -172,6 +172,22 @@ def test_rox_surfaces(roxar_project):
 
 
 @pytest.mark.requires_roxar
+def test_rox_surfaces_dtype_switching(roxar_project):
+    """Test dtype switching for from_roxar"""
+    srf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1, dtype="float32")
+    assert srf.ncol == 554
+    assert srf.values.mean() == pytest.approx(1698.648, abs=0.01)
+    assert srf.dtype == np.float32
+    srf.to_roxar(roxar_project, "TopReek_copy", "SomeFolder", stype="clipboard")
+
+    srf2 = srf.copy()
+    assert srf2.dtype == np.float32
+
+    srf2.dtype = np.float64
+    np.testing.assert_allclose(srf.values, srf2.values)
+
+
+@pytest.mark.requires_roxar
 def test_rox_surfaces_alternative_open(roxar_project):
     """Based on previous but instead use a project ref as first argument"""
 

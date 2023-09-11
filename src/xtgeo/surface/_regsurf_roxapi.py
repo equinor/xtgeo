@@ -3,6 +3,8 @@
 import os
 import tempfile
 
+import numpy as np
+
 from xtgeo import RoxUtils
 from xtgeo.common import XTGeoDialog
 
@@ -152,7 +154,7 @@ def _roxapi_export_surface(
         try:
             roxroot = proj.horizons[name][category]
             roxg = _xtgeo_to_roxapi_grid(self)
-            roxg.set_values(self.values)
+            roxg.set_values(self.values.astype(np.float64))
             roxroot.set_grid(roxg, realisation=realisation)
         except KeyError as kwe:
             logger.error(kwe)
@@ -165,7 +167,7 @@ def _roxapi_export_surface(
         try:
             roxroot = proj.zones[name][category]
             roxg = _xtgeo_to_roxapi_grid(self)
-            roxg.set_values(self.values)
+            roxg.set_values(self.values.astype(np.float64))
             roxroot.set_grid(roxg)
         except KeyError as kwe:
             logger.error(kwe)
@@ -183,7 +185,7 @@ def _roxapi_export_surface(
 
         roxroot = styperef.create_surface(name, folders)
         roxg = _xtgeo_to_roxapi_grid(self)
-        roxg.set_values(self.values)
+        roxg.set_values(self.values.astype(np.float64))
         roxroot.set_grid(roxg)
 
     elif stype == "trends":
