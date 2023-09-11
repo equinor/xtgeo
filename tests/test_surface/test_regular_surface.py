@@ -181,6 +181,31 @@ def test_irapbin_import1():
     xsurf.describe()
 
 
+def test_irapbin_import_32bit():
+    """Import Reek Irap binary, force 32 bit storage in import."""
+    # setting dtype in importing surface
+    xsurf = xtgeo.surface_from_file(TESTSET2, dtype=np.float32)
+    assert xsurf.values.dtype == np.float32
+
+    # setting dtype explicit as 64 bit
+    xsurf.dtype = np.float64
+    assert xsurf.values.dtype == np.float64
+
+    # setting dtype explicit as 32 bit
+    xsurf.dtype = np.float32
+    assert xsurf.values.dtype == np.float32
+
+    xsurf.dtype = "float64"
+    assert xsurf.values.dtype == np.float64
+
+
+def test_irapbin_import_invalid_dtype():
+    """Import Reek Irap binary, invalid dtype."""
+    # setting dtype in importing surface
+    with pytest.raises(AttributeError):
+        xtgeo.surface_from_file(TESTSET2, dtype=np.float33)
+
+
 def test_irapbin_import_use_pathib():
     """Import Reek Irap binary."""
     logger.info("Import and export...")

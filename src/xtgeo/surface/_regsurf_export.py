@@ -101,7 +101,7 @@ def _export_irap_ascii(self, mfile):
         self._xinc,
         self._yflip * self._yinc,
         self._rotation,
-        vals,
+        vals.astype(np.float64),
         0,
     )
     if ier != 0:
@@ -199,7 +199,7 @@ def _export_irap_binary_cxtgeo(self, mfile):
         self._xinc,
         self._yflip * self._yinc,
         self._rotation,
-        vals,
+        vals.astype(np.float64),
         0,
     )
 
@@ -225,7 +225,7 @@ def export_ijxyz_ascii(self, mfile):
         self._yflip,
         self._ilines,
         self._xlines,
-        vals,
+        vals.astype(np.float64),
         0,
     )
 
@@ -324,7 +324,7 @@ def _export_zmap_ascii(self, mfile):
         scopy._yori,
         scopy._xinc,
         yinc,
-        vals,
+        vals.astype(np.float64),
         zmin,
         zmax,
         0,
@@ -361,7 +361,9 @@ def export_storm_binary(self, mfile):
         scopy._yori,
         scopy._xinc,
         yinc,
-        scopy.get_values1d(order="F", asmasked=False, fill_value=self.undef),
+        scopy.get_values1d(order="F", asmasked=False, fill_value=self.undef).astype(
+            np.float64
+        ),
         zmin,
         zmax,
         0,
@@ -416,7 +418,7 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
     _cxtgeo.surf_export_petromod_bin(
         mfile.get_cfhandle(),
         dsc,
-        values,
+        values.astype(np.float64),
     )
 
     mfile.cfclose()
