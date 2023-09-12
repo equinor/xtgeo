@@ -42,7 +42,7 @@ import warnings
 from collections import OrderedDict
 from copy import deepcopy
 from types import FunctionType
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Type, Union
 
 import deprecation
 import numpy as np
@@ -80,7 +80,7 @@ def surface_from_file(
     template=None,
     values=True,
     engine: Optional[str] = "cxtgeo",
-    dtype: Optional[Union[np.float64, np.float32]] = np.float64,
+    dtype: Union[Type[np.float64], Type[np.float32]] = np.float64,
 ):
     """Make an instance of a RegularSurface directly from file import.
 
@@ -123,7 +123,7 @@ def surface_from_roxar(
     category,
     stype="horizons",
     realisation=0,
-    dtype: Optional[Union[np.float64, np.float32]] = np.float64,
+    dtype: Union[Type[np.float64], Type[np.float32]] = np.float64,
 ):
     """This makes an instance of a RegularSurface directly from roxar input.
 
@@ -347,7 +347,7 @@ class RegularSurface:
         filesrc: Optional[str] = None,
         fformat: Optional[str] = None,
         undef: Optional[float] = xtgeo.UNDEF,
-        dtype: Optional[Union[np.float64, np.float32]] = np.float64,
+        dtype: Union[Type[np.float64], Type[np.float32]] = np.float64,
     ):
         """Instantiating a RegularSurface::
 
@@ -719,7 +719,7 @@ class RegularSurface:
         return infer_dtype
 
     @dtype.setter
-    def dtype(self, wanted_dtype: Union[np.float64, np.float32]):
+    def dtype(self, wanted_dtype: Union[Type[np.float64], Type[np.float32]]):
         """Setting the dtype of the values (np.array); float64 or float32"""
         try:
             self._values = self._values.astype(wanted_dtype)
