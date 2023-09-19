@@ -74,14 +74,7 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def surface_from_file(
-    mfile,
-    fformat=None,
-    template=None,
-    values=True,
-    engine: Optional[str] = "cxtgeo",
-    dtype: Optional[Union[np.float64, np.float32]] = np.float64,
-):
+def surface_from_file(mfile, fformat=None, template=None, values=True, engine="cxtgeo"):
     """Make an instance of a RegularSurface directly from file import.
 
     Args:
@@ -94,7 +87,6 @@ def surface_from_file(
         values (bool): If True (default), surface values will be read (Irap binary only)
         engine (str): Some import methods are implemnted in both C and Python.
             The C method ``cxtgeo`` is default. Alternative use ``python``
-        dtype: Requsted numpy dtype of values; default is float64, alternatively float32
 
     Example::
 
@@ -108,23 +100,11 @@ def surface_from_file(
     """
 
     return RegularSurface._read_file(
-        mfile,
-        fformat=fformat,
-        load_values=values,
-        engine=engine,
-        template=template,
-        dtype=dtype,
+        mfile, fformat=fformat, load_values=values, engine=engine, template=template
     )
 
 
-def surface_from_roxar(
-    project,
-    name,
-    category,
-    stype="horizons",
-    realisation=0,
-    dtype: Optional[Union[np.float64, np.float32]] = np.float64,
-):
+def surface_from_roxar(project, name, category, stype="horizons", realisation=0):
     """This makes an instance of a RegularSurface directly from roxar input.
 
     Args:
@@ -138,7 +118,6 @@ def surface_from_roxar(
         stype (str): RMS folder type, 'horizons' (default), 'zones', 'clipboard',
             'general2d_data' or 'trends'
         realisation (int): Realisation number, default is 0
-        dtype: Requested numpy dtype for array; default is 64 bit
 
     Example::
 
@@ -157,7 +136,7 @@ def surface_from_roxar(
     """
 
     return RegularSurface._read_roxar(
-        project, name, category, stype=stype, realisation=realisation, dtype=dtype
+        project, name, category, stype=stype, realisation=realisation
     )
 
 
@@ -347,7 +326,6 @@ class RegularSurface:
         filesrc: Optional[str] = None,
         fformat: Optional[str] = None,
         undef: Optional[float] = xtgeo.UNDEF,
-        dtype: Optional[Union[np.float64, np.float32]] = np.float64,
     ):
         """Instantiating a RegularSurface::
 
@@ -410,13 +388,12 @@ class RegularSurface:
         self._metadata = xtgeo.MetaDataRegularSurface()
 
         self._values = None
-
         if values is None:
             values = np.ma.zeros((self._ncol, self._nrow))
             self._isloaded = False
         else:
             self._isloaded = True
-        self._ensure_correct_values(values, force_dtype=dtype)
+        self.values = values
 
         if ilines is None:
             self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
@@ -709,27 +686,8 @@ class RegularSurface:
         return ymax
 
     @property
-    def dtype(self) -> np.dtype:
-        """Getting the dtype of the values (np.array); float64 or float32"""
-        # this is not stored as state varible, but derived from the actual values
-        try:
-            infer_dtype = self._values.dtype
-        except AttributeError:
-            infer_dtype = np.float64
-        return infer_dtype
-
-    @dtype.setter
-    def dtype(self, wanted_dtype: Union[np.float64, np.float32]):
-        """Setting the dtype of the values (np.array); float64 or float32"""
-        try:
-            self._values = self._values.astype(wanted_dtype)
-        except TypeError as msg:
-            warnings.warn(f"Cannot change dtype: {msg}. Will keep current", UserWarning)
-            return
-
-    @property
     def values(self):
-        """The map values, as 2D masked numpy (float64/32), shape (ncol, nrow).
+        """The map values, as 2D masked numpy (float64), shape (ncol, nrow).
 
         When setting values as a scalar, the current mask will be preserved.
 
@@ -1027,11 +985,10 @@ class RegularSurface:
             fformat = mfile.detect_fformat()
         else:
             fformat = mfile.generic_format_by_proposal(fformat)  # default
-        new_kwargs = _data_reader_factory(fformat)(mfile, values=load_values, **kwargs)
-        new_kwargs["filesrc"] = mfile.file
-        new_kwargs["fformat"] = fformat
-        new_kwargs["dtype"] = kwargs.get("dtype", np.float64)
-        return cls(**new_kwargs)
+        kwargs = _data_reader_factory(fformat)(mfile, values=load_values, **kwargs)
+        kwargs["filesrc"] = mfile.file
+        kwargs["fformat"] = fformat
+        return cls(**kwargs)
 
     def load_values(self):
         """Import surface values in cases where metadata only is loaded.
@@ -1243,13 +1200,7 @@ class RegularSurface:
 
     @classmethod
     def _read_roxar(
-        cls,
-        project,
-        name,
-        category,
-        stype="horizons",
-        realisation=0,
-        dtype=np.float64,
+        cls, project, name, category, stype="horizons", realisation=0
     ):  # pragma: no cover
         """Load a surface from a Roxar RMS project.
 
@@ -1272,14 +1223,11 @@ class RegularSurface:
                 example 'DS_extracted'
             stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
             realisation (int): Realisation number, default is 0
-            dtype: For supporting conversion to 32 bit float for the numpy; default
-                is 64 bit
 
         """
         kwargs = _regsurf_roxapi.import_horizon_roxapi(
             project, name, category, stype, realisation
         )
-        kwargs["dtype"] = dtype  # eventual dtype change will be done in __init__
 
         return cls(**kwargs)
 
@@ -3071,7 +3019,7 @@ class RegularSurface:
     # ==================================================================================
 
     def _ensure_correct_values(
-        self, values, force_dtype=None
+        self, values
     ):  # pylint: disable=too-many-branches, too-many-statements
         """Ensures that values is a 2D masked numpy (ncol, nrow), C order.
 
@@ -3079,15 +3027,11 @@ class RegularSurface:
 
         Args:
             values (array-like or scalar): Values to process.
-            force_dtype (numpy dtype or None): If not None, try to derive dtype from
-                current values
 
         Return:
             Nothing, self._values will be updated inplace
 
         """
-        apply_dtype = force_dtype if force_dtype else self.dtype
-
         currentmask = None
         if isinstance(self.values, ma.MaskedArray):
             currentmask = ma.getmaskarray(self.values)
@@ -3116,7 +3060,7 @@ class RegularSurface:
 
         elif isinstance(values, numbers.Number):
             if currentmask is not None:
-                vals = np.ones(self.dimensions, dtype=apply_dtype) * values
+                vals = np.ones(self.dimensions, dtype=np.float64) * values
                 vals = np.ma.array(vals, mask=currentmask)
 
                 # there maybe cases where values scalar input is some kind of UNDEF
@@ -3126,11 +3070,11 @@ class RegularSurface:
                 self._values *= 0
                 self._values += vals
             else:
-                vals = ma.zeros((self.ncol, self.nrow), order="C", dtype=apply_dtype)
+                vals = ma.zeros((self.ncol, self.nrow), order="C", dtype=np.float64)
                 self._values = vals + float(values)
 
         elif isinstance(values, (list, tuple, np.ndarray)):  # ie values ~ list-like
-            vals = ma.array(values, order="C", dtype=apply_dtype)
+            vals = ma.array(values, order="C", dtype=np.float64)
             vals = ma.masked_greater(vals, self.undef_limit, copy=True)
             vals = ma.masked_invalid(vals, copy=True)
 
@@ -3143,7 +3087,7 @@ class RegularSurface:
             self._values = vals
 
         elif isinstance(values, (list, tuple)):  # ie values ~ list-like
-            vals = ma.array(values, order="C", dtype=apply_dtype)
+            vals = ma.array(values, order="C", dtype=np.float64)
             vals = ma.masked_greater(vals, self.undef_limit, copy=True)
             vals = ma.masked_invalid(vals, copy=True)
 
@@ -3160,6 +3104,3 @@ class RegularSurface:
 
         if self._values.mask is ma.nomask:
             self._values = ma.array(self._values, mask=ma.getmaskarray(self._values))
-
-        # ensure dtype; avoid allocation and ID change if possible by setting copy=False
-        self._values = self._values.astype(apply_dtype, copy=False)
