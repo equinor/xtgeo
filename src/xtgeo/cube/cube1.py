@@ -6,6 +6,7 @@ import os.path
 import pathlib
 import tempfile
 import warnings
+from typing import Any, Optional, Tuple
 
 import deprecation
 import numpy as np
@@ -130,7 +131,7 @@ def allow_deprecated_default_init(func):
     return wrapper
 
 
-class Cube:  # pylint: disable=too-many-public-methods
+class Cube:  # pylint: disable=too-many-public-methods, W0201
     """Class for a (seismic) cube in the XTGeo framework.
 
     The values are stored as a 3D numpy array (4 bytes; float32 is default),
@@ -948,7 +949,14 @@ class Cube:  # pylint: disable=too-many-public-methods
         self._metadata.required = self
 
     def to_roxar(
-        self, project, name, folder=None, domain="time", compression=("wavelet", 5)
+        self,
+        project: Any,
+        name: str,
+        folder: Optional[str] = None,
+        propname: str = "seismic_attribute",
+        domain: str = "time",
+        compression: Tuple[str, float] = ("wavelet", 5.0),
+        target: str = "seismic",
     ):  # pragma: no cover
         """Export (transfer) a cube from a XTGeo cube object to Roxar data.
 
@@ -958,30 +966,50 @@ class Cube:  # pylint: disable=too-many-public-methods
             will not be saved until the user do an explicit project save action.
 
         Args:
-            project (str or roxar._project): Inside RMS use the magic 'project',
+            project: Inside RMS use the magic 'project',
                 else use path to RMS project, or a project reference
-            name (str): Name of cube (seismic data) within RMS project.
-            folder (str): Cubes may be stored under a folder in the tree, use '/'
+            name: Name of cube (seismic data) within RMS project.
+            folder: Cubes may be stored under a folder in the tree, use '/'
                 to seperate subfolders.
-            domain (str): 'time' (default) or 'depth'
-            compression (tuple): description to come...
+            propname: Name of grid property; only relevant when target is "grid" and
+                defaults to "seismic_attribute"
+            domain: 'time' (default) or 'depth'
+            compression: Reference to Roxar API 'compression method' and 'compression
+                tolerance', but implementation is pending. Hence inactive.
+            target: Optionally, the seismic cube can be written to the `Grid model`
+                tree in RMS. Internally, it will be convert to a "box" grid with one
+                gridproperty, before it is written to RMS. The ``compression``and
+                ``domain`` are not relevant when writing to grid model.
 
         Raises:
             To be described...
 
         Example::
 
-            zz = xtgeo.cube.Cube('myfile.segy')
-            zz.to_roxar(project, 'reek_cube')
-
-            # alternative
             zz = xtgeo.cube_from_file('myfile.segy')
             zz.to_roxar(project, 'reek_cube')
+            # write cube to "Grid model" tree in RMS instead
+            zz.to_roxar(project, 'cube_as_grid', propname="impedance", target="grid")
 
+        .. versionchanged:: 3.4 Add ``target`` and ``propname`` keys
         """
-        _cube_roxapi.export_cube_roxapi(
-            self, project, name, folder=folder, domain=domain, compression=compression
-        )
+
+        if "grid" in target.lower():
+            _tmpgrd = xtgeo.grid_from_cube(self, propname=name)
+            _tmpprop = _tmpgrd.props[0]
+            _tmpprop.name = propname if propname else "seismic_attribute"
+            _tmpgrd.to_roxar(project, name)
+            _tmpprop.to_roxar(project, name, _tmpprop.name)
+
+        else:
+            _cube_roxapi.export_cube_roxapi(
+                self,
+                project,
+                name,
+                folder=folder,
+                domain=domain,
+                compression=compression,
+            )
 
     @staticmethod
     def scan_segy_traces(sfile, outfile=None):
@@ -1054,15 +1082,17 @@ class Cube:  # pylint: disable=too-many-public-methods
 
         if isinstance(values, numbers.Number):
             self._values = np.zeros(self.dimensions, dtype=np.float32) + values
-            return
+            self._values = self._values.astype(np.float32)  # ensure 32 bit floats
 
-        if isinstance(values, np.ndarray):
-            values = values.reshape(self.dimensions)
+        elif isinstance(values, np.ndarray):
+            values = values.reshape(self.dimensions).astype(np.float32)
 
             if not values.data.c_contiguous:
                 values = np.ascontiguousarray(values)
+            self._values = values
 
-        if isinstance(values, (list, tuple)):
-            values = np.array(values, dtype=np.float32).reshape(self.dimensions)
+        elif isinstance(values, (list, tuple)):
+            self._values = np.array(values, dtype=np.float32).reshape(self.dimensions)
 
-        self._values = values
+        else:
+            raise RuntimeError("Cannot process _ensure_correct_values")
