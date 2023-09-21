@@ -4,7 +4,7 @@ setuptools>=43
 wheel>=0.38
 numpy
 cmake
-setuptools_scm
+setuptools_scm<8
 scikit-build
 ninja
 pytest-runner
