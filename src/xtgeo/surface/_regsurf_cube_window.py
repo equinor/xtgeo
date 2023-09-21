@@ -4,9 +4,11 @@
 
 import numpy as np
 import numpy.ma as ma
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGShowProgress
-from . import _regsurf_cube_window_v2 as cwv
+
+from xtgeo.common import XTGeoDialog, XTGShowProgress
+
+from . import _regsurf_cube_window_v2 as cwv2
+from . import _regsurf_cube_window_v3 as cwv3
 
 xtg = XTGeoDialog()
 
@@ -69,8 +71,25 @@ def slice_cube_window(
             deadtraces=deadtraces,
         )
 
+    elif algorithm == 2:
+        attrs = cwv2.slice_cube_window(
+            self,
+            cube,
+            zsurf=zsurf,
+            other=other,
+            other_position=other_position,
+            sampling=sampling,
+            mask=mask,
+            zrange=zrange,
+            ndiv=ndiv,
+            attribute=attribute,
+            maskthreshold=maskthreshold,
+            snapxy=snapxy,
+            showprogress=showprogress,
+            deadtraces=deadtraces,
+        )
     else:
-        attrs = cwv.slice_cube_window(
+        attrs = cwv3.slice_cube_window(
             self,
             cube,
             zsurf=zsurf,
