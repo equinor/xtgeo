@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Setup for XTGeo - subsurface reservoir tool for maps, 3D grids etc."""
-import os
 import sys
 
 try:
@@ -37,18 +36,9 @@ EXTRAS_REQUIRE = {"tests": TEST_REQUIREMENTS, "docs": DOCS_REQUIREMENTS}
 CMDCLASS = {"clean": setuputils.CleanUp}
 
 
-def src(anypath):
-    root = os.path.dirname(__file__)
-    return os.path.abspath(os.path.join(root, anypath))
-
-
 skbuild.setup(
     name="xtgeo",
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
-    use_scm_version={
-        "root": src(""),
-        "write_to": src("src/xtgeo/_theversion.py"),
-    },
     long_description=README + "\n\n" + HISTORY,
     long_description_content_type="text/markdown",
     author="Equinor R&T",
@@ -106,10 +96,6 @@ if CMD == "develop":
     print("Run in DEVELOP mode")
     setuptools_setup(  # use setuptools version of setup
         name="xtgeo",
-        use_scm_version={
-            "root": src(""),
-            "write_to": src("src/xtgeo/_theversion.py"),
-        },
         packages=setuptools.find_packages(where="src"),
         package_dir={"": "src"},
         zip_safe=False,
