@@ -45,3 +45,6 @@ requires = [
   'autoclasstoc',
   'myst-parser',
 ]
+
+[tool.setuptools_scm]
+write_to = "src/xtgeo/_theversion.py"
