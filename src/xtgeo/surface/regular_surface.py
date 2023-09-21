@@ -32,6 +32,7 @@ or::
 # --------------------------------------------------------------------------------------
 
 # pylint: disable=too-many-public-methods
+from __future__ import annotations
 
 import functools
 import io
@@ -42,7 +43,7 @@ import warnings
 from collections import OrderedDict
 from copy import deepcopy
 from types import FunctionType
-from typing import List, Optional, Tuple, Type, Union
+from typing import Dict, List, Literal, Optional, Tuple, Type, Union
 
 import deprecation
 import numpy as np
@@ -69,6 +70,22 @@ from . import (
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
+# valid argumentts for seismic attributes
+ValidAttrs = Literal[
+    "all",
+    "max",
+    "min",
+    "rms",
+    "mean",
+    "var",
+    "maxpos",
+    "maxneg",
+    "sumpos",
+    "sumneg",
+    "meanabs",
+    "meanpos",
+    "meanneg",
+]
 
 # ======================================================================================
 # METHODS as wrappers to class init + import
@@ -2541,21 +2558,21 @@ class RegularSurface:
 
     def slice_cube_window(
         self,
-        cube,
-        zsurf=None,
-        other=None,
-        other_position="below",
-        sampling="nearest",
-        mask=True,
-        zrange=None,
-        ndiv=None,
-        attribute="max",
-        maskthreshold=0.1,
-        snapxy=False,
-        showprogress=False,
-        deadtraces=True,
-        algorithm=2,
-    ):
+        cube: xtgeo.Cube,
+        zsurf: Optional[xtgeo.RegularSurface] = None,
+        other: Optional[xtgeo.RegularSurface] = None,
+        other_position: str = "below",
+        sampling: Literal["nearest", "cube", "trilinear"] = "nearest",
+        mask: bool = True,
+        zrange: Optional[float] = None,
+        ndiv: Optional[int] = None,
+        attribute: Union[List[ValidAttrs], ValidAttrs] = "max",
+        maskthreshold: float = 0.1,
+        snapxy: bool = False,
+        showprogress: bool = False,
+        deadtraces: bool = True,
+        algorithm: Literal[1, 2, 3] = 2,
+    ) -> Optional[Dict[xtgeo.RegularSurface]]:
         """Slice the cube within a vertical window and get the statistical attrubutes.
 
         The statistical attributes can be min, max etc. Attributes are:
@@ -2590,44 +2607,49 @@ class RegularSurface:
         available.
 
         Args:
-            cube (Cube): Instance of a Cube()
-            zsurf (RegularSurface): Instance of a depth (or time) map, which
+            cube: Instance of a Cube() here
+            zsurf: Instance of a depth (or time) map, which
                 is the depth or time map (or...) that is used a slicer.
                 If None, then the surface instance itself is used a slice
                 criteria. Note that zsurf must have same map defs as the
                 surface instance.
-            other (RegularSurface): Instance of other surface if window is
+            other: Instance of other surface if window is
                 between surfaces instead of a static window. The zrange
                 input is then not applied.
-            sampling (str): 'nearest'/'trilinear'/'cube' for nearest node (default),
+            sampling: 'nearest'/'trilinear'/'cube' for nearest node (default),
                  or 'trilinear' for trilinear interpolation. The 'cube' option is
                  only available with algorithm = 2 and will overrule ndiv and sample
                  at the cube's Z increment resolution.
-            mask (bool): If True (default), then the map values outside
+            mask: If True (default), then the map values outside
                 the cube will be undef, otherwise map will be kept as-is
-            zrange (float): The one-sided "radius" range of the window, e.g. 10
+            zrange: The one-sided "radius" range of the window, e.g. 10
                 (10 is default) units (e.g. meters if in depth mode).
                 The full window is +- zrange (i.e. diameter).
-                If other surface is present, zrange is computed based on that.
-            ndiv (int): Number of intervals for sampling within zrange. None
+                If other surface is present, zrange is computed based on those
+                two surfaces instead.
+            ndiv: Number of intervals for sampling within zrange. None
                 means 'auto' sampling, using 0.5 of cube Z increment as basis. If
-                algorithm = 2 and sampling is 'cube', the cube Z increment
+                algorithm = 2/3 and sampling is 'cube', the cube Z increment
                 will be used.
-            attribute (str or list): The requested attribute(s), e.g.
+            attribute: The requested attribute(s), e.g.
                 'max' value. May also be a list of attributes, e.g.
                 ['min', 'rms', 'max']. By such, a dict of surface objects is
-                returned. Note 'all' will make a list of possible attributes
+                returned. Note 'all' will make a list of all possible attributes.
             maskthreshold (float): Only if two surface; if isochore is less
                 than given value, the result will be masked.
-            snapxy (bool): If True (optional), then the map values will get
-                values at nearest Cube XY location. Only relevant to use if
-                surface is derived from seismic coordinates (e.g. Auto4D).
-            showprogress (bool): If True, then a progress is printed to stdout.
-            deadtraces (bool): If True (default) then dead cube traces
+            snapxy: If True (optional), then the map values will get
+                values at nearest Cube XY location, and the resulting surfaces layout
+                map will be defined by the seismic layout. Quite relevant to use if
+                surface is derived from seismic coordinates (e.g. Auto4D), but can be
+                useful in other cases also, as long as one notes that map definition
+                may change from input.
+            showprogress: If True, then a progress is printed to stdout.
+            deadtraces: If True (default) then dead cube traces
                 (given as value 2 in SEGY trace headers), are treated as
-                undefined, nad map will be undefined at dead trace location.
-            algorithm (int): 1 for legacy method, 2 (default) for new faster
-                and more precise method available from xtgeo version 2.9.
+                undefined, and map will be undefined at dead trace location.
+            algorithm: 1 for legacy method, 2 (default) for new faster
+                and more precise method available from xtgeo version 2.9, and
+                algorithm 3 as new implementation from Sept. 2023 (v3.4)
 
         Example::
 
@@ -2657,9 +2679,19 @@ class RegularSurface:
 
         .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is now 2,
                             while 1 is the legacy version
+
+        .. versionchanged:: 3.4 Added ``algorithm`` 3 which is more robust and
+                            hence recommended!
+
         """
         if other is None and zrange is None:
             zrange = 10
+
+        if algorithm != 3:
+            warnings.warn(
+                "Other algorithms than no. 3 may be deprecated from xtgeo version 4",
+                PendingDeprecationWarning,
+            )
 
         asurfs = _regsurf_cube_window.slice_cube_window(
             self,
