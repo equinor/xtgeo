@@ -12,8 +12,9 @@ jobs:
           python-version: "3.10"
       - name: Check black style and linting
         run: |
-          pip install black
+          pip install black mypy
           pip freeze
           black --check *.py src tests --extend-exclude tests/**/snapshots --extend-exclude src/xtgeo/grid3d/grid_properties.py
+          mypy src tests --ignore-missing-imports
           pip install flake8
           flake8 src tests
