@@ -2,8 +2,8 @@
 
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
@@ -175,7 +175,7 @@ class Grid3DSlice(BasePlot):
         for pos in range(len(ibn)):
             nppol = xyc[pos, :, :]
             if nppol.mean() > 0.0:
-                polygon = Polygon(nppol, True)
+                polygon = Polygon(nppol)
                 patches.append(polygon)
 
         patchcoll = PatchCollection(
