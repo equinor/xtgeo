@@ -83,9 +83,7 @@ up your fork for local development (first time):
     $ source bin/activate
     $ cd /your_path_to_git_clone/xtgeo/
     $ pip install pip -U
-    $ pip install -r requirements/requirements_dev.txt
-    $ python setup.py clean
-    $ python setup.py develop
+    $ pip install ".[dev,docs]"
     $ pytest  # to check that stuff works
 
 4. Create a branch for local development:
@@ -100,13 +98,12 @@ Now you can make your changes locally.
 
 .. code-block:: bash
 
-    $ flake8 <your edited code>
-    $ pylint <your edited code>
-    $ Use `pytest` for running tests
-    $ Run `black` on your python code, then there is no discussions on formatting
-
-To get ``flake8``, ``pylint`` and ``black`` and just pip install them into
-your virtualenv.
+    $ black src tests
+    $ flake8 src tests
+    $ isort src tests
+    $ mypy src
+    $ pylint src tests
+    $ pytest tests
 
 6. If you want to edit C code, take contact with the author for detailed instructions.
 
@@ -137,9 +134,7 @@ and it is targeted to Equinor usage using bash shell in Linux:
     $ source ~/venv/py36_rms12.0.2/bin/activate
     $ cd path_to_xtgeo/
     $ python -m pip install pip -U
-    $ pip install requirements/requirements_dev.txt
-    $ python setup.py clean
-    $ python setup.py develop
+    $ pip install ".[dev]"
     $ pytest
 
 Now you have an editable install in your virtual environment that can be ran

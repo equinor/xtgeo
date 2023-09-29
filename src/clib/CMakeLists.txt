@@ -1,63 +1,20 @@
-message(STATUS "XTGeo library...")
-
 include_directories(${CMAKE_CURRENT_LIST_DIR}/xtg)
+set(SRC "${CMAKE_CURRENT_LIST_DIR}/xtg")
 
-find_package(Threads)
-
-
-if (MSVC)
-  set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
-  set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
-else()
-  set(XTGFLAGS -Wall -Wno-unused-but-set-variable -fPIC)
-  set(CXTGEOFLAGS -Wl,--no-undefined)
-endif()
-
-set (SRC "${CMAKE_CURRENT_LIST_DIR}/xtg")
-
-# todo: replace globbing with unique list, as globbing is bad practice
+# TODO: replace globbing with unique list, as globbing is bad practice
 FILE(GLOB SOURCES ${SRC}/*.c)
+add_library(xtg STATIC ${SOURCES})
 
-add_library(xtg
-  STATIC
-  ${SOURCES}
-  )
+find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+find_package(SWIG 3.0.1 COMPONENTS REQUIRED)
+include(UseSWIG)
 
-target_compile_options(xtg PRIVATE ${XTGFLAGS})
-
-# ======================================================================================
-# Find Python and SWIG
-# ======================================================================================
-
-# in case required SWIG is missing or too old and we are within Equinor, need a path to
-# a SWIG version that works (RHEL7 have SWIG 2 by default which is too old)
-if("$ENV{HOSTNAME}" MATCHES "statoil" AND CMAKE_SYSTEM_NAME MATCHES "Linux")
-  LIST(APPEND CMAKE_PROGRAM_PATH "/prog/res/opt/rhel7/swig_4.0.2/bin")
-  message(STATUS "Using Swig from /prog/res")
+# CMP0053: Simplify variable reference and escape sequence evaluation.
+# The OLD behavior for this policy is to honor the legacy behavior for
+# variable references and escape sequences.
+if (POLICY CMP0053)
+  cmake_policy(SET CMP0053 OLD)
 endif()
-
-# These policies are related to SWIG python libraries naming
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  cmake_policy(SET CMP0074 NEW)
-  if (POLICY CMP0078)
-    cmake_policy(SET CMP0078 OLD)
-  endif()
-
-  if (POLICY CMP0086)
-    cmake_policy(SET CMP0086 OLD)
-  endif()
-else()
-  set(UseSWIG_TARGET_NAME_PREFERENCE LEGACY)
-endif()
-
-find_package(SWIG 3.0.1 REQUIRED)
-include(${SWIG_USE_FILE})
-
-find_package(PythonLibs REQUIRED)
-
-message(STATUS "XTGeo Python include path: ${PYTHON_INCLUDE_PATH}")
-message(STATUS "XTGeo Python include dirs: ${PYTHON_INCLUDE_DIRS}")
-message(STATUS "XTGeo Python executable ok: ${PYTHON_EXECUTABLE}")
 
 # ======================================================================================
 # Looking for numpy; need to avoid that weird old system numpy is used (aka RHEL6)
@@ -67,11 +24,7 @@ message(STATUS "XTGeo Python executable ok: ${PYTHON_EXECUTABLE}")
 # via https://github.com/DeepLearnPhysics/larcv3/blob/src/CMakeLists.txt
 # ======================================================================================
 
-if (POLICY CMP0053)
-  cmake_policy(SET CMP0053 OLD)
-endif()
-
-if(NOT PYTHON_EXECUTABLE)
+if(NOT Python_EXECUTABLE)
   if(NumPy_FIND_QUIETLY)
     find_package(PythonInterp QUIET)
   else()
@@ -80,7 +33,7 @@ if(NOT PYTHON_EXECUTABLE)
   endif()
 endif()
 
-if (PYTHON_EXECUTABLE)
+if (Python_EXECUTABLE)
   # Find out the include path
   execute_process(
     COMMAND @PYTHON_EXECUTABLE@ -c
@@ -94,7 +47,7 @@ if (PYTHON_EXECUTABLE)
     message(STATUS "Detected NumPy: ${__numpy_path}; version ${__numpy_version}")
 elseif(__numpy_out)
   message(ERROR "Python executable not found.")
-endif(PYTHON_EXECUTABLE)
+endif(Python_EXECUTABLE)
 
 find_path(PYTHON_NUMPY_INCLUDE_DIR numpy/arrayobject.h
   HINTS "${__numpy_path}" "${PYTHON_INCLUDE_PATH}" NO_DEFAULT_PATH)
@@ -103,34 +56,92 @@ if(PYTHON_NUMPY_INCLUDE_DIR)
   set(PYTHON_NUMPY_FOUND 1 CACHE INTERNAL "Python numpy found")
 endif(PYTHON_NUMPY_INCLUDE_DIR)
 
-message(STATUS "XTGeo Numpy include path: ${PYTHON_NUMPY_INCLUDE_DIR}")
+message(STATUS "XTGeo Python include path: ${PYTHON_INCLUDE_PATH}")
+message(STATUS "XTGeo Python include dirs: ${PYTHON_INCLUDE_DIRS}")
+message(STATUS "XTGeo Python executable  : ${PYTHON_EXECUTABLE}")
+message(STATUS "XTGeo numpy include path : ${PYTHON_NUMPY_INCLUDE_DIR}")
 
 # ======================================================================================
-# Swigging and linking, with backward compatibility to older cmake versions
+# Find swig
 # ======================================================================================
-message(STATUS "Swigging")
 
-set(LIBRARYNAME cxtgeo)
-
-if (CMAKE_VERSION VERSION_GREATER 3.7)
-  swig_add_library(${LIBRARYNAME} LANGUAGE python SOURCES cxtgeo.i)
-else()
-  swig_add_module(${LIBRARYNAME} python cxtgeo.i)
+# in case required SWIG is missing or too old and we are within Equinor, need a path to
+# a SWIG version that works (RHEL7 have SWIG 2 by default which is too old)
+if("$ENV{HOSTNAME}" MATCHES "statoil" AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+  LIST(APPEND CMAKE_PROGRAM_PATH "/prog/res/opt/rhel7/swig_4.0.2/bin")
+  message(STATUS "Using Swig from /prog/res")
 endif()
 
-set(SWIGTARGET ${SWIG_MODULE_${LIBRARYNAME}_REAL_NAME})
+# ======================================================================================
+# Adjust policies
+# ======================================================================================
 
-target_include_directories(${SWIGTARGET} PUBLIC
+# CMP0074: find_package() uses <PackageName>_ROOT variables.
+# The OLD behavior for this policy is to ignore <PackageName>_ROOT variables.
+# The NEW behavior for this policy is to use <PackageName>_ROOT variables.
+cmake_policy(SET CMP0074 NEW)
+
+# CMP0078: UseSWIG generates standard target names.
+# The OLD behavior for this policy relies on UseSWIG_TARGET_NAME_PREFERENCE
+# variable that can be used to specify an explicit preference.
+# The value may be one of:
+#   LEGACY: legacy strategy is applied. Variable SWIG_MODULE_<name>_REAL_NAME
+#     must be used to get real target name. This is the default if not specified.
+#   STANDARD: target name matches specified name.
+if (POLICY CMP0078)
+  cmake_policy(SET CMP0078 OLD)
+endif()
+
+# CMP0086: UseSWIG honors SWIG_MODULE_NAME via -module flag.
+# The OLD behavior for this policy is to never pass -module option.
+# The NEW behavior is to pass -module option to SWIG compiler if
+#   SWIG_MODULE_NAME is specified.
+if (POLICY CMP0086)
+  cmake_policy(SET CMP0086 OLD)
+endif()
+
+# ======================================================================================
+# Compile swig bindings
+# ======================================================================================
+
+message(STATUS "Compiling swig bindings")
+
+if (MSVC)
+  set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
+  set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
+else()
+  set(XTGFLAGS -Wall -Wno-unused-but-set-variable -fPIC)
+  set(CXTGEOFLAGS -Wl,--no-undefined)
+endif()
+target_compile_options(xtg PRIVATE ${XTGFLAGS})
+
+set(PYTHON_MODULE cxtgeo)
+swig_add_library(
+  ${PYTHON_MODULE}
+  LANGUAGE python
+  OUTPUT_DIR "${SKBUILD_PLATLIB_DIR}"
+  SOURCES cxtgeo.i
+)
+set(SWIG_MODULE ${SWIG_MODULE_${PYTHON_MODULE}_REAL_NAME})
+
+target_include_directories(
+  ${SWIG_MODULE} PUBLIC
   ${PYTHON_INCLUDE_DIRS}
   ${PYTHON_NUMPY_INCLUDE_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}
-  )
-target_compile_options(${SWIGTARGET} PUBLIC ${CXTGEOFLAGS})
+  ${CMAKE_CURRENT_LIST_DIR})
+target_compile_options(${SWIG_MODULE} PUBLIC ${CXTGEOFLAGS})
+target_link_libraries(${SWIG_MODULE} xtg Python::Module)
 
-swig_link_libraries(${LIBRARYNAME} xtg ${PTHREAD_LIBRARY})
+# scikit-build-core docs recommend this
+if(WIN32)
+    set_property(TARGET ${SWIG_MODULE} PROPERTY SUFFIX ".${Python_SOABI}.pyd")
+else()
+    set_property(
+      TARGET ${SWIG_MODULE}
+      PROPERTY SUFFIX ".${Python_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+endif()
 
-python_extension_module(${SWIGTARGET})
-
-set(CXTGEO src/xtgeo/cxtgeo)
-
-install(TARGETS ${SWIGTARGET} LIBRARY DESTINATION ${CXTGEO})
+# Root installation directory is set in pyproject.toml
+# SWIG_MODULE == _cxtgeo, so this installs to
+# xtgeo.cxtgeo._cxtgeo
+install(TARGETS ${SWIG_MODULE} LIBRARY DESTINATION ${PYTHON_MODULE})
