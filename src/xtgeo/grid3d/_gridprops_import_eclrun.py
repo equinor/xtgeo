@@ -1,8 +1,9 @@
 from copy import deepcopy
 from typing import List, Tuple, Union
 
-import xtgeo
 from typing_extensions import Literal
+
+import xtgeo
 from xtgeo.common.constants import MAXKEYWORDS
 
 from . import _grid3d_utils as utils

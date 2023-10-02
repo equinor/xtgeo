@@ -4,6 +4,7 @@
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
+
 from .blocked_well import BlockedWell
 
 xtg = XTGeoDialog()

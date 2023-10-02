@@ -2,13 +2,14 @@
 
 from collections import OrderedDict
 from copy import deepcopy
-from packaging.version import parse as versionparse
 from math import atan2, degrees
 from typing import Tuple
 
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
+from packaging.version import parse as versionparse
+
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog

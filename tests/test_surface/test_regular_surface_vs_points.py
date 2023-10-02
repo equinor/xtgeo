@@ -1,6 +1,7 @@
 from os.path import join
 
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface

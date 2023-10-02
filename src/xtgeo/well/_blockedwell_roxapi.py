@@ -9,8 +9,8 @@ import numpy.ma as npma
 import pandas as pd
 
 from xtgeo.common import XTGeoDialog
-from xtgeo.roxutils import RoxUtils
 from xtgeo.common.exceptions import WellNotFoundError
+from xtgeo.roxutils import RoxUtils
 
 try:
     import roxar

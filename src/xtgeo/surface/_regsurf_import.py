@@ -8,6 +8,7 @@ from struct import unpack
 import h5py
 import numpy as np
 import numpy.ma as ma
+
 import xtgeo
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
