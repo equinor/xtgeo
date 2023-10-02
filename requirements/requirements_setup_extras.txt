@@ -1,9 +1,0 @@
-flake8
-pydocstyle
-coverage>=4.1
-pre-commit
-coverage>=4.1
-bandit
-autopep8
-pylint
-pytest-cov
