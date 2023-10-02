@@ -1,0 +1,21 @@
+name: Setup xtgeo
+description: Set up the xtgeo test environment
+
+inputs:
+  python-version:
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Build and install xtgeo
+      shell: bash
+      run: |
+        pip install -U pip
+        pip install ".[dev]"

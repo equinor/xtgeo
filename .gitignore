@@ -82,3 +82,4 @@ pip-wheel-metadata/
 .vscode/
 .venv*/
 .nfs*
+tmp/
