@@ -1,0 +1,9 @@
+name: Setup xtgeo testdata
+description: Set up the xtgeo test environment
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install test data
+      shell: bash
+      run: git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
