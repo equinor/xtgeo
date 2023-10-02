@@ -11,11 +11,7 @@ copy_test_files () {
 }
 
 install_package () {
-    pip install .
-}
-
-install_test_dependencies () {
-    pip install -r requirements/requirements_test.txt
+    pip install ".[dev]"
 }
 
 start_tests () {
@@ -31,12 +27,7 @@ cleanup () {
 run_tests() {
     copy_test_files
 
-    if [ ! -z "${CI_PR_RUN:-}" ]
-    then
-        install_package
-    fi
-
-    install_test_dependencies
+    install_package
 
     pushd $CI_TEST_ROOT
     start_tests
