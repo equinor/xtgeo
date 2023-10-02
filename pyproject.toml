@@ -118,6 +118,20 @@ exclude = '''
 )/
 '''
 
+[tool.cibuildwheel]
+manylinux-x86_64-image = "manylinux2014"
+test-extras = ["dev"]
+before-build = 'python -m pip install "pip<=22.0.4"'
+before-test = [
+    "pushd {package}",
+    "git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata",
+]
+test-command = [
+    "pushd {package}",
+    # Ignore forking tests as they do not work well with CIBW
+    'pytest --disable-warnings -x -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"',
+]
+
 [tool.isort]
 profile = "black"
 

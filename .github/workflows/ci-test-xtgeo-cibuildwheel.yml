@@ -11,6 +11,7 @@ jobs:
     name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os.runs_on }}
     runs-on: ${{ matrix.os.runs_on }}
     strategy:
+      fail-fast: false
       matrix:
         cibw_python: [cp38, cp39, cp310, cp311]
         os:
@@ -22,32 +23,21 @@ jobs:
             cibw_image: macosx_x86_64
 
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      # pillow < 8.4 required for CIBW build
-      CIBW_BEFORE_TEST: >
-        pushd {project} &&
-        pip install -r requirements/requirements_test.txt &&
-        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-      # Ignore forking tests as they do not work well with CIBW
-      CIBW_TEST_COMMAND: >
-        pushd {project} &&
-        pytest  --disable-warnings -x -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"
       CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os.cibw_image }}
-      # CIBW_TEST_SKIP: "cp312*linux* cp312*macos*"
-      CIBW_BEFORE_BUILD: python -m pip install "pip<=22.0.4"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v2
 
       - name: Install cibuildwheel
-        run: >
-          python -m pip install wheel &&
-          python -m pip install cibuildwheel
+        run: pip install wheel cibuildwheel
+
       - name: Run cibuildwheel
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: cibuildwheel --output-dir wheelhouse
+
       - name: Publish
         if: ${{ github.event_name == 'release' }}
         env:
