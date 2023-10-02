@@ -1,13 +1,14 @@
 """Module for map plots of surfaces, using matplotlib."""
 
 
-import matplotlib.pyplot as plt
 import matplotlib.patches as mplp
-from matplotlib import ticker
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
+from matplotlib import ticker
 
 from xtgeo.common import XTGeoDialog
+
 from .baseplot import BasePlot
 
 xtg = XTGeoDialog()

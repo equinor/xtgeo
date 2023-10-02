@@ -1,6 +1,7 @@
 import pytest
-import xtgeo
 from packaging import version
+
+import xtgeo
 from xtgeo import Well
 from xtgeo import version as xtgeo_version
 

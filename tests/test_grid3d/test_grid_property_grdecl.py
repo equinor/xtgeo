@@ -4,9 +4,10 @@ from unittest.mock import mock_open, patch
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-import xtgeo
 from hypothesis import HealthCheck, assume, given, settings
 from numpy.testing import assert_allclose
+
+import xtgeo
 from xtgeo.grid3d._gridprop_import_grdecl import read_grdecl_3d_property
 
 from .grid_generator import xtgeo_grids as grids

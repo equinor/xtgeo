@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 
+import sys
 from collections import OrderedDict
 from os.path import join
 
 import numpy as np
 import pandas as pd
 import pytest
-import sys
 
 import xtgeo
 from xtgeo.common import XTGeoDialog

@@ -1,15 +1,15 @@
 """Export Cube data via SegyIO library or XTGeo CLIB."""
+import json
 import shutil
 import struct
-import json
-import numpy as np
 
+import numpy as np
 import segyio
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo import XTGeoCLibError
+from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 

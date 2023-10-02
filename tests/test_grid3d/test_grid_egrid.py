@@ -5,9 +5,10 @@ import ecl_data_io as eclio
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+from hypothesis import HealthCheck, assume, given, settings
+
 import xtgeo as xtg
 import xtgeo.grid3d._egrid as xtge
-from hypothesis import HealthCheck, assume, given, settings
 
 from .egrid_generator import (
     egrids,

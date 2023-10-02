@@ -4,6 +4,7 @@ import math
 
 import numpy as np
 import pytest
+
 import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo

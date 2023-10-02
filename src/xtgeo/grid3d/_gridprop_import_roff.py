@@ -4,6 +4,7 @@
 import warnings
 
 import numpy as np
+
 import xtgeo
 
 from ._roff_parameter import RoffParameter

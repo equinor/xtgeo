@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Private module for refinement of a grid."""
 from collections import OrderedDict
+
 import numpy as np
 
-from xtgeo.common import XTGeoDialog
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
