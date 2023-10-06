@@ -57,7 +57,8 @@ dependencies = [
     "scipy>=1.5",
     "segyio>1.8.0",
     "shapely>=1.6.2",
-    "tables;platform_system != 'Darwin'",  # TODO: update when fixed for mac
+    "tables<3.9;platform_system != 'Darwin' and python_version == '3.8'", # TODO: mac...
+    "tables;platform_system != 'Darwin' and python_version > '3.8'",      # TODO: mac...
     "typing-extensions",
 ]
 
