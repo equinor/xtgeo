@@ -50,6 +50,7 @@ examples/*
 !examples/*.py
 !examples/run_examples.sh
 _tmp_*
+.dmypy.json
 
 # Translations
 *.mo
