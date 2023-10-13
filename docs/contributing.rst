@@ -143,7 +143,7 @@ in RMS while testing. Hence open rms with ``rms`` command (not ``runrms``).
 Inside RMS you can open a Python dialog and run your version of xtgeo. Theoretically,
 you could now do changes in your editable install and RMS should see them.
 However, RMS will not load libraries updates once loaded, and ``importlib.reload``
-will not help help very much. One safe alternative is of course to close and
+will not help very much. One safe alternative is of course to close and
 reopen RMS, but that is unpractical and time consuming.
 The better alternative is a brute force hack in order to make it work,
 see the five lines of code in top of this example:
