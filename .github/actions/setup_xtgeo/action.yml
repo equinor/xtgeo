@@ -17,5 +17,5 @@ runs:
     - name: Build and install xtgeo
       shell: bash
       run: |
-        pip install -U pip
-        pip install ".[dev]"
+        python -m pip install -U pip
+        python -m pip install ".[dev]"
