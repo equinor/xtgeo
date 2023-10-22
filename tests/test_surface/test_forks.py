@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import subprocess
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

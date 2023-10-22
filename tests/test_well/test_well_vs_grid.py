@@ -4,6 +4,7 @@
 from os.path import join
 
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 

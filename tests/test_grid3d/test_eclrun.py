@@ -3,6 +3,7 @@ from os.path import basename, join
 
 import numpy as np
 import pytest
+
 import xtgeo
 
 # pylint: disable=wildcard-import, unused-wildcard-import

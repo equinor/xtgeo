@@ -3,13 +3,14 @@
 
 
 from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
 
 import xtgeo
+import xtgeo.common.constants as const
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-import xtgeo.common.constants as const
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)

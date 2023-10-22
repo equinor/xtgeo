@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import sys
 from collections import OrderedDict
 from os.path import join
 
@@ -264,6 +265,7 @@ def test_shortwellname(create_well):
     assert short == "A-142H"
 
 
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
 def test_hdf_io_single(tmp_path):
     """Test HDF io, single well."""
     mywell = xtgeo.well_from_file(WELL1)
@@ -274,6 +276,7 @@ def test_hdf_io_single(tmp_path):
     assert mywell2.nrow == mywell.nrow
 
 
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
 def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
     """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
     t0 = xtg.timer()

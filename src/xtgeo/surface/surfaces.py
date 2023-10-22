@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 
 """The surfaces module, which has the Surfaces class (collection of surface objects)."""
-from xtgeo import RegularSurface
 
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
-from typing import Optional, List
 import warnings
+from typing import List, Literal, Optional
+
 import deprecation
 import numpy as np
 
 import xtgeo
+
 from . import _surfs_import
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -47,7 +44,7 @@ class Surfaces:
 
     def __init__(
         self,
-        surfaces: Optional[List[RegularSurface]] = None,
+        surfaces: Optional[List[xtgeo.RegularSurface]] = None,
         subtype: Optional[Literal["tops", "isochores"]] = None,
         order: Optional[Literal["same", "stratigraphic"]] = None,
     ):

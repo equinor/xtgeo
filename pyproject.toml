@@ -1,8 +1,102 @@
-# NOTE: you have to use single-quoted strings in TOML for regular expressions.
+[build-system]
+requires = [
+  "scikit-build-core[pyproject]",
+  "swig",
+  "numpy==1.19.2; python_version == '3.8'",
+  "numpy==1.19.5; python_version == '3.9'",
+  "numpy==1.21.6; python_version == '3.10'",
+  "numpy==1.23.5; python_version == '3.11'",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.verbose = true
+logging.level = "INFO"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/xtgeo/_theversion.py"]
+wheel.install-dir = "xtgeo"
+
+[project]
+name = "xtgeo"
+description = "XTGeo is a Python library for 3D grids, surfaces, wells, etc"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "LGPL-3.0" }
+authors = [
+    { name = "Equinor", email = "jriv@equinor.com" },
+]
+keywords = ["grids", "surfaces", "wells", "cubes"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Utilities",
+]
+dynamic = ["version"]
+dependencies = [
+    "deprecation",
+    "ecl-data-io>=2.1",
+    "h5py>=3",
+    "hdf5plugin>=2.3",
+    "matplotlib>=3.3",
+    "numpy>=1.19",
+    "pandas>=1.1",
+    "roffio>=0.0.2",
+    "scipy>=1.5",
+    "segyio>1.8.0",
+    "shapely>=1.6.2",
+    "tables<3.9;platform_system != 'Darwin' and python_version == '3.8'", # TODO: mac...
+    "tables;platform_system != 'Darwin' and python_version > '3.8'",      # TODO: mac...
+    "typing-extensions",
+]
+
+[project.urls]
+Homepage = "https://github.com/equinor/xtgeo"
+Repository = "https://github.com/equinor/xtgeo"
+Issues = "https://github.com/equinor/xtgeo/issues"
+Documentation = "https://xtgeo.readthedocs.io"
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "coverage>=4.1",
+    "flake8",
+    "isort",
+    "hypothesis",
+    "mypy",
+    "pylint",
+    "pytest",
+    "pytest-benchmark",
+    "pytest-cov",
+    "pydocstyle",
+    "pytest-runner",
+    "pytest-mock",
+    "pytest-snapshot",
+    "pytest-xdist",
+]
+docs = [
+    "pydocstyle",
+    "Sphinx<4.0",
+    "sphinx-rtd-theme",
+    "sphinx-toolbox",
+    "autoclasstoc",
+    "myst-parser",
+]
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311']
+target-version = ["py38", "py39", "py310", "py311"]
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -16,6 +110,7 @@ exclude = '''
   | buck-out
   | build
   | dist
+  | _theversion.py
   # The following are specific to Black, you probably don't want those.
   | blib2to3
   | tests/data
@@ -23,28 +118,43 @@ exclude = '''
 )/
 '''
 
-# numpy version scheme to fulfill Roxar API compatibility:
-# RMS 12.1.*  -->  numpy == 1.19.2 with python 3.8
-
-[build-system]
-requires = [
-  "setuptools>=43",
-  "scikit-build<0.17",
-  'cmake==3.15.3; python_version >= "3.8" and platform_system == "Linux"',
-  'cmake==3.18.0; platform_system != "Linux"',
-  "ninja",
-  'swig',
-  "setuptools_scm>=3.2.0",
-  'numpy==1.19.2; python_version == "3.8"',
-  'numpy==1.19.5; python_version == "3.9"',
-  'numpy==1.21.6; python_version == "3.10"',
-  'numpy==1.23.5; python_version == "3.11"',
-  'Sphinx<4.0',
-  'sphinx-rtd-theme',
-  'sphinx-toolbox',
-  'autoclasstoc',
-  'myst-parser',
+[tool.cibuildwheel]
+manylinux-x86_64-image = "manylinux2014"
+test-extras = ["dev"]
+before-build = 'python -m pip install "pip<=22.0.4"'
+before-test = [
+    "pushd {package}",
+    "git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata",
 ]
+test-command = [
+    "pushd {package}",
+    # Ignore forking tests as they do not work well with CIBW
+    'pytest --disable-warnings -x -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"',
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.pydocstyle]
+convention = "google"
+match = '(?!(test_|_)).*\.py'
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--verbose"
+log_cli = "False"
+log_cli_format = "%(levelname)8s (%(relativeCreated)6.0fms) %(filename)44s [%(funcName)40s()] %(lineno)4d >>   %(message)s"
+log_cli_level = "INFO"
+testpaths = "tests"
+markers = [
+    "bigtest: A big test not executed by default",
+    "requires_opm: A test requiring opm in the environment",
+    "requires_roxar: Test requires to run in RMS python",
+]
+doctest_optionflags = "ELLIPSIS"
 
 [tool.setuptools_scm]
 write_to = "src/xtgeo/_theversion.py"

@@ -3,12 +3,12 @@
 
 
 import logging
+
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGShowProgress
+from xtgeo.common import XTGeoDialog, XTGShowProgress
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

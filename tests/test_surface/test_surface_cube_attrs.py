@@ -2,6 +2,7 @@
 from os.path import join
 
 import pytest
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -155,6 +156,54 @@ def test_various_attrs_algorithm2(loadsfile1):
     assert surfx.values.mean() == pytest.approx(529.328, abs=0.01)
 
 
+def test_various_attrs_algorithm3(loadsfile1):
+    cube1 = loadsfile1
+    surf1 = xtgeo.surface_from_cube(cube1, 2540)
+    surf2 = xtgeo.surface_from_cube(cube1, 2548)
+
+    surfx = surf1.copy()
+    surfx.slice_cube_window(
+        cube1,
+        other=surf2,
+        other_position="below",
+        attribute="mean",
+        sampling="trilinear",
+        snapxy=True,
+        ndiv=None,
+        algorithm=3,
+    )
+
+    assert surfx.values.mean() == pytest.approx(177.34, abs=0.1)
+
+    surfx = surf1.copy()
+    surfx.slice_cube_window(
+        cube1,
+        other=surf2,
+        other_position="below",
+        attribute="maxneg",
+        sampling="trilinear",
+        snapxy=True,
+        ndiv=None,
+        algorithm=3,
+    )
+
+    assert surfx.values.count() == 0  # no nonmasked elements
+
+    surfx = surf1.copy()
+    surfx.slice_cube_window(
+        cube1,
+        other=surf2,
+        other_position="below",
+        attribute="sumabs",
+        sampling="cube",
+        snapxy=True,
+        ndiv=None,
+        algorithm=3,
+    )
+
+    assert surfx.values.mean() == pytest.approx(529.328, abs=0.01)
+
+
 def test_avg_surface(loadsfile1):
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 1100.0)
@@ -237,8 +286,10 @@ def test_avg_surface2(loadsfile1):
 
 
 @pytest.mark.benchmark(group="cube slicing")
-@pytest.mark.parametrize("algorithm", [pytest.param(1, marks=pytest.mark.bigtest), 2])
-def test_avg_surface_large_cube_algorithm1(benchmark, algorithm):
+@pytest.mark.parametrize(
+    "algorithm", [pytest.param(1, marks=pytest.mark.bigtest), 2, 3]
+)
+def test_avg_surface_large_cube_algorithmx(benchmark, algorithm):
     cube1 = xtgeo.Cube(ncol=120, nrow=120, nlay=100, zori=200, xinc=12, yinc=12, zinc=4)
 
     cube1.values[400:80, 400:80, :] = 12
@@ -270,7 +321,7 @@ def test_attrs_reek(tmpdir, loadsfile2):
     t2a = xtgeo.surface_from_file(TOP2A)
     t2b = xtgeo.surface_from_file(TOP2B)
 
-    attlist = ["maxpos", "maxneg"]
+    attlist = ["maxpos", "maxneg", "mean", "rms"]
 
     attrs1 = t2a.slice_cube_window(
         cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=1
@@ -278,12 +329,19 @@ def test_attrs_reek(tmpdir, loadsfile2):
     attrs2 = t2a.slice_cube_window(
         cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=2
     )
+    attrs3 = t2a.slice_cube_window(
+        cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=3
+    )
 
-    for att in attrs1.keys():
+    for att, _ in attrs1.items():
         srf1 = attrs1[att]
         srf2 = attrs2[att]
+        srf3 = attrs3[att]
 
         srf1.to_file(join(tmpdir, "attr1_" + att + ".gri"))
         srf2.to_file(join(tmpdir, "attr2_" + att + ".gri"))
+        srf3.to_file(join(tmpdir, "attr3_" + att + ".gri"))
 
         assert srf1.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)
+        assert srf3.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)
+        print("\nok")

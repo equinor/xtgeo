@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module/class for 3D grids (corner point geometry) with XTGeo."""
+from __future__ import annotations
 
 import functools
 import json
@@ -163,7 +164,7 @@ def create_box_grid(
         origin (tuple of float): Startpoint of grid (x, y, z)
         oricenter (bool): If False, startpoint is node, if True, use cell center
         increment (tuple of float): Grid increments (xinc, yinc, zinc)
-        rotation (float): Roations in degrees, anticlock from X axis.
+        rotation (float): Rotation in degrees, anticlock from X axis.
         flip (int): If +1, grid origin is lower left and left-handed;
                     if -1, origin is upper left and right-handed (row flip).
 
@@ -182,6 +183,47 @@ def create_box_grid(
     )
 
     return Grid(**kwargs)
+
+
+def grid_from_cube(
+    cube: xtgeo.Cube, propname: str = "seismics", oricenter: bool = True
+):
+    """Create a rectangular 'shoebox' grid from an existing cube.
+
+    The cube values itself will then be stored with name given by ``propname`` key.
+
+    Since the cube actually is node centered, while grids are cell oriented,
+    the geometries here are shifted half an increment as default. To avoid this, use
+    oricenter=False.
+
+    Args:
+        cube: The xtgeo Cube instance
+        propname: Name of seismic property, if None then only the grid geometry
+            will be made
+        oricenter: Default is True, to treat seismic nodes as cell center values in
+            a grid.
+
+    .. versionadded:: 3.4
+    """
+
+    grd = create_box_grid(
+        cube.dimensions,
+        (cube.xori, cube.yori, cube.zori),
+        oricenter=oricenter,
+        increment=(cube.xinc, cube.yinc, cube.zinc),
+        rotation=cube.rotation,
+        flip=cube.yflip,
+    )
+    if propname is not None:
+        gprop = xtgeo.GridProperty(
+            ncol=cube.ncol,
+            nrow=cube.nrow,
+            nlay=cube.nlay,
+            values=cube.values.copy(),
+            name=propname,
+        )
+        grd.props = [gprop]
+    return grd
 
 
 # --------------------------------------------------------------------------------------

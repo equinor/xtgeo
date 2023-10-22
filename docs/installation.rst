@@ -66,8 +66,7 @@ Hence folder structure may look like
    /some/path/to/xtgeo
    /some/path/to/xtgeo-testdata
 
-For required python packages, see the requirements*.txt files and the
-pyproject.toml file in the root folder.
+For required python packages, see the pyproject.toml file in the root folder.
 
 Once you have a copy of the source, and you have a `virtual environment`_,
 then always run tests (run first compile and install with ``pip install .``):

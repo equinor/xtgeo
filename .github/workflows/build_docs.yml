@@ -10,12 +10,14 @@ jobs:
   build_docs:
     name: Build docs
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/actions/build-xtgeo"
+      - uses: actions/checkout@v4
         with:
-          python-version: 3.9
-      - name: Install doc requirements
-        run: pip install -r requirements/requirements_docs.txt
+          fetch-depth: 0
+
+      - name: Install xtgeo
+        run: pip install ".[docs]"
+
       - name: Build docs
         run: sphinx-build -W docs tmp/docs

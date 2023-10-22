@@ -134,7 +134,15 @@ def export_horizon_roxapi(
     _check_stypes_names_category(roxutils, stype, name, category)
 
     logger.info("Surface from xtgeo to roxapi...")
-    _roxapi_export_surface(self, roxutils.project, name, category, stype, realisation)
+    use_srf = self
+    if self.yflip == -1:
+        # roxar API cannot handle negative increments
+        use_srf = self.copy()
+        use_srf.swapaxes()
+
+    _roxapi_export_surface(
+        use_srf, roxutils.project, name, category, stype, realisation
+    )
 
     if roxutils._roxexternal:
         roxutils.project.save()

@@ -1,6 +1,7 @@
 """Private module for grid vs well zonelog checks."""
 
 import numpy as np
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

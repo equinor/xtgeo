@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Conftest functions"""
-from packaging.version import parse as versionparse
-
 import pandas as pd
 import pytest
+from packaging.version import parse as versionparse
 
 
 class Helpers:

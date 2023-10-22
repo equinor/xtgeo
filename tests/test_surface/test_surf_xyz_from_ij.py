@@ -1,7 +1,8 @@
-import pytest
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
-import xtgeo
 import numpy as np
+import pytest
+
+import xtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 
 
 class Surface:

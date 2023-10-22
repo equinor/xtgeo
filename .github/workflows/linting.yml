@@ -1,4 +1,4 @@
-name: linting
+name: Linting
 
 on: [push, pull_request]
 
@@ -6,8 +6,7 @@ jobs:
   linting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
         with:
           python-version: "3.10"
       - name: Check black style and linting
@@ -18,3 +17,24 @@ jobs:
           mypy src tests --ignore-missing-imports
           pip install flake8
           flake8 src tests
+          fetch-depth: 0
+
+      - name: Setup xtgeo
+        uses: "./.github/actions/setup_xtgeo"
+        with:
+          python-version: 3.11
+
+      - name: List dependencies
+        run: pip freeze
+
+      - name: Lint with isort
+        if: ${{ always() }}
+        run: isort --check-only src tests
+
+      - name: Lint with black
+        if: ${{ always() }}
+        run: black src tests
+
+      - name: Lint with flake8
+        if: ${{ always() }}
+        run: flake8 src tests
