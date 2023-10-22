@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-  "scikit-build-core[pyproject]",
+  "scikit-build-core[pyproject]<0.6.0",
   "swig",
   "numpy==1.19.2; python_version == '3.8'",
   "numpy==1.19.5; python_version == '3.9'",
