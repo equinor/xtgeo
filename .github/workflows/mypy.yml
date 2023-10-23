@@ -1,0 +1,22 @@
+name: mypy
+
+on: [push, pull_request]
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup xtgeo
+        uses: "./.github/actions/setup_xtgeo"
+        with:
+          python-version: 3.11
+
+      - name: List dependencies
+        run: pip freeze
+
+      - name: run mypy
+        run: mypy .
