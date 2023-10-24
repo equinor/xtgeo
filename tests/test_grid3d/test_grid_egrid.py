@@ -1,10 +1,10 @@
 import io
 import sys
 
-import ecl_data_io as eclio
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+import resfo
 from hypothesis import HealthCheck, assume, given, settings
 
 import xtgeo as xtg
@@ -189,7 +189,7 @@ from .grid_generator import xtgeo_grids
 )
 def test_bad_keywords_raises(file_contents, bad_keyword):
     buf = io.BytesIO()
-    eclio.write(buf, file_contents)
+    resfo.write(buf, file_contents)
     buf.seek(0)
     with pytest.raises(xtge.EGridFileFormatError, match=bad_keyword):
         xtge.EGrid.from_file(buf)
@@ -288,7 +288,7 @@ def test_grid_head_error():
 
 def test_read_duplicate_keyword_error():
     buf = io.BytesIO()
-    eclio.write(buf, [("FILEHEAD", np.zeros((100,), dtype=np.int32))] * 2)
+    resfo.write(buf, [("FILEHEAD", np.zeros((100,), dtype=np.int32))] * 2)
     buf.seek(0)
     reader = xtge.EGridReader(buf)
 
@@ -298,7 +298,7 @@ def test_read_duplicate_keyword_error():
 
 def test_read_bad_keyword_error():
     buf = io.BytesIO()
-    eclio.write(buf, [("NTKEYWRD", np.zeros((100,), dtype=np.int32))] * 2)
+    resfo.write(buf, [("NTKEYWRD", np.zeros((100,), dtype=np.int32))] * 2)
     buf.seek(0)
     reader = xtge.EGridReader(buf)
 
@@ -308,7 +308,7 @@ def test_read_bad_keyword_error():
 
 def test_read_mixed_gridhead():
     buf = io.BytesIO()
-    eclio.write(
+    resfo.write(
         buf,
         [
             ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
@@ -325,7 +325,7 @@ def test_read_mixed_gridhead():
 
 def test_read_no_endgrid():
     buf = io.BytesIO()
-    eclio.write(
+    resfo.write(
         buf,
         [
             ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
@@ -344,7 +344,7 @@ def test_read_no_endgrid():
 
 def test_read_unexpected_section():
     buf = io.BytesIO()
-    eclio.write(
+    resfo.write(
         buf,
         [
             ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
@@ -370,7 +370,7 @@ def test_read_multiple_amalgamations():
     buf = io.BytesIO()
 
     with pytest.warns(UserWarning):
-        eclio.write(
+        resfo.write(
             buf,
             [
                 ("FILEHEAD", np.zeros((100,), dtype=np.int32)),

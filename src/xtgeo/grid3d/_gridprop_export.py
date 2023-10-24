@@ -2,8 +2,8 @@
 import json
 import struct
 
-import ecl_data_io as eclio
 import numpy as np
+import resfo
 import roffio
 
 import xtgeo
@@ -81,11 +81,11 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt
 
         with open(pfile, mode) as fh:
             if dtype is not None:
-                eclio.write(fh, [(name.ljust(8), vals.astype(dtype))])
+                resfo.write(fh, [(name.ljust(8), vals.astype(dtype))])
             elif self.isdiscrete:
-                eclio.write(fh, [(name.ljust(8), vals.astype(np.int32))])
+                resfo.write(fh, [(name.ljust(8), vals.astype(np.int32))])
             else:
-                eclio.write(fh, [(name.ljust(8), vals.astype(np.float32))])
+                resfo.write(fh, [(name.ljust(8), vals.astype(np.float32))])
 
     else:
         mode = "w"

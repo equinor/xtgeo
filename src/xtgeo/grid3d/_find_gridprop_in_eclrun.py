@@ -6,8 +6,8 @@ import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import ecl_data_io as eclio
 import numpy as np
+import resfo
 from typing_extensions import Literal
 
 import xtgeo
@@ -96,10 +96,10 @@ def remainder_saturations(saturations):
 
 
 def peek_headers(generator):
-    """Reads header from a ecl_data_io keyword generator without consuming keywords.
+    """Reads header from a resfo keyword generator without consuming keywords.
 
     Args:
-        generator: keyword generator such as returned by ecl_data_io.lazy_read
+        generator: keyword generator such as returned by resfo.lazy_read
 
     Returns:
         Tuple of inthead, logihead, and a modified generator which contains all original
@@ -393,7 +393,7 @@ def get_actnum_from_porv(init_filelike, grid):
     Returns:
         None
     """
-    generator = filter_lgr(eclio.lazy_read(init_filelike))
+    generator = filter_lgr(resfo.lazy_read(init_filelike))
     intehead, logihead, generator = peek_headers(generator)
 
     if "INTERSECT" not in str(intehead.simulator):
@@ -459,7 +459,7 @@ def find_gridprop_from_init_file(
     get_actnum_from_porv(init_filelike, grid)
     if init_stream:
         init_filelike.seek(orig_pos, 0)
-    generator = filter_lgr(eclio.lazy_read(init_filelike))
+    generator = filter_lgr(resfo.lazy_read(init_filelike))
     intehead, logihead, generator = peek_headers(generator)
 
     check_grid_match(intehead, logihead, grid)
@@ -579,7 +579,7 @@ def find_gridprops_from_restart_file(
     dates: Union[List[int], Literal["all", "first", "last"]],
     grid,
     fracture: bool = False,
-    fformat: eclio.Format = eclio.Format.UNFORMATTED,
+    fformat: resfo.Format = resfo.Format.UNFORMATTED,
 ) -> List[Dict]:
     """Finds all parameters in a restart file matching the given names and dates.
 
@@ -599,11 +599,11 @@ def find_gridprops_from_restart_file(
     """
     close = False
     if isinstance(restart_filelike, (pathlib.Path, str)):
-        if fformat == eclio.Format.UNFORMATTED:
+        if fformat == resfo.Format.UNFORMATTED:
             filehandle = open(restart_filelike, "rb")
             close = True
             assume_init_file = (str(restart_filelike)).replace(".UNRST", ".INIT")
-        elif fformat == eclio.Format.FORMATTED:
+        elif fformat == resfo.Format.FORMATTED:
             filehandle = open(restart_filelike, "rt", encoding="ascii")
             close = True
             assume_init_file = (str(restart_filelike)).replace(".FUNRST", ".FINIT")
@@ -622,7 +622,7 @@ def find_gridprops_from_restart_file(
         filehandle = restart_filelike
         close = False
     try:
-        generator = section_generator(filter_lgr(eclio.lazy_read(filehandle)))
+        generator = section_generator(filter_lgr(resfo.lazy_read(filehandle)))
         read_properties = find_gridprops_from_restart_file_sections(
             generator,
             names,

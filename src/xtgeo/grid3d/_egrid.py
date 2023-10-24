@@ -3,7 +3,7 @@ The egrid fileformat is a file outputted by reservoir simulators such as opm
 flow containing the grid geometry. The layout of cell data and units is similar
 to grdecl files, but there is additional metadata.
 
-The data is layed out similarly to other ecl output files, see the ecl_data_io
+The data is layed out similarly to other ecl output files, see the resfo
 module.
 
 There is an alternate data layout (in addition to that of grdecl files), called
@@ -66,7 +66,7 @@ from typing import (
 )
 
 import numpy as np
-from ecl_data_io import Format, lazy_read, write
+from resfo import Format, lazy_read, write
 
 from ._ecl_grid import (
     CoordinateType,
@@ -649,7 +649,7 @@ class EGrid(EclGrid):
         write the EGrid to file.
         Args:
             filelike (str,Path,stream): The egrid file to write to.
-            file_format (ecl_data_io.Format): The format of the file.
+            file_format (resfo.Format): The format of the file.
         """
         file_format = None
         if fileformat == "egrid":
@@ -767,7 +767,7 @@ class EGridReader:
 
     Args:
         filelike (str, Path, stream): The egrid file to read from.
-        file_format (None or ecl_data_io.Format): The format of the file,
+        file_format (None or resfo.Format): The format of the file,
             None means guess.
 
     """

@@ -4,10 +4,10 @@ from datetime import date
 from typing import Any
 from unittest.mock import MagicMock
 
-import ecl_data_io as eclio
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+import resfo
 from hypothesis import HealthCheck, assume, given, settings
 
 import xtgeo
@@ -406,7 +406,7 @@ class EclRun:
         return LogiHead.from_file_values(self.logihead_array)
 
     def write_files(self, dir_path):
-        eclio.write(
+        resfo.write(
             dir_path / self.unrst_file,
             [
                 ("SEQNUM  ", np.zeros(1)),
@@ -419,7 +419,7 @@ class EclRun:
     @property
     def init_file(self):
         buf = io.BytesIO()
-        eclio.write(
+        resfo.write(
             buf,
             [
                 ("INTEHEAD", self.init_intehead_array),
@@ -433,7 +433,7 @@ class EclRun:
     @property
     def unrst_file(self):
         buf = io.BytesIO()
-        eclio.write(
+        resfo.write(
             buf,
             [
                 ("SEQNUM  ", np.zeros(1)),
@@ -494,7 +494,7 @@ def test_gridprop_unrst_date_correct(ecl_run, use_alterate_date_form, use_first)
 @given(ecl_runs)
 def test_gridprop_unrst_same_formatted(tmp_path, ecl_run):
     funrst = tmp_path / "file.FUNRST"
-    eclio.write(funrst, eclio.read(ecl_run.unrst_file), eclio.Format.FORMATTED)
+    resfo.write(funrst, resfo.read(ecl_run.unrst_file), resfo.Format.FORMATTED)
 
     ecl_run.unrst_file.seek(0)
 
@@ -521,7 +521,7 @@ def test_gridprop_unrst_same_formatted(tmp_path, ecl_run):
 @given(ecl_runs)
 def test_gridprop_init_same_formatted(tmp_path, ecl_run):
     finit = tmp_path / "file.FUNRST"
-    eclio.write(finit, eclio.read(ecl_run.init_file), eclio.Format.FORMATTED)
+    resfo.write(finit, resfo.read(ecl_run.init_file), resfo.Format.FORMATTED)
 
     ecl_run.init_file.seek(0)
 

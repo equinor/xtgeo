@@ -46,7 +46,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "deprecation",
-    "ecl-data-io>=2.1",
+    "resfo>=4.0.0",
     "h5py>=3",
     "hdf5plugin>=2.3",
     "matplotlib>=3.3",
