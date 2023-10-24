@@ -1,20 +1,33 @@
-# -*- coding: utf-8 -*-
-"""Module for a 3D grid property."""
-
+from __future__ import annotations
 
 import copy
 import functools
 import hashlib
 import io
-import numbers
 import pathlib
 import warnings
 from types import FunctionType
-from typing import Any, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+)
 
+import deprecation
 import numpy as np
+import numpy.typing as npt
 
 import xtgeo
+from xtgeo.common import XTGeoDialog
+from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.sys import _XTGeoFile
+from xtgeo.metadata.metadata import MetaDataCPProperty
 
 from . import (
     _gridprop_export,
@@ -32,8 +45,14 @@ from ._gridprop_import_grdecl import import_bgrdecl_prop, import_grdecl_prop
 from ._gridprop_import_roff import import_roff
 from ._gridprop_import_xtgcpprop import import_xtgcpprop
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+if TYPE_CHECKING:
+    from xtgeo.xyz.polygons import Polygons
+
+    from ._gridprop_op1 import XYValueLists
+    from .grid import Grid
 
 # --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
@@ -57,7 +76,7 @@ logger = xtg.functionlogger(__name__)
 # ======================================================================================
 
 
-def _data_reader_factory(fformat):
+def _data_reader_factory(fformat: str) -> Callable:
     if fformat in ["roff_binary", "roff_ascii"]:
         return import_roff
     elif fformat in ["finit", "init"]:
@@ -71,39 +90,100 @@ def _data_reader_factory(fformat):
     elif fformat == "bgrdecl":
         return import_bgrdecl_prop
 
-    elif fformat in ["xtg"]:
+    elif fformat == "xtg":
         return import_xtgcpprop
     else:
         raise ValueError(f"Invalid grid property file format {fformat}")
 
 
-def gridproperty_from_file(*args, **kwargs):
-    """Make a GridProperty instance directly from file import.
-
-    For arguments, see :func:`GridProperty.from_file()`
-
-    Args:
-        pfile (str): Property file
-        args: See :func:`GridProperty.from_file()`
-        kwargs: See :func:`GridProperty.from_file()`.
-
-    Example::
-
-        >>> import xtgeo
-        >>> myporo = xtgeo.gridproperty_from_file(
-        ...    reek_dir + '/reek_sim_poro.roff',
-        ...    name="PORO"
-        ... )
+def gridproperty_from_file(
+    pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+    fformat: Optional[str] = None,
+    **kwargs: Dict[str, Any],
+) -> GridProperty:
     """
-    return GridProperty._read_file(*args, **kwargs)
+    Make a GridProperty instance directly from a file import.
+
+    Note that the the property may be linked to its geometrical grid
+    through the ``grid=`` option. Sometimes this is required, for instance
+    for most Eclipse input.
+
+    Parameters:
+        pfile:
+            Name of file to be imported.
+        fformat:
+            File format to be used (roff/init/unrst/grdecl).
+            Defaults to None and tries to infer from file extension.
+        name (str):
+            Name of property to import
+        date (int or str):
+            For restart files, date in YYYYMMDD format. Also
+            the YYYY-MM-DD form is allowed (string), and for Eclipse,
+            mnemonics like 'first', 'last' is also allowed.
+        grid (Grid, optional):
+            Grid object for checks. Optional for ROFF, required for Eclipse).
+        gridlink (bool):
+            If True, and grid is not None, a link from the grid
+            instance to the property is made. If False, no such link is made.
+            Avoiding gridlink is recommended when running statistics of multiple
+            realisations of a property.
+        fracture (bool):
+            Only applicable for DUAL POROSITY systems. If True
+            then the fracture property is read. If False then the matrix
+            property is read. Names will be appended with "M" or "F"
+        ijrange (list-like):
+            A list of 4 numbers (i1, i2, j1, j2) for a subrange
+            of cells to read. Only applicable for xtgcpprop format.
+        zerobased (bool):
+            Input if cells counts are zero- or one-based in
+            ijrange. Only applicable for xtgcpprop format.
+
+    Returns:
+        A GridProperty instance.
+
+    Examples::
+
+        import xtgeo
+        gprop = xtgeo.gridproperty_from_file("somefile.roff", fformat="roff")
+
+        # or
+
+        mygrid = xtgeo.grid_from_file("ECL.EGRID")
+        pressure_1 = xtgeo.gridproperty_from_file("ECL.UNRST", name="PRESSURE",
+                                                 date="first", grid=mygrid)
+
+    """
+    return GridProperty._read_file(pfile, fformat, **kwargs)
 
 
 def gridproperty_from_roxar(
-    project, gname, pname, realisation=0, faciescodes=False
-):  # pragma: no cover
-    """Make a GridProperty instance directly inside RMS.
+    project: str,
+    gname: str,
+    pname: str,
+    realisation: int = 0,
+    faciescodes: bool = False,
+) -> GridProperty:
+    """
+    Make a GridProperty instance directly inside RMS.
 
-    For arguments, see :func:`GridProperty.from_roxar()`
+    Parameters:
+        project:
+            The Roxar project name
+        gname:
+            Name of the grid model
+        pname:
+            Name of the grid property
+        realisation:
+            Realisation number (default 0; first)
+        faciescodes:
+            If a Roxar property is of the special body_facies type (e.g. result
+            from a channel facies object modelling), the default is to get the
+            body code values. If faciescodes is True, the facies code values
+            will be read instead. For other roxar properties this key is not
+            relevant.
+
+    Returns:
+        A GridProperty instance.
 
     Example::
 
@@ -112,16 +192,20 @@ def gridproperty_from_roxar(
 
     """
     return GridProperty._read_roxar(
-        project, gname, pname, realisation=realisation, faciescodes=faciescodes
+        pname,
+        gname,
+        pname,
+        realisation=realisation,
+        faciescodes=faciescodes,
     )
 
 
-def allow_deprecated_init(func):
+def allow_deprecated_init(func: Callable) -> Callable:
     # This decorator is here to maintain backwards compatibility in the construction
     # of GridProperty and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
     @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: GridProperty, *args: Any, **kwargs: Any) -> Callable:
         # Check if dummy values are to be used
         if (
             all(param not in kwargs for param in ["values", "ncol", "nrow", "nlay"])
@@ -148,8 +232,7 @@ def allow_deprecated_init(func):
         # from file and raise a deprecation warning if
         # we are.
         if "pfile" in kwargs or (
-            len(args) >= 1
-            and isinstance(args[0], (str, pathlib.Path, xtgeo._XTGeoFile))
+            len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, _XTGeoFile))
         ):
             pfile = kwargs.get("pfile", args[0])
             warnings.warn(
@@ -159,7 +242,7 @@ def allow_deprecated_init(func):
                 DeprecationWarning,
             )
             fformat = kwargs.get("fformat", None)
-            mfile = xtgeo._XTGeoFile(pfile)
+            mfile = _XTGeoFile(pfile)
             if fformat is None or fformat == "guess":
                 fformat = mfile.detect_fformat()
             else:
@@ -169,9 +252,7 @@ def allow_deprecated_init(func):
                 del kwargs["pfile"]
             if "fformat" in kwargs:
                 del kwargs["fformat"]
-            if len(args) >= 1 and isinstance(
-                args[0], (str, pathlib.Path, xtgeo._XTGeoFile)
-            ):
+            if len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, _XTGeoFile)):
                 args = args[min(len(args), 2) :]
 
             kwargs = _data_reader_factory(fformat)(mfile, *args, **kwargs)
@@ -183,7 +264,8 @@ def allow_deprecated_init(func):
 
 
 class GridProperty(_Grid3D):
-    """Class for a single 3D grid property, e.g porosity or facies.
+    """
+    Class for a single 3D grid property, e.g porosity or facies.
 
     An GridProperty instance may or may not 'belong' to a grid (geometry) object.
     E.g. for ROFF input, ncol, nrow, nlay are given in the import file and the grid
@@ -203,94 +285,109 @@ class GridProperty(_Grid3D):
 
        poronumpy = poro.values1d
 
-    .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid()
-    .. versionchanged:: 2.8 Possible to base it on existing GridProperty() instance
+    .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid
+    .. versionchanged:: 2.8 Possible to base it on existing GridProperty instance
 
     """
 
     @allow_deprecated_init
     def __init__(
         self,
-        gridlike=None,
+        gridlike: Optional[Union[Grid, GridProperty]] = None,
         ncol: Optional[int] = None,
         nrow: Optional[int] = None,
         nlay: Optional[int] = None,
-        name: Optional[str] = "unknown",
-        discrete: Optional[bool] = False,
+        name: str = "unknown",
+        discrete: bool = False,
         date: Optional[str] = None,
-        grid: Optional[Any] = None,
-        linkgeometry: Optional[bool] = True,
-        fracture: Optional[bool] = False,
-        codes: Optional[dict] = None,
-        dualporo: Optional[bool] = False,
-        dualperm: Optional[bool] = False,
-        roxar_dtype: Optional[Any] = None,
+        grid: Optional[Grid] = None,
+        linkgeometry: bool = True,
+        fracture: bool = False,
+        codes: Optional[Dict[int, str]] = None,
+        dualporo: bool = False,
+        dualperm: bool = False,
+        roxar_dtype: Optional[npt.DTypeLike] = None,
         values: Optional[Union[np.ndarray, float, int]] = None,
         roxorigin: bool = False,
         filesrc: Optional[str] = None,
-    ):
-        """Instantating.
+    ) -> None:
+        """
+        Instantiating.
 
-            Args:
-                pfile: Input file-like or a Grid/GridProperty instance or leave blank.
-                fformat: File format input, default is ``guess``.
-                ncol: Number of columns (nx) defaults to 4.
-                nrow: Number of rows (ny) defaults to 3.
-                ncol: Number of layers (nz) defaults to 5.
-                name: Name of property.
-                discrete: True or False.
-                date: Date on YYYYMMDD form.
-                grid: Attached grid object
-                linkgeometry: If True, establish a link between GridProperty and Grid
-                fracture: True if fracture option (relevant for flow simulator data)
-                codes: Codes in case a discrete property e.g. {1: "Sand", 4: "Shale"}
-                dualporo: True if dual porosity system.
-                dualperm: True if dual porosity and dual permeability system.
-                roxar_dtype: Spesify roxar datatype e.g. np.uint8
-                values: Values to apply (will not be applied if a file-like is input)
-
-        Returns:
-            A GridProperty object instance.
+        Parameters:
+            gridlike:
+                Grid or GridProperty instance, or leave blank.
+            ncol:
+                Number of columns (nx). Defaults to 4.
+            nrow:
+                Number of rows (ny). Defaults to 3.
+            nlay:
+                Number of layers (nz). Defaults to 5.
+            name:
+                Name of property. Defaults to "unknown".
+            discrete:
+                True or False. Defaults to False.
+            date:
+                Date on YYYYMMDD form.
+            grid:
+                Attached Grid object.
+            linkgeometry:
+                If True, establish a link between GridProperty and Grid.
+                Defaults to True.
+            fracture:
+                True if fracture option (relevant for flow simulator data).
+                Defaults to False.
+            codes:
+                Codes in case a discrete property e.g. {1: "Sand", 4: "Shale"}.
+            dualporo:
+                True if dual porosity system.
+                Defaults to False.
+            dualperm:
+                True if dual porosity and dual permeability system.
+                Defaults to False.
+            roxar_dtype:
+                Specify Roxar datatype e.g. np.uint8.
+            values:
+                Values to apply.
+            roxorigin:
+                True if the object comes from Roxar API.
+                Defaults to False.
+            filesrc:
+                Where the file came from.
 
         Raises:
-            RuntimeError: if something goes wrong (e.g. file not found)
+            RuntimeError
+                If something goes wrong (e.g. file not found).
 
         Examples::
 
-            from xtgeo.grid3d import GridProperty
-            myprop = GridProperty()
-            myprop.from_file('emerald.roff', name='PORO')
+            import xtgeo
+            myprop = xtgeo.gridproperty_from_file("emerald.roff", name="PORO")
 
             # or
 
             values = np.ma.ones((12, 17, 10), dtype=np.float64),
             myprop = GridProperty(ncol=12, nrow=17, nlay=10,
                                   values=values, discrete=False,
-                                  name='MyValue')
-
-            # or
-
-            myprop = GridProperty('emerald.roff', name='PORO')
+                                  name="MyValue")
 
             # or create properties from a Grid() instance
 
-            mygrid = Grid("grid.roff")
-            myprop1 = GridProperty(mygrid, name='PORO')
-            myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1,
+            mygrid = xtgeo.grid_from_file("grid.roff")
+            myprop1 = xtgeo.GridProperty(mygrid, name="PORO")
+            myprop2 = xtgeo.GridProperty(mygrid, name="FACIES", discrete=True, values=1,
                                    linkgeometry=True)  # alternative 1
             myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
 
             # from Grid instance:
-            grd = Grid("somefile_grid_file")
+            grd = xtgeo.grid_from_file("somefile_grid_file")
             myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
 
             # or from existing GridProperty instance:
             myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
 
         """
-
         super().__init__(ncol, nrow, nlay)
-
         self._reset(
             gridlike,
             ncol,
@@ -313,91 +410,105 @@ class GridProperty(_Grid3D):
 
     def _reset(
         self,
-        gridlike=None,
+        gridlike: Optional[Union[Grid, GridProperty]] = None,
         ncol: Optional[int] = None,
         nrow: Optional[int] = None,
         nlay: Optional[int] = None,
-        name: Optional[str] = "unknown",
-        discrete: Optional[bool] = False,
+        name: str = "unknown",
+        discrete: bool = False,
         date: Optional[str] = None,
         grid: Optional[Any] = None,
-        linkgeometry: Optional[bool] = True,
-        fracture: Optional[bool] = False,
-        codes: Optional[dict] = None,
-        dualporo: Optional[bool] = False,
-        dualperm: Optional[bool] = False,
-        roxar_dtype: Optional[Any] = None,
+        linkgeometry: bool = True,
+        fracture: bool = False,
+        codes: Optional[Dict[int, str]] = None,
+        dualporo: bool = False,
+        dualperm: bool = False,
+        roxar_dtype: Optional[npt.DTypeLike] = None,
         values: Optional[Union[np.ndarray, float, int]] = None,
         roxorigin: bool = False,
         filesrc: Optional[str] = None,
-    ):
-        """Instantating.
+    ) -> None:
+        """
+        Instantiating.
 
-            Args:
-                pfile: Input file-like or a Grid/GridProperty instance or leave blank.
-                fformat: File format input, default is ``guess``.
-                ncol: Number of columns (nx) defaults to 4.
-                nrow: Number of rows (ny) defaults to 3.
-                ncol: Number of layers (nz) defaults to 5.
-                name: Name of property.
-                discrete: True or False.
-                date: Date on YYYYMMDD form.
-                grid: Attached grid object
-                linkgeometry: If True, establish a link between GridProperty and Grid
-                fracture: True if fracture option (relevant for flow simulator data)
-                codes: Codes in case a discrete property e.g. {1: "Sand", 4: "Shale"}
-                dualporo: True if dual porosity system.
-                dualperm: True if dual porosity and dual permeability system.
-                roxar_dtype: Spesify roxar datatype e.g. np.uint8
-                values: Values to apply (will not be applied if a file-like is input)
-
-        Returns:
-            A GridProperty object instance.
+        Parameters:
+            gridlike:
+                Grid or GridProperty instance, or leave blank.
+            ncol:
+                Number of columns (nx). Defaults to 4.
+            nrow:
+                Number of rows (ny). Defaults to 3.
+            nlay:
+                Number of layers (nz). Defaults to 5.
+            name:
+                Name of property. Defaults to "unknown".
+            discrete:
+                True or False. Defaults to False.
+            date:
+                Date on YYYYMMDD form.
+            grid:
+                Attached Grid object.
+            linkgeometry:
+                If True, establish a link between GridProperty and Grid.
+                Defaults to True.
+            fracture:
+                True if fracture option (relevant for flow simulator data).
+                Defaults to False.
+            codes:
+                Codes in case a discrete property e.g. {1: "Sand", 4: "Shale"}.
+            dualporo:
+                True if dual porosity system.
+                Defaults to False.
+            dualperm:
+                True if dual porosity and dual permeability system.
+                Defaults to False.
+            roxar_dtype:
+                Specify Roxar datatype e.g. np.uint8.
+            values:
+                Values to apply.
+            roxorigin: True if the object comes from Roxar API.
+                Defaults to False.
+            filesrc: Where the file came from.
 
         Raises:
-            RuntimeError: if something goes wrong (e.g. file not found)
+            RuntimeError
+                If something goes wrong (e.g. file not found).
 
         Examples::
 
-            from xtgeo.grid3d import GridProperty
-            myprop = GridProperty()
-            myprop.from_file('emerald.roff', name='PORO')
+            import xtgeo
+            myprop = xtgeo.gridproperty_from_file("emerald.roff", name="PORO")
 
             # or
 
             values = np.ma.ones((12, 17, 10), dtype=np.float64),
             myprop = GridProperty(ncol=12, nrow=17, nlay=10,
                                   values=values, discrete=False,
-                                  name='MyValue')
-
-            # or
-
-            myprop = GridProperty('emerald.roff', name='PORO')
+                                  name="MyValue")
 
             # or create properties from a Grid() instance
 
-            mygrid = Grid("grid.roff")
-            myprop1 = GridProperty(mygrid, name='PORO')
-            myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1,
+            mygrid = xtgeo.grid_from_file("grid.roff")
+            myprop1 = GridProperty(mygrid, name="PORO")
+            myprop2 = GridProperty(mygrid, name="FACIES", discrete=True, values=1,
                                    linkgeometry=True)  # alternative 1
             myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
 
             # from Grid instance:
-            grd = Grid("somefile_grid_file")
+            grd = xtgeo.grid_from_file("somefile_grid_file")
             myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
 
             # or from existing GridProperty instance:
             myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
 
         """
-
         super().__init__()
 
         self._ncol = ncol
         self._nrow = nrow
         self._nlay = nlay
 
-        # instance attributes defaults:
+        # Instance attributes defaults:
         self._name = name
         self._date = date
         self._isdiscrete = discrete
@@ -405,22 +516,21 @@ class GridProperty(_Grid3D):
         self._fracture = fracture
         self._codes = dict() if codes is None else codes
 
-        # not primary input:
+        # Not primary input:
         self._dualporo = dualporo
         self._dualperm = dualperm
 
         self._filesrc = filesrc
-        self._roxorigin = roxorigin  # true if the object comes from the ROXAPI
+        self._roxorigin = roxorigin
         if roxar_dtype is None:
             if discrete:
-                self._roxar_dtype = np.uint8
+                self._roxar_dtype: npt.DTypeLike = np.uint8
             else:
                 self._roxar_dtype = np.float32
         else:
             self.roxar_dtype = roxar_dtype
-        self._values = values
 
-        self._undef = xtgeo.UNDEF_INT if discrete else xtgeo.UNDEF
+        self._undef = UNDEF_INT if discrete else UNDEF
 
         self._set_initial_dimensions(gridlike, (ncol, nrow, nlay))
 
@@ -430,15 +540,26 @@ class GridProperty(_Grid3D):
 
         if isinstance(gridlike, xtgeo.grid3d.Grid):
             if linkgeometry:
-                # assosiate this grid property with grid instance. This is not default
-                # since sunch links may affect garbish collection
+                # Associate this grid property with a Grid instance. This is not default
+                # since sunch links may affect garbage collection
                 self.geometry = gridlike
             gridlike.append_prop(self)
 
-        self._metadata = xtgeo.MetaDataCPProperty()
+        self._metadata = MetaDataCPProperty()
 
-    def _set_initial_dimensions(self, gridlike, input_dimensions):
-        """Sets the initial dimensions either from input, grid or default.
+    def _set_initial_dimensions(
+        self,
+        gridlike: Optional[Union[Grid, GridProperty]],
+        input_dimensions: Tuple[Optional[int], Optional[int], Optional[int]],
+    ) -> None:
+        """
+        Sets the initial dimensions either from input, grid or default.
+
+        Parameters:
+            gridlike:
+                Grid/GridProperty instance or leave blank.
+            input_dimensions:
+                The (ncol, nrow, nlay) tuple describing the dimensions.
 
         If a gridlike is given, we use its dimensions, but make sure it matches
         the input dimensions if given (not None). Otherwise, dimensions are either
@@ -465,127 +586,137 @@ class GridProperty(_Grid3D):
             else:
                 self._nlay = nlay
 
-    def _check_dimensions_match(self, ncol, nrow, nlay):
+    def _check_dimensions_match(
+        self, ncol: Optional[int], nrow: Optional[int], nlay: Optional[int]
+    ) -> None:
         """
+        Checks that Grid/GridProperty dimensions match provided input dimensions.
+
+        Parameters:
+            input_dimensions:
+                The (ncol, nrow, nlay) tuple describing the dimensions.
+
         Raises:
-            ValueError: if given dimensions are not None and do not
+            ValueError
+                If given dimensions are not None and do not
                 match dimensions of the GridProperty
+
         """
         if ncol is not None and self._ncol != ncol:
             raise ValueError(
-                f"mismatching column dimension given: {ncol} vs {self._ncol}"
+                f"Mismatching column dimension given: {ncol} vs {self._ncol}"
             )
         if nrow is not None and self._nrow != nrow:
-            raise ValueError(f"mismatching row dimension given: {nrow} vs {self._nrow}")
+            raise ValueError(f"Mismatching row dimension given: {nrow} vs {self._nrow}")
         if nlay is not None and self._nlay != nlay:
             raise ValueError(
-                f"mismatching layer dimension given: {nlay} vs {self._nlay}"
+                f"Mismatching layer dimension given: {nlay} vs {self._nlay}"
             )
 
-    def __del__(self):
+    def __del__(self) -> None:
         logger.debug("DELETING property instance %s", self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         myrp = (
             f"{self.__class__.__name__} (id={id(self)}) ncol={self._ncol!r}, "
             f"nrow={self._nrow!r}, nlay={self._nlay!r}, filesrc={self._filesrc!r}"
         )
         return myrp
 
-    def __str__(self):
-        # user friendly print
+    def __str__(self) -> str:
         return self.describe(flush=False)
 
     # ==================================================================================
     # Properties
-    # Some proprerties such as ncol, nrow, nlay are from the Super class
+    # Some properties such as ncol, nrow, nlay are from _Grid3d
     # ==================================================================================
 
     @property
-    def metadata(self):
-        """Return metadata object instance of type MetaDataRegularSurface."""
+    def metadata(self) -> MetaDataCPProperty:
+        """Get or set metadata object instance of type MetaDataCPProperty."""
         return self._metadata
 
     @metadata.setter
-    def metadata(self, obj):
-        # The current metadata object can be replaced. A bit dangerous so further
-        # check must be done to validate. TODO.
-        if not isinstance(obj, xtgeo.MetaDataCPProperty):
-            raise ValueError("Input obj not an instance of MetaDataCPProperty")
-
-        self._metadata = obj  # checking is currently missing! TODO
+    def metadata(self, metadata: MetaDataCPProperty) -> None:
+        if not isinstance(metadata, MetaDataCPProperty):
+            raise ValueError("Input metadata not an instance of MetaDataCPProperty")
+        # TODO: validate this?
+        self._metadata = metadata
 
     @property
-    def name(self):
-        """Returns or rename the property name."""
+    def name(self) -> Optional[str]:
+        """Get or set the property name."""
         return self._name
 
     @name.setter
-    def name(self, name):
+    def name(self, name: str) -> None:
         self._name = name
 
     @property
-    def dimensions(self):
-        """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
-        return (self._ncol, self._nrow, self._nlay)
+    def dimensions(self) -> Tuple[int, int, int]:
+        """Get the grid dimensions as a tuple of 3 integers."""
+        return (self.ncol, self.nrow, self.nlay)
 
     @property
-    def nactive(self):
-        """int: Returns the number of active cells (read only)."""
+    def nactive(self) -> int:
+        """Get the number of active cells."""
         return len(self.actnum_indices)
 
     @property
-    def geometry(self):
-        """Returns or set the linked geometry, i.e. the Grid instance)"""
+    def geometry(self) -> Optional[Grid]:
+        """Get or set the linked geometry, i.e. the Grid instance."""
         return self._geometry
 
     @geometry.setter
-    def geometry(self, geom):
-        if geom is None:
+    def geometry(self, grid: Optional[Grid]) -> None:
+        if grid is None:
             self._geometry = None
-        elif isinstance(geom, xtgeo.grid3d.Grid) and geom.dimensions == self.dimensions:
-            self._geometry = geom
+        elif isinstance(grid, xtgeo.grid3d.Grid) and grid.dimensions == self.dimensions:
+            self._geometry = grid
         else:
             raise ValueError("Could not set geometry; wrong type or size")
 
     @property
-    def actnum_indices(self):
-        """Returns the 1D ndarray which holds the indices for active cells
-        given in 1D, C order (read only).
+    def actnum_indices(self) -> np.ndarray:
+        """
+        Get the 1D ndarray which holds the indices for active cells
+        given in 1D, C order.
 
         """
-        actnumv = self.get_actnum()
-        actnumv = np.ravel(actnumv.values)
+        gridprop = self.get_actnum()
+        actnumv = np.ravel(gridprop.values)
         return np.flatnonzero(actnumv)
 
     @property
-    def isdiscrete(self):
-        """Return True if property is discrete.
+    def isdiscrete(self) -> bool:
+        """
+        Get or set whether this property is discrete.
 
         This can also be used to convert from continuous to discrete
         or from discrete to continuous::
 
             myprop.isdiscrete = False
-        """
 
+        """
         return self._isdiscrete
 
     @isdiscrete.setter
-    def isdiscrete(self, flag):
+    def isdiscrete(self, flag: bool) -> None:
         if not isinstance(flag, bool):
             raise ValueError("Input to {__name__} must be a bool")
 
         if flag is self._isdiscrete:
-            pass
+            return
+
+        if flag is True and self._isdiscrete is False:
+            self.continuous_to_discrete()
         else:
-            if flag is True and self._isdiscrete is False:
-                self.continuous_to_discrete()
-            else:
-                self.discrete_to_continuous()
+            self.discrete_to_continuous()
 
     @property
-    def dtype(self):
-        """Return or set the values numpy dtype.
+    def dtype(self) -> np.dtype:
+        """
+        Get or set the ``values`` numpy dtype.
 
         When setting, note that the the dtype must correspond to the
         `isdiscrete` property. Hence dtype cannot alter isdiscrete status
@@ -595,187 +726,178 @@ class GridProperty(_Grid3D):
             if myprop.isdiscrete:
                 myprop.dtype = np.uint16
 
-
         """
         return self._values.dtype
 
     @dtype.setter
-    def dtype(self, dtype):
-        allowedfloat = [np.float16, np.float32, np.float64]
-        allowedint = [np.uint8, np.uint16, np.int16, np.int32, np.int64]
-
-        okv = True
-        msg = ""
+    def dtype(self, dtype: npt.DTypeLike) -> None:
+        allowed: List[npt.DTypeLike] = [np.float16, np.float32, np.float64]
         if self.isdiscrete:
-            if dtype in allowedint:
-                self.values = self.values.astype(dtype)
-            else:
-                okv = False
-                msg = f"{__name__}: Wrong input for dtype. Use one of {allowedint}!"
-        else:
-            if dtype in allowedfloat:
-                self.values = self.values.astype(dtype)
-            else:
-                okv = False
-                msg = f"{__name__}: Wrong input for dtype. Use one of {allowedfloat}!"
-
-        if not okv:
-            raise ValueError(msg)
+            allowed = [np.uint8, np.uint16, np.int16, np.int32, np.int64]
+        if dtype not in allowed:
+            raise ValueError(
+                f"{__name__}: Wrong input for dtype. Use one of {allowed}!"
+            )
+        # TODO: Remove this ignore
+        # https://github.com/numpy/numpy/issues/24392#issuecomment-1676068245
+        self.values = self.values.astype(dtype)  # type: ignore
 
     @property
-    def filesrc(self):
-        """Return or set file src (if any)"""
+    def filesrc(self) -> Optional[str]:
+        """Get or set the GridProperty file src (if any)."""
         return self._filesrc
 
     @filesrc.setter
-    def filesrc(self, src):
+    def filesrc(self, src: str) -> None:
         self._filesrc = src
 
     @property
-    def roxar_dtype(self):
-        """Return or set the roxar dtype (if any)"""
+    def roxar_dtype(self) -> Optional[np.dtype]:
+        """Get or set the roxar dtype (if any)."""
         return self._roxar_dtype
 
     @roxar_dtype.setter
-    def roxar_dtype(self, dtype):
+    def roxar_dtype(self, dtype: npt.DTypeLike) -> None:
         allowed = [np.uint16, np.uint8, np.float32]
-        if dtype in allowed:
-            self._roxar_dtype = dtype
-        else:
+        if dtype not in allowed:
             raise ValueError(
                 f"{__name__}: Wrong input for roxar_dtype. Use one of {allowed}!"
             )
+        self._roxar_dtype = dtype
 
     @property
     def date(self) -> Optional[str]:
-        """Returns or rename the property date as string on YYYYMMDD format."""
+        """Get or set the property date as string in YYYYMMDD format."""
         return self._date
 
     @date.setter
-    def date(self, date: Optional[str]):
+    def date(self, date: Optional[str]) -> None:
         self._date = date
 
     @property
-    def codes(self) -> dict:
-        """The property codes as a dictionary."""
+    def codes(self) -> Dict[int, str]:
+        """Get or set the property codes as a dictionary."""
         return self._codes
 
     @codes.setter
-    def codes(self, cdict):
-        if isinstance(cdict, dict):
-            self._codes = copy.deepcopy(cdict)
-        else:
+    def codes(self, codes: Dict[int, str]) -> None:
+        if not isinstance(codes, dict):
             raise ValueError(
                 "The codes must be a python dictionary, current input "
-                f"is type: {type(cdict)}"
+                f"is type: {type(codes)}"
             )
+        self._codes = copy.deepcopy(codes)
 
     @property
     def ncodes(self) -> int:
-        """Number of codes if discrete grid property (read only)."""
+        """Get number of codes if discrete grid property."""
         return len(self._codes)
 
     @property
     def values(self) -> np.ma.MaskedArray:
-        """Return or set the grid property as a masked 3D numpy array"""
+        """Get or set the grid property as a masked 3D numpy array."""
         return self._values
 
     @values.setter
-    def values(self, values):
+    def values(self, values: np.ma.MaskedArray) -> None:
         values = self.ensure_correct_values(self.ncol, self.nrow, self.nlay, values)
-
         self._values = values
 
     @property
     def ntotal(self) -> int:
-        """Returns total number of cells ncol*nrow*nlay (read only)"""
-        return self._ncol * self._nrow * self._nlay
+        """Get total number of cells (ncol * nrow * nlay)."""
+        return self.ncol * self.nrow * self.nlay
 
     @property
-    def roxorigin(self):
-        """Returns True if the property comes from ROXAPI"""
+    def roxorigin(self) -> bool:
+        """Get boolean value of True if the property comes from ROXAPI."""
         return self._roxorigin
 
     @roxorigin.setter
-    def roxorigin(self, val):
-        if isinstance(val, bool):
-            self._roxorigin = val
-        else:
+    def roxorigin(self, val: bool) -> None:
+        if not isinstance(val, bool):
             raise ValueError("Input to roxorigin must be True or False")
+        self._roxorigin = val
 
     @property
-    def values3d(self):
-        """For backward compatibility (use values instead)"""
+    def values3d(self) -> np.ma.MaskedArray:
+        """DEPRECATED: use values instead (kept for backwards compatibility)."""
         return self._values
 
     @values3d.setter
-    def values3d(self, values):
-        # kept for backwards compatibility
+    def values3d(self, values: np.ma.MaskedArray) -> None:
         self.values = values
 
     @property
-    def values1d(self):
-        """Returns a 1D view of values (masked numpy) (read only)."""
+    def values1d(self) -> np.ma.MaskedArray:
+        """Get a masked 1D array view of values."""
         return self._values.reshape(-1)
 
     @property
-    def undef(self):
-        """Get the actual undef value for floats or ints
-        numpy arrays (read only).
-        """
+    def undef(self) -> Union[float, int]:
+        """Get the actual undef value for floats or ints in numpy arrays."""
         if self._isdiscrete:
-            return xtgeo.UNDEF_INT
-
-        return xtgeo.UNDEF
+            return UNDEF_INT
+        return UNDEF
 
     @property
-    def undef_limit(self):
-        """Returns the undef limit number, which is slightly less than the
+    def undef_limit(self) -> Union[float, int]:
+        """
+        Get the undef limit number, which is slightly less than the
         undef value.
 
         Hence for numerical precision, one can force undef values
         to a given number, e.g.::
 
-           x[x<x.undef_limit]=999
+           x[x<x.undef_limit] = 999
 
         Undef limit values cannot be changed (read only).
 
         """
         if self._isdiscrete:
-            return xtgeo.UNDEF_INT_LIMIT
-
-        return xtgeo.UNDEF_LIMIT
+            return UNDEF_INT_LIMIT
+        return UNDEF_LIMIT
 
     # ==================================================================================
     # Class and special methods
     # ==================================================================================
 
-    def generate_hash(self):
-        """str: Return a unique hash ID for current grid; can e.g. be used to compare
-        two gridproperty instances with same source.
+    def generate_hash(self) -> str:
+        """
+        Generates a sha256 hash id representing a GridProperty.
+
+        Returns:
+            A unique hash id string.
 
         .. versionadded:: 2.10
+
         """
-
         mhash = hashlib.sha256()
-        gid = f"{self._filesrc}{self._ncol}{self._nrow}{self._nlay}"
-        f"{self._values.mean()}{self._values.min()}{self._values.max()}"
-
+        gid = (
+            f"{self._filesrc}{self._ncol}{self._nrow}{self._nlay}"
+            f"{self._values.mean()}{self._values.min()}{self._values.max()}"
+        )
         mhash.update(gid.encode())
         return mhash.hexdigest()
 
     @classmethod
-    def methods(cls):
-        """Returns the names of the methods in the class.
+    def methods(cls) -> str:
+        """
+        A list of methods in the class as a string.
 
-        >>> print(GridProperty.methods())
-        METHODS for GridProperty():
-        ======================
-        __init__
-        _reset
-        _set_initial_dimensions
-        _check_dimensions_match
-        ...
+        Returns:
+            The names of the methods in the class.
+
+        Example::
+            >>> print(GridProperty.methods())
+            METHODS for GridProperty():
+            ======================
+            __init__
+            _reset
+            _set_initial_dimensions
+            _check_dimensions_match
+            ...
+
         """
         mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
 
@@ -785,26 +907,36 @@ class GridProperty(_Grid3D):
 
         return txt
 
-    def ensure_correct_values(self, ncol, nrow, nlay, invalues):
-        """Ensures that values is a 3D masked numpy (ncol, nrol, nlay).
+    def ensure_correct_values(
+        self,
+        ncol: int,
+        nrow: int,
+        nlay: int,
+        invalues: npt.ArrayLike,
+    ) -> np.ma.MaskedArray:
+        """
+        Ensures that values is a 3D masked numpy (ncol, nrol, nlay).
 
-        Args:
-            ncol (int): Number of columns.
-            nrow (int): Number of rows.
-            nlay (int): Number of layers.
-            invalues (array or scalar): Values to process.
+        Parameters:
+            ncol:
+                Number of columns.
+            nrow:
+                Number of rows.
+            nlay:
+                Number of layers.
+            invalues:
+                Values to process.
 
-        Return:
-            values (MaskedArray): Numpy masked array on correct format.
+        Returns:
+            The values as a masked numpy array.
 
         """
-
         currentmask = None
         if self._values is not None:
             if isinstance(self._values, np.ma.MaskedArray):
                 currentmask = np.ma.getmaskarray(self._values)
 
-        if isinstance(invalues, numbers.Number):
+        if isinstance(invalues, (int, float)):
             vals = np.ma.zeros((ncol, nrow, nlay), order="C", dtype=self.dtype)
             vals = np.ma.array(vals, mask=currentmask)
             values = vals + invalues
@@ -845,7 +977,19 @@ class GridProperty(_Grid3D):
     # Import and export
     # ==================================================================================
 
-    def from_file(self, pfile, fformat=None, **kwargs):  # _roffapiv for devel.
+    # TODO: Remove this ignore once import cycles cleaned up
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,  # type: ignore
+        details="Use xtgeo.gridproperty_from_file() instead",
+    )
+    def from_file(
+        self,
+        pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+        fformat: Optional[str] = None,
+        **kwargs: Any,
+    ) -> GridProperty:
         """
         Import grid property from file, and makes an instance of this class.
 
@@ -853,50 +997,61 @@ class GridProperty(_Grid3D):
         through the ``grid=`` option. Sometimes this is required, for instance
         for most Eclipse input.
 
-        Args:
-            pfile (str): name of file to be imported
-            fformat (str): file format to be used roff/init/unrst/grdecl
-                (None is default, which means "guess" from file extension).
-            name (str): name of property to import
-            date (int or str): For restart files, date on YYYYMMDD format. Also
+        Parameters:
+            pfile:
+                Name of file to be imported
+            fformat:
+                File format to be used (roff/init/unrst/grdecl).
+                Defaults to None and tries to infer from file extension.
+            name:
+                Name of property to import
+            date:
+                For restart files, date in YYYYMMDD format. Also
                 the YYYY-MM-DD form is allowed (string), and for Eclipse,
                 mnemonics like 'first', 'last' is also allowed.
-            grid (Grid object): Grid Object for checks (optional for ROFF,
-                required for Eclipse).
-            gridlink (bool): If True, and grid is not None, a link from the grid
+            grid:
+                Grid object for checks. Optional for ROFF, required for Eclipse).
+            gridlink:
+                If True, and grid is not None, a link from the grid
                 instance to the property is made. If False, no such link is made.
                 Avoiding gridlink is recommended when running statistics of multiple
                 realisations of a property.
-            fracture (bool): Only applicable for DUAL POROSITY systems, if True
-                then the fracture property is read; if False then the matrix
+            fracture:
+                Only applicable for DUAL POROSITY systems. If True
+                then the fracture property is read. If False then the matrix
                 property is read. Names will be appended with "M" or "F"
-            ijrange (list-like): A list of 4 number: (i1, i2, j1, j2) for subrange
+            ijrange:
+                A list of 4 number: (i1, i2, j1, j2) for subrange
                 of cells to read. Only applicable for xtgcpprop format.
-            zerobased (bool): Input if cells counts are zero- or one-based in
+            zerobased:
+                Input if cells counts are zero- or one-based in
                 ijrange. Only applicable for xtgcpprop format.
+
+        Returns:
+           A GridProperty instance.
 
         Examples::
 
-           x = GridProperty()
-           x.from_file('somefile.roff', fformat='roff')
-           #
-           mygrid = Grid('ECL.EGRID')
-           pressure_1 = GridProperty()
-           pressure_1.from_file('ECL.UNRST', name='PRESSURE', date='first',
-                                grid=mygrid)
+           import xtgeo
+           gprop = xtgeo.gridproperty_from_file("somefile.roff", fformat="roff")
 
-        Returns:
-           True if success, otherwise False
+           # or
+
+           mygrid = xtgeo.grid_from_file("ECL.EGRID")
+           pressure_1 = xtgeo.gridproperty_from_file(
+               "ECL.UNRST", name="PRESSURE", date="first", grid=mygrid
+           )
 
         .. versionchanged:: 2.8 Added gridlink option, default is True
+
         """
-        pfile = xtgeo._XTGeoFile(pfile)
+        xtg_file = _XTGeoFile(pfile)
         if fformat is None or fformat == "guess":
-            fformat = pfile.detect_fformat()
+            _fformat = xtg_file.detect_fformat()
         else:
-            fformat = pfile.generic_format_by_proposal(fformat)  # default
-        kwargs = _data_reader_factory(fformat)(pfile, **kwargs)
-        kwargs["filesrc"] = pfile.file
+            _fformat = xtg_file.generic_format_by_proposal(fformat)  # default
+        kwargs = _data_reader_factory(_fformat)(xtg_file, **kwargs)
+        kwargs["filesrc"] = xtg_file.file
         self._reset(**kwargs)
         return self
 
@@ -905,52 +1060,65 @@ class GridProperty(_Grid3D):
         cls,
         pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
         fformat: Optional[str] = None,
-        **kwargs,
-    ):
-        pfile = xtgeo._XTGeoFile(pfile)
+        **kwargs: Any,
+    ) -> GridProperty:
+        xtg_file = _XTGeoFile(pfile)
         if fformat is None or fformat == "guess":
-            fformat = pfile.detect_fformat()
+            _fformat = xtg_file.detect_fformat()
         else:
-            fformat = pfile.generic_format_by_proposal(fformat)  # default
-        kwargs = _data_reader_factory(fformat)(pfile, **kwargs)
-        kwargs["filesrc"] = pfile.file
+            _fformat = xtg_file.generic_format_by_proposal(fformat)  # default
+        kwargs = _data_reader_factory(_fformat)(xtg_file, **kwargs)
+        kwargs["filesrc"] = xtg_file.file
         return cls(**kwargs)
 
     def to_file(
-        self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None
-    ):
-        """Export the grid property to file.
+        self,
+        pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+        fformat: str = "roff",
+        name: Optional[str] = None,
+        append: bool = False,
+        dtype: Optional[npt.DTypeLike] = None,
+        fmt: Optional[str] = None,
+    ) -> None:
+        """
+        Export the grid property to file.
 
-        Args:
-            pfile (str or Path): File name or pathlib.Path to export to
-            fformat (str): The file format to be used. Default is
-                roff binary , else roff_ascii/grdecl/bgrdecl
-            name (str): If provided, will explicitly give property name;
+        Parameters:
+            pfile:
+                File name or pathlib.Path to export to.
+            fformat:
+                The file format to be used. Default is
+                roff binary, else roff_ascii/grdecl/bgrdecl.
+            name:
+                If provided, will explicitly give property name;
                 else the existing name of the instance will used.
-            append (bool): Append to existing file, only for (b)grdecl formats.
-            dtype (str): Data type; this is valid only for grdecl or bgrdecl
-                formats, where default is None which means 'float32' for
-                floating point number and 'int32' for discrete properties.
+            append:
+                Append to existing file, only for (b)grdecl formats.
+            dtype:
+                The values data type. This is valid only for grdecl or bgrdecl
+                formats, where the default is None which means 'float32' for
+                floating point numbers and 'int32' for discrete properties.
                 Other choices are 'float64' which are 'DOUB' entries in
                 Eclipse formats.
-            fmt (str): Format for ascii grdecl format, default is None. If spesified,
-                the user is responsible for a valid format specifier, e.g. "%8.4f"
+            fmt:
+                Format for ascii grdecl format. Default is None. If specified,
+                the user is responsible for a valid format specifier, e.g. "%8.4f".
 
         Example::
 
             # This example demonstrates that file formats can be mixed
-            rgrid = Grid('reek.roff')
-            poro = GridProperty('reek_poro.grdecl', grid=rgrid, name='PORO')
+            import xtgeo
+            rgrid = xtgeo.grid_from_file("reek.roff")
+            poro = GridProperty("reek_poro.grdecl", grid=rgrid, name='PORO')
 
             poro.values += 0.05
 
-            poro.to_file('reek_export_poro.bgrdecl', format='bgrdecl')
+            poro.to_file("reek_export_poro.bgrdecl", format="bgrdecl")
 
         .. versionadded:: 2.13  Key `fmt` was added and default format for float output
             to grdecl is now "%e" if `fmt=None`
 
         """
-
         _gridprop_export.to_file(
             self,
             pfile,
@@ -961,18 +1129,35 @@ class GridProperty(_Grid3D):
             fmt=fmt,
         )
 
+    # TODO: Remove this ignore once import cycles are cleaned up
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,  # type: ignore
+        details="Use xtgeo.gridproperty_from_roxar() instead",
+    )
     def from_roxar(
-        self, projectname, gname, pname, realisation=0, faciescodes=False
-    ):  # pragma: no cover
-        """Import grid model property from RMS project, and makes an instance.
+        self,
+        projectname: str,
+        gridname: str,
+        propertyname: str,
+        realisation: int = 0,
+        faciescodes: bool = False,
+    ) -> None:  # pragma: no cover
+        """
+        Import grid model property from RMS project, and makes an instance.
 
-        Arguments:
-            projectname (str): Name of RMS project; use pure 'project'
-                if inside RMS
-            gfile (str): Name of grid model
-            pfile (str): Name of grid property
-            realisation (int): Realisation number (default 0; first)
-            faciescodes (bool): If a Roxar property is of the special ``body_facies``
+        Parameters:
+            projectname:
+                Name of RMS project. Use 'project' if inside RMS.
+            gridname:
+                Name of grid model.
+            propertyname:
+                Name of grid property.
+            realisation:
+                Realisation number. Default is 0 (the first).
+            faciescodes:
+                If a Roxar property is of the special ``body_facies``
                 type (e.g. result from a channel facies object modelling), the
                 default is to get the body code values. If faciescodes is True,
                 the facies code values will be read instead. For other roxar properties
@@ -981,27 +1166,37 @@ class GridProperty(_Grid3D):
         .. versionadded:: 2.12  Key `faciescodes` was added
 
         """
-
         self._reset(
             **_gridprop_roxapi.import_prop_roxapi(
-                projectname, gname, pname, realisation, faciescodes
+                projectname, gridname, propertyname, realisation, faciescodes
             )
         )
 
     @classmethod
     def _read_roxar(
-        cls, projectname, gname, pname, realisation=0, faciescodes=False
-    ):  # pragma: no cover
+        cls,
+        projectname: str,
+        gridname: str,
+        propertyname: str,
+        realisation: int = 0,
+        faciescodes: bool = False,
+    ) -> GridProperty:  # pragma: no cover
         return cls(
             **_gridprop_roxapi.import_prop_roxapi(
-                projectname, gname, pname, realisation, faciescodes
+                projectname, gridname, propertyname, realisation, faciescodes
             )
         )
 
     def to_roxar(
-        self, project, gname, pname, realisation=0, casting="unsafe"
-    ):  # pragma: no cover
-        """Store a grid model property into a RMS project.
+        self,
+        projectname: str,
+        gridname: str,
+        propertyname: str,
+        realisation: int = 0,
+        casting: str = "unsafe",
+    ) -> None:  # pragma: no cover
+        """
+        Store a grid model property into a RMS project.
 
         Note:
             When project is file path (direct access, outside RMS) then
@@ -1017,34 +1212,53 @@ class GridProperty(_Grid3D):
             "unsafe" casting. More common is casting issues with discrete as
             Roxar (RMS) often use `uint8` which only allow values in range 1..256.
 
-        Args:
-            project (str or roxar._project): Inside RMS use the magic 'project',
-                else use path to RMS project, or a project reference
-            gfile (str): Name of grid model
-            pfile (str): Name of grid property
-            projectname (str): Name of RMS project (None if inside a project)
-            realisation (int): Realisation number (default 0 first)
-            casting (str): This refers to numpy `astype(... casting=...)` settings.
+        Parameters:
+            projectname:
+                Inside RMS use the magic 'project' string. Otherwise
+                use a path to an RMS project, or a project reference.
+            gridname:
+                Name of grid model.
+            propertyname:
+                Name of grid property.
+            realisation:
+                Realisation number. Default is 0 (the first).
+            casting:
+                This refers to numpy `astype(... casting=...)` settings.
 
-
-        .. versionchanged: 2.10
-            Key `saveproject` has been removed and will have no effect
-
+        .. versionchanged:: 2.10 Key `saveproject` has been removed and will
+            have no effect
         .. versionadded:: 2.12 Key `casting` was added
 
         """
         _gridprop_roxapi.export_prop_roxapi(
-            self, project, gname, pname, realisation=realisation, casting=casting
+            self,
+            projectname,
+            gridname,
+            propertyname,
+            realisation=realisation,
+            casting=casting,
         )
 
     # ==================================================================================
     # Various public methods
     # ==================================================================================
 
-    def describe(self, flush=True):
-        """Describe an instance by printing to stdout"""
+    def describe(self, flush: bool = True) -> str:
+        """
+        Describe a GridProperty instance by printing its properties
+        to stdout
 
-        dsc = xtgeo.common.XTGDescription()
+        Parameters:
+            flush:
+                Print to stdout. True by default.
+
+        Returns:
+            A string description of the grid property instance.
+
+        """
+        from xtgeo.common import XTGDescription
+
+        dsc = XTGDescription()
         dsc.title("Description of GridProperty instance")
         dsc.txt("Object ID", id(self))
         dsc.txt("Name", self.name)
@@ -1070,12 +1284,13 @@ class GridProperty(_Grid3D):
 
         if flush:
             dsc.flush()
-            return None
+            return ""
 
         return dsc.astext()
 
-    def get_npvalues3d(self, fill_value=None):
-        """Get a pure numpy copy (not masked) copy of the values, 3D shape.
+    def get_npvalues3d(self, fill_value: Optional[npt.ArrayLike] = None) -> np.ndarray:
+        """
+        Get a pure numpy copy (not masked) of the values in 3D shape.
 
         Note that Numpy dtype will be reset; int32 if discrete or float64 if
         continuous. The reason for this is to avoid inconsistensies regarding
@@ -1083,19 +1298,22 @@ class GridProperty(_Grid3D):
 
         If fill_value is not None, than the returning dtype is always `np.float64`.
 
-        Args:
-            fill_value: Value of masked entries. Default is None which
-                means the XTGeo UNDEF value (a high number), different
-                for a continuous or discrete property
-        """
-        # this is a function, not a property by design
+        Parameters:
+            fill_value:
+                Value of masked entries. Default is None which
+                means the XTGeo UNDEF value (a high number). This UNDEF
+                value is different for a continuous or discrete property.
 
+        Returns:
+            Non-masked array copy of 3D-shaped values
+
+        """
         if fill_value is None:
             if self._isdiscrete:
-                fvalue = xtgeo.UNDEF_INT
-                dtype = np.int32
+                fvalue: npt.ArrayLike = UNDEF_INT
+                dtype: npt.DTypeLike = np.int32
             else:
-                fvalue = xtgeo.UNDEF
+                fvalue = UNDEF
                 dtype = np.float64
         else:
             fvalue = fill_value
@@ -1107,25 +1325,38 @@ class GridProperty(_Grid3D):
 
         return npv3d
 
-    def get_actnum(self, name="ACTNUM", asmasked=False, mask=None):
-        """Return an ACTNUM GridProperty object.
+    def get_actnum(
+        self,
+        name: str = "ACTNUM",
+        asmasked: bool = False,
+        mask: Optional[bool] = None,
+    ) -> GridProperty:
+        """
+        Return an ACTNUM GridProperty object.
 
         Note that this method is similar to, but not identical to,
         the job with same name in Grid(). Here, the maskedarray of the values
         is applied to deduce the ACTNUM array.
 
-        Args:
-            name (str): name of property in the XTGeo GridProperty object.
-            asmasked (bool): Actnum is returned with all cells shown
-                as default. Use asmasked=True to make 0 entries masked.
-            mask (bool): Deprecated, use asmasked instead!
+        Parameters:
+            name:
+                Name of property in the XTGeo GridProperty object.
+                Default is "ACTNUM".
+            asmasked:
+                Default is False, so that actnum is returned with all cells
+                shown. Use asmasked=True to make 0 entries masked.
+            mask:
+                Deprecated, use asmasked instead!
+
+        Returns:
+            The ACTNUM GridProperty object.
 
         Example::
 
             act = mygrid.get_actnum()
             print('{}% cells are active'.format(act.values.mean() * 100))
-        """
 
+        """
         if mask is not None:
             xtg.warndeprecated(
                 "The mask option is deprecated,"
@@ -1138,7 +1369,7 @@ class GridProperty(_Grid3D):
         )
 
         orig = self.values
-        vact = np.ones(self.values.shape)
+        vact = np.ma.ones(self.values.shape)
         vact[orig.mask] = 0
 
         if asmasked:
@@ -1148,27 +1379,43 @@ class GridProperty(_Grid3D):
         act.isdiscrete = True
         act.codes = {0: "0", 1: "1"}
 
-        # return the object
         return act
 
-    def get_active_npvalues1d(self):
-        """Return the grid property as a 1D numpy array (copy), active
-        cells only.
+    def get_active_npvalues1d(self) -> np.ma.MaskedArray:
         """
+        Get the active cells as a 1D numpy masked array.
 
+        Returns:
+            The grid property as a 1D numpy masked array, active cells only.
+
+        """
         return self.get_npvalues1d(activeonly=True)
 
-    def get_npvalues1d(self, activeonly=False, fill_value=np.nan, order="C"):
-        """Return the grid property as a 1D numpy array (copy) for active or all
+    def get_npvalues1d(
+        self,
+        activeonly: bool = False,
+        fill_value: npt.ArrayLike = np.nan,
+        order: Literal["C", "F"] = "C",
+    ) -> np.ma.MaskedArray:
+        """
+        Return the grid property as a 1D numpy array (copy) for active or all
         cells, but inactive have a fill value.
 
-        Args:
-            activeonly (bool): If True, then only return active cells
-            fill_value (float): Fill value for inactive cells
-            order (str): Array internal order; default is "C", alternative is "F"
+        Parameters:
+            activeonly:
+                If True, then only return active cells.
+                Default is False.
+            fill_value:
+                Fill value for inactive cells. Default is `np.nan`.
+            order:
+                Array internal order. Default is "C", alternative is "F".
+
+        Returns:
+            The grid property as a 1D numpy masked array.
 
         .. versionadded:: 2.3
         .. versionchanged:: 2.8 Added `fill_value` and `order`
+
         """
         vact = self.values1d.copy()
 
@@ -1180,8 +1427,16 @@ class GridProperty(_Grid3D):
 
         return vact.filled(fill_value)
 
-    def copy(self, newname=None):
-        """Copy a xtgeo.grid3d.GridProperty() object to another instance.
+    def copy(self, newname: Optional[str] = None) -> GridProperty:
+        """
+        Copy a GridProperty object to another instance.
+
+        Parameters:
+            newname:
+                Give the copied instance a new name.
+
+        Returns:
+            A copy of the GridProperty instance.
 
         ::
 
@@ -1195,7 +1450,6 @@ class GridProperty(_Grid3D):
             XPROP
 
         """
-
         if newname is None:
             newname = self.name
 
@@ -1218,19 +1472,31 @@ class GridProperty(_Grid3D):
 
         return xprop
 
-    def mask_undef(self):
+    def mask_undef(self) -> None:
         """Make UNDEF values masked."""
         if self._isdiscrete:
-            self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_INT_LIMIT)
+            self._values = np.ma.masked_greater(self._values, UNDEF_INT_LIMIT)
         else:
-            self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
+            self._values = np.ma.masked_greater(self._values, UNDEF_LIMIT)
 
-    def crop(self, spec):
-        """Crop a property, see method under grid"""
+    def crop(
+        self, spec: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+    ) -> None:
+        """
+        Crop a property between grid coordinates.
 
+        Parameters:
+            spec:
+                Provide a tuple of i, j, k lower and upper bounds
+                to crop between, e.g. ((1, 3), (2, 4), (1, 5)) would
+                crop a grid property such that only values from 1:3 in
+                the i plane, 2:4 in the j plane, and 1:5 in the k plane
+                would be present.
+
+        """
         (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
 
-        # compute size of new cropped grid
+        # Compute size of new cropped grid
         self._ncol = ic2 - ic1 + 1
         self._nrow = jc2 - jc1 + 1
         self._nlay = kc2 - kc1 + 1
@@ -1239,57 +1505,75 @@ class GridProperty(_Grid3D):
 
         self.values = newvalues[ic1 - 1 : ic2, jc1 - 1 : jc2, kc1 - 1 : kc2]
 
-    def get_xy_value_lists(self, grid=None, activeonly=True):
-        """Get lists of xy coords and values for Webportal format.
+    def get_xy_value_lists(
+        self, grid: Optional[Grid] = None, activeonly: bool = True
+    ) -> XYValueLists:
+        """
+        Get lists of xy coords and values for Webportal format.
 
         The coordinates are on the form (two cells)::
 
             [[[(x1,y1), (x2,y2), (x3,y3), (x4,y4)],
             [(x5,y5), (x6,y6), (x7,y7), (x8,y8)]]]
 
-        Args:
-            grid (object): The XTGeo Grid object for the property
-            activeonly (bool): If true (default), active cells only,
+        Parameters:
+            grid:
+                The XTGeo Grid object for the property.
+                Defaults to None.
+            activeonly:
+                If True (default), active cells only,
                 otherwise cell geometries will be listed and property will
                 have value -999 in undefined cells.
 
+        Returns:
+            A tuple of two lists, one being the xr coords, the other
+            the values at those coords.
+
+
         Example::
 
-            grid = Grid()
-            grid.from_file('../xtgeo-testdata/3dgrids/bri/b_grid.roff')
-            prop = GridProperty()
-            prop.from_file('../xtgeo-testdata/3dgrids/bri/b_poro.roff',
-                           grid=grid, name='PORO')
+            import xtgeo
+            grid = xtgeo.grid_from_file("../xtgeo-testdata/3dgrids/bri/b_grid.roff")
+            prop = xtgeogridproperty_from_file(
+                "../xtgeo-testdata/3dgrids/bri/b_poro.roff", grid=grid, name="PORO"
+            )
 
-            clist, valuelist = prop.get_xy_value_lists(grid=grid,
-                                                       activeonly=False)
-
+            clist, valuelist = prop.get_xy_value_lists(
+                grid=grid, activeonly=False
+            )
 
         """
-
         clist, vlist = _gridprop_op1.get_xy_value_lists(
             self, grid=grid, mask=activeonly
         )
         return clist, vlist
 
-    def get_values_by_ijk(self, iarr, jarr, karr, base=1):
-        """Get a 1D ndarray of values by I J K arrays.
+    def get_values_by_ijk(
+        self, iarr: np.ndarray, jarr: np.ndarray, karr: np.ndarray, base: int = 1
+    ) -> Optional[np.ma.MaskedArray]:
+        """
+        Get a 1D ndarray of values by I J K arrays.
 
         This could for instance be a well path where I J K
         exists as well logs.
 
         Note that the input arrays have 1 as base as default
 
-        Args:
-            iarr (ndarray): Numpy array of I
-            jarr (ndarray): Numpy array of J
-            karr (ndarray): Numpy array of K
-            base (int): Should be 1 or 0, dependent on what
+        Parameters:
+            iarr:
+                Numpy array of I
+            jarr:
+                Numpy array of J
+            karr:
+                Numpy array of K
+            base:
+                Should be 1 or 0, dependent on what
                 number base the input arrays has.
 
         Returns:
-            pvalues (ndarray): A 1D numpy array of property values,
-                with NaN if undefined
+            A 1D numpy array of property values,
+            with NaN if undefined. Returns None
+            on IndexErrors.
 
         """
         res = np.zeros(iarr.shape, dtype="float64")
@@ -1308,9 +1592,7 @@ class GridProperty(_Grid3D):
                 jarr.astype("int") - base,
                 karr.astype("int") - base,
             ]
-
             return np.ma.filled(res, fill_value=np.nan)
-
         except IndexError as ier:
             xtg.warn(f"Error {ier}, return None")
             return None
@@ -1318,57 +1600,70 @@ class GridProperty(_Grid3D):
             xtg.warn("Unexpected error")
             raise
 
-    def discrete_to_continuous(self):
-        """Convert from discrete to continuous values"""
-
-        if self.isdiscrete:
-            logger.info("Converting to continuous ...")
-            val = self._values.copy()
-            val = val.astype("float64")
-            self._values = val
-            self._isdiscrete = False
-            self._codes = {}
-            self._roxar_dtype = np.float32
-        else:
-            logger.info("No need to convert, already continuous")
-
-    def continuous_to_discrete(self):
-        """Convert from continuous to discrete values"""
-
+    def discrete_to_continuous(self) -> None:
+        """Convert from discrete to continuous values."""
         if not self.isdiscrete:
-            logger.info("Converting to discrete ...")
-            val = self._values.copy()
-            val = val.astype(np.int32)
-            self._values = val
-            self._isdiscrete = True
+            logger.debug("No need to convert, already continuous")
+            return
 
-            # make the code list
-            uniq = np.unique(val).tolist()
-            codes = dict(zip(uniq, uniq))
-            codes = {k: str(v) for k, v in codes.items()}  # val as strings
-            self._codes = codes
-            self._roxar_dtype = np.uint16
-        else:
-            logger.info("No need to convert, already discrete")
+        logger.debug("Converting to continuous ...")
+        val = self._values.copy()
+        val = val.astype("float64")
+        self._values = val
+        self._isdiscrete = False
+        self._codes = {}
+        self._roxar_dtype = np.float32
+
+    def continuous_to_discrete(self) -> None:
+        """Convert from continuous to discrete values."""
+        if self.isdiscrete:
+            logger.debug("No need to convert, already discrete")
+            return
+
+        logger.debug("Converting to discrete ...")
+        val = self._values.copy()
+        val = val.astype(np.int32)
+        self._values = val
+        self._isdiscrete = True
+
+        # make the code list
+        uniq = np.unique(val).tolist()
+        codes = dict(zip(uniq, uniq))
+        codes = {k: str(v) for k, v in codes.items()}  # val as strings
+        self._codes = codes
+        self._roxar_dtype = np.uint16
 
     # ==================================================================================
     # Operations restricted to inside/outside polygons
     # ==================================================================================
 
-    def operation_polygons(self, poly, value, opname="add", inside=True):
-        """A generic function for doing 3D grid property operations
+    def operation_polygons(
+        self,
+        poly: Polygons,
+        value: Union[float, int],
+        opname: str = "add",
+        inside: bool = True,
+    ) -> None:
+        """
+        A generic function for doing 3D grid property operations
         restricted to inside or outside polygon(s).
 
         This method requires that the property geometry is known
-        (prop.geometry is set to a grid instance)
+        (prop.geometry is set to a grid instance).
 
-        Args:
-            poly (Polygons): A XTGeo Polygons instance
-            value (float): Value to add, subtract etc
-            opname (str): Name of operation... 'add', 'sub', etc
-            inside (bool): If True do operation inside polygons; else outside.
+        Parameters:
+            poly:
+                A XTGeo Polygons instance.
+            value:
+                Value to add, subtract etc.
+            opname:
+                Name of operation... "add", "sub", etc.
+                Defaults to "add".
+            inside:
+                If True do operation inside polygons; else outside.
+                Defaults to True.
+
         """
-
         if self.geometry is None:
             msg = """
             You need to link the property to a grid geometry:"
@@ -1383,43 +1678,42 @@ class GridProperty(_Grid3D):
             self, poly, value, opname=opname, inside=inside
         )
 
-    # shortforms
-    def add_inside(self, poly, value):
-        """Add a value (scalar) inside polygons"""
+    def add_inside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Add a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="add", inside=True)
 
-    def add_outside(self, poly, value):
-        """Add a value (scalar) outside polygons"""
+    def add_outside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Add a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="add", inside=False)
 
-    def sub_inside(self, poly, value):
-        """Subtract a value (scalar) inside polygons"""
+    def sub_inside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Subtract a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="sub", inside=True)
 
-    def sub_outside(self, poly, value):
-        """Subtract a value (scalar) outside polygons"""
+    def sub_outside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Subtract a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="sub", inside=False)
 
-    def mul_inside(self, poly, value):
-        """Multiply a value (scalar) inside polygons"""
+    def mul_inside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Multiply a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="mul", inside=True)
 
-    def mul_outside(self, poly, value):
-        """Multiply a value (scalar) outside polygons"""
+    def mul_outside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Multiply a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="mul", inside=False)
 
-    def div_inside(self, poly, value):
-        """Divide a value (scalar) inside polygons"""
+    def div_inside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Divide a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="div", inside=True)
 
-    def div_outside(self, poly, value):
-        """Divide a value (scalar) outside polygons"""
+    def div_outside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Divide a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="div", inside=False)
 
-    def set_inside(self, poly, value):
-        """Set a value (scalar) inside polygons"""
+    def set_inside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Set a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="set", inside=True)
 
-    def set_outside(self, poly, value):
-        """Set a value (scalar) outside polygons"""
+    def set_outside(self, poly: Polygons, value: Union[float, int]) -> None:
+        """Set a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="set", inside=False)
