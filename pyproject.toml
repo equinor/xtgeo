@@ -129,7 +129,7 @@ before-test = [
 test-command = [
     "pushd {package}",
     # Ignore forking tests as they do not work well with CIBW
-    'pytest --disable-warnings -x -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"',
+    'pytest -n 4 tests --disable-warnings -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"',
 ]
 
 [tool.isort]
