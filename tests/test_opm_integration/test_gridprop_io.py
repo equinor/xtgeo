@@ -1,10 +1,10 @@
 import os
 from dataclasses import dataclass
 
-import ecl_data_io as eclio
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+import resfo
 from hypothesis import given, settings
 
 import xtgeo
@@ -187,7 +187,7 @@ def test_restart_header_reading(case):
     file_name = case.restart_file
     inte_head = None
     logi_head = None
-    for kw, val in eclio.read(file_name):
+    for kw, val in resfo.read(file_name):
         if kw == "INTEHEAD":
             inte_head = InteHead(val)
         if kw == "LOGIHEAD":
@@ -214,7 +214,7 @@ def test_init_header_reading(case):
     file_name = case.init_file
     inte_head = None
     logi_head = None
-    for kw, val in eclio.read(file_name):
+    for kw, val in resfo.read(file_name):
         if kw == "INTEHEAD":
             inte_head = InteHead(val)
         if kw == "LOGIHEAD":

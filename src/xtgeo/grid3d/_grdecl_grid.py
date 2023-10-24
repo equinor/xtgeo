@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import numpy as np
-from ecl_data_io import Format, lazy_read, write
+from resfo import Format, lazy_read, write
 
 from ._ecl_grid import (
     CoordinateType,

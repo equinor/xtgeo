@@ -1,4 +1,4 @@
-"""Test basic ecl_data_io wrt to xtgeo testdata and core ecl-data-io and xtgeo usage.
+"""Test basic resfo wrt to xtgeo testdata and core resfo and xtgeo usage.
 
 Based on 'simpleb8' and ran through various simulators in 2022 by V. Kippe (Equinor):
 
@@ -16,9 +16,9 @@ Based on 'simpleb8' and ran through various simulators in 2022 by V. Kippe (Equi
 
     IX_COMP_GRIDREPORT: IX compositional, with EGRID from IX
 """
-import ecl_data_io as eio
 import numpy as np
 import pytest
+import resfo
 
 import xtgeo
 
@@ -84,13 +84,11 @@ SIMPLEB8_PATH = TPATH / "3dgrids/simpleb8"
         ),
     ],
 )
-def test_ecl_data_io_read_grids(
-    ecl_like_file, some_valid_kwords, some_notpresent_kwords
-):
+def test_refo_read_grids(ecl_like_file, some_valid_kwords, some_notpresent_kwords):
     """Read grid data, different simulators."""
     kwords = []
     ktypes = []
-    for item in eio.lazy_read(SIMPLEB8_PATH / ecl_like_file):
+    for item in resfo.lazy_read(SIMPLEB8_PATH / ecl_like_file):
         kwords.append(item.read_keyword().strip())
         ktypes.append(item.read_type().strip())
 
@@ -121,13 +119,11 @@ def test_ecl_data_io_read_grids(
         ),
     ],
 )
-def test_ecl_data_io_read_init(
-    ecl_like_file, some_valid_kwords, some_notpresent_kwords
-):
+def test_refo_read_init(ecl_like_file, some_valid_kwords, some_notpresent_kwords):
     """Read INIT data, different simulators."""
     kwords = []
     ktypes = []
-    for item in eio.lazy_read(SIMPLEB8_PATH / ecl_like_file):
+    for item in resfo.lazy_read(SIMPLEB8_PATH / ecl_like_file):
         kwords.append(item.read_keyword().strip())
         ktypes.append(item.read_type().strip())
 
@@ -163,13 +159,11 @@ def test_ecl_data_io_read_init(
         ),
     ],
 )
-def test_ecl_data_io_read_restart(
-    ecl_like_file, some_valid_kwords, some_notpresent_kwords
-):
+def test_refo_read_restart(ecl_like_file, some_valid_kwords, some_notpresent_kwords):
     """Read UNRST data, different simulators."""
     kwords = []
     ktypes = []
-    for item in eio.lazy_read(SIMPLEB8_PATH / ecl_like_file):
+    for item in resfo.lazy_read(SIMPLEB8_PATH / ecl_like_file):
         kwords.append(item.read_keyword().strip())
         ktypes.append(item.read_type().strip())
 
@@ -238,7 +232,7 @@ def test_egrid_init_read_xtgeo(
 ):
     """Test reading properties from various simulators, egrid and init.
 
-    Internally, xtgeo uses ecl_data_io for Eclipse like data
+    Internally, xtgeo uses refo for Eclipse like data
     """
     grid = xtgeo.grid_from_file(SIMPLEB8_PATH / ecl_like_grid)
     actnum = grid.get_actnum_indices()
@@ -315,7 +309,7 @@ def test_egrid_unrst_read_xtgeo(
 ):
     """Test reading properties from various simulators, egrid and unrst
 
-    Internally, xtgeo uses ecl_data_io for Eclipse like data
+    Internally, xtgeo uses refo for Eclipse like data
     """
     grid = xtgeo.grid_from_file(SIMPLEB8_PATH / ecl_like_grid)
 

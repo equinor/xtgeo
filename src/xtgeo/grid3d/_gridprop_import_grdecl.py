@@ -1,9 +1,9 @@
 """Importing grid props from GRDECL, ascii or binary"""
 
 
-import ecl_data_io as eclio
 import numpy as np
 import numpy.ma as ma
+import resfo
 
 import xtgeo
 
@@ -32,7 +32,7 @@ def import_bgrdecl_prop(pfile, name, grid):
     result["name"] = name
     result["filesrc"] = pfile
 
-    for entry in eclio.lazy_read(pfile.file):
+    for entry in resfo.lazy_read(pfile.file):
         if match_keyword(entry.read_keyword(), name):
             values = entry.read_array()
             result["discrete"] = np.issubdtype(values.dtype, np.integer)

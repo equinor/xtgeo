@@ -1,6 +1,6 @@
 from typing import List, Union
 
-import ecl_data_io as eclio
+import resfo
 from typing_extensions import Literal
 
 from ._find_gridprop_in_eclrun import (
@@ -87,8 +87,8 @@ def sanitize_date(
     return date
 
 
-def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> eclio.Format:
-    """Converts 'unrst' and 'funrst' to the corresponding eclio.Format.
+def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> resfo.Format:
+    """Converts 'unrst' and 'funrst' to the corresponding resfo.Format.
 
     >>> sanitize_fformat('unrst')
     <Format.UNFORMATTED: 2>
@@ -96,9 +96,9 @@ def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> eclio.Format:
     <Format.FORMATTED: 1>
     """
     if fformat == "unrst":
-        return eclio.Format.UNFORMATTED
+        return resfo.Format.UNFORMATTED
     if fformat == "funrst":
-        return eclio.Format.FORMATTED
+        return resfo.Format.FORMATTED
     raise ValueError(f"fformat must be either 'unrst' or 'funrst' got {fformat}")
 
 
