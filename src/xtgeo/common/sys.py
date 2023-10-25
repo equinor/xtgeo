@@ -19,6 +19,7 @@ import numpy as np
 
 from xtgeo.cxtgeo import _cxtgeo
 
+from ._xyz_enum import _AttrType
 from .xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -687,3 +688,62 @@ def inherit_docstring(inherit_from):
         return func
 
     return decorator_set_docstring
+
+
+# ----------------------------------------------------------------------------------
+# Special methods for nerds, to be removed when not appplied any more
+# ----------------------------------------------------------------------------------
+
+
+def _convert_np_carr_int(length, np_array):
+    """Convert numpy 1D array to C array, assuming int type.
+
+    The numpy is always a double (float64), so need to convert first
+    """
+    carr = _cxtgeo.new_intarray(length)
+
+    np_array = np_array.astype(np.int32)
+
+    _cxtgeo.swig_numpy_to_carr_i1d(np_array, carr)
+
+    return carr
+
+
+def _convert_np_carr_double(length, np_array):
+    """Convert numpy 1D array to C array, assuming double type."""
+    carr = _cxtgeo.new_doublearray(length)
+
+    _cxtgeo.swig_numpy_to_carr_1d(np_array, carr)
+
+    return carr
+
+
+def _convert_carr_double_np(length, carray, nlen=None):
+    """Convert a C array to numpy, assuming double type."""
+    if nlen is None:
+        nlen = length
+
+    nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
+
+    return nparray
+
+
+def _get_carray(dataframe, attributes, attrname: str):
+    """Returns the C array pointer (via SWIG) for a given attr.
+
+    Type conversion is double if float64, int32 if DISC attr.
+    Returns None if log does not exist.
+    """
+    np_array = None
+    if attrname in dataframe:
+        np_array = dataframe[attrname].values
+    else:
+        return None
+
+    nlen = len(dataframe.index)
+    if attributes[attrname] == _AttrType.DISC.value:
+        carr = _convert_np_carr_int(nlen, np_array)
+    else:
+        carr = _convert_np_carr_double(nlen, np_array)
+
+    return carr

@@ -133,7 +133,7 @@ class Wells:
     def get_well(self, name):
         """Get a Well() instance by name, or None"""
 
-        logger.info("Asking for a well with name %s", name)
+        logger.debug("Asking for a well with name %s", name)
         for well in self._wells:
             if well.name == name:
                 return well
@@ -216,13 +216,13 @@ class Wells:
             fill_value2 (int): Only applied if filled=True, when logs
                 are missing completely for that well.
         """
-        logger.info("Ask for big dataframe for all wells")
+        logger.debug("Ask for big dataframe for all wells")
 
         bigdflist = []
         for well in self._wells:
             dfr = well.dataframe.copy()
             dfr["WELLNAME"] = well.name
-            logger.info(well.name)
+            logger.debug(well.name)
             if filled:
                 dfr = dfr.fillna(fill_value1)
             bigdflist.append(dfr)
@@ -232,7 +232,12 @@ class Wells:
         if filled:
             dfr = dfr.fillna(fill_value2)
 
-        spec_order = ["WELLNAME", "X_UTME", "Y_UTMN", "Z_TVDSS"]
+        spec_order = [
+            "WELLNAME",
+            self._wells[0].xname,  # use the names in the first well as column names
+            self._wells[0].yname,
+            self._wells[0].zname,
+        ]
         return dfr[spec_order + [col for col in dfr if col not in spec_order]]
 
     def quickplot(self, filename=None, title="QuickPlot"):

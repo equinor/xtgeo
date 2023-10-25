@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for Wells class"""
 
 
@@ -14,6 +13,8 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 xtg = XTGeoDialog()
+
+# self == Wells instance (plural wells)
 
 
 def wellintersections(
@@ -40,19 +41,19 @@ def wellintersections(
     for iwell, well in enumerate(self.wells):
         progress.flush(iwell)
 
-        logger.info("Work with %s", well.name)
+        logger.debug("Work with %s", well.name)
         try:
             well.geometrics()
         except ValueError:
-            logger.info("Skip %s (cannot compute geometrics)", well.name)
+            logger.debug("Skip %s (cannot compute geometrics)", well.name)
             continue
 
         welldfr = well.dataframe.copy()
 
-        xcor = welldfr["X_UTME"].values
-        ycor = welldfr["Y_UTMN"].values
+        xcor = welldfr[well.xname].values
+        ycor = welldfr[well.yname].values
         mcor = welldfr[well.mdlogname].values
-        logger.info("The mdlogname property is: %s", well.mdlogname)
+        logger.debug("The mdlogname property is: %s", well.mdlogname)
 
         if xcor.size < 2:
             continue
@@ -70,12 +71,12 @@ def wellintersections(
                 nox[well.name].append(other.name)
                 continue  # a quick check; no chance for overlap
 
-            logger.info("Consider crossing with %s ...", other.name)
+            logger.debug("Consider crossing with %s ...", other.name)
 
             # try to be smart to skip entries that earlier have beenn tested
             # for crossing. If other does not cross well, then well does not
             # cross other...
-            if other.name in nox.keys() and well.name in nox[other.name]:
+            if other.name in nox and well.name in nox[other.name]:
                 continue
 
             # truncate away the paralell part on a copy
@@ -92,9 +93,9 @@ def wellintersections(
                     well, xtol=xtol, ytol=ytol, ztol=ztol, itol=itol, atol=atol
                 )
 
-            xcorc = owell.dataframe["X_UTME"].values
-            ycorc = owell.dataframe["Y_UTMN"].values
-            zcorc = owell.dataframe["Z_TVDSS"].values
+            xcorc = owell.dataframe[well.xname].values
+            ycorc = owell.dataframe[well.yname].values
+            zcorc = owell.dataframe[well.zname].values
 
             if xcorc.size < 2:
                 continue
@@ -138,10 +139,18 @@ def wellintersections(
                         xpoints.append([well.name, mcor, other.name, xcor, ycor, zcor])
 
     dfr = pd.DataFrame(
-        xpoints, columns=["WELL", "MDEPTH", "CWELL", "X_UTME", "Y_UTMN", "Z_TVDSS"]
+        xpoints,
+        columns=[
+            "WELL",
+            "MDEPTH",
+            "CWELL",
+            self._wells[0].xname,
+            self._wells[0].yname,
+            self._wells[0].zname,
+        ],
     )
 
     progress.finished()
 
-    logger.info("All intersections found!")
+    logger.debug("All intersections found!")
     return dfr

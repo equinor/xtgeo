@@ -1,48 +1,18 @@
 """Operations along a well, private module."""
 
-import copy
-
 import numpy as np
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import constants as const
+from xtgeo.common._xyz_enum import _AttrType
+from xtgeo.common.sys import _get_carray
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
-
-
-def delete_log(self, lname):
-    """Delete/remove an existing log, or list of logs."""
-    self._ensure_consistency()
-
-    if not isinstance(lname, list):
-        lname = [lname]
-
-    lcount = 0
-    for logn in lname:
-        if logn not in self._wlognames:
-            logger.info("Log does no exist: %s", logn)
-            continue
-
-        logger.info("Log exist and will be deleted: %s", logn)
-        lcount += 1
-        del self._wlogtypes[logn]
-        del self._wlogrecords[logn]
-
-        self._df.drop(logn, axis=1, inplace=True)
-        self._ensure_consistency()
-
-        if self._mdlogname == logn:
-            self._mdlogname = None
-        if self._zonelogname == logn:
-            self._zonelogname = None
-
-    self._ensure_consistency()
-    return lcount
 
 
 def rescale(self, delta=0.15, tvdrange=None):
@@ -53,15 +23,15 @@ def rescale(self, delta=0.15, tvdrange=None):
     pdrows = pd.options.display.max_rows
     pd.options.display.max_rows = 999
 
-    dfrcolumns0 = self._df.columns
+    dfrcolumns0 = self.dataframe.columns
 
     if self.mdlogname is None:
         self.geometrics()
 
-    dfrcolumns1 = self._df.columns
+    dfrcolumns1 = self.dataframe.columns
     columnsadded = list(set(dfrcolumns1) - set(dfrcolumns0))  # new tmp columns, if any
 
-    dfr = self._df.copy().set_index(self.mdlogname)
+    dfr = self.dataframe.copy().set_index(self.mdlogname)
 
     logger.debug("Initial dataframe\n %s", dfr)
 
@@ -74,12 +44,12 @@ def rescale(self, delta=0.15, tvdrange=None):
         tvd1, tvd2 = tvdrange
 
         try:
-            startt = dfr.index[dfr["Z_TVDSS"] >= tvd1][0]
+            startt = dfr.index[dfr[self._wdata.zname] >= tvd1][0]
         except IndexError:
             startt = start
 
         try:
-            stopt = dfr.index[dfr["Z_TVDSS"] >= tvd2][0]
+            stopt = dfr.index[dfr[self._wdata.zname] >= tvd2][0]
         except IndexError:
             stopt = stop
 
@@ -100,16 +70,16 @@ def rescale(self, delta=0.15, tvdrange=None):
     dfr.reset_index(inplace=True, drop=True)
 
     for lname in dfr.columns:
-        if lname in self._wlogtypes:
-            ltype = self._wlogtypes[lname]
-            if ltype == "DISC":
+        if lname in self.wlogtypes:
+            ltype = self.wlogtypes[lname]
+            if ltype == _AttrType.DISC.value:
                 dfr = dfr.round({lname: 0})
 
     logger.debug("Updated dataframe:\n%s", dfr)
 
     pd.options.display.max_rows = pdrows  # reset
 
-    self._df = dfr
+    self.dataframe = dfr
     if columnsadded:
         self.delete_log(columnsadded)
 
@@ -123,7 +93,7 @@ def make_zone_qual_log(self, zqname):
         raise ValueError("Cannot find a zonelog")
 
     dff = self.get_filled_dataframe()
-    dff["ztmp"] = dff[self.zonelogname]
+    dff["ztmp"] = dff[self.zonelogname].copy()
     dff["ztmp"] = (dff.ztmp != dff.ztmp.shift()).cumsum()
 
     sgrp = dff.groupby("ztmp")
@@ -166,27 +136,28 @@ def make_zone_qual_log(self, zqname):
     dcode = dict(zip(idlist, code))
 
     # now create the new log
-    self.create_log(zqname, logtype="DISC", logrecord=codes)
+    self.create_log(zqname, logtype=_AttrType.DISC.value, logrecord=codes)
     for key, val in dcode.items():
-        self._df[zqname][dff["ztmp"] == key] = val
+        self.dataframe.loc[dff["ztmp"] == key, zqname] = val
 
     # set the metadata
-    self.set_logtype(zqname, "DISC")
+    self.set_logtype(zqname, _AttrType.DISC.value)
     self.set_logrecord(zqname, codes)
+    self._ensure_consistency()
 
     del dff
 
 
 def make_ijk_from_grid(self, grid, grid_id="", algorithm=1, activeonly=True):
     """Make an IJK log from grid indices."""
-    logger.info("Using algorithm %s in %s", algorithm, __name__)
+    logger.debug("Using algorithm %s in %s", algorithm, __name__)
 
     if algorithm == 1:
         _make_ijk_from_grid_v1(self, grid, grid_id=grid_id)
     else:
         _make_ijk_from_grid_v2(self, grid, grid_id=grid_id, activeonly=activeonly)
 
-    logger.info("Using algorithm %s in %s done", algorithm, __name__)
+    logger.debug("Using algorithm %s in %s done", algorithm, __name__)
 
 
 def _make_ijk_from_grid_v1(self, grid, grid_id=""):
@@ -194,11 +165,11 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
 
     This is the first version, using _cxtgeo.grd3d_well_ijk from C
     """
-    logger.info("Using algorithm 1 in %s", __name__)
+    logger.debug("Using algorithm 1 in %s", __name__)
 
-    wxarr = self.get_carray("X_UTME")
-    wyarr = self.get_carray("Y_UTMN")
-    wzarr = self.get_carray("Z_TVDSS")
+    wxarr = _get_carray(self.dataframe, self.wlogtypes, self.xname)
+    wyarr = _get_carray(self.dataframe, self.wlogtypes, self.yname)
+    wzarr = _get_carray(self.dataframe, self.wlogtypes, self.zname)
 
     nlen = self.nrow
     wivec = _cxtgeo.new_intarray(nlen)
@@ -242,16 +213,16 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
     jcellname = "JCELL" + grid_id
     kcellname = "KCELL" + grid_id
 
-    self._df[icellname] = indarray
-    self._df[jcellname] = jndarray
-    self._df[kcellname] = kndarray
+    self._wdata.data[icellname] = indarray
+    self._wdata.data[jcellname] = jndarray
+    self._wdata.data[kcellname] = kndarray
 
     for cellname in [icellname, jcellname, kcellname]:
-        self._wlogtypes[cellname] = "DISC"
+        self.set_logtype(cellname, _AttrType.DISC.value)
 
-    self._wlogrecords[icellname] = {ncel: str(ncel) for ncel in range(1, grid.ncol + 1)}
-    self._wlogrecords[jcellname] = {ncel: str(ncel) for ncel in range(1, grid.nrow + 1)}
-    self._wlogrecords[kcellname] = {ncel: str(ncel) for ncel in range(1, grid.nlay + 1)}
+    self.set_logrecord(icellname, {ncel: str(ncel) for ncel in range(1, grid.ncol + 1)})
+    self.set_logrecord(jcellname, {ncel: str(ncel) for ncel in range(1, grid.nrow + 1)})
+    self.set_logrecord(kcellname, {ncel: str(ncel) for ncel in range(1, grid.nlay + 1)})
 
     _cxtgeo.delete_intarray(wivec)
     _cxtgeo.delete_intarray(wjvec)
@@ -272,7 +243,7 @@ def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
     """
     # establish a Points instance and make points dataframe from well trajectory X Y Z
     wpoints = xtgeo.Points()
-    wpdf = self.dataframe.loc[:, ["X_UTME", "Y_UTMN", "Z_TVDSS"]].copy()
+    wpdf = self.dataframe.loc[:, [self.xname, self.yname, self.zname]].copy()
     wpoints.dataframe = wpdf
     wpoints.dataframe.reset_index(inplace=True, drop=True)
 
@@ -302,10 +273,15 @@ def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
 
 
 def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id=""):
-    """Getting gridproperties as logs."""
+    """Getting gridproperties as logs.
+
+    The routine will make grid_coordinates from grid with make_ijk_from_grid(), or reuse
+    existing vectors if grid is a tuple (much faster).
+    """
     if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
         raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
 
+    wcopy = self.copy()
     if isinstance(gridprops, xtgeo.GridProperty):
         gprops = xtgeo.GridProperties()
         gprops.append_props([gridprops])
@@ -315,14 +291,15 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     if isinstance(grid, tuple):
         icl, jcl, kcl = grid
     elif isinstance(grid, xtgeo.Grid):
-        self.make_ijk_from_grid(grid, grid_id="_tmp", algorithm=2)
+        wcopy.make_ijk_from_grid(grid, grid_id="_tmp", algorithm=2)
         icl, jcl, kcl = ("ICELL_tmp", "JCELL_tmp", "KCELL_tmp")
     else:
-        raise ValueError('The "grid" is of wrong type, must be a tuple or ' "a Grid")
+        raise ValueError("The 'grid' is of wrong type, must be a tuple or a Grid")
 
-    iind = self.dataframe[icl].values - 1
-    jind = self.dataframe[jcl].values - 1
-    kind = self.dataframe[kcl].values - 1
+    # let grid values have base 1 when looking up cells for gridprops
+    iind = wcopy.dataframe[icl].values - 1
+    jind = wcopy.dataframe[jcl].values - 1
+    kind = wcopy.dataframe[kcl].values - 1
 
     xind = iind.copy()
 
@@ -330,22 +307,32 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     jind[np.isnan(jind)] = 0
     kind[np.isnan(kind)] = 0
 
-    #    iind = np.ma.masked_where(iind[~np.isnan(iind)].astype('int')
     iind = iind.astype("int")
     jind = jind.astype("int")
     kind = kind.astype("int")
+    dfr = wcopy.dataframe.copy()
 
+    pnames = {}
     for prop in gprops.props:
         arr = prop.values[iind, jind, kind].astype("float")
+        arr = np.ma.filled(arr, fill_value=np.nan)
         arr[np.isnan(xind)] = np.nan
         pname = prop.name + prop_id
-        self.dataframe[pname] = arr
-        self._wlognames.append(pname)
-        if prop.isdiscrete:
-            self._wlogtypes[pname] = "DISC"
-            self._wlogrecords[pname] = copy.deepcopy(prop.codes)
-    self._ensure_consistency()
-    self.delete_logs(["ICELL_tmp", "JCELL_tmp", "KCELL_tmp"])
+        dfr[pname] = arr
+        pnames[pname] = (prop.isdiscrete, prop.codes)
+
+    wcopy.set_dataframe(dfr)
+    for pname, isdiscrete_codes in pnames.items():
+        isdiscrete, codes = isdiscrete_codes
+        if isdiscrete:
+            wcopy.set_logtype(pname, _AttrType.DISC.value)
+            wcopy.set_logrecord(pname, codes)
+        else:
+            wcopy.set_logtype(pname, _AttrType.CONT.value)
+            wcopy.set_logrecord(pname, ("", ""))
+
+    wcopy.delete_logs(["ICELL_tmp", "JCELL_tmp", "KCELL_tmp"])
+    self.set_dataframe(wcopy.dataframe)
 
 
 def report_zonation_holes(self, threshold=5):
@@ -357,15 +344,15 @@ def report_zonation_holes(self, threshold=5):
 
     wellreport = []
 
-    zlog = self._df[self.zonelogname].values.copy()
+    zlog = self._wdata.data[self.zonelogname].values.copy()
 
     mdlog = None
     if self.mdlogname:
-        mdlog = self._df[self.mdlogname].values
+        mdlog = self._wdata.data[self.mdlogname].values
 
-    xvv = self._df["X_UTME"].values
-    yvv = self._df["Y_UTMN"].values
-    zvv = self._df["Z_TVDSS"].values
+    xvv = self._wdata.data[self.xname].values
+    yvv = self._wdata.data[self.yname].values
+    zvv = self._wdata.data[self.zname].values
     zlog[np.isnan(zlog)] = const.UNDEF_INT
 
     ncv = 0
@@ -385,7 +372,7 @@ def report_zonation_holes(self, threshold=5):
             hole = True
 
         if zone > const.UNDEF_INT_LIMIT and ncv > threshold:
-            logger.info("Restart first (bigger hole)")
+            logger.debug("Restart first (bigger hole)")
             hole = False
             first = True
             ncv = 0
@@ -420,9 +407,9 @@ def report_zonation_holes(self, threshold=5):
         return None
 
     if mdlog is not None:
-        clm = ["INDEX", "X_UTME", "Y_UTMN", "Z_TVDSS", "Zone", "Well", "MD"]
+        clm = ["INDEX", self.xname, self.yname, self.zname, "Zone", "Well", "MD"]
     else:
-        clm = ["INDEX", "X_UTME", "Y_UTMN", "Z_TVDSS", "Zone", "Well"]
+        clm = ["INDEX", self.xname, self.yname, self.zname, "Zone", "Well"]
 
     return pd.DataFrame(wellreport, columns=clm)
 
@@ -432,35 +419,35 @@ def mask_shoulderbeds(self, inputlogs, targetlogs, nsamples, strict):
 
     Returns True if inputlog(s) and targetlog(s) are present; otherwise False.
     """
-    logger.info("Mask shoulderbeds for some logs...")
+    logger.debug("Mask shoulderbeds for some logs...")
 
     useinputs, usetargets, use_numeric = _mask_shoulderbeds_checks(
         self, inputlogs, targetlogs, nsamples, strict
     )
 
     if not useinputs or not usetargets:
-        logger.info("Mask shoulderbeds for some logs... nothing done")
+        logger.debug("Mask shoulderbeds for some logs... nothing done")
         return False
 
     for inlog in useinputs:
-        inseries = self._df[inlog]
+        inseries = self._wdata.data[inlog]
         if use_numeric:
             bseries = _get_bseries(inseries, nsamples)
         else:
             mode, value = list(nsamples.items())[0]
 
-            depth = self._df["Z_TVDSS"]
+            depth = self._wdata.data[self.zname]
             if mode == "md" and self.mdlogname is not None:
-                depth = self._df[self.mdlogname]
+                depth = self._wdata.data[self.mdlogname]
             elif mode == "md" and self.mdlogname is None:
                 raise ValueError("There is no mdlogname attribute present.")
 
             bseries = _get_bseries_by_distance(depth, inseries, value)
 
         for target in usetargets:
-            self._df.loc[bseries, target] = np.nan
+            self._wdata.data.loc[bseries, target] = np.nan
 
-    logger.info("Mask shoulderbeds for some logs... done")
+    logger.debug("Mask shoulderbeds for some logs... done")
     return True
 
 
@@ -469,23 +456,26 @@ def _mask_shoulderbeds_checks(self, inputlogs, targetlogs, nsamples, strict):
     # check that inputlogs exists and that they are discrete, and targetlogs
     useinputs = []
     for inlog in inputlogs:
-        if inlog not in self._wlogtypes.keys() and strict is True:
+        if inlog not in self.wlogtypes.keys() and strict is True:
             raise ValueError(f"Input log {inlog} is missing and strict=True")
-        if inlog in self._wlogtypes.keys() and self._wlogtypes[inlog] != "DISC":
+        if (
+            inlog in self.wlogtypes.keys()
+            and self.wlogtypes[inlog] != _AttrType.DISC.value
+        ):
             raise ValueError(f"Input log {inlog} is not of type DISC")
-        if inlog in self._wlogtypes.keys():
+        if inlog in self.wlogtypes.keys():
             useinputs.append(inlog)
 
     usetargets = []
     for target in targetlogs:
-        if target not in self._wlogtypes.keys() and strict is True:
+        if target not in self.wlogtypes.keys() and strict is True:
             raise ValueError(f"Target log {target} is missing and strict=True")
-        if target in self._wlogtypes.keys():
+        if target in self.wlogtypes.keys():
             usetargets.append(target)
 
     use_numeric = True
     if isinstance(nsamples, int):
-        maxlen = len(self._df) // 2
+        maxlen = self.nrow // 2
         if nsamples < 1 or nsamples > maxlen:
             raise ValueError(f"Keyword nsamples must be an int > 1 and < {maxlen}")
     elif isinstance(nsamples, dict):
@@ -560,17 +550,17 @@ def _get_bseries_by_distance(depth, inseries, distance):
 
 def create_surf_distance_log(self, surf, name):
     """Create a log which is vertical distance from a RegularSurface."""
-    logger.info("Create a log which is distance to surface")
+    logger.debug("Create a log which is distance to surface")
 
     if not isinstance(surf, xtgeo.RegularSurface):
         raise ValueError("Input surface is not a RegularSurface instance.")
 
     # make a Points instance since points has the snap
-    zvalues = self.dataframe["Z_TVDSS"]
+    zvalues = self.dataframe[self.zname]
     points = xtgeo.Points()
     points.dataframe = self.dataframe.iloc[:, 0:3]
     points.snap_surface(surf)
-    snapped = points.dataframe["Z_TVDSS"]
+    snapped = points.dataframe[self.zname]
     diff = snapped - zvalues
 
     # create log (default is force overwrite if it exists)

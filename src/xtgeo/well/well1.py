@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """XTGeo well module, working with one single well."""
 
-import functools
+from __future__ import annotations
+
 import io
-import math
-import warnings
-from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -16,31 +13,17 @@ import pandas as pd
 
 import xtgeo
 import xtgeo.common.constants as const
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo import XTGeoCLibError
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
+from xtgeo.common import _AttrType
+from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
 
-from . import _well_io, _well_oper, _well_roxapi, _wellmarkers
+from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-
-# pylint: disable=too-many-public-methods
-
-
 # ======================================================================================
-# METHODS as wrappers to class init + import
-
-
-def _data_reader_factory(file_format):
-    if file_format in ["rmswell", "irap_ascii"]:
-        return _well_io.import_rms_ascii
-    if file_format == "hdf":
-        return _well_io.import_hdf5_well
-    raise ValueError(
-        f"Unknown file format {file_format}, supported formats are "
-        "'rmswell', 'irap_ascii' and 'hdf'"
-    )
+# Functions, as wrappers to class methods
 
 
 def well_from_file(
@@ -51,29 +34,25 @@ def well_from_file(
     lognames: Optional[Union[str, List[str]]] = "all",
     lognames_strict: Optional[bool] = False,
     strict: Optional[bool] = False,
-) -> "Well":
+) -> Well:
     """Make an instance of a Well directly from file import.
 
-    Note:
-
-      rms_ascii is the only correct for wells from RMS. Irap did not have this
-      format. For maps and points, the formats from the old Irap tool is
-      applied in RMS, hence "irap_ascii" and "rms_ascii" are there the same.
-
     Args:
-        wfile: File path, either a string or a pathlib.Path instance
-        fformat: See :meth:`Well.from_file`
-        mdlogname: Name of Measured Depth log if any
+        wfile: File path for well, either a string or a pathlib.Path instance
+        fformat: "rms_ascii" or "hdf5"
+        mdlogname: Name of Measured Depth log, if any
         zonelogname: Name of Zonelog, if any
         lognames: Name or list of lognames to import, default is "all"
         lognames_strict: If True, all lognames must be present.
         strict: If True, then import will fail if zonelogname or mdlogname are asked
-            for but not present in wells.
+            for but those names are not present in wells.
 
     Example::
 
         >>> import xtgeo
-        >>> mywell = xtgeo.well_from_file(well_dir + "/OP_1.w")
+        >>> import pathlib
+        >>> welldir = pathlib.Path("../foo")
+        >>> mywell = xtgeo.well_from_file(welldir / "OP_1.w")
 
     .. versionchanged:: 2.1 Added ``lognames`` and ``lognames_strict``
     .. versionchanged:: 2.1 ``strict`` now defaults to False
@@ -98,19 +77,18 @@ def well_from_roxar(
     lognames_strict: Optional[bool] = False,
     inclmd: Optional[bool] = False,
     inclsurvey: Optional[bool] = False,
-) -> "Well":
+) -> xtgeo.Well:
     """This makes an instance of a Well directly from Roxar RMS.
 
-
     Note this method works only when inside RMS, or when RMS license is
-    activated.
+    activated (through the roxar environment).
 
     Args:
-        project: Path to project or magic ``project`` variable in RMS.
+        project: Path to project or magic the ``project`` variable in RMS.
         name: Name of Well, as shown in RMS.
         trajectory: Name of trajectory in RMS.
         logrun: Name of logrun in RMS.
-        lognames: List of lognames to import or use 'all' for all present logs
+        lognames: List of lognames to import, or use 'all' for all present logs
         lognames_strict: If True and log is not in lognames is a list, an Exception will
             be raised.
         inclmd: If True, a Measured Depth log will be included.
@@ -130,6 +108,7 @@ def well_from_roxar(
 
     .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
+    # TODO - mdlogname and zonelogname
     return Well._read_roxar(
         project,
         name,
@@ -142,163 +121,69 @@ def well_from_roxar(
     )
 
 
-def allow_deprecated_init(func):
-    # This decorator is here to maintain backwards compatibility in the
-    # construction of Well and should be deleted once the deprecation period
-    # has expired, the construction will then follow the new pattern.
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if not args and not kwargs:
-            warnings.warn(
-                "Initializing empty well is deprecated, please provide "
-                "non-defaulted values, or use mywell = "
-                "xtgeo.well_from_file('filename')",
-                DeprecationWarning,
-            )
-            return func(
-                self,
-                *([0.0] * 3),
-                "",
-                pd.DataFrame({"X_UTME": [], "Y_UTMN": [], "Z_TVDSS": []}),
-            )
-
-        # Checking if we are doing an initialization from file and raise a
-        # deprecation warning if we are.
-        if "wfile" in kwargs or (
-            len(args) >= 1 and isinstance(args[0], (str, Path, xtgeo._XTGeoFile))
-        ):
-            warnings.warn(
-                "Initializing directly from file name is deprecated and will be "
-                "removed in xtgeo version 4.0. Use: "
-                "mywell = xtgeo.well_from_file('filename') instead",
-                DeprecationWarning,
-            )
-            if len(args) >= 1:
-                wfile = args[0]
-                args = args[1:]
-            else:
-                wfile = kwargs.pop("wfile", None)
-            if len(args) >= 1:
-                fformat = args[0]
-                args = args[1:]
-            else:
-                fformat = kwargs.pop("fformat", None)
-
-            mfile = xtgeo._XTGeoFile(wfile)
-            if fformat is None or fformat == "guess":
-                fformat = mfile.detect_fformat()
-            else:
-                fformat = mfile.generic_format_by_proposal(fformat)
-            kwargs = _data_reader_factory(fformat)(mfile, *args, **kwargs)
-            kwargs["filesrc"] = mfile.file
-            return func(self, **kwargs)
-        return func(self, *args, **kwargs)
-
-    return wrapper
-
-
 class Well:
-    """Class for a well in the XTGeo framework.
+    """Class for a single well in the XTGeo framework.
 
     The well logs are stored in a Pandas dataframe, which make manipulation
     easy and fast.
 
-    The well trajectory are here represented as logs, and XYZ have magic names:
-    ``X_UTME``, ``Y_UTMN``, ``Z_TVDSS``, which are the three first Pandas columns.
+    The well trajectory are here represented as first 3 columns in the dataframe,
+    and XYZ have pre-defined names: ``X_UTME``, ``Y_UTMN``, ``Z_TVDSS``.
 
-    Other geometry logs has also 'semi-magic' names:
+    Other geometry logs may has also 'semi-defined' names, but this is not a strict
+    rule:
 
-    M_MDEPTH or Q_MDEPTH: Measured depth, either real/true (M_xx) or
+    ``M_MDEPTH`` or ``Q_MDEPTH``: Measured depth, either real/true (M_xx) or
     quasi computed/estimated (Q_xx). The Quasi may be incorrect for
     all uses, but sufficient for some computations.
 
-    Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.
+    Similar for ``M_INCL``, ``Q_INCL``, ``M_AZI``, ``Q_ASI``.
 
     All Pandas values (yes, discrete also!) are currently stored as float64
     format, and undefined values are Nan. Integers are stored as Float due
-    to the (historic) lacking support for 'Integer Nan'. In coming versions,
-    use of ``pandas.NA`` (available from Pandas version 1.0) may be implemented.
+    to the (historic) lacking support for 'Integer Nan'.
 
     Note there is a method that can return a dataframe (copy) with Integer
     and Float columns, see :meth:`get_filled_dataframe`.
 
-    The instance can be made either from file or (todo!) by specification::
+    The instance can be made either from file or by specification::
 
-        >>> well1 = Well(well_dir + '/OP_1.w')  # assume RMS ascii well
-        >>> well2 = Well(well_dir + '/OP_1.w', fformat='rms_ascii')
-        >>> well3 = xtgeo.well_from_file(well_dir + '/OP_1.w')
+        >>> well1 = xtgeo.well_from_file(well_dir + '/OP_1.w')
+        >>> well2 = xtgeo.Well(rkb=32.0, xpos=1234.0, ypos=4567.0, wname="Foo",
+                    df: mydataframe, ...)
 
     Args:
-        rkb: well RKB height
-        xpos: well head X pos
-        ypos: well head Y pos
+        rkb: Well RKB height
+        xpos: Well head X pos
+        ypos: Well head Y pos
         wname: well name
-        df: pandas dataframe with log values, expects columns to include
+        df: A pandas dataframe with log values, expects columns to include
           'X_UTME', 'Y_UTMN', 'Z_TVDSS' for x, y and z coordinates.
           Other columns should be log values.
         filesrc: source file if any
-        mdlogname: Name of Measured Depth log if any.
+        mdlogname: Name of Measured Depth log, if any.
         zonelogname: Name of Zonelog, if any
-        wlogtypes: dictionary of log types, 'DISC' or 'CONT', defaults to
-                to 'CONT'.
+        wlogtypes: dictionary of log types, 'DISC' (discrete) or 'CONT' (continuous),
+            defaults to to 'CONT'.
         wlogrecords: dictionary of codes for 'DISC' logs, None for no codes given,
             defaults to None.
     """
 
-    VALID_LOGTYPES = {"DISC", "CONT"}
-
-    @allow_deprecated_init
+    @_well_aux.allow_deprecated_init
     def __init__(
         self,
-        rkb: float,
-        xpos: float,
-        ypos: float,
-        wname: str,
-        df: pd.DataFrame,
-        mdlogname: str = None,
-        zonelogname: str = None,
-        wlogtypes: Dict[str, str] = None,
-        wlogrecords: Dict[str, str] = None,
+        rkb: float = 0.0,
+        xpos: float = 0.0,
+        ypos: float = 0.0,
+        wname: str = "",
+        df: Optional[pd.DataFrame] = None,
+        mdlogname: Optional[str] = None,
+        zonelogname: Optional[str] = None,
+        wlogtypes: Optional[Dict[str, str]] = None,
+        wlogrecords: Optional[Dict[str, str]] = None,
         filesrc: Optional[Union[str, Path]] = None,
     ):
-        if not all(
-            coordinate in df.columns for coordinate in ("X_UTME", "Y_UTMN", "Z_TVDSS")
-        ):
-            raise ValueError(
-                "Well dataframe must include 'X_UTME',"
-                f" 'Y_UTMN' and 'Z_TVDSS', got {df.columns}"
-            )
-        self._reset(
-            rkb,
-            xpos,
-            ypos,
-            wname,
-            df,
-            filesrc,
-            mdlogname,
-            zonelogname,
-            wlogtypes,
-            wlogrecords,
-        )
-
-    def _reset(
-        self,
-        rkb: float = None,
-        xpos: float = None,
-        ypos: float = None,
-        wname: str = None,
-        df: pd.DataFrame = None,
-        filesrc: Optional[Union[str, Path]] = None,
-        mdlogname: str = None,
-        zonelogname: str = None,
-        wlogtypes: Dict[str, str] = None,
-        wlogrecords: Dict[str, str] = None,
-    ):
-        if wlogtypes is None:
-            wlogtypes = dict()
-        if wlogrecords is None:
-            wlogrecords = dict()
-
+        # state variables from args
         self._rkb = rkb
         self._xpos = xpos
         self._ypos = ypos
@@ -307,69 +192,82 @@ class Well:
         self._mdlogname = mdlogname
         self._zonelogname = zonelogname
 
-        self._wlogtypes = wlogtypes
-        self._wlogrecords = wlogrecords
-
-        self._df = df
-
-        self._wlognames = list(self._df.columns)
-
-        self._metadata = xtgeo.MetaDataWell()
-        self._metadata.required = self
+        self._wdata = _xyz_data._XYZData(df, wlogtypes, wlogrecords)
 
         self._ensure_consistency()
 
+        # additional state variables
+        self._metadata = xtgeo.MetaDataWell()
+        self._metadata.required = self
+
+    _reset = __init__  # workaround until deprecation .from_file(), etc are removed
+
     def __repr__(self):  # noqa: D105
-        # should be able to newobject = eval(repr(thisobject))
+        # should (in theory...) be able to newobject = eval(repr(thisobject))
         myrp = (
-            f"{self.__class__.__name__} (filesrc={self._filesrc!r}, "
-            f"name={self._wname!r},  ID={id(self)})"
+            f"{self.__class__.__name__} (rkb={self._rkb}, xpos={self._xpos}, "
+            f"ypos={self._ypos}, wname='{self._wname}', "
+            f"filesrc='{self._filesrc}', mdlogname='{self._mdlogname}', "
+            f"zonelogname='{self._zonelogname}', \n"
+            f"wlogtypes='{self._wdata.attr_types}', "
+            f"\nwlogrecords='{self._wdata.attr_records}', "
+            f"df=\n{repr(self._wdata.data)}))"
         )
+
         return myrp
 
     def __str__(self):  # noqa: D105
         # user friendly print
         return self.describe(flush=False)
 
-    def _ensure_consistency(self):  # pragma: no coverage
-        """Ensure consistency within an object (private function).
+    def _ensure_consistency(self):
+        """Ensure consistency"""
+        self._wdata.ensure_consistency()
 
-        Consistency checking. As well log names are columns in the Pandas DF,
-        there are additional attributes per log that have to be "in sync".
+        if self._mdlogname not in self._wdata.data:
+            self._mdlogname = None
+
+        if self._zonelogname not in self._wdata.data:
+            self._zonelogname = None
+
+    def ensure_consistency(self):
+        """Ensure consistency for the instance.
+
+        .. versionadded:: 3.5
         """
-        if self._df is None:
-            return
-
-        self._wlognames = list(self._df.columns)
-
-        for logname in self._wlognames:
-            if logname not in self._wlogtypes:
-                self._wlogtypes[logname] = "CONT"  # continuous as default
-                self._wlogrecords[logname] = None  # None as default
-            else:
-                if self._wlogtypes[logname] not in self.VALID_LOGTYPES:
-                    self._wlogtypes[logname] = "CONT"
-                    self._wlogrecords[logname] = None  # None as default
-
-            if logname not in self._wlogrecords:
-                if self._wlogtypes[logname] == "DISC":
-                    # it is a discrete log with missing record; try to find
-                    # a default one based on current values...
-                    lvalues = self._df[logname].values.round(decimals=0)
-                    lmin = int(lvalues.min())
-                    lmax = int(lvalues.max())
-
-                    lvalues = lvalues.astype("int")
-                    codes = {}
-                    for lval in range(lmin, lmax + 1):
-                        if lval in lvalues:
-                            codes[lval] = str(lval)
-
-                    self._wlogrecords = codes
+        # public version, added oct-23
+        self._ensure_consistency()
 
     # ==================================================================================
     # Properties
     # ==================================================================================
+
+    @property
+    def xname(self):
+        """Return or set name of X coordinate column."""
+        return self._wdata.xname
+
+    @xname.setter
+    def xname(self, new_xname: str):
+        self._wdata.xname = new_xname
+
+    @property
+    def yname(self):
+        """Return or set name of Y coordinate column."""
+        return self._wdata.yname
+
+    @yname.setter
+    def yname(self, new_yname: str):
+        self._wdata.yname = new_yname
+
+    @property
+    def zname(self):
+        """Return or set name of Z coordinate column."""
+        return self._wdata.zname
+
+    @zname.setter
+    def zname(self, new_zname: str):
+        self._wdata.zname = new_zname
 
     @property
     def metadata(self):
@@ -457,7 +355,7 @@ class Well:
 
     @mdlogname.setter
     def mdlogname(self, mname):
-        if mname in self._wlognames:
+        if mname in self.get_lognames():
             self._mdlogname = mname
         else:
             self._mdlogname = None
@@ -469,7 +367,7 @@ class Well:
 
     @zonelogname.setter
     def zonelogname(self, zname):
-        if zname in self._wlognames:
+        if zname in self.get_lognames():
             self._zonelogname = zname
         else:
             self._zonelogname = None
@@ -477,38 +375,46 @@ class Well:
     @property
     def dataframe(self):
         """Returns or set the Pandas dataframe object for all logs."""
-        return self._df
+        return self._wdata.get_dataframe()
 
     @dataframe.setter
     def dataframe(self, dfr):
-        self._df = dfr.copy()
-        self._ensure_consistency()
+        self.set_dataframe(dfr)  # this will include consistency checking!
 
     @property
     def nrow(self):
         """int: Returns the Pandas dataframe object number of rows."""
-        return len(self._df.index)
+        return len(self._wdata.data.index)
 
     @property
     def ncol(self):
         """int: Returns the Pandas dataframe object number of columns."""
-        return len(self._df.columns)
+        return len(self._wdata.data.columns)
 
     @property
     def nlogs(self):
         """int: Returns the Pandas dataframe object number of columns."""
-        return len(self._df.columns) - 3
+        return len(self._wdata.data.columns) - 3
 
     @property
     def lognames_all(self):
         """list: Returns dataframe column names as list, including mandatory coords."""
-        self._ensure_consistency()
-        return self._wlognames
+        return self.get_lognames()
 
     @property
     def lognames(self):
         """list: Returns the Pandas dataframe column as list excluding coords."""
-        return list(self._df)[3:]
+        return list(self._wdata.data)[3:]
+
+    @property
+    def wlogtypes(self):
+        """Returns wlogtypes"""
+        return {name: atype.name for name, atype in self._wdata.attr_types.items()}
+
+    @property
+    def wlogrecords(self):
+        """Returns wlogrecords"""
+        return deepcopy(self._wdata.attr_records)
 
     # ==================================================================================
     # Methods
@@ -592,15 +498,15 @@ class Well:
         else:
             fformat = wfile.generic_format_by_proposal(fformat)  # default
 
-        kwargs = _data_reader_factory(fformat)(wfile, **kwargs)
+        kwargs = _well_aux._data_reader_factory(fformat)(wfile, **kwargs)
         self._reset(**kwargs)
         return self
 
     @classmethod
     def _read_file(
         cls,
-        wfile,
-        fformat="rms_ascii",
+        wfile: Union[str, Path],
+        fformat: Optional[str] = "rms_ascii",
         **kwargs,
     ):
         """Import well from file.
@@ -640,7 +546,7 @@ class Well:
         else:
             fformat = wfile.generic_format_by_proposal(fformat)  # default
 
-        kwargs = _data_reader_factory(fformat)(wfile, **kwargs)
+        kwargs = _well_aux._data_reader_factory(fformat)(wfile, **kwargs)
         return cls(**kwargs)
 
     def to_file(
@@ -768,9 +674,9 @@ class Well:
         """Export (save/store) a well to a roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
-        activated.
+        activated in terminal.
 
-        The current implementation will either update existing well names
+        The current implementation will either update the existing well
         (then well log array size must not change), or it will make a new well in RMS.
 
         Note:
@@ -779,7 +685,7 @@ class Well:
            will not be saved until the user do an explicit project save action.
 
         Args:
-            project (str): Magic string 'project' or file path to project
+            project (str, object): Magic string 'project' or file path to project
             wname (str): Name of well, as shown in RMS.
             lognames (:obj:list or :obj:str): List of lognames to save, or
                 use simply 'all' for current logs for this well. Default is 'all'
@@ -814,28 +720,32 @@ class Well:
             realisation=realisation,
         )
 
-    def get_wlogs(self) -> OrderedDict:
+    def get_lognames(self):
+        """Get the lognames for all logs."""
+        return list(self._wdata.data)
+
+    def get_wlogs(self) -> dict:
         """Get a compound dictionary with well log metadata.
 
-        The result will be an Ordered dict on the form:
+        The result will be an dict on the form:
 
         ``{"X_UTME": ["CONT", None], ... "Facies": ["DISC", {1: "BG", 2: "SAND"}]}``
         """
-        res = OrderedDict()
+        res = dict()
 
-        for key in self._wlognames:
-            wtype = "CONT"
+        for key in self.get_lognames():
+            wtype = _AttrType.CONT.value
             wrecord = None
-            if key in self._wlogtypes:
-                wtype = self._wlogtypes[key]
-            if key in self._wlogrecords:
-                wrecord = self._wlogrecords[key]
+            if key in self._wdata.attr_types:
+                wtype = self._wdata.attr_types[key].name
+            if key in self._wdata.attr_records:
+                wrecord = self._wdata.attr_records[key]
 
             res[key] = [wtype, wrecord]
 
         return res
 
-    def set_wlogs(self, wlogs: OrderedDict):
+    def set_wlogs(self, wlogs: dict):
         """Set a compound dictionary with well log metadata.
 
         This operation is somewhat risky as it may lead to inconsistency, so use with
@@ -852,26 +762,11 @@ class Well:
             ValueError: Invalid log record found in input:
 
         """
-        for key in self._wlognames:
+        for key in self.get_lognames():
             if key in wlogs.keys():
                 typ, rec = wlogs[key]
-
-                if typ in Well.VALID_LOGTYPES:
-                    self._wlogtypes[key] = deepcopy(typ)
-                else:
-                    raise ValueError(f"Invalid log type found in input: {typ}")
-
-                if rec is None or isinstance(rec, dict):
-                    self._wlogrecords[key] = deepcopy(rec)
-                else:
-                    raise ValueError(f"Invalid log record found in input: {rec}")
-
-            else:
-                raise ValueError(f"Key for column not found in input: {key}")
-
-        for key in wlogs.keys():
-            if key not in self._wlognames:
-                raise ValueError(f"Invalid input key found: {key}")
+                self._wdata.set_attr_type(key, typ)
+                self._wdata.set_attr_record(key, deepcopy(rec))
 
         self._ensure_consistency()
 
@@ -883,7 +778,10 @@ class Well:
 
         .. versionadded:: 2.2.0
         """
-        if logname in self._wlognames and self.get_logtype(logname) == "DISC":
+        if (
+            logname in self.get_lognames()
+            and self.get_logtype(logname) == _AttrType.DISC.value
+        ):
             return True
         return False
 
@@ -894,29 +792,17 @@ class Well:
             self.xpos,
             self.ypos,
             self.wname,
-            self._df.copy(),
+            self._wdata.data.copy(),
             self.mdlogname,
             self.zonelogname,
-            deepcopy(self._wlogtypes),
-            deepcopy(self._wlogrecords),
+            self.wlogtypes,
+            self.wlogrecords,
             self._filesrc,
         )
 
     def rename_log(self, lname, newname):
         """Rename a log, e.g. Poro to PORO."""
-        self._ensure_consistency()
-
-        if lname not in self.lognames:
-            raise ValueError("Input log does not exist")
-
-        if newname in self.lognames:
-            raise ValueError("New log name exists already")
-
-        self._wlogtypes[newname] = self._wlogtypes.pop(lname)
-        self._wlogrecords[newname] = self._wlogrecords.pop(lname)
-
-        # rename in dataframe
-        self._df.rename(index=str, columns={lname: newname}, inplace=True)
+        self._wdata.rename_attr(lname, newname)
 
         if self._mdlogname == lname:
             self._mdlogname = newname
@@ -924,18 +810,25 @@ class Well:
         if self._zonelogname == lname:
             self._zonelogname = newname
 
-    def create_log(self, lname, logtype="CONT", logrecord=None, value=0.0, force=True):
+    def create_log(
+        self,
+        lname: str,
+        logtype: str = _AttrType.CONT.value,
+        logrecord: Optional[dict] = None,
+        value: float = 0.0,
+        force: bool = True,
+    ) -> bool:
         """Create a new log with initial values.
 
         If the logname already exists, it will be silently overwritten, unless
         the option force=False.
 
         Args:
-            lname (str): name of new log
-            logtype (str): Must be 'CONT' (default) or 'DISC' (discrete)
-            logrecord (dict): A dictionary of key: values for 'DISC' logs
-            value (float): initia value to set_index
-            force (bool): If True, and lname exists, it will be overwritten, if
+            lname: name of new log
+            logtype: Must be 'CONT' (default) or 'DISC' (discrete)
+            logrecord: A dictionary of key: values for 'DISC' logs
+            value: initial value to set
+            force: If True, and lname exists, it will be overwritten, if
                False, no new log will be made. Will return False.
 
         Returns:
@@ -943,72 +836,80 @@ class Well:
             existing) or False if the new log already exists,
             and ``force=False``.
 
+        Note::
+
+            A new log can also be created by adding it to the dataframe directly, but
+            with less control over e.g. logrecord
+
         """
-        if lname in self.lognames and force is False:
-            return False
+        return self._wdata.create_attr(lname, logtype, logrecord, value, force)
 
-        self._wlogtypes[lname] = logtype
-        self._wlogrecords[lname] = logrecord
+    def copy_log(
+        self,
+        lname: str,
+        newname: str,
+        force: bool = True,
+    ) -> bool:
+        """Copy a log from an existing to a name
 
-        # make a new column
-        self._df[lname] = float(value)
-        self._ensure_consistency()
-        return True
+        If the new log already exists, it will be silently overwritten, unless
+        the option force=False.
 
-    def delete_log(self, lname):
+        Args:
+            lname: name of existing log
+            newname: name of new log
+
+        Returns:
+            True if a new log is made (either new or force overwrite an
+            existing) or False if the new log already exists,
+            and ``force=False``.
+
+        Note::
+
+            A copy can also be done directly in the dataframe, but with less
+            consistency checks; hence this method is recommended
+
+        """
+        return self._wdata.copy_attr(lname, newname, force)
+
+    def delete_log(self, lname: Union[str, List[str]]) -> int:
         """Delete/remove an existing log, or list of logs.
 
         Will continue silently if a log does not exist.
 
         Args:
-            lname(str or list): A logname or a list of lognames
+            lname: A logname or a list of lognames
 
         Returns:
             Number of logs deleted
+
+        Note::
+
+            A log can also be deleted by simply removing it from the dataframe.
+
         """
-        return _well_oper.delete_log(self, lname)
+        return self._wdata.delete_attr(lname)
 
     delete_logs = delete_log  # alias function
 
-    def get_logtype(self, lname):
-        """Returns the type of a give log (e.g. DISC or CONT)."""
-        self._ensure_consistency()
-
-        if lname in self._wlogtypes:
-            return self._wlogtypes[lname]
+    def get_logtype(self, lname) -> Optional[str]:
+        """Returns the type of a given log (e.g. DISC or CONT), None if not present."""
+        if lname in self._wdata.attr_types:
+            return self._wdata.attr_types[lname].name
         return None
 
     def set_logtype(self, lname, ltype):
         """Sets the type of a give log (e.g. DISC or CONT)."""
-        self._ensure_consistency()
-
-        valid = {"DISC", "CONT"}
-
-        if ltype in valid:
-            self._wlogtypes[lname] = ltype
-        else:
-            raise ValueError(f"Try to set invalid log type: {ltype}")
+        self._wdata.set_attr_type(lname, ltype)
 
     def get_logrecord(self, lname):
         """Returns the record (dict) of a given log name, None if not exists."""
-        if lname in self._wlogtypes:
-            return self._wlogrecords[lname]
 
-        return None
+        return self._wdata.get_attr_record(lname)
 
     def set_logrecord(self, lname, newdict):
         """Sets the record (dict) of a given discrete log."""
-        self._ensure_consistency()
-        if lname not in self.lognames:
-            raise ValueError(f"No such logname: {lname}")
-
-        if self._wlogtypes[lname] == "CONT":
-            raise ValueError("Cannot set a log record for a continuous log")
-
-        if not isinstance(newdict, dict):
-            raise ValueError("Input is not a dictionary")
-
-        self._wlogrecords[lname] = newdict
+        self._wdata.set_attr_record(lname, newdict)
 
     def get_logrecord_codename(self, lname, key):
         """Returns the name entry of a log record, for a given key.
@@ -1024,23 +925,9 @@ class Well:
 
         return None
 
-    def get_carray(self, lname):
-        """Returns the C array pointer (via SWIG) for a given log.
-
-        Type conversion is double if float64, int32 if DISC log.
-        Returns None of log does not exist.
-        """
-        if lname in self._df:
-            np_array = self._df[lname].values
-        else:
-            return None
-
-        if self.get_logtype(lname) == "DISC":
-            carr = self._convert_np_carr_int(np_array)
-        else:
-            carr = self._convert_np_carr_double(np_array)
-
-        return carr
+    def get_dataframe(self):
+        """Get, by intention, a copy of the dataframe"""
+        return self._wdata.get_dataframe_copy(infer_dtype=False, filled=False)
 
     def get_filled_dataframe(
         self, fill_value=const.UNDEF, fill_value_int=const.UNDEF_INT
@@ -1058,28 +945,16 @@ class Well:
                 high XTGeo UNDEF values, or user defined values.
 
         """
-        lnames = self.lognames
+        return self._wdata.get_dataframe_copy(
+            infer_dtype=True,
+            filled=True,
+            fill_value=fill_value,
+            fill_value_int=fill_value_int,
+        )
 
-        newdf = self._df.copy()
-
-        # make a dictionary of datatypes
-        dtype = {"X_UTME": "float64", "Y_UTMN": "float64", "Z_TVDSS": "float64"}
-
-        dfill = {"X_UTME": const.UNDEF, "Y_UTMN": const.UNDEF, "Z_TVDSS": const.UNDEF}
-
-        for lname in lnames:
-            if self.get_logtype(lname) == "DISC":
-                dtype[lname] = np.int32
-                dfill[lname] = fill_value_int
-            else:
-                dtype[lname] = np.float64
-                dfill[lname] = fill_value
-
-        # now first fill Nan's (because int cannot be converted if Nan)
-        newdf = newdf.fillna(dfill)
-        newdf = newdf.astype(dtype)
-
-        return newdf
+    def set_dataframe(self, dfr):
+        """Set the dataframe."""
+        self._wdata.set_dataframe(dfr)
 
     def create_relative_hlen(self):
         """Make a relative length of a well, as a log.
@@ -1087,17 +962,7 @@ class Well:
         The first well og entry defines zero, then the horizontal length
         is computed relative to that by simple geometric methods.
         """
-        # extract numpies from XYZ trajectory logs
-        xv = self._df["X_UTME"].values
-        yv = self._df["Y_UTMN"].values
-
-        distance = []
-        previous_x, previous_y = xv[0], yv[0]
-        for i, (x, y) in enumerate(zip(xv, yv)):
-            distance.append(math.hypot((previous_x - x), (y - previous_y)))
-            previous_x, previous_y = x, y
-
-        self._df["R_HLEN"] = pd.Series(np.cumsum(distance), index=self._df.index)
+        self._wdata.create_relative_hlen()
 
     def geometrics(self):
         """Compute some well geometrical arrays MD, INCL, AZI, as logs.
@@ -1112,52 +977,12 @@ class Well:
             False if geometrics cannot be computed
 
         """
-        if self._df.shape[0] < 3:
-            raise ValueError(
-                f"Cannot compute geometrics for {self.name}. Not enough "
-                f"trajectory points (need >3, have: {self.dataframe.shape[0]})"
-            )
-
-        # extract numpies from XYZ trajetory logs
-        ptr_xv = self.get_carray("X_UTME")
-        ptr_yv = self.get_carray("Y_UTMN")
-        ptr_zv = self.get_carray("Z_TVDSS")
-
-        # get number of rows in pandas
-        nlen = self.nrow
-
-        ptr_md = _cxtgeo.new_doublearray(nlen)
-        ptr_incl = _cxtgeo.new_doublearray(nlen)
-        ptr_az = _cxtgeo.new_doublearray(nlen)
-
-        ier = _cxtgeo.well_geometrics(
-            nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md, ptr_incl, ptr_az, 0
-        )
-
-        if ier != 0:
-            raise XTGeoCLibError(f"well_geometrics failed with error code: {ier}")
-
-        dnumpy = self._convert_carr_double_np(ptr_md)
-        self._df["Q_MDEPTH"] = pd.Series(dnumpy, index=self._df.index)
-
-        dnumpy = self._convert_carr_double_np(ptr_incl)
-        self._df["Q_INCL"] = pd.Series(dnumpy, index=self._df.index)
-
-        dnumpy = self._convert_carr_double_np(ptr_az)
-        self._df["Q_AZI"] = pd.Series(dnumpy, index=self._df.index)
+        rvalue = self._wdata.geometrics()
 
         if not self._mdlogname:
             self._mdlogname = "Q_MDEPTH"
 
-        # delete tmp pointers
-        _cxtgeo.delete_doublearray(ptr_xv)
-        _cxtgeo.delete_doublearray(ptr_yv)
-        _cxtgeo.delete_doublearray(ptr_zv)
-        _cxtgeo.delete_doublearray(ptr_md)
-        _cxtgeo.delete_doublearray(ptr_incl)
-        _cxtgeo.delete_doublearray(ptr_az)
-
-        return True
+        return rvalue
 
     def truncate_parallel_path(
         self, other, xtol=None, ytol=None, ztol=None, itol=None, atol=None
@@ -1185,18 +1010,18 @@ class Well:
 
         if self.dataframe.shape[0] < 3 or other.dataframe.shape[0] < 3:
             raise ValueError(
-                f"Too few points to truncate parallel path, was {self._df.size} and "
-                f"{other._df.size}, must be >3"
+                f"Too few points to truncate parallel path, was "
+                f"{self._wdata.data.size} and {other.dataframe.size}, must be >3"
             )
 
         # extract numpies from XYZ trajectory logs
-        xv1 = self._df["X_UTME"].values
-        yv1 = self._df["Y_UTMN"].values
-        zv1 = self._df["Z_TVDSS"].values
+        xv1 = self._wdata.data[self.xname].values
+        yv1 = self._wdata.data[self.yname].values
+        zv1 = self._wdata.data[self.zname].values
 
-        xv2 = other._df["X_UTME"].values
-        yv2 = other._df["Y_UTMN"].values
-        zv2 = other._df["Z_TVDSS"].values
+        xv2 = other.dataframe[self.xname].values
+        yv2 = other.dataframe[self.yname].values
+        zv2 = other.dataframe[self.zname].values
 
         ier = _cxtgeo.well_trunc_parallel(
             xv1, yv1, zv1, xv2, yv2, zv2, xtol, ytol, ztol, itol, atol, 0
@@ -1205,24 +1030,25 @@ class Well:
         if ier != 0:
             raise RuntimeError("Unexpected error")
 
-        self._df = self._df[self._df["X_UTME"] < const.UNDEF_LIMIT]
-        self._df.reset_index(drop=True, inplace=True)
+        dfr = self.dataframe.copy()
+        dfr = dfr[dfr[self.xname] < const.UNDEF_LIMIT]
+        self.set_dataframe(dfr)
 
     def may_overlap(self, other):
         """Consider if well overlap in X Y coordinates with other well, True/False."""
-        if self._df.size < 2 or other._df.size < 2:
+        if self.dataframe.size < 2 or other.dataframe.size < 2:
             return False
 
         # extract numpies from XYZ trajectory logs
-        xmin1 = np.nanmin(self.dataframe["X_UTME"].values)
-        xmax1 = np.nanmax(self.dataframe["X_UTME"].values)
-        ymin1 = np.nanmin(self.dataframe["Y_UTMN"].values)
-        ymax1 = np.nanmax(self.dataframe["Y_UTMN"].values)
+        xmin1 = np.nanmin(self.dataframe[self.xname].values)
+        xmax1 = np.nanmax(self.dataframe[self.xname].values)
+        ymin1 = np.nanmin(self.dataframe[self.yname].values)
+        ymax1 = np.nanmax(self.dataframe[self.yname].values)
 
-        xmin2 = np.nanmin(other.dataframe["X_UTME"].values)
-        xmax2 = np.nanmax(other.dataframe["X_UTME"].values)
-        ymin2 = np.nanmin(other.dataframe["Y_UTMN"].values)
-        ymax2 = np.nanmax(other.dataframe["Y_UTMN"].values)
+        xmin2 = np.nanmin(other.dataframe[self.xname].values)
+        xmax2 = np.nanmax(other.dataframe[self.xname].values)
+        ymin2 = np.nanmin(other.dataframe[self.yname].values)
+        ymax2 = np.nanmax(other.dataframe[self.yname].values)
 
         if xmin1 > xmax2 or ymin1 > ymax2:
             return False
@@ -1240,10 +1066,10 @@ class Well:
             tvdmin (float): Minimum TVD
             tvdmax (float): Maximum TVD
         """
-        self._df = self._df[self._df["Z_TVDSS"] >= tvdmin]
-        self._df = self._df[self._df["Z_TVDSS"] <= tvdmax]
-
-        self._df.reset_index(drop=True, inplace=True)
+        dfr = self.dataframe.copy()
+        dfr = dfr[dfr[self.zname] >= tvdmin]
+        dfr = dfr[dfr[self.zname] <= tvdmax]
+        self.set_dataframe(dfr)
 
     def downsample(self, interval=4, keeplast=True):
         """Downsample by sampling every N'th element (coarsen only).
@@ -1253,15 +1079,15 @@ class Well:
             keeplast (bool): If True, the last element from the original
                 dataframe is kept, to avoid that the well is shortened.
         """
-        if self._df.size < 2 * interval:
+        if self.dataframe.size < 2 * interval:
             return
 
-        dfr = self._df[::interval]
+        dfr = self.dataframe[::interval].copy()
 
         if keeplast:
-            dfr = pd.concat([dfr, self._df.iloc[-1:]], ignore_index=True)
+            dfr = pd.concat([dfr, self.dataframe.iloc[-1:]], ignore_index=True)
 
-        self._df = dfr.reset_index(drop=True)
+        self.set_dataframe(dfr.reset_index(drop=True))
 
     def rescale(self, delta=0.15, tvdrange=None):
         """Rescale (refine or coarse) by sampling a delta along the trajectory, in MD.
@@ -1283,9 +1109,9 @@ class Well:
         .. versionadded:: 2.1
         .. versionchanged:: 2.13 Added `skipname` key
         """
-        dfr = self._df.copy()
+        dfr = self._wdata.data.copy()
 
-        keep = ("X_UTME", "Y_UTMN", "Z_TVDSS")
+        keep = (self.xname, self.yname, self.zname)
         for col in dfr.columns:
             if col not in keep:
                 dfr.drop(labels=col, axis=1, inplace=True)
@@ -1472,7 +1298,7 @@ class Well:
 
         dxlist = []
 
-        useloglist = ["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]
+        useloglist = [self.xname, self.yname, self.zname, "POLY_ID"]
         if extralogs is not None:
             useloglist.extend(extralogs)
 
@@ -1684,46 +1510,3 @@ class Well:
 
         """
         _well_oper.get_gridproperties(self, gridprops, grid=grid, prop_id=prop_id)
-
-    # ==================================================================================
-    # PRIVATE METHODS
-    # should not be applied outside the class
-    # ==================================================================================
-
-    # ----------------------------------------------------------------------------------
-    # Import/Export methods for various formats
-    # ----------------------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------------------
-    # Special methods for nerds, todo is to move to private module
-    # ----------------------------------------------------------------------------------
-
-    def _convert_np_carr_int(self, np_array):
-        """Convert numpy 1D array to C array, assuming int type.
-
-        The numpy is always a double (float64), so need to convert first
-        """
-        carr = _cxtgeo.new_intarray(self.nrow)
-
-        np_array = np_array.astype(np.int32)
-
-        _cxtgeo.swig_numpy_to_carr_i1d(np_array, carr)
-
-        return carr
-
-    def _convert_np_carr_double(self, np_array):
-        """Convert numpy 1D array to C array, assuming double type."""
-        carr = _cxtgeo.new_doublearray(self.nrow)
-
-        _cxtgeo.swig_numpy_to_carr_1d(np_array, carr)
-
-        return carr
-
-    def _convert_carr_double_np(self, carray, nlen=None):
-        """Convert a C array to numpy, assuming double type."""
-        if nlen is None:
-            nlen = len(self._df.index)
-
-        nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
-
-        return nparray

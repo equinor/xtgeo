@@ -26,22 +26,21 @@ def fixture_loadwell1():
     return xtgeo.blockedwell_from_file(wfile)
 
 
-def test_import(loadwell1):
-    """Import well from file."""
+def test_import_blockedwell(loadwell1):
+    """Import blocked well from file."""
 
     mywell = loadwell1
-
-    print(mywell.dataframe)
 
     assert mywell.xpos == 461809.6, "XPOS"
     assert mywell.ypos == 5932990.4, "YPOS"
     assert mywell.wellname == "OP_1", "WNAME"
+    assert mywell.xname == "X_UTME"
 
-    logger.info(mywell.get_logtype("Facies"))
-    logger.info(mywell.get_logrecord("Facies"))
+    assert mywell.get_logtype("Facies") == "DISC"
+    assert mywell.get_logrecord("Facies") == {
+        0: "Background",
+        1: "Channel",
+        2: "Crevasse",
+    }
 
-    # logger.info the numpy string of Poro...
-    logger.info(type(mywell.dataframe["Poro"].values))
-
-    dfr = mywell.dataframe
-    assert dfr["Poro"][4] == pytest.approx(0.224485, abs=0.0001)
+    assert mywell.dataframe["Poro"][4] == pytest.approx(0.224485, abs=0.0001)

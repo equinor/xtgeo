@@ -1,19 +1,16 @@
-# -*- coding: utf-8 -*-
-"""Well input and output, private module for ROXAPI"""
-
-
-from collections import OrderedDict
+"""Blocked Well input and output, private module for ROXAPI"""
 
 import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
 from xtgeo.common import XTGeoDialog
+from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.exceptions import WellNotFoundError
 from xtgeo.roxutils import RoxUtils
 
 try:
-    import roxar
+    import roxar  # type: ignore
 except ImportError:
     pass
 
@@ -21,7 +18,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-# Import / export via ROX api
+# Import / export via ROX/RMS api
 
 
 def import_bwell_roxapi(
@@ -29,7 +26,7 @@ def import_bwell_roxapi(
 ):
     """Private function for loading project and ROXAPI blockwell import"""
 
-    logger.info("Opening RMS project ...")
+    logger.debug("Opening RMS project ...")
     rox = RoxUtils(project, readonly=True)
 
     _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
@@ -42,7 +39,7 @@ def export_bwell_roxapi(
 ):
     """Private function for blockwell export (store in RMS) from XTGeo to RoxarAPI"""
 
-    logger.info("Opening RMS project ...")
+    logger.debug("Opening RMS project ...")
     rox = RoxUtils(project, readonly=False)
 
     _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
@@ -60,13 +57,13 @@ def _roxapi_import_bwell(
 
     if gname in rox.project.grid_models:
         gmodel = rox.project.grid_models[gname]
-        logger.info("RMS grid model <%s> OK", gname)
+        logger.debug("RMS grid model <%s> OK", gname)
     else:
         raise ValueError(f"No such grid name present: {gname}")
 
     if bwname in gmodel.blocked_wells_set:
         bwset = gmodel.blocked_wells_set[bwname]
-        logger.info("Blocked well set <%s> OK", bwname)
+        logger.debug("Blocked well set <%s> OK", bwname)
     else:
         raise ValueError(f"No such blocked well set: {bwname}")
 
@@ -85,17 +82,18 @@ def _roxapi_import_bwell(
     cind = bw_cellindices[dind]
     xyz = np.transpose(gmodel.get_grid(realisation=realisation).get_cell_centers(cind))
 
-    logs = OrderedDict()
-    logs["X_UTME"] = xyz[0].astype(np.float64)
-    logs["Y_UTMN"] = xyz[1].astype(np.float64)
-    logs["Z_TVDSS"] = xyz[2].astype(np.float64)
+    logs = {}
+    logs[_AttrName.XNAME.value] = xyz[0].astype(np.float64)
+    logs[_AttrName.YNAME.value] = xyz[1].astype(np.float64)
+    logs[_AttrName.ZNAME.value] = xyz[2].astype(np.float64)
+
     if ijk:
         ijk = np.transpose(
             gmodel.get_grid(realisation=realisation).grid_indexer.get_indices(cind)
         )
-        logs["I_INDEX"] = ijk[0].astype(np.float64)
-        logs["J_INDEX"] = ijk[1].astype(np.float64)
-        logs["K_INDEX"] = ijk[2].astype(np.float64)
+        logs[_AttrName.I_INDEX.value] = ijk[0].astype(np.float64)
+        logs[_AttrName.J_INDEX.value] = ijk[1].astype(np.float64)
+        logs[_AttrName.K_INDEX.value] = ijk[2].astype(np.float64)
 
     usenames = []
     if lognames and lognames == "all":
@@ -112,11 +110,11 @@ def _roxapi_import_bwell(
         tmplog = npma.filled(tmplog, fill_value=np.nan)
         tmplog[tmplog == -999] = np.nan
         if "discrete" in str(bwprop.type):
-            self._wlogtypes[lname] = "DISC"
-            self._wlogrecords[lname] = bwprop.code_names
+            self.set_logtype(lname, _AttrType.DISC.value)
+            self.set_logrecord(lname, bwprop.code_names)
         else:
-            self._wlogtypes[lname] = "CONT"
-            self._wlogrecords[lname] = None
+            self.set_logtype(lname, _AttrType.CONT.value)
+            self.set_logrecord(lname, None)
 
         logs[lname] = tmplog
 
@@ -133,7 +131,10 @@ def _roxapi_import_bwell(
         self._xpos, self._ypos = rox.project.wells[wname].wellhead
     else:
         self._rkb = None
-        self._xpos, self._ypos = self._df["X_UTME"][0], self._df["Y_UTMN"][0]
+        self._xpos, self._ypos = (
+            self._df[_AttrName.XNAME][0],
+            self._df[_AttrName.YNAME][0],
+        )
 
 
 def _roxapi_export_bwell(
@@ -143,13 +144,13 @@ def _roxapi_export_bwell(
 
     if gname in rox.project.grid_models:
         gmodel = rox.project.grid_models[gname]
-        logger.info("RMS grid model <%s> OK", gname)
+        logger.debug("RMS grid model <%s> OK", gname)
     else:
         raise ValueError(f"No such grid name present: {gname}")
 
     if bwname in gmodel.blocked_wells_set:
         bwset = gmodel.blocked_wells_set[bwname]
-        logger.info("Blocked well set <%s> OK", bwname)
+        logger.debug("Blocked well set <%s> OK", bwname)
         bwprops = bwset.properties
     else:
         raise ValueError(f"No such blocked well set: {bwname}")
@@ -165,14 +166,22 @@ def _roxapi_export_bwell(
     dind = bwset.get_data_indices([self._wname], realisation=realisation)
 
     for lname in self.lognames:
-        if not ijk and "_INDEX" in lname:
+        if (
+            not ijk
+            and any(
+                _AttrName.I_INDEX.value,
+                _AttrName.J_INDEX.value,
+                _AttrName.K_INDEX.value,
+            )
+            in lname
+        ):
             continue
 
         if lognames != "all" and lname not in lognames:
             continue
 
         if lname not in bwnames:
-            if self._wlogtypes[lname] == "CONT":
+            if self._wlogtypes[lname] == _AttrType.CONT.value:
                 print("Create CONT", lname, "for", wname)
                 bwlog = bwset.properties.create(
                     lname, roxar.GridPropertyType.continuous, np.float32

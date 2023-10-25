@@ -95,7 +95,7 @@ class BlockedWells(Wells):
 
     def get_blocked_well(self, name):
         """Get a BlockedWell() instance by name, or None"""
-        logger.info("Calling super...")
+        logger.debug("Calling super...")
         return super().get_well(name)
 
     @deprecation.deprecated(
