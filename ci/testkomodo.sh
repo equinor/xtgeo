@@ -16,7 +16,7 @@ install_package () {
 
 start_tests () {
     pushd $CI_TEST_ROOT/testpath
-    pytest -vv --hypothesis-profile ci-fast
+    pytest -n auto -vv
     popd
 }
 
