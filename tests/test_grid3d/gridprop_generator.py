@@ -18,6 +18,7 @@ def grid_properties(draw, name=keywords, grid=xtgeo_grids):
     grid = draw(grid)
     dims = grid.dimensions
     is_discrete = draw(st.booleans())
+    _name = draw(name)
     if is_discrete:
         num_codes = draw(st.integers(min_value=2, max_value=10))
         code_names = draw(
@@ -41,7 +42,7 @@ def grid_properties(draw, name=keywords, grid=xtgeo_grids):
         gp = GridProperty(
             grid,
             *dims,
-            draw(name),
+            _name,
             discrete=is_discrete,
             codes=dict(zip(code_values, code_names)),
             values=values,
@@ -55,7 +56,7 @@ def grid_properties(draw, name=keywords, grid=xtgeo_grids):
         return GridProperty(
             grid,
             *dims,
-            draw(name),
+            _name,
             discrete=is_discrete,
             values=values,
             grid=grid,
