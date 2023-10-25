@@ -7,7 +7,6 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.well import Well
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -66,13 +65,13 @@ def test_report_zlog_mismatch():
 
     zo = xtgeo.gridproperty_from_file(ZONEFILE, name="Zone")
 
-    w1 = Well(WELL1)
-    w2 = Well(WELL2)
-    w3 = Well(WELL3)
-    w4 = Well(WELL4)
-    w5 = Well(WELL5)
-    w6 = Well(WELL6)
-    w7 = Well(WELL7)
+    w1 = xtgeo.well_from_file(WELL1)
+    w2 = xtgeo.well_from_file(WELL2)
+    w3 = xtgeo.well_from_file(WELL3)
+    w4 = xtgeo.well_from_file(WELL4)
+    w5 = xtgeo.well_from_file(WELL5)
+    w6 = xtgeo.well_from_file(WELL6)
+    w7 = xtgeo.well_from_file(WELL7)
 
     wells = [w1, w2, w3, w4, w5, w6, w7]
 

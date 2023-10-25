@@ -3,6 +3,8 @@
 # For polygons, the order of the points sequence is important. In
 # addition, a Polygons dataframe _must_ have a INT column called 'POLY_ID'
 # which identifies each polygon piece.
+from __future__ import annotations
+
 import functools
 import io
 import pathlib
@@ -17,13 +19,14 @@ import shapely.geometry as sg
 
 import xtgeo
 from xtgeo.common import inherit_docstring
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _polygons_oper, _xyz_oper
 from ._xyz import XYZ
 from ._xyz_io import _convert_idbased_xyz
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 

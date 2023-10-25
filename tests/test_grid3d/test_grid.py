@@ -85,7 +85,7 @@ def test_create_shoebox(tmp_path):
     )
     logger.info("Making a a 1,8 mill cell grid took %5.3f secs", xtg.timer(timer1))
 
-    dx, dy = grd.get_dxdy()
+    dx, dy = (grd.get_dx(), grd.get_dy())
 
     assert dx.values.mean() == pytest.approx(20.0, abs=0.0001)
     assert dy.values.mean() == pytest.approx(20.0, abs=0.0001)
@@ -139,7 +139,7 @@ def test_emerald_grid_values(emerald_grid):
     dzval = dzv.values
     mydz = float(dzval[31:32, 72:73, 0:1])
     assert mydz == pytest.approx(2.761, abs=0.001), "Grid DZ Emerald"
-    dxv, dyv = emerald_grid.get_dxdy()
+    dxv, dyv = (emerald_grid.get_dx(), emerald_grid.get_dy())
 
     mydx = float(dxv.values3d[31:32, 72:73, 0:1])
     mydy = float(dyv.values3d[31:32, 72:73, 0:1])

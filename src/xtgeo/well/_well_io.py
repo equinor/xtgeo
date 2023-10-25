@@ -9,6 +9,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common._xyz_enum import _AttrName, _AttrType
 
 xtg = XTGeoDialog()
 
@@ -28,11 +29,15 @@ def import_rms_ascii(
     wlogtype = dict()
     wlogrecords = dict()
 
-    xlognames_all = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
+    xlognames_all = [
+        _AttrName.XNAME.value,
+        _AttrName.YNAME.value,
+        _AttrName.ZNAME.value,
+    ]
     xlognames = []
 
     lnum = 1
-    with open(wfile.file, "r") as fwell:
+    with open(wfile.file, "r", encoding="UTF-8") as fwell:
         for line in fwell:
             if lnum == 1:
                 _ffver = line.strip()  # noqa, file version
@@ -91,11 +96,11 @@ def import_rms_ascii(
 
                 logger.debug("Reading log name %s of type %s", lname, ltype)
 
-                if ltype == "DISC":
+                if ltype == _AttrType.DISC.value:
                     xdict = {int(rxv[i]): rxv[i + 1] for i in range(0, len(rxv), 2)}
                     wlogrecords[lname] = xdict
                 else:
-                    wlogrecords[lname] = rxv
+                    wlogrecords[lname] = tuple(row[1:])
 
                 nlogread += 1
 
@@ -142,7 +147,7 @@ def _trim_on_lognames(dfr, lognames, lognames_strict, wname):
     if lognames == "all":
         return dfr
 
-    uselnames = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
+    uselnames = [_AttrName.XNAME.value, _AttrName.YNAME.value, _AttrName.ZNAME.value]
     if isinstance(lognames, str):
         uselnames.append(lognames)
     elif isinstance(lognames, list):
@@ -198,7 +203,7 @@ def _check_special_logs(dfr, mdlogname, zonelogname, strict, wname):
 def export_rms_ascii(self, wfile, precision=4):
     """Export to RMS well format."""
 
-    with open(wfile, "w") as fwell:
+    with open(wfile, "w", encoding="utf-8") as fwell:
         print("1.0", file=fwell)
         print("Unknown", file=fwell)
         if self._rkb is None:
@@ -212,21 +217,21 @@ def export_rms_ascii(self, wfile, precision=4):
         for lname in self.lognames:
             usewrec = "linear"
             wrec = []
-            if isinstance(self._wlogrecords[lname], dict):
-                for key in self._wlogrecords[lname]:
+            if isinstance(self.wlogrecords[lname], dict):
+                for key in self.wlogrecords[lname]:
                     wrec.append(key)
-                    wrec.append(self._wlogrecords[lname][key])
+                    wrec.append(self.wlogrecords[lname][key])
                 usewrec = " ".join(str(x) for x in wrec)
 
-            print(f"{lname} {self._wlogtypes[lname]} {usewrec}", file=fwell)
+            print(f"{lname} {self.get_logtype(lname)} {usewrec}", file=fwell)
 
     # now export all logs as pandas framework
-    tmpdf = self._df.copy()
+    tmpdf = self._wdata.data.copy()
     tmpdf.fillna(value=-999, inplace=True)
 
     # make the disc as is np.int
-    for lname in self._wlogtypes:
-        if self._wlogtypes[lname] == "DISC":
+    for lname in self.wlogtypes:
+        if self.wlogtypes[lname] == _AttrType.DISC.value:
             tmpdf[[lname]] = tmpdf[[lname]].astype(int)
 
     cformat = "%-." + str(precision) + "f"
@@ -243,7 +248,7 @@ def export_rms_ascii(self, wfile, precision=4):
 
 def export_hdf5_well(self, wfile, compression="lzf"):
     """Save to HDF5 format."""
-    logger.info("Export to hdf5 format...")
+    logger.debug("Export to hdf5 format...")
 
     self._ensure_consistency()
 
@@ -260,13 +265,13 @@ def export_hdf5_well(self, wfile, compression="lzf"):
         complevel = 0
 
     with pd.HDFStore(wfile.file, "w", complevel=complevel, complib=complib) as store:
-        logger.info("export to HDF5 %s", wfile.name)
-        store.put("Well", self._df)
+        logger.debug("export to HDF5 %s", wfile.name)
+        store.put("Well", self._wdata.data)
         store.get_storer("Well").attrs["metadata"] = jmeta
         store.get_storer("Well").attrs["provider"] = "xtgeo"
         store.get_storer("Well").attrs["format_idcode"] = 1401
 
-    logger.info("Export to hdf5 format... done!")
+    logger.debug("Export to hdf5 format... done!")
 
 
 def import_wlogs(wlogs: OrderedDict):
@@ -288,7 +293,7 @@ def import_wlogs(wlogs: OrderedDict):
     for key in wlogs.keys():
         typ, rec = wlogs[key]
 
-        if typ in {"DISC", "CONT"}:
+        if typ in {_AttrType.DISC.value, _AttrType.CONT.value}:
             wlogtypes[key] = deepcopy(typ)
         else:
             raise ValueError(f"Invalid log type found in input: {typ}")
@@ -302,7 +307,7 @@ def import_wlogs(wlogs: OrderedDict):
 
 def import_hdf5_well(wfile, **kwargs):
     """Load from HDF5 format."""
-    logger.info("The kwargs may be unused: %s", kwargs)
+    logger.debug("The kwargs may be unused: %s", kwargs)
     reqattrs = xtgeo.MetaDataWell.REQUIRED
 
     with pd.HDFStore(wfile.file, "r") as store:

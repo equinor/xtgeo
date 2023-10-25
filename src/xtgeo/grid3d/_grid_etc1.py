@@ -839,7 +839,8 @@ def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False)
         y1 = ycor.values[self.ncol - 1, midcol, midlay]
         glist.append(degrees(atan2(y1 - y0, x1 - x0)))
 
-        dx, dy = self.get_dxdy(asmasked=False)
+        dx = self.get_dx(asmasked=False)
+        dy = self.get_dy(asmasked=False)
         dz = self.get_dz(asmasked=False)
         glist.append(dx.values.mean())
         glist.append(dy.values.mean())

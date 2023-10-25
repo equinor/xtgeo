@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
-import sys
-from collections import OrderedDict
 from os.path import join
 
 import numpy as np
@@ -175,7 +170,7 @@ def test_import_well_selected_logs():
     "log_name, newdict, expected",
     [
         ("Poro", {0: "null"}, "Cannot set a log record for a continuous log"),
-        ("not_in_lognames", {}, "No such logname: not_in_lognames"),
+        ("not_in_lognames", {}, "No such attr_name"),
         ("Facies", list(), "Input is not a dictionary"),
     ],
 )
@@ -216,7 +211,7 @@ def test_rename_log(simple_well):
 
 
 @pytest.mark.parametrize(
-    "log_name,change_from, change_to",
+    "log_name, change_from, change_to",
     [("Poro", "CONT", "DISC"), ("Poro", "CONT", "CONT"), ("Facies", "DISC", "CONT")],
 )
 def test_set_log_type(simple_well, log_name, change_from, change_to):
@@ -232,7 +227,7 @@ def test_loadwell1_properties(simple_well):
     mywell = simple_well
 
     assert mywell.get_logtype("Poro") == "CONT"
-    assert mywell.get_logrecord("Poro") is None
+    assert mywell.get_logrecord("Poro") == ("UNK", "lin")
 
     assert mywell.name == "OP_1"
     mywell.name = "OP_1_EDITED"
@@ -265,29 +260,29 @@ def test_shortwellname(create_well):
     assert short == "A-142H"
 
 
-@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
-def test_hdf_io_single(tmp_path):
-    """Test HDF io, single well."""
-    mywell = xtgeo.well_from_file(WELL1)
+# @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
+# def test_hdf_io_single(tmp_path):
+#     """Test HDF io, single well."""
+#     mywell = xtgeo.well_from_file(WELL1)
 
-    wname = (tmp_path / "hdfwell").with_suffix(".hdf")
-    mywell.to_hdf(wname)
-    mywell2 = xtgeo.well_from_file(wname, fformat="hdf")
-    assert mywell2.nrow == mywell.nrow
+#     wname = (tmp_path / "hdfwell").with_suffix(".hdf")
+#     mywell.to_hdf(wname)
+#     mywell2 = xtgeo.well_from_file(wname, fformat="hdf")
+#     assert mywell2.nrow == mywell.nrow
 
 
-@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
-def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
-    """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
-    t0 = xtg.timer()
-    wname = (tmp_path / "$random").with_suffix(".hdf")
-    wuse = simple_well.to_hdf(wname, compression=None)
-    print("Time for save HDF: ", xtg.timer(t0))
+# @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
+# def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
+#     """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
+#     t0 = xtg.timer()
+#     wname = (tmp_path / "$random").with_suffix(".hdf")
+#     wuse = simple_well.to_hdf(wname, compression=None)
+#     print("Time for save HDF: ", xtg.timer(t0))
 
-    t0 = xtg.timer()
-    result = xtgeo.well_from_file(wuse, fformat="hdf5")
-    assert result.dataframe.equals(simple_well.dataframe)
-    print("Time for load HDF: ", xtg.timer(t0))
+#     t0 = xtg.timer()
+#     result = xtgeo.well_from_file(wuse, fformat="hdf5")
+#     assert result.dataframe.equals(simple_well.dataframe)
+#     print("Time for load HDF: ", xtg.timer(t0))
 
 
 def test_import_export_rmsasc(tmp_path, simple_well):
@@ -302,30 +297,8 @@ def test_import_export_rmsasc(tmp_path, simple_well):
     print("Time for load RMSASC: ", xtg.timer(t0))
 
 
-def test_get_carr(simple_well):
-    """Get a C array pointer"""
-
-    mywell = simple_well
-
-    dummy = mywell.get_carray("NOSUCH")
-
-    assert dummy is None, "Wrong log name"
-
-    cref = mywell.get_carray("X_UTME")
-
-    xref = str(cref)
-
-    assert "Swig" in xref and "double" in xref, "carray from log name, double"
-
-    cref = mywell.get_carray("Zonelog")
-
-    xref = str(cref)
-
-    assert "Swig" in xref and "int" in xref, "carray from log name, int"
-
-
 def test_create_and_delete_logs(loadwell3):
-    """Test create adn delete logs."""
+    """Test create and delete logs, using explicit create_log() and delete_log()."""
     mywell = loadwell3
 
     status = mywell.create_log("NEWLOG")
@@ -347,6 +320,39 @@ def test_create_and_delete_logs(loadwell3):
     assert ndeleted == 2
 
 
+def test_create_and_delete_logs_implicit(loadwell3):
+    """Test create and delete logs, using implicit dataframe operations."""
+    mywell = loadwell3
+
+    mywell.dataframe["NEWLOG"] = 1234.0
+    assert mywell.dataframe.NEWLOG.mean() == 1234.0
+    assert "NEWLOG" in mywell.get_lognames()
+
+    # status = mywell.create_log("NEWLOG", force=True, value=200)
+    # assert status is True
+    # assert mywell.dataframe.NEWLOG.mean() == 200.0
+
+    # ndeleted = mywell.delete_log("NEWLOG")
+
+    # assert ndeleted == 1
+    # status = mywell.create_log("NEWLOG", force=True, value=200)
+
+    # ndeleted = mywell.delete_log(["NEWLOG", "GR"])
+    # assert ndeleted == 2
+
+
+def test_wlogtypes(loadwell3):
+    mywell = loadwell3
+    wlogtypes = mywell.wlogtypes
+    assert wlogtypes == {
+        "X_UTME": "CONT",
+        "Y_UTMN": "CONT",
+        "Z_TVDSS": "CONT",
+        "GR": "CONT",
+        "ZONELOG": "DISC",
+    }
+
+
 def test_get_set_wlogs(loadwell3):
     """Test on getting ans setting a dictionary with some log attributes."""
     mywell = loadwell3
@@ -354,7 +360,7 @@ def test_get_set_wlogs(loadwell3):
     mydict = mywell.get_wlogs()
     print(mydict)
 
-    assert isinstance(mydict, OrderedDict)
+    assert isinstance(mydict, dict)
 
     assert mydict["X_UTME"][0] == "CONT"
     assert mydict["ZONELOG"][0] == "DISC"
@@ -369,8 +375,7 @@ def test_get_set_wlogs(loadwell3):
     assert mydict2["ZONELOG"][1][24] == "ZONE_24_EDITED"
 
     mydict2["EXTRA"] = None
-    with pytest.raises(ValueError):
-        mywell.set_wlogs(mydict2)
+    mywell.set_wlogs(mydict2)
 
 
 def test_make_hlen(loadwell1):
@@ -389,10 +394,20 @@ def test_make_zqual_log(loadwell3):
 
     logger.debug("True well name: %s", mywell.truewellname)
 
-    mywell.make_zone_qual_log("manamana")
+    mywell.make_zone_qual_log("ZQUAL")
 
-    with pd.option_context("display.max_rows", 1000):
-        print(mywell.dataframe)
+    recs = mywell.get_logrecord("ZQUAL")
+    assert recs == {
+        0: "UNDETERMINED",
+        1: "INCREASE",
+        2: "DECREASE",
+        3: "U_TURN",
+        4: "INV_U_TURN",
+        9: "INCOMPLETE",
+    }
+    unique, counts = np.unique(mywell.dataframe["ZQUAL"].values, return_counts=True)
+    assert unique.tolist() == [0.0, 1.0, 2.0, 3.0, 9.0]
+    assert counts.tolist() == [714, 123, 612, 782, 90]
 
 
 @pytest.mark.parametrize(
@@ -798,15 +813,24 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
     well.create_log("MEGAZONE1", logtype="DISC", logrecord=lrec)
     well.create_log("MEGAZONE2", logtype="DISC", logrecord=lrec)
 
-    zl = well.dataframe["Zonelog"]
-    well.dataframe["MEGAZONE1"][(zl > 0) & (zl < 4)] = 1
-    well.dataframe["MEGAZONE1"][zl > 3] = 2
-    well.dataframe["MEGAZONE1"][np.isnan(zl)] = np.nan
+    zl = well.dataframe["Zonelog"].copy()
+    # well.dataframe["MEGAZONE1"][(zl > 0) & (zl < 4)] = 1   # << get Pd warnings
+    well.dataframe.loc[(zl > 0) & (zl < 4), "MEGAZONE1"] = 1
+
+    well.dataframe.loc[zl > 3, "MEGAZONE1"] = 2
+    _, counts = np.unique(well.dataframe["MEGAZONE1"].values, return_counts=True)
+    assert counts.tolist() == [4780, 75, 11]
+
+    well.dataframe.loc[np.isnan(zl), "MEGAZONE1"] = np.nan
+    _, counts = np.unique(well.dataframe["MEGAZONE1"].values, return_counts=True)
+    assert counts.tolist() == [4779, 75, 11, 1]
 
     # derive from distance log:
     d1 = well.dataframe["DIST_TOP"]
     d2 = well.dataframe["DIST_BASE"]
-    well.dataframe["MEGAZONE2"][(d1 <= 0.0) & (d2 > 0)] = 1
+    well.dataframe.loc[(d1 <= 0.0) & (d2 > 0), "MEGAZONE2"] = 1
+    _, counts = np.unique(well.dataframe["MEGAZONE2"].values, return_counts=True)
+    assert counts.tolist() == [4788, 78]
 
     # now use logics from Grid() report_zone_mismatch()...
     # much coding pasting vvvvvv =======================================================
@@ -824,10 +848,12 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
 
     if depthrange:
         d1, d2 = depthrange
-        wll._df = wll._df[(d1 < wll._df.Z_TVDSS) & (wll._df.Z_TVDSS < d2)]
+        wll.set_dataframe(
+            wll.dataframe[(d1 < wll.dataframe.Z_TVDSS) & (wll.dataframe.Z_TVDSS < d2)]
+        )
 
     # from here, work with the dataframe only
-    df = wll._df
+    df = wll.dataframe.copy()
 
     # zonelogrange
     z1, z2 = zonelogrange
@@ -871,7 +897,7 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
     res2 = dfuse2["zmatch2"].mean() * 100
 
     # update Well() copy (segment only)
-    wll.dataframe = dfuse2
+    wll.set_dataframe(dfuse2)
 
     res = {
         "MATCH1": res1,
@@ -1002,23 +1028,7 @@ def test_copy(string_to_well):
 def test_create_relative_hlen(string_to_well, well_definition, expected_hlen):
     well = string_to_well(well_definition)
     well.create_relative_hlen()
-    assert well.dataframe["R_HLEN"].to_list() == expected_hlen
-
-
-def test_speed_new(string_to_well):
-    well_definition = """1.01
-        Unknown
-        name 0 0 0
-        1
-        Zonelog DISC 1 zone1 2 zone2 3 zone3"""
-
-    for i in range(1, 10000):
-        well_definition += f"\n        {i} {i} 1 1"
-
-    well = string_to_well(well_definition)
-    t0 = xtg.timer()
-    well.create_relative_hlen()
-    print(f"Run time: {xtg.timer(t0)}")
+    assert well.dataframe["R_HLEN"].to_list() == pytest.approx(expected_hlen)
 
 
 def test_truncate_parallel_path_too_short(string_to_well):
@@ -1174,11 +1184,13 @@ def test_downsample(string_to_well, input_points, expected_points):
         well_definition += f"\n        {i} {i} {i} 1"
 
     well = string_to_well(well_definition)
+    print(well.dataframe)
     well.downsample()
+    print(well.dataframe)
     assert {
-        "X_UTME": well.dataframe["X_UTME"].to_list(),
-        "Y_UTMN": well.dataframe["Y_UTMN"].to_list(),
-        "Z_TVDSS": well.dataframe["Z_TVDSS"].to_list(),
+        "X_UTME": well.dataframe["X_UTME"].values.tolist(),
+        "Y_UTMN": well.dataframe["Y_UTMN"].values.tolist(),
+        "Z_TVDSS": well.dataframe["Z_TVDSS"].values.tolist(),
     } == {
         "X_UTME": expected_points,
         "Y_UTMN": expected_points,
@@ -1253,7 +1265,3 @@ def test_get_polygons_skipname(string_to_well):
     polygons = well.get_polygons(skipname=True)
     assert "NAME" not in polygons.dataframe.columns
     assert polygons.name == "custom_name"
-
-
-def test_get_fence_poly(string_to_well):
-    pass

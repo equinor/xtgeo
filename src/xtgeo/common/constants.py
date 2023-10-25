@@ -21,3 +21,7 @@ UNDEF_MAP_IRAPA = 9999900.0000
 
 MAXKEYWORDS = cx.MAXKEYWORDS  # maximum keywords for ECL and ROFF scanning
 MAXDATES = cx.MAXDATES  # maximum keywords for ECL scanning
+
+# for XYZ data, restricted to float32 and int32
+UNDEF_CONT = UNDEF
+UNDEF_DISC = UNDEF_INT

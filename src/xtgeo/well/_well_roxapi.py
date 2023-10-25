@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 """Well input and output, private module for ROXAPI."""
 
-
-from collections import OrderedDict
-
 import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common._xyz_enum import _AttrName, _AttrType
+from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.roxutils import RoxUtils
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# Well() instance self = xwell1
+
+# Well() instance: self
 
 
 # Import from ROX api
@@ -71,9 +70,7 @@ def _roxapi_import_well(
     wlogrecords = dict()
 
     # get logs repr trajecetry
-    mdlogname, logs = _roxapi_traj(
-        wlogtypes, wlogrecords, roxtraj, roxlrun, inclmd, inclsurvey
-    )
+    mdlogname, logs = _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey)
 
     if lognames and lognames == "all":
         for logcurv in roxlrun.log_curves:
@@ -102,11 +99,8 @@ def _roxapi_import_well(
     }
 
 
-def _roxapi_traj(
-    wlogtypes, wlogrecords, roxtraj, roxlrun, inclmd, inclsurvey
-):  # pragma: no cover
+def _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey):  # pragma: no cover
     """Get trajectory in ROXAPI."""
-    # compute trajectory
 
     surveyset = roxtraj.survey_point_series
     measured_depths = roxlrun.get_measured_depths()
@@ -120,21 +114,21 @@ def _roxapi_traj(
         try:
             geo_array[ino] = surveyset.interpolate_survey_point(mdv)
         except ValueError:
-            logger.warning("MD is %s, surveyinterpolation fails, " "CHECK RESULT!", mdv)
+            logger.warning("MD is %s, surveyinterpolation fails, CHECK RESULT!", mdv)
             geo_array[ino] = geo_array[ino - 1]
 
-    logs = OrderedDict()
+    logs = dict()
     mdlogname = None
 
-    logs["X_UTME"] = geo_array[:, 3]
-    logs["Y_UTMN"] = geo_array[:, 4]
-    logs["Z_TVDSS"] = geo_array[:, 5]
+    logs[_AttrName.XNAME.value] = geo_array[:, 3]
+    logs[_AttrName.YNAME.value] = geo_array[:, 4]
+    logs[_AttrName.ZNAME.value] = geo_array[:, 5]
     if inclmd or inclsurvey:
-        logs["M_MDEPTH"] = geo_array[:, 0]
-        mdlogname = "M_MDEPTH"
+        logs[_AttrName.M_MD_NAME.value] = geo_array[:, 0]
+        mdlogname = _AttrName.M_MD_NAME.value
     if inclsurvey:
-        logs["M_INCL"] = geo_array[:, 1]
-        logs["M_AZI"] = geo_array[:, 2]
+        logs[_AttrName.M_INCL_NAME.value] = geo_array[:, 1]
+        logs[_AttrName.M_AZI_NAME.value] = geo_array[:, 2]
 
     return mdlogname, logs
 
@@ -145,17 +139,17 @@ def _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname):  # pragma: no cover
     tmplog = npma.filled(tmplog, fill_value=np.nan)
     tmplog[tmplog == -999] = np.nan
     if roxcurve.is_discrete:
-        wlogtypes[lname] = "DISC"
+        wlogtypes[lname] = _AttrType.DISC.value
         wlogrecords[lname] = roxcurve.get_code_names()
     else:
-        wlogtypes[lname] = "CONT"
+        wlogtypes[lname] = _AttrType.CONT.value
         wlogrecords[lname] = None
 
     return tmplog
 
 
 def export_well_roxapi(
-    xwell1,
+    self,
     project,
     wname,
     lognames="all",
@@ -164,11 +158,11 @@ def export_well_roxapi(
     realisation=0,
 ):
     """Private function for well export (store in RMS) from XTGeo to RoxarAPI."""
-    logger.info("Opening RMS project ...")
+    logger.debug("Opening RMS project ...")
 
     rox = RoxUtils(project, readonly=False)
 
-    _roxapi_export_well(xwell1, rox, wname, lognames, logrun, trajectory, realisation)
+    _roxapi_export_well(self, rox, wname, lognames, logrun, trajectory, realisation)
 
     if rox._roxexternal:
         rox.project.save()
@@ -176,24 +170,20 @@ def export_well_roxapi(
     rox.safe_close()
 
 
-def _roxapi_export_well(xwell1, rox, wname, lognames, logrun, trajectory, realisation):
+def _roxapi_export_well(self, rox, wname, lognames, logrun, trajectory, realisation):
     if wname in rox.project.wells:
-        _roxapi_update_well(
-            xwell1, rox, wname, lognames, logrun, trajectory, realisation
-        )
+        _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisation)
     else:
-        _roxapi_create_well(
-            xwell1, rox, wname, lognames, logrun, trajectory, realisation
-        )
+        _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation)
 
 
-def _roxapi_update_well(xwell1, rox, wname, lognames, logrun, trajectory, realisation):
+def _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisation):
     """Assume well is to updated only with logs, new or changed.
 
     Also, the length of arrays should not change, at least not for now.
 
     """
-    logger.info("Key realisation not in use: %s", realisation)
+    logger.debug("Key realisation not in use: %s", realisation)
 
     well = rox.project.wells[wname]
     traj = well.wellbore.trajectories[trajectory]
@@ -202,16 +192,16 @@ def _roxapi_update_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
     lrun.log_curves.clear()
 
     if lognames == "all":
-        uselognames = xwell1.lognames
+        uselognames = self.lognames
     else:
         uselognames = lognames
 
     for lname in uselognames:
         isdiscrete = False
-        xtglimit = xtgeo.UNDEF_LIMIT
-        if xwell1._wlogtypes[lname] == "DISC":
+        xtglimit = UNDEF_LIMIT
+        if self.wlogtypes[lname] == _AttrType.DISC.value:
             isdiscrete = True
-            xtglimit = xtgeo.UNDEF_INT_LIMIT
+            xtglimit = UNDEF_INT_LIMIT
 
         if isdiscrete:
             thelog = lrun.log_curves.create_discrete(name=lname)
@@ -220,12 +210,12 @@ def _roxapi_update_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
 
         values = thelog.generate_values()
 
-        if values.size != xwell1.dataframe[lname].values.size:
+        if values.size != self.dataframe[lname].values.size:
             raise ValueError("New logs have different sampling or size, not possible")
 
         usedtype = values.dtype
 
-        vals = np.ma.masked_invalid(xwell1.dataframe[lname].values)
+        vals = np.ma.masked_invalid(self.dataframe[lname].values)
         vals = np.ma.masked_greater(vals, xtglimit)
         vals = vals.astype(usedtype)
         thelog.set_values(vals)
@@ -237,12 +227,12 @@ def _roxapi_update_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
             else:
                 codedict = {
                     int(key): str(value)
-                    for key, value in xwell1._wlogrecords[lname].items()
+                    for key, value in self._wlogrecords[lname].items()
                 }
             thelog.set_code_names(codedict)
 
 
-def _roxapi_create_well(xwell1, rox, wname, lognames, logrun, trajectory, realisation):
+def _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation):
     """Save Well() instance to a new well in RMS.
 
     From version 2.15.
@@ -250,15 +240,15 @@ def _roxapi_create_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
     logger.debug("Key realisation is not supported: %s", realisation)
 
     roxwell = rox.project.wells.create(wname)
-    roxwell.rkb = xwell1.rkb
-    roxwell.wellhead = (xwell1.xpos, xwell1.ypos)
+    roxwell.rkb = self.rkb
+    roxwell.wellhead = (self.xpos, self.ypos)
 
     traj = roxwell.wellbore.trajectories.create(trajectory)
 
     series = traj.survey_point_series
-    east = xwell1.dataframe["X_UTME"].values
-    north = xwell1.dataframe["Y_UTMN"].values
-    tvd = xwell1.dataframe["Z_TVDSS"].values
+    east = self.dataframe[self.xname].values
+    north = self.dataframe[self.yname].values
+    tvd = self.dataframe[self.zname].values
     values = np.array([east, north, tvd]).transpose()
     series.set_points(values)
 
@@ -268,8 +258,8 @@ def _roxapi_create_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
     lrun.set_measured_depths(md)
 
     # Add log curves
-    for curvename, curveprop in xwell1.get_wlogs().items():
-        if curvename not in xwell1.lognames:
+    for curvename, curveprop in self.get_wlogs().items():
+        if curvename not in self.lognames:
             continue  # skip X_UTME .. Z_TVDSS
         if lognames and lognames != "all" and curvename not in lognames:
             continue
@@ -281,14 +271,14 @@ def _roxapi_create_well(xwell1, rox, wname, lognames, logrun, trajectory, realis
             cname = "MD_imported"
             xtg.warn(f"Logname MD is renamed to {cname}")
 
-        if curveprop[0] == "DISC":
+        if curveprop[0] == _AttrType.DISC.value:
             lcurve = lrun.log_curves.create_discrete(cname)
-            cc = np.ma.masked_invalid(xwell1.dataframe[curvename].values)
+            cc = np.ma.masked_invalid(self.dataframe[curvename].values)
             lcurve.set_values(cc.astype(np.int32))
             codedict = {int(key): str(value) for key, value in curveprop[1].items()}
             lcurve.set_code_names(codedict)
         else:
             lcurve = lrun.log_curves.create(cname)
-            lcurve.set_values(xwell1.dataframe[curvename].values)
+            lcurve.set_values(self.dataframe[curvename].values)
 
-        logger.info("Log curve created: %s", cname)
+        logger.debug("Log curve created: %s", cname)

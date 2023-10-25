@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """The XTGeo xyz.points module, which contains the Points class."""
+from __future__ import annotations
+
 import functools
 import io
 import pathlib

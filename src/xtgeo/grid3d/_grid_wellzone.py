@@ -55,17 +55,19 @@ def report_zone_mismatch(
 
     # get the IJK along the well as logs; use a copy of the well instance
     wll = well.copy()
-    wll._df[zonelogname] += zonelogshift
+    wll.dataframe[zonelogname] += zonelogshift
 
     if depthrange:
         d1, d2 = depthrange
-        wll._df = wll._df[(d1 < wll._df.Z_TVDSS) & (wll._df.Z_TVDSS < d2)]
+        wll.dataframe = wll.dataframe[
+            (d1 < wll.dataframe.Z_TVDSS) & (wll.dataframe.Z_TVDSS < d2)
+        ]
 
     wll.get_gridproperties(zoneprop, self)
     zmodel = zoneprop.name + "_model"
 
     # from here, work with the dataframe only
-    df = wll._df
+    df = wll.dataframe
 
     # zonelogrange
     z1, z2 = zonelogrange

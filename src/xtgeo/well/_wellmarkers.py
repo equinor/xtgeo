@@ -9,7 +9,7 @@ import pandas as pd
 
 import xtgeo
 import xtgeo.common.constants as const
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -26,31 +26,30 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
 
     self.geometrics()  # note the caller has made a copy of the true self
 
-    # as zlog is float64; need to convert to int array with high
-    # number as undef
+    # as zlog is float64; need to convert to int array with high number as undef
     if self.zonelogname is not None:
         if use_undef:
-            self._df.dropna(subset=[self.zonelogname], inplace=True)
-        zlog = self._df[self.zonelogname].values
-        zlog[np.isnan(zlog)] = const.UNDEF_INT
+            self.dataframe.dropna(subset=[self.zonelogname], inplace=True)
+        zlog = self.dataframe[self.zonelogname].values
+        zlog[np.isnan(zlog)] = const.UNDEF_DISC
         zlog = np.rint(zlog).astype(int)
     else:
         return None
 
-    xvv = self._df["X_UTME"].values
-    yvv = self._df["Y_UTMN"].values
-    zvv = self._df["Z_TVDSS"].values
-    incl = self._df["Q_INCL"].values
-    mdv = self._df["Q_MDEPTH"].values
+    xvv = self.dataframe[self.xname].values.copy()
+    yvv = self.dataframe[self.yname].values.copy()
+    zvv = self.dataframe[self.zname].values.copy()
+    incl = self.dataframe["Q_INCL"].values.copy()
+    mdv = self.dataframe["Q_MDEPTH"].values.copy()
 
     if self.mdlogname is not None:
-        mdv = self._df[self.mdlogname].values
+        mdv = self.dataframe[self.mdlogname].values.copy()
 
     if zonelist is None:
         # need to declare as list; otherwise Py3 will get dict.keys
         zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
-    logger.info("Find values for %s", zonelist)
+    logger.debug("Find values for %s", zonelist)
 
     ztops, ztopnames, zisos, zisonames = _extract_ztops(
         self,
@@ -211,9 +210,9 @@ def _extract_ztops(
         pzone = zone
 
     wpts_names = [
-        "X_UTME",
-        "Y_UTMN",
-        "Z_TVDSS",
+        self.xname,
+        self.yname,
+        self.zname,
         self.mdlogname,
         "Q_INCL",
         "Q_AZI",
@@ -229,9 +228,9 @@ def _extract_ztops(
     llen = len(wpts) - 1
 
     zwpts_names = [
-        "X_UTME",
-        "Y_UTMN",
-        "Z_TVDSS",
+        self.xname,
+        self.yname,
+        self.zname,
         self.mdlogname + "_AVG",
         "Q_MD1",
         "Q_MD2",
@@ -331,9 +330,9 @@ def get_fraction_per_zone(
         A dataframe with relevant data...
 
     """
-    logger.info("The zonelist is %s", zonelist)
-    logger.info("The dlogname is %s", dlogname)
-    logger.info("The dvalues are %s", dvalues)
+    logger.debug("The zonelist is %s", zonelist)
+    logger.debug("The dlogname is %s", dlogname)
+    logger.debug("The dvalues are %s", dvalues)
 
     if zonelogname is not None:
         usezonelogname = zonelogname
@@ -351,14 +350,14 @@ def get_fraction_per_zone(
         zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
     useinclname = "Q_INCL"
-    if "M_INCL" in self._df:
+    if "M_INCL" in self.dataframe:
         useinclname = "M_INCL"
     else:
         self.geometrics()
 
     result = OrderedDict()
-    result["X_UTME"] = []
-    result["Y_UTMN"] = []
+    result[self.xname] = []
+    result[self.yname] = []
     result["DFRAC"] = []
     result["Q_INCL"] = []
     result["ZONE"] = []
@@ -369,8 +368,8 @@ def get_fraction_per_zone(
 
     xtralogs = [dlogname, useinclname, "_QFLAG"]
     for izon in zonelist:
-        logger.info("The zone number is %s", izon)
-        logger.info("The extralogs are %s", xtralogs)
+        logger.debug("The zone number is %s", izon)
+        logger.debug("The extralogs are %s", xtralogs)
 
         dfr = self.get_zone_interval(izon, extralogs=xtralogs)
 
@@ -397,16 +396,16 @@ def get_fraction_per_zone(
                 logger.debug("Skipped due to too missing/undef value(s)")
                 continue
 
-            xavg = dframe["X_UTME"].mean()
-            yavg = dframe["Y_UTMN"].mean()
+            xavg = dframe[self.xname].mean()
+            yavg = dframe[self.yname].mean()
 
             dfrac = 0.0
             for dval in dvalues:
                 if any(dseries.isin([dval])):
                     dfrac += dseries.value_counts(normalize=True)[dval]
 
-            result["X_UTME"].append(xavg)
-            result["Y_UTMN"].append(yavg)
+            result[self.xname].append(xavg)
+            result[self.yname].append(yavg)
             result["DFRAC"].append(dfrac)
             result["Q_INCL"].append(qinclavg)
             result["ZONE"].append(izon)
@@ -414,7 +413,7 @@ def get_fraction_per_zone(
             result[dlogname].append(svalues)
 
     # make the dataframe and return it
-    if result["X_UTME"]:
+    if result[self.xname]:
         return pd.DataFrame.from_dict(result)
 
     self.delete_log("_QFLAG")
@@ -425,12 +424,12 @@ def get_fraction_per_zone(
 def get_surface_picks(self, surf):
     """get Surface picks"""
 
-    xcor = self._df["X_UTME"].values
-    ycor = self._df["Y_UTMN"].values
-    zcor = self._df["Z_TVDSS"].values
+    xcor = self.dataframe[self.xname].values
+    ycor = self.dataframe[self.yname].values
+    zcor = self.dataframe[self.zname].values
 
     if self.mdlogname:
-        mcor = self._df[self.mdlogname].values
+        mcor = self.dataframe[self.mdlogname].values
     else:
         mcor = np.zeros(xcor.size, dtype=np.float64) + xtgeo.UNDEF
 

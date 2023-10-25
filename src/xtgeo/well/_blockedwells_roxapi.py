@@ -18,7 +18,7 @@ def import_bwells_roxapi(
 ):  # pragma: no cover
     """Private function for loading project and ROXAPI blockwell import"""
 
-    logger.info("Opening RMS project ...")
+    logger.debug("Opening RMS project ...")
     rox = RoxUtils(project, readonly=True)
 
     _roxapi_import_bwells(self, rox, gname, bwname, lognames, ijk, realisation)
@@ -33,24 +33,24 @@ def _roxapi_import_bwells(
 
     if gname in rox.project.grid_models:
         gmodel = rox.project.grid_models[gname]
-        logger.info("RMS grid model <%s> OK", gname)
+        logger.debug("RMS grid model <%s> OK", gname)
     else:
         raise ValueError(f"No such grid name present: {gname}")
 
     if bwname in gmodel.blocked_wells_set:
         bwset = gmodel.blocked_wells_set[bwname]
-        logger.info("Blocked well set <%s> OK", bwname)
+        logger.debug("Blocked well set <%s> OK", bwname)
     else:
         raise ValueError(f"No such blocked well set: {bwname}")
 
     wnames = bwset.get_well_names()
 
-    logger.info("Lognames are %s", lnames)
+    logger.debug("Lognames are %s", lnames)
 
     bwlist = []
-    logger.info("Loading wells ...")
+    logger.debug("Loading wells ...")
     for wname in wnames:
-        logger.info("Loading well %s", wname)
+        logger.debug("Loading well %s", wname)
         bwtmp = BlockedWell()
         bwtmp.from_roxar(
             rox.project,

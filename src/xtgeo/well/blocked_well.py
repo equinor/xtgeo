@@ -6,11 +6,13 @@ import deprecation
 import pandas as pd
 
 import xtgeo
+from xtgeo.common._xyz_enum import _AttrName
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from . import _blockedwell_roxapi
 from .well1 import Well
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
@@ -66,7 +68,9 @@ def blockedwell_from_roxar(
 
     # TODO: replace this with proper class method
     obj = BlockedWell(
-        *([0.0] * 3), "", pd.DataFrame({"X_UTME": [], "Y_UTMN": [], "Z_TVDSS": []})
+        *([0.0] * 3),
+        "",
+        pd.DataFrame({_AttrName.XNAME: [], _AttrName.YNAME: [], _AttrName.ZNAME: []}),
     )
 
     _blockedwell_roxapi.import_bwell_roxapi(
@@ -100,22 +104,22 @@ class BlockedWell(Well):
     save the result in RMS, as this is derived from the grid. Also the blocked well
     icon must exist before save.
 
-    The well trajectory are here represented as logs, and XYZ have magic names:
-    X_UTME, Y_UTMN, Z_TVDSS, which are the three first Pandas columns.
+    The well trajectory are here represented as logs, and XYZ have magic names as
+    default: X_UTME, Y_UTMN, Z_TVDSS, which are the three first Pandas columns.
 
     Other geometry logs has also 'semi-magic' names:
 
     M_MDEPTH or Q_MDEPTH: Measured depth, either real/true (M...) or
-    quasi computed/estimated (Q...). The Quasi may be incorrect for
+    quasi computed/estimated (Q...). The Quasi computations may be incorrect for
     all uses, but sufficient for some computations.
 
-    Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.
+    Similar for M_INCL, Q_INCL, M_AZI, Q_AZI.
 
     I_INDEX, J_INDEX, K_INDEX: They are grid indices. For practical reasons
     they are treated as a CONT logs, since the min/max grid indices usually are
     unknown, and hence making a code index is not trivial.
 
-    All Pandas values (yes, discrete also!) are stored as float64
+    All Pandas values (yes, discrete also!) are stored as float32 or float64
     format, and undefined values are Nan. Integers are stored as Float due
     to the lacking support for 'Integer Nan' (currently lacking in Pandas,
     but may come in later Pandas versions).
@@ -125,9 +129,7 @@ class BlockedWell(Well):
 
     The instance can be made either from file or::
 
-        >>> well1 = BlockedWell(well_dir + '/OP_1.bw')  # assume RMS ascii well
-        >>> well2 = BlockedWell(well_dir + '/OP_1.bw', fformat='rms_ascii')
-        >>> well3 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
+        >>> well1 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')  # RMS ascii well
 
     If in RMS, instance can be made also from RMS icon::
 
@@ -138,11 +140,7 @@ class BlockedWell(Well):
             'wellname',
         )
 
-    For arguments, see method under :meth:`from_file`.
-
     """
-
-    VALID_LOGTYPES = {"DISC", "CONT"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -157,7 +155,10 @@ class BlockedWell(Well):
 
     @gridname.setter
     def gridname(self, newname):
-        self._gridname = newname
+        if isinstance(newname, str):
+            self._gridname = newname
+        else:
+            raise ValueError("Input name is not a string.")
 
     def copy(self):
         newbw = super().copy()
@@ -214,7 +215,8 @@ class BlockedWell(Well):
         """Set (export) a single blocked well item inside roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
-        activated.
+        activated. RMS will store blocked wells as a Gridmodel feature, not as a
+        well.
 
         Note:
            When project is file path (direct access, outside RMS) then
@@ -236,6 +238,7 @@ class BlockedWell(Well):
         .. versionadded: 2.12
 
         """
+        # TODO: go from *args, **kwargs to keywords
         project = args[0]
         gname = args[1]
         bwname = args[2]
