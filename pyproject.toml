@@ -86,7 +86,7 @@ dev = [
 ]
 docs = [
     "pydocstyle",
-    "Sphinx<4.0",
+    "Sphinx",
     "sphinx-rtd-theme",
     "sphinx-toolbox",
     "autoclasstoc",
