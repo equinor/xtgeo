@@ -2272,9 +2272,9 @@ class Grid(_Grid3D):
 
         Example::
 
-            grd = xtgeo.Grid("somefile.roff")
-            prop1 = xtgeo.GridProperty("somepropfile1.roff")
-            prop2 = xtgeo.GridProperty("somepropfile2.roff")
+            grd = xtgeo.grid_from_file("somefile.roff")
+            prop1 = xtgeo.gridproperty_from_file("somepropfile1.roff")
+            prop2 = xtgeo.gridproperty_from_file("somepropfile2.roff")
 
             grd.props = [prop1, prop2]
 
@@ -2469,13 +2469,13 @@ class Grid(_Grid3D):
 
         Example::
 
-            g1 = xtgeo.Grid("gullfaks2.roff")
+            g1 = xtgeo.grid_from_file("gullfaks2.roff")
 
-            z = xtgeo.GridProperty(gullfaks2_zone.roff", name="Zone")
+            z = xtgeo.gridproperty_from_file(gullfaks2_zone.roff", name="Zone")
 
-            w2 = xtgeo.Well("34_10-1.w", zonelogname="Zonelog")
+            w2 = xtgeo.well_from_file("34_10-1.w", zonelogname="Zonelog")
 
-            w3 = xtgeo.Well("34_10-B-21_B.w", zonelogname="Zonelog"))
+            w3 = xtgeo.well_from_file("34_10-B-21_B.w", zonelogname="Zonelog"))
 
             wells = [w2, w3]
 
@@ -2561,9 +2561,9 @@ class Grid(_Grid3D):
 
         Example::
 
-            mygrid = xtgeo.Grid("somegrid.roff")
-            poro = xtgeo.GridProperty("someporo.roff")
-            mywell = xtgeo.Well("somewell.rmswell")
+            mygrid = xtgeo.grid_from_file("somegrid.roff")
+            poro = xtgeo.gridproperty_from_file("someporo.roff")
+            mywell = xtgeo.well_from_file("somewell.rmswell")
             fence = mywell.get_fence_polyline(sampling=5, tvdmin=1750, asnumpy=True)
             (hmin, hmax, vmin, vmax, arr) = mygrid.get_randomline(
                  fence, poro, zmin=1750, zmax=1850, zincrement=0.5,

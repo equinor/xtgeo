@@ -1171,7 +1171,7 @@ class Well:
         Example::
 
             mywell.rescale()  # optional
-            thesurf = xtgeo.RegularSurface("some.gri")
+            thesurf = xtgeo.surface_from_file("some.gri")
             mywell.create_surf_distance_log(thesurf, name="sdiff")
 
         """

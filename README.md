@@ -1,7 +1,6 @@
 ![XTGeo](https://github.com/equinor/xtgeo/blob/main/docs/images/xtgeo-logo-wide.png)
 ![builds](https://github.com/equinor/xtgeo/workflows/builds/badge.svg)
 ![linting](https://github.com/equinor/xtgeo/workflows/linting/badge.svg)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c209aeed6a2a40b08ea859aeadf31cb0)](https://www.codacy.com/app/jcrivenaes/xtgeo?utm_source=github.com&utm_medium=referral&utm_content=equinor/xtgeo&utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/equinor/xtgeo/branch/main/graph/badge.svg)](https://codecov.io/gh/equinor/xtgeo)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![PyPI version](https://badge.fury.io/py/xtgeo.svg)](https://badge.fury.io/py/xtgeo)
@@ -49,12 +48,12 @@ the documentation.
 ## Getting started
 
 ```python
-from xtgeo.surface import RegularSurface
+import xtgeo
 
 # create an instance of a surface, read from file
-mysurf = RegularSurface("myfile.gri")  # Irap binary as default
+mysurf = xtgeo.surface_from_file("myfile.gri")  # Irap binary as default
 
-print("Mean is {}".format(mysurf.values.mean()))
+print(f"Mean is {mysurf.values.mean()}")
 
 # change date so all values less than 2000 becomes 2000
 # The values attribute gives the Numpy array

@@ -2838,9 +2838,9 @@ class RegularSurface:
 
         Example::
 
-            fence = xtgeo.Polygons("somefile.pol")
+            fence = xtgeo.polygons_from_file("somefile.pol")
             fspec = fence.get_fence(distance=20, nextend=5, asnumpy=True)
-            surf = xtgeo.RegularSurface("somefile.gri")
+            surf = xtgeo.surface_from_file("somefile.gri")
 
             arr = surf.get_randomline(fspec)
 
