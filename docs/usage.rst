@@ -118,12 +118,12 @@ and 30 from back. The applied order of these routines matters...
 
    import xtgeo
 
-   big = xtgeo.cube_from_file('troll.segy')  # alt. for xtgeo.cube.Cube('troll.segy')
+   big = xtgeo.cube_from_file("troll.segy")
    big.do_thinning(2, 2, 1)  # keep every second inline and xline
    big.do_cropping((20, 30), (250, 20), (0, 0))  # crop ilines and xlines
 
    # export a much smaller file to SEGY
-   big.to_file('much_smaller.segy')
+   big.to_file("much_smaller.segy")
 
 
 Reduce or change cube (e.g. SEGY) data by resampling
@@ -141,7 +141,7 @@ Also, another small cube with another rotation is made:
 
    import xtgeo
 
-   big = xtgeo.Cube('troll.segy')
+   big = xtgeo.cube_from_file("troll.segy")
 
    # make a cube of every second iline and xline
    newcube = xtgeo.Cube(xori=big.xori, yori=big.yori, zori=big.zori,

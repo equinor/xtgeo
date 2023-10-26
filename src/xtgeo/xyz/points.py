@@ -287,7 +287,7 @@ def points_from_wells(
 
     Example::
 
-            wells = [xtgeo.Well("w1.w"), xtgeo.Well("w2.w")]
+            wells = [xtgeo.well_from_file("w1.w"), xtgeo.well_from_file("w2.w")]
             points = xtgeo.points_from_wells(wells)
 
     Note:
@@ -338,7 +338,7 @@ def points_from_wells_dfrac(
 
     Example::
 
-            wells = [xtgeo.Well("w1.w"), xtgeo.Well("w2.w")]
+            wells = [xtgeo.well_from_file("w1.w"), xtgeo.well_from_file("w2.w")]
             points = xtgeo.points_from_wells_dfrac(
                     wells, dlogname="Facies", dcodes=[4], zonelogname="ZONELOG"
                 )
@@ -702,7 +702,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
 
         if attributes:
             for target, source in attributes.items():
-                input[target] = dfr[source]
+                input_[target] = dfr[source]
 
         df = pd.DataFrame(input_)
         df.dropna(inplace=True)
@@ -951,14 +951,10 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
 
         Example::
 
-            topx = RegularSurface('topx.gri')
-            topx_aspoints = Points()
-            topx_aspoints.from_surface(topx)
+            topx = xtgeo.surface_from_file("topx.gri")
+            topx_aspoints = xtgeo.points_from_surface(topx)
 
-            # alternative shortform:
-            topx_aspoints = Points(topx)  # get an instance directly
-
-            topx_aspoints.to_file('mypoints.poi')  # export as XYZ file
+            topx_aspoints.to_file("mypoints.poi")  # export as XYZ file
 
         .. deprecated:: 2.16 Use xtgeo.points_from_surface() instead.
         """
