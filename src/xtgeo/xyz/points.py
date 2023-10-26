@@ -695,16 +695,16 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         if attributes and not all(item in dfr.columns for item in attributes.values()):
             raise ValueError("One or more attribute column names are not correct")
 
-        input = OrderedDict()
-        input["X_UTME"] = dfr[east]
-        input["Y_UTMN"] = dfr[north]
-        input["Z_TVDSS"] = dfr[tvdmsl]
+        input_ = OrderedDict()
+        input_["X_UTME"] = dfr[east]
+        input_["Y_UTMN"] = dfr[north]
+        input_["Z_TVDSS"] = dfr[tvdmsl]
 
         if attributes:
             for target, source in attributes.items():
                 input[target] = dfr[source]
 
-        df = pd.DataFrame(input)
+        df = pd.DataFrame(input_)
         df.dropna(inplace=True)
         self._reset(values=df, filesrc="DataFrame input")
 
