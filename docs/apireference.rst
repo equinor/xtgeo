@@ -24,10 +24,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.RegularSurface
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -38,10 +34,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.Surfaces
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -69,10 +61,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.Points
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -92,10 +80,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.Polygons
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -117,10 +101,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.Well
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -131,10 +111,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.Wells
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -152,10 +128,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.BlockedWell
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -171,10 +143,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.BlockedWells
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -196,10 +164,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.Cube
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -220,10 +184,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.Grid
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -241,10 +201,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.GridProperty
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -255,10 +211,6 @@ Classes
 """""""
 
 .. autoclass:: xtgeo.GridProperties
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -273,10 +225,6 @@ RoxUtils
 """"""""
 
 .. autoclass:: xtgeo.RoxUtils
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -287,10 +235,6 @@ MetadataRegularSurface
 """"""""""""""""""""""
 
 .. autoclass:: xtgeo.MetaDataRegularSurface
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -298,10 +242,6 @@ MetaDataRegularCube
 """""""""""""""""""
 
 .. autoclass:: xtgeo.MetaDataRegularCube
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -309,10 +249,6 @@ MetaDataCPGeometry
 """"""""""""""""""
 
 .. autoclass:: xtgeo.MetaDataCPGeometry
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -320,10 +256,6 @@ MetaDataCPProperty
 """"""""""""""""""
 
 .. autoclass:: xtgeo.MetaDataCPProperty
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -331,10 +263,6 @@ MetaDataWell
 """"""""""""
 
 .. autoclass:: xtgeo.MetaDataWell
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -345,10 +273,6 @@ XSection
 """"""""
 
 .. autoclass:: xtgeo.plot.XSection
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -356,10 +280,6 @@ Map
 """
 
 .. autoclass:: xtgeo.plot.Map
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
 
@@ -367,9 +287,5 @@ Grid3DSlice
 """""""""""
 
 .. autoclass:: xtgeo.plot.Grid3DSlice
-    :members:
-    :show-inheritance:
-    :inherited-members:
-    :special-members: __init__
 
     .. autoclasstoc::
