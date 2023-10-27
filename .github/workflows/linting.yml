@@ -25,7 +25,3 @@ jobs:
       - name: Lint with black
         if: ${{ always() }}
         run: black src tests
-
-      - name: Lint with flake8
-        if: ${{ always() }}
-        run: flake8 src tests

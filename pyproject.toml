@@ -71,7 +71,6 @@ Documentation = "https://xtgeo.readthedocs.io"
 dev = [
     "black",
     "coverage>=4.1",
-    "flake8",
     "isort",
     "hypothesis",
     "mypy",

@@ -9,13 +9,28 @@ inputs:
 runs:
   using: "composite"
   steps:
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Build and install xtgeo
+    - uses: actions/cache@v3
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ inputs.python-version }}-${{ hashFiles('pyproject.toml') }}
+
+    - name: Create venv and install dependencies
       shell: bash
+      if: steps.cache-primes.outputs.cache-hit != 'true'
       run: |
+        python -m venv .venv
+        . .venv/bin/activate
         python -m pip install -U pip
         python -m pip install ".[dev]"
+
+    - name: Add venv to gh env.
+      shell: bash
+      run: |
+        . .venv/bin/activate
+        echo PATH=$PATH >> $GITHUB_ENV
