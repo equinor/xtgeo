@@ -85,12 +85,13 @@ dev = [
     "pytest-xdist",
 ]
 docs = [
-    "pydocstyle",
-    "Sphinx",
-    "sphinx-rtd-theme",
-    "sphinx-toolbox",
     "autoclasstoc",
     "myst-parser",
+    "pydocstyle",
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-rtd-theme",
+    "sphinx-toolbox",
 ]
 
 [tool.black]

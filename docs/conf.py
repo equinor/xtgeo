@@ -1,8 +1,9 @@
 # noqa # pylint: skip-file
 from datetime import date
 
-import xtgeo
 from autoclasstoc import PublicMethods
+
+import xtgeo
 
 version = xtgeo.__version__
 release = xtgeo.__version__
@@ -11,20 +12,16 @@ current_year = date.today().year
 copyright = "Equinor 2019 - " + str(current_year) + f" (XTGeo release {release})"
 
 extensions = [
-    "myst_parser",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx_toolbox.more_autodoc.typehints",
-    "sphinx_toolbox.more_autosummary",
     "autoclasstoc",
+    "myst_parser",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.autodoc",
+    "sphinx_toolbox.more_autosummary",
+    "sphinx_autodoc_typehints",
 ]
-
-autosummary_generate = True
-
-autoclass_content = "both"
 
 
 class RemainingPublicMethods(PublicMethods):
@@ -33,13 +30,20 @@ class RemainingPublicMethods(PublicMethods):
         return super().predicate(name, attr, meta) and not name.startswith("__")
 
 
+autoclass_content = "both"
 autoclasstoc_sections = [
     "public-attrs",
     "public-methods",
 ]
-
-autodoc_typehints = "description"
-
+autosummary_generate = True
+autodoc_default_options = {
+    "inherited-members": True,
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+    "special-members": "__init__",
+}
+autodoc_typehints = "none"
 napoleon_include_special_with_doc = False
 
 # The suffix of source filenames.
@@ -47,7 +51,6 @@ source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 # The master toctree document.
 master_doc = "index"
-
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build"]
