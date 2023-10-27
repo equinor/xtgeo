@@ -1,5 +1,8 @@
 """Various grid property operations"""
+# pylint: disable=protected-access
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 
@@ -9,14 +12,24 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _gridprop_lowlevel as gl
 
 xtg = XTGeoDialog()
-
 logger = xtg.functionlogger(__name__)
 
+if TYPE_CHECKING:
+    from xtgeo.grid3d import Grid, GridProperty
+    from xtgeo.xyz import Polygons
 
-# pylint: disable=protected-access
+
+XYCoordinate = Tuple[Union[float, int], Union[float, int]]
+XYCoordList = List[List[List[XYCoordinate]]]
+ValueList = List[List[Union[float, int]]]
+XYValueLists = Tuple[XYCoordList, ValueList]
 
 
-def get_xy_value_lists(self, **kwargs):
+def get_xy_value_lists(
+    self: GridProperty,
+    grid: Optional[Union[Grid, GridProperty]] = None,
+    mask: Optional[bool] = None,
+) -> XYValueLists:
     """Get values for webportal format
 
     Two cells:
@@ -28,11 +41,6 @@ def get_xy_value_lists(self, **kwargs):
     will have a -999 value.
 
     """
-
-    grid = kwargs.get("grid", None)
-
-    mask = kwargs.get("mask", True)
-
     if grid is None:
         raise RuntimeError("Missing grid object")
 
@@ -76,11 +84,17 @@ def get_xy_value_lists(self, **kwargs):
     return coordlist, valuelist
 
 
-def operation_polygons(self, poly, value, opname="add", inside=True):
+def operation_polygons(
+    self: GridProperty,
+    poly: Polygons,
+    value: Union[float, int],
+    opname: Literal["add", "sub", "mul", "div", "set"] = "add",
+    inside: bool = True,
+) -> None:
     """A generic function for doing operations restricted to inside
     or outside polygon(s).
-    """
 
+    """
     grid = self.geometry
     grid._xtgformat1()
 
@@ -116,7 +130,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             1,
         )
         if ier == -9:
-            print(f"## Polygon no {id_ + 1} is not closed")
+            logger.warning(f"Polygon no {id_ + 1} is not closed")
 
     gl.update_values_from_carray(proxy, cvals, np.float64, delete=True)
 
@@ -135,7 +149,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
     elif opname == "div":
         # Dividing a map of zero is always a hazzle; try to obtain 0.0
         # as result in these cases
-        if 0.0 in value:
+        if np.isclose(value, 0.0):
             xtg.warn(
                 "Dividing a surface with value or surface with zero "
                 "elements; may get unexpected results, try to "
