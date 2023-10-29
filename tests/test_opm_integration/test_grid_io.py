@@ -78,7 +78,7 @@ def read_write_egrid(dimensions, egrid):
 
 @pytest.mark.requires_opm
 @pytest.mark.usefixtures("setup_tmpdir")
-@settings(deadline=None, max_examples=5)
+@settings(max_examples=5)
 @given(xtgeo_grids)
 def test_grdecl_roundtrip(xtgeo_grid):
     grdecl_file = "xtg_grid.grdecl"
@@ -96,7 +96,7 @@ def test_grdecl_roundtrip(xtgeo_grid):
 
 @pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.requires_opm
-@settings(deadline=None, max_examples=5)
+@settings(max_examples=5)
 @given(xtgeo_grids)
 def test_egrid_roundtrip(xtgeo_grid):
     egrid_file = "xtg_grid.EGRID"

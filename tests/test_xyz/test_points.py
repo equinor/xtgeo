@@ -63,7 +63,6 @@ def list_of_equal_length_lists(draw):
     return draw(st.lists(fixed_len_list, min_size=1))
 
 
-@settings(deadline=400)
 @given(list_of_equal_length_lists())
 def test_create_pointset(points):
     """Create randomly generated points and verify content."""

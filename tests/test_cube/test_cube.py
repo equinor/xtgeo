@@ -66,7 +66,7 @@ cubes = st.builds(Cube, *([indices] * 3), *([increments] * 3), *([coordinates] *
 
 
 @given(cubes)
-@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_import_guess_segy(tmp_path, cube):
     filepath = tmp_path / "test.segy"
     cube.to_file(filepath)

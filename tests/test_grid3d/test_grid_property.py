@@ -649,7 +649,7 @@ def test_gridprop_init_roxar_dtype():
         )
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
 @given(xtgeo_grids)
 def test_gridprop_export_actnum(fformat, tmp_path, grid):
@@ -667,7 +667,7 @@ def test_gridprop_export_actnum(fformat, tmp_path, grid):
     assert actnum.values.tolist() == actnum2.values.tolist()
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
 @given(xtgeo_grids)
 def test_gridprop_export_actnum_append(fformat, tmp_path, grid):
@@ -692,7 +692,7 @@ def test_gridprop_export_actnum_append(fformat, tmp_path, grid):
     assert actnum2.values.tolist() == actnum3.values.tolist()
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(xtgeo_grids)
 def test_gridprop_export_bgrdecl_double(tmp_path, grid):
     actnum = grid.get_actnum(asmasked=True)
