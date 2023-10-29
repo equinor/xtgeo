@@ -107,7 +107,7 @@ def test_gridunit(inp_str, expected_unit, expected_relative):
             assert gridunit.grid_relative == expected_relative
 
 
-@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(grdecl_grids(), st.sampled_from(["grdecl", "bgrdecl"]))
 def test_grdecl_grid_read_write(tmp_path, grgrid, fileformat):
     assume(grgrid.mapaxes is None or fileformat != "bgrdecl")
@@ -184,7 +184,6 @@ def test_to_from_grdeclgrid(grdecl_grid):
 
 
 @settings(
-    deadline=None,
     print_blob=True,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
@@ -210,7 +209,6 @@ def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
 
 
 @settings(
-    deadline=None,
     print_blob=True,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )

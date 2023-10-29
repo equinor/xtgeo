@@ -1,7 +1,7 @@
 import deprecation
 import numpy as np
 import pytest
-from hypothesis import given, settings
+from hypothesis import given
 from hypothesis import strategies as st
 
 import xtgeo
@@ -97,7 +97,6 @@ def test_simple_io(input_val, expected_result, fformat, engine):
     assert surf_from_file.values.data.tolist() == expected_result
 
 
-@settings(deadline=None)
 @pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.parametrize("input_engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize("output_engine", ["cxtgeo", "python"])

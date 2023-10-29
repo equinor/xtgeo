@@ -4,7 +4,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import given, settings
+from hypothesis import given
 from hypothesis import strategies as st
 
 import xtgeo
@@ -63,7 +63,6 @@ def list_of_equal_length_lists(draw):
     return draw(st.lists(fixed_len_list, min_size=1))
 
 
-@settings(deadline=400)
 @given(list_of_equal_length_lists())
 def test_create_pointset(points):
     """Create randomly generated points and verify content."""

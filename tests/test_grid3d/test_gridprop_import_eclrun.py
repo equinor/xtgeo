@@ -490,7 +490,7 @@ def test_gridprop_unrst_date_correct(ecl_run, use_alterate_date_form, use_first)
     assert int(gridprop.date) == ecl_run.xtgeo_step_date
 
 
-@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(ecl_runs)
 def test_gridprop_unrst_same_formatted(tmp_path, ecl_run):
     funrst = tmp_path / "file.FUNRST"
@@ -517,7 +517,7 @@ def test_gridprop_unrst_same_formatted(tmp_path, ecl_run):
     assert np.array_equal(unrst_gridprop.values, funrst_gridprop.values)
 
 
-@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(ecl_runs)
 def test_gridprop_init_same_formatted(tmp_path, ecl_run):
     finit = tmp_path / "file.FUNRST"

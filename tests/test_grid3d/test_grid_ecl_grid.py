@@ -65,7 +65,7 @@ def test_grdecl_convert_units(grid, unit):
         assert grid.actnum is None
 
 
-@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
     xtgeo_grids, units, units, st.sampled_from(["grdecl", "bgrdecl", "egrid", "fegrid"])
 )

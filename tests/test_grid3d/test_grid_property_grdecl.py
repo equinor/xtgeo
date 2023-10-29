@@ -14,7 +14,7 @@ from .grid_generator import xtgeo_grids as grids
 from .gridprop_generator import grid_properties, keywords
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(grids, st.data())
 def test_gridprop_to_from_file_is_identity(tmp_path, grid, data):
     filepath = tmp_path / "gridprop.grdecl"
@@ -65,7 +65,7 @@ def test_read_grid_property_is_c_contiguous(grid_property):
         ).flags["C_CONTIGUOUS"]
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
 @given(grid_properties())
 def test_read_write_roundtrip(tmp_path, fformat, grid_property):
@@ -80,7 +80,7 @@ def test_read_write_roundtrip(tmp_path, fformat, grid_property):
     assert_allclose(grid_property.values, prop2.values, atol=0.01)
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
 @given(grid_properties(), keywords)
 def test_read_write_bad_name(tmp_path, fformat, grid_property, keyword):

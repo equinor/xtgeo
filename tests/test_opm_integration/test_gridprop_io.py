@@ -180,7 +180,7 @@ opm_setups = st.builds(OpmSetup, xtgeo_grids, st.booleans(), unit_systems)
 
 @pytest.mark.requires_opm
 @pytest.mark.usefixtures("setup_tmpdir")
-@settings(deadline=None, max_examples=5)
+@settings(max_examples=5)
 @given(opm_setups)
 def test_restart_header_reading(case):
     case.run()
@@ -207,7 +207,7 @@ def test_restart_header_reading(case):
 
 @pytest.mark.requires_opm
 @pytest.mark.usefixtures("setup_tmpdir")
-@settings(deadline=None, max_examples=5)
+@settings(max_examples=5)
 @given(opm_setups)
 def test_init_header_reading(case):
     case.run()
@@ -233,7 +233,7 @@ def test_init_header_reading(case):
 
 @pytest.mark.requires_opm
 @pytest.mark.usefixtures("setup_tmpdir")
-@settings(deadline=None, max_examples=5)
+@settings(max_examples=5)
 @given(opm_setups)
 def test_init_props_reading(case):
     case.run()
@@ -247,7 +247,7 @@ def test_init_props_reading(case):
 
 @pytest.mark.requires_opm
 @pytest.mark.usefixtures("setup_tmpdir")
-@settings(deadline=None, max_examples=5)
+@settings(max_examples=5)
 @given(opm_setups)
 def test_restart_prop_reading(case):
     case.run()

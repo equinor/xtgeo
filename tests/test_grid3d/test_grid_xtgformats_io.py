@@ -404,7 +404,6 @@ def ijk_ranges(
 
 
 @settings(
-    deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(ijk_ranges())

@@ -196,7 +196,6 @@ def test_bad_keywords_raises(file_contents, bad_keyword):
 
 
 @settings(
-    deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(egrids())
@@ -207,7 +206,6 @@ def test_egrid_read_write(tmp_path, egrid):
 
 
 @settings(
-    deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(xtgeo_compatible_egrids(head=xtgeo_compatible_egridheads(mpaxes=st.just(None))))
@@ -228,7 +226,6 @@ def test_egrid_from_xtgeo(tmp_path, egrid):
 
 
 @settings(
-    deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(xtgeo_grids)
@@ -425,7 +422,6 @@ def test_lgr_warning(egrid):
 
 
 @settings(
-    deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(xtgeo_compatible_egrids())
