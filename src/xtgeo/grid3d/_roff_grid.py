@@ -1,11 +1,27 @@
+from __future__ import annotations
+
+import pathlib
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
-from typing import Optional
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import roffio
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+
+if TYPE_CHECKING:
+    from xtgeo.grid3d import Grid
 
 
 @dataclass
@@ -106,7 +122,7 @@ class RoffGrid:
     yscale: float = 1.0
     zscale: float = -1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.active is None:
             self.active = np.ones(self.nx * self.ny * self.nz, dtype=np.bool_)
         if self.split_enz is None:
@@ -114,7 +130,7 @@ class RoffGrid:
                 self.nx * self.ny * self.nz, dtype=np.uint8
             ).tobytes()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, RoffGrid):
             return False
         return (
@@ -135,13 +151,13 @@ class RoffGrid:
         )
 
     @property
-    def num_nodes(self):
+    def num_nodes(self) -> int:
         """
         The number of nodes in the grid, ie. the size of split_enz.
         """
         return (self.nx + 1) * (self.ny + 1) * (self.nz + 1)
 
-    def _create_lookup(self):
+    def _create_lookup(self) -> None:
         if not hasattr(self, "_lookup"):
             n = self.num_nodes
             self._lookup = np.zeros(n + 1, dtype=np.int32)
@@ -151,7 +167,7 @@ class RoffGrid:
                 else:
                     self._lookup[i + 1] = 1 + self._lookup[i]
 
-    def z_value(self, node):
+    def z_value(self, node: Tuple[int, int, int]) -> np.ndarray:
         """
         Gives the 8 z values for any given node for
         adjacent cells in the order:
@@ -213,7 +229,7 @@ class RoffGrid:
         else:
             raise ValueError("Only split types 1, 2, 4 and 8 are supported!")
 
-    def xtgeo_coord(self):
+    def xtgeo_coord(self) -> np.ndarray:
         """
         Returns:
             The coordinates of nodes in the format of xtgeo.Grid.coordsv
@@ -226,16 +242,17 @@ class RoffGrid:
         coordsv *= scale
         return coordsv.reshape((self.nx + 1, self.ny + 1, 6)).astype(np.float64)
 
-    def xtgeo_actnum(self):
+    def xtgeo_actnum(self) -> np.ndarray:
         """
         Returns:
             The active field in the format of xtgeo.Grid.actnumsv
         """
+        assert self.active is not None
         actnum = self.active.reshape((self.nx, self.ny, self.nz))
         actnum = np.flip(actnum, -1)
         return actnum.astype(np.int32)
 
-    def xtgeo_zcorn(self):
+    def xtgeo_zcorn(self) -> np.ndarray:
         """
         Returns:
             The z values for nodes in the format of xtgeo.Grid.zcornsv
@@ -243,6 +260,7 @@ class RoffGrid:
         zcornsv = np.zeros(
             (self.nx + 1) * (self.ny + 1) * (self.nz + 1) * 4, dtype=np.float32
         )
+        assert self.split_enz is not None
         retval = _cxtgeo.grd3d_roff2xtgeo_splitenz(
             int(self.nz + 1),
             float(self.zoffset),
@@ -275,7 +293,7 @@ class RoffGrid:
         else:
             raise ValueError(f"Unknown error {retval} occurred")
 
-    def xtgeo_subgrids(self):
+    def xtgeo_subgrids(self) -> Optional[OrderedDict[str, range]]:
         """
         Returns:
             The z values for nodes in the format of xtgeo.Grid.zcornsv
@@ -290,7 +308,9 @@ class RoffGrid:
         return result
 
     @staticmethod
-    def _from_xtgeo_subgrids(xtgeo_subgrids):
+    def _from_xtgeo_subgrids(
+        xtgeo_subgrids: MutableMapping[str, Union[range, Sequence]]
+    ) -> np.ndarray:
         """
         Args:
             A xtgeo.Grid._subgrids dictionary
@@ -300,7 +320,7 @@ class RoffGrid:
         if xtgeo_subgrids is None:
             return None
         subgrids = []
-        for key, value in xtgeo_subgrids.items():
+        for _, value in xtgeo_subgrids.items():
             if isinstance(value, range):
                 subgrids.append(value.stop - value.start)
             elif value != list(range(value[0], value[-1] + 1)):
@@ -312,7 +332,7 @@ class RoffGrid:
         return np.array(subgrids, dtype=np.int32)
 
     @staticmethod
-    def from_xtgeo_grid(xtgeo_grid):
+    def from_xtgeo_grid(xtgeo_grid: Grid) -> RoffGrid:
         """
         Args:
             An xtgeo.Grid
@@ -334,13 +354,17 @@ class RoffGrid:
 
         return RoffGrid(nx, ny, nz, corner_lines, zvals, split_enz, active, subgrids)
 
-    def to_file(self, filelike, roff_format=roffio.Format.BINARY):
+    def to_file(
+        self,
+        filelike: Union[str, pathlib.Path, IO],
+        roff_format: roffio.Format = roffio.Format.BINARY,
+    ) -> None:
         """
         Writes the RoffGrid to a roff file
         Args:
             filelike (str or byte stream): The file to write to.
         """
-        data = {
+        data: Dict[str, Dict] = {
             "filedata": {"filetype": "grid"},
             "dimensions": {"nX": self.nx, "nY": self.ny, "nZ": self.nz},
             "translate": {
@@ -364,7 +388,7 @@ class RoffGrid:
         roffio.write(filelike, data, roff_format=roff_format)
 
     @staticmethod
-    def from_file(filelike):
+    def from_file(filelike: Union[str, pathlib.Path, IO]) -> RoffGrid:
         """
         Read a RoffGrid from a roff file
         Args:
@@ -434,11 +458,12 @@ class RoffGrid:
                 f"File {filelike} did not have filetype set to grid, found {filetype}"
             )
 
-        return RoffGrid(
-            **{
-                translated: found[tag][key]
-                for tag, tag_keys in translate_kws.items()
-                for key, translated in tag_keys.items()
-                if found[tag][key] is not None
-            }
-        )
+        # TODO(JB): This needs more refactoring, tricky to track key-values when
+        # added to a dict like this. One option is to use a TypedDict.
+        kwarg = {
+            translated: found[tag][key]
+            for tag, tag_keys in translate_kws.items()
+            for key, translated in tag_keys.items()
+            if found[tag][key] is not None
+        }
+        return RoffGrid(**kwarg)  # type: ignore
