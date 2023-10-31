@@ -122,6 +122,18 @@ def test_gridproperties_from_roff(grid_property):
     assert props.names == [grid_property.name]
 
 
+def test_gridproperties_from_roff_with_name_starting_with_na():
+    grid_property = xtgeo.GridProperty(name="NA")
+    buff = io.BytesIO()
+    grid_property.to_file(buff, fformat="roff")
+    buff.seek(0)
+    props = xtgeo.gridproperties_from_file(
+        buff, fformat="roff", names=[grid_property.name]
+    )
+
+    assert props.names == [grid_property.name]
+
+
 @given(gridproperties_elements())
 def test_gridproperties_invalid_format(grid_property):
     buff = io.BytesIO()
