@@ -49,7 +49,7 @@ dependencies = [
     "hdf5plugin>=2.3",
     "joblib",
     "matplotlib>=3.3",
-    "numpy>=1.19",
+    "numpy<2",
     "pandas>=1.1",
     "roffio>=0.0.2",
     "scipy>=1.5",
