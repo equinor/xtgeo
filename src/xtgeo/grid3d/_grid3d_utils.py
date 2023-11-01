@@ -1,7 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Some grid utilities, file scanning etc (methods with no class)"""
+
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING, List, Literal, Union
 
 import pandas as pd
 
@@ -10,13 +12,22 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import XTGeoCLibError
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
+if TYPE_CHECKING:
+    from xtgeo.common.sys import _XTGeoFile
+
+    from .grid_properties import GridPropertiesKeywords, KeywordDateTuple, KeywordTuple
+
 xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
 def scan_keywords(
-    pfile, fformat="xecl", maxkeys=MAXKEYWORDS, dataframe=False, dates=False
-):
+    pfile: _XTGeoFile,
+    fformat: Literal["xecl", "roff"] = "xecl",
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
+    dates: bool = False,
+) -> GridPropertiesKeywords:
     """Quick scan of keywords in Eclipse binary restart/init/... file,
     or ROFF binary files.
 
@@ -27,21 +38,20 @@ def scan_keywords(
 
     if fformat == "xecl":
         if dates:
-            data = _scan_ecl_keywords_w_dates(
+            keywords = _scan_ecl_keywords_w_dates(
                 pfile, maxkeys=maxkeys, dataframe=dataframe
             )
         else:
-            data = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
-
+            keywords = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
+    elif fformat == "roff":
+        keywords = _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
     else:
-        data = _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
-
+        raise ValueError(f"File format can be either `roff` or `xecl`, given {fformat}")
     pfile.cfclose()
+    return keywords
 
-    return data
 
-
-def scan_dates(pfile, maxdates=MAXDATES, dataframe=False):
+def scan_dates(pfile: _XTGeoFile, maxdates: int = MAXDATES, dataframe: bool = False):
     """Quick scan dates in a simulation restart file.
 
     Cf. grid_properties.py description
@@ -81,11 +91,12 @@ def scan_dates(pfile, maxdates=MAXDATES, dataframe=False):
     return zdates
 
 
-def _scan_ecl_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
-    logger.info("Scanning ECL keywords...")
+def _scan_ecl_keywords(
+    pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
+) -> Union[List[KeywordTuple], pd.DataFrame]:
     cfhandle = pfile.get_cfhandle()
 
-    # maxkeys*10 is used for 1D kewords; 10 => max 8 letters in eclipse +
+    # maxkeys*10 is used for 1D keywords; 10 => max 8 letters in eclipse +
     # "|" + "extra buffer"
     nkeys, keywords, rectypes, reclens, recstarts = _cxtgeo.grd3d_scan_eclbinary(
         cfhandle, maxkeys * 10, maxkeys, maxkeys, maxkeys
@@ -131,12 +142,11 @@ def _scan_ecl_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
     return result
 
 
-def _scan_ecl_keywords_w_dates(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
+def _scan_ecl_keywords_w_dates(
+    pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
+) -> Union[List[KeywordDateTuple], pd.DataFrame]:
     """Add a date column to the keyword"""
-
-    logger.info("Scan keywords with dates...")
     xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
-
     xdates = scan_dates(pfile, maxdates=MAXDATES, dataframe=False)
 
     result = []
@@ -160,7 +170,9 @@ def _scan_ecl_keywords_w_dates(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
     return result
 
 
-def _scan_roff_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
+def _scan_roff_keywords(
+    pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
+) -> Union[List[KeywordTuple], pd.DataFrame]:
     rectypes = _cxtgeo.new_intarray(maxkeys)
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
