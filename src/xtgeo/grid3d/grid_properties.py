@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Module for Grid Properties."""
+from __future__ import annotations
+
 import hashlib
+import io
+import pathlib
 import warnings
-from typing import List, Optional
+from typing import List, Literal, Optional, Tuple, Union
 
 import deprecation
 import numpy as np
@@ -20,6 +22,12 @@ from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+KeywordTuple = Tuple[str, str, int, int]
+KeywordDateTuple = Tuple[str, str, int, int, Union[str, int]]
+GridPropertiesKeywords = Union[
+    List[Union[KeywordTuple, KeywordDateTuple]], pd.DataFrame
+]
 
 
 def gridproperties_from_file(
@@ -291,7 +299,6 @@ class GridProperties(_Grid3D):
         # compatability until the names setter has been
         # deprecated
         self._names = []
-
         self.props = props or []
 
     def __repr__(self):  # noqa: D105
@@ -724,44 +731,56 @@ class GridProperties(_Grid3D):
 
     @staticmethod
     def scan_keywords(
-        pfile, fformat="xecl", maxkeys=MAXKEYWORDS, dataframe=False, dates=False
-    ):
+        pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+        fformat: Literal["roff", "xecl"] = "xecl",
+        maxkeys: int = MAXKEYWORDS,
+        dataframe: bool = False,
+        dates: bool = False,
+    ) -> GridPropertiesKeywords:
         """Quick scan of keywords in Eclipse binary files, or ROFF binary files.
 
         For Eclipse files:
-        Returns a list of tuples (or dataframe), e.g. ('PRESSURE',
-        'REAL', 355299, 3582700), where (keyword, type, no_of_values,
-        byteposition_in_file)
+            Returns a list of tuples (or dataframe), e.g.
+               ``('PRESSURE', 'REAL', 355299, 3582700)``
+            where
+                ``(keyword, type, no_of_values, byteposition_in_file)``
 
-        For ROFF files
-        Returns a list of tuples (or dataframe), e.g.
-        ('translate!xoffset', 'float', 1, 3582700),
-        where (keyword, type, no_of_values, byteposition_in_file).
+        For ROFF files:
+            Returns a list of tuples (or dataframe), e.g.
+                ``('translate!xoffset', 'float', 1, 3582700)``
+            where
+                ``(keyword, type, no_of_values, byteposition_in_file)``
 
         For Eclipse, the byteposition is to the KEYWORD, while for ROFF
         the byte position is to the beginning of the actual data.
 
-        Args:
-            pfile (str): Name or a filehandle to file with properties
-            fformat (str): xecl (Eclipse INIT, RESTART, ...) or roff for
-                ROFF binary,
-            maxkeys (int): Maximum number of keys
-            dataframe (bool): If True, return a Pandas dataframe instead
-            dates (bool): if True, the date is the last column (only
-                menaingful for restart files). Default is False.
+        Parameters:
+            pfile:
+                Name or a filehandle to file with properties.
+            fformat:
+                xecl (Eclipse INIT, RESTART, ...) or roff for ROFF binary.
+                Default is "xecl".
+            maxkeys:
+                Maximum number of keys. Default is
+                ``xtgeo.commom.constants.MAXKEYWORDS``.
+            dataframe:
+                If True, return a Pandas dataframe instead. Default is False.
+            dates:
+                If True, the date is the last column (only
+                meaningful for restart files). Default is False.
 
-        Return:
+        Returns:
             A list of tuples or dataframe with keyword info
 
         Example::
             >>> dlist = GridProperties.scan_keywords(reek_dir + "/REEK.UNRST")
 
         """
-        pfile = xtgeo._XTGeoFile(pfile)
-        pfile.check_file(raiseerror=ValueError)
+        xtg_file = xtgeo._XTGeoFile(pfile)
+        xtg_file.check_file(raiseerror=ValueError)
 
         return utils.scan_keywords(
-            pfile,
+            xtg_file,
             fformat=fformat,
             maxkeys=maxkeys,
             dataframe=dataframe,
