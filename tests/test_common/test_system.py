@@ -32,7 +32,7 @@ def test_generic_hash():
     ahash = xsys.generic_hash("ABCDEF", hashmethod="blake2b")
     assert ahash[0:12] == "0bb3eb1511cb"
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         ahash = xsys.generic_hash("ABCDEF", hashmethod="invalid")
 
     # pass a hashlib function
@@ -136,13 +136,20 @@ files_formats = {
 def test_xtgeo_file_reinstance(tmp_path):
     gfile = xtgeo._XTGeoFile(tmp_path / "test.txt")
 
-    with pytest.raises(RuntimeError, match="Reinstancing"):
+    with pytest.raises(RuntimeError, match="Cannot instantiate"):
         xtgeo._XTGeoFile(gfile)
 
 
 def test_xtgeo_file_bad_input():
-    with pytest.raises(RuntimeError, match="input"):
+    with pytest.raises(RuntimeError, match="Cannot instantiate"):
         xtgeo._XTGeoFile(1.0)
+
+
+def test_xtgeo_file_resolve_alias_on_stream_doesnt_modify_or_raise():
+    stream = io.BytesIO()
+    xtg_file = xtgeo._XTGeoFile(stream)
+    xtg_file.resolve_alias(xtgeo.create_box_grid((1, 1, 1)))
+    assert stream == xtg_file.file
 
 
 def test_xtgeo_file_bad_alias(tmp_path):
@@ -163,7 +170,7 @@ def test_xtgeo_file_properties(testpath, filename):
     assert isinstance(gfile, xtgeo._XTGeoFile)
     assert isinstance(gfile._file, pathlib.Path)
 
-    assert gfile._memstream is False
+    assert gfile.memstream is False
     assert gfile._mode == "rb"
     assert gfile._delete_after is False
     assert pathlib.Path(gfile.name) == (testpath / filename).absolute().resolve()
