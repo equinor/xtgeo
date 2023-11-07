@@ -319,14 +319,13 @@ class _XYZData:
         occured, hence no consistency checks are done
         """
 
-        # the purpose of this hash check is to avoid psending time on consistency
+        # the purpose of this hash check is to avoid spending time on consistency
         # checks if no changes
         hash_proposed = (
             jhash(self._df),
             jhash(self._attr_types),
             jhash(self._attr_records),
         )
-
         if self._hash == hash_proposed:
             return False
 
