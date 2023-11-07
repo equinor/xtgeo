@@ -11,7 +11,7 @@ argument-rgx=^[a-z_][_a-z0-9]+((_[a-z0-9]+)*)?$
 dummy-variables-rgx=^_+[a-z0-9]*?$|dummy
 
 [TYPECHECK]
-generated-members=np.*, numpy.*, pd.*, pandas.*, cxtgeo.*, matplotlib.*
+generated-members=np.*, numpy.*, pd.*, pandas.*, cxtgeo.*, matplotlib.*, xtgeo.*
 
 [FORMAT]
 max-line-length=88
