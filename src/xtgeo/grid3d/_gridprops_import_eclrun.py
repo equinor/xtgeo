@@ -1,7 +1,5 @@
 from copy import deepcopy
-from typing import List, Tuple, Union
-
-from typing_extensions import Literal
+from typing import List, Literal, Tuple, Union
 
 import xtgeo
 from xtgeo.common.constants import MAXKEYWORDS
