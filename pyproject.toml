@@ -22,7 +22,7 @@ description = "XTGeo is a Python library for 3D grids, surfaces, wells, etc"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "LGPL-3.0" }
-authors = [{ name = "Equinor", email = "jriv@equinor.com" }]
+authors = [{ name = "Equinor", email = "fg_fmu-atlas@equinor.com" }]
 keywords = ["grids", "surfaces", "wells", "cubes"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -30,6 +30,8 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.8",
