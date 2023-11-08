@@ -1,7 +1,6 @@
-from typing import List, Union
+from typing import List, Literal, Union
 
 import resfo
-from typing_extensions import Literal
 
 from ._find_gridprop_in_eclrun import (
     find_gridprop_from_init_file,
