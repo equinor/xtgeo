@@ -179,9 +179,6 @@ x_point_line_pos(double x1,
                  double *rel,
                  int option1);
 
-FILE *
-x_fopen(const char *filename, const char *mode);
-
 /*
  *-----------------------------------------------------------------------------
  * Byte swapping test
