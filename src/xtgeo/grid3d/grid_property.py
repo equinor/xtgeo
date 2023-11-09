@@ -7,21 +7,10 @@ import io
 import pathlib
 import warnings
 from types import FunctionType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union
 
 import deprecation
 import numpy as np
-import numpy.typing as npt
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -49,6 +38,8 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from xtgeo.xyz.polygons import Polygons
 
     from ._gridprop_op1 import XYValueLists
@@ -99,7 +90,7 @@ def _data_reader_factory(fformat: str) -> Callable:
 def gridproperty_from_file(
     pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
     fformat: Optional[str] = None,
-    **kwargs: Dict[str, Any],
+    **kwargs: dict[str, Any],
 ) -> GridProperty:
     """
     Make a GridProperty instance directly from a file import.
@@ -303,7 +294,7 @@ class GridProperty(_Grid3D):
         grid: Optional[Grid] = None,
         linkgeometry: bool = True,
         fracture: bool = False,
-        codes: Optional[Dict[int, str]] = None,
+        codes: Optional[dict[int, str]] = None,
         dualporo: bool = False,
         dualperm: bool = False,
         roxar_dtype: Optional[npt.DTypeLike] = None,
@@ -420,7 +411,7 @@ class GridProperty(_Grid3D):
         grid: Optional[Any] = None,
         linkgeometry: bool = True,
         fracture: bool = False,
-        codes: Optional[Dict[int, str]] = None,
+        codes: Optional[dict[int, str]] = None,
         dualporo: bool = False,
         dualperm: bool = False,
         roxar_dtype: Optional[npt.DTypeLike] = None,
@@ -550,7 +541,7 @@ class GridProperty(_Grid3D):
     def _set_initial_dimensions(
         self,
         gridlike: Optional[Union[Grid, GridProperty]],
-        input_dimensions: Tuple[Optional[int], Optional[int], Optional[int]],
+        input_dimensions: tuple[Optional[int], Optional[int], Optional[int]],
     ) -> None:
         """
         Sets the initial dimensions either from input, grid or default.
@@ -653,7 +644,7 @@ class GridProperty(_Grid3D):
         self._name = name
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> tuple[int, int, int]:
         """Get the grid dimensions as a tuple of 3 integers."""
         return (self.ncol, self.nrow, self.nlay)
 
@@ -731,7 +722,7 @@ class GridProperty(_Grid3D):
 
     @dtype.setter
     def dtype(self, dtype: npt.DTypeLike) -> None:
-        allowed: List[npt.DTypeLike] = [np.float16, np.float32, np.float64]
+        allowed: list[npt.DTypeLike] = [np.float16, np.float32, np.float64]
         if self.isdiscrete:
             allowed = [np.uint8, np.uint16, np.int16, np.int32, np.int64]
         if dtype not in allowed:
@@ -775,12 +766,12 @@ class GridProperty(_Grid3D):
         self._date = date
 
     @property
-    def codes(self) -> Dict[int, str]:
+    def codes(self) -> dict[int, str]:
         """Get or set the property codes as a dictionary."""
         return self._codes
 
     @codes.setter
-    def codes(self, codes: Dict[int, str]) -> None:
+    def codes(self, codes: dict[int, str]) -> None:
         if not isinstance(codes, dict):
             raise ValueError(
                 "The codes must be a python dictionary, current input "
@@ -1480,7 +1471,7 @@ class GridProperty(_Grid3D):
             self._values = np.ma.masked_greater(self._values, UNDEF_LIMIT)
 
     def crop(
-        self, spec: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+        self, spec: tuple[tuple[int, int], tuple[int, int], tuple[int, int]]
     ) -> None:
         """
         Crop a property between grid coordinates.
