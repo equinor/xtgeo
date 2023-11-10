@@ -246,38 +246,35 @@ def _slice_constant_window(
 
     logger.info("ZINCR is %s", zincr)
 
-    # collect above the original surface
-    progress = XTGShowProgress(
-        ndiv * 2, show=showprogress, leadtext="progress: ", skip=1
-    )
-    for idv in range(ndiv):
-        progress.flush(idv)
-        ztmp = this.copy()
-        ztmp.values -= zincr * (idv + 1)
-        ztmp.slice_cube(
-            cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
-        )
-        npcollect.append(ztmp.values)
-    # collect below the original surface
-    for idv in range(ndiv):
-        progress.flush(ndiv + idv)
-        ztmp = this.copy()
-        ztmp.values += zincr * (idv + 1)
-        ztmp.slice_cube(
-            cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
-        )
-        npcollect.append(ztmp.values)
+    with XTGShowProgress(total=ndiv*2, disable=not showprogress, ascii=True) as pbar:
+        # collect above the original surface
+        for idv in range(ndiv):
+            ztmp = this.copy()
+            ztmp.values -= zincr * (idv + 1)
+            ztmp.slice_cube(
+                cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
+            )
+            npcollect.append(ztmp.values)
+            pbar.update()
 
-    logger.info("Make a stack of the maps...")
-    stacked = ma.dstack(npcollect)
-    del npcollect
+        # collect below the original surface
+        for idv in range(ndiv):
+            ztmp = this.copy()
+            ztmp.values += zincr * (idv + 1)
+            ztmp.slice_cube(
+                cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
+            )
+            npcollect.append(ztmp.values)
+            pbar.update()
 
-    attvalues = dict()
-    for attr in attrlist:
-        logger.info("Running attribute %s", attr)
-        attvalues[attr] = _attvalues(attr, stacked)
+        logger.info("Make a stack of the maps...")
+        stacked = ma.dstack(npcollect)
 
-    progress.finished()
+        attvalues = dict()
+        for attr in attrlist:
+            logger.info("Running attribute %s", attr)
+            attvalues[attr] = _attvalues(attr, stacked)
+
     return attvalues  # this is dict with numpies, one per attribute
 
 
@@ -314,9 +311,7 @@ def _slice_between_surfaces(
         mul = 1
 
     # collect above the original surface
-    progress = XTGShowProgress(ndiv, show=showprogress, leadtext="progress: ")
-    for idv in range(ndiv):
-        progress.flush(idv)
+    for idv in XTGShowProgress(range(ndiv), disable=not showprogress, ascii=True):
         ztmp = this.copy()
         ztmp.values += zincr * (idv + 1) * mul
         zvalues = ztmp.values.copy()
@@ -343,8 +338,6 @@ def _slice_between_surfaces(
     for attr in attrlist:
         attvaluestmp = _attvalues(attr, stacked)
         attvalues[attr] = ma.masked_where(isovalues < mthreshold, attvaluestmp)
-
-    progress.finished()
 
     return attvalues  # this is dict with numpies, one per attribute
 

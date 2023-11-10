@@ -34,12 +34,7 @@ def wellintersections(
     # make a dict if nocrossings
     nox = {}
 
-    wlen = len(self.wells)
-
-    progress = XTGShowProgress(wlen, show=showprogress, leadtext="progress: ", skip=5)
-
-    for iwell, well in enumerate(self.wells):
-        progress.flush(iwell)
+    for well in XTGShowProgress(self.wells, disable=not showprogress, ascii=True):
 
         logger.debug("Work with %s", well.name)
         try:
@@ -149,8 +144,6 @@ def wellintersections(
             self._wells[0].zname,
         ],
     )
-
-    progress.finished()
 
     logger.debug("All intersections found!")
     return dfr

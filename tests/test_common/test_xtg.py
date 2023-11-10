@@ -79,11 +79,6 @@ def test_timer(capsys):
     # xtg.warn('Used time was {}'.format(xtg.timer(time1)))
 
 
-def test_print_xtgeo_header():
-    """Test writing an app header."""
-    xtg.print_xtgeo_header("MYAPP", "0.99", info="Beta release (be careful)")
-
-
 def test_user_msg():
     """Testing user messages"""
 
