@@ -183,7 +183,7 @@ def gridproperty_from_roxar(
 
     """
     return GridProperty._read_roxar(
-        pname,
+        project,
         gname,
         pname,
         realisation=realisation,
