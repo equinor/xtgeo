@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, List, Literal, Union
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 
@@ -93,7 +93,7 @@ def scan_dates(pfile: _XTGeoFile, maxdates: int = MAXDATES, dataframe: bool = Fa
 
 def _scan_ecl_keywords(
     pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
-) -> Union[List[KeywordTuple], pd.DataFrame]:
+) -> list[KeywordTuple] | pd.DataFrame:
     cfhandle = pfile.get_cfhandle()
 
     # maxkeys*10 is used for 1D keywords; 10 => max 8 letters in eclipse +
@@ -144,7 +144,7 @@ def _scan_ecl_keywords(
 
 def _scan_ecl_keywords_w_dates(
     pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
-) -> Union[List[KeywordDateTuple], pd.DataFrame]:
+) -> list[KeywordDateTuple] | pd.DataFrame:
     """Add a date column to the keyword"""
     xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
     xdates = scan_dates(pfile, maxdates=MAXDATES, dataframe=False)
@@ -172,7 +172,7 @@ def _scan_ecl_keywords_w_dates(
 
 def _scan_roff_keywords(
     pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
-) -> Union[List[KeywordTuple], pd.DataFrame]:
+) -> list[KeywordTuple] | pd.DataFrame:
     rectypes = _cxtgeo.new_intarray(maxkeys)
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
