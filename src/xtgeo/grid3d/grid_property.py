@@ -148,7 +148,7 @@ def gridproperty_from_file(
 
 
 def gridproperty_from_roxar(
-    project: str,
+    project: Any,  # project can be a path but also a magic variable in RMS
     gname: str,
     pname: str,
     realisation: int = 0,
@@ -159,7 +159,7 @@ def gridproperty_from_roxar(
 
     Parameters:
         project:
-            The Roxar project name
+            The Roxar project path or magical pre-defined variable in RMS
         gname:
             Name of the grid model
         pname:
