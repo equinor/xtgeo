@@ -18,16 +18,16 @@ if TYPE_CHECKING:
     from xtgeo.grid3d import Grid, GridProperty
     from xtgeo.xyz import Polygons
 
-
-XYCoordinate = Tuple[Union[float, int], Union[float, int]]
-XYCoordList = List[List[List[XYCoordinate]]]
-ValueList = List[List[Union[float, int]]]
-XYValueLists = Tuple[XYCoordList, ValueList]
+_CoordOrValue = Union[float, int]
+_XYCoordinate = Tuple[_CoordOrValue, _CoordOrValue]
+_XYCoordList = List[List[List[_XYCoordinate]]]
+_ValueList = List[List[_CoordOrValue]]
+XYValueLists = Tuple[_XYCoordList, _ValueList]
 
 
 def get_xy_value_lists(
     self: GridProperty,
-    grid: Optional[Union[Grid, GridProperty]] = None,
+    grid: Optional[Grid | GridProperty] = None,
     mask: Optional[bool] = None,
 ) -> XYValueLists:
     """Get values for webportal format
@@ -87,7 +87,7 @@ def get_xy_value_lists(
 def operation_polygons(
     self: GridProperty,
     poly: Polygons,
-    value: Union[float, int],
+    value: float | int,
     opname: Literal["add", "sub", "mul", "div", "set"] = "add",
     inside: bool = True,
 ) -> None:
