@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import numbers
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -17,23 +17,19 @@ if TYPE_CHECKING:
 
 
 def gridproperty_non_dummy_values(
-    gridlike: Optional[Union[Grid, GridProperty]],
-    dimensions: Tuple[int, int, int],
-    values: Optional[Union[np.ndarray, float, int]],
+    gridlike: Optional[Grid | GridProperty],
+    dimensions: tuple[int, int, int],
+    values: Optional[np.ndarray | float | int],
     isdiscrete: bool,
 ) -> np.ma.MaskedArray:
     """
     Gives the initial values array of an gridprop.
 
-    Parameters:
-        gridlike:
-            Either Grid or GridProperty, giving the mask to replicate.
-        dimensions:
-            The (ncol, nrow, nlay) dimensions of the grid property.
-        values:
-            The values parameter given to init.
-        isdiscrete:
-            The discrete parameter given to init.
+    Args:
+        gridlike: Either Grid or GridProperty, giving the mask to replicate.
+        dimensions: The (ncol, nrow, nlay) dimensions of the grid property.
+        values: The values parameter given to init.
+        isdiscrete: The discrete parameter given to init.
 
     Returns:
         The array to be set to GridProperty._values.
@@ -62,9 +58,8 @@ def gridproperty_dummy_values(isdiscrete: bool) -> np.ma.MaskedArray:
     Given no parameters to init, these dummy values should be set for backwards
     compatability.
 
-    Parameters:
-        isdiscrete:
-            If the grid property values are discrete.
+    Args:
+        isdiscrete: If the grid property values are discrete.
 
     Returns:
         The array to be set to GridProperty._values.
@@ -78,7 +73,7 @@ def gridproperty_dummy_values(isdiscrete: bool) -> np.ma.MaskedArray:
 
 
 def initial_gridprop_values_zero(
-    dimensions: Tuple[int, int, int], isdiscrete: bool
+    dimensions: tuple[int, int, int], isdiscrete: bool
 ) -> np.ma.MaskedArray:
     """
     Initial values for an GridProperty with zeros.
@@ -86,9 +81,8 @@ def initial_gridprop_values_zero(
     Given that the user supplies at least some parameters, but not a values array,
     values should be initialized to zero.
 
-    Parameters:
-        dimensions:
-            The (ncol, nrow, nlay) dimensions of the grid property.
+    Args:
+        dimensions: The (ncol, nrow, nlay) dimensions of the grid property.
 
     Returns:
         Zero initialized values array.
@@ -98,7 +92,7 @@ def initial_gridprop_values_zero(
 
 
 def initial_gridprop_values_from_scalar(
-    dimensions: Tuple[int, int, int], value: Union[float, int], isdiscrete: bool
+    dimensions: tuple[int, int, int], value: float | int, isdiscrete: bool
 ) -> np.ma.MaskedArray:
     """
     Initial grid property values from scalar.
@@ -107,13 +101,10 @@ def initial_gridprop_values_from_scalar(
     filled with that value, with possible conversion depending
     on the isdiscrete parameter.
 
-    Parameters:
-        dimensions:
-            The (ncol, nrow, nlay) dimensions of the grid property.
-        value:
-            The scalar value to initialize with.
-        isdiscrete:
-            If the values are discrete.
+    Args:
+        dimensions: The (ncol, nrow, nlay) dimensions of the grid property.
+        value: The scalar value to initialize with.
+        isdiscrete: If the values are discrete.
 
     Returns:
         Filled array with given scalar value.
@@ -125,18 +116,15 @@ def initial_gridprop_values_from_scalar(
 
 
 def initial_gridprop_values_from_array(
-    dimensions: Tuple[int, int, int], values: np.ndarray, isdiscrete: bool
+    dimensions: tuple[int, int, int], values: np.ndarray, isdiscrete: bool
 ) -> np.ma.MaskedArray:
     """
     Initial GridProperty values from numpy array.
 
-    Parameters:
-        dimensions:
-            The (ncol, nrow, nlay) dimensions of the grid property.
-        value:
-            The numpy array to initialize with.
-        isdiscrete:
-            If the values are discrete.
+    Args:
+        dimensions: The (ncol, nrow, nlay) dimensions of the grid property.
+        value: The numpy array to initialize with.
+        isdiscrete: If the values are discrete.
 
     Returns:
         GridProperty with values initialized from a numpy array.
