@@ -34,18 +34,18 @@ In addition there are other classes:
 """
 from __future__ import annotations
 
+import contextlib
+import datetime
 import logging
 import os
 import pathlib
-import warnings
-from typing import Final, Literal
-
 import platform
+import warnings
+from typing import Callable, Final, Iterator, Literal
 
 import tqdm
 
 import xtgeo
-
 
 logging.basicConfig(
     level=os.environ.get(
@@ -57,6 +57,30 @@ logging.basicConfig(
         "%(asctime)s - %(filename)s:%(lineno)d - %(levelname)s - %(message)s",
     ),
 )
+
+
+@contextlib.contextmanager
+def timer() -> Iterator[Callable[[], datetime.timedelta]]:
+    """
+    A contextmanger tha tracks elapsed time inside it, after exit it gives
+    the total time for the context.
+
+    Ex.
+    with timer() as elapsed:
+        print(elapsed()) -> 0
+        time.seep(1)
+        print(elapsed()) -> 1
+    print(elapsed()) -> 1
+    time.seep(1)
+    print(elapsed()) -> 1
+    """
+
+    enter = datetime.datetime.now()
+    done: datetime.datetime | None = None
+    try:
+        yield lambda: (done or datetime.datetime.now()) - enter
+    finally:
+        done = datetime.datetime.now()
 
 
 class XTGShowProgress(tqdm.tqdm):
@@ -122,6 +146,7 @@ class XTGeoDialog(logging.Logger):  # pylint: disable=too-many-public-methods
 
     def __init__(self) -> None:
         """Initializing XTGeoDialog."""
+        super().__init__("xtgeo")
         self._test_env = True
         self._testpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
 
@@ -177,6 +202,14 @@ class XTGeoDialog(logging.Logger):  # pylint: disable=too-many-public-methods
     def insane(self, *args, **kw) -> None:  # type: ignore
         self.critical(*args, **kw)
 
+    def functionlogger(self, *_, **__) -> XTGeoDialog:
+        global logger
+        return logger
+
+    def basiclogger(self, *_, **__) -> XTGeoDialog:
+        global logger
+        return logger
+
     @staticmethod
     def warndeprecated(string: str) -> None:
         """Show Deprecation warnings using Python warnings"""
@@ -190,7 +223,6 @@ class XTGeoDialog(logging.Logger):  # pylint: disable=too-many-public-methods
 
         warnings.simplefilter("default", UserWarning)
         warnings.warn(string, UserWarning, stacklevel=2)
-
 
 
 logger: Final = XTGeoDialog()

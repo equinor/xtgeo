@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, timer
 
 # pylint: disable=invalid-name
 
@@ -64,19 +64,17 @@ def test_more_logging_tests(caplog):
     os.environ["XTG_LOGGING_LEVEL"] = "CRITICAL"
 
 
-def test_timer(capsys):
+def test_timer():
     """Test the timer function"""
+    with timer() as elapsed:
+        assert pytest.approx(0, abs=0.001) == elapsed().total_seconds()
+        time.sleep(0.001)
+        assert pytest.approx(0.001, abs=0.001) == elapsed().total_seconds()
 
-    time1 = xtg.timer()
-    for inum in range(100000):
-        inum += 1
-
-    xtg.say(f"Used time was {xtg.timer(time1)}")
-    # captured = capsys.readouterr()
-    # assert 'Used time was' in captured[0]
-    # # repeat to see on screen
-    # xtg.say('')
-    # xtg.warn('Used time was {}'.format(xtg.timer(time1)))
+    # After ctx. exit time stops.
+    assert pytest.approx(0.001, abs=0.001) == elapsed().total_seconds()
+    time.sleep(0.001)
+    assert pytest.approx(0.001, abs=0.001) == elapsed().total_seconds()
 
 
 def test_user_msg():
