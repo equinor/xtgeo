@@ -1807,20 +1807,6 @@ grdcp3d_export_xtgeo_grid(long ncol,
                           FILE *fc);
 
 int
-grdcp3d_import_xtgeo_grid(int mode,
-                          long *swig_lon_out_p1,
-                          long *swig_lon_out_p2,
-                          long *swig_lon_out_p3,
-                          double *swig_np_dbl_inplaceflat_v1,  // coordsv
-                          long n_swig_np_dbl_inplaceflat_v1,   // ncoord
-                          float *swig_np_flt_inplaceflat_v1,   // zcornsv (float)
-                          long n_swig_np_flt_inplaceflat_v1,   // nzcorn
-                          int *swig_np_int_inplaceflat_v2,     // actnumsv
-                          long n_swig_np_int_inplaceflat_v2,   // nact
-                          char *swig_bnd_char_100k,            // metadata
-                          FILE *fc);
-
-int
 grd3cp3d_xtgformat1to2_geom(long ncol,
                             long nrow,
                             long nlay,
