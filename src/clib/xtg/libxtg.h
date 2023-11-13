@@ -181,15 +181,6 @@ double
 x_avg_angles(double *swig_np_dbl_in_v1,  // *angles
              long n_swig_np_dbl_in_v1);  // nsize,
 
-void
-x_conv_int2float(int n, int *v1, float *v2);
-
-void
-x_conv_int2double(int n, int *v1, double *v2);
-
-void
-x_conv_double2float(int n, double *v1, float *v2);
-
 double
 x_rotation_conv(double ain, int aimode, int mode, int option);
 
