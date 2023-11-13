@@ -63,12 +63,6 @@ xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 #endif
 
 int
-xtg_fseek_start(FILE *fhandle)
-{
-    return fseek(fhandle, 0, SEEK_SET);
-}
-
-int
 xtg_fflush(FILE *fhandle)
 {
     return fflush(fhandle);
