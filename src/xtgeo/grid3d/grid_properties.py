@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 import hashlib
-import io
-import pathlib
 import warnings
-from typing import List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
 
 import deprecation
 import numpy as np
@@ -22,6 +20,9 @@ from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
+
+if TYPE_CHECKING:
+    from xtgeo.common.types import FileLike
 
 KeywordTuple = Tuple[str, str, int, int]
 KeywordDateTuple = Tuple[str, str, int, int, Union[str, int]]
@@ -731,7 +732,7 @@ class GridProperties(_Grid3D):
 
     @staticmethod
     def scan_keywords(
-        pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+        pfile: FileLike,
         fformat: Literal["roff", "xecl"] = "xecl",
         maxkeys: int = MAXKEYWORDS,
         dataframe: bool = False,
@@ -754,19 +755,14 @@ class GridProperties(_Grid3D):
         For Eclipse, the byteposition is to the KEYWORD, while for ROFF
         the byte position is to the beginning of the actual data.
 
-        Parameters:
-            pfile:
-                Name or a filehandle to file with properties.
-            fformat:
-                xecl (Eclipse INIT, RESTART, ...) or roff for ROFF binary.
+        Args:
+            pfile: Name or a filehandle to file with properties.
+            fformat: xecl (Eclipse INIT, RESTART, ...) or roff for ROFF binary.
                 Default is "xecl".
-            maxkeys:
-                Maximum number of keys. Default is
+            maxkeys: Maximum number of keys. Default is
                 ``xtgeo.commom.constants.MAXKEYWORDS``.
-            dataframe:
-                If True, return a Pandas dataframe instead. Default is False.
-            dates:
-                If True, the date is the last column (only
+            dataframe: If True, return a Pandas dataframe instead. Default is False.
+            dates: If True, the date is the last column (only
                 meaningful for restart files). Default is False.
 
         Returns:
