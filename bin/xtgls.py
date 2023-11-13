@@ -1,7 +1,7 @@
 """xtgls: a small script for listing xtg formatted files."""
-import pathlib
-import json
 import argparse
+import json
+import pathlib
 
 # import yaml
 from collections import OrderedDict
