@@ -4,7 +4,9 @@ Print a CSV from all INIT vectors
 
 import pathlib
 import tempfile
+
 import numpy as np
+
 import xtgeo
 
 EXPATH = pathlib.Path("../../xtgeo-testdata/3dgrids/reek")
@@ -32,5 +34,4 @@ def all_init_as_csv():
 
 
 if __name__ == "__main__":
-
     all_init_as_csv()

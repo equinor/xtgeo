@@ -2,8 +2,8 @@
 Crop a 3D grid.
 """
 
-import tempfile
 import pathlib
+import tempfile
 
 import xtgeo
 
@@ -43,7 +43,6 @@ def cropper():
     for ncr in ncolranges:
         nc1, nc2 = ncr
         for nrr in nrowranges:
-
             nr1, nr2 = nrr
 
             fname = "_{}-{}_{}-{}".format(nc1, nc2, nr1, nr2)

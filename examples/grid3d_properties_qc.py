@@ -2,6 +2,7 @@
 """Compute statistics within one realisation, using ROFF or RMS internal."""
 
 from os.path import join as ojn
+
 import xtgeo
 
 EXPATH1 = "../../xtgeo-testdata/3dgrids/reek2"
@@ -91,6 +92,5 @@ def show_stats_inside_rms():
 
 
 if __name__ == "__main__":
-
     show_stats()
     # show_stats_inside_rms()

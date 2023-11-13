@@ -36,7 +36,6 @@ def slice_a_grid():
     slices = [1700, 1720, 1740]
 
     for myslice in slices:
-
         print("Slice is {}".format(myslice))
 
         for prp in grd.props:
