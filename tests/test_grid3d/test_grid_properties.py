@@ -122,18 +122,6 @@ def test_gridproperties_from_roff(grid_property):
     assert props.names == [grid_property.name]
 
 
-def test_gridproperties_from_roff_with_name_starting_with_na():
-    grid_property = xtgeo.GridProperty(name="NA")
-    buff = io.BytesIO()
-    grid_property.to_file(buff, fformat="roff")
-    buff.seek(0)
-    props = xtgeo.gridproperties_from_file(
-        buff, fformat="roff", names=[grid_property.name]
-    )
-
-    assert props.names == [grid_property.name]
-
-
 @given(gridproperties_elements())
 def test_gridproperties_invalid_format(grid_property):
     buff = io.BytesIO()
@@ -192,12 +180,25 @@ def test_scan_keywords_invalid_file():
         GridProperties.scan_keywords(TPATH / "notafile.UNRST")
 
 
+def test_scan_keywords_roff_as_tuple_list():
+    """A static method to scan quickly keywords in a ROFF file"""
+    t1 = xtg.timer()
+    keywords = GridProperties.scan_keywords(XFILE2, fformat="roff")
+    t2 = xtg.timer(t1)
+    logger.info("Keywords scanned in %s seconds", t2)
+    assert keywords[0] == ("filedata!byteswaptest", "int", 1, 111)
+    assert keywords[-1] == ("parameter!data", "int", 35840, 806994)
+    logger.info(keywords)
+
+
 def test_scan_keywords_roff():
     """A static method to scan quickly keywords in a ROFF file"""
     t1 = xtg.timer()
     df = GridProperties.scan_keywords(XFILE2, dataframe=True, fformat="roff")
     t2 = xtg.timer(t1)
-    logger.info("Dates scanned in %s seconds", t2)
+    logger.info("Keywords scanned in %s seconds", t2)
+    assert tuple(df.iloc[0]) == ("filedata!byteswaptest", "int", 1, 111)
+    assert tuple(df.iloc[-1]) == ("parameter!data", "int", 35840, 806994)
     logger.info(df)
 
 

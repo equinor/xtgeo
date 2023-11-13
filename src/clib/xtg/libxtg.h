@@ -1175,16 +1175,6 @@ grdcp3d_calc_xyz(long ncol,
                  double *swig_np_dbl_aout_v3,  // zarr
                  long n_swig_np_dbl_aout_v3);
 
-long
-grd3d_scan_roffbinary(FILE *fc,
-                      int *swig_int_out_p1,       // *swap,
-                      char *swig_out_char_msize,  // tagletters
-                      int nswig_out_char_msize,
-                      int *rectypes,
-                      long *reclengths,
-                      long *recstarts,
-                      long maxkw);
-
 void
 grd3d_conv_roxapi_grid(int nx,
                        int ny,
