@@ -1790,19 +1790,6 @@ grdcp3d_from_cube(int ncol,
                   int yflip,
                   int option);
 
-void
-grdcp3d_export_xtgeo_grid(long ncol,
-                          long nrow,
-                          long nlay,
-                          double *swig_np_dbl_inplaceflat_v1,  // coordsv
-                          long n_swig_np_dbl_inplaceflat_v1,   // ncoord
-                          float *swig_np_flt_inplaceflat_v1,   // zcornsv (float)
-                          long n_swig_np_flt_inplaceflat_v1,   // nzcorn
-                          int *swig_np_int_inplaceflat_v2,     // actnumsv
-                          long n_swig_np_int_inplaceflat_v2,   // nact
-                          char *metadata,
-                          FILE *fc);
-
 int
 grd3cp3d_xtgformat1to2_geom(long ncol,
                             long nrow,
