@@ -1,5 +1,8 @@
 """Some common XTGEO calculation routines."""
-from typing import List, Tuple
+
+from __future__ import annotations
+
+from typing import Any, Literal, Optional, Sequence
 
 import numpy as np
 
@@ -12,7 +15,14 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def ib_to_ijk(ib, nx, ny, nz, ibbase=0, forder=True):
+def ib_to_ijk(
+    ib: int,
+    nx: int,
+    ny: int,
+    nz: int,
+    ibbase: int = 0,
+    forder: bool = True,
+) -> tuple[int, int, int]:
     """Convert a 1D index (starting from ibbase) to cell indices I J K.
 
     The default is F-order, but ``forder=False`` gives C order
@@ -30,9 +40,18 @@ def ib_to_ijk(ib, nx, ny, nz, ibbase=0, forder=True):
     return (iv, jv, kv)
 
 
-def ijk_to_ib(i, j, k, nx, ny, nz, ibbase=0, forder=True):
+def ijk_to_ib(
+    i: int,
+    j: int,
+    k: int,
+    nx: int,
+    ny: int,
+    nz: int,
+    ibbase: int = 0,
+    forder: bool = True,
+) -> int:
     """
-    Convert a cell indices I J K to 1D index (starting from ibbase).
+    Convert cell indices I J K to 1D index (starting from ibbase).
 
     Both Fortran order and C order (Fortran order is default).
     """
@@ -63,7 +82,7 @@ def xyori_from_ij(
     nrow: int,
     yflip: int,
     rotation: float,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Get xori and yori given X Y, geometrics and indices for regular maps/cubes.
 
     Args:
@@ -106,7 +125,13 @@ def xyori_from_ij(
     return xori, yori
 
 
-def vectorinfo2(x1, x2, y1, y2, option=1):
+def vectorinfo2(
+    x1: float,
+    x2: float,
+    y1: float,
+    y2: float,
+    option: int = 1,
+) -> tuple[float, float, float]:
     """
     Get length and angles from 2 points in space (2D plane).
 
@@ -119,9 +144,9 @@ def vectorinfo2(x1, x2, y1, y2, option=1):
     return llen, rad, deg
 
 
-def diffangle(angle1, angle2, option=1):
+def diffangle(angle1: float, angle2: float, option: int = 1) -> float:
     """
-    Find the minimim difference between two angles, option=1 means degress,
+    Find the minimim difference between two angles, option=1 means degrees,
     otherwise radians. The routine think clockwise for differences.
 
     Examples::
@@ -133,14 +158,14 @@ def diffangle(angle1, angle2, option=1):
     return _cxtgeo.x_diff_angle(angle1, angle2, option)
 
 
-def averageangle(anglelist):
+def averageangle(anglelist: Sequence[float]) -> float:
     """
-    Find the average of a list of angles, in degress
+    Find the average of a list of angles, in degrees
     """
     return _cxtgeo.x_avg_angles(anglelist)
 
 
-def find_flip(xv, yv):
+def find_flip(xv: tuple[float], yv: tuple[float]) -> Literal[-1, 1]:
     """Find the XY flip status by computing the cross products.
 
     If flip is 1, then the system is right handed in school algebra
@@ -152,11 +177,10 @@ def find_flip(xv, yv):
         yv (tuple): Second vector (x2, y2, z2)
 
     Return:
-        Flip flag (1 of -1)
+        Flip flag (1 or -1)
 
     .. versionchanged:: 2.1 Reverse the number returned, skip zv
     """
-    flip = 0
 
     xv = np.array(xv)
     yv = np.array(yv)
@@ -165,15 +189,13 @@ def find_flip(xv, yv):
 
     logger.debug("Cross product XY is %s", xycross)
 
-    if xycross[2] < 0:
-        flip = -1
-    else:
-        flip = 1
-
-    return flip
+    return -1 if xycross[2] < 0 else 1
 
 
-def angle2azimuth(inangle, mode="degrees"):
+def angle2azimuth(
+    inangle: float,
+    mode: Literal["degrees", "radians"] = "degrees",
+) -> float:
     """Return the Azimuth angle given input normal angle.
 
     Normal angle means counterclock rotation from X (East) axis, while
@@ -195,7 +217,10 @@ def angle2azimuth(inangle, mode="degrees"):
     return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0)
 
 
-def azimuth2angle(inangle, mode="degrees"):
+def azimuth2angle(
+    inangle: float,
+    mode: Literal["degrees", "radians"] = "degrees",
+) -> float:
     """Return the "school" angle given input azimuth angle.
 
     Normal "school" angle means counterclock rotation from X (East) axis, while
@@ -217,7 +242,7 @@ def azimuth2angle(inangle, mode="degrees"):
     return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0)
 
 
-def tetrehedron_volume(vertices):
+def tetrehedron_volume(vertices: Sequence[float]) -> float:
     """Compute volume of an irregular tetrahedron
 
     Input is an array of lenght 12 element, and is "list-like" meaning that
@@ -235,7 +260,12 @@ def tetrehedron_volume(vertices):
     return _cxtgeo.x_tetrahedron_volume(vertices)
 
 
-def point_in_tetrahedron(x0, y0, z0, vertices):
+def point_in_tetrahedron(
+    x0: float,
+    y0: float,
+    z0: float,
+    vertices: Sequence[float],
+) -> bool:
     """Check if point P0 is inside a tetrahedron.
 
     Args:
@@ -259,7 +289,13 @@ def point_in_tetrahedron(x0, y0, z0, vertices):
     return False
 
 
-def point_in_hexahedron(x0, y0, z0, vertices, _algorithm=1):
+def point_in_hexahedron(
+    x0: float,
+    y0: float,
+    z0: float,
+    vertices: Sequence[float],
+    _algorithm: int = 1,
+) -> bool:
     """Check if point P0 is inside a tetrahedron.
 
     Vertices my be in order of what 3D cells normally have
@@ -275,9 +311,9 @@ def point_in_hexahedron(x0, y0, z0, vertices, _algorithm=1):
 
 
     Args:
-        x0 (double): X xoord of point P0
-        y0 (double): Y xoord of point P0
-        z0 (double): Z xoord of point P0
+        x0 (float): X xoord of point P0
+        y0 (float): Y xoord of point P0
+        z0 (float): Z xoord of point P0
         vertices (list-like): Vertices as e.g. numpy array [[x1, y1, z1], [x2, y2, ...]
         _algorithm (int): Method for calculation (experimental, default may change)
 
@@ -289,14 +325,17 @@ def point_in_hexahedron(x0, y0, z0, vertices, _algorithm=1):
 
     status = _cxtgeo.x_point_in_hexahedron(x0, y0, z0, vertices, _algorithm)
 
-    if status >= 1:
-        return True
-
-    return False
+    return True if status >= 1 else False
 
 
-def vectorpair_angle3d(p0, p1, p2, degrees=True, birdview=False):
-    """Find angle in 3D for two vectors
+def vectorpair_angle3d(
+    p0: Sequence[float],
+    p1: Sequence[float],
+    p2: Sequence[float],
+    degrees: bool = True,
+    birdview: bool = False,
+) -> Optional[float]:
+    """Find angle in 3D between two vectors
 
     ::
 
@@ -310,7 +349,7 @@ def vectorpair_angle3d(p0, p1, p2, degrees=True, birdview=False):
         p0 (list like): Common point P0 (x y z)
         p1 (list like): Point P1 (x y z)
         p2 (list like): Point P2 (x y z)
-        degrees (bool): The get result in degrees if True, radians if False
+        degrees (bool): The result in degrees if True, radians if False
         birdview (bool): If True, find angles projected in Z (bird perspective)
 
     Returns:
@@ -320,38 +359,34 @@ def vectorpair_angle3d(p0, p1, p2, degrees=True, birdview=False):
         ValueError: Errors in input dimensions, all points must have 3 values
     """
 
-    p0 = np.array(p0)
-    p1 = np.array(p1)
-    p2 = np.array(p2)
+    _p0 = np.array(p0)
+    _p1 = np.array(p1)
+    _p2 = np.array(p2)
 
-    if p0.size != p1.size or p0.size != p2.size or p0.size != 3:
+    if any(size != 3 for size in (_p0.size, _p1.size, _p2.size)):
         raise ValueError("Errors in input dimensions, all points must have 3 values")
 
-    degs = 1
-    if not degrees:
-        degs = 0
+    degs = 1 if degrees else 0
+    bird = 1 if birdview else 0
 
-    bird = 0
-    if birdview:
-        bird = 1
+    angle = _cxtgeo.x_vectorpair_angle3d(_p0, _p1, _p2, degs, bird)
 
-    angle = _cxtgeo.x_vectorpair_angle3d(p0, p1, p2, degs, bird)
-
-    if angle == -999:
-        return None
-
-    return angle
+    return None if np.isclose(angle, -999) else angle
 
 
 def _swap_axes(
     rotation: float,
     yflip: int,
-    **values: List[List],
-):
-    swapped_values = {}
-    for name, val in values.items():
-        swapped_values[name] = np.ascontiguousarray(np.swapaxes(val, 0, 1))
+    **values: dict[str, Any],
+) -> tuple[float, int, dict[str, np.ndarray]]:
+    swapped_values: dict[str, np.ndarray] = {
+        name: np.ascontiguousarray(np.swapaxes(val, 0, 1))
+        for name, val in values.items()
+    }
 
+    # TODO: use a while loop or similar, to compensate for possibly
+    # multiple rotations in either direction (yflip is not checked)
+    # (or use modulo  (%) on yflip)
     rotation = rotation + yflip * 90
     if rotation < 0:
         rotation += 360
