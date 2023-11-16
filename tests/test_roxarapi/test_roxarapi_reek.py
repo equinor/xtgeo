@@ -434,3 +434,60 @@ def test_rox_well_with_added_logs(roxar_project):
     # check that export with set codes
     well.set_logrecord("Facies", {1: "name"})
     well.to_roxar(roxar_project, "dummy3", logrun="log", trajectory="My trajectory")
+
+
+@pytest.mark.requires_roxar
+@pytest.mark.parametrize(
+    "update_option, expected_logs, expected_poroavg",
+    [
+        (None, ["Poro", "NewPoro"], 0.26376),
+        ("overwrite", ["Zonelog", "Perm", "Poro", "Facies", "NewPoro"], 0.26376),
+        ("append", ["Zonelog", "Perm", "Poro", "Facies", "NewPoro"], 0.16376),
+    ],
+)
+def test_rox_well_update(roxar_project, update_option, expected_logs, expected_poroavg):
+    """Operations on discrete well logs"""
+    initial_wellname = WELLS1[1].replace(".w", "")
+    wellname = "TESTWELL"
+
+    initial_well = xtgeo.well_from_roxar(
+        roxar_project,
+        initial_wellname,
+        logrun="log",
+        lognames="all",
+        trajectory="My trajectory",
+    )
+    initial_well.to_roxar(roxar_project, wellname)
+
+    print("###############################################")
+
+    well = xtgeo.well_from_roxar(
+        roxar_project,
+        wellname,
+        lognames=["Poro"],
+    )
+    well.create_log("NewPoro")
+    well.dataframe["Poro"] += 0.1
+
+    well.to_roxar(
+        roxar_project,
+        wellname,
+        lognames=well.lognames,
+        update_option=update_option,
+    )
+    print("Lognames are", well.lognames)
+
+    rox = xtgeo.RoxUtils(roxar_project)
+
+    rox_lcurves = (
+        rox.project.wells[wellname]
+        .wellbore.trajectories["Drilled trajectory"]
+        .log_runs["log"]
+        .log_curves
+    )
+    rox_lognames = [lname.name for lname in rox_lcurves]
+    assert rox_lognames == expected_logs
+
+    assert rox_lcurves["Poro"].get_values().mean() == pytest.approx(
+        expected_poroavg, abs=0.001
+    )

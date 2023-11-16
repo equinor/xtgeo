@@ -679,10 +679,6 @@ class Well:
         The current implementation will either update the existing well
         (then well log array size must not change), or it will make a new well in RMS.
 
-        Note:
-           When project is file path (direct access, outside RMS) then
-           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
-           will not be saved until the user do an explicit project save action.
 
         Args:
             project (str, object): Magic string 'project' or file path to project
@@ -690,16 +686,54 @@ class Well:
             lognames (:obj:list or :obj:str): List of lognames to save, or
                 use simply 'all' for current logs for this well. Default is 'all'
             realisation (int): Currently inactive
-            trajectory (str): Name of trajectory in RMS
-            logrun (str): Name of logrun in RMS
+            trajectory (str): Name of trajectory in RMS, default is "Drilled trajectory"
+            logrun (str): Name of logrun in RMS, defaault is "log"
+            update_option (str): None | "overwrite" | "append". This only applies
+                when the well (wname) exists in RMS, and rules are based on name
+                matching. Default is None which means that all well logs in
+                RMS are emptied and then replaced with the content from xtgeo.
+                The "overwrite" option will replace logs in RMS with logs from xtgeo,
+                and append new if they do not exist in RMS. The
+                "append" option will only append logs if name does not exist in RMS
+                already. Reading only a subset of logs and then use "overwrite" or
+                "append" may speed up execution significantly.
+
+        Note:
+           When project is file path (direct access, outside RMS) then
+           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+           will not be saved until the user do an explicit project save action.
+
+        Example::
+
+            # assume that existing logs in RMS are ["PORO", "PERMH", "GR", "DT", "FAC"]
+            # read only one existing log (faster)
+            wll = xtgeo.well_from_roxar(project, "WELL1", lognames=["PORO"])
+            wll.dataframe["PORO"] += 0.2  # add 0.2 to PORO log
+            wll.create_log("NEW", value=0.333)  # create a new log with constant value
+
+            # the "option" is a variable... for output, ``lognames="all"`` is default
+            if option is None:
+                # remove all current logs in RMS; only logs will be PORO and NEW
+                wll.to_roxar(project, "WELL1", update_option=option)
+            elif option == "overwrite":
+                # keep all original logs but update PORO and add NEW
+                wll.to_roxar(project, "WELL1", update_option=option)
+            elif option == "append":
+                # keep all original logs as they were (incl. PORO) and add NEW
+                wll.to_roxar(project, "WELL1", update_option=option)
+
+        Note:
+            The keywords ``lognames`` and ``update_option`` will interact
 
         .. versionadded:: 2.12
         .. versionchanged:: 2.15
             Saving to new wells enabled (earlier only modifying existing)
-
+        .. versionchanged:: 3.5
+            Add key ``update_option``
         """
         # use *args, **kwargs since this method is overrided in blocked_well, and
-        # signature should be the same
+        # signature should be the same (TODO: change this to keywords; think this is
+        # a python 2.7 relict?)
 
         project = args[0]
         wname = args[1]
@@ -707,6 +741,7 @@ class Well:
         trajectory = kwargs.get("trajectory", "Drilled trajectory")
         logrun = kwargs.get("logrun", "log")
         realisation = kwargs.get("realisation", 0)
+        update_option = kwargs.get("update_option", None)
 
         logger.debug("Not in use: realisation %s", realisation)
 
@@ -718,6 +753,7 @@ class Well:
             trajectory=trajectory,
             logrun=logrun,
             realisation=realisation,
+            update_option=update_option,
         )
 
     def get_lognames(self):

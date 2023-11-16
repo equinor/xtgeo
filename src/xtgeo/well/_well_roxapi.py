@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 """Well input and output, private module for ROXAPI."""
 
+from __future__ import annotations
+
+from typing import Any, Literal, Optional
+
 import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
@@ -149,20 +154,26 @@ def _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname):  # pragma: no cover
 
 
 def export_well_roxapi(
-    self,
+    self: xtgeo.Well,
     project,
     wname,
-    lognames="all",
-    logrun="log",
-    trajectory="Drilled trajectory",
-    realisation=0,
+    lognames: str | list[str] = "all",
+    logrun: str = "log",
+    trajectory: str = "Drilled trajectory",
+    realisation: int = 0,
+    update_option: Optional[Literal["overwrite", "append"]] = None,
 ):
-    """Private function for well export (store in RMS) from XTGeo to RoxarAPI."""
+    """Private function for well export (i.e. store in RMS) from XTGeo to RoxarAPI."""
     logger.debug("Opening RMS project ...")
 
     rox = RoxUtils(project, readonly=False)
 
-    _roxapi_export_well(self, rox, wname, lognames, logrun, trajectory, realisation)
+    if wname in rox.project.wells:
+        _roxapi_update_well(
+            self, rox, wname, lognames, logrun, trajectory, realisation, update_option
+        )
+    else:
+        _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation)
 
     if rox._roxexternal:
         rox.project.save()
@@ -170,66 +181,89 @@ def export_well_roxapi(
     rox.safe_close()
 
 
-def _roxapi_export_well(self, rox, wname, lognames, logrun, trajectory, realisation):
-    if wname in rox.project.wells:
-        _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisation)
+def _store_log_in_roxapi(self, lrun: Any, logname: str) -> None:
+    """Store a single log in RMS / Roxar API for a well"""
+    if logname in (self.xname, self.yname, self.zname):
+        return
+
+    isdiscrete = False
+    xtglimit = UNDEF_LIMIT
+    if self.wlogtypes[logname] == _AttrType.DISC.value:
+        isdiscrete = True
+        xtglimit = UNDEF_INT_LIMIT
+
+    store_logname = logname
+
+    # the MD name is applied as default in RMS for measured depth; hence it can be wise
+    # to avoid duplicate names here, since the measured depth log is crucial.
+    if logname == "MD":
+        store_logname = "MD_imported"
+        xtg.warn(f"Logname MD is stored as {store_logname}")
+
+    if isdiscrete:
+        thelog = lrun.log_curves.create_discrete(name=store_logname)
     else:
-        _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation)
+        thelog = lrun.log_curves.create(name=store_logname)
+
+    values = thelog.generate_values()
+
+    if values.size != self.dataframe[logname].values.size:
+        raise ValueError("New logs have different sampling or size, not possible")
+
+    usedtype = values.dtype
+
+    vals = np.ma.masked_invalid(self.dataframe[logname].values)
+    vals = np.ma.masked_greater(vals, xtglimit)
+    vals = vals.astype(usedtype)
+    thelog.set_values(vals)
+
+    if isdiscrete:
+        # roxarapi requires keys to be ints, while xtgeo can accept any, e.g. strings
+        if vals.mask.all():
+            codedict = {0: "unset"}
+        else:
+            codedict = {
+                int(key): str(value) for key, value in self.wlogrecords[logname].items()
+            }
+        thelog.set_code_names(codedict)
 
 
-def _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisation):
-    """Assume well is to updated only with logs, new or changed.
+def _roxapi_update_well(
+    self: xtgeo.Well,
+    rox: Any,
+    wname: str,
+    lognames: str | list[str],
+    logrun: str,
+    trajectory: str,
+    realisation: int,
+    update_option: Optional[Literal["overwrite", "append"]] = None,
+):
+    """Assume well is to updated only with logs, new only are appended
 
-    Also, the length of arrays should not change, at least not for now.
+    Also, the length of arrays are not allowed not change (at least not for now).
 
     """
     logger.debug("Key realisation not in use: %s", realisation)
+    if update_option not in (None, "overwrite", "append"):
+        raise ValueError(
+            f"The update_option <{update_option}> is invalid, valid "
+            "options are: None | overwrite | append"
+        )
 
-    well = rox.project.wells[wname]
-    traj = well.wellbore.trajectories[trajectory]
-    lrun = traj.log_runs[logrun]
+    lrun = rox.project.wells[wname].wellbore.trajectories[trajectory].log_runs[logrun]
 
-    lrun.log_curves.clear()
+    # find existing lognames in target
+    current_logs = [lname.name for lname in lrun.log_curves]
 
-    if lognames == "all":
-        uselognames = self.lognames
-    else:
-        uselognames = lognames
+    uselognames = self.lognames if lognames == "all" else lognames
+
+    if update_option is None:
+        lrun.log_curves.clear()  # clear existing logs; all will be replaced
 
     for lname in uselognames:
-        isdiscrete = False
-        xtglimit = UNDEF_LIMIT
-        if self.wlogtypes[lname] == _AttrType.DISC.value:
-            isdiscrete = True
-            xtglimit = UNDEF_INT_LIMIT
-
-        if isdiscrete:
-            thelog = lrun.log_curves.create_discrete(name=lname)
-        else:
-            thelog = lrun.log_curves.create(name=lname)
-
-        values = thelog.generate_values()
-
-        if values.size != self.dataframe[lname].values.size:
-            raise ValueError("New logs have different sampling or size, not possible")
-
-        usedtype = values.dtype
-
-        vals = np.ma.masked_invalid(self.dataframe[lname].values)
-        vals = np.ma.masked_greater(vals, xtglimit)
-        vals = vals.astype(usedtype)
-        thelog.set_values(vals)
-
-        if isdiscrete:
-            # roxarapi requires keys to int, while xtgeo can accept any, e.g. strings
-            if vals.mask.all():
-                codedict = {0: "unset"}
-            else:
-                codedict = {
-                    int(key): str(value)
-                    for key, value in self._wlogrecords[lname].items()
-                }
-            thelog.set_code_names(codedict)
+        if update_option == "append" and lname in current_logs:
+            continue
+        _store_log_in_roxapi(self, lrun, lname)
 
 
 def _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation):
@@ -257,28 +291,6 @@ def _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisat
     lrun = traj.log_runs.create(logrun)
     lrun.set_measured_depths(md)
 
-    # Add log curves
-    for curvename, curveprop in self.get_wlogs().items():
-        if curvename not in self.lognames:
-            continue  # skip X_UTME .. Z_TVDSS
-        if lognames and lognames != "all" and curvename not in lognames:
-            continue
-        if not lognames:
-            continue
-
-        cname = curvename
-        if curvename == "MD":
-            cname = "MD_imported"
-            xtg.warn(f"Logname MD is renamed to {cname}")
-
-        if curveprop[0] == _AttrType.DISC.value:
-            lcurve = lrun.log_curves.create_discrete(cname)
-            cc = np.ma.masked_invalid(self.dataframe[curvename].values)
-            lcurve.set_values(cc.astype(np.int32))
-            codedict = {int(key): str(value) for key, value in curveprop[1].items()}
-            lcurve.set_code_names(codedict)
-        else:
-            lcurve = lrun.log_curves.create(cname)
-            lcurve.set_values(self.dataframe[curvename].values)
-
-        logger.debug("Log curve created: %s", cname)
+    uselognames = self.lognames if lognames == "all" else lognames
+    for lname in uselognames:
+        _store_log_in_roxapi(self, lrun, lname)
