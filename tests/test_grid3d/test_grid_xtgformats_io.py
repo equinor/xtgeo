@@ -10,16 +10,10 @@ from hypothesis import HealthCheck, given, settings
 from numpy.testing import assert_allclose
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
+TPATH = testdatafolder
 
 BIGBOX_DIMENSIONS = (100, 100, 20)
 

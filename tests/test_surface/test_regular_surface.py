@@ -9,15 +9,11 @@ from packaging import version
 
 import xtgeo
 from xtgeo import RegularSurface
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger, timeit
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+TPATH = testdatafolder
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -246,18 +242,16 @@ def test_irapbin_import_metadatafirst():
 
     nsurf = 10
     sur = []
-    t1 = xtg.timer()
-    for ix in range(nsurf):
-        sur.append(xtgeo.surface_from_file(TESTSET2, values=False))
-    t2 = xtg.timer(t1)
-    logger.info("Loading %s surfaces lazy took %s secs.", nsurf, t2)
+    with timeit() as elapsed:
+        for ix in range(nsurf):
+            sur.append(xtgeo.surface_from_file(TESTSET2, values=False))
+    logger.info("Loading %s surfaces lazy took %s secs.", nsurf, elapsed())
     assert sur[nsurf - 1].ncol == 1264
 
-    t1 = xtg.timer()
-    for ix in range(nsurf):
-        sur[ix].load_values()
-    t2 = xtg.timer(t1)
-    logger.info("Loading %s surfaces actual values took %s secs.", nsurf, t2)
+    with timeit() as elapsed:
+        for ix in range(nsurf):
+            sur[ix].load_values()
+    logger.info("Loading %s surfaces actual values took %s secs.", nsurf, elapsed())
 
     assert sur[nsurf - 1].ncol == 1264
     assert sur[nsurf - 1].nrow == 2010
@@ -271,18 +265,11 @@ def test_irapbin_export_test(tmpdir):
     nsurf = 10
     surf = xtgeo.surface_from_file(TESTSET5)
 
-    t1 = xtg.timer()
-    for _ix in range(nsurf):
-        surf.to_file(join(tmpdir, "tull1"), engine="cxtgeo")
+    with timeit() as elapsed:
+        for _ in range(nsurf):
+            surf.to_file(join(tmpdir, "tull1"), engine="cxtgeo")
 
-    t2a = xtg.timer(t1)
-    logger.info("Saving %s surfaces xtgeo %s secs.", nsurf, t2a)
-
-    t2b = xtg.timer(t1)
-    logger.info("TEST Saving %s surfaces xtgeo %s secs.", nsurf, t2b)
-
-    gain = (t2a - t2b) / t2a
-    logger.info("Speed gain %s percent", gain * 100)
+    logger.info("Saving %s surfaces xtgeo %s secs.", nsurf, elapsed())
 
 
 def test_petromodbin_import_export(tmpdir):
@@ -939,18 +926,20 @@ def test_irapbin_export_py(tmpdir):
 
     x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
-    t0 = xtg.timer()
-    for _ in range(10):
-        x.to_file(join(tmpdir, "purecx.gri"), fformat="irap_binary", engine="cxtgeo")
-    t1 = xtg.timer(t0)
-    print(f"CXTGeo based write: {t1:3.4f}")
+    with timeit() as e1:
+        for _ in range(10):
+            x.to_file(
+                join(tmpdir, "purecx.gri"), fformat="irap_binary", engine="cxtgeo"
+            )
+    print(f"CXTGeo based write: {e1()}")
 
-    t0 = xtg.timer()
-    for _ in range(10):
-        x.to_file(join(tmpdir, "purepy.gri"), fformat="irap_binary", engine="python")
-    t2 = xtg.timer(t0)
-    print(f"Python based write: {t2:3.4f}")
-    print(f"Ratio python based / cxtgeo based {t2 / t1:3.4f}")
+    with timeit() as e2:
+        for _ in range(10):
+            x.to_file(
+                join(tmpdir, "purepy.gri"), fformat="irap_binary", engine="python"
+            )
+    print(f"Python based write: {e2()}")
+    print(f"Ratio python based / cxtgeo based {(e2() / e1()):3.4f}")
 
     s1 = xtgeo.surface_from_file(join(tmpdir, "purecx.gri"))
     s2 = xtgeo.surface_from_file(join(tmpdir, "purepy.gri"))

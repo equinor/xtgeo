@@ -13,7 +13,7 @@ import xtgeo
 from . import _surfs_import
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def surfaces_from_grid(grid, subgrids=True, rfactor=1):
@@ -81,7 +81,7 @@ class Surfaces:
                     sobj = xtgeo.surface_from_file(item, fformat="guess")
                     self.surfaces.append(sobj)
                 except OSError:
-                    xtg.warnuser(f"Cannot read as file, skip: {item}")
+                    logger.warnuser(f"Cannot read as file, skip: {item}")
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""

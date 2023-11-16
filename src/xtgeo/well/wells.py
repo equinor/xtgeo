@@ -16,7 +16,7 @@ from . import _wells_utils
 from .well1 import Well
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def wells_from_files(filelist, *args, **kwargs):

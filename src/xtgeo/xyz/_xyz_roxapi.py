@@ -7,13 +7,9 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, _XTGeoFile
+from xtgeo.common import _XTGeoFile, logger
 from xtgeo.roxutils import RoxUtils
 from xtgeo.xyz import _xyz_io
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 # pylint: disable=protected-access
 VALID_STYPES = ["horizons", "zones", "clipboard", "general2d_data", "faults"]

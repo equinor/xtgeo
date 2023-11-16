@@ -12,7 +12,7 @@ import deprecation
 import numpy as np
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.sys import _XTGeoFile
 from xtgeo.metadata.metadata import MetaDataCPProperty
@@ -32,9 +32,6 @@ from ._gridprop_import_eclrun import (
 from ._gridprop_import_grdecl import import_bgrdecl_prop, import_grdecl_prop
 from ._gridprop_import_roff import import_roff
 from ._gridprop_import_xtgcpprop import import_xtgcpprop
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -1258,7 +1255,7 @@ class GridProperty(_Grid3D):
 
         """
         if mask is not None:
-            xtg.warndeprecated(
+            logger.warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )
@@ -1555,7 +1552,7 @@ class GridProperty(_Grid3D):
                 myprop.geometry = mygrid
 
             """
-            xtg.warnuser(msg)
+            logger.warnuser(msg)
             raise ValueError("The geometry attribute is not set")
 
         _gridprop_op1.operation_polygons(

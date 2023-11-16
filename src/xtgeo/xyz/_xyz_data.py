@@ -42,15 +42,11 @@ from joblib import hash as jhash
 
 import xtgeo.common.constants as const
 from xtgeo.common.sys import _convert_carr_double_np, _get_carray
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import logger
 from xtgeo.cxtgeo import _cxtgeo
 from xtgeo.cxtgeo._cxtgeo import XTGeoCLibError  # type: ignore[attr-defined]
 
 from ..common._xyz_enum import _AttrName, _AttrType, _XYZType
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
-
 
 CONT_DEFAULT_RECORD = ("", "")  # unit and scale, where emptry string indicates ~unknown
 

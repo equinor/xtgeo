@@ -12,9 +12,8 @@ try:
 except ImportError:
     pass
 
-xtg = XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 # self is the XTGeo GridProperty instance
 # pragma: no cover

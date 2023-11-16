@@ -5,15 +5,10 @@
 import numpy as np
 import numpy.ma as ma
 
-from xtgeo.common import XTGeoDialog, XTGShowProgress
+from xtgeo.common import XTGeoDialog, XTGShowProgress, logger
 
 from . import _regsurf_cube_window_v2 as cwv2
 from . import _regsurf_cube_window_v3 as cwv3
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
-
 
 ALLATTRS = [
     "max",
@@ -246,7 +241,7 @@ def _slice_constant_window(
 
     logger.info("ZINCR is %s", zincr)
 
-    with XTGShowProgress(total=ndiv*2, disable=not showprogress, ascii=True) as pbar:
+    with XTGShowProgress(total=ndiv * 2, disable=not showprogress, ascii=True) as pbar:
         # collect above the original surface
         for idv in range(ndiv):
             ztmp = this.copy()

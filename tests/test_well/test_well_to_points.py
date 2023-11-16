@@ -1,14 +1,10 @@
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = XTGeoDialog()
-
-TPATH = xtg.testpathobj
-
-logger = xtg.basiclogger(__name__)
-
+TPATH = testdatafolder
 WFILE = TPATH / "wells/etc/otest.rmswell"
 
 

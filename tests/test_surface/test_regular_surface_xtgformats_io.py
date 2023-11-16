@@ -7,12 +7,6 @@ import pytest
 from numpy.testing import assert_allclose
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
 
 
 @pytest.fixture(name="benchmark_surface")

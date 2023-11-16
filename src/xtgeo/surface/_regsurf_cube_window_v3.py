@@ -16,10 +16,8 @@ warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
 warnings.filterwarnings(action="ignore", message="Mean of empty slice")
 warnings.filterwarnings(action="ignore", message="Degree of freedom")
 
-xtg = XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
-
+from xtgeo.common import logger
 
 STATATTRS = [
     "min",

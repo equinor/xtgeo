@@ -12,7 +12,7 @@ from ._roff_grid import RoffGrid
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def match_xtgeo_214_header(header: bytes) -> bool:

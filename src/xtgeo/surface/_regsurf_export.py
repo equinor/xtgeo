@@ -13,13 +13,8 @@ import numpy as np
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
-
 
 DEBUG = 0
 

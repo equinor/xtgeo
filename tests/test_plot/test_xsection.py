@@ -5,15 +5,11 @@ import glob
 from os.path import join
 
 import xtgeo
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.plot import XSection
 
-xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 USEFILE1 = TPATH / "wells/reek/1/OP_1.w"
 USEFILE2 = TPATH / "surfaces/reek/1/topreek_rota.gri"

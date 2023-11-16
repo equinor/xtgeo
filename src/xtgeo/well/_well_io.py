@@ -8,12 +8,8 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 
 def import_rms_ascii(

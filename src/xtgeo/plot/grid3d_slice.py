@@ -5,11 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.plot.baseplot import BasePlot
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
 class Grid3DSlice(BasePlot):

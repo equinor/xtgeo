@@ -4,12 +4,9 @@
 import numpy as np
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.calc import _swap_axes
 
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 # pylint: disable=protected-access
 
 

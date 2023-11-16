@@ -9,11 +9,7 @@ import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import RoxUtils
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import XTGeoDialog, logger
 
 # logger.info(roxmsg)
 
@@ -220,7 +216,7 @@ def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
         roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
 
         if roxgrid.has_dual_index_system:
-            xtg.warnuser(
+            logger.warnuser(
                 f"The roxar grid {gname} has dual index system.\n"
                 "XTGeo does not implement extraction of simbox grid\n"
                 "and only considers physical index."
@@ -486,7 +482,7 @@ def _set_subgrids(self, rox, grid):
         grid.set_zonation(roxar_subs)
 
     else:
-        xtg.warnuser(
+        logger.warnuser(
             "Implementation of subgrids is lacking in Roxar API for this "
             "RMS version. Will continue to store in RMS but without subgrid index."
         )

@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 import xtgeo
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.surface._zmap_parser import ZMAPFormatException, ZMAPSurface, parse_zmap
 
 
@@ -41,9 +42,7 @@ from xtgeo.surface._zmap_parser import ZMAPFormatException, ZMAPSurface, parse_z
         40.1785        51.0874        54.6339        55.6271        55.9614
     -99999.0000    -99999.0000    -99999.0000        68.1617        63.9811"""
         ),
-        Path(
-            xtgeo.XTGeoDialog().testpathobj / "surfaces" / "etc" / "zmap_example.zmap"
-        ),
+        Path(testdatafolder / "surfaces" / "etc" / "zmap_example.zmap"),
     ],
 )
 def test_zmap_input_format(zmap_input):
@@ -67,7 +66,7 @@ def test_zmap_input_format(zmap_input):
 
 def test_integration():
     result = xtgeo.surface_from_file(
-        Path(xtgeo.XTGeoDialog().testpathobj / "surfaces" / "etc" / "zmap_example.zmap")
+        testdatafolder / "surfaces" / "etc" / "zmap_example.zmap"
     )
     assert result.xmax == 460718.9063
     assert result.ymax == 5925787.0

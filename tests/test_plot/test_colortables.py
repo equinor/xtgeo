@@ -2,15 +2,10 @@
 import sys
 
 import xtgeo.plot._colortables as ct
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    sys.exit(-9)
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 # =========================================================================
 # Do tests

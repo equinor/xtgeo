@@ -9,13 +9,9 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 RPATH1 = TPATH / "surfaces/reek"
 RPATH3 = TPATH / "surfaces/etc"

@@ -7,15 +7,11 @@ import h5py
 import hdf5plugin
 import roffio
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.grid3d._egrid import EGrid
 
 from ._grdecl_grid import GrdeclGrid
 from ._roff_grid import RoffGrid
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 # valid byte settings for xtgeo/hdf5 based export e.g. 441 means
 # 4byte float for coord, 4byte float for zcorn, and 1 byte Int for actnums.

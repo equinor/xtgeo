@@ -7,14 +7,10 @@ import pandas as pd
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
-from xtgeo.common import XTGeoDialog
 from xtgeo.common import constants as const
+from xtgeo.common import logger
 from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.sys import _get_carray
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 
 def rescale(self, delta=0.15, tvdrange=None):

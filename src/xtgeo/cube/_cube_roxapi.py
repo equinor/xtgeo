@@ -17,11 +17,7 @@ Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering
 import numpy as np
 
 from xtgeo import RoxUtils
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import XTGeoDialog, logger
 
 
 def import_cube_roxapi(self, project, name, folder=None):  # pragma: no cover

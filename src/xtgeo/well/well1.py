@@ -20,7 +20,7 @@ from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
 
 xtg = xtgeo.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 # ======================================================================================
 # Functions, as wrappers to class methods

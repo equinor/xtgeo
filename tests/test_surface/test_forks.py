@@ -5,12 +5,10 @@ import subprocess
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 TESTFILE = TPATH / "surfaces/reek/1/basereek_rota_v2.gri"
 

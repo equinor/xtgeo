@@ -9,7 +9,7 @@ from xtgeo.grid3d import _gridprop_lowlevel as gl
 from xtgeo.surface import _regsurf_lowlevel as rl
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def get_randomline(

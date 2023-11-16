@@ -13,14 +13,11 @@ from matplotlib import collections as mc
 from matplotlib.lines import Line2D
 from scipy.ndimage import gaussian_filter
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.well import Well
 from xtgeo.xyz import Polygons
 
 from .baseplot import BasePlot, _get_colormap
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
 class XSection(BasePlot):

@@ -7,16 +7,11 @@ import pytest
 from hypothesis import given
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
 from .grid_generator import xtgeo_grids
 
-xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 # pylint: disable=logging-format-interpolation
 

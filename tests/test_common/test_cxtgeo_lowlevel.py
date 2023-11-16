@@ -6,7 +6,7 @@ import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+from xtgeo.common import logger
 
 
 @pytest.mark.parametrize(

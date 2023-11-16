@@ -3,17 +3,12 @@ from os.path import join
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Points
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 # =============================================================================
 # Do tests

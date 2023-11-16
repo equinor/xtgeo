@@ -9,18 +9,13 @@ import pytest
 from hypothesis import given
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger, timeit
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.grid3d import Grid
 
 from .grid_generator import dimensions, increments, xtgeo_grids
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__, info=True)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 REEKFILE = TPATH / "3dgrids/reek/REEK.EGRID"
 REEKFIL2 = TPATH / "3dgrids/reek3/reek_sim.grdecl"  # ASCII GRDECL
@@ -79,11 +74,14 @@ def test_create_shoebox(tmp_path):
     grd = xtgeo.create_box_grid((2, 3, 4), flip=-1)
     grd.to_file(tmp_path / "shoebox_default_flipped.roff")
 
-    timer1 = xtg.timer()
-    grd = xtgeo.create_box_grid(
-        origin=(0, 0, 1000), dimension=(300, 200, 30), increment=(20, 20, 1), flip=-1
-    )
-    logger.info("Making a a 1,8 mill cell grid took %5.3f secs", xtg.timer(timer1))
+    with timeit() as elapsed:
+        grd = xtgeo.create_box_grid(
+            origin=(0, 0, 1000),
+            dimension=(300, 200, 30),
+            increment=(20, 20, 1),
+            flip=-1,
+        )
+    logger.info("Making a a 1,8 mill cell grid took %5.3f secs", elapsed())
 
     dx, dy = (grd.get_dx(), grd.get_dy())
 
@@ -203,11 +201,10 @@ def test_subgrids():
 
 def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc."""
-    t0 = xtg.timer()
-    for _ino in range(100):
-        xtgeo.grid_from_file(REEKFIL4)
-    t1 = xtg.timer(t0)
-    print("100 loops with ROXAPIV 2 took: ", t1)
+    with timeit() as elapsed:
+        for _ino in range(100):
+            xtgeo.grid_from_file(REEKFIL4)
+    print("100 loops with ROXAPIV 2 took: ", elapsed())
 
 
 def test_convert_vs_xyz_cell_corners():

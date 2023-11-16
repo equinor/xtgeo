@@ -12,16 +12,13 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.common import XTGDescription, XTGeoDialog, logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 from . import _grid3d_utils as utils
 from . import _grid_etc1, _gridprops_import_eclrun, _gridprops_import_roff
 from ._grid3d import _Grid3D
 from .grid_property import GridProperty
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 KeywordTuple = Tuple[str, str, int, int]
 KeywordDateTuple = Tuple[str, str, int, int, Union[str, int]]
@@ -538,7 +535,7 @@ class GridProperties(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
-            xtg.warndeprecated(
+            logger.warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )
@@ -576,7 +573,7 @@ class GridProperties(_Grid3D):
             A GridProperty instance of ACTNUM, or None if no props present.
         """
         if mask is not None:
-            xtg.warndeprecated(
+            logger.warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )

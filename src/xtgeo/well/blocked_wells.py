@@ -13,7 +13,7 @@ from .blocked_well import BlockedWell
 from .wells import Wells
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def blockedwells_from_files(

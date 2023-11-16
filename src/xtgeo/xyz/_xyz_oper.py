@@ -10,12 +10,7 @@ from scipy.interpolate import UnivariateSpline, interp1d
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
-
+from xtgeo.common import logger
 
 # pylint: disable=protected-access
 

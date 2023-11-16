@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """Private baseclass for Grid and GridProperties, not to be used by itself."""
 
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import XTGeoDialog, logger
 
 
 class _Grid3D:
@@ -31,7 +28,7 @@ class _Grid3D:
         return self._nlay
 
     def _evaluate_mask(self, mask: bool) -> bool:
-        xtg.warn(
+        logger.warn(
             f"Use of keyword 'mask' in argument list is deprecated, use alternative "
             f"specified in API instead! In: {self}"
         )

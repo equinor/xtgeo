@@ -2,16 +2,11 @@ import sys
 from os.path import join
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.plot import Map
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    sys.exit(-9)
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 # =========================================================================
 # Do tests

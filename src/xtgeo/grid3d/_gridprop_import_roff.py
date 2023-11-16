@@ -11,7 +11,7 @@ from ._roff_parameter import RoffParameter
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def import_roff(pfile, name=None, grid=None):

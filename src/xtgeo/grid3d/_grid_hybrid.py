@@ -4,7 +4,7 @@ import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def make_hybridgrid(

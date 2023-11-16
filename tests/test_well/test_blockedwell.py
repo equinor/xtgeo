@@ -6,15 +6,10 @@ from os.path import join
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-testpath = xtg.testpathobj
+testpath = testdatafolder
 
 wfile = join(testpath, "wells/reek/1/OP_1.bw")
 

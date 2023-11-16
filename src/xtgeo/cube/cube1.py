@@ -13,11 +13,8 @@ import numpy as np
 
 import xtgeo
 import xtgeo.common.sys as xtgeosys
-from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.common import XTGDescription, XTGeoDialog, logger
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
 def _data_reader_factory(fformat):

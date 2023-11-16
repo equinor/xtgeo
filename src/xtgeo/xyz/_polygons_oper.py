@@ -16,11 +16,7 @@ import shapely.geometry as sg
 from scipy.spatial import Delaunay, cKDTree
 
 import xtgeo
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
-
+from xtgeo.common.xtgeo_dialog import XTGeoDialog, logger
 
 MINIMUM_NUMBER_POINTS = 4
 

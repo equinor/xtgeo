@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from .grid_properties import GridPropertiesKeywords, KeywordDateTuple, KeywordTuple
 
 xtg = xtgeo.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def scan_keywords(

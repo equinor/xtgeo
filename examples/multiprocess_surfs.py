@@ -9,13 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 TESTFILE = "../../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
-NTHREAD = 20
 
 
 def _get_files_as_regularsurfaces_thread(option=1):
     surfs = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=NTHREAD) as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
         if option == 1:
             futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:
@@ -36,7 +35,7 @@ def _get_files_as_regularsurfaces_thread(option=1):
 def _get_files_as_regularsurfaces_multiprocess(option=1):
     surfs = []
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=NTHREAD) as executor:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
         if option == 1:
             futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:

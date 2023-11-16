@@ -77,12 +77,10 @@ def fixture_generate_plot(request):
 
 @pytest.fixture()
 def testpath(request):
-    testdatapath = request.config.getoption("--testdatapath")
-    environ_path = os.environ.get("XTG_TESTPATH", None)
-    if environ_path:
-        testdatapath = environ_path
-
-    return testdatapath
+    return os.environ.get(
+        "XTG_TESTPATH",
+        request.config.getoption("--testdatapath"),
+    )
 
 
 @pytest.fixture(autouse=True)

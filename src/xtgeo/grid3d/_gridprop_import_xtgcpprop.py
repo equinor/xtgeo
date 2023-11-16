@@ -11,7 +11,7 @@ import xtgeo.common.sys as xsys
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def import_xtgcpprop(mfile, ijrange=None, zerobased=False):

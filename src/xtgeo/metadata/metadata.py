@@ -17,7 +17,7 @@ from collections import OrderedDict
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 class _OptionalMetaData:

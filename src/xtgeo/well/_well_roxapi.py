@@ -5,14 +5,10 @@ import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.roxutils import RoxUtils
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
-
 
 # Well() instance: self
 

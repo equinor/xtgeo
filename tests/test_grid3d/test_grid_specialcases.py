@@ -8,13 +8,9 @@ The tests where made on resolving issues #873, #874
 import pytest
 
 import xtgeo
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = xtgeo.XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 SPE9 = TPATH / "3dgrids/bench_spe9"
 SPE9_ROOT = SPE9 / "BENCH_SPE9"

@@ -9,7 +9,7 @@ from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
 
 xtg = xtgeo.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def import_ecl_egrid(

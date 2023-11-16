@@ -12,7 +12,6 @@ from xtgeo.common import XTGeoDialog, XTGShowProgress
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-xtg = XTGeoDialog()
 
 # self == Wells instance (plural wells)
 
@@ -35,7 +34,6 @@ def wellintersections(
     nox = {}
 
     for well in XTGShowProgress(self.wells, disable=not showprogress, ascii=True):
-
         logger.debug("Work with %s", well.name)
         try:
             well.geometrics()

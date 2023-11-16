@@ -12,19 +12,13 @@ from packaging.version import parse as versionparse
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons
 
 from . import _gridprop_lowlevel
 from ._grid3d_fence import _update_tmpvars
 from .grid_property import GridProperty
-
-xtg = XTGeoDialog()
-
-
-logger = xtg.functionlogger(__name__)
-
 
 # Note that "self" is the grid instance
 

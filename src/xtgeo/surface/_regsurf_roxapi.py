@@ -6,11 +6,7 @@ import tempfile
 import numpy as np
 
 from xtgeo import RoxUtils
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import XTGeoDialog, logger
 
 VALID_STYPES = ["horizons", "zones", "clipboard", "general2d_data", "trends"]
 

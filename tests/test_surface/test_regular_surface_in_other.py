@@ -7,19 +7,14 @@ import numpy.ma as ma
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
 # =============================================================================
 # Do tests
 # =============================================================================
 
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 SURF1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 POLY1 = TPATH / "polygons/reek/1/closedpoly1.pol"

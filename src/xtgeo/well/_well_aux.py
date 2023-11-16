@@ -14,13 +14,10 @@ from typing import Callable, Optional
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import logger
 from xtgeo.common._xyz_enum import _AttrName
 
 from . import _well_io
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
 def _data_reader_factory(file_format: Optional[str] = None):

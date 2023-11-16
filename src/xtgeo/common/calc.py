@@ -7,12 +7,8 @@ from typing import Any, Literal, Optional, Sequence
 import numpy as np
 
 from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.cxtgeo import _cxtgeo
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 
 def ib_to_ijk(

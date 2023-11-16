@@ -4,14 +4,10 @@ from os.path import join
 import pytest
 
 import xtgeo
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit("Cannot find test setup")
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 SFILE1 = join(TPATH, "cubes/etc/ib_synth_iainb.segy")
 SFILE2 = join(TPATH, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")

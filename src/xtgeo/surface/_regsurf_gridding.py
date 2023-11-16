@@ -13,7 +13,7 @@ import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 # Note: 'self' is an instance of RegularSurface
 # pylint: disable=too-many-branches, too-many-statements, too-many-locals

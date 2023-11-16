@@ -8,20 +8,15 @@ import segyio
 from hypothesis import HealthCheck, given, settings
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder, timeit
 from xtgeo.cube import Cube
 from xtgeo.cube._cube_import import (
     _import_segy_all_traces,
     _import_segy_incomplete_traces,
 )
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit("Cannot find test setup")
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 SFILE1 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
 SFILE3 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.storm")
@@ -120,10 +115,9 @@ def test_segy_export_import(tmpdir):
 def test_storm_import():
     """Import Cube using Storm format (case Reek)."""
 
-    st1 = xtg.timer()
-    acube = xtgeo.cube_from_file(SFILE3, fformat="storm")
-    elapsed = xtg.timer(st1)
-    logger.info("Reading Storm format took %s", elapsed)
+    with timeit() as elapsed:
+        acube = xtgeo.cube_from_file(SFILE3, fformat="storm")
+        logger.info("Reading Storm format took %s", elapsed())
 
     assert acube.ncol == 280, "NCOL"
 
@@ -137,10 +131,9 @@ def test_storm_import():
 def test_segy_import(loadsfile1):
     """Import SEGY using internal reader (case 1 Reek)."""
 
-    st1 = xtg.timer()
-    xcu = loadsfile1
-    elapsed = xtg.timer(st1)
-    logger.info("Reading with XTGEO took %s", elapsed)
+    with timeit() as elapsed:
+        xcu = loadsfile1
+        logger.info("Reading with XTGEO took %s", elapsed())
 
     assert xcu.ncol == 408, "NCOL"
 
@@ -155,10 +148,9 @@ def test_segy_import(loadsfile1):
 def test_segyio_import(loadsfile1):
     """Import SEGY (case 1 Reek) via SegIO library."""
 
-    st1 = xtg.timer()
-    xcu = loadsfile1
-    elapsed = xtg.timer(st1)
-    logger.info("Reading with SEGYIO took %s", elapsed)
+    with timeit() as elapsed:
+        xcu = loadsfile1
+        logger.info("Reading with SEGYIO took %s", elapsed())
 
     assert xcu.ncol == 408, "NCOL"
     dim = xcu.values.shape

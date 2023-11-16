@@ -22,12 +22,10 @@ except ImportError:
     pass
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 PROJNAME = "tmp_project.rmsxxx"
 

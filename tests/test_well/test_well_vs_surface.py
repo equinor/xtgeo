@@ -8,12 +8,10 @@ import pytest
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 WFILE = join(TPATH, "wells/battle/1/WELLX.rmswell")
 SFILE = join(TPATH, "surfaces/etc/battle_1330.gri")

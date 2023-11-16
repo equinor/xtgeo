@@ -6,14 +6,10 @@ import numpy as np
 import pytest
 
 import xtgeo
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 
 # =============================================================================

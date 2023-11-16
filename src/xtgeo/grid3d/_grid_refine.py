@@ -5,11 +5,7 @@ from collections import OrderedDict
 import numpy as np
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import XTGeoDialog, logger
 
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
@@ -48,7 +44,7 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
             if oldsubgrids:
                 if subgrids.values() != oldsubgrids.values():
-                    xtg.warn("ISSUES!!!")
+                    logger.warning("ISSUES!!!")
 
         # 2b: zoneprop is not present
         elif zoneprop is None and self.subgrids:

@@ -14,7 +14,7 @@ Usage of logging in scripts::
 
   import xtgeo
   xtg = xtgeo.common.XTGeoDialog()
-  logger = xtg.basiclogger(__name__)
+  from xtgeo.common import logger
   logger.info('This is logging of %s', something)
 
 Other than logging, there is also a template for user interaction, which shall
@@ -50,7 +50,7 @@ import xtgeo
 logging.basicConfig(
     level=os.environ.get(
         logging.getLevelName("XTG_LOGGING_LEVEL"),
-        logging.DEBUG,
+        logging.INFO,
     ),
     format=os.environ.get(
         "XTG_LOGGING_FORMAT",
@@ -60,7 +60,7 @@ logging.basicConfig(
 
 
 @contextlib.contextmanager
-def timer() -> Iterator[Callable[[], datetime.timedelta]]:
+def timeit() -> Iterator[Callable[[], datetime.timedelta]]:
     """
     A contextmanger tha tracks elapsed time inside it, after exit it gives
     the total time for the context.
@@ -81,6 +81,13 @@ def timer() -> Iterator[Callable[[], datetime.timedelta]]:
         yield lambda: (done or datetime.datetime.now()) - enter
     finally:
         done = datetime.datetime.now()
+
+
+def _testdatafolder() -> pathlib.Path:
+    testpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
+    if not os.path.isdir(testpath):
+        raise RuntimeError(f"XTG_TESTPATH({testpath}) must be a directory.")
+    return pathlib.Path(testpath)
 
 
 class XTGShowProgress(tqdm.tqdm):
@@ -146,26 +153,13 @@ class XTGeoDialog(logging.Logger):  # pylint: disable=too-many-public-methods
 
     def __init__(self) -> None:
         """Initializing XTGeoDialog."""
-        super().__init__("xtgeo")
-        self._test_env = True
-        self._testpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
-
-    @property
-    def testpathobj(self) -> pathlib.Path:
-        """Return testpath as pathlib.Path object."""
-        return pathlib.Path(self._testpath)
-
-    @property
-    def testpath(self) -> str:
-        """Return or setting up testpath."""
-        return self._testpath
-
-    @testpath.setter
-    def testpath(self, newtestpath: str) -> None:
-        if not os.path.isdir(newtestpath):
-            raise RuntimeError(f"Proposed test path is not valid: {newtestpath}")
-
-        self._testpath = newtestpath
+        super().__init__(
+            "xtgeo",
+            level=os.environ.get(
+                logging.getLevelName("XTG_LOGGING_LEVEL"),
+                logging.DEBUG,
+            ),
+        )
 
     @staticmethod
     def get_xtgeo_info(variant: Literal["clibinfo"] = "clibinfo") -> str:
@@ -187,28 +181,8 @@ class XTGeoDialog(logging.Logger):  # pylint: disable=too-many-public-methods
 
         return "Invalid"
 
-    def testsetup(self) -> bool:
-        """Basic setup for XTGeo testing (private; only relevant for tests)"""
-
-        tstpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
-        if not os.path.isdir(tstpath):
-            raise RuntimeError(f"XTG_TESTPATH({tstpath}) must be a directory.")
-
-        self._test_env = True
-        self._testpath = tstpath
-
-        return True
-
     def insane(self, *args, **kw) -> None:  # type: ignore
         self.critical(*args, **kw)
-
-    def functionlogger(self, *_, **__) -> XTGeoDialog:
-        global logger
-        return logger
-
-    def basiclogger(self, *_, **__) -> XTGeoDialog:
-        global logger
-        return logger
 
     @staticmethod
     def warndeprecated(string: str) -> None:
@@ -224,5 +198,9 @@ class XTGeoDialog(logging.Logger):  # pylint: disable=too-many-public-methods
         warnings.simplefilter("default", UserWarning)
         warnings.warn(string, UserWarning, stacklevel=2)
 
+    def say(self, txt: str) -> None:
+        return self.info(txt)
+
 
 logger: Final = XTGeoDialog()
+testdatafolder: Final = _testdatafolder()

@@ -4,13 +4,9 @@
 import pytest
 
 import xtgeo
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = xtgeo.common.XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 REEKROOT = TPATH / "3dgrids/reek/REEK"
 WELL1 = TPATH / "wells/reek/1/OP_1.w"

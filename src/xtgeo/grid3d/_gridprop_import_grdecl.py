@@ -11,7 +11,7 @@ from ._grdecl_format import match_keyword, open_grdecl
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def import_bgrdecl_prop(pfile, name, grid):

@@ -10,9 +10,10 @@ import xtgeo.common.calc as xcalc
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+from xtgeo.common import logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 # =============================================================================
 # Do tests of simple calc routines

@@ -7,13 +7,9 @@ import resfo
 import roffio
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 
 from ._roff_parameter import RoffParameter
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 
 def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None):

@@ -12,13 +12,9 @@ import numpy.ma as ma
 import xtgeo
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.surface._zmap_parser import parse_zmap
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 
 def import_irap_binary(mfile, values=True, engine="cxtgeo", **_):
@@ -406,7 +402,7 @@ def import_petromod(mfile, **_):
     if args["rotation"] != 0.0 and (
         rota_xori != args["xori"] or rota_yori != args["yori"]
     ):
-        xtg.warnuser("Rotation origin and data origin do match")
+        logger.warnuser("Rotation origin and data origin do match")
 
     # reread file for map values
 
@@ -458,7 +454,7 @@ def import_zmap_ascii(mfile, values=True, **_):
 
 def import_xtg(mfile, values=True, **kwargs):
     """Using pure python for experimental XTGEO import."""
-    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
+    logger.debug("Additional, probably unused kwargs: %s", kwargs)
 
     offset = 28
     with open(mfile.file, "rb") as fhandle:

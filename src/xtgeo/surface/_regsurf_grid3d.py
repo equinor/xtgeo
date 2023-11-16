@@ -7,12 +7,8 @@ import numpy.ma as ma
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 from xtgeo.grid3d import _gridprop_lowlevel
-
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
 
 #
 

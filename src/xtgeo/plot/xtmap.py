@@ -7,12 +7,9 @@ import numpy as np
 import numpy.ma as ma
 from matplotlib import ticker
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
 
 from .baseplot import BasePlot
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
 class Map(BasePlot):

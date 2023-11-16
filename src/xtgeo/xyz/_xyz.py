@@ -7,12 +7,9 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.common import XTGDescription, XTGeoDialog, logger
 
 from . import _xyz_oper
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 Polygons = TypeVar("Polygons")
 
@@ -233,7 +230,7 @@ class XYZ(ABC):
         """
         for cname in clist:
             if cname in self.protected_columns():
-                xtg.warnuser(
+                logger.warnuser(
                     f"The column {cname} is protected and will not be deleted."
                 )
                 continue

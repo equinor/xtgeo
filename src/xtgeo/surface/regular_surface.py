@@ -68,7 +68,7 @@ from . import (
 )
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 # valid argumentts for seismic attributes
 ValidAttrs = Literal[
@@ -2551,10 +2551,12 @@ class RegularSurface:
         )
 
         if ier == -4:
-            xtg.warnuser("Number of sampled surface nodes < 10 percent of Cube nodes")
+            logger.warnuser(
+                "Number of sampled surface nodes < 10 percent of Cube nodes"
+            )
             print("Number of sampled surface nodes < 10 percent of Cube nodes")
         elif ier == -5:
-            xtg.warn("No nodes sampled: map is 100 percent outside of cube?")
+            logger.warn("No nodes sampled: map is 100 percent outside of cube?")
 
     def slice_cube_window(
         self,
@@ -3037,7 +3039,7 @@ class RegularSurface:
         maxvalue = minmax[1]
 
         if colortable is not None:
-            xtg.warndeprecated(
+            logger.warndeprecated(
                 "The colortable parameter is deprecated,"
                 "and will be removed in version 4.0. Use colormap instead."
             )

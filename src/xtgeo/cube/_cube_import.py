@@ -41,10 +41,7 @@ import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import XTGeoDialog, logger
 
 
 def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
@@ -115,7 +112,7 @@ def _import_segy_all_traces(segyfile: segyio.segy.SegyFile) -> Dict:
 def _process_cube_values(values: np.ndarray) -> np.ndarray:
     """Helper function to validate/check values."""
     if values.dtype != np.float32:
-        xtg.warnuser(f"Values are converted from {values.dtype} to float32")
+        logger.warnuser(f"Values are converted from {values.dtype} to float32")
         values = values.astype(np.float32)
     if np.any(np.isnan(values)):
         raise ValueError(

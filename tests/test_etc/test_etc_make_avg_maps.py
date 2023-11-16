@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.surface import RegularSurface
 
 # set default level
-xtg = XTGeoDialog()
 
-logger = xtg.basiclogger(__name__)
-TPATH = xtg.testpathobj
+
+TPATH = testdatafolder
 
 # ======================================================================================
 # This tests a combination of methods, in order to produce maps of HC thickness

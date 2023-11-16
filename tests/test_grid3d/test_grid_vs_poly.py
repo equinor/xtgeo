@@ -4,14 +4,9 @@ import sys
 from os.path import join
 
 import xtgeo
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    sys.exit(-9)
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 reekgrid = TPATH / "3dgrids/reek/REEK.EGRID"
 reekpoly = TPATH / "polygons/reek/1/mypoly.pol"

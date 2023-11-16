@@ -13,8 +13,8 @@ import pytest
 from hypothesis import HealthCheck, example, given, settings
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.grid3d import Grid, GridProperty
 
 from .grid_generator import dimensions, xtgeo_grids
@@ -24,35 +24,29 @@ from .gridprop_generator import grid_properties
 # pylint: disable=invalid-name
 
 # set default level
-xtg = XTGeoDialog()
+testpath = testdatafolder
 
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-TESTFILE1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
-TESTFILE2 = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
-TESTFILE5 = TPATH / "3dgrids/reek/REEK.EGRID"
-TESTFILE6 = TPATH / "3dgrids/reek/REEK.INIT"
-TESTFILE7 = TPATH / "3dgrids/reek/REEK.UNRST"
-TESTFILE8 = TPATH / "3dgrids/reek/reek_sim_zone.roff"
-TESTFILE8A = TPATH / "3dgrids/reek/reek_sim_grid.roff"
+TESTFILE1 = testpath / "3dgrids/reek/reek_sim_poro.roff"
+TESTFILE2 = testpath / "3dgrids/eme/1/emerald_hetero.roff"
+TESTFILE5 = testpath / "3dgrids/reek/REEK.EGRID"
+TESTFILE6 = testpath / "3dgrids/reek/REEK.INIT"
+TESTFILE7 = testpath / "3dgrids/reek/REEK.UNRST"
+TESTFILE8 = testpath / "3dgrids/reek/reek_sim_zone.roff"
+TESTFILE8A = testpath / "3dgrids/reek/reek_sim_grid.roff"
 TESTFILE9 = TESTFILE1
-TESTFILE10 = TPATH / "3dgrids/bri/b_grid.roff"
-TESTFILE11 = TPATH / "3dgrids/bri/b_poro.roff"
-POLYFILE = TPATH / "polygons/reek/1/polset2.pol"
+TESTFILE10 = testpath / "3dgrids/bri/b_grid.roff"
+TESTFILE11 = testpath / "3dgrids/bri/b_poro.roff"
+POLYFILE = testpath / "polygons/reek/1/polset2.pol"
 
-TESTFILE12A = TPATH / "3dgrids/reek/reek_sim_grid.grdecl"
-TESTFILE12B = TPATH / "3dgrids/reek/reek_sim_poro.grdecl"
+TESTFILE12A = testpath / "3dgrids/reek/reek_sim_grid.grdecl"
+TESTFILE12B = testpath / "3dgrids/reek/reek_sim_poro.grdecl"
 
-TESTFILE13A = TPATH / "3dgrids/etc/TEST_SP.EGRID"
-TESTFILE13B = TPATH / "3dgrids/etc/TEST_SP.INIT"
+TESTFILE13A = testpath / "3dgrids/etc/TEST_SP.EGRID"
+TESTFILE13B = testpath / "3dgrids/etc/TEST_SP.INIT"
 
-DUALROFF = TPATH / "3dgrids/etc/dual_grid_w_props.roff"
+DUALROFF = testpath / "3dgrids/etc/dual_grid_w_props.roff"
 
-BANAL7 = TPATH / "3dgrids/etc/banal7_grid_params.roff"
+BANAL7 = testpath / "3dgrids/etc/banal7_grid_params.roff"
 
 
 def test_create():
@@ -732,7 +726,7 @@ def test_gridprop_export_bgrdecl_double(tmp_path, grid):
 def test_simpleb8_case(simcase, props, snapshot):
     """Test a very small case that is actually ran through E100, E300, IX."""
 
-    folder = TPATH / "3dgrids" / "simpleb8"
+    folder = testpath / "3dgrids" / "simpleb8"
 
     grd = xtgeo.grid_from_file(folder / str(simcase + ".EGRID"), fformat="egrid")
 

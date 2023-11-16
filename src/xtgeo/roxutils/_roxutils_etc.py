@@ -7,10 +7,7 @@ try:
 except ImportError:
     pass
 
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import XTGeoDialog, logger
 
 
 def create_whatever_category(

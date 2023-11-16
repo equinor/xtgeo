@@ -21,15 +21,9 @@ import pytest
 import resfo
 
 import xtgeo
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = xtgeo.XTGeoDialog()
-
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 SIMPLEB8_PATH = TPATH / "3dgrids/simpleb8"
 

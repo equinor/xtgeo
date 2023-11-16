@@ -5,15 +5,14 @@ import numpy.ma as ma
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.surface import RegularSurface
 
 # set default level
-xtg = XTGeoDialog()
 
-logger = xtg.basiclogger(__name__)
 
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 ROFF1_GRID = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
 ROFF1_PROPS = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
 
@@ -85,37 +84,33 @@ def test_hcpvfz1(tmpdir, generate_plot):
     zp = np.ones((grd.ncol, grd.nrow, grd.nlay))
     # now make hcpf map
 
-    t1 = xtg.timer()
-    hcmap.hc_thickness_from_3dprops(
-        xprop=xcv,
-        yprop=ycv,
-        dzprop=dzv,
-        hcpfzprop=hcpfz,
-        zoneprop=zp,
-        zone_minmax=(1, 1),
-    )
+    with timer() as elapsed:
+        hcmap.hc_thickness_from_3dprops(
+            xprop=xcv,
+            yprop=ycv,
+            dzprop=dzv,
+            hcpfzprop=hcpfz,
+            zoneprop=zp,
+            zone_minmax=(1, 1),
+        )
 
     assert hcmap.values.mean() == pytest.approx(1.447, abs=0.1)
 
-    t2 = xtg.timer(t1)
+    logger.info("Speed basic is %s", elapsed())
 
-    logger.info("Speed basic is %s", t2)
-
-    t1 = xtg.timer()
-    hcmap2.hc_thickness_from_3dprops(
-        xprop=xcv,
-        yprop=ycv,
-        dzprop=dzv,
-        hcpfzprop=hcpfz,
-        zoneprop=zp,
-        coarsen=2,
-        zone_avg=True,
-        zone_minmax=(1, 1),
-        mask_outside=True,
-    )
-    t2 = xtg.timer(t1)
-
-    logger.info("Speed zoneavg coarsen 2 is %s", t2)
+    with timer() as elapsed:
+        hcmap2.hc_thickness_from_3dprops(
+            xprop=xcv,
+            yprop=ycv,
+            dzprop=dzv,
+            hcpfzprop=hcpfz,
+            zoneprop=zp,
+            coarsen=2,
+            zone_avg=True,
+            zone_minmax=(1, 1),
+            mask_outside=True,
+        )
+    logger.info("Speed zoneavg coarsen 2 is %s", elapsed())
 
     if generate_plot:
         hcmap.quickplot(filename=join(tmpdir, "quickplot_hcpv.png"))

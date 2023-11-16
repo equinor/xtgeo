@@ -8,14 +8,9 @@ import io
 import numpy as np
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
-xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
+TPATH = testdatafolder
 
 BANAL6 = TPATH / "3dgrids/etc/banal6.roff"
 

@@ -13,7 +13,7 @@ import xtgeo.common.sys as xsys
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def convert_subgrids(sdict):

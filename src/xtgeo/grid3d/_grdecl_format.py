@@ -5,7 +5,7 @@ import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+from xtgeo.common import logger
 
 
 def split_line(line):

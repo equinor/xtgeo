@@ -19,15 +19,12 @@ import shapely.geometry as sg
 
 import xtgeo
 from xtgeo.common import inherit_docstring
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import logger
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _polygons_oper, _xyz_oper
 from ._xyz import XYZ
 from ._xyz_io import _convert_idbased_xyz
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
 def _data_reader_factory(file_format):
