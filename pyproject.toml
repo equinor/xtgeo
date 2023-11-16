@@ -59,7 +59,7 @@ dependencies = [
     "shapely>=1.6.2",
     "tables;platform_system != 'Darwin' and python_version > '3.8'",      # TODO: mac...
     "tables<3.9;platform_system != 'Darwin' and python_version == '3.8'", # TODO: mac...
-    "tqdm",
+    "tqdm>=4.66",
 ]
 
 [project.urls]

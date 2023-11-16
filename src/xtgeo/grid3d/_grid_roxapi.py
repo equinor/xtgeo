@@ -9,7 +9,7 @@ import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import RoxUtils
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger, warnuser
 
 # logger.info(roxmsg)
 
@@ -77,19 +77,19 @@ def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
     indexer = roxgrid.grid_indexer
     ncol, nrow, _ = indexer.dimensions
 
-    xtg.say("ROXAPI with support for CornerPointGeometry")
+    logger.info("ROXAPI with support for CornerPointGeometry")
     geom = roxgrid.get_geometry()
     defined_cells = geom.get_defined_cells()
-    xtg.say(f"Defined cells \n{defined_cells}")
+    logger.info(f"Defined cells \n{defined_cells}")
 
-    xtg.say(f"IJK handedness: {geom.ijk_handedness}")
+    logger.info(f"IJK handedness: {geom.ijk_handedness}")
     for ipi in range(ncol + 1):
         for jpi in range(nrow + 1):
             tpi, bpi, zco = geom.get_pillar_data(ipi, jpi)
-            xtg.say(f"For pillar {ipi}, {jpi}\n")
-            xtg.say(f"Tops\n{tpi}")
-            xtg.say(f"Bots\n{bpi}")
-            xtg.say(f"Depths\n{zco}")
+            logger.info(f"For pillar {ipi}, {jpi}\n")
+            logger.info(f"Tops\n{tpi}")
+            logger.info(f"Bots\n{bpi}")
+            logger.info(f"Depths\n{zco}")
 
 
 def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
@@ -216,7 +216,7 @@ def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
         roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
 
         if roxgrid.has_dual_index_system:
-            logger.warnuser(
+            warnuser(
                 f"The roxar grid {gname} has dual index system.\n"
                 "XTGeo does not implement extraction of simbox grid\n"
                 "and only considers physical index."
@@ -384,11 +384,11 @@ def _export_grid_cornerpoint_roxapi_v1(
             )
             if info and ipi < 5 and jpi < 5:
                 if ipi == 0 and jpi == 0:
-                    xtg.say("Showing info for i<5 and j<5 only!")
-                xtg.say(f"XTGeo pillar {ipi}, {jpi}\n")
-                xtg.say(f"XTGeo Tops\n{tpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Depths\n{zzco}")
+                    logger.info("Showing info for i<5 and j<5 only!")
+                logger.info(f"XTGeo pillar {ipi}, {jpi}\n")
+                logger.info(f"XTGeo Tops\n{tpi[ipi, jpi]}")
+                logger.info(f"XTGeo Bots\n{bpi[ipi, jpi]}")
+                logger.info(f"XTGeo Depths\n{zzco}")
 
     geom.set_defined_cells(self.get_actnum().values.astype(np.bool))
     grid.set_geometry(geom)
@@ -447,11 +447,11 @@ def _export_grid_cornerpoint_roxapi_v2(
             )
             if info and ipi < 5 and jpi < 5:
                 if ipi == 0 and jpi == 0:
-                    xtg.say("Showing info for i<5 and j<5 only!")
-                xtg.say(f"XTGeo pillar {ipi}, {jpi}\n")
-                xtg.say(f"XTGeo Tops\n{tpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Depths\n{zzco}")
+                    logger.info("Showing info for i<5 and j<5 only!")
+                logger.info(f"XTGeo pillar {ipi}, {jpi}\n")
+                logger.info(f"XTGeo Tops\n{tpi[ipi, jpi]}")
+                logger.info(f"XTGeo Bots\n{bpi[ipi, jpi]}")
+                logger.info(f"XTGeo Depths\n{zzco}")
 
     geom.set_defined_cells(self._actnumsv.astype(np.bool))
     grid.set_geometry(geom)
@@ -482,7 +482,7 @@ def _set_subgrids(self, rox, grid):
         grid.set_zonation(roxar_subs)
 
     else:
-        logger.warnuser(
+        warnuser(
             "Implementation of subgrids is lacking in Roxar API for this "
             "RMS version. Will continue to store in RMS but without subgrid index."
         )

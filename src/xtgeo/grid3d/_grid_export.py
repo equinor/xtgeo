@@ -7,7 +7,7 @@ import h5py
 import hdf5plugin
 import roffio
 
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.grid3d._egrid import EGrid
 
 from ._grdecl_grid import GrdeclGrid

@@ -7,7 +7,7 @@ from typing import Any, Literal, Optional, Sequence
 import numpy as np
 
 from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.cxtgeo import _cxtgeo
 
 
@@ -61,8 +61,8 @@ def ijk_to_ib(
     if ib < 0:
         raise IndexError(f"Negative index: {ib}")
     if ibbase == 0 and ib > nx * ny * nz - 1:
-        xtg.warn("Something is wrong with IJK conversion")
-        xtg.warn(f"I J K, NX, NY, NZ IB: {i} {j} {k} {nx} {ny} {nz} {ib}")
+        logger.warning("Something is wrong with IJK conversion")
+        logger.warning(f"I J K, NX, NY, NZ IB: {i} {j} {k} {nx} {ny} {nz} {ib}")
 
     return ib
 

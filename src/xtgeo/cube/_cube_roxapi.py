@@ -17,7 +17,7 @@ Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering
 import numpy as np
 
 from xtgeo import RoxUtils
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 
 def import_cube_roxapi(self, project, name, folder=None):  # pragma: no cover
@@ -98,7 +98,7 @@ def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
     self._traceidcodes = np.ones((self._ncol, self._nrow), dtype=np.int32)
 
     if rcube.is_empty:
-        xtg.warn("Cube has no data; assume 0")
+        logger.warning("Cube has no data; assume 0")
     else:
         self.values = rcube.get_values()
 

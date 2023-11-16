@@ -2,7 +2,6 @@
 """Grid import functions for various formats."""
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
 from xtgeo.grid3d import _grid_import_ecl, _grid_import_roff
 
 from . import _grid_import_xtgcpgeom

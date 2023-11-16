@@ -6,7 +6,7 @@ import numpy.ma as ma
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 
 def f2c_order(obj, values1d):

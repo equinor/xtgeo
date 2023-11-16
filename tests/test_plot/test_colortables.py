@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import sys
-
 import xtgeo.plot._colortables as ct
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 
 TPATH = testdatafolder

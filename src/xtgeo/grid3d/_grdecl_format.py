@@ -1,10 +1,6 @@
 import warnings
 from contextlib import contextmanager
 
-import xtgeo
-
-xtg = xtgeo.common.XTGeoDialog()
-
 from xtgeo.common import logger
 
 

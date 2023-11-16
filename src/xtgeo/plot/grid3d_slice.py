@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
 
-from xtgeo.common import XTGeoDialog, logger
 from xtgeo.plot.baseplot import BasePlot
 
 

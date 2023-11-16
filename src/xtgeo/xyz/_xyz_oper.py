@@ -350,7 +350,9 @@ def get_fence(
     fence.hlen()
 
     if len(fence.dataframe) < 2:
-        xtg.warn(f"Too few points in polygons for fence, return False (name: {name})")
+        logger.warning(
+            f"Too few points in polygons for fence, return False (name: {name})"
+        )
         return False
 
     fence.filter_byid(polyid)

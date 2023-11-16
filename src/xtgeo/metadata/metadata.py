@@ -16,9 +16,6 @@ from collections import OrderedDict
 # from datetime import date
 import xtgeo
 
-xtg = xtgeo.common.XTGeoDialog()
-from xtgeo.common import logger
-
 
 class _OptionalMetaData:
     """Optional metadata are not required, but keys are limited.

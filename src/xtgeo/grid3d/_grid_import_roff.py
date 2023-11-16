@@ -6,13 +6,7 @@ import tempfile
 import warnings
 from contextlib import contextmanager
 
-import xtgeo
-
 from ._roff_grid import RoffGrid
-
-xtg = xtgeo.common.XTGeoDialog()
-
-from xtgeo.common import logger
 
 
 def match_xtgeo_214_header(header: bytes) -> bool:

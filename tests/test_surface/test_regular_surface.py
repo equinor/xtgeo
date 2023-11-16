@@ -9,7 +9,7 @@ from packaging import version
 
 import xtgeo
 from xtgeo import RegularSurface
-from xtgeo.common import XTGeoDialog, logger, timeit
+from xtgeo.common import logger, timer
 from xtgeo.common.xtgeo_dialog import testdatafolder
 
 TPATH = testdatafolder
@@ -242,13 +242,13 @@ def test_irapbin_import_metadatafirst():
 
     nsurf = 10
     sur = []
-    with timeit() as elapsed:
+    with timer() as elapsed:
         for ix in range(nsurf):
             sur.append(xtgeo.surface_from_file(TESTSET2, values=False))
     logger.info("Loading %s surfaces lazy took %s secs.", nsurf, elapsed())
     assert sur[nsurf - 1].ncol == 1264
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         for ix in range(nsurf):
             sur[ix].load_values()
     logger.info("Loading %s surfaces actual values took %s secs.", nsurf, elapsed())
@@ -265,7 +265,7 @@ def test_irapbin_export_test(tmpdir):
     nsurf = 10
     surf = xtgeo.surface_from_file(TESTSET5)
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         for _ in range(nsurf):
             surf.to_file(join(tmpdir, "tull1"), engine="cxtgeo")
 
@@ -926,14 +926,14 @@ def test_irapbin_export_py(tmpdir):
 
     x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
-    with timeit() as e1:
+    with timer() as e1:
         for _ in range(10):
             x.to_file(
                 join(tmpdir, "purecx.gri"), fformat="irap_binary", engine="cxtgeo"
             )
     print(f"CXTGeo based write: {e1()}")
 
-    with timeit() as e2:
+    with timer() as e2:
         for _ in range(10):
             x.to_file(
                 join(tmpdir, "purepy.gri"), fformat="irap_binary", engine="python"

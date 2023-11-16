@@ -3,10 +3,7 @@
 import numpy as np
 
 import xtgeo
-
-xtg = xtgeo.common.XTGeoDialog()
-
-from xtgeo.common import logger
+from xtgeo.common import logger, warndeprecated
 
 
 def report_zone_mismatch(
@@ -40,9 +37,7 @@ def report_zone_mismatch(
     self._xtgformat1()
 
     if onelayergrid is not None:
-        logger.warndeprecated(
-            "Using key 'onelayergrid' is redundant and can be skipped"
-        )
+        warndeprecated("Using key 'onelayergrid' is redundant and can be skipped")
 
     if not isinstance(well, xtgeo.Well):
         raise ValueError("Input well is not a Well() instance")

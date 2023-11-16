@@ -7,7 +7,7 @@ import resfo
 import roffio
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 from ._roff_parameter import RoffParameter
 

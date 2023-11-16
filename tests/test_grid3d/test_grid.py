@@ -9,7 +9,7 @@ import pytest
 from hypothesis import given
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger, timeit
+from xtgeo.common import logger, timer
 from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.grid3d import Grid
 
@@ -74,14 +74,16 @@ def test_create_shoebox(tmp_path):
     grd = xtgeo.create_box_grid((2, 3, 4), flip=-1)
     grd.to_file(tmp_path / "shoebox_default_flipped.roff")
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         grd = xtgeo.create_box_grid(
             origin=(0, 0, 1000),
             dimension=(300, 200, 30),
             increment=(20, 20, 1),
             flip=-1,
         )
-    logger.info("Making a a 1,8 mill cell grid took %5.3f secs", elapsed())
+    logger.info(
+        "Making a a 1,8 mill cell grid took %5.3f secs", elapsed().total_seconds()
+    )
 
     dx, dy = (grd.get_dx(), grd.get_dy())
 
@@ -201,7 +203,7 @@ def test_subgrids():
 
 def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc."""
-    with timeit() as elapsed:
+    with timer() as elapsed:
         for _ino in range(100):
             xtgeo.grid_from_file(REEKFIL4)
     print("100 loops with ROXAPIV 2 took: ", elapsed())

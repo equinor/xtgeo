@@ -5,7 +5,7 @@ import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.roxutils import RoxUtils
@@ -265,7 +265,7 @@ def _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisat
         cname = curvename
         if curvename == "MD":
             cname = "MD_imported"
-            xtg.warn(f"Logname MD is renamed to {cname}")
+            logger.warning(f"Logname MD is renamed to {cname}")
 
         if curveprop[0] == _AttrType.DISC.value:
             lcurve = lrun.log_curves.create_discrete(cname)

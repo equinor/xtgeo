@@ -9,10 +9,6 @@ import numpy as np
 import xtgeo
 import xtgeo.common.sys as xsys
 
-xtg = xtgeo.common.XTGeoDialog()
-
-from xtgeo.common import logger
-
 
 def import_xtgcpprop(mfile, ijrange=None, zerobased=False):
     """Using pure python for experimental xtgcpprop import.

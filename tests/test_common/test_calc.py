@@ -8,8 +8,6 @@ import pytest
 import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-
-xtg = xtgeo.XTGeoDialog()
 from xtgeo.common import logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 

@@ -3,18 +3,19 @@ import io
 import logging
 
 import xtgeo
+from xtgeo.common.xtgeo_dialog import testdatafolder
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-TESTFILE = "../../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
+NTHREAD = 20
 
 
-def _get_files_as_regularsurfaces_thread(option=1):
+def _get_files_as_regularsurfaces_thread(option: int = 1) -> xtgeo.Surfaces:
     surfs = []
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=NTHREAD) as executor:
         if option == 1:
             futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:
@@ -22,20 +23,17 @@ def _get_files_as_regularsurfaces_thread(option=1):
 
         for future in concurrent.futures.as_completed(futures):
             try:
-                surf = future.result()
+                surfs.append(future.result())
             except Exception as exc:  # pylint: disable=broad-except
                 logger.error("Error: %s", exc)
-            else:
-                surfs.append(surf)
 
-        regular_surfaces = xtgeo.Surfaces(surfs)
-        return regular_surfaces
+    return xtgeo.Surfaces(surfs)
 
 
-def _get_files_as_regularsurfaces_multiprocess(option=1):
+def _get_files_as_regularsurfaces_multiprocess(option: int = 1) -> xtgeo.Surfaces:
     surfs = []
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=NTHREAD) as executor:
         if option == 1:
             futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:
@@ -43,35 +41,27 @@ def _get_files_as_regularsurfaces_multiprocess(option=1):
 
         for future in concurrent.futures.as_completed(futures):
             try:
-                surf = future.result()
+                surfs.append(future.result())
             except Exception as exc:  # pylint: disable=broad-except
                 logger.error("Error: %s", exc)
-            else:
-                surfs.append(surf)
 
-        regular_surfaces = xtgeo.Surfaces(surfs)
-        return regular_surfaces
+    return xtgeo.Surfaces(surfs)
 
 
-def _get_regsurff(i):
+def _get_regsurff(i: int) -> xtgeo.Surfaces:
     logger.info("Start %s", i)
-
-    sfile = TESTFILE
-
-    logger.info("File is %s", sfile)
-    rf = xtgeo.surface_from_file(sfile)
+    logger.info("File is %s", testdatafolder)
+    rf = xtgeo.surface_from_file(testdatafolder)
     logger.info("End %s", i)
     return rf
 
 
-def _get_regsurfi(i):
+def _get_regsurfi(i: int) -> xtgeo.Surfaces:
     logger.info("Start %s", i)
-
-    sfile = TESTFILE
-    with open(sfile, "rb") as fin:
+    with open(testdatafolder, "rb") as fin:
         stream = io.BytesIO(fin.read())
 
-    logger.info("File is %s", sfile)
+    logger.info("File is %s", testdatafolder)
     rf = xtgeo.surface_from_file(stream, fformat="irap_binary")
     logger.info("End %s", i)
 

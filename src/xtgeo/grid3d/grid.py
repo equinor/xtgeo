@@ -23,7 +23,7 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-from xtgeo.common import XTGDescription, _XTGeoFile
+from xtgeo.common import XTGDescription, _XTGeoFile, logger, warndeprecated
 
 from . import (
     _grid3d_fence,
@@ -41,9 +41,6 @@ from . import (
 from ._ecl_grid import Units
 from ._grid3d import _Grid3D
 from .grid_properties import GridProperties, GridProperty
-
-xtg = xtgeo.common.XTGeoDialog()
-from xtgeo.common import logger
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -1667,7 +1664,7 @@ class Grid(_Grid3D):
         .. versionchanged:: 2.6 Added ``dual`` keyword
         """
         if mask is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )
@@ -1756,7 +1753,7 @@ class Grid(_Grid3D):
             A XTGeo GridProperty object dZ
         """
         if mask is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )
@@ -1957,7 +1954,7 @@ class Grid(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )
@@ -2031,7 +2028,7 @@ class Grid(_Grid3D):
             mask (bool): Deprecated, use asmasked instead!
         """
         if mask is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )

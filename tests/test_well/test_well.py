@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger, timeit
+from xtgeo.common import logger, timer
 from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.well import Well
 from xtgeo.xyz import Polygons
@@ -281,12 +281,12 @@ def test_shortwellname(create_well):
 
 
 def test_import_export_rmsasc(tmp_path, simple_well):
-    with timeit() as elapsed:
+    with timer() as elapsed:
         wname = (tmp_path / "$random").with_suffix(".rmsasc")
         wuse = simple_well.to_file(wname)
     print("Time for save RMSASC: ", elapsed())
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         result = xtgeo.well_from_file(wuse)
         assert result.dataframe.equals(result.dataframe)
     print("Time for load RMSASC: ", elapsed())

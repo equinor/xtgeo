@@ -7,8 +7,6 @@ try:
 except ImportError:
     pass
 
-from xtgeo.common import XTGeoDialog, logger
-
 
 def create_whatever_category(
     self, category, stype="horizons", domain="depth", htype="surface"

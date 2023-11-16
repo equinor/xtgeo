@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGDescription, XTGeoDialog, logger
+from xtgeo.common import XTGDescription, logger, warndeprecated
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 from . import _grid3d_utils as utils
@@ -535,7 +535,7 @@ class GridProperties(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )
@@ -573,7 +573,7 @@ class GridProperties(_Grid3D):
             A GridProperty instance of ACTNUM, or None if no props present.
         """
         if mask is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )

@@ -4,7 +4,7 @@
 import os
 import random
 
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 
 def random40():

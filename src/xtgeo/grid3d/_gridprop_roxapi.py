@@ -5,7 +5,6 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
 try:
     import roxar  # type: ignore

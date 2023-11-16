@@ -2,7 +2,7 @@
 """Well input and output, private module for ROXAPI"""
 
 
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.roxutils import RoxUtils
 
 from .blocked_well import BlockedWell
@@ -63,5 +63,5 @@ def _roxapi_import_bwells(
     self._wells = bwlist
 
     if not self._wells:
-        xtg.warn("No wells imported to BlockedWells")
+        logger.warning("No wells imported to BlockedWells")
         self._wells = None

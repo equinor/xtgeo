@@ -5,7 +5,6 @@
 import numpy as np
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog, logger
 
 
 def convert_np_carr_int(xyz, np_array):  # pragma: no cover

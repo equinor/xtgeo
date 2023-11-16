@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 
 def import_xyz(pfile, zname="Z_TVDSS"):

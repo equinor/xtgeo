@@ -7,13 +7,11 @@
 import deprecation
 
 import xtgeo
+from xtgeo.common import logger
 
 from . import _blockedwells_roxapi
 from .blocked_well import BlockedWell
 from .wells import Wells
-
-xtg = xtgeo.common.XTGeoDialog()
-from xtgeo.common import logger
 
 
 def blockedwells_from_files(
@@ -149,10 +147,10 @@ class BlockedWells(Wells):
                 )
                 self._wells.append(wll)
             except ValueError as err:
-                xtg.warn(f"SKIP this well: {err}")
+                logger.warning(f"SKIP this well: {err}")
                 continue
         if not self._wells:
-            xtg.warn("No wells imported!")
+            logger.warning("No wells imported!")
 
     @deprecation.deprecated(
         deprecated_in="2.16",

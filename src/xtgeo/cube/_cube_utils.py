@@ -6,7 +6,7 @@ import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.common.calc import _swap_axes
 
 # pylint: disable=protected-access

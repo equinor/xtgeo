@@ -5,9 +5,6 @@ import pytest
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
-xtg = xtgeo.XTGeoDialog()
-from xtgeo.common import logger
-
 
 @pytest.mark.parametrize(
     "depth, logseries, distance, expected",

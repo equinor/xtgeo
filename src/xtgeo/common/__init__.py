@@ -12,14 +12,18 @@ from xtgeo.common.xtgeo_dialog import (
     XTGeoDialog,
     XTGShowProgress,
     logger,
-    timeit,
+    timer,
+    warndeprecated,
+    warnuser,
 )
 from xtgeo.xyz._xyz_data import _XYZData
 
 __all__ = [
     "inherit_docstring",
     "logger",
-    "timeit",
+    "timer",
+    "warnuser",
+    "warndeprecated",
     "WellNotFoundError",
     "XTGDescription",
     "XTGeoDialog",

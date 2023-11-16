@@ -11,12 +11,10 @@ import deprecation
 import pandas as pd
 
 import xtgeo
+from xtgeo.common import logger
 
 from . import _wells_utils
 from .well1 import Well
-
-xtg = xtgeo.common.XTGeoDialog()
-from xtgeo.common import logger
 
 
 def wells_from_files(filelist, *args, **kwargs):
@@ -172,10 +170,10 @@ class Wells:
                     )
                 )
             except ValueError as err:
-                xtg.warn(f"SKIP this well: {err}")
+                logger.warning(f"SKIP this well: {err}")
                 continue
         if not self._wells:
-            xtg.warn("No wells imported!")
+            logger.warning("No wells imported!")
 
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) all wells (or based on a filter) from

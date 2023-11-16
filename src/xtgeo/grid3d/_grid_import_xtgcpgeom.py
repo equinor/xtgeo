@@ -8,11 +8,7 @@ from struct import unpack
 import h5py
 import numpy as np
 
-import xtgeo
 import xtgeo.common.sys as xsys
-
-xtg = xtgeo.common.XTGeoDialog()
-
 from xtgeo.common import logger
 
 

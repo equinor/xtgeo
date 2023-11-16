@@ -11,7 +11,7 @@ from matplotlib.path import Path as MPath
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.xyz import Polygons
 
 VALID_OPER = (
@@ -496,7 +496,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             0,
         )
         if ier == -9:
-            xtg.warn("Polygon is not closed")
+            logger.warning("Polygon is not closed")
 
     proxy.set_values1d(vals)
     proxyv = proxy.values.astype(np.int8)
@@ -516,7 +516,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
         # Dividing a map of zero is always a hazzle; try to obtain 0.0
         # as result in these cases
         if 0.0 in value:
-            xtg.warn(
+            logger.warning(
                 "Dividing a surface with value=0.0 or surface with zero "
                 "elements; may get unexpected results, try to "
                 "achieve zero values as result!"

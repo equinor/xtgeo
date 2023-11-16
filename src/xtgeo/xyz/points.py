@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import inherit_docstring, logger
+from xtgeo.common import inherit_docstring
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _xyz_oper

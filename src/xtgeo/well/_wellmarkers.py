@@ -10,7 +10,7 @@ import pandas as pd
 import xtgeo
 import xtgeo.common.constants as const
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 
 def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef):

@@ -10,7 +10,6 @@ from hypothesis import HealthCheck, given, settings
 from numpy.testing import assert_allclose
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 
 TPATH = testdatafolder

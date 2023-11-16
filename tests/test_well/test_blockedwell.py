@@ -6,7 +6,7 @@ from os.path import join
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 
 testpath = testdatafolder

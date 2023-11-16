@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import List, Literal, Tuple, Union
 
 import xtgeo
+from xtgeo.common import logger
 from xtgeo.common.constants import MAXKEYWORDS
 
 from . import _grid3d_utils as utils
@@ -12,10 +13,6 @@ from ._find_gridprop_in_eclrun import (
 )
 from ._gridprop_import_eclrun import decorate_name
 from .grid_property import GridProperty
-
-xtg = xtgeo.common.XTGeoDialog()
-
-from xtgeo.common import logger
 
 
 def sanitize_date_list(
@@ -295,11 +292,11 @@ def _process_sloppydates(dates, validdates):
             usedates.append(date)
     if not usedates:
         msg = f"No valid dates given (dates: {dates} vs {validdates})"
-        xtg.error(msg)
+        logger.error(msg)
         raise ValueError(msg)
 
     if skipdates:
         msg = f"Some dates not found: {skipdates}; will continue with dates: {usedates}"
-        xtg.warn(msg)
+        logger.warning(msg)
 
     return usedates

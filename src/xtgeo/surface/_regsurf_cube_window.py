@@ -5,7 +5,7 @@
 import numpy as np
 import numpy.ma as ma
 
-from xtgeo.common import XTGeoDialog, XTGShowProgress, logger
+from xtgeo.common import XTGShowProgress, logger
 
 from . import _regsurf_cube_window_v2 as cwv2
 from . import _regsurf_cube_window_v3 as cwv3

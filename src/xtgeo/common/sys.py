@@ -21,7 +21,7 @@ import numpy as np
 from xtgeo.cxtgeo import _cxtgeo
 
 from ._xyz_enum import _AttrType
-from .xtgeo_dialog import XTGeoDialog, logger
+from .xtgeo_dialog import logger
 
 if TYPE_CHECKING:
     import numpy.typing as npt

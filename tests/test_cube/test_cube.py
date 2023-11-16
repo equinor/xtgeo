@@ -9,7 +9,7 @@ from hypothesis import HealthCheck, given, settings
 
 import xtgeo
 from xtgeo.common import logger
-from xtgeo.common.xtgeo_dialog import testdatafolder, timeit
+from xtgeo.common.xtgeo_dialog import testdatafolder, timer
 from xtgeo.cube import Cube
 from xtgeo.cube._cube_import import (
     _import_segy_all_traces,
@@ -115,7 +115,7 @@ def test_segy_export_import(tmpdir):
 def test_storm_import():
     """Import Cube using Storm format (case Reek)."""
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         acube = xtgeo.cube_from_file(SFILE3, fformat="storm")
         logger.info("Reading Storm format took %s", elapsed())
 
@@ -131,7 +131,7 @@ def test_storm_import():
 def test_segy_import(loadsfile1):
     """Import SEGY using internal reader (case 1 Reek)."""
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         xcu = loadsfile1
         logger.info("Reading with XTGEO took %s", elapsed())
 
@@ -148,7 +148,7 @@ def test_segy_import(loadsfile1):
 def test_segyio_import(loadsfile1):
     """Import SEGY (case 1 Reek) via SegIO library."""
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         xcu = loadsfile1
         logger.info("Reading with SEGYIO took %s", elapsed())
 

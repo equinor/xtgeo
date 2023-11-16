@@ -3,14 +3,13 @@
 
 
 import io
-import sys
 
 import hypothesis.strategies as st
 import pytest
 from hypothesis import assume, given
 
 import xtgeo
-from xtgeo.common import logger, timeit
+from xtgeo.common import logger, timer
 from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.grid3d import GridProperties
 
@@ -138,7 +137,7 @@ def test_gridproperties_invalid_format(grid_property):
 def test_scan_dates():
     """A static method to scan dates in a RESTART file"""
 
-    with timeit() as elapsed:
+    with timer() as elapsed:
         dl = GridProperties.scan_dates(RFILE1)  # no need to make instance
     print(f"Dates scanned in {elapsed().total_seconds()} seconds")
 
@@ -153,7 +152,7 @@ def test_scan_dates_invalid_file():
 
 def test_dates_from_restart():
     """A simpler static method to scan dates in a RESTART file"""
-    with timeit() as elapsed:
+    with timer() as elapsed:
         dl = GridProperties.scan_dates(
             RFILE1, datesonly=True
         )  # no need to make instance
@@ -164,7 +163,7 @@ def test_dates_from_restart():
 
 def test_scan_keywords():
     """A static method to scan quickly keywords in a RESTART/INIT/*GRID file"""
-    with timeit() as elapsed:
+    with timer() as elapsed:
         df = GridProperties.scan_keywords(RFILE1, dataframe=True)
     logger.info("Dates scanned in %s seconds", elapsed())
     logger.info(df)
@@ -187,7 +186,7 @@ def test_scan_keywords_invalid_file():
 
 def test_scan_keywords_roff():
     """A static method to scan quickly keywords in a ROFF file"""
-    with timeit() as elapsed:
+    with timer() as elapsed:
         df = GridProperties.scan_keywords(XFILE2, dataframe=True, fformat="roff")
     logger.info("Dates scanned in %s seconds", elapsed())
     logger.info(df)

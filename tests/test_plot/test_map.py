@@ -1,8 +1,6 @@
-import sys
 from os.path import join
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.plot import Map
 

@@ -6,9 +6,6 @@ import pytest
 import xtgeo
 from xtgeo.xyz import Points
 
-xtg = xtgeo.XTGeoDialog()
-from xtgeo.common import logger
-
 WFILES1 = pathlib.Path("wells/reek/1/OP_1.w")
 WFILES2 = pathlib.Path("wells/reek/1/OP_[1-5]*.w")
 

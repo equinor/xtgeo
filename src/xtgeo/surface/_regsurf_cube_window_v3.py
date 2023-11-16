@@ -10,7 +10,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
 warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
 warnings.filterwarnings(action="ignore", message="Mean of empty slice")

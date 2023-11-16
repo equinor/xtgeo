@@ -3,7 +3,6 @@
 import os
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 
 TPATH = testdatafolder

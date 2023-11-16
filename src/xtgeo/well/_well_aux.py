@@ -14,7 +14,6 @@ from typing import Callable, Optional
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import logger
 from xtgeo.common._xyz_enum import _AttrName
 
 from . import _well_io

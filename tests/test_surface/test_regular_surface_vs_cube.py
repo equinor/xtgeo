@@ -8,7 +8,6 @@ import numpy.ma as ma
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.common.xtgeo_dialog import testdatafolder
 
 TPATH = testdatafolder

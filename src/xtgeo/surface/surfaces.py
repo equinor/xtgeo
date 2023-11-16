@@ -9,11 +9,9 @@ import deprecation
 import numpy as np
 
 import xtgeo
+from xtgeo.common import logger, warnuser
 
 from . import _surfs_import
-
-xtg = xtgeo.common.XTGeoDialog()
-from xtgeo.common import logger
 
 
 def surfaces_from_grid(grid, subgrids=True, rfactor=1):
@@ -81,7 +79,7 @@ class Surfaces:
                     sobj = xtgeo.surface_from_file(item, fformat="guess")
                     self.surfaces.append(sobj)
                 except OSError:
-                    logger.warnuser(f"Cannot read as file, skip: {item}")
+                    warnuser(f"Cannot read as file, skip: {item}")
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""

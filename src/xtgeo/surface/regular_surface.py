@@ -52,6 +52,7 @@ import pandas as pd
 
 import xtgeo
 import xtgeo.common.sys as xtgeosys
+from xtgeo.common import logger, warndeprecated, warnuser
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
 from . import (
@@ -66,9 +67,6 @@ from . import (
     _regsurf_roxapi,
     _regsurf_utils,
 )
-
-xtg = xtgeo.common.XTGeoDialog()
-from xtgeo.common import logger
 
 # valid argumentts for seismic attributes
 ValidAttrs = Literal[
@@ -2551,12 +2549,10 @@ class RegularSurface:
         )
 
         if ier == -4:
-            logger.warnuser(
-                "Number of sampled surface nodes < 10 percent of Cube nodes"
-            )
+            warnuser("Number of sampled surface nodes < 10 percent of Cube nodes")
             print("Number of sampled surface nodes < 10 percent of Cube nodes")
         elif ier == -5:
-            logger.warn("No nodes sampled: map is 100 percent outside of cube?")
+            logger.warning("No nodes sampled: map is 100 percent outside of cube?")
 
     def slice_cube_window(
         self,
@@ -3027,7 +3023,9 @@ class RegularSurface:
 
         ncount = self.values.count()
         if ncount < 5:
-            xtg.warn(f"None or too few map nodes for plotting. Skip output {filename}!")
+            logger.warning(
+                f"None or too few map nodes for plotting. Skip output {filename}!"
+            )
             return
 
         mymap = xtgeo.plot.Map()
@@ -3039,7 +3037,7 @@ class RegularSurface:
         maxvalue = minmax[1]
 
         if colortable is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The colortable parameter is deprecated,"
                 "and will be removed in version 4.0. Use colormap instead."
             )

@@ -9,8 +9,6 @@ import pytest
 import xtgeo
 import xtgeo.common.sys as xsys
 
-xtg = xtgeo.XTGeoDialog()
-
 
 def test_xtgeo_file_memstream_string_fformat_unknown():
     assert xtgeo._XTGeoFile(io.StringIO()).detect_fformat() == "unknown"

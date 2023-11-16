@@ -6,7 +6,6 @@ import os
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.plot import Grid3DSlice
 

@@ -12,7 +12,7 @@ import numpy.ma as ma
 import xtgeo
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger, warnuser
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.surface._zmap_parser import parse_zmap
 
@@ -402,7 +402,7 @@ def import_petromod(mfile, **_):
     if args["rotation"] != 0.0 and (
         rota_xori != args["xori"] or rota_yori != args["yori"]
     ):
-        logger.warnuser("Rotation origin and data origin do match")
+        warnuser("Rotation origin and data origin do match")
 
     # reread file for map values
 

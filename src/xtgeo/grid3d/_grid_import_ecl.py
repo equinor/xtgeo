@@ -7,10 +7,6 @@ import xtgeo
 from xtgeo.grid3d._egrid import EGrid, RockModel
 from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
 
-xtg = xtgeo.XTGeoDialog()
-
-from xtgeo.common import logger
-
 
 def import_ecl_egrid(
     gfile,

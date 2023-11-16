@@ -12,8 +12,6 @@ Other levels are DEBUG and CRITICAL. CRITICAL is default (cf. Pythons logging)
 
 Usage of logging in scripts::
 
-  import xtgeo
-  xtg = xtgeo.common.XTGeoDialog()
   from xtgeo.common import logger
   logger.info('This is logging of %s', something)
 
@@ -21,7 +19,7 @@ Other than logging, there is also a template for user interaction, which shall
 be used in client scripts::
 
   xtg.echo('This is a message')
-  xtg.warn('This is a warning')
+  xtg.warning('This is a warning')
   xtg.error('This is an error, will continue')
   xtg.critical('This is a big error, will exit')
 
@@ -29,9 +27,8 @@ In addition there are other classes:
 
 * XTGShowProgress()
 
-* XTGDescription()
-
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -41,26 +38,45 @@ import os
 import pathlib
 import platform
 import warnings
-from typing import Callable, Final, Iterator, Literal
+from typing import Callable, Final, Iterator
 
 import tqdm
 
 import xtgeo
 
 logging.basicConfig(
-    level=os.environ.get(
-        logging.getLevelName("XTG_LOGGING_LEVEL"),
-        logging.INFO,
+    level=logging.getLevelName(
+        os.environ.get(
+            "XTG_LOGGING_LEVEL",
+            logging.INFO,
+        )
     ),
     format=os.environ.get(
         "XTG_LOGGING_FORMAT",
-        "%(asctime)s - %(filename)s:%(lineno)d - %(levelname)s - %(message)s",
+        "%(levelname)s - %(asctime)s - %(filename)s:%(lineno)d - %(message)s",
     ),
 )
 
 
+def get_xtgeo_info() -> str:
+    """Prints a banner for a XTGeo app to STDOUT.
+
+    Args:
+        variant (str): Variant of info
+
+    Returns:
+        info (str): A string with XTGeo system info
+
+    """
+
+    return (
+        f"XTGeo version {xtgeo.__version__} (Python "
+        f"{platform.python_version()} on {platform.system()})"
+    )
+
+
 @contextlib.contextmanager
-def timeit() -> Iterator[Callable[[], datetime.timedelta]]:
+def timer() -> Iterator[Callable[[], datetime.timedelta]]:
     """
     A contextmanger tha tracks elapsed time inside it, after exit it gives
     the total time for the context.
@@ -83,11 +99,20 @@ def timeit() -> Iterator[Callable[[], datetime.timedelta]]:
         done = datetime.datetime.now()
 
 
+def _xtgeo_root_folder() -> pathlib.Path:
+    return pathlib.Path("./").resolve()
+
+
 def _testdatafolder() -> pathlib.Path:
-    testpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
-    if not os.path.isdir(testpath):
-        raise RuntimeError(f"XTG_TESTPATH({testpath}) must be a directory.")
-    return pathlib.Path(testpath)
+    testpath = pathlib.Path(
+        os.environ.get(
+            "XTG_TESTPATH",
+            _xtgeo_root_folder().parent / "xtgeo-testdata",
+        )
+    )
+    if testpath.is_dir():
+        return testpath
+    raise RuntimeError(f"XTG_TESTPATH({testpath}) must be a directory.")
 
 
 class XTGShowProgress(tqdm.tqdm):
@@ -143,64 +168,19 @@ class XTGDescription:
             return "{:40s} {:>2s} {}  {}  {}  {}  {}  {}  {}".format(*atxt)
 
 
-class XTGeoDialog(logging.Logger):  # pylint: disable=too-many-public-methods
-    ...
-    """System for handling dialogs and messages in XTGeo.
-
-    This module cooperates with Python logging module.
-
-    """
-
-    def __init__(self) -> None:
-        """Initializing XTGeoDialog."""
-        super().__init__(
-            "xtgeo",
-            level=os.environ.get(
-                logging.getLevelName("XTG_LOGGING_LEVEL"),
-                logging.DEBUG,
-            ),
-        )
-
-    @staticmethod
-    def get_xtgeo_info(variant: Literal["clibinfo"] = "clibinfo") -> str:
-        """Prints a banner for a XTGeo app to STDOUT.
-
-        Args:
-            variant (str): Variant of info
-
-        Returns:
-            info (str): A string with XTGeo system info
-
-        """
-
-        if variant == "clibinfo":
-            return (
-                f"XTGeo version {xtgeo.__version__} (Python "
-                f"{platform.python_version()} on {platform.system()})"
-            )
-
-        return "Invalid"
-
-    def insane(self, *args, **kw) -> None:  # type: ignore
-        self.critical(*args, **kw)
-
-    @staticmethod
-    def warndeprecated(string: str) -> None:
-        """Show Deprecation warnings using Python warnings"""
-
-        warnings.simplefilter("default", DeprecationWarning)
-        warnings.warn(string, DeprecationWarning, stacklevel=2)
-
-    @staticmethod
-    def warnuser(string: str) -> None:
-        """Show User warnings, using Python warnings"""
-
-        warnings.simplefilter("default", UserWarning)
-        warnings.warn(string, UserWarning, stacklevel=2)
-
-    def say(self, txt: str) -> None:
-        return self.info(txt)
+def warnuser(string: str) -> None:
+    """Show User warnings, using Python warnings"""
+    warnings.simplefilter("default", UserWarning)
+    warnings.warn(string, UserWarning, stacklevel=2)
 
 
-logger: Final = XTGeoDialog()
+def warndeprecated(string: str) -> None:
+    """Show Deprecation warnings using Python warnings"""
+    warnings.simplefilter("default", DeprecationWarning)
+    warnings.warn(string, DeprecationWarning, stacklevel=2)
+
+
+logger: Final = logging.getLogger(name="XTGeo")
+XTGeoDialog: Final = logger  # Alias
+
 testdatafolder: Final = _testdatafolder()

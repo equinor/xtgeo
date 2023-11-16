@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from packaging.version import parse as versionparse
 
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger, warnuser
 
 from . import _colortables as _ctable
 
@@ -117,7 +117,7 @@ class BasePlot(object):
             for i in range(cmap.N):
                 colors.append(cmap(i))
         else:
-            logger.warnuser(
+            warnuser(
                 "Trying to access as color map not installed in this version "
                 f"of matplotlib: <{cfile}>. Revert to <rainbow>"
             )

@@ -9,10 +9,6 @@ import xtgeo
 
 from ._grdecl_format import match_keyword, open_grdecl
 
-xtg = xtgeo.common.XTGeoDialog()
-
-from xtgeo.common import logger
-
 
 def import_bgrdecl_prop(pfile, name, grid):
     """Import prop for binary files with GRDECL layout.

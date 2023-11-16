@@ -12,7 +12,7 @@ import deprecation
 import numpy as np
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger, warndeprecated, warnuser
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.sys import _XTGeoFile
 from xtgeo.metadata.metadata import MetaDataCPProperty
@@ -880,7 +880,7 @@ class GridProperty(_Grid3D):
             try:
                 values = np.ma.reshape(values, (ncol, nrow, nlay), order="C")
             except ValueError as emsg:
-                xtg.error(f"Cannot reshape array: {emsg}")
+                logger.error(f"Cannot reshape array: {emsg}")
                 raise
 
         # replace any undef or nan with mask
@@ -1255,7 +1255,7 @@ class GridProperty(_Grid3D):
 
         """
         if mask is not None:
-            logger.warndeprecated(
+            warndeprecated(
                 "The mask option is deprecated,"
                 "and will be removed in version 4.0. Use asmasked instead."
             )
@@ -1479,10 +1479,10 @@ class GridProperty(_Grid3D):
             ]
             return np.ma.filled(res, fill_value=np.nan)
         except IndexError as ier:
-            xtg.warn(f"Error {ier}, return None")
+            logger.warning(f"Error {ier}, return None")
             return None
         except:  # noqa
-            xtg.warn("Unexpected error")
+            logger.warning("Unexpected error")
             raise
 
     def discrete_to_continuous(self) -> None:
@@ -1546,13 +1546,14 @@ class GridProperty(_Grid3D):
 
         """
         if self.geometry is None:
-            msg = """
+            warnuser(
+                """
             You need to link the property to a grid geometry:"
 
                 myprop.geometry = mygrid
 
             """
-            logger.warnuser(msg)
+            )
             raise ValueError("The geometry attribute is not set")
 
         _gridprop_op1.operation_polygons(

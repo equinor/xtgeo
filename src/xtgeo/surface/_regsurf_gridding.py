@@ -10,9 +10,6 @@ import scipy.interpolate
 import scipy.ndimage
 
 import xtgeo
-
-xtg = xtgeo.common.XTGeoDialog()
-
 from xtgeo.common import logger
 
 # Note: 'self' is an instance of RegularSurface

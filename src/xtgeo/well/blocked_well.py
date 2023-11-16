@@ -6,9 +6,7 @@ import deprecation
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import logger
 from xtgeo.common._xyz_enum import _AttrName
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from . import _blockedwell_roxapi
 from .well1 import Well

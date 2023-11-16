@@ -11,7 +11,7 @@ try:
 except ImportError:
     pass
 
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 from . import _roxutils_etc
 
@@ -112,7 +112,7 @@ class RoxUtils(object):
                 self._project.close()
                 logger.info("RMS project instance is closed")
             except TypeError as msg:
-                xtg.warn(msg)
+                logger.warning(msg)
         else:
             logger.info("Close request, but skip for good reasons...")
             logger.debug("... either in RMS GUI or in a sequence of running roxarapps")

@@ -13,7 +13,7 @@ import numpy as np
 
 import xtgeo
 import xtgeo.common.sys as xtgeosys
-from xtgeo.common import XTGDescription, XTGeoDialog, logger
+from xtgeo.common import XTGDescription, logger
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
 

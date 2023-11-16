@@ -12,7 +12,7 @@ from packaging.version import parse as versionparse
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons
 

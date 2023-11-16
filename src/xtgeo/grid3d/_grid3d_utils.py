@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 
-import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import XTGeoCLibError
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
@@ -16,9 +15,6 @@ if TYPE_CHECKING:
     from xtgeo.common.sys import _XTGeoFile
 
     from .grid_properties import GridPropertiesKeywords, KeywordDateTuple, KeywordTuple
-
-xtg = xtgeo.XTGeoDialog()
-from xtgeo.common import logger
 
 
 def scan_keywords(

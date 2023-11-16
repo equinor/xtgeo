@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 from xtgeo.common.xtgeo_dialog import testdatafolder
 from xtgeo.surface import RegularSurface
 

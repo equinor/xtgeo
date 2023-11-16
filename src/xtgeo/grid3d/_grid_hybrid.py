@@ -3,9 +3,6 @@ import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
-xtg = xtgeo.XTGeoDialog()
-from xtgeo.common import logger
-
 
 def make_hybridgrid(
     self,

@@ -7,7 +7,7 @@ import numpy as np
 import numpy.ma as ma
 from matplotlib import ticker
 
-from xtgeo.common import XTGeoDialog, logger
+from xtgeo.common import logger
 
 from .baseplot import BasePlot
 

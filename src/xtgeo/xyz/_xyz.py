@@ -7,7 +7,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from xtgeo.common import XTGDescription, XTGeoDialog, logger
+from xtgeo.common import XTGDescription, logger, warnuser
 
 from . import _xyz_oper
 
@@ -230,9 +230,7 @@ class XYZ(ABC):
         """
         for cname in clist:
             if cname in self.protected_columns():
-                logger.warnuser(
-                    f"The column {cname} is protected and will not be deleted."
-                )
+                warnuser(f"The column {cname} is protected and will not be deleted.")
                 continue
 
             if cname in self.geometry_columns():
