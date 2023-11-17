@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module/class for 3D grids (corner point geometry) with XTGeo."""
 from __future__ import annotations
 
@@ -7,16 +6,8 @@ import json
 import pathlib
 import warnings
 from collections import OrderedDict
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Hashable,
-    Literal,
-    NoReturn,
-    Optional,
-    Sequence,
-)
+from collections.abc import Callable, Hashable, Sequence
+from typing import TYPE_CHECKING, Any, Literal, NoReturn
 
 import deprecation
 import numpy as np
@@ -81,7 +72,7 @@ METRIC = Literal[
 def _handle_import(
     grid_constructor: Callable[..., Grid],
     gfile: FileLike | _XTGeoFile,
-    fformat: Optional[str] = None,
+    fformat: str | None = None,
     **kwargs: dict,
 ) -> Grid:
     """Handles the import given a constructor.
@@ -109,7 +100,7 @@ def _handle_import(
 
 def grid_from_file(
     gfile: str | pathlib.Path,
-    fformat: Optional[str] = None,
+    fformat: str | None = None,
     **kwargs: dict[str, Any],
 ) -> Grid:
     """Read a grid (cornerpoint) from filelike and an returns a Grid() instance.
@@ -225,7 +216,7 @@ def create_box_grid(
 
 def grid_from_cube(
     cube: xtgeo.Cube,
-    propname: Optional[str] = "seismics",
+    propname: str | None = "seismics",
     oricenter: bool = True,
 ) -> Grid:
     """Create a rectangular 'shoebox' grid from an existing cube.
@@ -391,13 +382,13 @@ class Grid(_Grid3D):
         actnumsv: np.ndarray,
         dualporo: bool = False,
         dualperm: bool = False,
-        subgrids: Optional[OrderedDict] = None,
-        units: Optional[Units] = None,
-        filesrc: Optional[pathlib.Path | str] = None,
-        props: Optional[GridProperties] = None,
-        name: Optional[str] = None,
-        roxgrid: Optional[Any] = None,
-        roxindexer: Optional[Any] = None,
+        subgrids: OrderedDict | None = None,
+        units: Units | None = None,
+        filesrc: pathlib.Path | str | None = None,
+        props: GridProperties | None = None,
+        name: str | None = None,
+        roxgrid: Any | None = None,
+        roxindexer: Any | None = None,
     ):
         coordsv = np.asarray(coordsv)
         zcornsv = np.asarray(zcornsv)
@@ -457,13 +448,13 @@ class Grid(_Grid3D):
         actnumsv: np.ndarray,
         dualporo: bool = False,
         dualperm: bool = False,
-        subgrids: Optional[OrderedDict[str, range | list[int]]] = None,
-        units: Optional[Units] = None,
-        filesrc: Optional[pathlib.Path | str] = None,
-        props: Optional[GridProperties] = None,
-        name: Optional[str] = None,
-        roxgrid: Optional[Any] = None,
-        roxindexer: Optional[Any] = None,
+        subgrids: OrderedDict[str, range | list[int]] | None = None,
+        units: Units | None = None,
+        filesrc: pathlib.Path | str | None = None,
+        props: GridProperties | None = None,
+        name: str | None = None,
+        roxgrid: Any | None = None,
+        roxindexer: Any | None = None,
     ) -> None:
         """This function only serves to allow deprecated initialization."""
         # TODO: Remove once implicit initialization such as Grid().from_file()
@@ -487,7 +478,7 @@ class Grid(_Grid3D):
             self._props = props
         self._name = name
         self._subgrids = subgrids
-        self._ijk_handedness: Optional[Literal["left", "right"]] = None
+        self._ijk_handedness: Literal["left", "right"] | None = None
 
         self._dualactnum = None
         if dualporo:
@@ -540,12 +531,12 @@ class Grid(_Grid3D):
         self._metadata = obj  # checking is currently missing! TODO
 
     @property
-    def filesrc(self) -> Optional[str | pathlib.Path]:
+    def filesrc(self) -> str | pathlib.Path | None:
         """str: Source for grid (filepath or name in RMS)."""
         return self._filesrc
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """str: Name attribute of grid."""
         return self._name
 
@@ -573,7 +564,7 @@ class Grid(_Grid3D):
         return (ncoord, nzcorn, ntot)
 
     @property
-    def ijk_handedness(self) -> Optional[Literal["left", "right"]]:
+    def ijk_handedness(self) -> Literal["left", "right"] | None:
         """str: IJK handedness for grids, "right" or "left".
 
         For a non-rotated grid with K increasing with depth, 'left' is corner in
@@ -598,7 +589,7 @@ class Grid(_Grid3D):
         self._ijk_handedness = value
 
     @property
-    def subgrids(self) -> Optional[OrderedDict[str, range | list[int]]]:
+    def subgrids(self) -> OrderedDict[str, range | list[int]] | None:
         """:obj:`list` of :obj:`int`: A dict with subgrid name and an array as value.
 
         I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2": [5, 6, 7],
@@ -622,7 +613,7 @@ class Grid(_Grid3D):
     @subgrids.setter
     def subgrids(
         self,
-        sgrids: Optional[OrderedDict[str, range | list[int]]],
+        sgrids: OrderedDict[str, range | list[int]] | None,
     ) -> None:
         if sgrids is None:
             self._subgrids = None
@@ -716,7 +707,7 @@ class Grid(_Grid3D):
         self._props = gprops  # self._props is a GridProperties instance
 
     @property
-    def props(self) -> Optional[list[GridProperty]]:
+    def props(self) -> list[GridProperty] | None:
         """Return or set a list of XTGeo GridProperty objects.
 
         When setting, the dimension of the property object is checked,
@@ -752,17 +743,17 @@ class Grid(_Grid3D):
         self._props.props = plist  # self._props is a GridProperties instance
 
     @property
-    def propnames(self) -> Optional[list[str]]:
+    def propnames(self) -> list[str] | None:
         """Returns a list of property names that are hooked to a grid."""
         return None if self._props is None else self._props.names
 
     @property
-    def roxgrid(self) -> Optional[Any]:
+    def roxgrid(self) -> Any | None:
         """Get the Roxar native proj.grid_models[gname].get_grid() object."""
         return self._roxgrid
 
     @property
-    def roxindexer(self) -> Optional[Any]:
+    def roxindexer(self) -> Any | None:
         """The Roxar native proj.grid_models[gname].get_grid().grid_indexer object."""
         return self._roxindexer
 
@@ -885,9 +876,9 @@ class Grid(_Grid3D):
     def to_hdf(
         self,
         gfile: str | pathlib.Path,
-        compression: Optional[str] = None,
-        chunks: Optional[bool] = False,
-        subformat: Optional[int] = 844,
+        compression: str | None = None,
+        chunks: bool | None = False,
+        subformat: int | None = 844,
     ) -> FileLike:
         """Export grid geometry to HDF5 storage format (experimental!).
 
@@ -921,7 +912,7 @@ class Grid(_Grid3D):
     def to_xtgf(
         self,
         gfile: str | pathlib.Path,
-        subformat: Optional[int] = 844,
+        subformat: int | None = 844,
     ) -> pathlib.Path:
         """Export grid geometry to xtgeo native binary file format (experimental!).
 
@@ -985,7 +976,7 @@ class Grid(_Grid3D):
     def from_file(
         self,
         gfile: FileLike,
-        fformat: Optional[str] = None,
+        fformat: str | None = None,
         **kwargs: Any,
     ) -> Grid:
         """Import grid geometry from file, and makes an instance of this class.
@@ -1048,7 +1039,7 @@ class Grid(_Grid3D):
     def from_hdf(
         self,
         gfile: FileLike,
-        ijkrange: Optional[Sequence[int]] = None,
+        ijkrange: Sequence[int] | None = None,
         zerobased: bool = False,
     ) -> None:
         """Import grid geometry from HDF5 file (experimental!).
@@ -1179,7 +1170,7 @@ class Grid(_Grid3D):
         self,
         details: bool = False,
         flush: bool = True,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Describe an instance by printing to stdout."""
         logger.info("Print a description...")
 
@@ -1381,7 +1372,7 @@ class Grid(_Grid3D):
 
         self._props.append_props([prop])
 
-    def set_subgrids(self, sdict: Optional[OrderedDict[str, int]]) -> None:
+    def set_subgrids(self, sdict: OrderedDict[str, int] | None) -> None:
         """Set the subgrid from a simplified ordered dictionary.
 
         The simplified dictionary is on the form
@@ -1406,7 +1397,7 @@ class Grid(_Grid3D):
 
         self.subgrids = newsub
 
-    def get_subgrids(self) -> Optional[OrderedDict[str, int]]:
+    def get_subgrids(self) -> OrderedDict[str, int] | None:
         """Get the subgrids on a simplified ordered dictionary.
 
         The simplified dictionary is on the form {"name1": 3, "name2": 5}
@@ -1456,8 +1447,8 @@ class Grid(_Grid3D):
 
     def estimate_design(
         self,
-        nsub: Optional[str | int] = None,
-    ) -> Optional[dict[str, str | float]]:
+        nsub: str | int | None = None,
+    ) -> dict[str, str | float] | None:
         """Estimate design and simbox thickness of the grid or a subgrid.
 
         If the grid consists of several subgrids, and nsub is not specified, then
@@ -1528,7 +1519,7 @@ class Grid(_Grid3D):
 
     def subgrids_from_zoneprop(
         self, zoneprop: GridProperty
-    ) -> Optional[OrderedDict[str, int]]:
+    ) -> OrderedDict[str, int] | None:
         """Estimate subgrid index from a zone property.
 
         The new will esimate which will replace the current if any.
@@ -1586,7 +1577,7 @@ class Grid(_Grid3D):
         self,
         order: Literal["C", "F", "A", "K"] = "C",
         fracture: bool = False,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """Returns the 1D ndarray which holds the indices for matrix/fracture cases.
 
         Args:
@@ -1624,7 +1615,7 @@ class Grid(_Grid3D):
         """
         return self._props
 
-    def get_prop_by_name(self, name: str) -> Optional[GridProperty]:
+    def get_prop_by_name(self, name: str) -> GridProperty | None:
         """Gets a property object by name lookup, return None if not present."""
 
         if self.props is None:
@@ -1643,7 +1634,7 @@ class Grid(_Grid3D):
         self,
         name: str = "ACTNUM",
         asmasked: bool = False,
-        mask: Optional[bool] = None,
+        mask: bool | None = None,
         dual: bool = False,
     ) -> GridProperty:
         """Return an ACTNUM GridProperty object.
@@ -1728,7 +1719,7 @@ class Grid(_Grid3D):
         name: str = "dZ",
         flip: bool = True,
         asmasked: bool = True,
-        mask: Optional[bool] = None,
+        mask: bool | None = None,
         metric: METRIC = "z projection",
     ) -> GridProperty:
         """Return the dZ as GridProperty object.
@@ -1945,7 +1936,7 @@ class Grid(_Grid3D):
         self,
         names: tuple[str, str, str] = ("IX", "JY", "KZ"),
         asmasked: bool = True,
-        mask: Optional[bool] = None,
+        mask: bool | None = None,
         zerobased: bool = False,
     ) -> tuple[GridProperty, GridProperty, GridProperty]:
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter, J counter, K counter.
@@ -2015,7 +2006,7 @@ class Grid(_Grid3D):
         self,
         names: tuple[str, str, str] = ("X_UTME", "Y_UTMN", "Z_TVDSS"),
         asmasked: bool = True,
-        mask: Optional[bool] = None,
+        mask: bool | None = None,
     ) -> tuple[GridProperty, GridProperty, GridProperty,]:
         """Returns 3 xtgeo.grid3d.GridProperty objects for x, y, z coordinates.
 
@@ -2279,7 +2270,7 @@ class Grid(_Grid3D):
     def inactivate_inside(
         self,
         poly: Polygons,
-        layer_range: Optional[tuple[int, int]] = None,
+        layer_range: tuple[int, int] | None = None,
         inside: bool = True,
         force_close: bool = False,
     ) -> None:
@@ -2308,7 +2299,7 @@ class Grid(_Grid3D):
     def inactivate_outside(
         self,
         poly: Polygons,
-        layer_range: Optional[tuple[int, int]] = None,
+        layer_range: tuple[int, int] | None = None,
         force_close: bool = False,
     ) -> None:
         """Inacativate grid outside a polygon."""
@@ -2327,7 +2318,7 @@ class Grid(_Grid3D):
         colcrop: tuple[int, int],
         rowcrop: tuple[int, int],
         laycrop: tuple[int, int],
-        props: Optional[str | list[GridProperty]] = None,
+        props: str | list[GridProperty] | None = None,
     ) -> None:
         """Reduce the grid size by cropping.
 
@@ -2398,7 +2389,7 @@ class Grid(_Grid3D):
         self._tmp = {}
 
     def reverse_row_axis(
-        self, ijk_handedness: Optional[Literal["left", "right"]] = None
+        self, ijk_handedness: Literal["left", "right"] | None = None
     ) -> None:
         """Reverse the row axis (J indices).
 
@@ -2444,8 +2435,8 @@ class Grid(_Grid3D):
         nhdiv: int = 10,
         toplevel: float = 1000.0,
         bottomlevel: float = 1100.0,
-        region: Optional[GridProperty] = None,
-        region_number: Optional[int] = None,
+        region: GridProperty | None = None,
+        region_number: int | None = None,
     ) -> None:
         """Convert to hybrid grid, either globally or in a selected region.
 
@@ -2496,8 +2487,8 @@ class Grid(_Grid3D):
 
     def refine_vertically(
         self,
-        rfactor: Optional[int | dict],
-        zoneprop: Optional[GridProperty] = None,
+        rfactor: int | dict | None,
+        zoneprop: GridProperty | None = None,
     ) -> None:
         """Refine vertically, proportionally.
 
@@ -2550,19 +2541,19 @@ class Grid(_Grid3D):
 
     def report_zone_mismatch(
         self,
-        well: Optional[Well] = None,
+        well: Well | None = None,
         zonelogname: str = "ZONELOG",
-        zoneprop: Optional[GridProperty] = None,
-        onelayergrid: Optional[tuple] = None,
+        zoneprop: GridProperty | None = None,
+        onelayergrid: tuple | None = None,
         zonelogrange: tuple[int, int] = (0, 9999),
         zonelogshift: int = 0,
-        depthrange: Optional[tuple] = None,
-        perflogname: Optional[str] = None,
+        depthrange: tuple | None = None,
+        perflogname: str | None = None,
         perflogrange: tuple[int, int] = (1, 9999),
-        filterlogname: Optional[str] = None,
+        filterlogname: str | None = None,
         filterlogrange: tuple[float, float] = (1e-32, 9999.0),
         resultformat: Literal[1, 2] = 1,
-    ) -> Optional[tuple | dict]:
+    ) -> tuple | dict | None:
         """Reports mismatch between wells and a zone.
 
         Approaches on matching:
@@ -2659,10 +2650,10 @@ class Grid(_Grid3D):
         self,
         fencespec: np.ndarray | Polygons,
         prop: str | GridProperty,
-        zmin: Optional[float] = None,
-        zmax: Optional[float] = None,
+        zmin: float | None = None,
+        zmax: float | None = None,
         zincrement: float = 1.0,
-        hincrement: Optional[float | bool] = None,
+        hincrement: float | bool | None = None,
         atleast: int = 5,
         nextend: int = 2,
     ) -> tuple[int, int, int, int, np.ndarray]:

@@ -5,8 +5,9 @@ import functools
 import hashlib
 import pathlib
 import warnings
+from collections.abc import Callable
 from types import FunctionType
-from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 
 import deprecation
 import numpy as np
@@ -89,7 +90,7 @@ def _data_reader_factory(fformat: str) -> Callable:
 
 def gridproperty_from_file(
     pfile: FileLike,
-    fformat: Optional[str] = None,
+    fformat: str | None = None,
     **kwargs: dict[str, Any],
 ) -> GridProperty:
     """
@@ -271,23 +272,23 @@ class GridProperty(_Grid3D):
     @allow_deprecated_init
     def __init__(
         self,
-        gridlike: Optional[Grid | GridProperty] = None,
-        ncol: Optional[int] = None,
-        nrow: Optional[int] = None,
-        nlay: Optional[int] = None,
+        gridlike: Grid | GridProperty | None = None,
+        ncol: int | None = None,
+        nrow: int | None = None,
+        nlay: int | None = None,
         name: str = "unknown",
         discrete: bool = False,
-        date: Optional[str] = None,
-        grid: Optional[Grid] = None,
+        date: str | None = None,
+        grid: Grid | None = None,
         linkgeometry: bool = True,
         fracture: bool = False,
-        codes: Optional[dict[int, str]] = None,
+        codes: dict[int, str] | None = None,
         dualporo: bool = False,
         dualperm: bool = False,
-        roxar_dtype: Optional[npt.DTypeLike] = None,
-        values: Optional[np.ndarray | float | int] = None,
+        roxar_dtype: npt.DTypeLike | None = None,
+        values: np.ndarray | float | int | None = None,
         roxorigin: bool = False,
-        filesrc: Optional[str] = None,
+        filesrc: str | None = None,
     ) -> None:
         """
         Instantiating.
@@ -368,23 +369,23 @@ class GridProperty(_Grid3D):
 
     def _reset(
         self,
-        gridlike: Optional[Grid | GridProperty] = None,
-        ncol: Optional[int] = None,
-        nrow: Optional[int] = None,
-        nlay: Optional[int] = None,
+        gridlike: Grid | GridProperty | None = None,
+        ncol: int | None = None,
+        nrow: int | None = None,
+        nlay: int | None = None,
         name: str = "unknown",
         discrete: bool = False,
-        date: Optional[str] = None,
-        grid: Optional[Grid] = None,
+        date: str | None = None,
+        grid: Grid | None = None,
         linkgeometry: bool = True,
         fracture: bool = False,
-        codes: Optional[dict[int, str]] = None,
+        codes: dict[int, str] | None = None,
         dualporo: bool = False,
         dualperm: bool = False,
-        roxar_dtype: Optional[npt.DTypeLike] = None,
-        values: Optional[np.ndarray | float | int] = None,
+        roxar_dtype: npt.DTypeLike | None = None,
+        values: np.ndarray | float | int | None = None,
         roxorigin: bool = False,
-        filesrc: Optional[str] = None,
+        filesrc: str | None = None,
     ) -> None:
         """
         Instantiating.
@@ -489,8 +490,8 @@ class GridProperty(_Grid3D):
 
     def _set_initial_dimensions(
         self,
-        gridlike: Optional[Grid | GridProperty],
-        input_dimensions: tuple[Optional[int], Optional[int], Optional[int]],
+        gridlike: Grid | GridProperty | None,
+        input_dimensions: tuple[int | None, int | None, int | None],
     ) -> None:
         """
         Sets the initial dimensions either from input, grid or default.
@@ -526,7 +527,7 @@ class GridProperty(_Grid3D):
                 self._nlay = nlay
 
     def _check_dimensions_match(
-        self, ncol: Optional[int], nrow: Optional[int], nlay: Optional[int]
+        self, ncol: int | None, nrow: int | None, nlay: int | None
     ) -> None:
         """
         Checks that Grid/GridProperty dimensions match provided input dimensions.
@@ -582,7 +583,7 @@ class GridProperty(_Grid3D):
         self._metadata = metadata
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """Get or set the property name."""
         return self._name
 
@@ -601,12 +602,12 @@ class GridProperty(_Grid3D):
         return len(self.actnum_indices)
 
     @property
-    def geometry(self) -> Optional[Grid]:
+    def geometry(self) -> Grid | None:
         """Get or set the linked geometry, i.e. the Grid instance."""
         return self._geometry
 
     @geometry.setter
-    def geometry(self, grid: Optional[Grid]) -> None:
+    def geometry(self, grid: Grid | None) -> None:
         if grid is None:
             self._geometry = None
         elif isinstance(grid, xtgeo.grid3d.Grid) and grid.dimensions == self.dimensions:
@@ -679,7 +680,7 @@ class GridProperty(_Grid3D):
         self.values = self.values.astype(dtype)
 
     @property
-    def filesrc(self) -> Optional[str]:
+    def filesrc(self) -> str | None:
         """Get or set the GridProperty file src (if any)."""
         return self._filesrc
 
@@ -688,7 +689,7 @@ class GridProperty(_Grid3D):
         self._filesrc = src
 
     @property
-    def roxar_dtype(self) -> Optional[np.dtype]:
+    def roxar_dtype(self) -> np.dtype | None:
         """Get or set the roxar dtype (if any)."""
         return self._roxar_dtype
 
@@ -702,12 +703,12 @@ class GridProperty(_Grid3D):
         self._roxar_dtype = dtype
 
     @property
-    def date(self) -> Optional[str]:
+    def date(self) -> str | None:
         """Get or set the property date as string in YYYYMMDD format."""
         return self._date
 
     @date.setter
-    def date(self, date: Optional[str]) -> None:
+    def date(self, date: str | None) -> None:
         self._date = date
 
     @property
@@ -918,7 +919,7 @@ class GridProperty(_Grid3D):
     def from_file(
         self,
         pfile: FileLike,
-        fformat: Optional[str] = None,
+        fformat: str | None = None,
         **kwargs: Any,
     ) -> GridProperty:
         """
@@ -981,7 +982,7 @@ class GridProperty(_Grid3D):
     def _read_file(
         cls,
         pfile: FileLike,
-        fformat: Optional[str] = None,
+        fformat: str | None = None,
         **kwargs: Any,
     ) -> GridProperty:
         xtg_file = _XTGeoFile(pfile)
@@ -997,10 +998,10 @@ class GridProperty(_Grid3D):
         self,
         pfile: FileLike,
         fformat: str = "roff",
-        name: Optional[str] = None,
+        name: str | None = None,
         append: bool = False,
-        dtype: Optional[npt.DTypeLike] = None,
-        fmt: Optional[str] = None,
+        dtype: npt.DTypeLike | None = None,
+        fmt: str | None = None,
     ) -> None:
         """
         Export the grid property to file.
@@ -1192,7 +1193,7 @@ class GridProperty(_Grid3D):
 
         return dsc.astext()
 
-    def get_npvalues3d(self, fill_value: Optional[npt.ArrayLike] = None) -> np.ndarray:
+    def get_npvalues3d(self, fill_value: npt.ArrayLike | None = None) -> np.ndarray:
         """
         Get a pure numpy copy (not masked) of the values in 3D shape.
 
@@ -1232,7 +1233,7 @@ class GridProperty(_Grid3D):
         self,
         name: str = "ACTNUM",
         asmasked: bool = False,
-        mask: Optional[bool] = None,
+        mask: bool | None = None,
     ) -> GridProperty:
         """
         Return an ACTNUM GridProperty object.
@@ -1324,7 +1325,7 @@ class GridProperty(_Grid3D):
 
         return vact.filled(fill_value)
 
-    def copy(self, newname: Optional[str] = None) -> GridProperty:
+    def copy(self, newname: str | None = None) -> GridProperty:
         """
         Copy a GridProperty object to another instance.
 
@@ -1401,7 +1402,7 @@ class GridProperty(_Grid3D):
         self.values = newvalues[ic1 - 1 : ic2, jc1 - 1 : jc2, kc1 - 1 : kc2]
 
     def get_xy_value_lists(
-        self, grid: Optional[Grid] = None, activeonly: bool = True
+        self, grid: Grid | None = None, activeonly: bool = True
     ) -> XYValueLists:
         """
         Get lists of xy coords and values for Webportal format.
@@ -1442,7 +1443,7 @@ class GridProperty(_Grid3D):
 
     def get_values_by_ijk(
         self, iarr: np.ndarray, jarr: np.ndarray, karr: np.ndarray, base: int = 1
-    ) -> Optional[np.ma.MaskedArray]:
+    ) -> np.ma.MaskedArray | None:
         """
         Get a 1D ndarray of values by I J K arrays.
 

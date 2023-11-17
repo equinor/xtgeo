@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import List, Optional
 
 from ._ecl_output_file import Simulator
 
@@ -36,24 +37,24 @@ class LogiHead:
 
     """
 
-    dissolved_gas: Optional[bool] = None
-    vaporized_oil: Optional[bool] = None
-    directional: Optional[bool] = None
-    radial: Optional[bool] = None
-    reversible: Optional[bool] = None
-    hysterisis: Optional[bool] = None
-    dual_porosity: Optional[bool] = None
-    end_point_scaling: Optional[bool] = None
-    directional_end_point_scaling: Optional[bool] = None
-    reversible_end_point_scaling: Optional[bool] = None
-    alternate_end_point_scaling: Optional[bool] = None
-    miscible_displacement: Optional[bool] = None
-    scale_water_pressure1: Optional[bool] = None
-    scale_water_pressure2: Optional[bool] = None
-    coal_bed_methane: Optional[bool] = None
+    dissolved_gas: bool | None = None
+    vaporized_oil: bool | None = None
+    directional: bool | None = None
+    radial: bool | None = None
+    reversible: bool | None = None
+    hysterisis: bool | None = None
+    dual_porosity: bool | None = None
+    end_point_scaling: bool | None = None
+    directional_end_point_scaling: bool | None = None
+    reversible_end_point_scaling: bool | None = None
+    alternate_end_point_scaling: bool | None = None
+    miscible_displacement: bool | None = None
+    scale_water_pressure1: bool | None = None
+    scale_water_pressure2: bool | None = None
+    coal_bed_methane: bool | None = None
 
     @classmethod
-    def from_file_values(cls, values: List[bool], simulator: Simulator):
+    def from_file_values(cls, values: list[bool], simulator: Simulator):
         """Construct a LogiHead from the array following the LOGIHEAD keyword
         Args:
             values: The iterable of boolean values following the LOGIHEAD keyword

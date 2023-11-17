@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import functools
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 import pandas as pd
 
@@ -22,7 +22,7 @@ from . import _well_io
 logger = null_logger(__name__)
 
 
-def _data_reader_factory(file_format: Optional[str] = None):
+def _data_reader_factory(file_format: str | None = None):
     if file_format in ["rmswell", "irap_ascii", None]:
         return _well_io.import_rms_ascii
     if file_format == "hdf":

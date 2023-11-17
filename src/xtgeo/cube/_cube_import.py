@@ -26,11 +26,12 @@ Indices is fastest along "J" (C order), and xlines and ilines spacing may vary (
 xline, 1 for iline in this example) but shall be constant per axis
 
 """
+from __future__ import annotations
+
 import json
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from struct import unpack
-from typing import Dict, List, Tuple
 from warnings import warn
 
 import numpy as np
@@ -47,7 +48,7 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
+def import_segy(sfile: xtgeo._XTGeoFile) -> dict:
     """Import SEGY via the SegyIO library.
 
     Args:
@@ -76,7 +77,7 @@ def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
         else:
             raise
     except Exception as anyerror:  # catch the rest
-        raise IOError(f"Cannot parse SEGY file: {str(anyerror)}") from anyerror
+        raise OSError(f"Cannot parse SEGY file: {str(anyerror)}") from anyerror
 
     if not attributes:
         raise ValueError("Could not get attributes for segy file")
@@ -85,7 +86,7 @@ def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:
     return attributes
 
 
-def _import_segy_all_traces(segyfile: segyio.segy.SegyFile) -> Dict:
+def _import_segy_all_traces(segyfile: segyio.segy.SegyFile) -> dict:
     """Import a a full cube SEGY via the SegyIO library to xtgeo format spec.
 
     Here, the segyio.tools.cube function can be applied
@@ -128,7 +129,7 @@ def _process_cube_values(values: np.ndarray) -> np.ndarray:
 
 def _segy_all_traces_attributes(
     segyfile: segyio.segy.SegyFile, ncol, nrow, nlay
-) -> Dict:
+) -> dict:
     """Get the geometrical values xtgeo needs for a cube definition."""
     trcode = segyio.TraceField.TraceIdentificationCode
     traceidcodes = segyfile.attributes(trcode)[:].reshape(ncol, nrow)
@@ -169,7 +170,7 @@ def _segy_all_traces_attributes(
     }
 
 
-def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> Dict:
+def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> dict:
     """Import a a cube SEGY with incomplete traces via the SegyIO library.
 
     Note that the undefined value will be xtgeo.UNDEF (large number)!
@@ -242,7 +243,7 @@ def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> Dict:
     return attrs
 
 
-def _inverse_anyline_map(anylines: List[int]) -> Dict:
+def _inverse_anyline_map(anylines: list[int]) -> dict:
     """Small helper function to get e.g. inline 2345: [0, 1, 2, .., 70].
 
     I.e. to get a mapping between inline number and a list of possible indices
@@ -255,7 +256,7 @@ def _inverse_anyline_map(anylines: List[int]) -> Dict:
     return anyll
 
 
-def _find_long_line(anyll: dict, nany: int) -> List:
+def _find_long_line(anyll: dict, nany: int) -> list:
     """Helper function; get index of vectors indices to be used for calculations.
 
     Look for a "sufficiently" long inline/xline, as long distance between points
@@ -285,13 +286,13 @@ def _geometry_incomplete_traces(
     segyfile: segyio.segy.SegyFile,
     ncol: int,
     nrow: int,
-    ilines: List[int],
-    xlines: List[int],
-    ilines_case: List[int],
-    xlines_case: List[int],
+    ilines: list[int],
+    xlines: list[int],
+    ilines_case: list[int],
+    xlines_case: list[int],
     ispacing: int,
     xspacing: int,
-) -> List:
+) -> list:
     """Compute xtgeo attributes (mostly geometries) for incomplete trace cube."""
     attrs = dict()
 
@@ -350,7 +351,7 @@ def _geometry_incomplete_traces(
 
 def _get_coordinate(
     segyfile: segyio.segy.SegyFile, segyindex: int
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     """Helper function to get coordinates given a index."""
     origin = segyfile.header[segyindex][
         segyio.su.cdpx,
@@ -474,7 +475,7 @@ def _scan_segy_trace(sfile, outfile):
 
 def import_stormcube(
     sfile: xtgeo._XTGeoFile,
-) -> Dict:
+) -> dict:
     """Import on StormCube format."""
     # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------

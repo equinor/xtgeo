@@ -10,10 +10,11 @@ import platform
 import re
 import struct
 import uuid
+from collections.abc import Callable
 from os.path import join
 from tempfile import mkstemp
 from types import BuiltinFunctionType
-from typing import TYPE_CHECKING, Callable, Literal, Optional, Type, Union
+from typing import TYPE_CHECKING, Literal, Union
 
 import h5py
 import numpy as np
@@ -89,7 +90,7 @@ VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]
 
 
 def npfromfile(
-    fname: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+    fname: str | pathlib.Path | io.BytesIO | io.StringIO,
     dtype: npt.DTypeLike = np.float32,
     count: int = 1,
     offset: int = 0,
@@ -116,8 +117,8 @@ def npfromfile(
 
 
 def check_folder(
-    fname: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
-    raiseerror: Optional[Type[Exception]] = None,
+    fname: str | pathlib.Path | io.BytesIO | io.StringIO,
+    raiseerror: type[Exception] | None = None,
 ) -> bool:
     """General function to check folder."""
     _nn = _XTGeoFile(fname)
@@ -127,7 +128,7 @@ def check_folder(
 
 
 def generic_hash(
-    gid: str, hashmethod: Union[Literal["md5", "sha256", "blake2d"], Callable] = "md5"
+    gid: str, hashmethod: Literal["md5", "sha256", "blake2d"] | Callable = "md5"
 ) -> str:
     """Return a unique hash ID for current instance.
 
@@ -188,7 +189,7 @@ class _XTGeoFile:
 
     def __init__(
         self,
-        filelike: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+        filelike: str | pathlib.Path | io.BytesIO | io.StringIO,
         mode: Literal["rb", "wb"] = "rb",
         obj: XTGeoObject = None,
     ) -> None:
@@ -201,8 +202,8 @@ class _XTGeoFile:
                 f"a str, pathlib.Path, io.BytesIO, or io.StringIO."
             )
 
-        self._file: Union[pathlib.Path, io.BytesIO, io.StringIO]
-        self._tmpfile: Optional[str] = None
+        self._file: pathlib.Path | io.BytesIO | io.StringIO
+        self._tmpfile: str | None = None
         self._delete_after = False  # delete file (e.g. tmp) afterwards
         self._mode = mode
 
@@ -229,12 +230,12 @@ class _XTGeoFile:
         return self._memstream
 
     @property
-    def file(self) -> Union[pathlib.Path, io.BytesIO, io.StringIO]:
+    def file(self) -> pathlib.Path | io.BytesIO | io.StringIO:
         """Get Path object (if input was file) or memory stream object."""
         return self._file
 
     @property
-    def name(self) -> Union[str, io.BytesIO, io.StringIO]:
+    def name(self) -> str | io.BytesIO | io.StringIO:
         """Get the absolute path name of the file, or the memory stream."""
         if isinstance(self.file, (io.BytesIO, io.StringIO)):
             return self.file
@@ -320,8 +321,8 @@ class _XTGeoFile:
 
     def check_file(
         self,
-        raiseerror: Optional[Type[Exception]] = None,
-        raisetext: Optional[str] = None,
+        raiseerror: type[Exception] | None = None,
+        raisetext: str | None = None,
     ) -> bool:
         """
         Check if a file exists, and raises an OSError if not.
@@ -357,8 +358,8 @@ class _XTGeoFile:
 
     def check_folder(
         self,
-        raiseerror: Optional[Type[Exception]] = None,
-        raisetext: Optional[str] = None,
+        raiseerror: type[Exception] | None = None,
+        raisetext: str | None = None,
     ) -> bool:
         """
         Check if folder given in file exists and is writeable.
@@ -433,12 +434,12 @@ class _XTGeoFile:
             logger.debug("Get SWIG C fhandle no %s", self._cfhandlecount)
             return self._cfhandle
 
-        fobj: Union[bytes, str, io.BytesIO, io.StringIO] = self.name
+        fobj: bytes | str | io.BytesIO | io.StringIO = self.name
         if isinstance(self.file, io.BytesIO):
             if self._mode == "rb" and islinux:
                 fobj = self.file.getvalue()
             elif self._mode == "wb" and islinux:
-                fobj = bytes()
+                fobj = b""  # Empty bytes obj.
             elif self._mode == "rb" and not islinux:
                 # Write stream to a temporary file
                 fds, self._tmpfile = mkstemp(prefix="tmpxtgeoio")
@@ -455,7 +456,7 @@ class _XTGeoFile:
             try:
                 cfhandle = _cxtgeo.xtg_fopen(fobj, self._mode)
             except TypeError as err:
-                raise IOError(f"Cannot open file: {fobj!r}") from err
+                raise OSError(f"Cannot open file: {fobj!r}") from err
 
         self._cfhandle = cfhandle
         self._cfhandlecount = 1
@@ -525,7 +526,7 @@ class _XTGeoFile:
         return True
 
     def detect_fformat(
-        self, details: Optional[bool] = False, suffixonly: Optional[bool] = False
+        self, details: bool | None = False, suffixonly: bool | None = False
     ) -> str:
         """
         Try to deduce format from looking at file signature.
@@ -552,9 +553,7 @@ class _XTGeoFile:
         fmt = self._detect_format_by_extension()
         return self._validate_format(fmt)
 
-    def _detect_fformat_by_contents(
-        self, details: Optional[bool] = False
-    ) -> Optional[str]:
+    def _detect_fformat_by_contents(self, details: bool | None = False) -> str | None:
         # Try the read the N first bytes
         maxbuf = 100
 
@@ -750,7 +749,7 @@ def _convert_np_carr_double(length: int, np_array: np.ndarray) -> np.ndarray:
 
 
 def _convert_carr_double_np(
-    length: int, carray: np.ndarray, nlen: Optional[int] = None
+    length: int, carray: np.ndarray, nlen: int | None = None
 ) -> np.ndarray:
     """Convert a C array to numpy, assuming double type."""
     if nlen is None:
@@ -761,7 +760,7 @@ def _convert_carr_double_np(
 
 def _get_carray(
     dataframe: pd.DataFrame, attributes: _AttrType, attrname: str
-) -> Optional[np.ndarray]:
+) -> np.ndarray | None:
     """
     Returns the C array pointer (via SWIG) for a given attr.
 

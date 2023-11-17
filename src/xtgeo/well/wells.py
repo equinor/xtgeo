@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """Wells module, which has the Wells class (collection of Well objects)"""
 
 
+from __future__ import annotations
+
 import functools
 import warnings
-from typing import List
 
 import deprecation
 import pandas as pd
@@ -73,7 +72,7 @@ class Wells:
     """
 
     @allow_deprecated_init
-    def __init__(self, wells: List[Well] = None):
+    def __init__(self, wells: list[Well] = None):
         if wells is None:
             self._wells = []
         else:

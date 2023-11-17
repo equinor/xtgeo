@@ -20,8 +20,9 @@ And ignore ECHO and NOECHO keywords. see _grid_format for the details
 of how these keywords are layed out in a text file, and see GrdeclGrid
 for how the grid geometry is interpreted from these keywords.
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 import numpy as np
 from resfo import Format, lazy_read, write
@@ -113,11 +114,11 @@ class GrdeclGrid(EclGrid):
         coord: np.ndarray,
         zcorn: np.ndarray,
         specgrid: SpecGrid,
-        actnum: Optional[np.ndarray] = None,
-        mapaxes: Optional[MapAxes] = None,
-        mapunits: Optional[Units] = None,
-        gridunit: Optional[GridUnit] = None,
-        gdorient: Optional[GdOrient] = None,
+        actnum: np.ndarray | None = None,
+        mapaxes: MapAxes | None = None,
+        mapunits: Units | None = None,
+        gridunit: GridUnit | None = None,
+        gdorient: GdOrient | None = None,
     ):
         self._coord = coord
         self._zcorn = zcorn
@@ -145,7 +146,7 @@ class GrdeclGrid(EclGrid):
         return str(self)
 
     @property
-    def mapaxes(self) -> Optional[MapAxes]:
+    def mapaxes(self) -> MapAxes | None:
         return self._mapaxes
 
     @mapaxes.setter
@@ -169,7 +170,7 @@ class GrdeclGrid(EclGrid):
         self._zcorn = value
 
     @property
-    def actnum(self) -> Optional[np.ndarray]:
+    def actnum(self) -> np.ndarray | None:
         return self._actnum
 
     @classmethod
@@ -177,8 +178,8 @@ class GrdeclGrid(EclGrid):
         cls,
         coord: np.ndarray,
         zcorn: np.ndarray,
-        actnum: Optional[np.ndarray],
-        size: Tuple[int, int, int],
+        actnum: np.ndarray | None,
+        size: tuple[int, int, int],
     ):
         return cls(coord, zcorn, SpecGrid(*size), actnum)
 
