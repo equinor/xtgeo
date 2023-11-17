@@ -1,8 +1,9 @@
-# coding: utf-8
 """Various operations"""
 
+from __future__ import annotations
+
 import numbers
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import numpy.ma as ma
@@ -577,9 +578,7 @@ def _proxy_map_polygons(surf, poly, inside=True):
     return proxy
 
 
-def operation_polygons_v2(
-    self, poly, value: Union[float, Any], opname="add", inside=True
-):
+def operation_polygons_v2(self, poly, value: float | Any, opname="add", inside=True):
     """Operations restricted to polygons, using matplotlib (much faster).
 
     The 'value' can be a number or another regular surface (with same design)

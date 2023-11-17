@@ -5,7 +5,6 @@ from __future__ import annotations
 import io
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import deprecation
 import numpy as np
@@ -26,13 +25,13 @@ logger = null_logger(__name__)
 
 
 def well_from_file(
-    wfile: Union[str, Path],
-    fformat: Optional[str] = "rms_ascii",
-    mdlogname: Optional[str] = None,
-    zonelogname: Optional[str] = None,
-    lognames: Optional[Union[str, List[str]]] = "all",
-    lognames_strict: Optional[bool] = False,
-    strict: Optional[bool] = False,
+    wfile: str | Path,
+    fformat: str | None = "rms_ascii",
+    mdlogname: str | None = None,
+    zonelogname: str | None = None,
+    lognames: str | list[str] | None = "all",
+    lognames_strict: bool | None = False,
+    strict: bool | None = False,
 ) -> Well:
     """Make an instance of a Well directly from file import.
 
@@ -68,14 +67,14 @@ def well_from_file(
 
 
 def well_from_roxar(
-    project: Union[str, object],
+    project: str | object,
     name: str,
-    trajectory: Optional[str] = "Drilled trajectory",
-    logrun: Optional[str] = "log",
-    lognames: Optional[Union[str, List[str]]] = "all",
-    lognames_strict: Optional[bool] = False,
-    inclmd: Optional[bool] = False,
-    inclsurvey: Optional[bool] = False,
+    trajectory: str | None = "Drilled trajectory",
+    logrun: str | None = "log",
+    lognames: str | list[str] | None = "all",
+    lognames_strict: bool | None = False,
+    inclmd: bool | None = False,
+    inclsurvey: bool | None = False,
 ) -> xtgeo.Well:
     """This makes an instance of a Well directly from Roxar RMS.
 
@@ -175,12 +174,12 @@ class Well:
         xpos: float = 0.0,
         ypos: float = 0.0,
         wname: str = "",
-        df: Optional[pd.DataFrame] = None,
-        mdlogname: Optional[str] = None,
-        zonelogname: Optional[str] = None,
-        wlogtypes: Optional[Dict[str, str]] = None,
-        wlogrecords: Optional[Dict[str, str]] = None,
-        filesrc: Optional[Union[str, Path]] = None,
+        df: pd.DataFrame | None = None,
+        mdlogname: str | None = None,
+        zonelogname: str | None = None,
+        wlogtypes: dict[str, str] | None = None,
+        wlogrecords: dict[str, str] | None = None,
+        filesrc: str | Path | None = None,
     ):
         # state variables from args
         self._rkb = rkb
@@ -504,8 +503,8 @@ class Well:
     @classmethod
     def _read_file(
         cls,
-        wfile: Union[str, Path],
-        fformat: Optional[str] = "rms_ascii",
+        wfile: str | Path,
+        fformat: str | None = "rms_ascii",
         **kwargs,
     ):
         """Import well from file.
@@ -550,8 +549,8 @@ class Well:
 
     def to_file(
         self,
-        wfile: Union[str, Path, io.BytesIO],
-        fformat: Optional[str] = "rms_ascii",
+        wfile: str | Path | io.BytesIO,
+        fformat: str | None = "rms_ascii",
     ):
         """Export well to file or memory stream.
 
@@ -582,15 +581,15 @@ class Well:
 
     def from_hdf(
         self,
-        wfile: Union[str, Path],
+        wfile: str | Path,
     ):
         """Deprecated, use :meth:`xtgeo.well_from_file()`"""
         return self.from_file(wfile, fformat="hdf")
 
     def to_hdf(
         self,
-        wfile: Union[str, Path],
-        compression: Optional[str] = "lzf",
+        wfile: str | Path,
+        compression: str | None = "lzf",
     ) -> Path:
         """Export well to HDF based file.
 
@@ -622,14 +621,14 @@ class Well:
     )
     def from_roxar(
         self,
-        project: Union[str, object],
+        project: str | object,
         name: str,
-        trajectory: Optional[str] = "Drilled trajectory",
-        logrun: Optional[str] = "log",
-        lognames: Optional[Union[str, List[str]]] = "all",
-        lognames_strict: Optional[bool] = False,
-        inclmd: Optional[bool] = False,
-        inclsurvey: Optional[bool] = False,
+        trajectory: str | None = "Drilled trajectory",
+        logrun: str | None = "log",
+        lognames: str | list[str] | None = "all",
+        lognames_strict: bool | None = False,
+        inclmd: bool | None = False,
+        inclsurvey: bool | None = False,
     ):
         """Deprecated, use :meth:`xtgeo.well_from_roxar()`"""
         kwargs = _well_roxapi.import_well_roxapi(
@@ -648,14 +647,14 @@ class Well:
     @classmethod
     def _read_roxar(
         cls,
-        project: Union[str, object],
+        project: str | object,
         name: str,
-        trajectory: Optional[str] = "Drilled trajectory",
-        logrun: Optional[str] = "log",
-        lognames: Optional[Union[str, List[str]]] = "all",
-        lognames_strict: Optional[bool] = False,
-        inclmd: Optional[bool] = False,
-        inclsurvey: Optional[bool] = False,
+        trajectory: str | None = "Drilled trajectory",
+        logrun: str | None = "log",
+        lognames: str | list[str] | None = "all",
+        lognames_strict: bool | None = False,
+        inclmd: bool | None = False,
+        inclsurvey: bool | None = False,
     ):
         kwargs = _well_roxapi.import_well_roxapi(
             project,
@@ -849,7 +848,7 @@ class Well:
         self,
         lname: str,
         logtype: str = _AttrType.CONT.value,
-        logrecord: Optional[dict] = None,
+        logrecord: dict | None = None,
         value: float = 0.0,
         force: bool = True,
     ) -> bool:
@@ -907,7 +906,7 @@ class Well:
         """
         return self._wdata.copy_attr(lname, newname, force)
 
-    def delete_log(self, lname: Union[str, List[str]]) -> int:
+    def delete_log(self, lname: str | list[str]) -> int:
         """Delete/remove an existing log, or list of logs.
 
         Will continue silently if a log does not exist.
@@ -927,7 +926,7 @@ class Well:
 
     delete_logs = delete_log  # alias function
 
-    def get_logtype(self, lname) -> Optional[str]:
+    def get_logtype(self, lname) -> str | None:
         """Returns the type of a given log (e.g. DISC or CONT), None if not present."""
         if lname in self._wdata.attr_types:
             return self._wdata.attr_types[lname].name
@@ -1192,7 +1191,7 @@ class Well:
     def create_surf_distance_log(
         self,
         surf: object,
-        name: Optional[str] = "DIST_SURF",
+        name: str | None = "DIST_SURF",
     ):
         """Make a log that is vertical distance to a regular surface.
 
@@ -1402,10 +1401,10 @@ class Well:
 
     def mask_shoulderbeds(
         self,
-        inputlogs: List[str],
-        targetlogs: List[str],
-        nsamples: Optional[Union[int, Dict[str, float]]] = 2,
-        strict: Optional[bool] = False,
+        inputlogs: list[str],
+        targetlogs: list[str],
+        nsamples: int | dict[str, float] | None = 2,
+        strict: bool | None = False,
     ) -> bool:
         """Mask data around zone boundaries or other discrete log boundaries.
 

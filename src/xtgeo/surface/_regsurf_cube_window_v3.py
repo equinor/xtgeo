@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """Regular surface vs Cube, slice a window interval v3, in pure numpy."""
 
 from __future__ import annotations
 
 import warnings
-from typing import Optional, Tuple, Union
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -92,7 +90,7 @@ def _upper_lower_surface(
     other: xtgeo.RegularSurface,
     other_position: str,
     zrange: float,
-) -> Tuple[xtgeo.RegularSurface, xtgeo.RegularSurface]:
+) -> tuple[xtgeo.RegularSurface, xtgeo.RegularSurface]:
     """Return upper and lower surface, sampled to cube resolution."""
 
     logger.info("Define surfaces to apply...")
@@ -193,7 +191,7 @@ def _filter_cube_values_upper_lower(cvalues, dvalues, upper, lower):
     return cvalues
 
 
-def _expand_attributes(attribute: Union[str, list]) -> list:
+def _expand_attributes(attribute: str | list) -> list:
     """The 'attribute' may be a name, 'all', or a list of attributes"""
     useattrs = None
     if isinstance(attribute, str):
@@ -296,13 +294,13 @@ def _compute_stats(
 def slice_cube_window(
     self,
     cube: xtgeo.Cube,
-    zsurf: Optional[xtgeo.RegularSurface] = None,
-    other: Optional[xtgeo.RegularSurface] = None,
+    zsurf: xtgeo.RegularSurface | None = None,
+    other: xtgeo.RegularSurface | None = None,
     other_position: str = "below",
     sampling: str = "nearest",
     mask: bool = True,
     zrange: float = 10.0,
-    ndiv: Optional[int] = None,
+    ndiv: int | None = None,
     attribute: str = "max",
     maskthreshold: float = 0.1,
     snapxy: bool = False,

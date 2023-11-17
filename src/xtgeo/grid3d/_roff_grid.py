@@ -2,18 +2,9 @@ from __future__ import annotations
 
 import pathlib
 from collections import OrderedDict, defaultdict
+from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass
-from typing import (
-    IO,
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import IO, TYPE_CHECKING, Any
 
 import numpy as np
 import roffio
@@ -112,9 +103,9 @@ class RoffGrid:
     corner_lines: np.ndarray
     zvals: np.ndarray
 
-    split_enz: Optional[bytes] = None
-    active: Optional[np.ndarray] = None
-    subgrids: Optional[np.ndarray] = None
+    split_enz: bytes | None = None
+    active: np.ndarray | None = None
+    subgrids: np.ndarray | None = None
     xoffset: float = 0.0
     yoffset: float = 0.0
     zoffset: float = 0.0
@@ -167,7 +158,7 @@ class RoffGrid:
                 else:
                     self._lookup[i + 1] = 1 + self._lookup[i]
 
-    def z_value(self, node: Tuple[int, int, int]) -> np.ndarray:
+    def z_value(self, node: tuple[int, int, int]) -> np.ndarray:
         """
         Gives the 8 z values for any given node for
         adjacent cells in the order:
@@ -293,7 +284,7 @@ class RoffGrid:
         else:
             raise ValueError(f"Unknown error {retval} occurred")
 
-    def xtgeo_subgrids(self) -> Optional[OrderedDict[str, range]]:
+    def xtgeo_subgrids(self) -> OrderedDict[str, range] | None:
         """
         Returns:
             The z values for nodes in the format of xtgeo.Grid.zcornsv
@@ -309,7 +300,7 @@ class RoffGrid:
 
     @staticmethod
     def _from_xtgeo_subgrids(
-        xtgeo_subgrids: MutableMapping[str, Union[range, Sequence]]
+        xtgeo_subgrids: MutableMapping[str, range | Sequence]
     ) -> np.ndarray:
         """
         Args:
@@ -356,7 +347,7 @@ class RoffGrid:
 
     def to_file(
         self,
-        filelike: Union[str, pathlib.Path, IO],
+        filelike: str | pathlib.Path | IO,
         roff_format: roffio.Format = roffio.Format.BINARY,
     ) -> None:
         """
@@ -364,7 +355,7 @@ class RoffGrid:
         Args:
             filelike (str or byte stream): The file to write to.
         """
-        data: Dict[str, Dict] = {
+        data: dict[str, dict] = {
             "filedata": {"filetype": "grid"},
             "dimensions": {"nX": self.nx, "nY": self.ny, "nZ": self.nz},
             "translate": {
@@ -388,7 +379,7 @@ class RoffGrid:
         roffio.write(filelike, data, roff_format=roff_format)
 
     @staticmethod
-    def from_file(filelike: Union[str, pathlib.Path, IO]) -> RoffGrid:
+    def from_file(filelike: str | pathlib.Path | IO) -> RoffGrid:
         """
         Read a RoffGrid from a roff file
         Args:

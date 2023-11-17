@@ -1,9 +1,10 @@
 """Private module, Grid ETC 1 methods, info/modify/report."""
 
+from __future__ import annotations
+
 from collections import OrderedDict
 from copy import deepcopy
 from math import atan2, degrees
-from typing import Tuple
 
 import numpy as np
 import numpy.ma as ma
@@ -94,7 +95,7 @@ def get_dz(
     """
     self._xtgformat2()
     nx, ny, nz = self.dimensions
-    result = np.zeros((nx * ny * nz))
+    result = np.zeros(nx * ny * nz)
     try:
         metric_fun = method_factory[metric]
     except KeyError as err:
@@ -134,7 +135,7 @@ def get_dx(self, name="dX", asmasked=False, metric="horizontal"):
         raise ValueError(f"Unknown metric {metric}") from err
     self._xtgformat2()
     nx, ny, nz = self.dimensions
-    result = np.zeros((nx * ny * nz))
+    result = np.zeros(nx * ny * nz)
     _cxtgeo.grdcp3d_calc_dx(
         self._ncol,
         self._nrow,
@@ -166,7 +167,7 @@ def get_dy(self, name="dX", asmasked=False, metric="horizontal"):
         raise ValueError(f"Unknown metric {metric}") from err
     self._xtgformat2()
     nx, ny, nz = self.dimensions
-    result = np.zeros((nx * ny * nz))
+    result = np.zeros(nx * ny * nz)
     _cxtgeo.grdcp3d_calc_dy(
         self._ncol,
         self._nrow,
@@ -203,7 +204,7 @@ def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
         discrete=False,
     )
 
-    bval = np.zeros((bulk.dimensions))
+    bval = np.zeros(bulk.dimensions)
 
     if precision not in (1, 2, 4):
         raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
@@ -571,7 +572,7 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
 def get_vtk_esg_geometry_data(
     self,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Get geometry data consisting of vertices and cell connectivities suitable for
     use with VTK's vtkExplicitStructuredGrid.
 
@@ -611,7 +612,7 @@ def get_vtk_esg_geometry_data(
     return point_dims, vertex_arr, conn_arr, inact_indices
 
 
-def get_vtk_geometries(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def get_vtk_geometries(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return actnum, corners and dims arrays for VTK ExplicitStructuredGrid usage."""
     self._xtgformat2()
 

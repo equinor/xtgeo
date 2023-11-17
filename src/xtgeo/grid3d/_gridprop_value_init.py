@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import numbers
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 
 
 def gridproperty_non_dummy_values(
-    gridlike: Optional[Grid | GridProperty],
+    gridlike: Grid | GridProperty | None,
     dimensions: tuple[int, int, int],
-    values: Optional[np.ndarray | float | int],
+    values: np.ndarray | float | int | None,
     isdiscrete: bool,
 ) -> np.ma.MaskedArray:
     """

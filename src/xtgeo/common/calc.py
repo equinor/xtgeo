@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any, Literal
 
 import numpy as np
 
@@ -333,7 +334,7 @@ def vectorpair_angle3d(
     p2: Sequence[float],
     degrees: bool = True,
     birdview: bool = False,
-) -> Optional[float]:
+) -> float | None:
     """Find angle in 3D between two vectors
 
     ::

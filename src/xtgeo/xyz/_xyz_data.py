@@ -33,8 +33,9 @@ corresponding entries in attr_types and attr_records will be deleted.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from copy import deepcopy
-from typing import Dict, List, Literal, Optional, Sequence, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -74,13 +75,13 @@ class _XYZData:
     def __init__(
         self,
         dataframe: pd.DataFrame,
-        attr_types: Optional[Dict[str, str]] = None,
-        attr_records: Optional[Dict[str, Union[Dict[int, str], Sequence[str]]]] = None,
+        attr_types: dict[str, str] | None = None,
+        attr_records: dict[str, dict[int, str] | Sequence[str]] | None = None,
         xname: str = _AttrName.XNAME.value,
         yname: str = _AttrName.YNAME.value,
         zname: str = _AttrName.ZNAME.value,
-        idname: Optional[str] = None,  # Well, Polygon, ...
-        undef: Union[float, Sequence[float, float]] = -999.0,
+        idname: str | None = None,  # Well, Polygon, ...
+        undef: float | Sequence[float, float] = -999.0,
         xyztype: Literal["well", "points", "polygons"] = "well",
         floatbits: Literal["float32", "float64"] = "float64",
     ):
@@ -383,7 +384,7 @@ class _XYZData:
         """Get a record for a named attribute."""
         return self._attr_records[name]
 
-    def set_attr_record(self, name: str, record: Optional[dict]) -> None:
+    def set_attr_record(self, name: str, record: dict | None) -> None:
         """Set a record for a named log."""
 
         if name not in self._attr_types:
@@ -487,7 +488,7 @@ class _XYZData:
             _AttrType.CONT.value,  # type: ignore
             _AttrType.DISC.value,  # type: ignore
         ],
-        attr_record: Optional[dict] = None,
+        attr_record: dict | None = None,
         value: float = 0.0,
         force: bool = True,
         force_reserved: bool = False,
@@ -526,7 +527,7 @@ class _XYZData:
         self.ensure_consistency()
         return True
 
-    def delete_attr(self, attrname: Union[str, List[str]]) -> int:
+    def delete_attr(self, attrname: str | list[str]) -> int:
         """Delete/remove an existing attribute, or list of attributes.
 
         Returns number of logs deleted

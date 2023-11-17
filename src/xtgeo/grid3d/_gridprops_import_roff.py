@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import io
-from typing import TYPE_CHECKING, List, Literal, Union
+from typing import TYPE_CHECKING, Literal
 
 import roffio
 
@@ -18,9 +18,9 @@ logger = null_logger(__name__)
 
 def import_roff_gridproperties(
     pfile: _XTGeoFile,
-    names: Union[List[str], Literal["all"]],
+    names: list[str] | Literal["all"],
     strict: bool = True,
-) -> List[GridProperty]:
+) -> list[GridProperty]:
     """
     Imports a list of properties from a ROFF file.
 
