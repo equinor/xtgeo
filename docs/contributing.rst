@@ -205,43 +205,38 @@ Standard acronyms to start the commit message with are:
     TST: addition or modification of tests
     REL: related to releasing xtgeo
 
-Type hints
+Type Hints
 ----------
 
-xtgeo strongly encourages (from year 2021) the use of PEP 484 style type hints.
-New development should contain type hints and pull requests to annotate existing
-code are accepted as well!
+As of 2023, xtgeo requires the use of type annotations in all new feature
+developments, incorporating Python 3.10's enhanced syntax for type hints.
+This facilitates a more concise and readable style.
 
-Style guidelines
+Style Guidelines
 ~~~~~~~~~~~~~~~~
 
-Types imports should follow the from typing import ... convention. So rather than
+- For Python versions prior to 3.10, include the following import for compatibility:
+  
+  .. code-block:: python
 
-.. code-block:: python
+      from __future__ import annotations
 
-    import typing
+- Use Python's built-in generics (e.g., `list`, `tuple`) directly. This approach is preferred over importing types like `List` or `Tuple` from the `typing` module.
 
-    primes: typing.List[int] = []
+- Apply the new union type syntax using the pipe (`|`) for clarity and simplicity. For example:
 
-You should write
+  .. code-block:: python
 
-.. code-block:: python
+      primes: list[int | float] = []
 
-    from typing import List, Optional, Union
+- For optional types, use `None` with the pipe (`|`) instead of `Optional`. For instance:
 
-    primes: List[int] = []
+  .. code-block:: python
 
-Optional should be used where applicable, so instead of
+      maybe_primes: list[int | None] = []
 
-.. code-block:: python
-
-    maybe_primes: List[Union[int, None]] = []
-
-You should write
-
-.. code-block:: python
-
-    maybe_primes: List[Optional[int]] = []
+Note: These guidelines align with PEP 604 and are preferred for all new code submissions and when
+updating existing code.
 
 
 Pull Request Guidelines
