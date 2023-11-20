@@ -79,6 +79,7 @@ if not ROXAR:
 #
 _xprint("Import matplotlib etc...DONE")
 
+from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.exceptions import (
@@ -90,7 +91,6 @@ from xtgeo.common.exceptions import (
     WellNotFoundError,
 )
 from xtgeo.common.sys import _XTGeoFile
-from xtgeo.cxtgeo._cxtgeo import XTGeoCLibError
 
 _xprint("Import common... done")
 

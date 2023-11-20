@@ -11,7 +11,7 @@ import numpy.ma as ma
 
 import xtgeo
 import xtgeo.common.sys as xsys
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
+from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.surface._zmap_parser import parse_zmap

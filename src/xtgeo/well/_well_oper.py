@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
+from xtgeo import _cxtgeo
 from xtgeo.common import constants as const
 from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrType

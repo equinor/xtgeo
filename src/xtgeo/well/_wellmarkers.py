@@ -9,7 +9,7 @@ import pandas as pd
 
 import xtgeo
 import xtgeo.common.constants as const
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 
 logger = null_logger(__name__)

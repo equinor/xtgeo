@@ -12,7 +12,7 @@ import pandas as pd
 from packaging.version import parse as versionparse
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons

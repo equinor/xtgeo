@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 
 xtg = XTGeoDialog()

@@ -69,7 +69,6 @@ target/
 # pyenv python configuration file
 .python-version
 src/xtgeo/_theversion.py
-src/xtgeo/cxtgeo/cxtgeo*
 
 # other
 .venv*

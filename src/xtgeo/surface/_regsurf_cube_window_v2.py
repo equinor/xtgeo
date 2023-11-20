@@ -5,7 +5,7 @@
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 
 logger = null_logger(__name__)

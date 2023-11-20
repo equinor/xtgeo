@@ -4,8 +4,7 @@ import warnings
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo import XTGeoCLibError
+from xtgeo import XTGeoCLibError, _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.calc import _swap_axes
 

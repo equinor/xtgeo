@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo import XTGeoCLibError
+from xtgeo import XTGeoCLibError, _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 

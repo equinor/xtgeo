@@ -7,7 +7,7 @@ import pytest
 
 import xtgeo
 import xtgeo.common.calc as xcalc
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 
 xtg = xtgeo.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
