@@ -15,14 +15,13 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, inherit_docstring
+from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _xyz_oper
 from ._xyz import XYZ
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def _data_reader_factory(file_format):

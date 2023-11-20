@@ -6,14 +6,13 @@ import deprecation
 import pandas as pd
 
 import xtgeo
+from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from . import _blockedwell_roxapi
 from .well1 import Well
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 # =============================================================================

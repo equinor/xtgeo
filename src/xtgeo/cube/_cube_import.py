@@ -41,10 +41,10 @@ import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def import_segy(sfile: xtgeo._XTGeoFile) -> Dict:

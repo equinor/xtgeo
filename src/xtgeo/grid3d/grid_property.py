@@ -12,7 +12,7 @@ import deprecation
 import numpy as np
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.sys import _XTGeoFile
 from xtgeo.metadata.metadata import MetaDataCPProperty
@@ -34,7 +34,7 @@ from ._gridprop_import_roff import import_roff
 from ._gridprop_import_xtgcpprop import import_xtgcpprop
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 if TYPE_CHECKING:
     import numpy.typing as npt

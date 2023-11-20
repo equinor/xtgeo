@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from packaging.version import parse as versionparse
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 
 from . import _colortables as _ctable
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def _get_colormap(name):

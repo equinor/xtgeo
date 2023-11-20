@@ -5,13 +5,11 @@ import warnings
 
 import numpy as np
 
-import xtgeo
+from xtgeo.common import null_logger
 
 from ._roff_parameter import RoffParameter
 
-xtg = xtgeo.common.XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def import_roff(pfile, name=None, grid=None):

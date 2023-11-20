@@ -408,7 +408,31 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def functionlogger(name):
-        """Get the logger for functions (not top level)."""
+        """
+        Deprecated: Get the logger for functions (not top level).
+
+        This method is deprecated and will be removed in a future version.
+        Use the `null_logger` function instead for creating loggers with a NullHandler.
+
+        Args:
+            name (str): The name of the logger.
+
+        Returns:
+            logging.Logger: A logger object with a NullHandler.
+
+        Example:
+            # Deprecated usage
+            logger = XTGeoDialog.functionlogger(__name__)
+
+            # Recommended usage
+            logger = null_logger(__name__)
+        """
+
+        warnings.warn(
+            "functionlogger is deprecated and will be removed in a future version. "
+            "Use null_logger instead.",
+            DeprecationWarning,
+        )
 
         logger = logging.getLogger(name)
         logger.addHandler(logging.NullHandler())

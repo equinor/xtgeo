@@ -7,10 +7,9 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import null_logger
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 if TYPE_CHECKING:
     from xtgeo.grid3d import Grid, GridProperty

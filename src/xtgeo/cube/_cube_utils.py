@@ -6,13 +6,11 @@ import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import null_logger
 from xtgeo.common.calc import _swap_axes
 
-xtg = XTGeoDialog()
+logger = null_logger(__name__)
 
-
-logger = xtg.functionlogger(__name__)
 # pylint: disable=protected-access
 
 

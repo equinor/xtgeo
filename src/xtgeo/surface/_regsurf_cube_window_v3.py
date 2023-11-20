@@ -10,15 +10,13 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import null_logger
 
 warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
 warnings.filterwarnings(action="ignore", message="Mean of empty slice")
 warnings.filterwarnings(action="ignore", message="Degree of freedom")
 
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 STATATTRS = [

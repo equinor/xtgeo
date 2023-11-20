@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING, List, Literal, Union
 import roffio
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import null_logger
 
 if TYPE_CHECKING:
     from xtgeo.common.sys import _XTGeoFile
 
     from .grid_property import GridProperty
 
-logger = XTGeoDialog().functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def import_roff_gridproperties(

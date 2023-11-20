@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 from . import _grid3d_utils as utils
@@ -21,7 +21,7 @@ from ._grid3d import _Grid3D
 from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 KeywordTuple = Tuple[str, str, int, int]
 KeywordDateTuple = Tuple[str, str, int, int, Union[str, int]]

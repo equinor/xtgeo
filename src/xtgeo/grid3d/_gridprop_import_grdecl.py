@@ -6,12 +6,11 @@ import numpy.ma as ma
 import resfo
 
 import xtgeo
+from xtgeo.common import null_logger
 
 from ._grdecl_format import match_keyword, open_grdecl
 
-xtg = xtgeo.common.XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def import_bgrdecl_prop(pfile, name, grid):

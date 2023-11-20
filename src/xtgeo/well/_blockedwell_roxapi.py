@@ -4,7 +4,7 @@ import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.exceptions import WellNotFoundError
 from xtgeo.roxutils import RoxUtils
@@ -14,8 +14,7 @@ try:
 except ImportError:
     pass
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 # Import / export via ROX/RMS api

@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import List, Literal, Tuple, Union
 
 import xtgeo
+from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXKEYWORDS
 
 from . import _grid3d_utils as utils
@@ -15,7 +16,7 @@ from .grid_property import GridProperty
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def sanitize_date_list(

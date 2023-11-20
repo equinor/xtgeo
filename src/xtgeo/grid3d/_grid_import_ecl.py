@@ -4,12 +4,11 @@
 
 
 import xtgeo
+from xtgeo.common import null_logger
 from xtgeo.grid3d._egrid import EGrid, RockModel
 from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
 
-xtg = xtgeo.XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def import_ecl_egrid(
