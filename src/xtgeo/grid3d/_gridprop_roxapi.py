@@ -5,16 +5,14 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import null_logger
 
 try:
     import roxar  # type: ignore
 except ImportError:
     pass
 
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # self is the XTGeo GridProperty instance
 # pragma: no cover

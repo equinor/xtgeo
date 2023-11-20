@@ -20,8 +20,8 @@ import numpy as np
 
 from xtgeo.cxtgeo import _cxtgeo
 
+from . import null_logger
 from ._xyz_enum import _AttrType
-from .xtgeo_dialog import XTGeoDialog
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -57,8 +57,7 @@ if TYPE_CHECKING:
         Wells,
     ]
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 SUPPORTED_FORMATS = {

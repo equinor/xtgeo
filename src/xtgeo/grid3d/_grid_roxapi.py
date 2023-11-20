@@ -9,13 +9,11 @@ import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo import RoxUtils
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 
 xtg = XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
-
-# logger.info(roxmsg)
+logger = null_logger(__name__)
 
 # self is Grid() instance
 

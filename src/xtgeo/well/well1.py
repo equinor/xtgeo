@@ -14,13 +14,12 @@ import pandas as pd
 import xtgeo
 import xtgeo.common.constants as const
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
-from xtgeo.common import _AttrType
+from xtgeo.common import _AttrType, null_logger
 from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
 
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
 
-xtg = xtgeo.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # ======================================================================================
 # Functions, as wrappers to class methods

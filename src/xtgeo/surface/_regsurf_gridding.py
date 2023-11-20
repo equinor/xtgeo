@@ -10,10 +10,9 @@ import scipy.interpolate
 import scipy.ndimage
 
 import xtgeo
+from xtgeo.common import null_logger
 
-xtg = xtgeo.common.XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # Note: 'self' is an instance of RegularSurface
 # pylint: disable=too-many-branches, too-many-statements, too-many-locals

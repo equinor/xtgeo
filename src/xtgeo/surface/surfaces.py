@@ -9,11 +9,12 @@ import deprecation
 import numpy as np
 
 import xtgeo
+from xtgeo.common import null_logger
 
 from . import _surfs_import
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def surfaces_from_grid(grid, subgrids=True, rfactor=1):

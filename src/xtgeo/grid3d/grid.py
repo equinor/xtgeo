@@ -23,7 +23,7 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-from xtgeo.common import XTGDescription, _XTGeoFile
+from xtgeo.common import XTGDescription, _XTGeoFile, null_logger
 
 from . import (
     _grid3d_fence,
@@ -43,7 +43,7 @@ from ._grid3d import _Grid3D
 from .grid_properties import GridProperties, GridProperty
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 if TYPE_CHECKING:
     import pandas as pd

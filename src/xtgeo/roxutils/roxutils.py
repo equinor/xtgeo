@@ -11,12 +11,12 @@ try:
 except ImportError:
     pass
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 
 from . import _roxutils_etc
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 class RoxUtils(object):

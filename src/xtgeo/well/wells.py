@@ -11,12 +11,13 @@ import deprecation
 import pandas as pd
 
 import xtgeo
+from xtgeo.common import null_logger
 
 from . import _wells_utils
 from .well1 import Well
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def wells_from_files(filelist, *args, **kwargs):

@@ -4,7 +4,6 @@
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
 class _Grid3D:

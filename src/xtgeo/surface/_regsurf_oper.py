@@ -11,12 +11,12 @@ from matplotlib.path import Path as MPath
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 VALID_OPER = (
     "add",

@@ -5,11 +5,10 @@ from collections import OrderedDict
 import numpy as np
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 
 xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements

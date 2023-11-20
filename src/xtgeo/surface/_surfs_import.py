@@ -2,11 +2,9 @@
 # pylint: disable=protected-access
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import null_logger
 
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def from_grid3d(grid, subgrids, rfactor):

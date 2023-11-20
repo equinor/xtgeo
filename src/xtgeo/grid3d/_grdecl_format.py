@@ -1,11 +1,9 @@
 import warnings
 from contextlib import contextmanager
 
-import xtgeo
+from xtgeo.common import null_logger
 
-xtg = xtgeo.common.XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def split_line(line):

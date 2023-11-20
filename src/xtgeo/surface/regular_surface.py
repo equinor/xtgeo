@@ -52,6 +52,7 @@ import pandas as pd
 
 import xtgeo
 import xtgeo.common.sys as xtgeosys
+from xtgeo.common import null_logger
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
 from . import (
@@ -68,7 +69,7 @@ from . import (
 )
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # valid argumentts for seismic attributes
 ValidAttrs = Literal[

@@ -7,12 +7,12 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 
 from . import _xyz_oper
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 Polygons = TypeVar("Polygons")
 
