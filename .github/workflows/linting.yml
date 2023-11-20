@@ -23,7 +23,7 @@ jobs:
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: List dependencies
         run: pip freeze
