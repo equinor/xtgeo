@@ -9,7 +9,7 @@ from typing import IO, TYPE_CHECKING, Any
 import numpy as np
 import roffio
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 
 if TYPE_CHECKING:
     from xtgeo.grid3d import Grid

@@ -12,7 +12,7 @@ import hdf5plugin
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 

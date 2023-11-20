@@ -4,7 +4,7 @@
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.grid3d import _gridprop_lowlevel as gl
 from xtgeo.surface import _regsurf_lowlevel as rl

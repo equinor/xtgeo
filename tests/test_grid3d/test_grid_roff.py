@@ -11,7 +11,7 @@ from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from numpy.testing import assert_allclose
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d._grid_import_roff import handle_deprecated_xtgeo_roff_file
 from xtgeo.grid3d._roff_grid import RoffGrid

@@ -9,7 +9,7 @@ from matplotlib.path import Path as MPath
 from scipy.interpolate import UnivariateSpline, interp1d
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 
 xtg = XTGeoDialog()

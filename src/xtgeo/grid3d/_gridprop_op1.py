@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.grid3d import _gridprop_lowlevel as gl
 

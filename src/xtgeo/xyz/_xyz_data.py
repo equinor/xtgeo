@@ -42,10 +42,9 @@ import pandas as pd
 from joblib import hash as jhash
 
 import xtgeo.common.constants as const
+from xtgeo import XTGeoCLibError, _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.sys import _convert_carr_double_np, _get_carray
-from xtgeo.cxtgeo import _cxtgeo
-from xtgeo.cxtgeo._cxtgeo import XTGeoCLibError  # type: ignore[attr-defined]
 
 from ..common._xyz_enum import _AttrName, _AttrType, _XYZType
 

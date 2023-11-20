@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Literal, Union
 import h5py
 import numpy as np
 
-from xtgeo.cxtgeo import _cxtgeo
+from xtgeo import _cxtgeo
 
 from . import null_logger
 from ._xyz_enum import _AttrType

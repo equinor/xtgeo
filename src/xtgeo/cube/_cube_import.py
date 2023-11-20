@@ -41,7 +41,7 @@ from segyio import TraceField as TF
 import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 
 xtg = XTGeoDialog()

@@ -7,9 +7,8 @@ from typing import Any, Literal
 
 import numpy as np
 
-from xtgeo import XTGeoCLibError
+from xtgeo import XTGeoCLibError, _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.cxtgeo import _cxtgeo
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
