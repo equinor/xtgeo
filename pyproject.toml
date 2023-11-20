@@ -6,6 +6,7 @@ requires = [
     "numpy==1.19.5; python_version == '3.9'",
     "numpy==1.21.6; python_version == '3.10'",
     "numpy==1.23.5; python_version == '3.11'",
+    "numpy==1.26.2; python_version == '3.12'",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -38,6 +39,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Software Development :: Libraries",
@@ -97,7 +99,7 @@ docs = [
 
 [tool.black]
 line-length = 88
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -122,7 +124,7 @@ exclude = '''
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux2014"
 test-extras = ["dev"]
-before-build = 'python -m pip install "pip<=22.0.4"'
+before-build = 'python -m pip install -U pip'
 before-test = [
     "pushd {package}",
     "git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata",
