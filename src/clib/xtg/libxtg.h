@@ -1228,9 +1228,6 @@ grd3d_roff2xtgeo_splitenz(int nz,
                           long n_swig_np_flt_inplace_v2   // nzcorn
 );
 
-void
-grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
-
 int
 grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax);
 
@@ -1253,18 +1250,6 @@ grd3d_conv_grid_roxapi(int ncol,
                        double *swig_np_dbl_aout_v3,  // *zcorners
                        long n_swig_np_dbl_aout_v3    // nzcorners
 );
-
-int
-grd3d_copy(int ncol,
-           int nrow,
-           int nlay,
-           double *p_coord1_v,
-           double *p_zcorn1_v,
-           int *p_actnum1_v,
-           double *p_coord2_v,
-           double *p_zcorn2_v,
-           int *p_actnum2_v,
-           int iflag);
 
 int
 grd3d_crop_geometry(int nx,
