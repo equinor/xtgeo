@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import io
 import os
@@ -717,6 +718,7 @@ class _XTGeoFile:
 
 
 def inherit_docstring(inherit_from: Callable) -> Callable:
+    @functools.wraps(inherit_from)
     def decorator_set_docstring(func: Callable) -> Callable:
         if func.__doc__ is None and inherit_from.__doc__ is not None:
             func.__doc__ = inherit_from.__doc__
