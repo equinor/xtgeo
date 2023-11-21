@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import hashlib
 import warnings
-from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Any, List, Literal, Tuple, Union
 
 import deprecation
 import numpy as np
@@ -22,6 +23,8 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
+    from xtgeo import Grid
+    from xtgeo.common import _XTGeoFile
     from xtgeo.common.types import FileLike
 
 KeywordTuple = Tuple[str, str, int, int]
@@ -32,14 +35,14 @@ GridPropertiesKeywords = Union[
 
 
 def gridproperties_from_file(
-    pfile,
-    fformat=None,
-    names=None,
-    dates=None,
-    grid=None,
-    namestyle=0,
-    strict=(True, False),
-):
+    pfile: _XTGeoFile,
+    fformat: str | None = None,
+    names: list[str] | None = None,
+    dates: list[str] | None = None,
+    grid: Grid | None = None,
+    namestyle: int = 0,
+    strict: tuple[bool, bool] = (True, False),
+) -> GridProperties:
     """Import grid properties from file.
 
     In case of names='all' then all vectors which have a valid length
@@ -75,17 +78,17 @@ def gridproperties_from_file(
     pfile.check_file(raiseerror=ValueError)
 
     if fformat is None or fformat == "guess":
-        fformat = pfile.detect_fformat()
+        _fformat: str = pfile.detect_fformat()
     else:
-        fformat = pfile.generic_format_by_proposal(fformat)  # default
+        _fformat = pfile.generic_format_by_proposal(fformat)  # default
 
-    if fformat.lower() in ["roff_ascii", "roff_binary"]:
+    if _fformat.lower() in ["roff_ascii", "roff_binary"]:
         props = _gridprops_import_roff.import_roff_gridproperties(
             pfile, names, strict=strict
         )
         return GridProperties(props=props)
 
-    elif fformat.lower() == "init":
+    elif _fformat.lower() == "init":
         return GridProperties(
             props=_gridprops_import_eclrun.import_ecl_init_gridproperties(
                 pfile,
@@ -95,7 +98,7 @@ def gridproperties_from_file(
                 maxkeys=MAXKEYWORDS,
             )
         )
-    elif fformat.lower() == "unrst":
+    elif _fformat.lower() == "unrst":
         return GridProperties(
             props=_gridprops_import_eclrun.import_ecl_restart_gridproperties(
                 pfile,
@@ -108,7 +111,7 @@ def gridproperties_from_file(
             )
         )
     else:
-        raise ValueError("Invalid file format {fformat}")
+        raise ValueError("Invalid file format {_fformat}")
 
 
 # --------------------------------------------------------------------------------------
@@ -127,8 +130,13 @@ def gridproperties_from_file(
 
 
 def gridproperties_dataframe(
-    gridproperties, grid=None, activeonly=True, ijk=False, xyz=False, doubleformat=False
-):  # pylint: disable=too-many-branches, too-many-statements
+    gridproperties: Iterable[GridProperties],
+    grid: Grid | None = None,
+    activeonly: bool = True,
+    ijk: bool = False,
+    xyz: bool = False,
+    doubleformat: bool = False,
+) -> pd.DataFrame:  # pylint: disable=too-many-branches, too-many-statements
     """Returns a Pandas dataframe table for the properties.
 
     Similar to :meth:`GridProperties.get_dataframe()` but takes any list of
@@ -255,10 +263,10 @@ class GridProperties(_Grid3D):
 
     def __init__(
         self,
-        ncol: Optional[int] = None,
-        nrow: Optional[int] = None,
-        nlay: Optional[int] = None,
-        props: List[GridProperty] = None,
+        ncol: int | None = None,
+        nrow: int | None = None,
+        nlay: int | None = None,
+        props: list[GridProperty] | None = None,
     ):
         dims_given = False
         if ncol is not None:
@@ -299,21 +307,24 @@ class GridProperties(_Grid3D):
         # The _names field is just kept for backwards
         # compatability until the names setter has been
         # deprecated
-        self._names = []
+        self._names: list[str] = []
+
+        # This triggers the setter for 'props', ensuring proper
+        # setup of related attributes like '_ncol', '_nrow',
+        # '_nlay', and '_names', and performs a consistency check.
         self.props = props or []
 
-    def __repr__(self):  # noqa: D105
-        myrp = (
+    def __repr__(self) -> str:  # noqa: D105
+        return (
             f"{self.__class__.__name__} (id={id(self)}) ncol={self._ncol!r}, "
             f"nrow={self._nrow!r}, nlay={self._nlay!r}, filesrc={self.names!r}"
         )
-        return myrp
 
-    def __str__(self):
+    def __str__(self) -> str:
         """str: User friendly print."""
-        return self.describe(flush=False)
+        return self.describe(flush=False) or ""
 
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         """bool: Emulate 'if "PORO" in props'."""
         prop = self.get_prop_by_name(name, raiseserror=False)
         if prop:
@@ -321,18 +332,18 @@ class GridProperties(_Grid3D):
 
         return False
 
-    def __getitem__(self, name):  # noqa: D105
+    def __getitem__(self, name: str) -> GridProperty:  # noqa: D105
         prop = self.get_prop_by_name(name, raiseserror=False)
         if prop is None:
             raise KeyError(f"Key {name} does not exist")
 
         return prop
 
-    def __iter__(self):  # noqa: D105
+    def __iter__(self) -> Iterator[GridProperty]:  # noqa: D105
         return iter(self._props)
 
     @property
-    def names(self):
+    def names(self) -> list[str]:
         """Returns a list of property names.
 
         Example::
@@ -368,7 +379,7 @@ class GridProperties(_Grid3D):
         "In order to change the name of properties, "
         "use\nfor p in gridprops:\n    p.name = newname",
     )
-    def names(self, nameslist):
+    def names(self, nameslist: list[str]) -> None:
         if len(nameslist) != len(self._props):
             raise ValueError("Number of names does not match number of properties")
 
@@ -379,7 +390,7 @@ class GridProperties(_Grid3D):
         self._names = nameslist
 
     @property
-    def props(self):
+    def props(self) -> list[GridProperty] | None:
         """Returns a list of XTGeo GridProperty objects, None if empty.
 
         Example::
@@ -409,7 +420,7 @@ class GridProperties(_Grid3D):
         return self._props
 
     @props.setter
-    def props(self, propslist):
+    def props(self, propslist: list[GridProperty]) -> None:
         self._props = propslist
         if propslist:
             self._ncol = propslist[0].ncol
@@ -419,7 +430,7 @@ class GridProperties(_Grid3D):
         self._consistency_check()
 
     @property
-    def dates(self):
+    def dates(self) -> list[str | None] | None:
         """Returns a list of valid (found) dates after import.
 
         Returns None if no dates present
@@ -455,7 +466,7 @@ class GridProperties(_Grid3D):
 
     # Copy, and etc aka setters and getters
 
-    def copy(self):
+    def copy(self) -> GridProperties:
         """Copy a GridProperties instance to a new unique instance.
 
         Note that the GridProperty instances will also be unique.
@@ -465,7 +476,7 @@ class GridProperties(_Grid3D):
         gps._names = self._names.copy()
         return gps
 
-    def describe(self, flush=True):
+    def describe(self, flush: bool = True) -> str | None:
         """Describe an instance by printing to stdout."""
         dsc = XTGDescription()
 
@@ -479,7 +490,7 @@ class GridProperties(_Grid3D):
             return None
         return dsc.astext()
 
-    def generate_hash(self):
+    def generate_hash(self) -> str:
         """str: Return a unique hash ID for current gridproperties instance.
 
         .. versionadded:: 2.10
@@ -497,7 +508,9 @@ class GridProperties(_Grid3D):
         mhash.update(hashinput.encode())
         return mhash.hexdigest()
 
-    def get_prop_by_name(self, name, raiseserror=True):
+    def get_prop_by_name(
+        self, name: str, raiseserror: bool = True
+    ) -> GridProperty | None:
         """Find and return a property object (GridProperty) by name.
 
         Args:
@@ -517,7 +530,7 @@ class GridProperties(_Grid3D):
 
         return None
 
-    def append_props(self, proplist):
+    def append_props(self, proplist: list[GridProperties]) -> None:
         """Add a list of GridProperty objects to current GridProperties instance."""
         if not self._props and proplist:
             self._ncol = proplist[0].ncol
@@ -528,8 +541,12 @@ class GridProperties(_Grid3D):
         self._consistency_check()
 
     def get_ijk(
-        self, names=("IX", "JY", "KZ"), zerobased=False, asmasked=False, mask=None
-    ):
+        self,
+        names: tuple[str, str, str] = ("IX", "JY", "KZ"),
+        zerobased: bool = False,
+        asmasked: bool = False,
+        mask: bool | None = None,
+    ) -> tuple[GridProperty, GridProperty, GridProperty]:
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter, J counter, K counter.
 
         Args:
@@ -549,7 +566,12 @@ class GridProperties(_Grid3D):
             self, names=names, zerobased=zerobased, asmasked=asmasked
         )
 
-    def get_actnum(self, name="ACTNUM", asmasked=False, mask=None):
+    def get_actnum(
+        self,
+        name: str = "ACTNUM",
+        asmasked: bool = False,
+        mask: bool | None = None,
+    ) -> GridProperty | None:
         """Return an ACTNUM GridProperty object.
 
         Args:
@@ -598,14 +620,14 @@ class GridProperties(_Grid3D):
     )
     def from_file(
         self,
-        pfile,
-        fformat="roff",
-        names=None,
-        dates=None,
-        grid=None,
-        namestyle=0,
-        strict=(True, False),
-    ):
+        pfile: FileLike,
+        fformat: Literal["roff", "init", "unrst"] = "roff",
+        names: list[str] | None = None,
+        dates: list[str] | None = None,
+        grid: Grid | None = None,
+        namestyle: int = 0,
+        strict: tuple[bool, bool] = (True, False),
+    ) -> None:
         """Import grid properties from file in one go.
 
         This class is particulary useful for Eclipse INIT and RESTART files.
@@ -666,8 +688,13 @@ class GridProperties(_Grid3D):
         )
 
     def get_dataframe(
-        self, activeonly=False, ijk=False, xyz=False, doubleformat=False, grid=None
-    ):
+        self,
+        activeonly: bool = False,
+        ijk: bool = False,
+        xyz: bool = False,
+        doubleformat: bool = False,
+        grid: Grid | None = None,
+    ) -> pd.DataFrame:
         """Returns a Pandas dataframe table for the properties.
 
         See also :func:`xtgeo.gridproperties_dataframe()`
@@ -722,10 +749,29 @@ class GridProperties(_Grid3D):
         current_version=xtgeo.version,
         details="Use GridProperty.get_dataframe() instead",
     )
-    def dataframe(self, *args, **kwargs):
+    def dataframe(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
+        """
+        Deprecated method to obtain a pandas DataFrame representation of
+        the grid property.
+
+        This method is deprecated as of version 2.16 and will be
+        removed in version 4.0. Users are advised to use the
+        `GridProperty.get_dataframe()` method instead for similar
+        functionality.
+
+        Returns:
+            pd.DataFrame: DataFrame representation of the grid property.
+
+        Note:
+            This method is a wrapper around `get_dataframe(*args, **kwargs)`
+            and maintains compatibility with older versions of the API.
+            However, transitioning to `get_dataframe()` is recommended for
+            future-proofing your code.
+        """
+
         return self.get_dataframe(*args, **kwargs)
 
-    def _consistency_check(self):
+    def _consistency_check(self) -> None:
         for p in self._props:
             if (p.ncol, p.nrow, p.nlay) != (self.ncol, self.nrow, self.nlay):
                 raise ValueError("Mismatching dimensions in GridProperties members.")
@@ -785,8 +831,12 @@ class GridProperties(_Grid3D):
 
     @staticmethod
     def scan_dates(
-        pfile, fformat="unrst", maxdates=MAXDATES, dataframe=False, datesonly=False
-    ):
+        pfile: FileLike,
+        fformat: Literal["unrst"] = "unrst",
+        maxdates: int = MAXDATES,
+        dataframe: bool = False,
+        datesonly: bool = False,
+    ) -> list | pd.DataFrame:
         """Quick scan dates in a simulation restart file.
 
         Args:
@@ -812,12 +862,13 @@ class GridProperties(_Grid3D):
         """
         logger.info("Format supported as default is %s", fformat)
 
-        pfile = xtgeo._XTGeoFile(pfile)
-        pfile.check_file(raiseerror=ValueError)
+        _pfile = xtgeo._XTGeoFile(pfile)
+        _pfile.check_file(raiseerror=ValueError)
 
-        dlist = utils.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
+        dlist = utils.scan_dates(_pfile, maxdates=maxdates, dataframe=dataframe)
 
         if datesonly and dataframe:
+            assert isinstance(dlist, pd.DataFrame)
             dlist.drop("SEQNUM", axis=1, inplace=True)
 
         if datesonly and not dataframe:
