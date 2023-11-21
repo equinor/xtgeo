@@ -40,17 +40,27 @@ def scan_keywords(
         pfile.get_cfhandle()  # just to keep cfhanclecounter correct
         if dates:
             keywords = _scan_ecl_keywords_w_dates(
-                pfile, maxkeys=maxkeys, dataframe=dataframe
+                pfile,
+                maxkeys=maxkeys,
+                dataframe=dataframe,
             )
         else:
-            keywords = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
+            keywords = _scan_ecl_keywords(
+                pfile,
+                maxkeys=maxkeys,
+                dataframe=dataframe,
+            )
         pfile.cfclose()
     elif fformat == "roff":
         keywords = _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
     return keywords
 
 
-def scan_dates(pfile: _XTGeoFile, maxdates: int = MAXDATES, dataframe: bool = False):
+def scan_dates(
+    pfile: _XTGeoFile,
+    maxdates: int = MAXDATES,
+    dataframe: bool = False,
+) -> list | pd.DataFrame:
     """Quick scan dates in a simulation restart file.
 
     Cf. grid_properties.py description
@@ -82,16 +92,17 @@ def scan_dates(pfile: _XTGeoFile, maxdates: int = MAXDATES, dataframe: bool = Fa
 
     zdates = list(zip(sq, da))  # list for PY3
 
-    if dataframe:
-        cols = ["SEQNUM", "DATE"]
-        df = pd.DataFrame.from_records(zdates, columns=cols)
-        return df
-
-    return zdates
+    return (
+        pd.DataFrame.from_records(zdates, columns=["SEQNUM", "DATE"])
+        if dataframe
+        else zdates
+    )
 
 
 def _scan_ecl_keywords(
-    pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
+    pfile: _XTGeoFile,
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
 ) -> list[KeywordTuple] | pd.DataFrame:
     cfhandle = pfile.get_cfhandle()
 
@@ -142,11 +153,15 @@ def _scan_ecl_keywords(
 
 
 def _scan_ecl_keywords_w_dates(
-    pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
+    pfile: _XTGeoFile,
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
 ) -> list[KeywordDateTuple] | pd.DataFrame:
     """Add a date column to the keyword"""
     xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
+    assert isinstance(xkeys, list)
     xdates = scan_dates(pfile, maxdates=MAXDATES, dataframe=False)
+    assert isinstance(xdates, list)
 
     result = []
     # now merge these two:
@@ -170,7 +185,9 @@ def _scan_ecl_keywords_w_dates(
 
 
 def _scan_roff_keywords(
-    pfile: _XTGeoFile, maxkeys: int = MAXKEYWORDS, dataframe: bool = False
+    pfile: _XTGeoFile,
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
 ) -> list[KeywordTuple] | pd.DataFrame:
     with open(pfile.file, "rb") as fin:
         is_binary = fin.read(8) == b"roff-bin"

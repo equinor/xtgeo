@@ -11,7 +11,7 @@ from hypothesis import assume, given
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import GridProperties
+from xtgeo.grid3d import GridProperties, GridProperty
 
 from .grid_generator import xtgeo_grids
 from .gridprop_generator import grid_properties as gridproperties_elements
@@ -293,3 +293,17 @@ def test_get_dataframe_filled(gridproperties):
     assert (
         len(df.index) == gridproperties.ncol * gridproperties.nrow * gridproperties.nlay
     )
+
+
+def test_props_set_get() -> None:
+    gp = GridProperties()
+    assert gp.props is None
+
+    props = [GridProperty()]
+    gp = GridProperties()
+    gp.props = props
+    assert gp.props == props
+
+    props = [GridProperty()]
+    gp = GridProperties(props=props)
+    assert gp.props == props
