@@ -237,9 +237,8 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
 def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
     """Getting IJK from a grid and make as well logs.
 
-    This is a newer version, using grid.get_ijk_from_points which in turn
-    use the from C method x_chk_point_in_hexahedron, while v1 use the
-    x_chk_point_in_cell. This one is believed to be more precise!
+    This is a newer version using grid.get_ijk_from_points. This one
+    is believed to be more precise!
     """
     # establish a Points instance and make points dataframe from well trajectory X Y Z
     wpoints = xtgeo.Points()

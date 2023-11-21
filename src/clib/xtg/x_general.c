@@ -13,15 +13,6 @@
 #include "logger.h"
 
 void
-x_fgets(char *str, int n, FILE *stream)
-{
-
-    if (fgets(str, n, stream) == NULL) {
-        logger_error(LI, FI, FU, "Error in read (fgets)");
-    }
-}
-
-void
 x_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t ier;

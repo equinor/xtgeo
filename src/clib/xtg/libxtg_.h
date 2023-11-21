@@ -11,28 +11,13 @@
 #define XTGFORMAT2 2
 
 void
-x_fgets(char *, int, FILE *);
-
-void
 x_fread(void *, size_t, size_t, FILE *);
-
-int
-x_nint(double);
-
-void
-x_free(int num, ...);
 
 double **
 x_allocate_2d_double(int n1, int n2);
 
 void
 x_free_2d_double(double **ptr_array);
-
-float **
-x_allocate_2d_float(int n1, int n2);
-
-void
-x_free_2d_float(float **ptr_array);
 
 int **
 x_allocate_2d_int(int n1, int n2);
@@ -47,21 +32,6 @@ void
 x_free_2d_mbool(mbool **ptr_array);
 
 int
-x_cmp_sort(const void *vp, const void *vq);
-
-void
-x_mapaxes(int mode,
-          double *x,
-          double *y,
-          const double x1,
-          const double y1,
-          const double x2,
-          const double y2,
-          const double x3,
-          const double y3,
-          int option);
-
-int
 x_verify_vectorlengths(long ncol,
                        long nrow,
                        long nlay,
@@ -71,17 +41,8 @@ x_verify_vectorlengths(long ncol,
                        int ntotlen,
                        int format);
 
-void
-x_basicstats(int n, double undef, double *v, double *min, double *max, double *avg);
-
-void
-x_basicstats2(int n, float undef, float *v, float *min, float *max, float *avg);
-
 int
 x_chk_point_in_cell(double x, double y, double z, double coor[], int imethod);
-
-int
-x_chk_point_in_hexahedron(double x, double y, double z, double *coor, int flip);
 
 void
 x_2d_rect_corners(double x,
@@ -140,6 +101,7 @@ x_interp_cube_nodes(double *x_v,
 
 int
 x_plane_normalvector(double *points_v, double *nvector, int option);
+
 int
 x_isect_line_plane(double *nvector, double *line_v, double *point_v, int option);
 
@@ -187,9 +149,6 @@ x_point_line_pos(double x1,
 
 int
 x_swap_check();
-
-int
-x_byteorder(int);
 
 /******************************************************************************
   FUNCTION: SwapEndian
