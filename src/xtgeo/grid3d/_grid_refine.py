@@ -1,6 +1,8 @@
-# -*- coding: utf-8 -*-
 """Private module for refinement of a grid."""
+from __future__ import annotations
+
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -10,11 +12,18 @@ from xtgeo.common import XTGeoDialog, null_logger
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
+if TYPE_CHECKING:
+    from xtgeo.grid3d import Grid, GridProperty
+
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
 
 
-def refine_vertically(self, rfactor, zoneprop=None):
+def refine_vertically(
+    self: Grid,
+    rfactor: int | dict[int, int],
+    zoneprop: GridProperty | None = None,
+) -> Grid:
     """Refine vertically, proportionally.
 
     See details in caller.
