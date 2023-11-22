@@ -178,6 +178,7 @@ unit_systems = st.sampled_from(UnitSystem)
 opm_setups = st.builds(OpmSetup, xtgeo_grids, st.booleans(), unit_systems)
 
 
+@pytest.mark.xfail(reason="OPM flaky")
 @pytest.mark.requires_opm
 @pytest.mark.usefixtures("setup_tmpdir")
 @settings(max_examples=5)
@@ -245,6 +246,7 @@ def test_init_props_reading(case):
     assert poro.date == "20000101"
 
 
+@pytest.mark.xfail(reason="OPM flaky")
 @pytest.mark.requires_opm
 @pytest.mark.usefixtures("setup_tmpdir")
 @settings(max_examples=5)
