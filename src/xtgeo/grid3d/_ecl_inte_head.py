@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import warnings
+from typing import Any, Literal, cast
 
 import numpy as np
 
@@ -26,7 +29,7 @@ class InteHead:
     True
     """
 
-    def __init__(self, values: np.ndarray):
+    def __init__(self, values: np.ndarray[np.int_, Any]) -> None:
         """Create an InteHead from the corresponding array.
 
         Args:
@@ -35,19 +38,19 @@ class InteHead:
         """
         self.values = values
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, InteHead):
             return False
 
         return np.array_equal(self.values, other.values)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"InteHead(values={self.values})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
-    def _optional_index_lookup(self, index, constructor=(lambda x: x)):
+    def _optional_index_lookup(self, index: int) -> int | None:
         """Looks up the value at the given index, returning None if out of bound.
 
         Args:
@@ -57,49 +60,48 @@ class InteHead:
         Returns:
             value at the index, None if out of bounds.
         """
-        if len(self.values) > index:
-            return constructor(self.values[index])
-        return None
+        return self.values[index] if len(self.values) > index else None
 
     @property
-    def unit_system(self) -> UnitSystem:
+    def unit_system(self) -> UnitSystem | None:
         """
         The unit system used in the file.
         """
-        return self._optional_index_lookup(2, UnitSystem)
+        v = self._optional_index_lookup(2)
+        return None if v is None else UnitSystem(v)
 
     @property
-    def num_x(self):
+    def num_x(self) -> int | None:
         """The number of columns (x direction) of cells"""
         return self._optional_index_lookup(8)
 
     @property
-    def num_y(self):
+    def num_y(self) -> int | None:
         """The number of rows (y direction) of cells"""
         return self._optional_index_lookup(9)
 
     @property
-    def num_z(self):
+    def num_z(self) -> int | None:
         """The number of layers (z direction) of cells"""
         return self._optional_index_lookup(10)
 
     @property
-    def num_active(self):
+    def num_active(self) -> int | None:
         """The number of active cells"""
         return self._optional_index_lookup(11)
 
     @property
-    def phases(self):
+    def phases(self) -> Phases | None:
         """The phase system used for simulation"""
         if any([ids in str(self.simulator) for ids in ["300", "INTERSECT"]]):
             # item 14 in E300 runs is number of tracers, not IPHS; assume oil/wat/gas
             # item 14 in INTERSECT is always(?) undef., not IPHS; assume oil/wat/gas
             return Phases.OIL_WATER_GAS
-
-        return self._optional_index_lookup(14, Phases)
+        v = self._optional_index_lookup(14)
+        return None if v is None else Phases(v)
 
     @property
-    def day(self):
+    def day(self) -> int | None:
         """The simulated time calendar day
 
         (e.g. 3rd of april 2018)
@@ -108,7 +110,7 @@ class InteHead:
         return self._optional_index_lookup(64)
 
     @property
-    def month(self):
+    def month(self) -> int | None:
         """The simulated time calendar month
 
         4 for simulation being in month 4.
@@ -117,7 +119,7 @@ class InteHead:
         return self._optional_index_lookup(65)
 
     @property
-    def year(self):
+    def year(self) -> int | None:
         """The simulated time calendar month
 
         e.g. 2018 for simulation being done in year 2018
@@ -125,7 +127,7 @@ class InteHead:
         return self._optional_index_lookup(66)
 
     @property
-    def simulator(self) -> Simulator:
+    def simulator(self) -> Simulator | int | None:
         """The simulator used for producing the run, or integer code if unknown"""
         s_code = self._optional_index_lookup(94)
         try:
@@ -135,6 +137,11 @@ class InteHead:
             return s_code
 
     @property
-    def type_of_grid(self):
+    def type_of_grid(self) -> TypeOfGrid | None:
         """The type of grid used in the simulation"""
-        return self._optional_index_lookup(13, TypeOfGrid.alternate_code)
+        value = self._optional_index_lookup(13)
+        return (
+            None
+            if value is None
+            else TypeOfGrid.alternate_code(cast(Literal[0, 1, 2, 3], value))
+        )
