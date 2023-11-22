@@ -52,13 +52,14 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, unique
 from itertools import chain
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from resfo import Format, lazy_read, write
+from typing_extensions import Self
 
 from ._ecl_grid import (
     CoordinateType,
@@ -70,6 +71,10 @@ from ._ecl_grid import (
     Units,
 )
 from ._ecl_output_file import TypeOfGrid
+
+if TYPE_CHECKING:
+    from xtgeo.common.types import FileLike
+    from xtgeo.grid3d import Grid
 
 
 class EGridFileFormatError(ValueError):
@@ -120,7 +125,7 @@ class Filehead:
     grid_format: GridFormat
 
     @classmethod
-    def from_egrid(cls, values: list[int]):
+    def from_egrid(cls, values: list[int]) -> Self:
         """
         Construct a Filehead given the list of values following
         the FILEHEAD keyword.
@@ -179,7 +184,7 @@ class GridHead:
     lgr_end: tuple[int, int, int]
 
     @classmethod
-    def from_egrid(cls, values: Sequence[int]):
+    def from_egrid(cls, values: Sequence[int]) -> Self:
         if len(values) < 33:
             raise ValueError(
                 f"Too few arguments to GridHead.from_egrid {len(values)} < 33"
@@ -221,12 +226,14 @@ class EGridSubGrid:
     general format of a eclipse grid. EGridSubGrid contain the common implementation.
     """
 
-    grid_head: GridHead | None
+    grid_head: GridHead
     coord: np.ndarray
     zcorn: np.ndarray
     actnum: np.ndarray | None = None
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, EGridSubGrid):
+            return False
         return (
             self.grid_head == other.grid_head
             and np.array_equal(self.actnum, other.actnum)
@@ -234,7 +241,7 @@ class EGridSubGrid:
             and np.array_equal(self.zcorn, other.zcorn)
         )
 
-    def _check_xtgeo_compatible(self):
+    def _check_xtgeo_compatible(self) -> None:
         if self.grid_head.coordinate_type == CoordinateType.CYLINDRICAL:
             raise NotImplementedError(
                 "Xtgeo does not currently support cylindrical coordinate systems"
@@ -286,7 +293,7 @@ class LGRSection(EGridSubGrid):
     boxorig: tuple[int, int, int] | None = None
     coord_sys: MapAxes | None = None
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, LGRSection):
             return False
         return (
@@ -299,7 +306,7 @@ class LGRSection(EGridSubGrid):
             and self.coord_sys == other.coord_sys
         )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.name is None:
             raise TypeError("Missing parameter to LGRSection: name")
 
@@ -351,7 +358,7 @@ class GlobalGrid(EGridSubGrid):
     boxorig: tuple[int, int, int] | None = None
     corsnum: np.ndarray | None = None
 
-    def _check_xtgeo_compatible(self):
+    def _check_xtgeo_compatible(self) -> None:
         super()._check_xtgeo_compatible()
         if self.corsnum is not None:
             warnings.warn(
@@ -366,7 +373,7 @@ class GlobalGrid(EGridSubGrid):
                 "grid is imported without converting by local coordsys."
             )
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, GlobalGrid):
             return False
         return (
@@ -414,7 +421,7 @@ class NNCHead:
     grid_identifier: int
 
     @classmethod
-    def from_egrid(cls, values: list[int]):
+    def from_egrid(cls, values: list[int]) -> Self:
         return cls(*values[0:2])
 
     def to_egrid(self) -> np.ndarray:
@@ -447,7 +454,7 @@ class NNCSection:
     nncl: np.ndarray | None = None
     nncg: np.ndarray | None = None
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NNCSection):
             return False
         return (
@@ -489,7 +496,7 @@ class AmalgamationSection:
     nna1: np.ndarray | None
     nna2: np.ndarray | None
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, AmalgamationSection):
             return False
         return (
@@ -511,13 +518,13 @@ class EGridHead:
     """The EGridHead section occurs once at the start of an EGrid file."""
 
     file_head: Filehead
-    mapunits: Units | None = None
-    mapaxes: MapAxes | None = None
-    gridunit: GridUnit | None = None
-    gdorient: GdOrient | None = None
+    mapunits: Units = field(default_factory=Units)
+    mapaxes: MapAxes = field(default_factory=MapAxes)
+    gridunit: GridUnit = field(default_factory=GridUnit)
+    gdorient: GdOrient = field(default_factory=GdOrient)
 
     def to_egrid(self) -> list[tuple[str, Any]]:
-        result = [
+        result: list[tuple[str, Any]] = [
             ("FILEHEAD", self.file_head.to_egrid()),
         ]
         if self.mapunits is not None:
@@ -562,7 +569,7 @@ class EGrid(EclGrid):
         zcorn: np.ndarray,
         actnum: np.ndarray | None,
         size: tuple[int, int, int],
-    ):
+    ) -> Self:
         grid_head = GridHead(
             TypeOfGrid.CORNER_POINT,
             *size,
@@ -601,7 +608,7 @@ class EGrid(EclGrid):
         return self.global_grid.coord
 
     @coord.setter
-    def coord(self, value: np.ndarray):
+    def coord(self, value: np.ndarray) -> None:
         self.global_grid.coord = value
 
     @property
@@ -609,7 +616,7 @@ class EGrid(EclGrid):
         return self.global_grid.zcorn
 
     @zcorn.setter
-    def zcorn(self, value: np.ndarray):
+    def zcorn(self, value: np.ndarray) -> None:
         self.global_grid.zcorn = value
 
     @property
@@ -617,7 +624,11 @@ class EGrid(EclGrid):
         return self.global_grid.actnum
 
     @classmethod
-    def from_file(cls, filelike, fileformat: str = None):
+    def from_file(
+        cls,
+        filelike: FileLike,
+        fileformat: str | None = None,
+    ) -> Self:
         """
         Read an egrid file
         Args:
@@ -636,7 +647,7 @@ class EGrid(EclGrid):
             raise ValueError(f"Unrecognized egrid file format {fileformat}")
         return EGridReader(filelike, file_format=file_format).read()
 
-    def to_file(self, filelike, fileformat: str = "egrid"):
+    def to_file(self, filelike: FileLike, fileformat: str = "egrid") -> None:
         """
         write the EGrid to file.
         Args:
@@ -659,7 +670,7 @@ class EGrid(EclGrid):
             contents += nnc.to_egrid()
         write(filelike, contents, file_format)
 
-    def _check_xtgeo_compatible(self):
+    def _check_xtgeo_compatible(self) -> None:
         self.global_grid._check_xtgeo_compatible()
         if self.lgr_sections:
             warnings.warn(
@@ -670,8 +681,6 @@ class EGrid(EclGrid):
 
     @property
     def is_map_relative(self) -> bool:
-        if self.egrid_head.gridunit is None:
-            return False
         return self.egrid_head.gridunit.grid_relative == GridRelative.MAP
 
     @property
@@ -679,11 +688,11 @@ class EGrid(EclGrid):
         return self.egrid_head.mapaxes
 
     @mapaxes.setter
-    def mapaxes(self, value):
+    def mapaxes(self, value: MapAxes) -> None:
         self.egrid_head.mapaxes = value
 
     @property
-    def dimensions(self) -> tuple[int, int, int]:
+    def dimensions(self) -> tuple[int, int, int] | None:
         return self.global_grid.dimensions
 
     @property
@@ -691,7 +700,7 @@ class EGrid(EclGrid):
         return self.egrid_head.mapunits
 
     @map_axis_units.setter
-    def map_axis_units(self, value):
+    def map_axis_units(self, value: Units) -> None:
         self.egrid_head.mapunits = value
 
     @property
@@ -699,11 +708,11 @@ class EGrid(EclGrid):
         return self.egrid_head.gridunit.unit
 
     @grid_units.setter
-    def grid_units(self, value):
+    def grid_units(self, value: Units) -> None:
         self.egrid_head.gridunit.unit = value
 
     @classmethod
-    def from_xtgeo_grid(cls, xtgeo_grid):
+    def from_xtgeo_grid(cls, xtgeo_grid: Grid) -> EclGrid:
         default_grid = super().from_xtgeo_grid(xtgeo_grid)
 
         default_grid.global_grid.coord = default_grid.global_grid.coord.astype(
@@ -764,7 +773,11 @@ class EGridReader:
 
     """
 
-    def __init__(self, filelike, file_format: Format = None):
+    def __init__(
+        self,
+        filelike: FileLike,
+        file_format: Format = None,
+    ) -> None:
         self.filelike = filelike
         self.keyword_generator = lazy_read(filelike, file_format)
 
@@ -775,7 +788,7 @@ class EGridReader:
         stop_keywords: Iterable[str],
         skip_keywords: Iterable[str] = [],
         keyword_visitors: Iterable[Callable] = [],
-    ):
+    ) -> dict[str, Any]:
         """
         Read a general egrid file section.
         Args:
@@ -860,7 +873,7 @@ class EGridReader:
         keyword encountered.
         """
 
-        def check_gridhead(kw: str, value):
+        def check_gridhead(kw: str, value: Any) -> None:
             if kw == "GRIDHEAD" and value.type_of_grid != TypeOfGrid.CORNER_POINT:
                 raise NotImplementedError(
                     "XTGeo does not support unstructured or mixed grids."
@@ -890,12 +903,14 @@ class EGridReader:
             raise EGridFileFormatError("Did not read ENDGRID after global grid")
         return GlobalGrid(**params)
 
-    def read_subsections(self) -> tuple[list[LGRSection], list[NNCSection]]:
+    def read_subsections(
+        self,
+    ) -> tuple[list[LGRSection], list[NNCSection | AmalgamationSection]]:
         """
         Reads lgr and nnc subsections from the start of the keyword_generator.
         """
-        lgr_sections = []
-        nnc_sections = []
+        lgr_sections: list[LGRSection] = []
+        nnc_sections: list[NNCSection | AmalgamationSection] = []
         while True:
             try:
                 entry = next(self.keyword_generator)
