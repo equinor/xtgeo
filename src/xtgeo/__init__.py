@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # flake8: noqa
 # pylint: skip-file
 # type: ignore
@@ -50,34 +49,23 @@ try:
 except Exception:
     ROXAR = False
 
-
-# to avoid problems in batch runs when no DISPLAY is set:
-_xprint("Import matplotlib etc...")
 if not ROXAR:
-    import matplotlib as mplib
+    _display = os.environ.get("DISPLAY", "")
+    _hostname = os.environ.get("HOSTNAME", "")
+    _host = os.environ.get("HOST", "")
 
-    display = os.environ.get("DISPLAY", "")
-    host1 = os.environ.get("HOSTNAME", "")
-    host2 = os.environ.get("HOST", "")
-    dhost = host1 + host2 + display
+    _dhost = _hostname + _host + _display
+    _lsf_job = "LSB_JOBID" in os.environ
 
-    ertbool = "LSB_JOBID" in os.environ
-
-    if display == "" or "grid" in dhost or "lgc" in dhost or ertbool:
+    if _display == "" or "grid" in _dhost or "lgc" in _dhost or _lsf_job:
         _xprint("")
         _xprint("=" * 79)
-
         _xprint(
             "XTGeo info: No display found or a batch (e.g. ERT) server. "
             "Using non-interactive Agg backend for matplotlib"
         )
-        mplib.use("Agg")
         _xprint("=" * 79)
-
-#
-# Order matters!
-#
-_xprint("Import matplotlib etc...DONE")
+        os.environ["MPLBACKEND"] = "Agg"
 
 from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog

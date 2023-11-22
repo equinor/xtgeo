@@ -5,7 +5,6 @@
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
-from matplotlib.path import Path as MPath
 from scipy.interpolate import UnivariateSpline, interp1d
 
 import xtgeo
@@ -40,11 +39,13 @@ def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
 
     self.dataframe[name] = outside_value
 
+    import matplotlib as mpl
+
     for pol in usepolys:
         idgroups = pol.dataframe.groupby(pol.pname)
         for _, grp in idgroups:
             singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
-            poly_path = MPath(singlepoly)
+            poly_path = mpl.path.Path(singlepoly)
             is_inside = poly_path.contains_points(points)
             self.dataframe.loc[is_inside, name] = inside_value
 
