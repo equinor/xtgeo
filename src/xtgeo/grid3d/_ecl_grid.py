@@ -1,13 +1,20 @@
+from __future__ import annotations
+
 import warnings
 from abc import ABC, abstractmethod
 from dataclasses import astuple, dataclass, fields
 from enum import Enum, auto, unique
-from typing import Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from scipy.constants import foot
 
 from ._grdecl_format import match_keyword
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from xtgeo.grid3d import Grid
 
 
 @unique
@@ -16,7 +23,7 @@ class Units(Enum):
     CM = auto()
     FEET = auto()
 
-    def conversion_factor(self, other):
+    def conversion_factor(self, other: Units) -> float:
         "Conversion factor from one unit to another"
         result = 1.0
         if self == other:
@@ -31,14 +38,14 @@ class Units(Enum):
             result *= 1e-2
         return result
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> str:
         return self.name
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> str:
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, unit_string):
+    def from_grdecl(cls, unit_string: str) -> Units:
         if match_keyword(unit_string, "METRES"):
             return cls.METRES
         if match_keyword(unit_string, "FEET"):
@@ -48,7 +55,7 @@ class Units(Enum):
         raise ValueError(f"Unknown unit string {unit_string}")
 
     @classmethod
-    def from_bgrdecl(cls, unit_string):
+    def from_bgrdecl(cls, unit_string: bytes | str) -> Units:
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -67,23 +74,17 @@ class GridRelative(Enum):
     ORIGIN = auto()
 
     def to_grdecl(self) -> str:
-        if self == GridRelative.MAP:
-            return "MAP"
-        else:
-            return ""
+        return "MAP" if self == GridRelative.MAP else ""
 
     def to_bgrdecl(self) -> str:
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, unit_string: str):
-        if match_keyword(unit_string, "MAP"):
-            return cls.MAP
-        else:
-            return cls.ORIGIN
+    def from_grdecl(cls, unit_string: str) -> GridRelative:
+        return cls.MAP if match_keyword(unit_string, "MAP") else cls.ORIGIN
 
     @classmethod
-    def from_bgrdecl(cls, unit_string):
+    def from_bgrdecl(cls, unit_string: bytes | str) -> GridRelative:
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -118,7 +119,7 @@ class GrdeclKeyword:
     ...     return cls(A.from_grdecl(values[0]), B.from_grdecl(values[1]))
     """
 
-    def to_grdecl(self) -> List[Any]:
+    def to_grdecl(self) -> list[Any]:
         """Convert the keyword to list of grdecl keyword values.
         Returns:
             list of values of the given keyword. ie. The
@@ -127,16 +128,16 @@ class GrdeclKeyword:
         """
         return [value.to_grdecl() for value in astuple(self)]
 
-    def to_bgrdecl(self) -> List[Any]:
+    def to_bgrdecl(self) -> list[Any]:
         return [value.to_bgrdecl() for value in astuple(self)]
 
     @classmethod
-    def from_bgrdecl(cls, values):
+    def from_bgrdecl(cls, values: Any) -> GrdeclKeyword:
         object_types = [f.type for f in fields(cls)]
         return cls(*[typ.from_bgrdecl(val) for val, typ in zip(values, object_types)])
 
     @classmethod
-    def from_grdecl(cls, values):
+    def from_grdecl(cls, values: Any) -> GrdeclKeyword:
         """Convert list of grdecl keyword values to a keyword.
         Args:
             values(list): list of values given after the keyword in
@@ -166,14 +167,15 @@ class Order(Enum):
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, order_string):
+    def from_grdecl(cls, order_string: str) -> Order:
         if match_keyword(order_string, "INC"):
             return cls.INCREASING
         if match_keyword(order_string, "DEC"):
             return cls.DECREASING
+        raise ValueError(f"Unknown order {order_string}")
 
     @classmethod
-    def from_bgrdecl(cls, unit_string: Union[bytes, str]):
+    def from_bgrdecl(cls, unit_string: bytes | str) -> Order:
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -197,7 +199,7 @@ class Handedness(Enum):
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, orientation_string: str):
+    def from_grdecl(cls, orientation_string: str) -> Handedness:
         if match_keyword(orientation_string, "LEFT"):
             return cls.LEFT
         if match_keyword(orientation_string, "RIGHT"):
@@ -205,7 +207,7 @@ class Handedness(Enum):
         raise ValueError(f"Unknown handedness string {orientation_string}")
 
     @classmethod
-    def from_bgrdecl(cls, unit_string: Union[bytes, str]):
+    def from_bgrdecl(cls, unit_string: bytes | str) -> Handedness:
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -225,7 +227,7 @@ class Orientation(Enum):
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, orientation_string: str):
+    def from_grdecl(cls, orientation_string: str) -> Orientation:
         if match_keyword(orientation_string, "UP"):
             return cls.UP
         if match_keyword(orientation_string, "DOWN"):
@@ -233,7 +235,7 @@ class Orientation(Enum):
         raise ValueError(f"Unknown orientation string {orientation_string}")
 
     @classmethod
-    def from_bgrdecl(cls, unit_string: Union[bytes, str]):
+    def from_bgrdecl(cls, unit_string: bytes | str) -> Orientation:
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -282,17 +284,17 @@ class MapAxes(GrdeclKeyword):
     x line.
     """
 
-    y_line: Tuple[float, float] = (0.0, 1.0)
-    origin: Tuple[float, float] = (0.0, 0.0)
-    x_line: Tuple[float, float] = (1.0, 0.0)
+    y_line: tuple[float, float] = (0.0, 1.0)
+    origin: tuple[float, float] = (0.0, 0.0)
+    x_line: tuple[float, float] = (1.0, 0.0)
 
-    def to_grdecl(self) -> List[float]:
+    def to_grdecl(self) -> list[float]:
         return list(self.y_line) + list(self.origin) + list(self.x_line)
 
-    def to_bgrdecl(self) -> List[float]:
+    def to_bgrdecl(self) -> NDArray[np.float32]:  # type: ignore[override]
         return np.array(self.to_grdecl(), dtype=np.float32)
 
-    def in_units(self, old_units, new_units):
+    def in_units(self, old_units: Units, new_units: Units) -> MapAxes:
         factor = old_units.conversion_factor(new_units)
         y_line = (self.y_line[0] * factor, self.y_line[1] * factor)
         x_line = (self.x_line[0] * factor, self.x_line[1] * factor)
@@ -300,11 +302,11 @@ class MapAxes(GrdeclKeyword):
         return MapAxes(y_line, origin, x_line)
 
     @classmethod
-    def from_bgrdecl(cls, values: List[Union[float, str]]):
+    def from_bgrdecl(cls, values: list[float | str]) -> MapAxes:
         return cls.from_grdecl(values)
 
     @classmethod
-    def from_grdecl(cls, values: List[Union[float, str]]):
+    def from_grdecl(cls, values: list[float | str]) -> MapAxes:
         if len(values) != 6:
             raise ValueError("MAPAXES must contain 6 values")
         return cls(
@@ -338,14 +340,13 @@ class CoordinateType(Enum):
             return 1
 
     @classmethod
-    def from_bgrdecl(cls, coord_value: int):
+    def from_bgrdecl(cls, coord_value: int) -> CoordinateType:
         if coord_value == 0:
             return cls.CARTESIAN
-        else:
-            return cls.CYLINDRICAL
+        return cls.CYLINDRICAL
 
     @classmethod
-    def from_grdecl(cls, coord_string: str):
+    def from_grdecl(cls, coord_string: str) -> CoordinateType:
         if match_keyword(coord_string, "F"):
             return cls.CARTESIAN
         if match_keyword(coord_string, "T"):
@@ -353,7 +354,7 @@ class CoordinateType(Enum):
         raise ValueError(f"Unknown coordinate type {coord_string}")
 
 
-def transform_xtgeo_coord_by_mapaxes(mapaxes: MapAxes, coord: np.ndarray):
+def transform_xtgeo_coord_by_mapaxes(mapaxes: MapAxes, coord: np.ndarray) -> np.ndarray:
     """Transforms xtgeo coord values by mapaxes.
 
     The mapaxes keyword in a grdecl file defines a new coordinate system by
@@ -385,7 +386,10 @@ def transform_xtgeo_coord_by_mapaxes(mapaxes: MapAxes, coord: np.ndarray):
     return coord
 
 
-def inverse_transform_xtgeo_coord_by_mapaxes(mapaxes: MapAxes, coord: np.ndarray):
+def inverse_transform_xtgeo_coord_by_mapaxes(
+    mapaxes: MapAxes,
+    coord: np.ndarray,
+) -> np.ndarray:
     """Inversely transforms xtgeo coord values by mapaxes.
 
     The inverse operation of transform_xtgeo_coord_by_mapaxes.
@@ -463,17 +467,32 @@ class EclGrid(ABC):
     def coord(self) -> np.ndarray:
         pass
 
+    @coord.setter
+    @abstractmethod
+    def coord(self, v: np.ndarray) -> None:
+        pass
+
     @property
     @abstractmethod
     def zcorn(self) -> np.ndarray:
         pass
 
-    @property
+    @zcorn.setter
     @abstractmethod
-    def actnum(self) -> Optional[np.ndarray]:
+    def zcorn(self, v: np.ndarray) -> None:
         pass
 
-    def __eq__(self, other) -> bool:
+    @property
+    @abstractmethod
+    def actnum(self) -> np.ndarray:
+        pass
+
+    @actnum.setter
+    @abstractmethod
+    def actnum(self, v: np.ndarray) -> None:
+        pass
+
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, EclGrid):
             return False
         return (
@@ -492,12 +511,12 @@ class EclGrid(ABC):
 
     @property
     @abstractmethod
-    def mapaxes(self) -> Optional[MapAxes]:
+    def mapaxes(self) -> MapAxes:
         pass
 
     @property
     @abstractmethod
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> tuple[int, int, int]:
         pass
 
     @property
@@ -505,16 +524,26 @@ class EclGrid(ABC):
     def map_axis_units(self) -> Units:
         pass
 
+    @map_axis_units.setter
+    @abstractmethod
+    def map_axis_units(self, v: Units) -> None:
+        pass
+
     @property
     @abstractmethod
     def grid_units(self) -> Units:
         pass
 
+    @grid_units.setter
     @abstractmethod
-    def _check_xtgeo_compatible(self):
+    def grid_units(self, v: Units) -> None:
         pass
 
-    def convert_grid_units(self, units):
+    @abstractmethod
+    def _check_xtgeo_compatible(self) -> None:
+        pass
+
+    def convert_grid_units(self, units: Units) -> None:
         """Converts the units of the grid
         Args:
             units: The unit to convert to.
@@ -529,7 +558,7 @@ class EclGrid(ABC):
         self.grid_units = units
 
     @staticmethod
-    def valid_mapaxes(mapaxes: MapAxes) -> bool:
+    def valid_mapaxes(mapaxes: MapAxes) -> np.bool_:
         y_line = mapaxes.y_line
         x_line = mapaxes.x_line
         origin = mapaxes.origin
@@ -538,7 +567,11 @@ class EclGrid(ABC):
 
         return np.linalg.norm(x_axis) > 1e-5 and np.linalg.norm(y_axis) > 1e-5
 
-    def _relative_to_transform(self, xtgeo_coord, relative_to=GridRelative.MAP):
+    def _relative_to_transform(
+        self,
+        xtgeo_coord: np.ndarray,
+        relative_to: GridRelative = GridRelative.MAP,
+    ) -> np.ndarray:
         """Handle relative transform of xtgeo_coord()."""
         mapaxes = self.mapaxes
         has_mapaxes = True
@@ -568,7 +601,7 @@ class EclGrid(ABC):
 
         return xtgeo_coord
 
-    def xtgeo_coord(self, relative_to=GridRelative.MAP):
+    def xtgeo_coord(self, relative_to: GridRelative = GridRelative.MAP) -> np.ndarray:
         """
         Args:
             relative_to: Specifies the axis system the coords should be
@@ -588,7 +621,7 @@ class EclGrid(ABC):
         xtgeo_coord = self._relative_to_transform(xtgeo_coord, relative_to)
         return np.ascontiguousarray(xtgeo_coord)
 
-    def xtgeo_actnum(self):
+    def xtgeo_actnum(self) -> np.ndarray:
         """
         Returns:
             actnum in xtgeo format.
@@ -600,7 +633,7 @@ class EclGrid(ABC):
         activity_number = self.actnum.reshape((nx, ny, nz), order="F")
         return np.ascontiguousarray(activity_number)
 
-    def xtgeo_zcorn(self, relative_to=GridRelative.MAP):
+    def xtgeo_zcorn(self, relative_to: GridRelative = GridRelative.MAP) -> np.ndarray:
         """
             relative_to: Specifies the axis system the zcorn should be
             relative to, either map or origin. Defaults to map. For zcorn
@@ -667,7 +700,7 @@ class EclGrid(ABC):
 
         return np.ascontiguousarray(result)
 
-    def duplicate_insignificant_xtgeo_zcorn(self, zcorn: np.ndarray):
+    def duplicate_insignificant_xtgeo_zcorn(self, zcorn: np.ndarray) -> None:
         """Duplicates values on the faces and corners of the grid.
 
         The xtgeo format has 4 z values for all cornerlines, refering
@@ -731,20 +764,19 @@ class EclGrid(ABC):
         cls,
         coord: np.ndarray,
         zcorn: np.ndarray,
-        actnum: Optional[np.ndarray],
-        size: Tuple[int, int, int],
-    ):
+        actnum: np.ndarray | None,
+        size: tuple[int, int, int],
+    ) -> EclGrid:
         pass
 
     @classmethod
-    def from_xtgeo_grid(cls, xtgeo_grid):
+    def from_xtgeo_grid(cls, xtgeo_grid: Grid) -> EclGrid:
         xtgeo_grid._xtgformat2()
 
         nx, ny, nz = xtgeo_grid.dimensions
         actnum = xtgeo_grid._actnumsv.reshape(nx, ny, nz)
         actnum = actnum.ravel(order="F")
-        if np.all(actnum == 1):
-            actnum = None
+
         coord = np.ascontiguousarray(np.swapaxes(xtgeo_grid._coordsv, 0, 1).ravel())
         zcorn = np.zeros((2, nx, 2, ny, 2, nz))
         xtgeo_zcorn = xtgeo_grid._zcornsv.reshape((nx + 1, ny + 1, nz + 1, 4))
@@ -777,7 +809,7 @@ class EclGrid(ABC):
         result = cls.default_settings_grid(
             coord=coord,
             zcorn=zcorn,
-            actnum=actnum,
+            actnum=None if np.all(actnum == 1) else actnum,
             size=(nx, ny, nz),
         )
 
