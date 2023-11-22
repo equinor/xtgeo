@@ -7,7 +7,6 @@ from typing import Any
 
 import numpy as np
 import numpy.ma as ma
-from matplotlib.path import Path as MPath
 
 import xtgeo
 from xtgeo import XTGeoCLibError, _cxtgeo
@@ -565,11 +564,13 @@ def _proxy_map_polygons(surf, poly, inside=True):
     xvals, yvals = proxy.get_xy_values(asmasked=False)
     points = np.array([xvals.ravel(), yvals.ravel()]).T
 
+    import matplotlib as mpl
+
     for pol in usepolys:
         idgroups = pol.dataframe.groupby(pol.pname)
         for _, grp in idgroups:
             singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
-            poly_path = MPath(singlepoly)
+            poly_path = mpl.path.Path(singlepoly)
             is_inside = poly_path.contains_points(points)
             is_inside = is_inside.reshape(proxy.ncol, proxy.nrow)
             proxy.values = np.where(is_inside, inside_value, proxy.values)

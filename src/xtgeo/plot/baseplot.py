@@ -1,7 +1,4 @@
 """The baseplot module."""
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
 from packaging.version import parse as versionparse
 
 from xtgeo.common import XTGeoDialog, null_logger
@@ -14,7 +11,11 @@ logger = null_logger(__name__)
 
 def _get_colormap(name):
     """For matplotlib compatibility."""
+    import matplotlib as mpl
+
     if versionparse(mpl.__version__) < versionparse("3.6"):
+        import matplotlib.plt as plt
+
         return plt.cm.get_cmap(name)
     else:
         return mpl.colormaps[name]
@@ -56,7 +57,9 @@ class BasePlot(object):
 
     @colormap.setter
     def colormap(self, cmap):
-        if isinstance(cmap, LinearSegmentedColormap):
+        import matplotlib as mpl
+
+        if isinstance(cmap, mpl.colors.LinearSegmentedColormap):
             self._colormap = cmap
         elif isinstance(cmap, str):
             logger.info("Definition of a colormap from string name: %s", cmap)
@@ -85,6 +88,9 @@ class BasePlot(object):
                 from 0 index. Default is just keep the linear sequence as is.
 
         """
+        import matplotlib as mpl
+        import matplotlib.pyplot as plt
+
         valid_maps = sorted(m for m in plt.cm.datad)
 
         logger.info("Valid color maps: %s", valid_maps)
@@ -99,21 +105,37 @@ class BasePlot(object):
 
         elif cfile == "xtgeo":
             colors = _ctable.xtgeocolors()
-            cmap = LinearSegmentedColormap.from_list(cfile, colors, N=len(colors))
+            cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                cfile,
+                colors,
+                N=len(colors),
+            )
             cmap.name = "xtgeo"
         elif cfile == "random40":
             colors = _ctable.random40()
-            cmap = LinearSegmentedColormap.from_list(cfile, colors, N=len(colors))
+            cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                cfile,
+                colors,
+                N=len(colors),
+            )
             cmap.name = "random40"
 
         elif cfile == "randomc":
             colors = _ctable.randomc(256)
-            cmap = LinearSegmentedColormap.from_list(cfile, colors, N=len(colors))
+            cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                cfile,
+                colors,
+                N=len(colors),
+            )
             cmap.name = "randomc"
 
         elif isinstance(cfile, str) and "rms" in cfile:
             colors = _ctable.colorsfromfile(cfile)
-            cmap = LinearSegmentedColormap.from_list("rms", colors, N=len(colors))
+            cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                "rms",
+                colors,
+                N=len(colors),
+            )
             cmap.name = cfile
         elif cfile in valid_maps:
             cmap = _get_colormap(cfile)
@@ -138,7 +160,11 @@ class BasePlot(object):
                     logger.warning("Color list out of range")
                     ctable.append(colors[0])
 
-            cmap = LinearSegmentedColormap.from_list(ctable, colors, N=len(colors))
+            cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                ctable,
+                colors,
+                N=len(colors),
+            )
             cmap.name = "user"
 
         return cmap
@@ -182,7 +208,8 @@ class BasePlot(object):
 
 
         """
-        # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
+        import matplotlib.pyplot as plt
+
         self._fig, self._ax = plt.subplots(
             figsize=(11.69 * figscaling, 8.27 * figscaling)
         )
@@ -204,6 +231,8 @@ class BasePlot(object):
             self._fig.tight_layout()
 
         if self._showok:
+            import matplotlib.pyplot as plt
+
             logger.info("Calling plt show method...")
             plt.show()
             return True
@@ -218,6 +247,8 @@ class BasePlot(object):
         After close is called, no more operations can be performed on the plot.
 
         """
+        import matplotlib.pyplot as plt
+
         for fig in self._allfigs:
             plt.close(fig)
 
@@ -247,6 +278,8 @@ class BasePlot(object):
             self._fig.tight_layout()
 
         if self._showok:
+            import matplotlib.pyplot as plt
+
             plt.savefig(filename, format=fformat, **kwargs)
             if last:
                 self.close()

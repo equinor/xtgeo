@@ -1,11 +1,7 @@
 """Module for map plots of surfaces, using matplotlib."""
 
-
-import matplotlib.patches as mplp
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
-from matplotlib import ticker
 
 from xtgeo.common import null_logger
 
@@ -121,6 +117,8 @@ class Map(BasePlot):
         levels = np.linspace(minvalue, maxvalue, self.contourlevels)
         logger.debug("Number of contour levels: %s", levels)
 
+        import matplotlib.pyplot as plt
+
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
 
         # zi = ma.masked_where(zimask, zi)
@@ -143,7 +141,9 @@ class Map(BasePlot):
 
             else:
                 logger.info("use LogLocator")
-                locator = ticker.LogLocator()
+                import matplotlib as mpl
+
+                locator = mpl.ticker.LogLocator()
                 ticks = None
                 uselevels = None
                 im = self._ax.contourf(xi, yi, zi, locator=locator, cmap=self.colormap)
@@ -176,6 +176,8 @@ class Map(BasePlot):
 
         .. _Matplotlib: http://matplotlib.org/api/colors_api.html
         """
+        import matplotlib as mpl
+
         aff = fpoly.dataframe.groupby(idname)
 
         for name, _group in aff:
@@ -185,7 +187,13 @@ class Map(BasePlot):
             # make a list [(X,Y) ...];
             af = list(zip(myfault["X_UTME"].values, myfault["Y_UTMN"].values))
 
-            px = mplp.Polygon(af, alpha=alpha, color=color, ec=edgecolor, lw=linewidth)
+            px = mpl.patches.Polygon(
+                af,
+                alpha=alpha,
+                color=color,
+                ec=edgecolor,
+                lw=linewidth,
+            )
 
             if px.get_closed():
                 self._ax.add_artist(px)
