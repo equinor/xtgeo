@@ -1,5 +1,6 @@
 XTG_TEST_RUNPATH=$CI_TEST_ROOT/run
 
+ROXENVSOURCE=/project/res/roxapi/aux/roxenvbash
 RMS_VERSIONS=(
     12.1.4
     13.1.2
@@ -16,6 +17,7 @@ copy_test_files () {
     # xtgeo tests look two directories back for xtgeo-testdata
     mkdir -p $XTG_TEST_RUNPATH
     cp -r $CI_SOURCE_ROOT/tests $XTG_TEST_RUNPATH
+    ln -s $CI_SOURCE_ROOT/examples $XTG_TEST_RUNPATH/examples
     ln -s $CI_SOURCE_ROOT/conftest.py $XTG_TEST_RUNPATH/conftest.py
     ln -s $CI_SOURCE_ROOT/pyproject.toml $XTG_TEST_RUNPATH/pyproject.toml
 }
@@ -24,8 +26,11 @@ start_tests () {
     pushd $CI_TEST_ROOT
     echo "Testing xtgeo against Komodo"
     install_and_test
+
+    set -e
     for version in ${RMS_VERSIONS[@]}; do
-        test_in_roxenv $version
+        # Subshell each version for sourcing roxenv
+        $(test_in_roxenv $version)
     done
     popd
 }
@@ -49,15 +54,15 @@ run_pytest () {
 
 test_in_roxenv () {
     set +e
-    source /project/res/roxapi/aux/roxenvbash $1
+    source $ROXENVSOURCE $1
     # Unsetting an empty PYTHONPATH after sourcing roxenvbash
     # may result in an error.
     unset PYTHONPATH
     set -e
 
     python -m venv roxenv --system-site-packages
-
     source roxenv/bin/activate
+
     echo "Testing xtgeo against RMS $1"
     install_and_test
     deactivate
