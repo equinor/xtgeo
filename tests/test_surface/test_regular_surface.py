@@ -1148,19 +1148,34 @@ def test_fill():
 
 
 def test_smoothing():
-    """Smooth the the surface"""
+    """Smooth the surface using median/gaussian filter"""
 
     srf = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     mean1 = srf.values.mean()
     assert mean1 == pytest.approx(1698.65, abs=0.1)
 
-    srf.smooth(iterations=1, width=5)
-
-    mean2 = srf.values.mean()
+    # test median smoothing methoid
+    srf2 = srf.copy()
+    srf2.smooth(method="median", iterations=1, width=5)
+    mean2 = srf2.values.mean()
     assert mean2 == pytest.approx(1698.65, abs=0.3)  # smoothed ~same mean
-
     assert mean1 != mean2  # but not exacly same
+
+    # test gaussian smoothing methoid
+    srf3 = srf.copy()
+    srf3.smooth(method="gaussian", iterations=1, width=5)
+    mean3 = srf3.values.mean()
+    assert mean3 == pytest.approx(1698.65, abs=0.3)  # smoothed ~same mean
+    assert mean1 != mean3  # but not exacly same
+
+    # check that the three surfaces have different min values
+    min1 = srf.values.min()
+    min2 = srf2.values.min()
+    min3 = srf3.values.min()
+    assert min1 == pytest.approx(1547.20, abs=0.1)
+    assert min2 == pytest.approx(1553.62, abs=0.1)
+    assert min3 == pytest.approx(1566.91, abs=0.1)
 
 
 def test_loadvalues_before_remove_deprecated(default_surface):
