@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from ._ecl_output_file import Simulator
 
 
-def lookup_optional_code(values, index):
+def lookup_optional_code(values: list[bool], index: int) -> bool | None:
     if len(values) <= index:
         return None
     return values[index]
@@ -54,7 +54,7 @@ class LogiHead:
     coal_bed_methane: bool | None = None
 
     @classmethod
-    def from_file_values(cls, values: list[bool], simulator: Simulator):
+    def from_file_values(cls, values: list[bool], simulator: Simulator) -> LogiHead:
         """Construct a LogiHead from the array following the LOGIHEAD keyword
         Args:
             values: The iterable of boolean values following the LOGIHEAD keyword
