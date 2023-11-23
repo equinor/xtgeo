@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import warnings
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import roffio
 
 from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
+
+if TYPE_CHECKING:
+    from xtgeo.common.types import FileLike
+
+    from .grid_property import GridProperty
 
 
 @dataclass
@@ -44,7 +50,7 @@ class RoffParameter:
     code_names: list[str] | None = None
     code_values: np.ndarray | None = None
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, RoffParameter):
             return False
         return (
@@ -56,7 +62,7 @@ class RoffParameter:
             and self.same_codes(other)
         )
 
-    def same_codes(self, other):
+    def same_codes(self, other: RoffParameter) -> bool:
         """
         Args:
             other (RoffParameter): Any roff parameter
@@ -78,7 +84,7 @@ class RoffParameter:
         )
 
     @property
-    def undefined_value(self):
+    def undefined_value(self) -> int | float:
         """
         Returns:
             The undefined value for the type of values in the
@@ -90,9 +96,10 @@ class RoffParameter:
             return -999
         if np.issubdtype(self.values.dtype, np.floating):
             return -999.0
+        raise ValueError(f"Parameter values of unsupported type {type(self.values)}")
 
     @property
-    def is_discrete(self):
+    def is_discrete(self) -> bool:
         """
         Returns:
             True if the RoffParameter is a discrete type
@@ -101,7 +108,7 @@ class RoffParameter:
             self.values.dtype, np.integer
         )
 
-    def xtgeo_codes(self):
+    def xtgeo_codes(self) -> dict[int, str]:
         """
         Returns:
             The discrete codes of the parameter in the format of
@@ -112,7 +119,7 @@ class RoffParameter:
         else:
             return dict()
 
-    def xtgeo_values(self):
+    def xtgeo_values(self) -> np.ndarray:
         """
         Args:
             The value to use for undefined. Defaults to that defined by
@@ -120,21 +127,17 @@ class RoffParameter:
         Returns:
             The values in the format of xtgeo grid property
         """
-        vals = self.values
-        if isinstance(vals, bytes):
-            vals = np.ndarray(len(vals), np.uint8, vals)
-        vals = vals.copy()
-        vals = np.flip(vals.reshape((self.nx, self.ny, self.nz)), -1)
-
-        if self.is_discrete:
-            vals = vals.astype(np.int32)
+        if isinstance(self.values, bytes):
+            vals: np.ndarray = np.ndarray(len(self.values), np.uint8, self.values)
         else:
-            vals = vals.astype(np.float64)
+            vals = self.values.copy()
 
+        vals = np.flip(vals.reshape((self.nx, self.ny, self.nz)), -1)
+        vals = vals.astype(np.int32) if self.is_discrete else vals.astype(np.float64)
         return np.ma.masked_values(vals, self.undefined_value)
 
     @staticmethod
-    def from_xtgeo_grid_property(xtgeo_grid_property):
+    def from_xtgeo_grid_property(gridproperty: GridProperty) -> RoffParameter:
         """
         Args:
             xtgeo_grid_property (xtgeo.GridProperty): Any xtgeo.GridProperty
@@ -143,20 +146,19 @@ class RoffParameter:
         """
         code_names = None
         code_values = None
-        if xtgeo_grid_property.isdiscrete:
-            code_names = list(xtgeo_grid_property.codes.values())
-            code_values = np.array(
-                list(xtgeo_grid_property.codes.keys()), dtype=np.int32
+        if gridproperty.isdiscrete:
+            code_names = list(gridproperty.codes.values())
+            code_values = np.array(list(gridproperty.codes.keys()), dtype=np.int32)
+
+        if not np.ma.isMaskedArray(gridproperty.values):
+            values = np.ma.masked_greater(
+                gridproperty.values,
+                UNDEF_INT_LIMIT if gridproperty.isdiscrete else UNDEF_LIMIT,
             )
+        else:
+            values = gridproperty.values
 
-        values = xtgeo_grid_property.values
-        if not np.ma.isMaskedArray(values):
-            if xtgeo_grid_property.isdiscrete:
-                values = np.ma.masked_greater(values, UNDEF_INT_LIMIT)
-            else:
-                values = np.ma.masked_greater(values, UNDEF_LIMIT)
-
-        if xtgeo_grid_property.isdiscrete:
+        if gridproperty.isdiscrete:
             values = values.astype(np.int32).filled(-999)
         else:
             # Although the roff format can contain double,
@@ -165,27 +167,31 @@ class RoffParameter:
             values = values.astype(np.float32).filled(-999.0)
 
         return RoffParameter(
-            *xtgeo_grid_property.dimensions,
-            name=xtgeo_grid_property.name,
+            nx=gridproperty.ncol,
+            ny=gridproperty.nrow,
+            nz=gridproperty.nlay,
+            name=gridproperty.name or "",
             values=np.asarray(np.flip(values, -1).ravel()),
             code_names=code_names,
             code_values=code_values,
         )
 
-    def to_file(self, filelike, roff_format=roffio.Format.BINARY):
+    def to_file(
+        self,
+        filelike: FileLike,
+        roff_format: roffio.Format = roffio.Format.BINARY,
+    ) -> None:
         """
         Writes the RoffParameter to a roff file
         Args:
             filelike (str or byte stream): The file to write to.
             roff_format (roffio.Format): The format to write the file in.
         """
-        data = OrderedDict(
-            {
-                "filedata": {"filetype": "parameter"},
-                "dimensions": {"nX": self.nx, "nY": self.ny, "nZ": self.nz},
-                "parameter": {"name": self.name},
-            }
-        )
+        data: dict[str, dict[str, Any]] = {
+            "filedata": {"filetype": "parameter"},
+            "dimensions": {"nX": self.nx, "nY": self.ny, "nZ": self.nz},
+            "parameter": {"name": self.name},
+        }
         if self.code_names is not None:
             data["parameter"]["codeNames"] = list(self.code_names)
         if self.code_values is not None:
@@ -196,7 +202,7 @@ class RoffParameter:
             roffio.write(filelike, data, roff_format=roff_format)
 
     @staticmethod
-    def from_file(filelike, name=None):
+    def from_file(filelike: FileLike, name: str | None = None) -> RoffParameter:
         """
         Read a RoffParameter from a roff file
         Args:
@@ -207,7 +213,7 @@ class RoffParameter:
             The RoffGrid in the roff file.
         """
 
-        def should_skip_parameter(tag, key):
+        def should_skip_parameter(tag: str, key: str) -> bool:
             if tag == "parameter" and key[0] == "name":
                 if name is None or key[1] == name:
                     return False
@@ -280,11 +286,18 @@ class RoffParameter:
                 f" have filetype parameter or grid, found {filetype}"
             )
 
+        roff: dict[str, Any] = {}
+        for tag, tag_keys in translate_kws.items():
+            for key, translated in tag_keys.items():
+                if found[tag][key] is not None:
+                    roff[translated] = found[tag][key]
+
         return RoffParameter(
-            **{
-                translated: found[tag][key]
-                for tag, tag_keys in translate_kws.items()
-                for key, translated in tag_keys.items()
-                if found[tag][key] is not None
-            }
+            nx=roff["nx"],
+            ny=roff["ny"],
+            nz=roff["nz"],
+            name=roff["name"],
+            values=roff["values"],
+            code_names=roff.get("code_names", None),
+            code_values=roff.get("code_values", None),
         )
