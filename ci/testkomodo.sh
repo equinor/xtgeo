@@ -26,12 +26,6 @@ start_tests () {
     pushd $CI_TEST_ROOT
     echo "Testing xtgeo against Komodo"
     install_and_test
-
-    set -e
-    for version in ${RMS_VERSIONS[@]}; do
-        # Subshell each version for sourcing roxenv
-        $(test_in_roxenv $version)
-    done
     popd
 }
 
@@ -62,6 +56,7 @@ test_in_roxenv () {
 
     python -m venv roxenv --system-site-packages
     source roxenv/bin/activate
+    pip install -U pip
 
     echo "Testing xtgeo against RMS $1"
     install_and_test
