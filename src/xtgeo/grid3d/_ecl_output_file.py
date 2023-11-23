@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from enum import Enum, unique
+from typing import Literal
 
 
 @unique
@@ -15,7 +18,7 @@ class TypeOfGrid(Enum):
     BLOCK_CENTER = 3
 
     @classmethod
-    def alternate_code(cls, code):
+    def alternate_code(cls, code: Literal[0, 1, 2, 3]) -> TypeOfGrid:
         """Converts from alternate code to TypeOfGrid member.
 
         weirdly, type of grid sometimes (For instance init's INTHEAD and
@@ -34,7 +37,7 @@ class TypeOfGrid(Enum):
         return type_of_grid
 
     @property
-    def alternate_value(self):
+    def alternate_value(self) -> int:
         """Inverse of alternate_code."""
         alternate_value = 0
         if self == TypeOfGrid.CORNER_POINT:
