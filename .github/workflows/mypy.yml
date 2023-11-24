@@ -1,6 +1,16 @@
 name: mypy
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main, "*postfix"]
+  pull_request:
+    branches: [main]
+  release:
+    types:
+      - published
+  schedule:
+    # Run nightly to check that tests are working with latest dependencies
+    - cron: "0 0 * * *"
 
 jobs:
   mypy:
