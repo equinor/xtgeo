@@ -350,8 +350,7 @@ class GridProperties(_Grid3D):
 
             >>> import xtgeo
             >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> props = GridProperties()
-            >>> props.from_file(
+            >>> props = xtgeo.gridproperties_from_file(
             ...     reek_dir + "/REEK.INIT",
             ...     fformat="init",
             ...     names=["PERMX"],
@@ -397,8 +396,7 @@ class GridProperties(_Grid3D):
 
             >>> import xtgeo
             >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> myprops = GridProperties()
-            >>> myprops.from_file(
+            >>> myprops = xtgeo.gridproperties_from_file(
             ...     reek_dir + "/REEK.INIT",
             ...     fformat="init",
             ...     names=["PERMX"],
@@ -443,8 +441,7 @@ class GridProperties(_Grid3D):
 
             >>> import xtgeo
             >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> props = GridProperties()
-            >>> props.from_file(
+            >>> props = xtgeo.gridproperties_from_file(
             ...     reek_dir + "/REEK.INIT",
             ...     fformat="init",
             ...     names=["PERMX"],
@@ -584,8 +581,7 @@ class GridProperties(_Grid3D):
 
             >>> import xtgeo
             >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> myprops = GridProperties()
-            >>> myprops.from_file(
+            >>> myprops = xtgeo.gridproperties_from_file(
             ...     reek_dir + "/REEK.INIT",
             ...     fformat="init",
             ...     names=["PERMX"],
@@ -655,8 +651,7 @@ class GridProperties(_Grid3D):
         Example::
             >>> import xtgeo
             >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> props = GridProperties()
-            >>> props.from_file(
+            >>> props = xtgeo.gridproperties_from_file(
             ...     reek_dir + "/REEK.INIT",
             ...     fformat="init",
             ...     names=["PERMX"],
@@ -716,7 +711,7 @@ class GridProperties(_Grid3D):
 
             >>> import xtgeo
             >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> pps.grid_properties_from_file(
+            >>> pps = xtgeo.gridproperties_from_file(
             ...     reek_dir + "/REEK.UNRST",
             ...     fformat="unrst",
             ...     names=['SOIL', 'SWAT', 'PRESSURE'],
