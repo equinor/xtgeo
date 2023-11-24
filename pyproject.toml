@@ -136,13 +136,6 @@ test-command = [
 [tool.isort]
 profile = "black"
 
-[tool.mypy]
-disallow_untyped_defs = true
-exclude = "^((tests|docs|examples|bin)/|conftest.py|src/clib/|src/xtgeo/(common|cube|xtgeo|grid3d|metadata|plot|roxutils|surface|well|xyz)/?)"
-follow_imports = "skip"
-ignore_missing_imports = true
-python_version = 3.8
-
 [tool.pydocstyle]
 convention = "google"
 match = '(?!(test_|_)).*\.py'
