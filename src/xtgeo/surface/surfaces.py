@@ -1,19 +1,20 @@
-# -*- coding: utf-8 -*-
-
 """The surfaces module, which has the Surfaces class (collection of surface objects)."""
 
+from __future__ import annotations
+
 import warnings
-from typing import List, Literal, Optional
+from typing import Literal
 
 import deprecation
 import numpy as np
 
 import xtgeo
+from xtgeo.common import null_logger
 
 from . import _surfs_import
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def surfaces_from_grid(grid, subgrids=True, rfactor=1):
@@ -44,9 +45,9 @@ class Surfaces:
 
     def __init__(
         self,
-        surfaces: Optional[List[xtgeo.RegularSurface]] = None,
-        subtype: Optional[Literal["tops", "isochores"]] = None,
-        order: Optional[Literal["same", "stratigraphic"]] = None,
+        surfaces: list[xtgeo.RegularSurface] | None = None,
+        subtype: Literal["tops", "isochores"] | None = None,
+        order: Literal["same", "stratigraphic"] | None = None,
     ):
         self._surfaces = []
         if surfaces is not None:

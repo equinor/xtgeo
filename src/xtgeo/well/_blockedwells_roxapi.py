@@ -2,13 +2,13 @@
 """Well input and output, private module for ROXAPI"""
 
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.roxutils import RoxUtils
 
 from .blocked_well import BlockedWell
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 # Import from ROX api

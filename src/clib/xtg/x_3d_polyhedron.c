@@ -556,7 +556,6 @@ _x_point_in_hexahedron_v2(double x0, double y0, double z0, double *corners, long
     }
 
     double **crn = x_allocate_2d_double(8, 3);
-    int **cset = x_allocate_2d_int(4, 5);
 
     int i, j;
     int ic = 0;

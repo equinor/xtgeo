@@ -1,9 +1,10 @@
-from copy import deepcopy
-from typing import List, Tuple, Union
+from __future__ import annotations
 
-from typing_extensions import Literal
+from copy import deepcopy
+from typing import Literal
 
 import xtgeo
+from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXKEYWORDS
 
 from . import _grid3d_utils as utils
@@ -17,12 +18,12 @@ from .grid_property import GridProperty
 
 xtg = xtgeo.common.XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def sanitize_date_list(
-    dates: Union[List[int], List[str], Literal["first", "all", "last"]]
-) -> Union[List[int], Literal["first", "all", "last"]]:
+    dates: list[int] | list[str] | Literal["first", "all", "last"]
+) -> list[int] | Literal["first", "all", "last"]:
     """
     Converts dateformats of the form 'YYYY-MM-DD', 'YYYYMMDD' or YYYYMMDD to
     list of integers of the form [YYYYMMDD] (ie. suitible for find_gridprops
@@ -69,11 +70,11 @@ def sanitize_date_list(
 
 def import_ecl_init_gridproperties(
     pfile,
-    names: Union[List[str], Literal["all"]],
+    names: list[str] | Literal["all"],
     grid,
     strict=True,
     maxkeys: int = MAXKEYWORDS,
-) -> List[GridProperty]:
+) -> list[GridProperty]:
     """Imports list of properties from an init file.
 
     Note, the method does not determine whether a given keyword in the file
@@ -151,13 +152,13 @@ def import_ecl_init_gridproperties(
 
 def import_ecl_restart_gridproperties(
     pfile,
-    names: Union[List[str], Literal["all"]],
-    dates: Union[List[int], List[str], Literal["all", "last", "first"]],
+    names: list[str] | Literal["all"],
+    dates: list[int] | list[str] | Literal["all", "last", "first"],
     grid,
-    strict: Tuple[bool, bool],
+    strict: tuple[bool, bool],
     namestyle: Literal[0, 1],
     maxkeys: int = MAXKEYWORDS,
-) -> List[GridProperty]:
+) -> list[GridProperty]:
     """Imports list of gridproperties from a restart file.
 
     Note, the method does not determine whether a given keyword in the file

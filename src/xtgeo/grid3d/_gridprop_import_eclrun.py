@@ -1,7 +1,8 @@
-from typing import List, Union
+from __future__ import annotations
+
+from typing import Literal
 
 import resfo
-from typing_extensions import Literal
 
 from ._find_gridprop_in_eclrun import (
     find_gridprop_from_init_file,
@@ -51,8 +52,8 @@ def import_gridprop_from_init(pfile, name, grid, fracture=False):
 
 
 def sanitize_date(
-    date: Union[int, str, Literal["first", "last"]]
-) -> Union[List[int], Literal["first", "last"]]:
+    date: int | str | Literal["first", "last"]
+) -> list[int] | Literal["first", "last"]:
     """
     Converts dateformats of the form 'YYYY-MM-DD', 'YYYYMMDD' or YYYYMMDD to
     list of integers of the form [YYYYMMDD] (ie. suitible for find_gridprops
@@ -106,7 +107,7 @@ def import_gridprop_from_restart(
     pfile,
     name: str,
     grid,
-    date: Union[int, str, Literal["first", "last"]],
+    date: int | str | Literal["first", "last"],
     fracture: bool = False,
     fformat: Literal["unrst", "funrst"] = "unrst",
 ):

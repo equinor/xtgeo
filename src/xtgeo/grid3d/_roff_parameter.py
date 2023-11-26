@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import warnings
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
-from typing import List, Optional, Union
 
 import numpy as np
 import roffio
@@ -38,10 +39,10 @@ class RoffParameter:
     nz: int
 
     name: str
-    values: Union[np.ndarray, bytes]
+    values: np.ndarray | bytes
 
-    code_names: Optional[List[str]] = None
-    code_values: Optional[np.ndarray] = None
+    code_names: list[str] | None = None
+    code_values: np.ndarray | None = None
 
     def __eq__(self, other):
         if not isinstance(other, RoffParameter):

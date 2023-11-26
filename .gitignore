@@ -50,6 +50,7 @@ examples/*
 !examples/*.py
 !examples/run_examples.sh
 _tmp_*
+.dmypy.json
 
 # Translations
 *.mo
@@ -68,7 +69,6 @@ target/
 # pyenv python configuration file
 .python-version
 src/xtgeo/_theversion.py
-src/xtgeo/cxtgeo/cxtgeo*
 
 # other
 .venv*
@@ -83,3 +83,4 @@ pip-wheel-metadata/
 .venv*/
 .nfs*
 tmp/
+.DS_Store

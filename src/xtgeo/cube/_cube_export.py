@@ -7,14 +7,11 @@ import numpy as np
 import segyio
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog
+from xtgeo import XTGeoCLibError, _cxtgeo
+from xtgeo.common import XTGeoDialog, null_logger
 
+logger = null_logger(__name__)
 xtg = XTGeoDialog()
-
-
-logger = xtg.functionlogger(__name__)
 
 
 def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):

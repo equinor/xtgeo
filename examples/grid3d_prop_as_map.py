@@ -4,6 +4,7 @@ Make a regularmap from a property at a given K layer
 By JRIV
 """
 import os
+
 import xtgeo
 
 GNAMEROOT = "../../xtgeo-testdata/3dgrids/reek/REEK"
@@ -43,5 +44,4 @@ def make_map():
 
 
 if __name__ == "__main__":
-
     make_map()

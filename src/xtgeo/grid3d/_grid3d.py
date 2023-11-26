@@ -4,13 +4,12 @@
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
 
 
-class _Grid3D(object):
+class _Grid3D:
     """Abstract base class for Grid3D."""
 
-    def __init__(self, ncol=4, nrow=3, nlay=5):
+    def __init__(self, ncol: int = 4, nrow: int = 3, nlay: int = 5):
         self._ncol = ncol
         self._nrow = nrow
         self._nlay = nlay
@@ -30,7 +29,7 @@ class _Grid3D(object):
         """Returns the NLAY (NZ or Nlayers) number of cells."""
         return self._nlay
 
-    def _evaluate_mask(self, mask) -> bool:
+    def _evaluate_mask(self, mask: bool) -> bool:
         xtg.warn(
             f"Use of keyword 'mask' in argument list is deprecated, use alternative "
             f"specified in API instead! In: {self}"
@@ -39,7 +38,4 @@ class _Grid3D(object):
         if not isinstance(mask, bool):
             raise ValueError('Wrong value or use of keyword "mask"')
 
-        if mask is False:
-            return False
-
-        return True
+        return mask

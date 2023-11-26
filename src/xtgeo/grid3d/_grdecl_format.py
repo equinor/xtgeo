@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import warnings
+from collections.abc import Generator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
-import xtgeo
+from xtgeo.common import null_logger
 
-xtg = xtgeo.common.XTGeoDialog()
+if TYPE_CHECKING:
+    from io import TextIOWrapper
 
-logger = xtg.functionlogger(__name__)
+    from xtgeo.common.types import FileLike
+
+logger = null_logger(__name__)
 
 
-def split_line(line):
+def split_line(line: str) -> Generator[str, None, None]:
     """
     split a keyword line inside a grdecl file. This splits the values of a
     'simple' keyword into tokens. ie.
@@ -56,7 +63,7 @@ def split_line(line):
         yield value
 
 
-def split_line_no_string(line):
+def split_line_no_string(line: str) -> Generator[str, None, None]:
     """
     Same as split_line, but does not handle string literals, instead
     its quite a bit faster.
@@ -67,7 +74,7 @@ def split_line_no_string(line):
         yield w
 
 
-def match_keyword(kw1, kw2):
+def match_keyword(kw1: str, kw2: str) -> bool:
     """
     Perhaps surprisingly, the eclipse input format considers keywords
     as 8 character strings with space denoting end. So PORO, 'PORO ', and
@@ -89,7 +96,7 @@ def match_keyword(kw1, kw2):
     return kw1[0:8].rstrip() == kw2[0:8].rstrip()
 
 
-def interpret_token(val):
+def interpret_token(val: str) -> list[str]:
     """
     Interpret a eclipse token, tries to interpret the
     value in the following order:
@@ -136,13 +143,13 @@ IGNORE_ALL = None
 
 @contextmanager
 def open_grdecl(
-    grdecl_file,
-    keywords,
-    simple_keywords=[],
-    max_len=None,
-    ignore=IGNORE_ALL,
-    strict=True,
-):
+    grdecl_file: FileLike,
+    keywords: list[str],
+    simple_keywords: list[str] | None = None,
+    max_len: int | None = None,
+    ignore: list[str] | None = IGNORE_ALL,
+    strict: bool = True,
+) -> Generator[Generator[tuple[str, list[str]], None, None], None, None]:
     """Generates tuples of keyword and values in records of a grdecl file.
 
     The format of the file must be that of the GRID section of a eclipse input
@@ -194,8 +201,13 @@ def open_grdecl(
         a warning.
     """
 
-    def read_grdecl(grdecl_stream):
-        words = []
+    if simple_keywords is None:
+        simple_keywords = []
+
+    def read_grdecl(
+        grdecl_stream: TextIOWrapper,
+    ) -> Generator[tuple[str, list[str]], None, None]:
+        words: list[str] = []
         keyword = None
         line_splitter = split_line
 

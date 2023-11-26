@@ -1,23 +1,23 @@
-# coding: utf-8
 """Module for a seismic (or whatever) cube."""
+from __future__ import annotations
+
 import functools
 import numbers
 import os.path
 import pathlib
 import tempfile
 import warnings
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import deprecation
 import numpy as np
 
 import xtgeo
 import xtgeo.common.sys as xtgeosys
-from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.common import XTGDescription, null_logger
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def _data_reader_factory(fformat):
@@ -952,10 +952,10 @@ class Cube:  # pylint: disable=too-many-public-methods, W0201
         self,
         project: Any,
         name: str,
-        folder: Optional[str] = None,
+        folder: str | None = None,
         propname: str = "seismic_attribute",
         domain: str = "time",
-        compression: Tuple[str, float] = ("wavelet", 5.0),
+        compression: tuple[str, float] = ("wavelet", 5.0),
         target: str = "seismic",
     ):  # pragma: no cover
         """Export (transfer) a cube from a XTGeo cube object to Roxar data.
@@ -1034,7 +1034,7 @@ class Cube:  # pylint: disable=too-many-public-methods, W0201
         if oflag:
             # pass
             logger.info("OUTPUT to screen...")
-            with open(outfile, "r") as out:
+            with open(outfile) as out:
                 for line in out:
                     print(line.rstrip("\r\n"))
             os.remove(outfile)
@@ -1061,7 +1061,7 @@ class Cube:  # pylint: disable=too-many-public-methods, W0201
 
         if flag:
             logger.info("OUTPUT to screen...")
-            with open(outfile, "r") as out:
+            with open(outfile) as out:
                 for line in out:
                     print(line.rstrip("\r\n"))
             os.remove(outfile)

@@ -49,9 +49,11 @@ import deprecation
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
+import scipy.ndimage
 
 import xtgeo
 import xtgeo.common.sys as xtgeosys
+from xtgeo.common import null_logger
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
 from . import (
@@ -68,7 +70,7 @@ from . import (
 )
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # valid argumentts for seismic attributes
 ValidAttrs = Literal[
@@ -2064,18 +2066,41 @@ class RegularSurface:
         """
         _regsurf_gridding.surf_fill(self, fill_value=fill_value)
 
-    def smooth(self, method="median", iterations=1, width=1):
+    def smooth(
+        self,
+        method: Literal["median", "gaussian"] = "median",
+        iterations: int = 1,
+        width: float = 1,
+    ) -> None:
         """Various smoothing methods for surfaces.
 
         Args:
-            method: Smoothing method (median)
+            method: Smoothing method (median or gaussian)
             iterations: Number of iterations
-            width: Range of influence (in nodes)
+            width:
+                - If method is 'median' range of influence is in nodes.
+                - If method is 'gaussian' range of influence is standard
+                  deviation of the Gaussian kernel.
 
         .. versionadded:: 2.1
         """
+
         if method == "median":
-            _regsurf_gridding.smooth_median(self, iterations=iterations, width=width)
+            _regsurf_gridding._smooth(
+                self,
+                window_function=functools.partial(
+                    scipy.ndimage.median_filter, size=int(width)
+                ),
+                iterations=iterations,
+            )
+        elif method == "gaussian":
+            _regsurf_gridding._smooth(
+                self,
+                window_function=functools.partial(
+                    scipy.ndimage.gaussian_filter, sigma=width
+                ),
+                iterations=iterations,
+            )
         else:
             raise ValueError("Unsupported method for smoothing")
 

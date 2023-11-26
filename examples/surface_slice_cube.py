@@ -133,7 +133,6 @@ def attribute_around_constant_cube_slices():
 
 
 if __name__ == "__main__":
-
     slice_a_cube_with_surface()
     attribute_around_surface_symmetric()
     attribute_around_surface_asymmetric()

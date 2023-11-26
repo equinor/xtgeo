@@ -1,5 +1,5 @@
-import io
 import concurrent.futures
+import io
 import logging
 
 import xtgeo
@@ -16,7 +16,6 @@ def _get_files_as_regularsurfaces_thread(option=1):
     surfs = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=NTHREAD) as executor:
-
         if option == 1:
             futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:
@@ -38,7 +37,6 @@ def _get_files_as_regularsurfaces_multiprocess(option=1):
     surfs = []
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=NTHREAD) as executor:
-
         if option == 1:
             futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:
@@ -82,7 +80,6 @@ def _get_regsurfi(i):
 
 
 if __name__ == "__main__":
-
     SURFS1 = _get_files_as_regularsurfaces_thread(option=1)
     for srf in SURFS1.surfaces:
         logger.info("1 %s", srf.values.mean())

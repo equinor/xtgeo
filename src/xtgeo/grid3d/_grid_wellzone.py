@@ -3,10 +3,10 @@
 import numpy as np
 
 import xtgeo
+from xtgeo.common import XTGeoDialog, null_logger
 
-xtg = xtgeo.common.XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+xtg = XTGeoDialog()
+logger = null_logger(__name__)
 
 
 def report_zone_mismatch(

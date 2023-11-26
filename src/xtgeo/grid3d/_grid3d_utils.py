@@ -1,47 +1,66 @@
-# -*- coding: utf-8 -*-
-
 """Some grid utilities, file scanning etc (methods with no class)"""
+
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING, Literal
 
+import numpy as np
 import pandas as pd
+import roffio
 
-import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo import XTGeoCLibError
+from xtgeo import XTGeoCLibError, _cxtgeo
+from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
-xtg = xtgeo.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+if TYPE_CHECKING:
+    from xtgeo.common.sys import _XTGeoFile
+
+    from .grid_properties import GridPropertiesKeywords, KeywordDateTuple, KeywordTuple
+
+logger = null_logger(__name__)
 
 
 def scan_keywords(
-    pfile, fformat="xecl", maxkeys=MAXKEYWORDS, dataframe=False, dates=False
-):
+    pfile: _XTGeoFile,
+    fformat: Literal["xecl", "roff"] = "xecl",
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
+    dates: bool = False,
+) -> GridPropertiesKeywords:
     """Quick scan of keywords in Eclipse binary restart/init/... file,
     or ROFF binary files.
 
     Cf. grid_properties.py description
     """
-
-    pfile.get_cfhandle()  # just to keep cfhanclecounter correct
+    if fformat not in ("xecl", "roff"):
+        raise ValueError(f"File format can be either `roff` or `xecl`, given {fformat}")
 
     if fformat == "xecl":
+        pfile.get_cfhandle()  # just to keep cfhanclecounter correct
         if dates:
-            data = _scan_ecl_keywords_w_dates(
-                pfile, maxkeys=maxkeys, dataframe=dataframe
+            keywords = _scan_ecl_keywords_w_dates(
+                pfile,
+                maxkeys=maxkeys,
+                dataframe=dataframe,
             )
         else:
-            data = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
+            keywords = _scan_ecl_keywords(
+                pfile,
+                maxkeys=maxkeys,
+                dataframe=dataframe,
+            )
+        pfile.cfclose()
+    elif fformat == "roff":
+        keywords = _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
+    return keywords
 
-    else:
-        data = _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
 
-    pfile.cfclose()
-
-    return data
-
-
-def scan_dates(pfile, maxdates=MAXDATES, dataframe=False):
+def scan_dates(
+    pfile: _XTGeoFile,
+    maxdates: int = MAXDATES,
+    dataframe: bool = False,
+) -> list | pd.DataFrame:
     """Quick scan dates in a simulation restart file.
 
     Cf. grid_properties.py description
@@ -73,19 +92,21 @@ def scan_dates(pfile, maxdates=MAXDATES, dataframe=False):
 
     zdates = list(zip(sq, da))  # list for PY3
 
-    if dataframe:
-        cols = ["SEQNUM", "DATE"]
-        df = pd.DataFrame.from_records(zdates, columns=cols)
-        return df
+    return (
+        pd.DataFrame.from_records(zdates, columns=["SEQNUM", "DATE"])
+        if dataframe
+        else zdates
+    )
 
-    return zdates
 
-
-def _scan_ecl_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
-    logger.info("Scanning ECL keywords...")
+def _scan_ecl_keywords(
+    pfile: _XTGeoFile,
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
+) -> list[KeywordTuple] | pd.DataFrame:
     cfhandle = pfile.get_cfhandle()
 
-    # maxkeys*10 is used for 1D kewords; 10 => max 8 letters in eclipse +
+    # maxkeys*10 is used for 1D keywords; 10 => max 8 letters in eclipse +
     # "|" + "extra buffer"
     nkeys, keywords, rectypes, reclens, recstarts = _cxtgeo.grd3d_scan_eclbinary(
         cfhandle, maxkeys * 10, maxkeys, maxkeys, maxkeys
@@ -131,13 +152,16 @@ def _scan_ecl_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
     return result
 
 
-def _scan_ecl_keywords_w_dates(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
+def _scan_ecl_keywords_w_dates(
+    pfile: _XTGeoFile,
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
+) -> list[KeywordDateTuple] | pd.DataFrame:
     """Add a date column to the keyword"""
-
-    logger.info("Scan keywords with dates...")
     xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
-
+    assert isinstance(xkeys, list)
     xdates = scan_dates(pfile, maxdates=MAXDATES, dataframe=False)
+    assert isinstance(xdates, list)
 
     result = []
     # now merge these two:
@@ -160,50 +184,88 @@ def _scan_ecl_keywords_w_dates(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
     return result
 
 
-def _scan_roff_keywords(pfile, maxkeys=MAXKEYWORDS, dataframe=False):
-    rectypes = _cxtgeo.new_intarray(maxkeys)
-    reclens = _cxtgeo.new_longarray(maxkeys)
-    recstarts = _cxtgeo.new_longarray(maxkeys)
+def _scan_roff_keywords(
+    pfile: _XTGeoFile,
+    maxkeys: int = MAXKEYWORDS,
+    dataframe: bool = False,
+) -> list[KeywordTuple] | pd.DataFrame:
+    with open(pfile.file, "rb") as fin:
+        is_binary = fin.read(8) == b"roff-bin"
 
-    cfhandle = pfile.get_cfhandle()
+    keywords = []
+    with roffio.lazy_read(pfile.file) as roff_iter:
+        SPACE_OR_NUL = 1
+        TAG = 3 + SPACE_OR_NUL  # "tag"
+        ENDTAG = 6 + SPACE_OR_NUL  # "endtag"
+        ARRAY_AND_SIZE = 5 + SPACE_OR_NUL + 4  # "array", 4 byte int
 
-    # maxkeys*32 is just to give sufficient allocated character space
-    nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
-        cfhandle, maxkeys * 32, rectypes, reclens, recstarts, maxkeys
-    )
+        count = 0
+        done = False
+        # 81 is where the standard RMS exported header size ends.
+        # This offset won't be correct for non-RMS exported roff files,
+        # but it is a compromise to keep the old functionality of byte
+        # counting _close enough_ because this data is not made available
+        # from roffio.
+        byte_pos = 81
 
-    pfile.cfclose()
+        for tag_name, tag_group in roff_iter:
+            byte_pos += TAG
+            byte_pos += len(tag_name) + SPACE_OR_NUL
 
-    keywords = keywords.replace(" ", "")
-    keywords = keywords.split("|")
+            for keyword, value in tag_group:
+                if isinstance(value, (np.ndarray, bytes)):
+                    byte_pos += ARRAY_AND_SIZE
+                dtype, size, offset = _get_roff_type_and_size(value, is_binary)
 
-    # record types translation (cf: grd3d_scan_eclbinary.c in cxtgeo)
-    rct = {
-        "1": "int",
-        "2": "float",
-        "3": "double",
-        "4": "char",
-        "5": "bool",
-        "6": "byte",
-    }
+                byte_pos += len(dtype) + SPACE_OR_NUL
+                byte_pos += len(keyword) + SPACE_OR_NUL
 
-    rc = []
-    rl = []
-    rs = []
-    for i in range(nkeys):
-        rc.append(rct[str(_cxtgeo.intarray_getitem(rectypes, i))])
-        rl.append(_cxtgeo.longarray_getitem(reclens, i))
-        rs.append(_cxtgeo.longarray_getitem(recstarts, i))
+                keyword = f"{tag_name}!{keyword}"
+                if tag_name == "parameter" and keyword == "name":
+                    keyword += f"!{value}"
+                keywords.append((keyword, dtype, size, byte_pos))
 
-    _cxtgeo.delete_intarray(rectypes)
-    _cxtgeo.delete_longarray(reclens)
-    _cxtgeo.delete_longarray(recstarts)
+                byte_pos += offset
+                count += 1
+                if count == maxkeys:
+                    done = True
+                    break
 
-    result = list(zip(keywords, rc, rl, rs))
+            byte_pos += ENDTAG
+            if done:
+                break
 
     if dataframe:
         cols = ["KEYWORD", "TYPE", "NITEMS", "BYTESTARTDATA"]
-        df = pd.DataFrame.from_records(result, columns=cols)
-        return df
+        return pd.DataFrame.from_records(keywords, columns=cols)
 
-    return result
+    return keywords
+
+
+def _get_roff_type_and_size(
+    value: str | bool | bytes | np.ndarray, is_binary: bool
+) -> tuple[str, int, int]:
+    # If is_binary is False add a multiplier because values will
+    # be separated by spaces in the case of numerical/boolean
+    # data, as opposed to buffer packed, while strings will be
+    # quoted and not just NUL delimited
+    if isinstance(value, str):
+        return "char", 1, len(value) + (1 if is_binary else 3)
+    if isinstance(value, bool):
+        return "bool", 1, 1 if is_binary else 2
+    if isinstance(value, bytes):
+        return "byte", len(value), len(value) * (1 if is_binary else 2)
+    if np.issubdtype(value.dtype, np.bool_):
+        return "bool", value.size, value.size * (1 if is_binary else 2)
+    if np.issubdtype(value.dtype, np.int8) or np.issubdtype(value.dtype, np.uint8):
+        return "byte", value.size, value.size * (1 if is_binary else 2)
+    if np.issubdtype(value.dtype, np.integer):
+        return "int", value.size, value.size * (4 if is_binary else 5)
+    if np.issubdtype(value.dtype, np.float32):
+        return "float", value.size, value.size * (4 if is_binary else 5)
+    if np.issubdtype(value.dtype, np.double):
+        return "double", value.size, value.size * (8 if is_binary else 9)
+    if np.issubdtype(value.dtype, np.unicode_):
+        total_bytes = sum(len(val) + (1 if is_binary else 3) for val in value)
+        return "char", value.size, total_bytes
+    raise ValueError(f"Could not find suitable roff type for {type(value)}")

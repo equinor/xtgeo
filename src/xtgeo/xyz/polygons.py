@@ -10,7 +10,7 @@ import io
 import pathlib
 import warnings
 from copy import deepcopy
-from typing import Any, List, Optional, Union
+from typing import Any
 
 import deprecation
 import numpy as np
@@ -18,16 +18,14 @@ import pandas as pd
 import shapely.geometry as sg
 
 import xtgeo
-from xtgeo.common import inherit_docstring
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _polygons_oper, _xyz_oper
 from ._xyz import XYZ
 from ._xyz_io import _convert_idbased_xyz
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def _data_reader_factory(file_format):
@@ -39,8 +37,8 @@ def _data_reader_factory(file_format):
 
 
 def _file_importer(
-    pfile: Union[str, pathlib.Path, io.BytesIO],
-    fformat: Optional[str] = None,
+    pfile: str | pathlib.Path | io.BytesIO,
+    fformat: str | None = None,
 ):
     """General function for polygons_from_file and (deprecated) method from_file."""
     pfile = xtgeo._XTGeoFile(pfile)
@@ -61,11 +59,11 @@ def _file_importer(
 
 
 def _roxar_importer(
-    project: Union[str, Any],
+    project: str | Any,
     name: str,
     category: str,
-    stype: Optional[str] = "horizons",
-    realisation: Optional[int] = 0,
+    stype: str | None = "horizons",
+    realisation: int | None = 0,
 ):  # pragma: no cover
     kwargs = _xyz_roxapi.import_xyz_roxapi(
         project, name, category, stype, realisation, None, True
@@ -76,9 +74,9 @@ def _roxar_importer(
 
 
 def _wells_importer(
-    wells: List[xtgeo.Well],
-    zone: Optional[int] = None,
-    resample: Optional[int] = 1,
+    wells: list[xtgeo.Well],
+    zone: int | None = None,
+    resample: int | None = 1,
 ):
     """Get line segments from a list of wells and a single zone number.
 
@@ -107,9 +105,7 @@ def _wells_importer(
     }
 
 
-def polygons_from_file(
-    pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"
-):
+def polygons_from_file(pfile: str | pathlib.Path, fformat: str | None = "guess"):
     """Make an instance of a Polygons object directly from file import.
 
     Supported formats are:
@@ -131,11 +127,11 @@ def polygons_from_file(
 
 
 def polygons_from_roxar(
-    project: Union[str, Any],
+    project: str | Any,
     name: str,
     category: str,
-    stype: Optional[str] = "horizons",
-    realisation: Optional[int] = 0,
+    stype: str | None = "horizons",
+    realisation: int | None = 0,
 ):  # pragma: no cover
     """Load a Polygons instance from Roxar RMS project.
 
@@ -172,9 +168,9 @@ def polygons_from_roxar(
 
 
 def polygons_from_wells(
-    wells: List[xtgeo.Well],
-    zone: Optional[int] = 1,
-    resample: Optional[int] = 1,
+    wells: list[xtgeo.Well],
+    zone: int | None = 1,
+    resample: int | None = 1,
 ):
     """Get polygons from wells and a single zone number.
 
@@ -282,7 +278,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     @_allow_deprecated_init
     def __init__(
         self,
-        values: Union[list, np.ndarray, pd.DataFrame] = None,
+        values: list | np.ndarray | pd.DataFrame = None,
         xname: str = "X_UTME",
         yname: str = "Y_UTMN",
         zname: str = "Z_TVDSS",
@@ -292,7 +288,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         tname: str = "T_CUMLEN",
         dtname: str = "T_DELTALEN",
         name: str = "poly",
-        attributes: Optional[dict] = None,
+        attributes: dict | None = None,
         # from legacy initialization, remove in 4.0, undocumented by purpose:
         fformat: str = "guess",
     ):
@@ -319,7 +315,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     def _reset(  # pylint: disable=arguments-renamed
         self,
-        values: Union[list, np.ndarray, pd.DataFrame],
+        values: list | np.ndarray | pd.DataFrame,
         xname: str = "X_UTME",
         yname: str = "Y_UTMN",
         zname: str = "Z_TVDSS",
@@ -329,7 +325,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         tname: str = "T_CUMLEN",
         dtname: str = "T_DELTALEN",
         name: str = "poly",
-        attributes: Optional[dict] = None,
+        attributes: dict | None = None,
     ):  # pylint: disable=arguments-differ
         """Used in deprecated methods."""
 
@@ -450,8 +446,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def boundary_from_points(
         cls,
         points,
-        alpha_factor: Optional[float] = 1.0,
-        alpha: Optional[float] = None,
+        alpha_factor: float | None = 1.0,
+        alpha: float | None = None,
         convex: bool = False,
     ):
         """Instantiate polygons from detecting the boundary around points.
@@ -667,7 +663,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return super().get_boundary()
 
     def simplify(
-        self, tolerance: Optional[float] = 0.1, preserve_topology: Optional[bool] = True
+        self, tolerance: float | None = 0.1, preserve_topology: bool | None = True
     ) -> bool:
         """Simply a polygon, i.e. remove unneccesary points.
 

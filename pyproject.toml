@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "scikit-build-core[pyproject]<0.6.0",
+    "scikit-build-core[pyproject]",
     "swig",
     "numpy==1.19.2; python_version == '3.8'",
     "numpy==1.19.5; python_version == '3.9'",
@@ -14,7 +14,7 @@ cmake.minimum-version = "3.15.3"
 cmake.verbose = true
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["src/xtgeo/_theversion.py"]
-wheel.install-dir = "xtgeo/cxtgeo"
+wheel.install-dir = "xtgeo"
 
 [project]
 name = "xtgeo"
@@ -22,7 +22,7 @@ description = "XTGeo is a Python library for 3D grids, surfaces, wells, etc"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "LGPL-3.0" }
-authors = [{ name = "Equinor", email = "jriv@equinor.com" }]
+authors = [{ name = "Equinor", email = "fg_fmu-atlas@equinor.com" }]
 keywords = ["grids", "surfaces", "wells", "cubes"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -30,6 +30,8 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.8",
@@ -49,7 +51,7 @@ dependencies = [
     "hdf5plugin>=2.3",
     "joblib",
     "matplotlib>=3.3",
-    "numpy>=1.19",
+    "numpy<2",
     "pandas>=1.1",
     "roffio>=0.0.2",
     "scipy>=1.5",
@@ -57,7 +59,6 @@ dependencies = [
     "shapely>=1.6.2",
     "tables<3.9;platform_system != 'Darwin' and python_version == '3.8'", # TODO: mac...
     "tables;platform_system != 'Darwin' and python_version > '3.8'",      # TODO: mac...
-    "typing-extensions",
 ]
 
 [project.urls]
@@ -85,12 +86,13 @@ dev = [
     "pytest-xdist",
 ]
 docs = [
-    "pydocstyle",
-    "Sphinx<4.0",
-    "sphinx-rtd-theme",
-    "sphinx-toolbox",
     "autoclasstoc",
     "myst-parser",
+    "pydocstyle",
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-rtd-theme",
+    "sphinx-toolbox",
 ]
 
 [tool.black]
@@ -133,13 +135,6 @@ test-command = [
 
 [tool.isort]
 profile = "black"
-
-[tool.mypy]
-disallow_untyped_defs = true
-exclude = "^((tests|docs|examples|bin)/|conftest.py|src/clib/|src/xtgeo/(common|cube|xtgeo|grid3d|metadata|plot|roxutils|surface|well|xyz)/?)"
-follow_imports = "skip"
-ignore_missing_imports = true
-python_version = 3.8
 
 [tool.pydocstyle]
 convention = "google"

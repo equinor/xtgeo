@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
+from xtgeo import _cxtgeo
 
 
 class Surface:

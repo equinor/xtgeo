@@ -6,7 +6,9 @@ handling and speed.
 
 import io
 from os.path import join as ojn
+
 import numpy.ma as npma
+
 import xtgeo
 
 # from memory_profiler import profile
@@ -83,7 +85,6 @@ def sum_running_stats_bytestream():
 
 
 if __name__ == "__main__":
-
     AVG1 = sum_running_stats()
 
     print(AVG1)

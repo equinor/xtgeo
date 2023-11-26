@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Do gridding from 3D parameters"""
-
+from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.ma as ma
@@ -10,10 +12,12 @@ import scipy.interpolate
 import scipy.ndimage
 
 import xtgeo
+from xtgeo.common import null_logger
 
-xtg = xtgeo.common.XTGeoDialog()
+if TYPE_CHECKING:
+    from xtgeo.surface import RegularSurface
 
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # Note: 'self' is an instance of RegularSurface
 # pylint: disable=too-many-branches, too-many-statements, too-many-locals
@@ -323,21 +327,25 @@ def surf_fill(self, fill_value=None):
         logger.info("Do fill... DONE")
 
 
-def smooth_median(self, iterations=1, width=1):
-    """Smooth a surface using a median filter.
+def _smooth(
+    self: RegularSurface,
+    window_function: Callable[[np.ndarray], np.ndarray],
+    iterations: int = 1,
+) -> None:
+    """
+    Smooth a RegularSurface using a window function.
 
-    .. versionadded:: 2.1
+    Original mask (undefined values) is stored before applying
+    smoothing on a filled array. Subsequently the original mask
+    is used to restore the undefined values in the output.
     """
 
     mask = ma.getmaskarray(self.values)
-    tmpv = ma.filled(self.values, fill_value=np.nan)
 
-    for _itr in range(iterations):
-        tmpv = scipy.ndimage.median_filter(tmpv, width)
-
-    tmpv = ma.masked_invalid(tmpv)
-
-    # seems that false areas of invalids (masked) may be made; combat that:
-    self.values = tmpv
     self.fill()
-    self.values = ma.array(self.values, mask=mask)
+
+    smoothed_values = self.values
+    for _ in range(iterations):
+        smoothed_values = window_function(smoothed_values, mode="nearest")
+
+    self.values = ma.array(smoothed_values, mask=mask)

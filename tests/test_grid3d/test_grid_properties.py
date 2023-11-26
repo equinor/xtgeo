@@ -11,7 +11,7 @@ from hypothesis import assume, given
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import GridProperties
+from xtgeo.grid3d import GridProperties, GridProperty
 
 from .grid_generator import xtgeo_grids
 from .gridprop_generator import grid_properties as gridproperties_elements
@@ -180,12 +180,25 @@ def test_scan_keywords_invalid_file():
         GridProperties.scan_keywords(TPATH / "notafile.UNRST")
 
 
+def test_scan_keywords_roff_as_tuple_list():
+    """A static method to scan quickly keywords in a ROFF file"""
+    t1 = xtg.timer()
+    keywords = GridProperties.scan_keywords(XFILE2, fformat="roff")
+    t2 = xtg.timer(t1)
+    logger.info("Keywords scanned in %s seconds", t2)
+    assert keywords[0] == ("filedata!byteswaptest", "int", 1, 111)
+    assert keywords[-1] == ("parameter!data", "int", 35840, 806994)
+    logger.info(keywords)
+
+
 def test_scan_keywords_roff():
     """A static method to scan quickly keywords in a ROFF file"""
     t1 = xtg.timer()
     df = GridProperties.scan_keywords(XFILE2, dataframe=True, fformat="roff")
     t2 = xtg.timer(t1)
-    logger.info("Dates scanned in %s seconds", t2)
+    logger.info("Keywords scanned in %s seconds", t2)
+    assert tuple(df.iloc[0]) == ("filedata!byteswaptest", "int", 1, 111)
+    assert tuple(df.iloc[-1]) == ("parameter!data", "int", 35840, 806994)
     logger.info(df)
 
 
@@ -280,3 +293,17 @@ def test_get_dataframe_filled(gridproperties):
     assert (
         len(df.index) == gridproperties.ncol * gridproperties.nrow * gridproperties.nlay
     )
+
+
+def test_props_set_get() -> None:
+    gp = GridProperties()
+    assert gp.props is None
+
+    props = [GridProperty()]
+    gp = GridProperties()
+    gp.props = props
+    assert gp.props == props
+
+    props = [GridProperty()]
+    gp = GridProperties(props=props)
+    assert gp.props == props

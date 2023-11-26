@@ -23,24 +23,3 @@ x_swap_check()
 
     return i;
 }
-
-/* used in ROFF files. Values:
- *
- * i = -1 or lower: query byteroder status
- * i =  0 Machine is big endian, import is bigendian (no swap)
- * i =  1 Machine is little endian, import is little endian (no swap)
- * i =  2 Machine is little endian, import file is big endian (swap needed)
- * i =  3 Machine is big endian, import file is little endian (swap needed)
- *
- */
-
-int
-x_byteorder(int i)
-{
-    static int byteorder;
-
-    if (i > -1) {
-        byteorder = i;
-    }
-    return byteorder;
-}

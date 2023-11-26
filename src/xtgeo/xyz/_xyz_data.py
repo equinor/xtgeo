@@ -33,23 +33,22 @@ corresponding entries in attr_types and attr_records will be deleted.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from copy import deepcopy
-from typing import Dict, List, Literal, Optional, Sequence, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 from joblib import hash as jhash
 
 import xtgeo.common.constants as const
+from xtgeo import XTGeoCLibError, _cxtgeo
+from xtgeo.common import null_logger
 from xtgeo.common.sys import _convert_carr_double_np, _get_carray
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
-from xtgeo.cxtgeo import _cxtgeo
-from xtgeo.cxtgeo._cxtgeo import XTGeoCLibError  # type: ignore[attr-defined]
 
 from ..common._xyz_enum import _AttrName, _AttrType, _XYZType
 
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 CONT_DEFAULT_RECORD = ("", "")  # unit and scale, where emptry string indicates ~unknown
@@ -75,13 +74,13 @@ class _XYZData:
     def __init__(
         self,
         dataframe: pd.DataFrame,
-        attr_types: Optional[Dict[str, str]] = None,
-        attr_records: Optional[Dict[str, Union[Dict[int, str], Sequence[str]]]] = None,
+        attr_types: dict[str, str] | None = None,
+        attr_records: dict[str, dict[int, str] | Sequence[str]] | None = None,
         xname: str = _AttrName.XNAME.value,
         yname: str = _AttrName.YNAME.value,
         zname: str = _AttrName.ZNAME.value,
-        idname: Optional[str] = None,  # Well, Polygon, ...
-        undef: Union[float, Sequence[float, float]] = -999.0,
+        idname: str | None = None,  # Well, Polygon, ...
+        undef: float | Sequence[float, float] = -999.0,
         xyztype: Literal["well", "points", "polygons"] = "well",
         floatbits: Literal["float32", "float64"] = "float64",
     ):
@@ -319,14 +318,13 @@ class _XYZData:
         occured, hence no consistency checks are done
         """
 
-        # the purpose of this hash check is to avoid psending time on consistency
+        # the purpose of this hash check is to avoid spending time on consistency
         # checks if no changes
         hash_proposed = (
             jhash(self._df),
             jhash(self._attr_types),
             jhash(self._attr_records),
         )
-
         if self._hash == hash_proposed:
             return False
 
@@ -385,7 +383,7 @@ class _XYZData:
         """Get a record for a named attribute."""
         return self._attr_records[name]
 
-    def set_attr_record(self, name: str, record: Optional[dict]) -> None:
+    def set_attr_record(self, name: str, record: dict | None) -> None:
         """Set a record for a named log."""
 
         if name not in self._attr_types:
@@ -489,7 +487,7 @@ class _XYZData:
             _AttrType.CONT.value,  # type: ignore
             _AttrType.DISC.value,  # type: ignore
         ],
-        attr_record: Optional[dict] = None,
+        attr_record: dict | None = None,
         value: float = 0.0,
         force: bool = True,
         force_reserved: bool = False,
@@ -528,7 +526,7 @@ class _XYZData:
         self.ensure_consistency()
         return True
 
-    def delete_attr(self, attrname: Union[str, List[str]]) -> int:
+    def delete_attr(self, attrname: str | list[str]) -> int:
         """Delete/remove an existing attribute, or list of attributes.
 
         Returns number of logs deleted

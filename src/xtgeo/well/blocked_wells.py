@@ -7,13 +7,14 @@
 import deprecation
 
 import xtgeo
+from xtgeo.common import null_logger
 
 from . import _blockedwells_roxapi
 from .blocked_well import BlockedWell
 from .wells import Wells
 
 xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def blockedwells_from_files(

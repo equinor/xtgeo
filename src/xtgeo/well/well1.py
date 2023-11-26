@@ -5,7 +5,6 @@ from __future__ import annotations
 import io
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import deprecation
 import numpy as np
@@ -13,27 +12,26 @@ import pandas as pd
 
 import xtgeo
 import xtgeo.common.constants as const
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
-from xtgeo.common import _AttrType
+from xtgeo import _cxtgeo  # type: ignore
+from xtgeo.common import _AttrType, null_logger
 from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
 
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
 
-xtg = xtgeo.XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 # ======================================================================================
 # Functions, as wrappers to class methods
 
 
 def well_from_file(
-    wfile: Union[str, Path],
-    fformat: Optional[str] = "rms_ascii",
-    mdlogname: Optional[str] = None,
-    zonelogname: Optional[str] = None,
-    lognames: Optional[Union[str, List[str]]] = "all",
-    lognames_strict: Optional[bool] = False,
-    strict: Optional[bool] = False,
+    wfile: str | Path,
+    fformat: str | None = "rms_ascii",
+    mdlogname: str | None = None,
+    zonelogname: str | None = None,
+    lognames: str | list[str] | None = "all",
+    lognames_strict: bool | None = False,
+    strict: bool | None = False,
 ) -> Well:
     """Make an instance of a Well directly from file import.
 
@@ -69,14 +67,14 @@ def well_from_file(
 
 
 def well_from_roxar(
-    project: Union[str, object],
+    project: str | object,
     name: str,
-    trajectory: Optional[str] = "Drilled trajectory",
-    logrun: Optional[str] = "log",
-    lognames: Optional[Union[str, List[str]]] = "all",
-    lognames_strict: Optional[bool] = False,
-    inclmd: Optional[bool] = False,
-    inclsurvey: Optional[bool] = False,
+    trajectory: str | None = "Drilled trajectory",
+    logrun: str | None = "log",
+    lognames: str | list[str] | None = "all",
+    lognames_strict: bool | None = False,
+    inclmd: bool | None = False,
+    inclsurvey: bool | None = False,
 ) -> xtgeo.Well:
     """This makes an instance of a Well directly from Roxar RMS.
 
@@ -176,12 +174,12 @@ class Well:
         xpos: float = 0.0,
         ypos: float = 0.0,
         wname: str = "",
-        df: Optional[pd.DataFrame] = None,
-        mdlogname: Optional[str] = None,
-        zonelogname: Optional[str] = None,
-        wlogtypes: Optional[Dict[str, str]] = None,
-        wlogrecords: Optional[Dict[str, str]] = None,
-        filesrc: Optional[Union[str, Path]] = None,
+        df: pd.DataFrame | None = None,
+        mdlogname: str | None = None,
+        zonelogname: str | None = None,
+        wlogtypes: dict[str, str] | None = None,
+        wlogrecords: dict[str, str] | None = None,
+        filesrc: str | Path | None = None,
     ):
         # state variables from args
         self._rkb = rkb
@@ -505,8 +503,8 @@ class Well:
     @classmethod
     def _read_file(
         cls,
-        wfile: Union[str, Path],
-        fformat: Optional[str] = "rms_ascii",
+        wfile: str | Path,
+        fformat: str | None = "rms_ascii",
         **kwargs,
     ):
         """Import well from file.
@@ -551,8 +549,8 @@ class Well:
 
     def to_file(
         self,
-        wfile: Union[str, Path, io.BytesIO],
-        fformat: Optional[str] = "rms_ascii",
+        wfile: str | Path | io.BytesIO,
+        fformat: str | None = "rms_ascii",
     ):
         """Export well to file or memory stream.
 
@@ -583,15 +581,15 @@ class Well:
 
     def from_hdf(
         self,
-        wfile: Union[str, Path],
+        wfile: str | Path,
     ):
         """Deprecated, use :meth:`xtgeo.well_from_file()`"""
         return self.from_file(wfile, fformat="hdf")
 
     def to_hdf(
         self,
-        wfile: Union[str, Path],
-        compression: Optional[str] = "lzf",
+        wfile: str | Path,
+        compression: str | None = "lzf",
     ) -> Path:
         """Export well to HDF based file.
 
@@ -623,14 +621,14 @@ class Well:
     )
     def from_roxar(
         self,
-        project: Union[str, object],
+        project: str | object,
         name: str,
-        trajectory: Optional[str] = "Drilled trajectory",
-        logrun: Optional[str] = "log",
-        lognames: Optional[Union[str, List[str]]] = "all",
-        lognames_strict: Optional[bool] = False,
-        inclmd: Optional[bool] = False,
-        inclsurvey: Optional[bool] = False,
+        trajectory: str | None = "Drilled trajectory",
+        logrun: str | None = "log",
+        lognames: str | list[str] | None = "all",
+        lognames_strict: bool | None = False,
+        inclmd: bool | None = False,
+        inclsurvey: bool | None = False,
     ):
         """Deprecated, use :meth:`xtgeo.well_from_roxar()`"""
         kwargs = _well_roxapi.import_well_roxapi(
@@ -649,14 +647,14 @@ class Well:
     @classmethod
     def _read_roxar(
         cls,
-        project: Union[str, object],
+        project: str | object,
         name: str,
-        trajectory: Optional[str] = "Drilled trajectory",
-        logrun: Optional[str] = "log",
-        lognames: Optional[Union[str, List[str]]] = "all",
-        lognames_strict: Optional[bool] = False,
-        inclmd: Optional[bool] = False,
-        inclsurvey: Optional[bool] = False,
+        trajectory: str | None = "Drilled trajectory",
+        logrun: str | None = "log",
+        lognames: str | list[str] | None = "all",
+        lognames_strict: bool | None = False,
+        inclmd: bool | None = False,
+        inclsurvey: bool | None = False,
     ):
         kwargs = _well_roxapi.import_well_roxapi(
             project,
@@ -679,10 +677,6 @@ class Well:
         The current implementation will either update the existing well
         (then well log array size must not change), or it will make a new well in RMS.
 
-        Note:
-           When project is file path (direct access, outside RMS) then
-           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
-           will not be saved until the user do an explicit project save action.
 
         Args:
             project (str, object): Magic string 'project' or file path to project
@@ -690,16 +684,54 @@ class Well:
             lognames (:obj:list or :obj:str): List of lognames to save, or
                 use simply 'all' for current logs for this well. Default is 'all'
             realisation (int): Currently inactive
-            trajectory (str): Name of trajectory in RMS
-            logrun (str): Name of logrun in RMS
+            trajectory (str): Name of trajectory in RMS, default is "Drilled trajectory"
+            logrun (str): Name of logrun in RMS, defaault is "log"
+            update_option (str): None | "overwrite" | "append". This only applies
+                when the well (wname) exists in RMS, and rules are based on name
+                matching. Default is None which means that all well logs in
+                RMS are emptied and then replaced with the content from xtgeo.
+                The "overwrite" option will replace logs in RMS with logs from xtgeo,
+                and append new if they do not exist in RMS. The
+                "append" option will only append logs if name does not exist in RMS
+                already. Reading only a subset of logs and then use "overwrite" or
+                "append" may speed up execution significantly.
+
+        Note:
+           When project is file path (direct access, outside RMS) then
+           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+           will not be saved until the user do an explicit project save action.
+
+        Example::
+
+            # assume that existing logs in RMS are ["PORO", "PERMH", "GR", "DT", "FAC"]
+            # read only one existing log (faster)
+            wll = xtgeo.well_from_roxar(project, "WELL1", lognames=["PORO"])
+            wll.dataframe["PORO"] += 0.2  # add 0.2 to PORO log
+            wll.create_log("NEW", value=0.333)  # create a new log with constant value
+
+            # the "option" is a variable... for output, ``lognames="all"`` is default
+            if option is None:
+                # remove all current logs in RMS; only logs will be PORO and NEW
+                wll.to_roxar(project, "WELL1", update_option=option)
+            elif option == "overwrite":
+                # keep all original logs but update PORO and add NEW
+                wll.to_roxar(project, "WELL1", update_option=option)
+            elif option == "append":
+                # keep all original logs as they were (incl. PORO) and add NEW
+                wll.to_roxar(project, "WELL1", update_option=option)
+
+        Note:
+            The keywords ``lognames`` and ``update_option`` will interact
 
         .. versionadded:: 2.12
         .. versionchanged:: 2.15
             Saving to new wells enabled (earlier only modifying existing)
-
+        .. versionchanged:: 3.5
+            Add key ``update_option``
         """
         # use *args, **kwargs since this method is overrided in blocked_well, and
-        # signature should be the same
+        # signature should be the same (TODO: change this to keywords; think this is
+        # a python 2.7 relict?)
 
         project = args[0]
         wname = args[1]
@@ -707,6 +739,7 @@ class Well:
         trajectory = kwargs.get("trajectory", "Drilled trajectory")
         logrun = kwargs.get("logrun", "log")
         realisation = kwargs.get("realisation", 0)
+        update_option = kwargs.get("update_option", None)
 
         logger.debug("Not in use: realisation %s", realisation)
 
@@ -718,6 +751,7 @@ class Well:
             trajectory=trajectory,
             logrun=logrun,
             realisation=realisation,
+            update_option=update_option,
         )
 
     def get_lognames(self):
@@ -814,7 +848,7 @@ class Well:
         self,
         lname: str,
         logtype: str = _AttrType.CONT.value,
-        logrecord: Optional[dict] = None,
+        logrecord: dict | None = None,
         value: float = 0.0,
         force: bool = True,
     ) -> bool:
@@ -872,7 +906,7 @@ class Well:
         """
         return self._wdata.copy_attr(lname, newname, force)
 
-    def delete_log(self, lname: Union[str, List[str]]) -> int:
+    def delete_log(self, lname: str | list[str]) -> int:
         """Delete/remove an existing log, or list of logs.
 
         Will continue silently if a log does not exist.
@@ -892,7 +926,7 @@ class Well:
 
     delete_logs = delete_log  # alias function
 
-    def get_logtype(self, lname) -> Optional[str]:
+    def get_logtype(self, lname) -> str | None:
         """Returns the type of a given log (e.g. DISC or CONT), None if not present."""
         if lname in self._wdata.attr_types:
             return self._wdata.attr_types[lname].name
@@ -1157,7 +1191,7 @@ class Well:
     def create_surf_distance_log(
         self,
         surf: object,
-        name: Optional[str] = "DIST_SURF",
+        name: str | None = "DIST_SURF",
     ):
         """Make a log that is vertical distance to a regular surface.
 
@@ -1367,10 +1401,10 @@ class Well:
 
     def mask_shoulderbeds(
         self,
-        inputlogs: List[str],
-        targetlogs: List[str],
-        nsamples: Optional[Union[int, Dict[str, float]]] = 2,
-        strict: Optional[bool] = False,
+        inputlogs: list[str],
+        targetlogs: list[str],
+        nsamples: int | dict[str, float] | None = 2,
+        strict: bool | None = False,
     ) -> bool:
         """Mask data around zone boundaries or other discrete log boundaries.
 

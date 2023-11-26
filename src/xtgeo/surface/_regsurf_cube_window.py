@@ -5,14 +5,12 @@
 import numpy as np
 import numpy.ma as ma
 
-from xtgeo.common import XTGeoDialog, XTGShowProgress
+from xtgeo.common import XTGShowProgress, null_logger
 
 from . import _regsurf_cube_window_v2 as cwv2
 from . import _regsurf_cube_window_v3 as cwv3
 
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 ALLATTRS = [

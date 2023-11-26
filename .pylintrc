@@ -1,7 +1,7 @@
 # PYLINT: General settings for XTGeo
 [MASTER]
-ignore=src/xtgeo/cxtgeo, src/xtgeo/clib, src/xtgeo/_theversion.py, setup.py
-extension-pkg-whitelist=xtgeo.cxtgeo._cxtgeo, _cxtgeo, numpy, matplotlib
+ignore=src/xtgeo/clib, src/xtgeo/_theversion.py
+extension-pkg-whitelist=xtgeo._cxtgeo, _cxtgeo, numpy, matplotlib
 
 [BASIC]
 good-names=logger, version, xtg, i, j, k, x, y, z, _
@@ -11,7 +11,7 @@ argument-rgx=^[a-z_][_a-z0-9]+((_[a-z0-9]+)*)?$
 dummy-variables-rgx=^_+[a-z0-9]*?$|dummy
 
 [TYPECHECK]
-generated-members=np.*, numpy.*, pd.*, pandas.*, cxtgeo.*, matplotlib.*
+generated-members=np.*, numpy.*, pd.*, pandas.*, matplotlib.*, xtgeo.*
 
 [FORMAT]
 max-line-length=88

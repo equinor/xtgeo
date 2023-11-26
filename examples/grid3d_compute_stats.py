@@ -5,7 +5,9 @@ handling and speed.
 """
 
 from os.path import join as ojn
+
 import numpy.ma as npma
+
 import xtgeo
 
 # from memory_profiler import profile
@@ -105,7 +107,6 @@ def sum_running_stats():
 
 
 if __name__ == "__main__":
-
     AVG1 = sum_stats()
     AVG2 = sum_running_stats()
 

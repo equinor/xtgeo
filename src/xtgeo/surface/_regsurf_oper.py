@@ -1,22 +1,21 @@
-# coding: utf-8
 """Various operations"""
 
+from __future__ import annotations
+
 import numbers
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import numpy.ma as ma
-from matplotlib.path import Path as MPath
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
-from xtgeo import XTGeoCLibError
-from xtgeo.common import XTGeoDialog
+from xtgeo import XTGeoCLibError, _cxtgeo
+from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
 
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 VALID_OPER = (
     "add",
@@ -565,11 +564,13 @@ def _proxy_map_polygons(surf, poly, inside=True):
     xvals, yvals = proxy.get_xy_values(asmasked=False)
     points = np.array([xvals.ravel(), yvals.ravel()]).T
 
+    import matplotlib as mpl
+
     for pol in usepolys:
         idgroups = pol.dataframe.groupby(pol.pname)
         for _, grp in idgroups:
             singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
-            poly_path = MPath(singlepoly)
+            poly_path = mpl.path.Path(singlepoly)
             is_inside = poly_path.contains_points(points)
             is_inside = is_inside.reshape(proxy.ncol, proxy.nrow)
             proxy.values = np.where(is_inside, inside_value, proxy.values)
@@ -577,9 +578,7 @@ def _proxy_map_polygons(surf, poly, inside=True):
     return proxy
 
 
-def operation_polygons_v2(
-    self, poly, value: Union[float, Any], opname="add", inside=True
-):
+def operation_polygons_v2(self, poly, value: float | Any, opname="add", inside=True):
     """Operations restricted to polygons, using matplotlib (much faster).
 
     The 'value' can be a number or another regular surface (with same design)

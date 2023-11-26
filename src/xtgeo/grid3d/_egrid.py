@@ -48,22 +48,14 @@ GridHead(type_of_grid=<TypeOfGrid.COMPOSITE...
 >>> head.to_egrid().tolist() == grid_head_contents
 True
 """
+from __future__ import annotations
+
 import warnings
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum, unique
 from itertools import chain
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Any
 
 import numpy as np
 from resfo import Format, lazy_read, write
@@ -128,7 +120,7 @@ class Filehead:
     grid_format: GridFormat
 
     @classmethod
-    def from_egrid(cls, values: List[int]):
+    def from_egrid(cls, values: list[int]):
         """
         Construct a Filehead given the list of values following
         the FILEHEAD keyword.
@@ -183,8 +175,8 @@ class GridHead:
     numres: int
     nseg: int
     coordinate_type: CoordinateType
-    lgr_start: Tuple[int, int, int]
-    lgr_end: Tuple[int, int, int]
+    lgr_start: tuple[int, int, int]
+    lgr_end: tuple[int, int, int]
 
     @classmethod
     def from_egrid(cls, values: Sequence[int]):
@@ -229,10 +221,10 @@ class EGridSubGrid:
     general format of a eclipse grid. EGridSubGrid contain the common implementation.
     """
 
-    grid_head: Optional[GridHead]
+    grid_head: GridHead | None
     coord: np.ndarray
     zcorn: np.ndarray
-    actnum: Optional[np.ndarray] = None
+    actnum: np.ndarray | None = None
 
     def __eq__(self, other):
         return (
@@ -262,14 +254,14 @@ class EGridSubGrid:
             )
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> tuple[int, int, int]:
         return (
             int(self.grid_head.num_x),
             int(self.grid_head.num_y),
             int(self.grid_head.num_z),
         )
 
-    def to_egrid(self) -> List[Tuple[str, Any]]:
+    def to_egrid(self) -> list[tuple[str, Any]]:
         result = [
             ("GRIDHEAD", self.grid_head.to_egrid()),
             ("COORD   ", self.coord.astype(np.float32)),
@@ -287,12 +279,12 @@ class LGRSection(EGridSubGrid):
     which define a subgrid with finer layout.
     """
 
-    name: Optional[str] = None
-    parent: Optional[str] = None
-    grid_parent: Optional[str] = None
-    hostnum: Optional[np.ndarray] = None
-    boxorig: Optional[Tuple[int, int, int]] = None
-    coord_sys: Optional[MapAxes] = None
+    name: str | None = None
+    parent: str | None = None
+    grid_parent: str | None = None
+    hostnum: np.ndarray | None = None
+    boxorig: tuple[int, int, int] | None = None
+    coord_sys: MapAxes | None = None
 
     def __eq__(self, other):
         if not isinstance(other, LGRSection):
@@ -311,7 +303,7 @@ class LGRSection(EGridSubGrid):
         if self.name is None:
             raise TypeError("Missing parameter to LGRSection: name")
 
-    def to_egrid(self) -> List[Tuple[str, Any]]:
+    def to_egrid(self) -> list[tuple[str, Any]]:
         result_dict = dict(super().to_egrid())
         result_dict["LGR     "] = [self.name]
         if self.parent is not None:
@@ -355,9 +347,9 @@ class GlobalGrid(EGridSubGrid):
     through the optional corsnum keyword.
     """
 
-    coord_sys: Optional[MapAxes] = None
-    boxorig: Optional[Tuple[int, int, int]] = None
-    corsnum: Optional[np.ndarray] = None
+    coord_sys: MapAxes | None = None
+    boxorig: tuple[int, int, int] | None = None
+    corsnum: np.ndarray | None = None
 
     def _check_xtgeo_compatible(self):
         super()._check_xtgeo_compatible()
@@ -384,7 +376,7 @@ class GlobalGrid(EGridSubGrid):
             and np.array_equal(self.corsnum, other.corsnum)
         )
 
-    def to_egrid(self) -> List[Tuple[str, Any]]:
+    def to_egrid(self) -> list[tuple[str, Any]]:
         result_dict = dict(super().to_egrid())
         if self.coord_sys is not None:
             result_dict["COORDSYS"] = self.coord_sys.to_bgrdecl()
@@ -422,7 +414,7 @@ class NNCHead:
     grid_identifier: int
 
     @classmethod
-    def from_egrid(cls, values: List[int]):
+    def from_egrid(cls, values: list[int]):
         return cls(*values[0:2])
 
     def to_egrid(self) -> np.ndarray:
@@ -452,8 +444,8 @@ class NNCSection:
     nnchead: NNCHead
     upstream_nnc: np.ndarray
     downstream_nnc: np.ndarray
-    nncl: Optional[np.ndarray] = None
-    nncg: Optional[np.ndarray] = None
+    nncl: np.ndarray | None = None
+    nncg: np.ndarray | None = None
 
     def __eq__(self, other):
         if not isinstance(other, NNCSection):
@@ -466,7 +458,7 @@ class NNCSection:
             and np.array_equal(self.nncg, other.nncg)
         )
 
-    def to_egrid(self) -> List[Tuple[str, Any]]:
+    def to_egrid(self) -> list[tuple[str, Any]]:
         result = [
             ("NNCHEAD ", self.nnchead.to_egrid()),
             ("NNC1    ", self.upstream_nnc),
@@ -493,9 +485,9 @@ class AmalgamationSection:
 
     """
 
-    lgr_idxs: Tuple[int, int]
-    nna1: Optional[np.ndarray]
-    nna2: Optional[np.ndarray]
+    lgr_idxs: tuple[int, int]
+    nna1: np.ndarray | None
+    nna2: np.ndarray | None
 
     def __eq__(self, other):
         if not isinstance(other, AmalgamationSection):
@@ -506,7 +498,7 @@ class AmalgamationSection:
             and np.array_equal(self.nna2, other.nna2)
         )
 
-    def to_egrid(self) -> List[Tuple[str, Any]]:
+    def to_egrid(self) -> list[tuple[str, Any]]:
         return [
             ("NNCHEADA", np.array(self.lgr_idxs, np.int32)),
             ("NNA1    ", self.nna1),
@@ -519,12 +511,12 @@ class EGridHead:
     """The EGridHead section occurs once at the start of an EGrid file."""
 
     file_head: Filehead
-    mapunits: Optional[Units] = None
-    mapaxes: Optional[MapAxes] = None
-    gridunit: Optional[GridUnit] = None
-    gdorient: Optional[GdOrient] = None
+    mapunits: Units | None = None
+    mapaxes: MapAxes | None = None
+    gridunit: GridUnit | None = None
+    gdorient: GdOrient | None = None
 
-    def to_egrid(self) -> List[Tuple[str, Any]]:
+    def to_egrid(self) -> list[tuple[str, Any]]:
         result = [
             ("FILEHEAD", self.file_head.to_egrid()),
         ]
@@ -555,21 +547,21 @@ class EGrid(EclGrid):
 
     egrid_head: EGridHead
     global_grid: GlobalGrid
-    lgr_sections: List[LGRSection]
+    lgr_sections: list[LGRSection]
     # The nnc_sections are kept as one list which can consist of both
     # NNCSection and AmalgamationSection as these occur interspersed in the
     # file. The order seems to be sorted by LGR index. Keeping them in
     # one list keeps the data layout of EGrid 1-to-1 with the contents
     # of the file.
-    nnc_sections: List[Union[NNCSection, AmalgamationSection]]
+    nnc_sections: list[NNCSection | AmalgamationSection]
 
     @classmethod
     def default_settings_grid(
         cls,
         coord: np.ndarray,
         zcorn: np.ndarray,
-        actnum: Optional[np.ndarray],
-        size: Tuple[int, int, int],
+        actnum: np.ndarray | None,
+        size: tuple[int, int, int],
     ):
         grid_head = GridHead(
             TypeOfGrid.CORNER_POINT,
@@ -621,7 +613,7 @@ class EGrid(EclGrid):
         self.global_grid.zcorn = value
 
     @property
-    def actnum(self) -> Optional[np.ndarray]:
+    def actnum(self) -> np.ndarray | None:
         return self.global_grid.actnum
 
     @classmethod
@@ -683,7 +675,7 @@ class EGrid(EclGrid):
         return self.egrid_head.gridunit.grid_relative == GridRelative.MAP
 
     @property
-    def mapaxes(self) -> Optional[MapAxes]:
+    def mapaxes(self) -> MapAxes | None:
         return self.egrid_head.mapaxes
 
     @mapaxes.setter
@@ -691,7 +683,7 @@ class EGrid(EclGrid):
         self.egrid_head.mapaxes = value
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> tuple[int, int, int]:
         return self.global_grid.dimensions
 
     @property
@@ -778,8 +770,8 @@ class EGridReader:
 
     def read_section(
         self,
-        keyword_factories: Dict[str, Callable],
-        required_keywords: Set[str],
+        keyword_factories: dict[str, Callable],
+        required_keywords: set[str],
         stop_keywords: Iterable[str],
         skip_keywords: Iterable[str] = [],
         keyword_visitors: Iterable[Callable] = [],
@@ -898,7 +890,7 @@ class EGridReader:
             raise EGridFileFormatError("Did not read ENDGRID after global grid")
         return GlobalGrid(**params)
 
-    def read_subsections(self) -> Tuple[List[LGRSection], List[NNCSection]]:
+    def read_subsections(self) -> tuple[list[LGRSection], list[NNCSection]]:
         """
         Reads lgr and nnc subsections from the start of the keyword_generator.
         """

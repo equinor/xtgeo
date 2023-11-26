@@ -5,12 +5,10 @@
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo import _cxtgeo
+from xtgeo.common import null_logger
 
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def slice_cube(

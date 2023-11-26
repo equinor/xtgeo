@@ -5,6 +5,12 @@ on:
     branches: [main, "*postfix"]
   pull_request:
     branches: [main]
+  release:
+    types:
+      - published
+  schedule:
+    # Run nightly to check that tests are working with latest dependencies
+    - cron: "0 0 * * *"
 
 jobs:
   test:
@@ -96,3 +102,22 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           files: xtgeocoverage.xml
+
+  opm-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: "./.github/actions/setup_xtgeo"
+        with:
+          python-version: 3.9
+
+      - name: Setup testdata
+        uses: "./.github/actions/setup_testdata"
+
+      - name: Set up OPM
+        run: |
+          sudo apt install software-properties-common &&
+          sudo apt-add-repository ppa:opm/ppa &&
+          sudo apt install mpi-default-bin libopm-simulators-bin
+      - name: Integration test
+        run: HAS_OPM=1 python -m pytest -m requires_opm --disable-warnings

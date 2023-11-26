@@ -5,22 +5,19 @@ import math
 import warnings
 from collections import OrderedDict
 
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
-from matplotlib import collections as mc
-from matplotlib.lines import Line2D
 from scipy.ndimage import gaussian_filter
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.well import Well
 from xtgeo.xyz import Polygons
 
 from .baseplot import BasePlot, _get_colormap
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 class XSection(BasePlot):
@@ -265,6 +262,7 @@ class XSection(BasePlot):
 
         """
         # overriding the base class canvas
+        import matplotlib.pyplot as plt
 
         plt.rcParams["axes.xmargin"] = 0  # fill the plot margins
 
@@ -445,6 +443,8 @@ class XSection(BasePlot):
         md_start_round = int(math.floor(md_start / 100.0)) * 100
         md_start_delta = md_start - md_start_round
 
+        import matplotlib.pyplot as plt
+
         auto_ticks = plt.xticks()
         auto_ticks_delta = auto_ticks[0][1] - auto_ticks[0][0]
 
@@ -566,7 +566,9 @@ class XSection(BasePlot):
             df, idx_zshift, ctable, zonelogname, fillnavalue
         )
 
-        lc = mc.LineCollection(
+        import matplotlib as mpl
+
+        lc = mpl.collections.LineCollection(
             segments, colors=segments_colors, linewidth=logwidth, zorder=202
         )
 
@@ -610,7 +612,9 @@ class XSection(BasePlot):
             df, idx, ctable, facieslogname, fillnavalue
         )
 
-        lc = mc.LineCollection(
+        import matplotlib as mpl
+
+        lc = mpl.collections.LineCollection(
             segments, colors=segments_colors, linewidth=logwidth, zorder=201
         )
 
@@ -656,7 +660,9 @@ class XSection(BasePlot):
             df, idx, ctable, perflogname, fillnavalue
         )
 
-        lc = mc.LineCollection(
+        import matplotlib as mpl
+
+        lc = mpl.collections.LineCollection(
             segments, colors=segments_colors, linewidth=logwidth, zorder=200
         )
 
@@ -769,9 +775,11 @@ class XSection(BasePlot):
         proxies = []
         labels = []
 
+        import matplotlib as mpl
+
         for item in items:
             color = items[item]
-            proxies.append(Line2D([0, 1], [0, 1], color=color, linewidth=5))
+            proxies.append(mpl.lines.Line2D([0, 1], [0, 1], color=color, linewidth=5))
             labels.append(item)
 
         ax.legend(

@@ -1,18 +1,18 @@
 """Operations along a well, private module."""
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
-from xtgeo.common import XTGeoDialog
+from xtgeo import _cxtgeo
 from xtgeo.common import constants as const
+from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.sys import _get_carray
 
-xtg = XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def rescale(self, delta=0.15, tvdrange=None):
@@ -237,9 +237,8 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
 def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
     """Getting IJK from a grid and make as well logs.
 
-    This is a newer version, using grid.get_ijk_from_points which in turn
-    use the from C method x_chk_point_in_hexahedron, while v1 use the
-    x_chk_point_in_cell. This one is believed to be more precise!
+    This is a newer version using grid.get_ijk_from_points. This one
+    is believed to be more precise!
     """
     # establish a Points instance and make points dataframe from well trajectory X Y Z
     wpoints = xtgeo.Points()
@@ -281,25 +280,26 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
         raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
 
-    wcopy = self.copy()
     if isinstance(gridprops, xtgeo.GridProperty):
         gprops = xtgeo.GridProperties()
         gprops.append_props([gridprops])
     else:
         gprops = gridprops
 
+    ijk_logs_created_tmp = False
     if isinstance(grid, tuple):
         icl, jcl, kcl = grid
     elif isinstance(grid, xtgeo.Grid):
-        wcopy.make_ijk_from_grid(grid, grid_id="_tmp", algorithm=2)
+        self.make_ijk_from_grid(grid, grid_id="_tmp", algorithm=2)
         icl, jcl, kcl = ("ICELL_tmp", "JCELL_tmp", "KCELL_tmp")
+        ijk_logs_created_tmp = True
     else:
         raise ValueError("The 'grid' is of wrong type, must be a tuple or a Grid")
 
     # let grid values have base 1 when looking up cells for gridprops
-    iind = wcopy.dataframe[icl].values - 1
-    jind = wcopy.dataframe[jcl].values - 1
-    kind = wcopy.dataframe[kcl].values - 1
+    iind = self.dataframe[icl].to_numpy(copy=True) - 1
+    jind = self.dataframe[jcl].to_numpy(copy=True) - 1
+    kind = self.dataframe[kcl].to_numpy(copy=True) - 1
 
     xind = iind.copy()
 
@@ -310,7 +310,7 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     iind = iind.astype("int")
     jind = jind.astype("int")
     kind = kind.astype("int")
-    dfr = wcopy.dataframe.copy()
+    dfr = self.dataframe.copy()
 
     pnames = {}
     for prop in gprops.props:
@@ -319,20 +319,20 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
         arr[np.isnan(xind)] = np.nan
         pname = prop.name + prop_id
         dfr[pname] = arr
-        pnames[pname] = (prop.isdiscrete, prop.codes)
+        pnames[pname] = (prop.isdiscrete, deepcopy(prop.codes))
 
-    wcopy.set_dataframe(dfr)
+    self.set_dataframe(dfr)
     for pname, isdiscrete_codes in pnames.items():
         isdiscrete, codes = isdiscrete_codes
         if isdiscrete:
-            wcopy.set_logtype(pname, _AttrType.DISC.value)
-            wcopy.set_logrecord(pname, codes)
+            self.set_logtype(pname, _AttrType.DISC.value)
+            self.set_logrecord(pname, codes)
         else:
-            wcopy.set_logtype(pname, _AttrType.CONT.value)
-            wcopy.set_logrecord(pname, ("", ""))
+            self.set_logtype(pname, _AttrType.CONT.value)
+            self.set_logrecord(pname, ("", ""))
 
-    wcopy.delete_logs(["ICELL_tmp", "JCELL_tmp", "KCELL_tmp"])
-    self.set_dataframe(wcopy.dataframe)
+    if ijk_logs_created_tmp:
+        self.delete_logs(["ICELL_tmp", "JCELL_tmp", "KCELL_tmp"])
 
 
 def report_zonation_holes(self, threshold=5):

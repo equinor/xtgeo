@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The XTGeo xyz.points module, which contains the Points class."""
 from __future__ import annotations
 
@@ -8,21 +7,17 @@ import pathlib
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import deprecation
 import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, inherit_docstring
-from xtgeo.xyz import _xyz_io, _xyz_roxapi
+from xtgeo.common import inherit_docstring, null_logger
+from xtgeo.xyz import XYZ, _xyz_io, _xyz_oper, _xyz_roxapi
 
-from . import _xyz_oper
-from ._xyz import XYZ
-
-xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = null_logger(__name__)
 
 
 def _data_reader_factory(file_format):
@@ -36,8 +31,8 @@ def _data_reader_factory(file_format):
 
 
 def _file_importer(
-    pfile: Union[str, pathlib.Path, io.BytesIO],
-    fformat: Optional[str] = None,
+    pfile: str | pathlib.Path | io.BytesIO,
+    fformat: str | None = None,
 ):
     """General function for points_from_file and (deprecated) method from_file."""
     xtgeo_file = xtgeo._XTGeoFile(pfile)
@@ -88,13 +83,13 @@ def _roxar_importer(
 
 
 def _wells_importer(
-    wells: List[xtgeo.Well],
+    wells: list[xtgeo.Well],
     tops: bool = True,
-    incl_limit: Optional[float] = None,
+    incl_limit: float | None = None,
     top_prefix: str = "Top",
-    zonelist: Optional[list] = None,
+    zonelist: list | None = None,
     use_undef: bool = False,
-) -> Dict:
+) -> dict:
     """General function importing from wells"""
     dflist = []
     for well in wells:
@@ -126,14 +121,14 @@ def _wells_importer(
 
 
 def _wells_dfrac_importer(
-    wells: List[xtgeo.Well],
+    wells: list[xtgeo.Well],
     dlogname: str,
-    dcodes: List[int],
+    dcodes: list[int],
     incl_limit: float = 90,
     count_limit: int = 3,
     zonelist: list = None,
     zonelogname: str = None,
-) -> Dict:
+) -> dict:
     """General function, get fraction of discrete code(s) e.g. facies per zone."""
 
     dflist = []
@@ -170,7 +165,7 @@ def _wells_dfrac_importer(
     }
 
 
-def points_from_file(pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"):
+def points_from_file(pfile: str | pathlib.Path, fformat: str | None = "guess"):
     """Make an instance of a Points object directly from file import.
 
     Supported formats are:
@@ -262,11 +257,11 @@ def points_from_surface(
 
 
 def points_from_wells(
-    wells: List[xtgeo.Well],
+    wells: list[xtgeo.Well],
     tops: bool = True,
-    incl_limit: Optional[float] = None,
+    incl_limit: float | None = None,
     top_prefix: str = "Top",
-    zonelist: Optional[list] = None,
+    zonelist: list | None = None,
     use_undef: bool = False,
 ):
     """Get tops or zone points data from a list of wells.
@@ -309,13 +304,13 @@ def points_from_wells(
 
 
 def points_from_wells_dfrac(
-    wells: List[xtgeo.Well],
+    wells: list[xtgeo.Well],
     dlogname: str,
-    dcodes: List[int],
+    dcodes: list[int],
     incl_limit: float = 90,
     count_limit: int = 3,
-    zonelist: Optional[list] = None,
-    zonelogname: Optional[str] = None,
+    zonelist: list | None = None,
+    zonelogname: str | None = None,
 ):
     """Get fraction of discrete code(s) e.g. facies per zone.
 
@@ -473,11 +468,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @_allow_deprecated_init
     def __init__(
         self,
-        values: Union[list, np.ndarray, pd.DataFrame] = None,
+        values: list | np.ndarray | pd.DataFrame = None,
         xname: str = "X_UTME",
         yname: str = "Y_UTMN",
         zname: str = "Z_TVDSS",
-        attributes: Optional[dict] = None,
+        attributes: dict | None = None,
         filesrc: str = None,
     ):
         """Initialisation of Points()."""
@@ -495,11 +490,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
 
     def _reset(
         self,
-        values: Union[list, np.ndarray, pd.DataFrame] = None,
+        values: list | np.ndarray | pd.DataFrame = None,
         xname: str = "X_UTME",
         yname: str = "Y_UTMN",
         zname: str = "Z_TVDSS",
-        attributes: Optional[dict] = None,
+        attributes: dict | None = None,
         filesrc: str = None,
     ):  # pylint: disable=arguments-differ
         """Used in deprecated methods."""
@@ -608,7 +603,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     )
     def from_roxar(
         self,
-        project: Union[str, Any],
+        project: str | Any,
         name: str,
         category: str,
         stype: str = "horizons",

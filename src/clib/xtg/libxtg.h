@@ -97,9 +97,6 @@ FILE *
 xtg_fopen_bytestream(char *swig_bytes, long swig_bytes_len, const char *mode);
 
 int
-xtg_fseek_start(FILE *fhandle);
-
-int
 xtg_fflush(FILE *fhandle);
 
 long
@@ -180,15 +177,6 @@ x_diff_angle(double ang1, double ang2, int option);
 double
 x_avg_angles(double *swig_np_dbl_in_v1,  // *angles
              long n_swig_np_dbl_in_v1);  // nsize,
-
-void
-x_conv_int2float(int n, int *v1, float *v2);
-
-void
-x_conv_int2double(int n, int *v1, double *v2);
-
-void
-x_conv_double2float(int n, double *v1, float *v2);
 
 double
 x_rotation_conv(double ain, int aimode, int mode, int option);
@@ -1187,16 +1175,6 @@ grdcp3d_calc_xyz(long ncol,
                  double *swig_np_dbl_aout_v3,  // zarr
                  long n_swig_np_dbl_aout_v3);
 
-long
-grd3d_scan_roffbinary(FILE *fc,
-                      int *swig_int_out_p1,       // *swap,
-                      char *swig_out_char_msize,  // tagletters
-                      int nswig_out_char_msize,
-                      int *rectypes,
-                      long *reclengths,
-                      long *recstarts,
-                      long maxkw);
-
 void
 grd3d_conv_roxapi_grid(int nx,
                        int ny,
@@ -1250,9 +1228,6 @@ grd3d_roff2xtgeo_splitenz(int nz,
                           long n_swig_np_flt_inplace_v2   // nzcorn
 );
 
-void
-grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
-
 int
 grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax);
 
@@ -1275,18 +1250,6 @@ grd3d_conv_grid_roxapi(int ncol,
                        double *swig_np_dbl_aout_v3,  // *zcorners
                        long n_swig_np_dbl_aout_v3    // nzcorners
 );
-
-int
-grd3d_copy(int ncol,
-           int nrow,
-           int nlay,
-           double *p_coord1_v,
-           double *p_zcorn1_v,
-           int *p_actnum1_v,
-           double *p_coord2_v,
-           double *p_zcorn2_v,
-           int *p_actnum2_v,
-           int iflag);
 
 int
 grd3d_crop_geometry(int nx,
@@ -1801,33 +1764,6 @@ grdcp3d_from_cube(int ncol,
                   double rotation,
                   int yflip,
                   int option);
-
-void
-grdcp3d_export_xtgeo_grid(long ncol,
-                          long nrow,
-                          long nlay,
-                          double *swig_np_dbl_inplaceflat_v1,  // coordsv
-                          long n_swig_np_dbl_inplaceflat_v1,   // ncoord
-                          float *swig_np_flt_inplaceflat_v1,   // zcornsv (float)
-                          long n_swig_np_flt_inplaceflat_v1,   // nzcorn
-                          int *swig_np_int_inplaceflat_v2,     // actnumsv
-                          long n_swig_np_int_inplaceflat_v2,   // nact
-                          char *metadata,
-                          FILE *fc);
-
-int
-grdcp3d_import_xtgeo_grid(int mode,
-                          long *swig_lon_out_p1,
-                          long *swig_lon_out_p2,
-                          long *swig_lon_out_p3,
-                          double *swig_np_dbl_inplaceflat_v1,  // coordsv
-                          long n_swig_np_dbl_inplaceflat_v1,   // ncoord
-                          float *swig_np_flt_inplaceflat_v1,   // zcornsv (float)
-                          long n_swig_np_flt_inplaceflat_v1,   // nzcorn
-                          int *swig_np_int_inplaceflat_v2,     // actnumsv
-                          long n_swig_np_int_inplaceflat_v2,   // nact
-                          char *swig_bnd_char_100k,            // metadata
-                          FILE *fc);
 
 int
 grd3cp3d_xtgformat1to2_geom(long ncol,
