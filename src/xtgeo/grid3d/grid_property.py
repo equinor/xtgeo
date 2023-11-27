@@ -47,6 +47,18 @@ if TYPE_CHECKING:
     from ._gridprop_op1 import XYValueLists
     from .grid import Grid
 
+    GridProperty_DType = (
+        type[np.uint8]
+        | type[np.uint16]
+        | type[np.int16]
+        | type[np.int32]
+        | type[np.int64]
+        | type[np.float16]
+        | type[np.float32]
+        | type[np.float64]
+    )
+    Roxar_DType = type[np.uint8] | type[np.uint16] | type[np.float32]
+
 # --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 #
@@ -180,7 +192,7 @@ def gridproperty_from_roxar(
     )
 
 
-def allow_deprecated_init(func: Callable) -> Callable:
+def _allow_deprecated_init(func: Callable) -> Callable:
     # This decorator is here to maintain backwards compatibility in the construction
     # of GridProperty and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -270,7 +282,7 @@ class GridProperty(_Grid3D):
 
     """
 
-    @allow_deprecated_init
+    @_allow_deprecated_init
     def __init__(
         self,
         gridlike: Grid | GridProperty | None = None,
@@ -286,7 +298,7 @@ class GridProperty(_Grid3D):
         codes: dict[int, str] | None = None,
         dualporo: bool = False,
         dualperm: bool = False,
-        roxar_dtype: npt.DTypeLike | None = None,
+        roxar_dtype: Roxar_DType | None = None,
         values: np.ndarray | float | int | None = None,
         roxorigin: bool = False,
         filesrc: str | None = None,
@@ -347,7 +359,7 @@ class GridProperty(_Grid3D):
             myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
 
         """
-        super().__init__(ncol, nrow, nlay)
+        super().__init__(ncol or 4, nrow or 3, nlay or 5)
         self._reset(
             gridlike,
             ncol,
@@ -383,7 +395,7 @@ class GridProperty(_Grid3D):
         codes: dict[int, str] | None = None,
         dualporo: bool = False,
         dualperm: bool = False,
-        roxar_dtype: npt.DTypeLike | None = None,
+        roxar_dtype: Roxar_DType | None = None,
         values: np.ndarray | float | int | None = None,
         roxorigin: bool = False,
         filesrc: str | None = None,
@@ -444,11 +456,7 @@ class GridProperty(_Grid3D):
             myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
 
         """
-        super().__init__()
-
-        self._ncol = ncol
-        self._nrow = nrow
-        self._nlay = nlay
+        super().__init__(ncol or 4, nrow or 3, nlay or 5)
 
         # Instance attributes defaults:
         self._name = name
@@ -464,11 +472,9 @@ class GridProperty(_Grid3D):
 
         self._filesrc = filesrc
         self._roxorigin = roxorigin
+
         if roxar_dtype is None:
-            if discrete:
-                self._roxar_dtype: npt.DTypeLike = np.uint8
-            else:
-                self._roxar_dtype = np.float32
+            self._roxar_dtype: Roxar_DType = np.uint8 if discrete else np.float32
         else:
             self.roxar_dtype = roxar_dtype
 
@@ -654,7 +660,7 @@ class GridProperty(_Grid3D):
             self.discrete_to_continuous()
 
     @property
-    def dtype(self) -> np.dtype:
+    def dtype(self) -> GridProperty_DType:
         """
         Get or set the ``values`` numpy dtype.
 
@@ -670,15 +676,18 @@ class GridProperty(_Grid3D):
         return self._values.dtype
 
     @dtype.setter
-    def dtype(self, dtype: npt.DTypeLike) -> None:
-        allowed: list[npt.DTypeLike] = [np.float16, np.float32, np.float64]
-        if self.isdiscrete:
-            allowed = [np.uint8, np.uint16, np.int16, np.int32, np.int64]
+    def dtype(self, dtype: GridProperty_DType) -> None:
+        allowed: list[GridProperty_DType] = (
+            [np.uint8, np.uint16, np.int16, np.int32, np.int64]
+            if self.isdiscrete
+            else [np.float16, np.float32, np.float64]
+        )
         if dtype not in allowed:
             raise ValueError(
                 f"{__name__}: Wrong input for dtype. Use one of {allowed}!"
             )
-        self.values = self.values.astype(dtype)
+        # https://github.com/numpy/numpy/issues/24392
+        self.values = self.values.astype(dtype)  # type: ignore
 
     @property
     def filesrc(self) -> str | None:
@@ -690,13 +699,13 @@ class GridProperty(_Grid3D):
         self._filesrc = src
 
     @property
-    def roxar_dtype(self) -> np.dtype | None:
+    def roxar_dtype(self) -> Roxar_DType | None:
         """Get or set the roxar dtype (if any)."""
         return self._roxar_dtype
 
     @roxar_dtype.setter
-    def roxar_dtype(self, dtype: npt.DTypeLike) -> None:
-        allowed = [np.uint16, np.uint8, np.float32]
+    def roxar_dtype(self, dtype: Roxar_DType) -> None:
+        allowed = [np.uint8, np.uint16, np.float32]
         if dtype not in allowed:
             raise ValueError(
                 f"{__name__}: Wrong input for roxar_dtype. Use one of {allowed}!"
@@ -1001,7 +1010,7 @@ class GridProperty(_Grid3D):
         fformat: str = "roff",
         name: str | None = None,
         append: bool = False,
-        dtype: npt.DTypeLike | None = None,
+        dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,
         fmt: str | None = None,
     ) -> None:
         """
@@ -1216,7 +1225,7 @@ class GridProperty(_Grid3D):
         if fill_value is None:
             if self._isdiscrete:
                 fvalue: npt.ArrayLike = UNDEF_INT
-                dtype: npt.DTypeLike = np.int32
+                dtype: type[np.int32] | type[np.float64] = np.int32
             else:
                 fvalue = UNDEF
                 dtype = np.float64
@@ -1364,7 +1373,7 @@ class GridProperty(_Grid3D):
         xprop.codes = self._codes
         xprop.date = self._date
         xprop.roxorigin = self._roxorigin
-        xprop.roxar_dtype = self._roxar_dtype
+        xprop.roxar_dtype = self.roxar_dtype
 
         xprop.filesrc = self._filesrc
 
@@ -1502,7 +1511,7 @@ class GridProperty(_Grid3D):
         self._values = val
         self._isdiscrete = False
         self._codes = {}
-        self._roxar_dtype = np.float32
+        self.roxar_dtype = np.float32
 
     def continuous_to_discrete(self) -> None:
         """Convert from continuous to discrete values."""
@@ -1521,7 +1530,7 @@ class GridProperty(_Grid3D):
         codes = dict(zip(uniq, uniq))
         codes = {k: str(v) for k, v in codes.items()}  # val as strings
         self._codes = codes
-        self._roxar_dtype = np.uint16
+        self.roxar_dtype = np.uint16
 
     # ==================================================================================
     # Operations restricted to inside/outside polygons
@@ -1531,7 +1540,7 @@ class GridProperty(_Grid3D):
         self,
         poly: Polygons,
         value: float | int,
-        opname: str = "add",
+        opname: Literal["add", "sub", "mul", "div", "set"] = "add",
         inside: bool = True,
     ) -> None:
         """
