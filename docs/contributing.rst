@@ -253,8 +253,13 @@ Before you submit a pull request, check that it meets these guidelines:
 Tips
 ----
 
-To run a subset of tests, e.g. only surface tests:
+- To run a subset of tests, e.g. only surface tests:
 
 .. code:: bash
 
     $ pytest test/test_surfaces
+
+- scikit-build-core offers some suggestions about building with editable installs, see info here:
+
+https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs
+
