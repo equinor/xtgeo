@@ -129,7 +129,7 @@ class XTGDescription:
         fmt = "=" * 99
         self._txt.append(fmt)
 
-    def txt(self, *atxt: str) -> None:
+    def txt(self, *atxt: Any) -> None:
         fmt = self._smartfmt(list(atxt))
         self._txt.append(fmt)
 
