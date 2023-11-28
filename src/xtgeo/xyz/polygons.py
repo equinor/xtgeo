@@ -19,6 +19,7 @@ import shapely.geometry as sg
 
 import xtgeo
 from xtgeo.common import inherit_docstring, null_logger
+from xtgeo.common.version import __version__
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _polygons_oper, _xyz_oper
@@ -493,7 +494,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     @deprecation.deprecated(
         deprecated_in="2.21",  # should have been 2.16, but was forgotten until 2.21
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.polygons_from_file() instead",
     )
     def from_file(self, pfile, fformat="xyz"):
@@ -519,7 +520,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.polygons_from_wells(...) instead",
     )
     def from_wells(self, wells, zone, resample=1):
@@ -625,7 +626,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use direct Polygons() initialisation instead",
     )
     def from_list(self, plist):

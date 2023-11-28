@@ -15,6 +15,8 @@ import numpy.ma as ma
 
 import xtgeo
 from xtgeo.common import XTGDescription, _XTGeoFile, null_logger
+from xtgeo.common.sys import generic_hash
+from xtgeo.common.version import __version__
 
 from . import (
     _grid3d_fence,
@@ -778,7 +780,7 @@ class Grid(_Grid3D):
 
         gid = "".join(str(getattr(self, att)) for att in required)
 
-        return xtgeo.common.sys.generic_hash(gid, hashmethod=hashmethod)
+        return generic_hash(gid, hashmethod=hashmethod)
 
     # ==================================================================================
     # Create/import/export
@@ -787,7 +789,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.create_box_grid() instead",
     )
     def create_box(
@@ -970,7 +972,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.grid_from_file() instead",
     )
     def from_file(
@@ -1033,7 +1035,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.grid_from_file() instead",
     )
     def from_hdf(
@@ -1074,7 +1076,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.grid_from_file() instead",
     )
     def from_xtgf(self, gfile: FileLike, mmap: bool = False) -> None:
@@ -1098,7 +1100,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.grid_from_roxar() instead",
     )
     def from_roxar(
@@ -1284,7 +1286,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Method dataframe is deprecated, use get_dataframe instead.",
     )
     def dataframe(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
@@ -1605,7 +1607,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.Grid().gridprops instead",
     )
     def get_gridproperties(self) -> GridProperties:
@@ -1824,7 +1826,7 @@ class Grid(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="3.0",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.Grid.get_dx() and/or xtgeo.Grid.get_dy() instead.",
     )
     def get_dxdy(

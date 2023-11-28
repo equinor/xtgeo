@@ -13,6 +13,7 @@ import pandas as pd
 import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
+from xtgeo.common.version import __version__
 
 from . import _grid3d_utils as utils
 from . import _grid_etc1, _gridprops_import_eclrun, _gridprops_import_roff
@@ -369,7 +370,7 @@ class GridProperties(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="The behavior of the setting names would before create an alias name "
         "the behavior of which was not always consistent. "
         "Note that setting names on the GridProperties has "
@@ -611,7 +612,7 @@ class GridProperties(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.gridproperties_from_file() instead",
     )
     def from_file(
@@ -741,7 +742,7 @@ class GridProperties(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use GridProperty.get_dataframe() instead",
     )
     def dataframe(self, *args: Any, **kwargs: Any) -> pd.DataFrame:

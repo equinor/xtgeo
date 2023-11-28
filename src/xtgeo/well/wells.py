@@ -11,6 +11,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common import null_logger
+from xtgeo.common.version import __version__
 
 from . import _wells_utils
 from .well1 import Well
@@ -142,7 +143,7 @@ class Wells:
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.wells_from_files() instead",
     )
     def from_files(

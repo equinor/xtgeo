@@ -15,6 +15,7 @@ import numpy as np
 import xtgeo
 import xtgeo.common.sys as xtgeosys
 from xtgeo.common import XTGDescription, null_logger
+from xtgeo.common.version import __version__
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
 logger = null_logger(__name__)
@@ -842,7 +843,7 @@ class Cube:  # pylint: disable=too-many-public-methods, W0201
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.cube_from_file() instead",
     )
     def from_file(self, sfile, fformat="guess", engine=None):

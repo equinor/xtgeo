@@ -10,6 +10,7 @@ from packaging import version
 import xtgeo
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.version import __version__ as xtgeo_version
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -1180,7 +1181,7 @@ def test_smoothing():
 
 def test_loadvalues_before_remove_deprecated(default_surface):
     """Test that load_values() has the claimed effect before deprecating __init__"""
-    if version.parse(xtgeo.version) >= version.parse("4.0"):
+    if version.parse(xtgeo_version) >= version.parse("4.0"):
         pytest.skip("Not relevant after deprecated __init__ is removed")
 
     correct = xtgeo.RegularSurface(filesrc=TESTSET1, **default_surface)
@@ -1213,7 +1214,7 @@ def test_loadvalues_before_remove_deprecated(default_surface):
 
 
 def test_loadvalues_after_remove(default_surface):
-    if version.parse(xtgeo.version) < version.parse("4.0"):
+    if version.parse(xtgeo_version) < version.parse("4.0"):
         pytest.skip("Not relevant before deprecated __init__ is removed")
 
     default_surface.pop("values", None)

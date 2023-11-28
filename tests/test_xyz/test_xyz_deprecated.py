@@ -7,7 +7,7 @@ import pytest
 from packaging import version
 
 import xtgeo
-from xtgeo import version as xtgeo_version
+from xtgeo.common.version import __version__ as xtgeo_version
 
 PFILE1A = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 PFILE1B = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.xyz")

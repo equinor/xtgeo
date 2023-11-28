@@ -5,6 +5,7 @@ import pytest
 from packaging import version
 
 import xtgeo
+from xtgeo.common.version import __version__ as xtgeo_version
 
 
 def fail_if_not_removed(version_limit, msg=None):
@@ -15,7 +16,7 @@ def fail_if_not_removed(version_limit, msg=None):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             func(*args, **kwargs)
-            if version.parse(xtgeo.version) > version.parse(version_limit):
+            if version.parse(xtgeo_version) > version.parse(version_limit):
                 pytest.fail(msg)
 
         return wrapper

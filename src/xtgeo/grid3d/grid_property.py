@@ -16,6 +16,7 @@ import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.sys import _XTGeoFile
+from xtgeo.common.version import __version__
 from xtgeo.metadata.metadata import MetaDataCPProperty
 
 from . import (
@@ -913,7 +914,7 @@ class GridProperty(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.gridproperty_from_file() instead",
     )
     def from_file(
@@ -1049,7 +1050,7 @@ class GridProperty(_Grid3D):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.gridproperty_from_roxar() instead",
     )
     def from_roxar(
