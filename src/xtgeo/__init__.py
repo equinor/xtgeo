@@ -123,11 +123,6 @@ from xtgeo.xyz.polygons import Polygons
 
 _xprint("Import various XTGeo modules... xyz...")
 
-if not ROXAR:
-    from xtgeo.plot import baseplot, grid3d_slice, xsection, xtmap
-
-_xprint("Import various XTGeo modules... plots...")
-
 _xprint("Import various XTGeo modules...DONE")
 
 # some function wrappers to initiate objects from imports
