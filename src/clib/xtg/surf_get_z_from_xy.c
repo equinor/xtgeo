@@ -64,7 +64,7 @@ surf_get_z_from_xy(double x,
 {
     int ier, iex[4], i = 0, j = 0;
     double x_v[4], y_v[4], z_v[4];
-    double xx, yy, zz, z, rx, ry;
+    double xx, yy, zz, z = 0.0, rx, ry;
 
     if (nx * ny != nn)
         logger_error(LI, FI, FU, "Fatal error in %s", FU);
