@@ -1114,7 +1114,8 @@ class GridProperty(_Grid3D):
         gridname: str,
         propertyname: str,
         realisation: int = 0,
-        casting: str = "unsafe",
+        casting: Literal["no", "equiv", "safe", "same_kind", "unsafe"]
+        | None = "unsafe",
     ) -> None:
         """
         Store a grid model property into a RMS project.
