@@ -1,5 +1,4 @@
 import pathlib
-from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -61,7 +60,7 @@ def test_polygons_from_list_and_attrs():
         (235, 559, 14, 1, "attr", 1.1),
         (255, 577, 12, 1, "here", 1.2),
     ]
-    attrs = OrderedDict()
+    attrs = dict()
     attrs["sometxt"] = "str"
     attrs["somefloat"] = "float"
 

@@ -5,7 +5,6 @@ import functools
 import io
 import pathlib
 import warnings
-from collections import OrderedDict
 from copy import deepcopy
 from typing import Any
 
@@ -691,7 +690,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         if attributes and not all(item in dfr.columns for item in attributes.values()):
             raise ValueError("One or more attribute column names are not correct")
 
-        input_ = OrderedDict()
+        input_ = dict()
         input_["X_UTME"] = dfr[east]
         input_["Y_UTMN"] = dfr[north]
         input_["Z_TVDSS"] = dfr[tvdmsl]

@@ -1,7 +1,6 @@
 """GridProperty import function of xtgcpprop format."""
 
 import json
-from collections import OrderedDict
 from struct import unpack
 
 import numpy as np
@@ -58,7 +57,7 @@ def import_xtgcpprop(mfile, ijrange=None, zerobased=False):
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
 
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
     req = meta["_required_"]
 
     reqattrs = xtgeo.MetaDataCPProperty.REQUIRED

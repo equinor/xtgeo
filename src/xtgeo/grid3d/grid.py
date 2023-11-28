@@ -5,7 +5,6 @@ import functools
 import json
 import pathlib
 import warnings
-from collections import OrderedDict
 from collections.abc import Callable, Hashable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, NoReturn
 
@@ -384,7 +383,7 @@ class Grid(_Grid3D):
         actnumsv: np.ndarray,
         dualporo: bool = False,
         dualperm: bool = False,
-        subgrids: OrderedDict | None = None,
+        subgrids: dict | None = None,
         units: Units | None = None,
         filesrc: pathlib.Path | str | None = None,
         props: GridProperties | None = None,
@@ -450,7 +449,7 @@ class Grid(_Grid3D):
         actnumsv: np.ndarray,
         dualporo: bool = False,
         dualperm: bool = False,
-        subgrids: OrderedDict[str, range | list[int]] | None = None,
+        subgrids: dict[str, range | list[int]] | None = None,
         units: Units | None = None,
         filesrc: pathlib.Path | str | None = None,
         props: GridProperties | None = None,
@@ -591,7 +590,7 @@ class Grid(_Grid3D):
         self._ijk_handedness = value
 
     @property
-    def subgrids(self) -> OrderedDict[str, range | list[int]] | None:
+    def subgrids(self) -> dict[str, range | list[int]] | None:
         """:obj:`list` of :obj:`int`: A dict with subgrid name and an array as value.
 
         I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2": [5, 6, 7],
@@ -615,13 +614,13 @@ class Grid(_Grid3D):
     @subgrids.setter
     def subgrids(
         self,
-        sgrids: OrderedDict[str, range | list[int]] | None,
+        sgrids: dict[str, range | list[int]] | None,
     ) -> None:
         if sgrids is None:
             self._subgrids = None
             return
 
-        if not isinstance(sgrids, OrderedDict):
+        if not isinstance(sgrids, dict):
             raise ValueError("Input to subgrids must be an ordered dictionary")
 
         lengths = 0
@@ -1374,22 +1373,22 @@ class Grid(_Grid3D):
 
         self._props.append_props([prop])
 
-    def set_subgrids(self, sdict: OrderedDict[str, int] | None) -> None:
+    def set_subgrids(self, sdict: dict[str, int] | None) -> None:
         """Set the subgrid from a simplified ordered dictionary.
 
         The simplified dictionary is on the form
         {"name1": 3, "name2": 5}
 
-        Note that the input must be an OrderedDict!
+        Note that the input must be an dict!
 
         """
         if sdict is None:
             return None
 
-        if not isinstance(sdict, OrderedDict):
-            raise ValueError("Input sdict is not an OrderedDict")
+        if not isinstance(sdict, dict):
+            raise ValueError("Input sdict is not an dict")
 
-        newsub: OrderedDict[str, range | list[int]] = OrderedDict()
+        newsub: dict[str, range | list[int]] = dict()
 
         inn1 = 1
         for name, nsub in sdict.items():
@@ -1399,7 +1398,7 @@ class Grid(_Grid3D):
 
         self.subgrids = newsub
 
-    def get_subgrids(self) -> OrderedDict[str, int] | None:
+    def get_subgrids(self) -> dict[str, int] | None:
         """Get the subgrids on a simplified ordered dictionary.
 
         The simplified dictionary is on the form {"name1": 3, "name2": 5}
@@ -1407,7 +1406,7 @@ class Grid(_Grid3D):
         if not self.subgrids:
             return None
 
-        return OrderedDict((name, len(subb)) for name, subb in self.subgrids.items())
+        return dict((name, len(subb)) for name, subb in self.subgrids.items())
 
     def rename_subgrids(self, names: list[str] | tuple[str, ...]) -> None:
         """Rename the names in the subgrids with the new names.
@@ -1419,9 +1418,8 @@ class Grid(_Grid3D):
 
         Example::
 
-            >>> from collections import OrderedDict
             >>> grd = create_box_grid((3, 3, 3))
-            >>> grd.subgrids = OrderedDict(
+            >>> grd.subgrids = dict(
             ...     [("1", range(1,2)), ("2", range(2,3)), ("3", range(3,4))]
             ... )
             >>> grd.rename_subgrids(["Inky", "Tinky", "Pinky"])
@@ -1473,7 +1471,7 @@ class Grid(_Grid3D):
             >>> import xtgeo
             >>> grd = xtgeo.grid_from_file(emerald_dir + "/emerald_hetero_grid.roff")
             >>> print(grd.subgrids)
-            OrderedDict([('subgrid_0', range(1, 17)), ('subgrid_1', range(17, 47))])
+            dict([('subgrid_0', range(1, 17)), ('subgrid_1', range(17, 47))])
             >>> res = grd.estimate_design(nsub="subgrid_0")
             >>> print("Subgrid design is", res["design"])
             Subgrid design is P
@@ -1521,7 +1519,7 @@ class Grid(_Grid3D):
 
     def subgrids_from_zoneprop(
         self, zoneprop: GridProperty
-    ) -> OrderedDict[str, int] | None:
+    ) -> dict[str, int] | None:
         """Estimate subgrid index from a zone property.
 
         The new will esimate which will replace the current if any.
@@ -1539,7 +1537,7 @@ class Grid(_Grid3D):
         minzone = int(zprval.min())
         maxzone = int(zprval.max())
 
-        newd: OrderedDict[str, range] = OrderedDict()
+        newd: dict[str, range] = dict()
         for izone in range(minzone, maxzone + 1):
             mininzn = int(kval[zprval == izone].min())  # 1 base
             maxinzn = int(kval[zprval == izone].max())  # 1 base

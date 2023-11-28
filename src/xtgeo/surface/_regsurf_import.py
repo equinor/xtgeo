@@ -2,7 +2,6 @@
 # pylint: disable=protected-access
 
 import json
-from collections import OrderedDict
 from struct import unpack
 
 import h5py
@@ -484,7 +483,7 @@ def import_xtg(mfile, values=True, **kwargs):
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
 
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
     req = meta["_required_"]
 
     reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
@@ -518,7 +517,7 @@ def import_hdf5_regsurf(mfile, values=True, **_):
             invalues = grp["values"][:]
 
         jmeta = grp.attrs["metadata"]
-        meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+        meta = json.loads(jmeta, object_pairs_hook=dict)
 
         req = meta["_required_"]
 

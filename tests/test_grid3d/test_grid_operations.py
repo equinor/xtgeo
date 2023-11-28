@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Testing: test_grid_operations"""
-from collections import OrderedDict
 from os.path import join
 
 import pytest
@@ -44,7 +43,7 @@ def test_hybridgrid1(tmpdir, snapshot, helpers):
         rotation=30.0,
         increment=(100, 150, 5),
     )
-    grd.subgrids = OrderedDict({"name1": [1], "name2": [2, 3], "name3": [4, 5]})
+    grd.subgrids = dict({"name1": [1], "name2": [2, 3], "name3": [4, 5]})
     assert grd.subgrids is not None  # initially, prior to subgrids
 
     grd.to_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"), fformat="bgrdecl")
@@ -112,7 +111,7 @@ def test_refine_vertically():
     """Do a grid refinement vertically."""
 
     emerald_grid = xtgeo.grid_from_file(EMEGFILE)
-    assert emerald_grid.get_subgrids() == OrderedDict(
+    assert emerald_grid.get_subgrids() == dict(
         [("subgrid_0", 16), ("subgrid_1", 30)]
     )
 
@@ -125,7 +124,7 @@ def test_refine_vertically():
 
     assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
 
-    assert emerald_grid.get_subgrids() == OrderedDict(
+    assert emerald_grid.get_subgrids() == dict(
         [("subgrid_0", 48), ("subgrid_1", 90)]
     )
     emerald_grid.inactivate_by_dz(0.001)
@@ -141,19 +140,19 @@ def test_refine_vertically_per_zone(tmpdir):
     assert emerald2_zone.values.min() == 1
     assert emerald2_zone.values.max() == 2
 
-    assert grd.subgrids == OrderedDict(
+    assert grd.subgrids == dict(
         [("subgrid_0", range(1, 17)), ("subgrid_1", range(17, 47))]
     )
 
     refinement = {1: 4, 2: 2}
     grd.refine_vertically(refinement, zoneprop=emerald2_zone)
 
-    assert grd.get_subgrids() == OrderedDict([("zone1", 64), ("zone2", 60)])
+    assert grd.get_subgrids() == dict([("zone1", 64), ("zone2", 60)])
 
     grd = emerald2_grid.copy()
     grd.refine_vertically(refinement)  # no zoneprop
 
-    assert grd.get_subgrids() == OrderedDict([("subgrid_0", 64), ("subgrid_1", 60)])
+    assert grd.get_subgrids() == dict([("subgrid_0", 64), ("subgrid_1", 60)])
 
 
 def test_reverse_row_axis_box(tmpdir):

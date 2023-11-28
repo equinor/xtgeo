@@ -6,12 +6,10 @@ The metadata works through the various datatypes in XTGeo. For example::
     >>> import xtgeo
     >>> surf = xtgeo.surface_from_file(surface_dir + "/topreek_rota.gri")
     >>> surf.metadata.required
-    OrderedDict([('ncol', 554),...
+    dict([('ncol', 554),...
     >>> surf.metadata.optional.mean = surf.values.mean()
 
 """
-# import datetime
-from collections import OrderedDict
 
 # from datetime import date
 import xtgeo
@@ -131,8 +129,8 @@ class _OptionalMetaData:
         self._md5sum = newhash
 
     def get_meta(self):
-        """Return metadata as an OrderedDict."""
-        meta = OrderedDict()
+        """Return metadata as an dict."""
+        meta = dict()
         for key in self.__slots__:
             newkey = key[1:]
             meta[newkey] = getattr(self, key)
@@ -145,15 +143,15 @@ class MetaData:
 
     def __init__(self):
         """Generic metadata class __init__, not be used directly."""
-        self._required = OrderedDict()
+        self._required = dict()
         self._optional = _OptionalMetaData()
-        self._freeform = OrderedDict()
+        self._freeform = dict()
 
         self._freeform = {"smda": "whatever"}
 
     def get_metadata(self):
         """Get all metadata that are present."""
-        allmeta = OrderedDict()
+        allmeta = dict()
         allmeta["_required_"] = self._required
         allmeta["_optional_"] = self._optional.get_meta()
         allmeta["_freeform_"] = self._freeform
@@ -229,7 +227,7 @@ class MetaData:
 class MetaDataRegularSurface(MetaData):
     """Metadata for RegularSurface() objects."""
 
-    REQUIRED = OrderedDict(
+    REQUIRED = dict(
         [
             ("ncol", 1),
             ("nrow", 1),
@@ -274,7 +272,7 @@ class MetaDataRegularCube(MetaData):
     """Metadata for Cube() objects."""
 
     # allowed optional keys; these are set to avoid discussions
-    REQUIRED = OrderedDict(
+    REQUIRED = dict(
         [
             ("ncol", 1),
             ("nrow", 1),
@@ -326,7 +324,7 @@ class MetaDataRegularCube(MetaData):
 class MetaDataCPGeometry(MetaData):
     """Metadata for Grid() objects of type simplified CornerPoint Geometry."""
 
-    REQUIRED = OrderedDict(
+    REQUIRED = dict(
         [
             ("ncol", 1),
             ("nrow", 1),
@@ -371,7 +369,7 @@ class MetaDataCPGeometry(MetaData):
 class MetaDataCPProperty(MetaData):
     """Metadata for GridProperty() objects belonging to CPGeometry."""
 
-    REQUIRED = OrderedDict(
+    REQUIRED = dict(
         [
             ("ncol", 1),
             ("nrow", 1),
@@ -407,7 +405,7 @@ class MetaDataCPProperty(MetaData):
 class MetaDataWell(MetaData):
     """Metadata for single Well() objects."""
 
-    REQUIRED = OrderedDict(
+    REQUIRED = dict(
         [
             ("rkb", 0.0),
             ("xpos", 0.0),

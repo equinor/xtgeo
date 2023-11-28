@@ -2,7 +2,6 @@
 """Private module, Grid Import private functions for xtgeo based formats."""
 
 import json
-from collections import OrderedDict
 from struct import unpack
 
 import h5py
@@ -21,16 +20,16 @@ def convert_subgrids(sdict):
     The simplified dictionary is on the form
     {"name1": 3, "name2": 5}
 
-    Note that the input must be an OrderedDict!
+    Note that the input must be an dict!
 
     """
     if sdict is None:
         return None
 
-    if not isinstance(sdict, OrderedDict):
-        raise ValueError("Input sdict is not an OrderedDict")
+    if not isinstance(sdict, dict):
+        raise ValueError("Input sdict is not an dict")
 
-    newsub = OrderedDict()
+    newsub = dict()
 
     inn1 = 1
     for name, nsub in sdict.items():
@@ -124,7 +123,7 @@ def import_xtgcpgeom(
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
 
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
 
     handle_metadata(result, meta, ncol, nrow, nlay)
     return result
@@ -143,7 +142,7 @@ def import_hdf5_cpgeom(mfile, ijkrange=None, zerobased=False):
         logger.info("Provider is %s", provider)
 
         jmeta = grp.attrs["metadata"]
-        meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+        meta = json.loads(jmeta, object_pairs_hook=dict)
 
         req = meta["_required_"]
         ncol = req["ncol"]
@@ -187,10 +186,10 @@ def filter_subgrids_partial(subgrids, k1, k2, nlay, zerobased):
     ...   12,
     ...   True
     ... )
-    OrderedDict([('subgrid2', 1), ('subgrid3', 1)])
+    dict([('subgrid2', 1), ('subgrid3', 1)])
 
     Args:
-        subgrids: The OrderedDict of subgrids.
+        subgrids: The dict of subgrids.
         k1: Start of subgrid layers (can be "min" to mean 0 or 1 dependent on zerobased)
         k2: End of subgrid layers (cna be "max" to mean nlay or nlay -1
             dependent on zerobased.
@@ -213,7 +212,7 @@ def filter_subgrids_partial(subgrids, k1, k2, nlay, zerobased):
         k1 -= 1
         k2 -= 1
 
-    partial_subgrid = OrderedDict()
+    partial_subgrid = dict()
     start = 0
     for key, value in subgrids.items():
         end = value + start

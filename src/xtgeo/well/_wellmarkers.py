@@ -2,8 +2,6 @@
 """Well marker data; private module"""
 
 
-from collections import OrderedDict
-
 import numpy as np
 import pandas as pd
 
@@ -354,7 +352,7 @@ def get_fraction_per_zone(
     else:
         self.geometrics()
 
-    result = OrderedDict()
+    result = dict()
     result[self.xname] = []
     result[self.yname] = []
     result["DFRAC"] = []
@@ -458,7 +456,7 @@ def get_surface_picks(self, surf):
 
         mres[mres > xtgeo.UNDEF_LIMIT] = np.nan
 
-        res = OrderedDict()
+        res = dict()
         res[poi.xname] = xres[:nval]
         res[poi.yname] = yres[:nval]
         res[poi.zname] = zres[:nval]

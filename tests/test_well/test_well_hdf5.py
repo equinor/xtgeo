@@ -1,4 +1,3 @@
-from collections import OrderedDict
 
 import pytest
 
@@ -8,13 +7,13 @@ from xtgeo.well._well_io import import_wlogs
 @pytest.mark.parametrize(
     "wlogs, expected_output",
     [
-        (OrderedDict(), {"wlogtypes": {}, "wlogrecords": {}}),
+        (dict(), {"wlogtypes": {}, "wlogrecords": {}}),
         (
-            OrderedDict([("X_UTME", ("CONT", None))]),
+            dict([("X_UTME", ("CONT", None))]),
             {"wlogtypes": {"X_UTME": "CONT"}, "wlogrecords": {"X_UTME": None}},
         ),
         (
-            OrderedDict([("ZONELOG", ("DISC", {"0": "ZONE00"}))]),
+            dict([("ZONELOG", ("DISC", {"0": "ZONE00"}))]),
             {
                 "wlogtypes": {"ZONELOG": "DISC"},
                 "wlogrecords": {"ZONELOG": {"0": "ZONE00"}},

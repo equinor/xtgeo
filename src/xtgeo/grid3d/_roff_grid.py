@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pathlib
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass
 from typing import IO, TYPE_CHECKING, Any
@@ -284,14 +284,14 @@ class RoffGrid:
         else:
             raise ValueError(f"Unknown error {retval} occurred")
 
-    def xtgeo_subgrids(self) -> OrderedDict[str, range] | None:
+    def xtgeo_subgrids(self) -> dict[str, range] | None:
         """
         Returns:
             The z values for nodes in the format of xtgeo.Grid.zcornsv
         """
         if self.subgrids is None:
             return None
-        result = OrderedDict()
+        result = dict()
         next_ind = 1
         for i, current in enumerate(self.subgrids):
             result[f"subgrid_{i}"] = range(next_ind, current + next_ind)
