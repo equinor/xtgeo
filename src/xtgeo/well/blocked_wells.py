@@ -8,6 +8,7 @@ import deprecation
 
 import xtgeo
 from xtgeo.common import null_logger
+from xtgeo.common.version import __version__
 
 from . import _blockedwells_roxapi
 from .blocked_well import BlockedWell
@@ -102,7 +103,7 @@ class BlockedWells(Wells):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.blockedwells_from_files() instead",
     )
     def from_files(
@@ -158,7 +159,7 @@ class BlockedWells(Wells):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.blockedwells_from_roxar() instead",
     )
     def from_roxar(self, *args, **kwargs):  # pragma: no cover

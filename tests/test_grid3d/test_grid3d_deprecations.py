@@ -8,7 +8,7 @@ from packaging import version
 
 import xtgeo
 from xtgeo import GridProperties, GridProperty
-from xtgeo import version as xtgeo_version
+from xtgeo.common.version import __version__ as xtgeo_version
 
 from .gridprop_generator import grid_properties
 

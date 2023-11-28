@@ -15,6 +15,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common import inherit_docstring, null_logger
+from xtgeo.common.version import __version__
 from xtgeo.xyz import XYZ, _xyz_io, _xyz_oper, _xyz_roxapi
 
 logger = null_logger(__name__)
@@ -589,7 +590,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.points_from_file() instead",
     )
     def from_file(self, pfile, fformat="xyz"):
@@ -598,7 +599,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.points_from_roxar() instead.",
     )
     def from_roxar(
@@ -663,7 +664,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use "
         "xtgeo.Points("
         "values=dfr[[east, nort, tvdsml]], xname=east, yname=north, zname=tvdmsl"
@@ -758,7 +759,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.points_from_wells() instead.",
     )
     def from_wells(
@@ -799,7 +800,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use direct Points() initialisation instead",
     )
     def from_list(self, plist):
@@ -808,7 +809,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.points_from_wells_dfrac() instead.",
     )
     def dfrac_from_wells(
@@ -932,7 +933,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.points_from_surface() instead",
     )
     def from_surface(self, surf, zname="Z_TVDSS"):

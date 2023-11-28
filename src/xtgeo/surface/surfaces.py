@@ -10,6 +10,7 @@ import numpy as np
 
 import xtgeo
 from xtgeo.common import null_logger
+from xtgeo.common.version import __version__
 
 from . import _surfs_import
 
@@ -126,7 +127,7 @@ class Surfaces:
     @deprecation.deprecated(
         deprecated_in="2.15",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.surface.surfaces_from_grid() instead",
     )
     def from_grid3d(self, grid, subgrids=True, rfactor=1):

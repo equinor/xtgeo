@@ -14,6 +14,7 @@ import xtgeo
 import xtgeo.common.constants as const
 from xtgeo import _cxtgeo  # type: ignore
 from xtgeo.common import _AttrType, null_logger
+from xtgeo.common.version import __version__
 from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
 
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
@@ -479,7 +480,7 @@ class Well:
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.well_from_file() instead",
     )
     def from_file(
@@ -616,7 +617,7 @@ class Well:
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.well_from_roxar() instead",
     )
     def from_roxar(

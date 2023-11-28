@@ -3,7 +3,7 @@ from packaging import version
 
 import xtgeo
 from xtgeo import Well
-from xtgeo import version as xtgeo_version
+from xtgeo.common.version import __version__ as xtgeo_version
 
 
 @pytest.fixture(name="any_well")

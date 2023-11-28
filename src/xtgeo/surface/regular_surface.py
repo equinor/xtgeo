@@ -55,6 +55,7 @@ import xtgeo
 import xtgeo.common.sys as xtgeosys
 from xtgeo.common import null_logger
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
+from xtgeo.common.version import __version__
 
 from . import (
     _regsurf_boundary,
@@ -899,7 +900,7 @@ class RegularSurface:
     @deprecation.deprecated(
         deprecated_in="2.15",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.surface_from_file() instead",
     )
     def from_file(
@@ -1181,7 +1182,7 @@ class RegularSurface:
     @deprecation.deprecated(
         deprecated_in="2.15",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.surface_from_hdf() instead",
     )
     def from_hdf(
@@ -1305,7 +1306,7 @@ class RegularSurface:
     @deprecation.deprecated(
         deprecated_in="2.15",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.surface_from_roxar() instead",
     )
     def from_roxar(
@@ -1430,7 +1431,7 @@ class RegularSurface:
     @deprecation.deprecated(
         deprecated_in="2.15",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.surface.surface_from_cube() instead",
     )
     def from_cube(self, cube, zlevel):
@@ -1555,7 +1556,7 @@ class RegularSurface:
     @deprecation.deprecated(
         deprecated_in="2.15",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.surface_from_grid3d() instead",
     )
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):

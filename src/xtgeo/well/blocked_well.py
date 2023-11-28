@@ -5,9 +5,9 @@
 import deprecation
 import pandas as pd
 
-import xtgeo
 from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
+from xtgeo.common.version import __version__
 
 from . import _blockedwell_roxapi
 from .well1 import Well
@@ -169,7 +169,7 @@ class BlockedWell(Well):
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
-        current_version=xtgeo.version,
+        current_version=__version__,
         details="Use xtgeo.blockedwell_from_roxar() instead",
     )
     def from_roxar(self, *args, **kwargs):
