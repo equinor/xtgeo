@@ -3,7 +3,6 @@
 
 import math
 import warnings
-from collections import OrderedDict
 
 import numpy as np
 import numpy.ma as ma
@@ -277,7 +276,7 @@ class XSection(BasePlot):
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
         self._fig, _ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         self._allfigs.append(self._fig)
-        ax1 = OrderedDict()
+        ax1 = dict()
 
         # since the plan is to at some point remove plotting from xtgeo:
         warnings.filterwarnings("ignore", category=DeprecationWarning)

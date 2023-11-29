@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Well input and ouput, private module"""
 import json
-from collections import OrderedDict
 from copy import deepcopy
 
 import numpy as np
@@ -272,14 +271,14 @@ def export_hdf5_well(self, wfile, compression="lzf"):
     logger.debug("Export to hdf5 format... done!")
 
 
-def import_wlogs(wlogs: OrderedDict):
+def import_wlogs(wlogs: dict):
     """
     This converts joined wlogtypes/wlogrecords such as found in
     the hdf5 format to the format used in the Well object.
 
-    >>> import_wlogs(OrderedDict())
+    >>> import_wlogs(dict())
     {'wlogtypes': {}, 'wlogrecords': {}}
-    >>> import_wlogs(OrderedDict([("X_UTME", ("CONT", None))]))
+    >>> import_wlogs(dict([("X_UTME", ("CONT", None))]))
     {'wlogtypes': {'X_UTME': 'CONT'}, 'wlogrecords': {'X_UTME': None}}
 
     Returns:
@@ -318,7 +317,7 @@ def import_hdf5_well(wfile, **kwargs):
     if isinstance(jmeta, bytes):
         jmeta = jmeta.decode()
 
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
     req = meta["_required_"]
     result = dict()
     for myattr in reqattrs:

@@ -29,7 +29,7 @@ xline, 1 for iline in this example) but shall be constant per axis
 from __future__ import annotations
 
 import json
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from copy import deepcopy
 from struct import unpack
 from warnings import warn
@@ -596,7 +596,7 @@ def import_xtgregcube(mfile, values=True):
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
 
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
     req = meta["_required_"]
 
     reqattrs = xtgeo.MetaDataRegularCube.REQUIRED

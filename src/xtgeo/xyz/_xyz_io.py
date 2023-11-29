@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Private import and export routines for XYZ stuff."""
 
-from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -120,7 +119,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
     dtypes = {_xn: np.float64, _yn: np.float64, _zn: np.float64}
 
     names = list(dtypes.keys())
-    _attrs = OrderedDict()
+    _attrs = dict()
 
     # parse header
     skiprows = 0

@@ -1,7 +1,6 @@
 """Private module for refinement of a grid."""
 from __future__ import annotations
 
-from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -30,7 +29,7 @@ def refine_vertically(
     """
     self._xtgformat1()
 
-    rfactord = OrderedDict()
+    rfactord = dict()
 
     # case 1 rfactor as scalar value.
     if isinstance(rfactor, int):
@@ -40,12 +39,12 @@ def refine_vertically(
                 rfactord[i + 1] = rfactor
         else:
             rfactord[0] = rfactor
-            subgrids = OrderedDict()
+            subgrids = dict()
             subgrids[1] = self.nlay
 
     # case 2 rfactor is a dict
     else:
-        rfactord = OrderedDict(sorted(rfactor.items()))  # redefined to ordered
+        rfactord = dict(sorted(rfactor.items()))  # redefined to ordered
         # 2a: zoneprop is present
         if zoneprop is not None:
             oldsubgrids = None
@@ -76,7 +75,7 @@ def refine_vertically(
     self.set_subgrids(subgrids)
 
     # Now, based on dict, give a value per subgrid for key, val in rfactor
-    newsubgrids = OrderedDict()
+    newsubgrids = dict()
     newnlay = 0
     for (_x, rfi), (snam, sran) in zip(rfactord.items(), subgrids.items()):
         newsubgrids[snam] = sran * rfi

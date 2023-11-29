@@ -40,7 +40,6 @@ import math
 import numbers
 import pathlib
 import warnings
-from collections import OrderedDict
 from copy import deepcopy
 from types import FunctionType
 from typing import Dict, List, Literal, Optional, Tuple, Type, Union
@@ -1957,7 +1956,7 @@ class RegularSurface:
             order=order, activeonly=activeonly, fill_value=fill_value
         )
 
-        entry = OrderedDict()
+        entry = dict()
 
         if ijcolumns or ij:
             ixn, jyn = self.get_ij_values1d(order=order, activeonly=activeonly)

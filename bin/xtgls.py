@@ -4,7 +4,6 @@ import json
 import pathlib
 
 # import yaml
-from collections import OrderedDict
 from struct import unpack
 
 VALIDEXT = [".xtgregsurf", ".xtgregcube", ".xtgcpgeom"]
@@ -25,7 +24,7 @@ def extract_meta_regsurf(fil):
     with open(fil, "rb") as fhandle:
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
     return meta
 
 
@@ -44,7 +43,7 @@ def extract_meta_regcube(fil):
     with open(fil, "rb") as fhandle:
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
 
     return meta
 
@@ -70,7 +69,7 @@ def extract_meta_cpgeom(fil):
     with open(fil, "rb") as fhandle:
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
-    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    meta = json.loads(jmeta, object_pairs_hook=dict)
 
     return meta
 

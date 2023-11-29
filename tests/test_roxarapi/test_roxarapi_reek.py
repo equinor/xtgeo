@@ -8,7 +8,6 @@ Then run tests in Roxar API which focus on IO.
 
 This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if Equinor.
 """
-from collections import OrderedDict
 from os.path import join
 
 import numpy as np
@@ -313,7 +312,7 @@ def test_rox_get_modify_set_get_grid_with_subzones(roxar_project, roxinstance):
 
     grd = xtgeo.grid_from_roxar(roxar_project, GRIDNAME1)
 
-    zonation = OrderedDict()
+    zonation = dict()
     zonation["intva"] = 4
     zonation["intvb"] = 7
     zonation["intvc"] = 3

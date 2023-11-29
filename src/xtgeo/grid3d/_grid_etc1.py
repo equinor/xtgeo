@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import OrderedDict
 from copy import deepcopy
 from math import atan2, degrees
 
@@ -350,7 +349,7 @@ def get_ijk_from_points(
         jarr -= 1
         karr -= 1
 
-    proplist = OrderedDict()
+    proplist = dict()
     if includepoints:
         proplist["X_UTME"] = points.dataframe[points.xname].values
         proplist["Y_UTME"] = points.dataframe[points.yname].values
@@ -1066,7 +1065,7 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     self._nlay = nnlay
 
     if isinstance(self.subgrids, dict):
-        newsub = OrderedDict()
+        newsub = dict()
         # easier to work with numpies than lists
         newarr = np.array(range(1, oldnlay + 1))
         newarr[newarr < kc1] = 0
