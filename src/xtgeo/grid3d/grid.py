@@ -1517,9 +1517,7 @@ class Grid(_Grid3D):
         """
         return _grid_etc1.estimate_flip(self)
 
-    def subgrids_from_zoneprop(
-        self, zoneprop: GridProperty
-    ) -> dict[str, int] | None:
+    def subgrids_from_zoneprop(self, zoneprop: GridProperty) -> dict[str, int] | None:
         """Estimate subgrid index from a zone property.
 
         The new will esimate which will replace the current if any.

@@ -33,7 +33,7 @@ def import_roff(
         )
         name = None
 
-    result: dict[str, Any]= dict()
+    result: dict[str, Any] = dict()
     roff_param = RoffParameter.from_file(pfile._file, name)
     result["codes"] = roff_param.xtgeo_codes()
     result["name"] = roff_param.name

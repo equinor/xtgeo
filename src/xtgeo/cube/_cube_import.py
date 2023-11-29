@@ -29,7 +29,7 @@ xline, 1 for iline in this example) but shall be constant per axis
 from __future__ import annotations
 
 import json
-from collections defaultdict
+from collections import defaultdict
 from copy import deepcopy
 from struct import unpack
 from warnings import warn

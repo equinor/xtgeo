@@ -111,9 +111,7 @@ def test_refine_vertically():
     """Do a grid refinement vertically."""
 
     emerald_grid = xtgeo.grid_from_file(EMEGFILE)
-    assert emerald_grid.get_subgrids() == dict(
-        [("subgrid_0", 16), ("subgrid_1", 30)]
-    )
+    assert emerald_grid.get_subgrids() == dict([("subgrid_0", 16), ("subgrid_1", 30)])
 
     avg_dz1 = emerald_grid.get_dz().values3d.mean()
 
@@ -124,9 +122,7 @@ def test_refine_vertically():
 
     assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
 
-    assert emerald_grid.get_subgrids() == dict(
-        [("subgrid_0", 48), ("subgrid_1", 90)]
-    )
+    assert emerald_grid.get_subgrids() == dict([("subgrid_0", 48), ("subgrid_1", 90)])
     emerald_grid.inactivate_by_dz(0.001)
 
 
