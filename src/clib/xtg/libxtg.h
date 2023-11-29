@@ -178,8 +178,6 @@ double
 x_avg_angles(double *swig_np_dbl_in_v1,  // *angles
              long n_swig_np_dbl_in_v1);  // nsize,
 
-double
-x_rotation_conv(double ain, int aimode, int mode, int option);
 
 double
 x_tetrahedron_volume(double *swig_np_dbl_inplaceflat_v1,

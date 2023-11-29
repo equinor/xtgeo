@@ -4,6 +4,8 @@ import math
 
 import numpy as np
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 import xtgeo
 import xtgeo.common.calc as xcalc
@@ -188,6 +190,36 @@ def test_azimuth2angle():
 
     res = xcalc.azimuth2angle(-30)
     assert res == 120
+
+
+@given(
+    x=st.floats(
+        min_value=0,
+        max_value=180,
+        allow_infinity=False,
+        allow_nan=False,
+    )
+)
+def test_angle2azimuth_azimuth2angle_deg(x: float) -> None:
+    assert (
+        pytest.approx(xcalc.azimuth2angle(xcalc.angle2azimuth(x, "degrees"), "degrees"))
+        == x
+    )
+
+
+@given(
+    x=st.floats(
+        min_value=0,
+        max_value=math.pi,
+        allow_infinity=False,
+        allow_nan=False,
+    )
+)
+def test_angle2azimuth_azimuth2angle_rad(x: float) -> None:
+    assert (
+        pytest.approx(xcalc.azimuth2angle(xcalc.angle2azimuth(x, "radians"), "radians"))
+        == x
+    )
 
 
 def test_averageangle():
