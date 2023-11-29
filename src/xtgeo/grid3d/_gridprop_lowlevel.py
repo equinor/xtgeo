@@ -1,17 +1,26 @@
 """GridProperty (not GridProperies) low level functions"""
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import numpy.ma as ma
 
-import xtgeo
-from xtgeo import _cxtgeo
+from xtgeo import _cxtgeo  # type: ignore[attr-defined]
 from xtgeo.common import null_logger
+from xtgeo.common.constants import UNDEF, UNDEF_INT
 
 logger = null_logger(__name__)
 
+if TYPE_CHECKING:
+    from ctypes import Array as cArray
 
-def f2c_order(obj, values1d):
+    from numpy.typing import DTypeLike
+
+    from xtgeo.grid3d import Grid, GridProperty
+
+
+def f2c_order(obj: Grid | GridProperty, values1d: np.ndarray) -> np.ndarray:
     """Convert values1d from Fortran to C order, obj can be a Grid() or GridProperty()
     instance
     """
@@ -21,7 +30,7 @@ def f2c_order(obj, values1d):
     return val
 
 
-def c2f_order(obj, values1d):
+def c2f_order(obj: Grid | GridProperty, values1d: np.ndarray) -> np.ndarray:
     """Convert values1d from C to F order, obj can be a Grid() or GridProperty()
     instance
     """
@@ -31,7 +40,12 @@ def c2f_order(obj, values1d):
     return val
 
 
-def update_values_from_carray(self, carray, dtype, delete=False):
+def update_values_from_carray(
+    self: GridProperty,
+    carray: cArray,
+    dtype: DTypeLike,
+    delete: bool = False,
+) -> None:
     """Transfer values from SWIG 1D carray to numpy, 3D array"""
 
     logger.debug("Update numpy from C array values")
@@ -54,15 +68,21 @@ def update_values_from_carray(self, carray, dtype, delete=False):
     values = np.asanyarray(values, order="C")
 
     # make it float64 or whatever(?) and mask it
-    self._values = values
+    self.values = values # type: ignore
     self.mask_undef()
 
     # optionally delete the C array if needed
     if delete:
-        carray = delete_carray(self, carray)
+        delete_carray(self, carray)
 
 
-def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
+def update_carray(
+    self: GridProperty,
+    undef: int | float | None = None,
+    discrete: bool | None = None,
+    dtype: DTypeLike = None,
+    order: Literal["C", "F", "A", "K"] = "F",
+) -> cArray:
     """Copy (update) values from numpy to SWIG, 1D array, returns a pointer
     to SWIG C array. If discrete is defined as True or False, force
     the SWIG array to be of that kind.
@@ -76,13 +96,13 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
         dstatus = bool(discrete)
 
     if undef is None:
-        undef = xtgeo.UNDEF
+        undef = UNDEF
         if dstatus:
-            undef = xtgeo.UNDEF_INT
+            undef = UNDEF_INT
 
     logger.debug("Entering conversion from numpy to C array ...")
 
-    values = self._values.copy()
+    values = self.values.copy()
 
     if not dtype:
         if dstatus:
@@ -93,10 +113,12 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
         values = values.astype(dtype)
 
     values = ma.filled(values, undef)
+    values = np.asfortranarray(values)
 
     if order == "F":
         values = np.asfortranarray(values)
-        values1d = np.ravel(values, order="F")
+
+    values1d = np.ravel(values, order=order)
 
     if values1d.dtype == "float64" and dstatus and not dtype:
         values1d = values1d.astype("int32")
@@ -119,7 +141,7 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
     return carray
 
 
-def delete_carray(self, carray):
+def delete_carray(self: GridProperty, carray: cArray) -> None:
     """Delete carray SWIG C pointer, return carray as None"""
 
     logger.debug("Enter delete carray values method for %d", id(self))
@@ -128,31 +150,26 @@ def delete_carray(self, carray):
 
     if "int" in str(carray):
         _cxtgeo.delete_intarray(carray)
-        carray = None
+        return None
     elif "float" in str(carray):
         _cxtgeo.delete_floatarray(carray)
-        carray = None
+        return None
     elif "double" in str(carray):
         _cxtgeo.delete_doublearray(carray)
-        carray = None
+        return None
     else:
         raise RuntimeError("BUG?")
 
-    return carray
 
-
-def check_shape_ok(self, values):
+def check_shape_ok(self: GridProperty, values: np.ndarray) -> bool:
     """Check if chape of values is OK"""
-    (ncol, nrow, nlay) = values.shape
-    if ncol != self._ncol or nrow != self._nrow or nlay != self._nlay:
-        logger.error(
-            "Wrong shape: Dimens of values %s %s %s" "vs %s %s %s",
-            ncol,
-            nrow,
-            nlay,
-            self._ncol,
-            self._nrow,
-            self._nlay,
-        )
-        return False
-    return True
+    if values.shape == (self._ncol, self._nrow, self._nlay):
+        return True
+    logger.error(
+        "Wrong shape: Dimens of values %s %s %s" "vs %s %s %s",
+        *values.shape,
+        self._ncol,
+        self._nrow,
+        self._nlay,
+    )
+    return False
