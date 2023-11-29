@@ -14,7 +14,7 @@ def _get_colormap(name):
     import matplotlib as mpl
 
     if versionparse(mpl.__version__) < versionparse("3.6"):
-        import matplotlib.plt as plt
+        import matplotlib.pyplot as plt
 
         return plt.cm.get_cmap(name)
     else:

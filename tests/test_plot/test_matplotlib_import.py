@@ -46,7 +46,12 @@ def test_that_agg_backend_set_when_lsf_job():
     _clear_state(sys, os)
     import xtgeo  # noqa
 
-    assert os.environ.get("MPLBACKEND", "") == "Agg"
+    try:
+        import roxar  # noqa
+
+        assert os.environ.get("MPLBACKEND", "") == ""
+    except ImportError:
+        assert os.environ.get("MPLBACKEND", "") == "Agg"
 
 
 @mock.patch.dict(sys.modules)
