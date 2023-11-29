@@ -39,6 +39,8 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
+    from typing import Union
+
     import numpy.typing as npt
 
     from xtgeo.common.types import FileLike
@@ -47,17 +49,17 @@ if TYPE_CHECKING:
     from ._gridprop_op1 import XYValueLists
     from .grid import Grid
 
-    GridProperty_DType = (
-        type[np.uint8]
-        | type[np.uint16]
-        | type[np.int16]
-        | type[np.int32]
-        | type[np.int64]
-        | type[np.float16]
-        | type[np.float32]
-        | type[np.float64]
-    )
-    Roxar_DType = type[np.uint8] | type[np.uint16] | type[np.float32]
+    GridProperty_DType = Union[
+        type[np.uint8],
+        type[np.uint16],
+        type[np.int16],
+        type[np.int32],
+        type[np.int64],
+        type[np.float16],
+        type[np.float32],
+        type[np.float64],
+    ]
+    Roxar_DType = Union[type[np.uint8], type[np.uint16], type[np.float32]]
 
 # --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
