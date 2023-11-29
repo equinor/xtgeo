@@ -14,6 +14,9 @@ on:
 
 jobs:
   mypy:
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.11"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,10 +26,10 @@ jobs:
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python-version }}
 
       - name: List dependencies
         run: pip freeze
 
-      - name: run mypy
+      - name: Run mypy
         run: mypy .
