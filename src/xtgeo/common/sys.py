@@ -202,7 +202,6 @@ class _XTGeoFile:
                 f"a str, pathlib.Path, io.BytesIO, or io.StringIO."
             )
 
-        self._file: pathlib.Path | io.BytesIO | io.StringIO
         self._tmpfile: str | None = None
         self._delete_after = False  # delete file (e.g. tmp) afterwards
         self._mode = mode
@@ -216,7 +215,7 @@ class _XTGeoFile:
         if isinstance(filelike, str):
             filelike = pathlib.Path(filelike)
 
-        self._file = filelike
+        self._file: pathlib.Path | io.BytesIO | io.StringIO = filelike
         self._memstream = isinstance(self._file, (io.BytesIO, io.StringIO))
 
         if obj and not self._memstream:
