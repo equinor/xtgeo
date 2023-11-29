@@ -68,7 +68,7 @@ def update_values_from_carray(
     values = np.asanyarray(values, order="C")
 
     # make it float64 or whatever(?) and mask it
-    self.values = values # type: ignore
+    self.values = values  # type: ignore
     self.mask_undef()
 
     # optionally delete the C array if needed
