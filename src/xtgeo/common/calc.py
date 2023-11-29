@@ -8,7 +8,7 @@ from typing import Any, Literal
 import numpy as np
 
 from xtgeo import XTGeoCLibError, _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common import XTGeoDialog, _angles, null_logger
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -207,13 +207,11 @@ def angle2azimuth(
     Return:
         Azimuth angle (in degrees or radian)
     """
-    nmode1 = 0
-    nmode2 = 2
-    if mode == "radians":
-        nmode1 += 1
-        nmode2 += 1
-
-    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0)
+    return (
+        _angles._deg_angle2azimuth(inangle)
+        if mode == "degrees"
+        else _angles._rad_angle2azimuth(inangle)
+    )
 
 
 def azimuth2angle(
@@ -232,13 +230,11 @@ def azimuth2angle(
     Return:
         Angle (in degrees or radians)
     """
-    nmode1 = 2
-    nmode2 = 0
-    if mode == "radians":
-        nmode1 += 1
-        nmode2 += 1
-
-    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0)
+    return (
+        _angles._deg_azimuth2angle(inangle)
+        if mode == "degrees"
+        else _angles._rad_azimuth2angle(inangle)
+    )
 
 
 def tetrehedron_volume(vertices: Sequence[float]) -> float:
