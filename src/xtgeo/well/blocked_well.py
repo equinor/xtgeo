@@ -37,7 +37,7 @@ def blockedwell_from_file(
         >>> well3 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
     """
 
-    return Well._read_file(
+    return BlockedWell._read_file(
         bwfile,
         fformat=fformat,
         mdlogname=mdlogname,
@@ -69,7 +69,13 @@ def blockedwell_from_roxar(
     obj = BlockedWell(
         *([0.0] * 3),
         "",
-        pd.DataFrame({_AttrName.XNAME: [], _AttrName.YNAME: [], _AttrName.ZNAME: []}),
+        pd.DataFrame(
+            {
+                _AttrName.XNAME.value: [],
+                _AttrName.YNAME.value: [],
+                _AttrName.ZNAME.value: [],
+            }
+        ),
     )
 
     _blockedwell_roxapi.import_bwell_roxapi(
