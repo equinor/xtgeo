@@ -9,11 +9,6 @@ import os
 import timeit
 import warnings
 
-try:
-    from xtgeo.common.version import __version__, version
-except ImportError:
-    __version__ = "0.0.0"
-
 
 def _timer(*args):
     time1 = timeit.default_timer()
@@ -77,6 +72,11 @@ from xtgeo.common.exceptions import (
     WellNotFoundError,
 )
 from xtgeo.common.sys import _XTGeoFile
+
+try:
+    from xtgeo.common.version import __version__, version
+except ImportError:
+    __version__ = version = "0.0.0"
 
 _xprint("Import common... done")
 
