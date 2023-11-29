@@ -315,8 +315,8 @@ def _roxapi_export_xyz(
 
     roxxyz = _get_roxitem(self, proj, name, category, stype, mode="set")
 
-    # pylint: disable=len-as-condition
-    if self.dataframe is None or len(self.dataframe.index) == 0:
+    if self.dataframe is None or self.dataframe.empty:
+        roxxyz.set_empty()
         return
 
     dfrcopy = self.dataframe.copy()
