@@ -1,17 +1,29 @@
 # -*- coding: utf-8 -*-
 """Roxar API functions for XTGeo Grid Geometry."""
+from __future__ import annotations
+
 import os
 import tempfile
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
-import xtgeo
-from xtgeo import RoxUtils, _cxtgeo
+from xtgeo import _cxtgeo  # type: ignore[attr-defined]
 from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common.constants import UNDEF_LIMIT
+from xtgeo.roxutils.roxutils import RoxUtils
 
 xtg = XTGeoDialog()
 
 logger = null_logger(__name__)
+
+if TYPE_CHECKING:
+    from xtgeo.grid3d.grid import Grid
+
+    try:
+        import roxar
+    except ImportError:
+        pass
 
 # self is Grid() instance
 
@@ -22,8 +34,8 @@ logger = null_logger(__name__)
 
 
 def import_grid_roxapi(
-    projectname, gname, realisation, dimonly, info
-):  # pragma: no cover
+    projectname: str, gname: str, realisation: int, dimonly: bool, info: bool
+) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec.
 
     Returns:
@@ -37,7 +49,9 @@ def import_grid_roxapi(
         return _import_grid_roxapi_v2(rox, gname, realisation, info)
 
 
-def _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info):  # pragma: no cover
+def _import_grid_roxapi_v1(
+    rox: RoxUtils, gname: str, realisation: int, dimonly: bool, info: bool
+) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec."""
 
     proj = rox.project
@@ -58,9 +72,9 @@ def _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info):  # pragma: n
             logger.info("Get corners... done")
 
         if info:
-            _display_roxapi_grid_info(rox, roxgrid)
+            _display_roxapi_grid_info(roxgrid)
 
-        result = _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname)
+        result = _convert_to_xtgeo_grid_v1(roxgrid, corners, gname)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
@@ -71,7 +85,7 @@ def _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info):  # pragma: n
     return result
 
 
-def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
+def _display_roxapi_grid_info(roxgrid: roxar.grids.Grid3D) -> None:
     """Push info to screen (mostly for debugging), experimental."""
 
     indexer = roxgrid.grid_indexer
@@ -92,7 +106,9 @@ def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
             xtg.say(f"Depths\n{zco}")
 
 
-def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
+def _convert_to_xtgeo_grid_v1(
+    roxgrid: roxar.grids.Grid3D, corners: np.ndarray | None, gname: str
+) -> dict[str, Any]:
     """Convert from RMS API to XTGeo API."""
     # pylint: disable=too-many-statements
 
@@ -103,15 +119,17 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
     ncol, nrow, nlay = indexer.dimensions
     ntot = ncol * nrow * nlay
 
-    result = {}
+    result: dict[str, Any] = {}
     result["name"] = gname
 
     if corners is None:
         logger.info("Asked for dimensions_only: No geometry read!")
-        return
+        # return empty dict for mypy now
+        # bug with "dimension only" not working #1042 will be adressed later
+        return {}
 
     logger.info("Get active cells")
-    mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
+    mybuffer: np.ndarray = np.ndarray(indexer.dimensions, dtype=np.int32)
 
     mybuffer.fill(0)
 
@@ -203,7 +221,9 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
     return result
 
 
-def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
+def _import_grid_roxapi_v2(
+    rox: RoxUtils, gname: str, realisation: int, info: bool
+) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec."""
     proj = rox.project
 
@@ -223,7 +243,7 @@ def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
             )
 
         if info:
-            _display_roxapi_grid_info(rox, roxgrid)
+            _display_roxapi_grid_info(roxgrid)
 
         result = _convert_to_xtgeo_grid_v2(roxgrid, gname)
 
@@ -236,14 +256,16 @@ def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
     return result
 
 
-def _convert_to_xtgeo_grid_v2(roxgrid, gname):
+def _convert_to_xtgeo_grid_v2(
+    roxgrid: roxar.grids.Grid3D, gname: str
+) -> dict[str, Any]:
     """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2."""
     indexer = roxgrid.grid_indexer
 
     ncol, nrow, nlay = indexer.dimensions
 
     # update other attributes
-    result = {}
+    result: dict[str, Any] = {}
 
     nncol = ncol + 1
     nnrow = nrow + 1
@@ -299,8 +321,13 @@ def _convert_to_xtgeo_grid_v2(roxgrid, gname):
 
 
 def export_grid_roxapi(
-    self, projectname, gname, realisation, info=False, method="cpg"
-):  # pragma: no cover
+    self: Grid,
+    projectname: str,
+    gname: str,
+    realisation: int,
+    info: bool = False,
+    method: str | Literal["cpg"] = "cpg",
+) -> None:
     """Export (i.e. store in RMS) via ROXAR API spec.
 
     Using method 'cpg' means that the CPG method is applied (from ROXAPI 1.3).
@@ -329,8 +356,8 @@ def export_grid_roxapi(
 
 
 def _export_grid_cornerpoint_roxapi_v1(
-    self, rox, gname, realisation, info
-):  # pragma: no cover
+    self: Grid, rox: RoxUtils, gname: str, realisation: int, info: bool
+) -> None:
     """Convert xtgeo geometry to pillar spec in ROXAPI and store."""
     try:
         from roxar.grids import CornerPointGridGeometry as CPG
@@ -369,7 +396,7 @@ def _export_grid_cornerpoint_roxapi_v1(
     tpi = tpi.reshape(self.ncol + 1, self.nrow + 1, 3)
     bpi = bpi.reshape(self.ncol + 1, self.nrow + 1, 3)
 
-    zco = np.ma.masked_greater(zco, xtgeo.UNDEF_LIMIT)
+    zco = np.ma.masked_greater(zco, UNDEF_LIMIT)
     zco = zco.reshape((self.ncol + 1, self.nrow + 1, 4, self.nlay + 1))
 
     for ipi in range(self.ncol + 1):
@@ -390,15 +417,15 @@ def _export_grid_cornerpoint_roxapi_v1(
                 xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
                 xtg.say(f"XTGeo Depths\n{zzco}")
 
-    geom.set_defined_cells(self.get_actnum().values.astype(np.bool))
+    geom.set_defined_cells(self.get_actnum().values.astype(bool))
     grid.set_geometry(geom)
 
     _set_subgrids(self, rox, grid)
 
 
 def _export_grid_cornerpoint_roxapi_v2(
-    self, rox, gname, realisation, info
-):  # pragma: no cover
+    self: Grid, rox: RoxUtils, gname: str, realisation: int, info: bool
+) -> None:
     """Convert xtgeo geometry to pillar spec in ROXAPI and store _xtgformat=2."""
     try:
         from roxar.grids import CornerPointGridGeometry as CPG
@@ -432,7 +459,7 @@ def _export_grid_cornerpoint_roxapi_v2(
     tpi = tpi.reshape(self.ncol + 1, self.nrow + 1, 3)
     bpi = bpi.reshape(self.ncol + 1, self.nrow + 1, 3)
 
-    zco = np.ma.masked_greater(zco, xtgeo.UNDEF_LIMIT)
+    zco = np.ma.masked_greater(zco, UNDEF_LIMIT)
     zco = zco.reshape((self.ncol + 1, self.nrow + 1, 4, self.nlay + 1))
 
     for ipi in range(self.ncol + 1):
@@ -453,14 +480,14 @@ def _export_grid_cornerpoint_roxapi_v2(
                 xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
                 xtg.say(f"XTGeo Depths\n{zzco}")
 
-    geom.set_defined_cells(self._actnumsv.astype(np.bool))
+    geom.set_defined_cells(self._actnumsv.astype(bool))
     grid.set_geometry(geom)
     _set_subgrids(self, rox, grid)
 
     del scopy
 
 
-def _set_subgrids(self, rox, grid):
+def _set_subgrids(self: Grid, rox: RoxUtils, grid: roxar.grids.Grid3D) -> None:
     """Export the subgrid index (zones) to Roxar API.
 
     From roxar API:
@@ -488,7 +515,9 @@ def _set_subgrids(self, rox, grid):
         )
 
 
-def _export_grid_viaroff_roxapi(self, rox, gname, realisation):  # pragma: no cover
+def _export_grid_viaroff_roxapi(
+    self: Grid, rox: RoxUtils, gname: str, realisation: int
+) -> None:
     """Convert xtgeo geometry to internal RMS via i/o ROFF tricks."""
     logger.info("Realisation is %s", realisation)
 
