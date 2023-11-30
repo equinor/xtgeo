@@ -1,19 +1,68 @@
-# coding: utf-8
 """Private module, Grid Import private functions for xtgeo based formats."""
+from __future__ import annotations
 
 import json
 from struct import unpack
+from typing import TYPE_CHECKING, Literal, Tuple, TypedDict, Union, overload
 
 import h5py
 import numpy as np
+from typing_extensions import NotRequired, TypeAlias
 
 import xtgeo.common.sys as xsys
 from xtgeo.common import null_logger
+from xtgeo.grid3d._gridprop_import_xtgcpprop import _read_filelike
 
 logger = null_logger(__name__)
 
+if TYPE_CHECKING:
+    from xtgeo.common.sys import _XTGeoFile
 
-def convert_subgrids(sdict):
+LMIN: TypeAlias = Literal["min"]
+LMAX: TypeAlias = Literal["max"]
+IJKRANGE: TypeAlias = Tuple[
+    Union[int, LMIN],
+    Union[int, LMAX],
+    Union[int, LMIN],
+    Union[int, LMAX],
+    Union[int, LMIN],
+    Union[int, LMAX],
+]
+
+
+class _RESULT(TypedDict):
+    coordsv: np.ndarray
+    zcornsv: np.ndarray
+    actnumsv: np.ndarray
+    subgrids: NotRequired[dict[str, range]]
+
+
+class __REQUIRED_(TypedDict):
+    xshift: np.ndarray
+    xscale: np.ndarray
+    yshift: np.ndarray
+    yscale: np.ndarray
+    zshift: np.ndarray
+    zscale: np.ndarray
+    subgrids: NotRequired[dict[str, int]]
+
+
+class _META(TypedDict):
+    _required_: __REQUIRED_
+
+
+@overload
+def convert_subgrids(sdict: dict[str, int]) -> dict[str, range]:
+    ...
+
+
+@overload
+def convert_subgrids(sdict: None) -> None:
+    ...
+
+
+def convert_subgrids(sdict: dict[str, int] | None) -> dict[str, range] | None:
+    # flake8: noqa: F841
     """Convert a simplified ordered dictionary to
         subgrid required by Grid.
 
@@ -29,18 +78,17 @@ def convert_subgrids(sdict):
     if not isinstance(sdict, dict):
         raise ValueError("Input sdict is not an dict")
 
-    newsub = dict()
-
-    inn1 = 1
-    for name, nsub in sdict.items():
-        inn2 = inn1 + nsub
-        newsub[name] = range(inn1, inn2)
-        inn1 = inn2
-
-    return newsub
+    start = 1
+    return {name: range(start, start := start + nsub) for name, nsub in sdict.items()}
 
 
-def handle_metadata(result, meta, ncol, nrow, nlay):
+def handle_metadata(
+    result: _RESULT,
+    meta: _META,
+    ncol: int,
+    nrow: int,
+    nlay: int,
+) -> None:
     # meta _optional_ *may* contain xshift, xscale etc which in case must be taken
     # into account
     coordsv = result["coordsv"]
@@ -66,21 +114,22 @@ def handle_metadata(result, meta, ncol, nrow, nlay):
     result["coordsv"] = coordsv.reshape((nncol, nnrow, 6)).astype(np.float64)
     result["zcornsv"] = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
     result["actnumsv"] = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
+
     if "subgrids" in req:
         result["subgrids"] = convert_subgrids(req["subgrids"])
 
 
 def import_xtgcpgeom(
-    mfile, mmap=False
-):  # pylint: disable=too-many-locals, too-many-statements
+    mfile: _XTGeoFile,
+    mmap: bool = False,
+) -> _RESULT:  # pylint: disable=too-many-locals, too-many-statements
     """Using pure python for experimental grid geometry import."""
     #
     offset = 36
-    with open(mfile.file, "rb") as fhandle:
-        buf = fhandle.read(offset)
+    with _read_filelike(mfile.file, size=offset) as f:
+        # unpack header
+        swap, magic, nformat, ncol, nrow, nlay = unpack("= i i i q q q", f)
 
-    # unpack header
-    swap, magic, nformat, ncol, nrow, nlay = unpack("= i i i q q q", buf)
     nncol = ncol + 1
     nnrow = nrow + 1
     nnlay = nlay + 1
@@ -95,41 +144,57 @@ def import_xtgcpgeom(
 
     coordfmt, zcornfmt, actnumfmt = [int(nbyte) for nbyte in str(nformat)]
 
-    dtype_coordsv = "float" + str(coordfmt * 8)
-    dtype_zcornsv = "float" + str(zcornfmt * 8)
-    dtype_actnumv = "int" + str(actnumfmt * 8)
+    dtype_coordsv = f"float{coordfmt * 8}"
+    dtype_zcornsv = f"float{zcornfmt * 8}"
+    dtype_actnumv = f"int{actnumfmt * 8}"
 
     ncoord = nncol * nnrow * 6
     nzcorn = nncol * nnrow * nnlay * 4
     nactnum = ncol * nrow * nlay
-    result = dict()
+
     # read numpy arrays from file
-    result["coordsv"] = xsys.npfromfile(
-        mfile.file, dtype=dtype_coordsv, count=ncoord, offset=offset, mmap=mmap
+    coordsv = xsys.npfromfile(
+        mfile.file,
+        dtype=dtype_coordsv,
+        count=ncoord,
+        offset=offset,
+        mmap=mmap,
     )
+
     newoffset = offset + ncoord * coordfmt
-    result["zcornsv"] = xsys.npfromfile(
-        mfile.file, dtype=dtype_zcornsv, count=nzcorn, offset=newoffset, mmap=mmap
+    zcornsv = xsys.npfromfile(
+        mfile.file,
+        dtype=dtype_zcornsv,
+        count=nzcorn,
+        offset=newoffset,
+        mmap=mmap,
     )
+
     newoffset += nzcorn * zcornfmt
-    result["actnumsv"] = xsys.npfromfile(
-        mfile.file, dtype=dtype_actnumv, count=nactnum, offset=newoffset, mmap=mmap
+    actnumsv = xsys.npfromfile(
+        mfile.file,
+        dtype=dtype_actnumv,
+        count=nactnum,
+        offset=newoffset,
+        mmap=mmap,
     )
+
     newoffset += nactnum * actnumfmt
+    result = _RESULT(coordsv=coordsv, zcornsv=zcornsv, actnumsv=actnumsv)
 
     # read metadata which will be at position offet + nfloat*narr +13
-    pos = newoffset + 13
-    with open(mfile.file, "rb") as fhandle:
-        fhandle.seek(pos)
-        jmeta = fhandle.read().decode()
-
-    meta = json.loads(jmeta, object_pairs_hook=dict)
+    with _read_filelike(mfile.file, seek=newoffset + 13) as f:
+        meta = json.loads(f, object_pairs_hook=dict)
 
     handle_metadata(result, meta, ncol, nrow, nlay)
     return result
 
 
-def import_hdf5_cpgeom(mfile, ijkrange=None, zerobased=False):
+def import_hdf5_cpgeom(
+    mfile: _XTGeoFile,
+    ijkrange: IJKRANGE | None = None,
+    zerobased: bool = False,
+) -> _RESULT:
     """Experimental grid geometry import using hdf5."""
     #
     with h5py.File(mfile.name, "r") as h5h:
@@ -157,24 +222,36 @@ def import_hdf5_cpgeom(mfile, ijkrange=None, zerobased=False):
                 "subgrids" in meta["_required_"]
                 and meta["_required_"]["subgrids"] is not None
             ):
+                *_, k1, k2 = ijkrange
                 meta["_required_"]["subgrids"] = filter_subgrids_partial(
-                    meta["_required_"]["subgrids"], *ijkrange[-2:], nlay, zerobased
+                    meta["_required_"]["subgrids"],
+                    k1,
+                    k2,
+                    nlay,
+                    zerobased,
                 )
         else:
             incoord = grp["coord"][:, :, :]
             inzcorn = grp["zcorn"][:, :, :, :]
             inactnum = grp["actnum"][:, :, :]
 
-    result = {}
-    result["coordsv"] = incoord.astype("float64")
-    result["zcornsv"] = inzcorn.astype("float32")
-    result["actnumsv"] = inactnum.astype("float32")
+    result = _RESULT(
+        coordsv=incoord.astype("float64"),
+        zcornsv=inzcorn.astype("float32"),
+        actnumsv=inactnum.astype("float32"),
+    )
 
     handle_metadata(result, meta, ncol, nrow, nlay)
     return result
 
 
-def filter_subgrids_partial(subgrids, k1, k2, nlay, zerobased):
+def filter_subgrids_partial(
+    subgrids: dict[str, int],
+    k1: int | LMIN,
+    k2: int | LMAX,
+    nlay: int,
+    zerobased: bool,
+) -> dict[str, int]:
     """
     Filters and truncates the subgrids of the global grid so that they
     refer to the filtered grid.
@@ -212,7 +289,7 @@ def filter_subgrids_partial(subgrids, k1, k2, nlay, zerobased):
         k1 -= 1
         k2 -= 1
 
-    partial_subgrid = dict()
+    partial_subgrid: dict[str, int] = dict()
     start = 0
     for key, value in subgrids.items():
         end = value + start
@@ -224,7 +301,19 @@ def filter_subgrids_partial(subgrids, k1, k2, nlay, zerobased):
     return partial_subgrid
 
 
-def _partial_read(h5h, req, ijkrange, zerobased):
+def _partial_read(
+    h5h: dict[str, np.ndarray],
+    req: dict[str, int],
+    ijkrange: tuple[
+        int | LMIN,
+        int | LMAX,
+        int | LMIN,
+        int | LMAX,
+        int | LMIN,
+        int | LMAX,
+    ],
+    zerobased: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, int, int, int]:
     """Read a partial IJ range."""
     ncol = req["ncol"]
     nrow = req["nrow"]
