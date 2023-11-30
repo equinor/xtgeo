@@ -42,10 +42,11 @@ def get_randomline(
 
     _update_tmpvars(self)
 
-    if hincrement is None and isinstance(fencespec, Polygons):
-        logger.info("Estimate hincrement from Polygons instance...")
+    if hincrement is not None and not isinstance(hincrement, (float, int)):
+        raise TypeError("'hincrement' can only be a number or None")
+
+    if isinstance(fencespec, Polygons):
         fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
-        logger.info("Estimate hincrement from Polygons instance... DONE")
 
     logger.info("Get property...")
     if isinstance(prop, str):
@@ -149,22 +150,22 @@ def _update_tmpvars(self: Grid, force: bool = False) -> None:
 def _get_randomline_fence(
     self: Grid,
     polygon: Polygons,
-    hincrement: float | int | None,
+    distance: float | int | None,
     atleast: int,
     nextend: int,
 ) -> np.ndarray:
     """Compute a resampled fence from a Polygons instance."""
-    if hincrement is None:
+    if distance is None:
+        logger.debug("Estimate fence distance from grid resolution...")
         geom = self.get_geometrics()
 
         avgdxdy = 0.5 * (geom[10] + geom[11])
         distance = 0.5 * avgdxdy
-    else:
-        distance = hincrement
+        logger.debug("Estimate fence distance from grid resolution... DONE")
 
-    logger.info("Getting fence from a Polygons instance...")
+    logger.debug("Getting fence from a Polygons instance...")
     fspec = polygon.get_fence(
         distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
     )
-    logger.info("Getting fence from a Polygons instance... DONE")
+    logger.debug("Getting fence from a Polygons instance... DONE")
     return fspec
