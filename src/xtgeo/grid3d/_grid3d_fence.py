@@ -1,28 +1,38 @@
 # -*- coding: utf-8 -*-
 
 """Some grid utilities, file scanning etc."""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-import xtgeo
-from xtgeo import _cxtgeo
+from xtgeo import _cxtgeo  # type: ignore
 from xtgeo.common import null_logger
+from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.grid3d import _gridprop_lowlevel as gl
 from xtgeo.surface import _regsurf_lowlevel as rl
+from xtgeo.surface.regular_surface import surface_from_grid3d
+from xtgeo.xyz import Polygons
+
+if TYPE_CHECKING:
+    from xtgeo.grid3d import Grid, GridProperty
+
 
 logger = null_logger(__name__)
 
 
 def get_randomline(
-    self,
-    fencespec,
-    prop,
-    zmin=None,
-    zmax=None,
-    zincrement=1.0,
-    hincrement=None,
-    atleast=5,
-    nextend=2,
-):
+    self: Grid,
+    fencespec: np.ndarray | Polygons,
+    prop: str | GridProperty,
+    zmin: float | int | None = None,
+    zmax: float | int | None = None,
+    zincrement: float | int = 1.0,
+    hincrement: float | int | None = None,
+    atleast: int = 5,
+    nextend: int = 2,
+) -> tuple[float, float, float, float, np.ndarray]:
     """Extract a randomline from a 3D grid.
 
     This is a difficult task, in particular in terms of acceptable speed.
@@ -32,15 +42,19 @@ def get_randomline(
 
     _update_tmpvars(self)
 
-    if hincrement is None and isinstance(fencespec, xtgeo.Polygons):
+    if hincrement is None and isinstance(fencespec, Polygons):
         logger.info("Estimate hincrement from Polygons instance...")
         fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
         logger.info("Estimate hincrement from Polygons instance... DONE")
 
     logger.info("Get property...")
     if isinstance(prop, str):
-        prop = self.get_prop_by_name(prop)
+        grid_prop = self.get_prop_by_name(prop)
+        if grid_prop is None:
+            raise ValueError(f"No property with name {prop} was found in grid")
+        prop = grid_prop
 
+    assert isinstance(fencespec, np.ndarray)
     xcoords = fencespec[:, 0]
     ycoords = fencespec[:, 1]
     hcoords = fencespec[:, 3]
@@ -87,14 +101,14 @@ def get_randomline(
 
     logger.info("Running C routine to get randomline... DONE")
 
-    values[values > xtgeo.UNDEF_LIMIT] = np.nan
+    values[values > UNDEF_LIMIT] = np.nan
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 
     logger.info("Getting randomline... DONE")
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)
 
 
-def _update_tmpvars(self, force=False):
+def _update_tmpvars(self: Grid, force: bool = False) -> None:
     """The self._tmp variables are needed to speed up calculations.
 
     If they are already created, the no need to recreate
@@ -106,24 +120,16 @@ def _update_tmpvars(self, force=False):
         one = self._tmp["onegrid"]
         logger.info("Make a tmp onegrid instance... DONE")
         logger.info("Make a set of tmp surfaces for I J locations + depth...")
-        self._tmp["topd"] = xtgeo.surface_from_grid3d(
+        self._tmp["topd"] = surface_from_grid3d(
             one, where="top", mode="depth", rfactor=4
         )
-        self._tmp["topi"] = xtgeo.surface_from_grid3d(
-            one, where="top", mode="i", rfactor=4
-        )
-        self._tmp["topj"] = xtgeo.surface_from_grid3d(
-            one, where="top", mode="j", rfactor=4
-        )
-        self._tmp["basd"] = xtgeo.surface_from_grid3d(
+        self._tmp["topi"] = surface_from_grid3d(one, where="top", mode="i", rfactor=4)
+        self._tmp["topj"] = surface_from_grid3d(one, where="top", mode="j", rfactor=4)
+        self._tmp["basd"] = surface_from_grid3d(
             one, where="base", mode="depth", rfactor=4
         )
-        self._tmp["basi"] = xtgeo.surface_from_grid3d(
-            one, where="base", mode="i", rfactor=4
-        )
-        self._tmp["basj"] = xtgeo.surface_from_grid3d(
-            one, where="base", mode="j", rfactor=4
-        )
+        self._tmp["basi"] = surface_from_grid3d(one, where="base", mode="i", rfactor=4)
+        self._tmp["basj"] = surface_from_grid3d(one, where="base", mode="j", rfactor=4)
 
         self._tmp["topi"].fill()
         self._tmp["topj"].fill()
@@ -140,7 +146,13 @@ def _update_tmpvars(self, force=False):
         logger.info("Re-use existing onegrid and tmp surfaces for I J")
 
 
-def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
+def _get_randomline_fence(
+    self: Grid,
+    polygon: Polygons,
+    hincrement: float | int | None,
+    atleast: int,
+    nextend: int,
+) -> np.ndarray:
     """Compute a resampled fence from a Polygons instance."""
     if hincrement is None:
         geom = self.get_geometrics()
@@ -151,7 +163,7 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
         distance = hincrement
 
     logger.info("Getting fence from a Polygons instance...")
-    fspec = fencespec.get_fence(
+    fspec = polygon.get_fence(
         distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
     )
     logger.info("Getting fence from a Polygons instance... DONE")

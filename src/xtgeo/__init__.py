@@ -92,8 +92,29 @@ from xtgeo.well.wells import Wells
 
 _xprint("Import various XTGeo modules... wells...")
 
+from xtgeo.grid3d import GridRelative, Units, grid, grid_properties, grid_property
+from xtgeo.grid3d.grid import Grid
+from xtgeo.grid3d.grid_properties import (
+    GridProperties,
+    gridproperties_dataframe,
+    gridproperties_from_file,
+)
+from xtgeo.grid3d.grid_property import (
+    GridProperty,
+    gridproperty_from_file,
+    gridproperty_from_roxar,
+)
+
+_xprint("Import various XTGeo modules... 3D grids...")
+
 from xtgeo.surface import regular_surface
-from xtgeo.surface.regular_surface import RegularSurface
+from xtgeo.surface.regular_surface import (
+    RegularSurface,
+    surface_from_cube,
+    surface_from_file,
+    surface_from_grid3d,
+    surface_from_roxar,
+)
 from xtgeo.surface.surfaces import Surfaces
 
 _xprint("Import various XTGeo modules... surface...")
@@ -103,12 +124,6 @@ from xtgeo.cube.cube1 import Cube
 
 _xprint("Import various XTGeo modules... cube...")
 
-from xtgeo.grid3d import GridRelative, Units, grid, grid_properties, grid_property
-from xtgeo.grid3d.grid import Grid
-from xtgeo.grid3d.grid_properties import GridProperties, gridproperties_dataframe
-from xtgeo.grid3d.grid_property import GridProperty
-
-_xprint("Import various XTGeo modules... 3D grids...")
 
 from xtgeo.metadata.metadata import (
     MetaDataCPGeometry,
@@ -133,14 +148,6 @@ from xtgeo.grid3d.grid import (
     grid_from_cube,
     grid_from_file,
     grid_from_roxar,
-)
-from xtgeo.grid3d.grid_properties import gridproperties_from_file
-from xtgeo.grid3d.grid_property import gridproperty_from_file, gridproperty_from_roxar
-from xtgeo.surface.regular_surface import (
-    surface_from_cube,
-    surface_from_file,
-    surface_from_grid3d,
-    surface_from_roxar,
 )
 from xtgeo.well.blocked_well import blockedwell_from_file, blockedwell_from_roxar
 from xtgeo.well.blocked_wells import blockedwells_from_files, blockedwells_from_roxar

@@ -2654,7 +2654,7 @@ class Grid(_Grid3D):
         hincrement: float | bool | None = None,
         atleast: int = 5,
         nextend: int = 2,
-    ) -> tuple[int, int, int, int, np.ndarray]:
+    ) -> tuple[float, float, float, float, np.ndarray]:
         """Get a sampled randomline from a fence spesification.
 
         This randomline will be a 2D numpy with depth on the vertical
