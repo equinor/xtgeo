@@ -114,7 +114,6 @@ long grdcp3d_get_vtk_esg_geometry_data(long ncol,
     }
 
     const long finalVertexCount = gm_vertexCount(gm);
-    const long finalConnCount = gm_connectivityCount(gm);
 
     gm_destroy(gm);
     gm = NULL;
