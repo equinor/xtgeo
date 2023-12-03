@@ -46,7 +46,6 @@ static struct GeoMaker* gm_create(long cellCountI, long cellCountJ, long cellCou
 static void gm_destroy(struct GeoMaker* gm);
 static void gm_addVertex(struct GeoMaker* gm, long i, long j, long k, double v[3]);
 static long gm_vertexCount(const struct GeoMaker* gm);
-static long gm_connectivityCount(const struct GeoMaker* gm);
 
 
 long grdcp3d_get_vtk_esg_geometry_data(long ncol,
@@ -280,10 +279,4 @@ static void gm_addVertex(GeoMaker* gm, long i, long j, long k, double v[3])
 static long gm_vertexCount(const GeoMaker* gm)
 {
     return gm->numVerticesAdded;
-}
-
-// ------------------------------------------------------------------------------------
-static long gm_connectivityCount(const GeoMaker* gm)
-{
-    return gm->numConnAdded;
 }
