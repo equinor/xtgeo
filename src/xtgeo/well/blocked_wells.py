@@ -11,7 +11,6 @@ from xtgeo.common import null_logger
 from xtgeo.common.version import __version__
 
 from . import _blockedwells_roxapi
-from .blocked_well import BlockedWell
 from .wells import Wells
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -75,10 +74,11 @@ def blockedwells_from_roxar(
                                             lognames=mylogs)
 
     """
+    # TODO refactor with class method
 
     obj = BlockedWells()
 
-    obj.from_roxar(project, gname, bwname, ijk=ijk, lognames=lognames)
+    obj._from_roxar(project, gname, bwname, ijk=ijk, lognames=lognames)
 
     return obj
 
@@ -142,7 +142,7 @@ class BlockedWells(Wells):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = BlockedWell(
+                wll = xtgeo.blockedwell_from_file(
                     wfile,
                     fformat=fformat,
                     mdlogname=mdlogname,
@@ -163,6 +163,35 @@ class BlockedWells(Wells):
         details="Use xtgeo.blockedwells_from_roxar() instead",
     )
     def from_roxar(self, *args, **kwargs):  # pragma: no cover
+        """Import (retrieve) blocked wells from roxar project.
+
+        Note this method works only when inside RMS, or when RMS license is
+        activated.
+
+        All the wells present in the bwname icon will be imported.
+
+        Args:
+            project (str): Magic string 'project' or file path to project
+            gname (str): Name of GridModel icon in RMS
+            bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
+            lognames (list): List of lognames to include, or use 'all' for
+                all current blocked logs for this well.
+            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
+            realisation (int): Realisation index (0 is default)
+        """
+        project = args[0]
+        gname = args[1]
+        bwname = args[2]
+        lognames = kwargs.get("lognames", None)
+        ijk = kwargs.get("ijk", True)
+
+        _blockedwells_roxapi.import_bwells_roxapi(
+            self, project, gname, bwname, lognames=lognames, ijk=ijk
+        )
+
+    # this is a temporary solution to avoid the deprecation warning; ideally a class
+    # method shall be applied
+    def _from_roxar(self, *args, **kwargs):  # pragma: no cover
         """Import (retrieve) blocked wells from roxar project.
 
         Note this method works only when inside RMS, or when RMS license is

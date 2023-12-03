@@ -245,19 +245,23 @@ class _XYZData:
                     # a default one based on current values...
                     lvalues = self._df[attr_name].values.round(decimals=0)
                     lvalues = lvalues[~np.isnan(lvalues)]
-                    lmin = int(lvalues.min())
-                    lmax = int(lvalues.max())
 
-                    lvalues = lvalues.astype("int")
-                    codes = {}
-                    for lval in range(lmin, lmax + 1):
-                        if lval in lvalues:
-                            codes[lval] = str(lval)
+                    if len(lvalues) > 0:
+                        lmin = int(lvalues.min())
+                        lmax = int(lvalues.max())
 
-                    if self._undef_disc in codes:
-                        del codes[self._undef_disc]
-                    if const.UNDEF_DISC in codes:
-                        del codes[const.UNDEF_DISC]
+                        lvalues = lvalues.astype("int")
+                        codes = {}
+                        for lval in range(lmin, lmax + 1):
+                            if lval in lvalues:
+                                codes[lval] = str(lval)
+
+                        if self._undef_disc in codes:
+                            del codes[self._undef_disc]
+                        if const.UNDEF_DISC in codes:
+                            del codes[const.UNDEF_DISC]
+                    else:
+                        codes = None
 
                     self._attr_records[attr_name] = codes
 
@@ -359,7 +363,7 @@ class _XYZData:
         etc, and allow lowercase "cont" for CONT
 
         """
-
+        logger.debug("Set the attribute type for %s as %s", name, attrtype)
         apply_attrtype = attrtype.upper()
         if "FLOAT" in apply_attrtype:
             apply_attrtype = _AttrType.CONT.value
@@ -540,6 +544,7 @@ class _XYZData:
                 continue
 
             lcount += 1
+            logger.debug("Actually deleting %s", logn)
             self._df.drop(logn, axis=1, inplace=True)
 
         self.ensure_consistency()

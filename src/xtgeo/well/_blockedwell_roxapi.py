@@ -109,16 +109,16 @@ def _roxapi_import_bwell(
         tmplog = npma.filled(tmplog, fill_value=np.nan)
         tmplog[tmplog == -999] = np.nan
         if "discrete" in str(bwprop.type):
-            self.set_logtype(lname, _AttrType.DISC.value)
-            self.set_logrecord(lname, bwprop.code_names)
+            self.create_log(
+                lname, logtype=_AttrType.DISC.value, logrecord=bwprop.code_names
+            )
         else:
-            self.set_logtype(lname, _AttrType.CONT.value)
-            self.set_logrecord(lname, None)
+            self.create_log(lname, logtype=_AttrType.CONT.value)
 
         logs[lname] = tmplog
 
-    self._df = pd.DataFrame.from_dict(logs)
-    self._gname = gname
+    self.set_dataframe(pd.DataFrame.from_dict(logs))
+    self._gridname = gname
     self._filesrc = None
 
     # finally get some other metadata like RKB and topside X Y; as they
@@ -131,8 +131,8 @@ def _roxapi_import_bwell(
     else:
         self._rkb = None
         self._xpos, self._ypos = (
-            self._df[_AttrName.XNAME][0],
-            self._df[_AttrName.YNAME][0],
+            self._df[_AttrName.XNAME.value][0],
+            self._df[_AttrName.YNAME.value][0],
         )
 
 
@@ -159,35 +159,33 @@ def _roxapi_export_bwell(
     else:
         raise WellNotFoundError(f"No such well in blocked well set: {wname}")
 
-    bwnames = [item.name for item in bwset.properties]
+    current_bwnames = [item.name for item in bwset.properties]
+    for bwname in current_bwnames:
+        if bwname not in self.lognames:
+            del bwset.properties[bwname]  # remove existing logs that are not in input
+    bwnames = [item.name for item in bwset.properties]  # updated list
 
     # get the current indices for the well
     dind = bwset.get_data_indices([self._wname], realisation=realisation)
 
     for lname in self.lognames:
-        if (
-            not ijk
-            and any(
-                _AttrName.I_INDEX.value,
-                _AttrName.J_INDEX.value,
-                _AttrName.K_INDEX.value,
-            )
-            in lname
-        ):
+        if not ijk and lname in [
+            _AttrName.I_INDEX.value,
+            _AttrName.J_INDEX.value,
+            _AttrName.K_INDEX.value,
+        ]:
             continue
 
         if lognames != "all" and lname not in lognames:
             continue
 
         if lname not in bwnames:
-            if self._wlogtypes[lname] == _AttrType.CONT.value:
-                print("Create CONT", lname, "for", wname)
+            if self.wlogtypes[lname] == _AttrType.CONT.value:
                 bwlog = bwset.properties.create(
                     lname, roxar.GridPropertyType.continuous, np.float32
                 )
                 bwprop = bwset.generate_values(discrete=False, fill_value=0.0)
             else:
-                print("Create DISK", lname, "for", wname)
                 bwlog = bwset.properties.create(
                     lname, roxar.GridPropertyType.discrete, np.int32
                 )
@@ -204,10 +202,12 @@ def _roxapi_export_bwell(
             raise ValueError(
                 "Dataframe is of wrong size, changing numbers of rows is not possible"
             )
-
         maskedvalues = np.ma.masked_invalid(self.dataframe[lname].values).astype(
             usedtype
         )
+        # there are cases where RMS API complains on the actual value of the masked data
+        # array being outside range; hence remedy is to set 'data' value to 0
+        maskedvalues.data[maskedvalues.mask] = 0
 
         bwprop[dind] = maskedvalues
         bwlog.set_values(bwprop, realisation=realisation)
