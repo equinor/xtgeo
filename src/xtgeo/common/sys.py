@@ -514,7 +514,7 @@ class _XTGeoFile:
         if self._tmpfile:
             try:
                 os.remove(self._tmpfile)
-            except Exception as ex:  # pylint: disable=W0703
+            except Exception as ex:
                 logger.error("Could not remove tempfile for some reason: %s", ex)
 
         self._cfhandle = 0

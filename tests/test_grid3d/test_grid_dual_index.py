@@ -56,7 +56,6 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-
 import xtgeo.grid3d.grid
 
 

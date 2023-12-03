@@ -8,10 +8,9 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import resfo
-from hypothesis import HealthCheck, assume, given, settings
-
 import xtgeo
 import xtgeo.grid3d._find_gridprop_in_eclrun as xtg_im_ecl
+from hypothesis import HealthCheck, assume, given, settings
 from xtgeo.grid3d._ecl_inte_head import InteHead
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Phases

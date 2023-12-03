@@ -387,7 +387,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="add", inside=True, version=0)
 
     def add_inside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Add a value (scalar) to points inside polygons (new behaviour).
 
@@ -416,7 +418,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="add", inside=False, version=0)
 
     def add_outside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Add a value (scalar) to points outside polygons (new behaviour).
 
@@ -445,7 +449,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="sub", inside=True, version=1)
 
     def sub_inside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Subtract a value (scalar) for points inside polygons (new behaviour).
 
@@ -474,7 +480,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="sub", inside=False, version=0)
 
     def sub_outside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Subtract a value (scalar) for points outside polygons (new behaviour).
 
@@ -503,7 +511,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="mul", inside=True, version=0)
 
     def mul_inside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Multiply a value (scalar) for points inside polygons (new behaviour).
 
@@ -532,7 +542,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="mul", inside=False, version=0)
 
     def mul_outside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Multiply a value (scalar) for points outside polygons (new behaviour).
 
@@ -561,7 +573,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="div", inside=True, version=0)
 
     def div_inside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Divide a value (scalar) for points inside polygons (new behaviour).
 
@@ -590,7 +604,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="div", inside=False, version=0)
 
     def div_outside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Divide a value (scalar) for points outside polygons (new behaviour).
 
@@ -621,7 +637,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="set", inside=True, version=0)
 
     def set_inside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Set a value (scalar) for points inside polygons (new behaviour).
 
@@ -650,7 +668,9 @@ class XYZ(ABC):
         self.operation_polygons(poly, value, opname="set", inside=False, version=0)
 
     def set_outside_polygons(
-        self, poly: Polygons | list[Polygons], value: float  # noqa: F821
+        self,
+        poly: Polygons | list[Polygons],
+        value: float,  # noqa: F821
     ):
         """Set a value (scalar) for points outside polygons (new behaviour).
 

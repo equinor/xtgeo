@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Module for basic XTGeo dialog, basic interaction with user,
 including logging for debugging.
@@ -152,7 +151,7 @@ class XTGDescription:
 
     @staticmethod
     def _smartfmt(atxt: list[str]) -> str:
-        # pylint: disable=consider-using-f-string  # f-string does not work with starred
+        # f-string does not work with starred
         alen = len(atxt)
         atxt.insert(1, "=>")
         if alen == 1:
@@ -174,15 +173,13 @@ class XTGDescription:
         return fmt
 
 
-class _TimeFilter(logging.Filter):  # pylint: disable=too-few-public-methods
+class _TimeFilter(logging.Filter):
     """handling difftimes in logging..."""
 
     # cf https://stackoverflow.com/questions/31521859/
     # \python-logging-module-time-since-last-log
 
     def filter(self, record: logging.LogRecord) -> bool:
-        # pylint: disable=access-member-before-definition
-        # pylint: disable=attribute-defined-outside-init
         try:
             last: float = self.last  # type: ignore
         except AttributeError:
@@ -216,7 +213,7 @@ class _Formatter(logging.Formatter):
         return super().format(record)
 
 
-class XTGeoDialog:  # pylint: disable=too-many-public-methods
+class XTGeoDialog:
     """System for handling dialogs and messages in XTGeo.
 
     This module cooperates with Python logging module.
@@ -276,8 +273,6 @@ class XTGeoDialog:  # pylint: disable=too-many-public-methods
 
     @logginglevel.setter
     def logginglevel(self, level: str) -> None:
-        # pylint: disable=pointless-statement
-
         validlevels = ("INFO", "WARNING", "DEBUG", "CRITICAL")
         if level in validlevels:
             self._logginglevel = level
@@ -597,7 +592,6 @@ class XTGeoDialog:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def _get_class_from_frame(fr: Any) -> Any:
-        # pylint: disable=deprecated-method
         args, _, _, value_dict = inspect.getargvalues(fr)
 
         # we check the first parameter for the frame function is

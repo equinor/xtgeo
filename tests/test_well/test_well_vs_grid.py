@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 from os.path import join
 
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -17,7 +15,6 @@ if not xtg.testsetup():
 TPATH = xtg.testpathobj
 # =========================================================================
 # Do tests
-# pylint: disable=redefined-outer-name
 # =========================================================================
 
 WFILE = join(TPATH, "wells/reek/1/OP_1.w")

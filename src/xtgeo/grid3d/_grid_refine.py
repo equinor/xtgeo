@@ -14,9 +14,6 @@ logger = null_logger(__name__)
 if TYPE_CHECKING:
     from xtgeo.grid3d import Grid, GridProperty
 
-# pylint: disable=too-many-branches
-# pylint: disable=too-many-statements
-
 
 def refine_vertically(
     self: Grid,

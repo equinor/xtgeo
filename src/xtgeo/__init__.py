@@ -1,5 +1,4 @@
 # flake8: noqa
-# pylint: skip-file
 # type: ignore
 
 """The XTGeo Python library."""

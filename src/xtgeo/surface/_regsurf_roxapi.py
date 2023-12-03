@@ -203,7 +203,7 @@ def _roxapi_export_surface(
         # here a workound; trends.surfaces are read-only in Roxar API, but is seems
         # that load() in RMS is an (undocumented?) workaround...
         try:
-            import roxar  # pylint: disable=import-outside-toplevel
+            import roxar
         except ImportError as err:
             raise ImportError(
                 "roxar not available, this functionality is not available"
@@ -223,7 +223,7 @@ def _roxapi_export_surface(
 def _xtgeo_to_roxapi_grid(self):  # pragma: no cover
     # Create a 2D grid
     try:
-        import roxar  # pylint: disable=import-error, import-outside-toplevel
+        import roxar
     except ImportError as err:
         raise ImportError(
             "roxar not available, this functionality is not available"

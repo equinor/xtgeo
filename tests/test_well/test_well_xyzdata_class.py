@@ -1,7 +1,6 @@
 """Test _XYZData class, in a Well context"""
 import pandas as pd
 import pytest
-
 from xtgeo.common import _AttrType, _XYZData
 
 

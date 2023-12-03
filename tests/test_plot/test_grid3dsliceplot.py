@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-
-
 import os
 
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Grid3DSlice

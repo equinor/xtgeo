@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module for XTGeo defined Exceptions.
 
 This module implements a number of Python exceptions you can raise from

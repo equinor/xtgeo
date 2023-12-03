@@ -2,9 +2,8 @@ import functools
 
 import deprecation
 import pytest
-from packaging import version
-
 import xtgeo
+from packaging import version
 from xtgeo.common.version import __version__ as xtgeo_version
 
 

@@ -28,14 +28,6 @@ jobs:
       - name: List dependencies
         run: pip freeze
 
-      - name: Lint with isort
+      - name: Ruff
         if: ${{ always() }}
-        run: isort --check-only src tests
-
-      - name: Lint with black
-        if: ${{ always() }}
-        run: black src tests
-
-      - name: Lint with flake8
-        if: ${{ always() }}
-        run: flake8 src tests
+        run: ruff check .

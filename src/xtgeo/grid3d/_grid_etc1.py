@@ -989,7 +989,7 @@ def copy(self):
     )
 
 
-def crop(self, spec, props=None):  # pylint: disable=too-many-locals
+def crop(self, spec, props=None):
     """Do cropping of geometry (and properties).
 
     If props is 'all' then all properties assosiated (linked) to then

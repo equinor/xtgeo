@@ -235,7 +235,7 @@ def _allow_deprecated_init(func):
     return wrapper
 
 
-class Polygons(XYZ):  # pylint: disable=too-many-public-methods
+class Polygons(XYZ):
     """Class for a Polygons object (connected points) in the XTGeo framework.
 
     The term Polygons is here used in a wider context, as it includes
@@ -314,7 +314,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             attributes=attributes,
         )
 
-    def _reset(  # pylint: disable=arguments-renamed
+    def _reset(
         self,
         values: list | np.ndarray | pd.DataFrame,
         xname: str = "X_UTME",
@@ -327,7 +327,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         dtname: str = "T_DELTALEN",
         name: str = "poly",
         attributes: dict | None = None,
-    ):  # pylint: disable=arguments-differ
+    ):
         """Used in deprecated methods."""
 
         super()._reset(xname, yname, zname)

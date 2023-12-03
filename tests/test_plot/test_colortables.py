@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 
 import xtgeo.plot._colortables as ct

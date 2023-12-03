@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Compute statistics within one realisation, using ROFF or RMS internal."""
 
 from os.path import join as ojn
@@ -59,7 +58,7 @@ def show_stats_inside_rms():
     but not tested. Focus on syntax for getting properties, otherwise code
     is quite similar.
     """
-    prj = project  # type: ignore # noqa # pylint: disable=undefined-variable
+    prj = project  # type: ignore # noqa
 
     # names of icons...
     gridmodel = "Reek"

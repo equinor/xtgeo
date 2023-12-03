@@ -1,5 +1,4 @@
 import pytest
-
 from xtgeo.well._well_io import import_wlogs
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Make a regularmap from a property at a given K layer
 By JRIV

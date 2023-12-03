@@ -4,7 +4,6 @@ import stat
 
 import numpy as np
 import pytest
-
 import xtgeo
 from xtgeo import _cxtgeo
 

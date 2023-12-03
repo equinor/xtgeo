@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Grid import functions for Eclipse, new approach (i.e. version 2)."""
 
 

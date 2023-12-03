@@ -31,7 +31,7 @@ or::
 # For functions with mask=... ,the should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
 
-# pylint: disable=too-many-public-methods
+
 from __future__ import annotations
 
 import functools
@@ -1613,7 +1613,6 @@ class RegularSurface:
             >>> mymapcopy = mymap.copy()
 
         """
-        # pylint: disable=protected-access
 
         xsurf = RegularSurface(
             ncol=self.ncol,
@@ -3128,8 +3127,10 @@ class RegularSurface:
     # ==================================================================================
 
     def _ensure_correct_values(
-        self, values, force_dtype=None
-    ):  # pylint: disable=too-many-branches, too-many-statements
+        self,
+        values,
+        force_dtype=None,
+    ):
         """Ensures that values is a 2D masked numpy (ncol, nrow), C order.
 
         This is an improved but private version over ensure_correct_values

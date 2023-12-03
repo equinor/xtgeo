@@ -50,8 +50,15 @@ def export_bwell_roxapi(
 
 
 def _roxapi_import_bwell(
-    self, rox, gname, bwname, wname, lognames, ijk, realisation
-):  # pylint: disable=too-many-statements
+    self,
+    rox,
+    gname,
+    bwname,
+    wname,
+    lognames,
+    ijk,
+    realisation,
+):
     """Private function for ROXAPI well import (get well from Roxar)"""
 
     if gname in rox.project.grid_models:
@@ -71,7 +78,6 @@ def _roxapi_import_bwell(
     else:
         raise WellNotFoundError(f"No such well in blocked well set: {wname}")
 
-    # pylint: disable=unnecessary-comprehension
     bwprops = [item for item in bwset.properties]
     bwnames = [item.name for item in bwset.properties]
 
@@ -136,9 +142,7 @@ def _roxapi_import_bwell(
         )
 
 
-def _roxapi_export_bwell(
-    self, rox, gname, bwname, wname, lognames, ijk, realisation
-):  # pylint: disable=too-many-statements
+def _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation):
     """Private function for ROXAPI well export (set well with updated logs to Roxar)"""
 
     if gname in rox.project.grid_models:

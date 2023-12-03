@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Regular surface vs Cube"""
 
 

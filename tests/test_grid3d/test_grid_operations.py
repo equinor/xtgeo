@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 """Testing: test_grid_operations"""
 from os.path import join
 
 import pytest
-from hypothesis import given
-
 import xtgeo
+from hypothesis import given
 from xtgeo.common import XTGeoDialog
 
 from .grid_generator import xtgeo_grids
@@ -17,7 +15,6 @@ if not xtg.testsetup():
 
 TPATH = xtg.testpathobj
 
-# pylint: disable=logging-format-interpolation
 
 # =============================================================================
 # Do tests

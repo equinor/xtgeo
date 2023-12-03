@@ -1,5 +1,4 @@
 """Import RegularSurface data."""
-# pylint: disable=protected-access
 
 import json
 from struct import unpack
@@ -258,7 +257,7 @@ def import_ijxyz(mfile, template=None, **_):
         return _import_ijxyz_tmpl(mfile, template)
 
 
-def _import_ijxyz(mfile):  # pylint: disable=too-many-locals
+def _import_ijxyz(mfile):
     """Import OW/DSG IJXYZ ascii format."""
     # import of seismic column system on the form:
     # 2588	1179	476782.2897888889	6564025.6954	1000.0

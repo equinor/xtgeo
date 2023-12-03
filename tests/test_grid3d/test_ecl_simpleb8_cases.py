@@ -19,7 +19,6 @@ Based on 'simpleb8' and ran through various simulators in 2022 by V. Kippe (Equi
 import numpy as np
 import pytest
 import resfo
-
 import xtgeo
 
 xtg = xtgeo.XTGeoDialog()

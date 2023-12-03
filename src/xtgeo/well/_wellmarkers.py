@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Well marker data; private module"""
 
 
@@ -108,7 +107,6 @@ def _extract_ztops(
         use_undef (bool): If True, then transition from UNDEF is also
             used.
     """
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
 
     # The wellpoints will be a list of tuples (one tuple per hit)
     wpts = []
@@ -294,7 +292,7 @@ def get_fraction_per_zone(
     incl_limit=80,
     count_limit=3,
     zonelogname=None,
-):  # pylint: disable=too-many-branches, too-many-statements
+):
     """Fraction of e.g. a facies in a zone segment.
 
         X_UTME       Y_UTMN    Z_TVDSS  Zonelog  Facies  M_INCL

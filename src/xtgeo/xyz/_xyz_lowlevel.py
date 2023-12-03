@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Private low level routines (SWIG vs C)"""
 
 

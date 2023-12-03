@@ -6,7 +6,6 @@ Currently tested format(s):
 import io
 
 import numpy as np
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 

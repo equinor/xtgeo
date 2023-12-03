@@ -122,7 +122,7 @@ def handle_metadata(
 def import_xtgcpgeom(
     mfile: _XTGeoFile,
     mmap: bool = False,
-) -> _RESULT:  # pylint: disable=too-many-locals, too-many-statements
+) -> _RESULT:
     """Using pure python for experimental grid geometry import."""
     #
     offset = 36

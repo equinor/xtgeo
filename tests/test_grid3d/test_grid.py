@@ -5,9 +5,8 @@ from os.path import join
 
 import numpy as np
 import pytest
-from hypothesis import given
-
 import xtgeo
+from hypothesis import given
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid
 
@@ -42,7 +41,6 @@ EME1PROP = TPATH / "3dgrids/eme/2/eme_small_w_hole_grid_params.roff"
 # =============================================================================
 # Do tests
 # =============================================================================
-# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture()

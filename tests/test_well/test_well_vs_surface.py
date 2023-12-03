@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-
-
 from os.path import join
 
 import pytest
-
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

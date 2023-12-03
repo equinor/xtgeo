@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Regular surface vs Grid3D"""
 
 
@@ -14,7 +13,6 @@ logger = null_logger(__name__)
 
 
 # self = RegularSurface instance!
-# pylint: disable=protected-access
 
 
 def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):

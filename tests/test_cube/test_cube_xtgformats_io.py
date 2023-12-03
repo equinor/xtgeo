@@ -2,9 +2,8 @@
 from os.path import join
 
 import pytest
-from numpy.testing import assert_allclose
-
 import xtgeo
+from numpy.testing import assert_allclose
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()

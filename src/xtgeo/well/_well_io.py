@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Well input and ouput, private module"""
 import json
 from copy import deepcopy
@@ -22,7 +21,7 @@ def import_rms_ascii(
     lognames_strict=False,
 ):
     """Import RMS ascii table well"""
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+
     wlogtype = dict()
     wlogrecords = dict()
 

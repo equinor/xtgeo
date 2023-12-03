@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
 import os
 import time
 
 import pytest
-
 from xtgeo.common import XTGeoDialog
-
-# pylint: disable=invalid-name
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)

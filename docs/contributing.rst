@@ -94,15 +94,11 @@ up your fork for local development (first time):
 
 Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the tests:
+5. When you're done making changes, check that your changes pass ruff and the tests:
 
 .. code-block:: bash
 
-    $ black src tests
-    $ flake8 src tests
-    $ isort src tests
-    $ mypy src
-    $ pylint src tests
+    $ ruff check .
     $ pytest tests
 
 6. If you want to edit C code, take contact with the author for detailed instructions.

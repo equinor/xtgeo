@@ -6,7 +6,6 @@ import pathlib
 import tempfile
 
 import numpy as np
-
 import xtgeo
 
 EXPATH = pathlib.Path("../../xtgeo-testdata/3dgrids/reek")

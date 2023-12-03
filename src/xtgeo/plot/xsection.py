@@ -36,8 +36,6 @@ class XSection(BasePlot):
 
     """
 
-    # pylint: disable=too-many-instance-attributes
-
     def __init__(
         self,
         zmin=0,
@@ -996,7 +994,7 @@ class XSection(BasePlot):
         fancyline=False,
         axisname="main",
         gridlines=False,
-    ):  # pylint: disable=too-many-branches, too-many-statements
+    ):
         """Input a surface list (ordered from top to base) , and plot them."""
         if self.fence is None:
             return

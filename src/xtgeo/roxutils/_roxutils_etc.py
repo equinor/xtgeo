@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Private module for etc functions"""
 
 
@@ -49,7 +48,7 @@ def create_whatever_category(
             if catg not in project.horizons.representations:
                 try:
                     project.horizons.representations.create(catg, geom, dom)
-                except Exception as exmsg:  # pylint: disable=broad-except
+                except Exception as exmsg:
                     print(f"Error: {exmsg}")
             else:
                 print(f"Category <{catg}> already exists")
@@ -58,7 +57,7 @@ def create_whatever_category(
             if catg not in project.zones.representations:
                 try:
                     project.zones.representations.create(catg, geom, dom)
-                except Exception as exmsg:  # pylint: disable=broad-except
+                except Exception as exmsg:
                     print(f"Error: {exmsg}")
             else:
                 print(f"Category <{catg}> already exists")

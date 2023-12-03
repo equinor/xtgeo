@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Regular surface vs Cube, slice a window interval"""
 
 
@@ -7,8 +6,7 @@ import numpy.ma as ma
 
 from xtgeo.common import XTGShowProgress, null_logger
 
-from . import _regsurf_cube_window_v2 as cwv2
-from . import _regsurf_cube_window_v3 as cwv3
+from . import _regsurf_cube_window_v2 as cwv2, _regsurf_cube_window_v3 as cwv3
 
 logger = null_logger(__name__)
 
@@ -347,7 +345,7 @@ def _slice_between_surfaces(
     return attvalues  # this is dict with numpies, one per attribute
 
 
-def _attvalues(attribute, stacked):  # pylint: disable=too-many-branches
+def _attvalues(attribute, stacked):
     """Attribute values computed in numpy.ma stack."""
     if attribute == "max":
         attvalues = ma.max(stacked, axis=2)

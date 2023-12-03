@@ -5,10 +5,9 @@ from os.path import join
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+import xtgeo
 from hypothesis import HealthCheck, given, settings
 from numpy.testing import assert_allclose
-
-import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()

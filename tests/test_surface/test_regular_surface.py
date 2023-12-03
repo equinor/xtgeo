@@ -5,9 +5,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from packaging import version
-
 import xtgeo
+from packaging import version
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.version import __version__ as xtgeo_version

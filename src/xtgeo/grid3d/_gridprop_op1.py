@@ -1,5 +1,4 @@
 """Various grid property operations"""
-# pylint: disable=protected-access
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union

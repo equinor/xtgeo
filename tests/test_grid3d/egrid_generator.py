@@ -1,8 +1,7 @@
 import hypothesis.strategies as st
 import numpy as np
-from hypothesis.extra.numpy import arrays
-
 import xtgeo.grid3d._egrid as xtge
+from hypothesis.extra.numpy import arrays
 
 from .grdecl_grid_generator import (
     coordinate_types,

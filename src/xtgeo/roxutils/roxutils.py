@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module for simplifying various operation in the Roxar python interface."""
 
 

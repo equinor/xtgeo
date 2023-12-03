@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Roxar API functions for XTGeo Grid Geometry."""
 from __future__ import annotations
 
@@ -110,7 +109,6 @@ def _convert_to_xtgeo_grid_v1(
     roxgrid: roxar.grids.Grid3D, corners: np.ndarray | None, gname: str
 ) -> dict[str, Any]:
     """Convert from RMS API to XTGeo API."""
-    # pylint: disable=too-many-statements
 
     logger.info("Converting to XTGeo internals...")
     logger.info("Call the ROXAPI grid indexer")

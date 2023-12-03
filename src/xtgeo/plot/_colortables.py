@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module for color tables."""
 
 import os

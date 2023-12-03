@@ -6,7 +6,6 @@
 The tests where made on resolving issues #873, #874
 """
 import pytest
-
 import xtgeo
 
 xtg = xtgeo.XTGeoDialog()

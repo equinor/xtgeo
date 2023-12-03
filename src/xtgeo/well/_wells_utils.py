@@ -18,8 +18,10 @@ xtg = XTGeoDialog()
 
 
 def wellintersections(
-    self, wfilter=None, showprogress=False
-):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    self,
+    wfilter=None,
+    showprogress=False,
+):
     """Get intersections between wells, return as dataframe table.
 
     This routine is using "shapely" functions!

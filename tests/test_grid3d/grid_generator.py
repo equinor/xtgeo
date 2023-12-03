@@ -1,5 +1,4 @@
 import hypothesis.strategies as st
-
 import xtgeo
 
 indices = st.integers(min_value=4, max_value=6)

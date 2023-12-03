@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The XTGeo xyz (points and polygons) package."""
 
 
