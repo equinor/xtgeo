@@ -1,9 +1,8 @@
 import hypothesis.strategies as st
 import numpy as np
-from hypothesis.extra.numpy import arrays
-
 import xtgeo.grid3d._ecl_grid as eclgrid
 import xtgeo.grid3d._grdecl_grid as ggrid
+from hypothesis.extra.numpy import arrays
 
 from .grid_generator import indices
 

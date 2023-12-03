@@ -3,10 +3,8 @@ from os.path import basename, join
 
 import numpy as np
 import pytest
-
 import xtgeo
 
-# pylint: disable=wildcard-import, unused-wildcard-import
 from .eclrun_fixtures import *  # noqa: F401, F403
 
 

@@ -132,7 +132,7 @@ def allow_deprecated_default_init(func):
     return wrapper
 
 
-class Cube:  # pylint: disable=too-many-public-methods, W0201
+class Cube:
     """Class for a (seismic) cube in the XTGeo framework.
 
     The values are stored as a 3D numpy array (4 bytes; float32 is default),

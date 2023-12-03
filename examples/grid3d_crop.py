@@ -19,7 +19,6 @@ TMPDIR = pathlib.Path(tempfile.gettempdir())
 def cropper():
     """Do a cropping of a 3D grid"""
 
-    # pylint: disable=too-many-locals
     grd = xtgeo.grid_from_file(GRIDFILEROOT, fformat="eclipserun", initprops=INITPROPS)
 
     print(grd.props)

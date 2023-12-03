@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Integration tests towards Roxar API, requires RoxarAPI license.
 
 Creates a tmp RMS project in given version which is used as fixture for all other Roxar
@@ -15,7 +14,6 @@ from typing import Any
 
 import numpy as np
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 

@@ -15,9 +15,6 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-# pylint: disable=protected-access
-
-
 def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
     """Make column to mark if XYZ df is inside/outside polygons, using matplotlib."""
     points = np.array(

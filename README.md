@@ -2,7 +2,7 @@
 ![builds](https://github.com/equinor/xtgeo/workflows/builds/badge.svg)
 ![linting](https://github.com/equinor/xtgeo/workflows/linting/badge.svg)
 [![codecov](https://codecov.io/gh/equinor/xtgeo/branch/main/graph/badge.svg)](https://codecov.io/gh/equinor/xtgeo)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![PyPI version](https://badge.fury.io/py/xtgeo.svg)](https://badge.fury.io/py/xtgeo)
 [![Documentation Status](https://readthedocs.org/projects/xtgeo/badge/?version=latest)](https://xtgeo.readthedocs.io/en/latest/?badge=latest)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xtgeo.svg)

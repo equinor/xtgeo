@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Regular surface vs Cube, slice a window interval v2"""
 
 
@@ -102,7 +101,7 @@ def _slice_cube_window(
     maskthreshold,
     showprogress,
     deadtraces,
-):  # pylint: disable=too-many-branches, too-many-statements
+):
     """Slice Cube between surfaces to find attributes
 
     New from May 2020, to provide a much faster algorithm and correct some issues

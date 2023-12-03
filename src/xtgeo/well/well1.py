@@ -1338,7 +1338,6 @@ class Well:
         if extralogs is not None:
             useloglist.extend(extralogs)
 
-        # pylint: disable=consider-using-enumerate
         for ivv in range(len(dflist)):
             dxf = dflist[ivv]
             dxf = dxf.rename(columns={"ztmp": "POLY_ID"})

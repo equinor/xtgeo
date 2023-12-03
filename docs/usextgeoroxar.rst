@@ -480,7 +480,7 @@ be input to Equinor's APS module.
     import numpy as np
     import xtgeo
 
-    PRJ = project  # noqa pylint: disable=undefined-variable
+    PRJ = project
     GNAME = "Geogrid_Valysar"
     BWNAME = "BW"
     FACIES = "Facies"

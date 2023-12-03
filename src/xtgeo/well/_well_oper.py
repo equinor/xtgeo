@@ -7,8 +7,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.common import constants as const
-from xtgeo.common import null_logger
+from xtgeo.common import constants as const, null_logger
 from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.sys import _get_carray
 
@@ -337,7 +336,6 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
 
 def report_zonation_holes(self, threshold=5):
     """Reports if well has holes in zonation, less or equal to N samples."""
-    # pylint: disable=too-many-branches, too-many-statements
 
     if self.zonelogname is None:
         raise RuntimeError("No zonelog present for well")

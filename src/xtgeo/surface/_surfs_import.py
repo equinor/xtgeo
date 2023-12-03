@@ -1,5 +1,4 @@
 """Import multiple surfaces"""
-# pylint: disable=protected-access
 
 import xtgeo
 from xtgeo.common import null_logger

@@ -1,5 +1,4 @@
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 

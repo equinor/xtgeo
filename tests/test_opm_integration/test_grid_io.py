@@ -1,10 +1,9 @@
 import os
 
 import pytest
+import xtgeo
 from hypothesis import given, settings
 from numpy.testing import assert_allclose
-
-import xtgeo
 
 from ..test_grid3d.grid_generator import xtgeo_grids
 

@@ -1,10 +1,8 @@
 import deprecation
 import numpy as np
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
-
 import xtgeo
+from hypothesis import given, strategies as st
 from xtgeo import Cube, RegularSurface
 
 

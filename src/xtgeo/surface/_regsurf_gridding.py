@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Do gridding from 3D parameters"""
 from __future__ import annotations
 
@@ -20,7 +19,6 @@ if TYPE_CHECKING:
 logger = null_logger(__name__)
 
 # Note: 'self' is an instance of RegularSurface
-# pylint: disable=too-many-branches, too-many-statements, too-many-locals
 
 
 def points_gridding(self, points, method="linear", coarsen=1):

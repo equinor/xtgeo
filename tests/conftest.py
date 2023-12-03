@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Conftest functions"""
 import pandas as pd
 import pytest

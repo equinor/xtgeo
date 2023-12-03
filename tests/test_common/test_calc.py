@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-
 import math
 
 import numpy as np
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
-
 import xtgeo
 import xtgeo.common.calc as xcalc
+from hypothesis import given, strategies as st
 from xtgeo import _cxtgeo
 
 xtg = xtgeo.XTGeoDialog()

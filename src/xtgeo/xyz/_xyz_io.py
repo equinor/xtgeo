@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Private import and export routines for XYZ stuff."""
 
 
@@ -182,7 +181,7 @@ def to_file(
     mdcolumn="M_MDEPTH",
     ispolygons=False,
     **kwargs,
-):  # pylint: disable=redefined-builtin
+):
     """Export XYZ (Points/Polygons) to file.
 
     Args:

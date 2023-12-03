@@ -15,8 +15,12 @@ from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 from xtgeo.common.version import __version__
 
-from . import _grid3d_utils as utils
-from . import _grid_etc1, _gridprops_import_eclrun, _gridprops_import_roff
+from . import (
+    _grid3d_utils as utils,
+    _grid_etc1,
+    _gridprops_import_eclrun,
+    _gridprops_import_roff,
+)
 from ._grid3d import _Grid3D
 from .grid_property import GridProperty
 
@@ -137,7 +141,7 @@ def gridproperties_dataframe(
     ijk: bool = False,
     xyz: bool = False,
     doubleformat: bool = False,
-) -> pd.DataFrame:  # pylint: disable=too-many-branches, too-many-statements
+) -> pd.DataFrame:
     """Returns a Pandas dataframe table for the properties.
 
     Similar to :meth:`GridProperties.get_dataframe()` but takes any list of

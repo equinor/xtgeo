@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
 """Export RegularSurface data."""
 
 import json
-
-# pylint: disable=protected-access
-# import hashlib
 import struct
 
 import h5py

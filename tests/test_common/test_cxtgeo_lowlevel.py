@@ -1,7 +1,6 @@
 """Test some basic cxtgeo functions."""
 import numpy as np
 import pytest
-
 import xtgeo
 from xtgeo import _cxtgeo
 

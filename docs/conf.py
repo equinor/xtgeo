@@ -1,9 +1,7 @@
-# noqa # pylint: skip-file
 from datetime import date
 
-from autoclasstoc import PublicMethods
-
 import xtgeo
+from autoclasstoc import PublicMethods
 
 version = xtgeo.__version__
 release = xtgeo.__version__

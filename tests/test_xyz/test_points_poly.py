@@ -2,7 +2,6 @@ import pathlib
 import sys
 
 import pytest
-
 import xtgeo
 from xtgeo.xyz import Points, Polygons
 

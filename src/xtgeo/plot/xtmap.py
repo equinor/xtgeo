@@ -49,7 +49,7 @@ class Map(BasePlot):
         xlabelrotation=None,
         colormap=None,
         logarithmic=False,
-    ):  # pylint: disable=too-many-statements
+    ):
         """Input a surface and plot it."""
         # need a deep copy to avoid changes in the original surf
 

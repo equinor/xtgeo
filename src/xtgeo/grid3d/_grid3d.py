@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Private baseclass for Grid and GridProperties, not to be used by itself."""
 
 from xtgeo.common import XTGeoDialog

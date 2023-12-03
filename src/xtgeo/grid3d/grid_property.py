@@ -75,11 +75,9 @@ if TYPE_CHECKING:
 # For functions with mask=... ,they should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
 
-# pylint: disable=logging-format-interpolation, too-many-public-methods
-
 # ======================================================================================
 # Functions outside the class, for rapid access. Will be exposed as
-# xxx = xtgeo.gridproperty_from_file. pylint: disable=fixme
+# xxx = xtgeo.gridproperty_from_file.
 # ======================================================================================
 
 

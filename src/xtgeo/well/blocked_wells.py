@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """BlockedWells module, (collection of BlockedWell objects)"""
 
 # ======================================================================================

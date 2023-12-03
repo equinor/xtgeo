@@ -43,7 +43,7 @@ VALID_OPER_POLYS = (
 )
 
 
-def operations_two(self, other, oper="add"):  # pylint: disable=too-many-branches
+def operations_two(self, other, oper="add"):
     """General operations between two maps"""
 
     other = _check_other(self, other)

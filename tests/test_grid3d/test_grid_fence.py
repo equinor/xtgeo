@@ -2,7 +2,6 @@
 
 
 import pytest
-
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

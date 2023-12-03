@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Grid import functions for various formats."""
 
 import xtgeo
@@ -10,7 +9,7 @@ from . import _grid_import_xtgcpgeom
 logger = null_logger(__name__)
 
 
-def from_file(gfile, fformat=None, **kwargs):  # pylint: disable=too-many-branches
+def from_file(gfile, fformat=None, **kwargs):
     """Import grid geometry from file, and makes an instance of this class.
 
     Returns:

@@ -391,7 +391,7 @@ def _allow_deprecated_init(func):
     return wrapper
 
 
-class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefined
+class Points(XYZ):
     """Class for a Points data in XTGeo.
 
     The Points class is a subclass of the :py:class:`~xtgeo.xyz._xyz.XYZ` abstract
@@ -496,7 +496,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         zname: str = "Z_TVDSS",
         attributes: dict | None = None,
         filesrc: str = None,
-    ):  # pylint: disable=arguments-differ
+    ):
         """Used in deprecated methods."""
         super()._reset(xname, yname, zname)
 
@@ -713,7 +713,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods, function-redefine
         hcolumn=None,
         mdcolumn="M_MDEPTH",
         **kwargs,
-    ):  # pylint: disable=redefined-builtin
+    ):
         """Export Points to file.
 
         Args:

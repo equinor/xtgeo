@@ -1,7 +1,6 @@
 import pathlib
 
 import pandas as pd
-
 import xtgeo
 
 SURFACE = pathlib.Path("surfaces/reek/1/topreek_rota.gri")

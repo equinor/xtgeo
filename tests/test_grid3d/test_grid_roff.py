@@ -9,7 +9,6 @@ import roffio
 from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from numpy.testing import assert_allclose
-
 from xtgeo import _cxtgeo
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d._grid_import_roff import handle_deprecated_xtgeo_roff_file
@@ -192,7 +191,6 @@ def test_not_a_grid(roff_grid):
         RoffGrid.from_file(buff)
 
 
-# pylint: disable=redefined-outer-name
 @pytest.fixture
 def single_cell_roff_grid():
     corner_lines = np.array(

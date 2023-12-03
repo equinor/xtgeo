@@ -3,10 +3,9 @@ import pathlib
 
 import numpy as np
 import pytest
+import xtgeo
 from hypothesis import given
 from packaging import version
-
-import xtgeo
 from xtgeo import GridProperties, GridProperty
 from xtgeo.common.version import __version__ as xtgeo_version
 

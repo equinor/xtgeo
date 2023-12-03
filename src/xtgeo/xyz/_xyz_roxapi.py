@@ -13,7 +13,7 @@ from xtgeo.xyz import _xyz_io
 
 logger = null_logger(__name__)
 
-# pylint: disable=protected-access
+
 VALID_STYPES = ["horizons", "zones", "clipboard", "general2d_data", "faults"]
 VALID_STYPES_EXPORT = VALID_STYPES + ["horizon_picks"]
 
@@ -94,7 +94,7 @@ def _roxapi_import_xyz_viafile(
     """
 
     try:
-        import roxar  # pylint: disable=import-outside-toplevel
+        import roxar
     except ImportError as err:
         raise ImportError(
             "roxar not available, this functionality is not available"
@@ -275,7 +275,7 @@ def _roxapi_export_xyz_viafile(
     logger.warning("Realisation %s not in use", realisation)
 
     try:
-        import roxar  # pylint: disable=import-outside-toplevel
+        import roxar
     except ImportError as err:
         raise ImportError(
             "roxar not available, this functionality is not available"
@@ -315,7 +315,6 @@ def _roxapi_export_xyz(
 
     roxxyz = _get_roxitem(self, proj, name, category, stype, mode="set")
 
-    # pylint: disable=len-as-condition
     if self.dataframe is None or len(self.dataframe.index) == 0:
         return
 
@@ -386,8 +385,13 @@ def _cast_dataframe_attrs_to_numeric(dfr):
 
 
 def _check_category_etc(
-    proj, name, category, stype, realisation, mode="get"
-):  # pylint: disable=too-many-branches  # pragma: no cover
+    proj,
+    name,
+    category,
+    stype,
+    realisation,
+    mode="get",
+):
     """Helper to check if valid placeholder' whithin RMS."""
 
     logger.warning("Realisation %s not in use", realisation)
@@ -440,7 +444,6 @@ def _check_category_etc(
 
 
 def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no cover
-    # pylint: disable=too-many-branches
     if stype == "horizons":
         roxxyz = proj.horizons[name][category]
     elif stype == "zones":
@@ -487,7 +490,6 @@ def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no c
 def _get_roxxyz(
     rox, name, category, stype, mode="set", is_polygons=False
 ):  # pragma: no cover
-    # pylint: disable=too-many-branches
     """Get the correct rox_xyz which is some pointer to a RoxarAPI structure."""
     if stype == "horizons":
         rox_xyz = rox.project.horizons[name][category]

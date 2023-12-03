@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 import hashlib
 import io
 import pathlib
 import sys
 
 import pytest
-
 import xtgeo
 import xtgeo.common.sys as xsys
 

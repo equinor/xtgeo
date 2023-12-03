@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
 from os.path import join
 
 import hypothesis.strategies as st
 import numpy as np
 import pytest
 import segyio
-from hypothesis import HealthCheck, given, settings
-
 import xtgeo
+from hypothesis import HealthCheck, given, settings
 from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
 from xtgeo.cube._cube_import import (

@@ -10,8 +10,6 @@ from xtgeo.common.calc import _swap_axes
 
 logger = null_logger(__name__)
 
-# pylint: disable=protected-access
-
 
 def swapaxes(self):
     """Pure numpy/python version"""

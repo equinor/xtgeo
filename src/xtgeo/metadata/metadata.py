@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The metadata module, currently experimental.
 
 The metadata works through the various datatypes in XTGeo. For example::

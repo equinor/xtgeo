@@ -72,13 +72,9 @@ Documentation = "https://xtgeo.readthedocs.io"
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "coverage>=4.1",
-    "flake8",
-    "isort",
     "hypothesis",
     "mypy",
-    "pylint",
     "pytest",
     "pytest-benchmark",
     "pytest-cov",
@@ -87,6 +83,7 @@ dev = [
     "pytest-mock",
     "pytest-snapshot",
     "pytest-xdist",
+    "ruff",
 ]
 docs = [
     "autoclasstoc",
@@ -97,30 +94,6 @@ docs = [
     "sphinx-rtd-theme",
     "sphinx-toolbox",
 ]
-
-[tool.black]
-line-length = 88
-target-version = ["py38", "py39", "py310", "py311", "py312"]
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | version.py
-  # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
-  | profiling
-)/
-'''
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux2014"
@@ -135,9 +108,6 @@ test-command = [
     # Ignore forking tests as they do not work well with CIBW
     'pytest -n 4 tests --disable-warnings -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"',
 ]
-
-[tool.isort]
-profile = "black"
 
 [tool.pydocstyle]
 convention = "google"
@@ -159,3 +129,18 @@ doctest_optionflags = "ELLIPSIS"
 
 [tool.setuptools_scm]
 write_to = "src/xtgeo/common/version.py"
+
+[tool.ruff]
+select = [
+    "E",
+    "F",
+    "I",
+    "W",
+    # "C90",
+    # "NPY",
+    # "PD",
+    # "PL",
+]
+line-length = 88
+[tool.ruff.lint.isort]
+combine-as-imports = true

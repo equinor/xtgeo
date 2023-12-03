@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Some grid utilities, file scanning etc."""
 from __future__ import annotations
 

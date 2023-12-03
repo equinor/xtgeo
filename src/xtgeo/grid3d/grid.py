@@ -374,7 +374,6 @@ class Grid(_Grid3D):
 
     """
 
-    # pylint: disable=too-many-public-methods
     @allow_deprecated_init
     def __init__(
         self,
@@ -1297,7 +1296,12 @@ class Grid(_Grid3D):
 
     def get_vtk_esg_geometry_data(
         self,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray,]:
+    ) -> tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
         """Get grid geometry data suitable for use with VTK's vtkExplicitStructuredGrid.
 
         Builds and returns grid geometry data in a format tailored for use with VTK's
@@ -2005,7 +2009,11 @@ class Grid(_Grid3D):
         names: tuple[str, str, str] = ("X_UTME", "Y_UTMN", "Z_TVDSS"),
         asmasked: bool = True,
         mask: bool | None = None,
-    ) -> tuple[GridProperty, GridProperty, GridProperty,]:
+    ) -> tuple[
+        GridProperty,
+        GridProperty,
+        GridProperty,
+    ]:
         """Returns 3 xtgeo.grid3d.GridProperty objects for x, y, z coordinates.
 
         The values are mid cell values. Note that ACTNUM is

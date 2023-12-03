@@ -24,7 +24,7 @@ def _get_files_as_regularsurfaces_thread(option=1):
         for future in concurrent.futures.as_completed(futures):
             try:
                 surf = future.result()
-            except Exception as exc:  # pylint: disable=broad-except
+            except Exception as exc:
                 logger.error("Error: %s", exc)
             else:
                 surfs.append(surf)
@@ -45,7 +45,7 @@ def _get_files_as_regularsurfaces_multiprocess(option=1):
         for future in concurrent.futures.as_completed(futures):
             try:
                 surf = future.result()
-            except Exception as exc:  # pylint: disable=broad-except
+            except Exception as exc:
                 logger.error("Error: %s", exc)
             else:
                 surfs.append(surf)

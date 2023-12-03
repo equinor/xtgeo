@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Well input and output, private module for ROXAPI"""
 
 

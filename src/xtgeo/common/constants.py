@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module for basic XTGeo constants"""
 
 # align with cxtgeo libxtg.h!

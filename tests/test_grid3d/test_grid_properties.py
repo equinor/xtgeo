@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing: test_grid_operations"""
 
 
@@ -7,15 +6,13 @@ import sys
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import assume, given
-
 import xtgeo
+from hypothesis import assume, given
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import GridProperties, GridProperty
 
 from .grid_generator import xtgeo_grids
-from .gridprop_generator import grid_properties as gridproperties_elements
-from .gridprop_generator import keywords
+from .gridprop_generator import grid_properties as gridproperties_elements, keywords
 
 xtg = XTGeoDialog()
 
@@ -32,9 +29,6 @@ RFILE1 = TPATH / "3dgrids/reek/REEK.UNRST"
 RFILE2 = TPATH / "3dgrids/simpleb8/E100_3LETTER_TRACER.UNRST"  # has kword with spaces
 
 XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
-
-# pylint: disable=logging-format-interpolation
-# pylint: disable=invalid-name
 
 
 @st.composite
@@ -164,14 +158,14 @@ def test_scan_keywords():
     logger.info("Dates scanned in %s seconds", t2)
     logger.info(df)
 
-    assert df.loc[12, "KEYWORD"] == "SWAT"  # pylint: disable=no-member
+    assert df.loc[12, "KEYWORD"] == "SWAT"
 
 
 def test_scan_ecl_keywords_with_spaces():
     """Allow and preserve spacing in keywords from Eclipse RESTART file"""
     df = GridProperties.scan_keywords(RFILE2, dataframe=True)
 
-    assert df.loc[12, "KEYWORD"] == "W2 F"  # pylint: disable=no-member
+    assert df.loc[12, "KEYWORD"] == "W2 F"
 
 
 def test_scan_keywords_invalid_file():

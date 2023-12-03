@@ -3,7 +3,6 @@ from os.path import join
 import numpy as np
 import numpy.ma as ma
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
