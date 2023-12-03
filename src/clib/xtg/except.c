@@ -11,7 +11,7 @@ static int error_status = 0;
 void
 throw_exception(char *msg)
 {
-    strncpy(error_message, msg, 256);
+    strncpy(error_message, msg, 255);
     error_status = 1;
 }
 
