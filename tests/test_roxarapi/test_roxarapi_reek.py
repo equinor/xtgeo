@@ -8,6 +8,8 @@ Then run tests in Roxar API which focus on IO.
 
 This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if Equinor.
 """
+from __future__ import annotations
+
 from os.path import join
 from typing import Any
 
@@ -15,17 +17,19 @@ import numpy as np
 import pytest
 
 import xtgeo
+from xtgeo.common import XTGeoDialog, null_logger
 
 try:
     import roxar
 except ImportError:
     pass
 
-xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+xtg = XTGeoDialog()
 
 if not xtg.testsetup():
     raise SystemExit
+
+logger = null_logger(__name__)
 
 TPATH = xtg.testpathobj
 
@@ -76,6 +80,83 @@ def fixture_roxinstance():
     return xtgeo.RoxUtils(project)
 
 
+def _run_blocked_wells_job(
+    project: Any,
+    gmname: str,
+    bwname: str,
+    wells: list[str],
+):
+    """Using roxar.jobs to make blocked wells.
+
+    This option with 1.4 (RMS 12).
+
+    The log names (Poro, Perm, etc) are here hardcoded in params dictionary.
+    """
+    import roxar.jobs
+
+    # create the block well job and add it to the grid
+    bw_job = roxar.jobs.Job.create(
+        ["Grid models", gmname, "Grid"], "Block Wells", "API_BW_Job"
+    )
+
+    # wells are formulated as [["Wells", wellname1],["Wells", wellname2]...]
+    well_input = [["Wells", wname] for wname in wells]
+
+    # set the output name of the blocked wells data
+    params = {
+        "BlockedWellsName": bwname,
+        "Continuous Blocked Log": [
+            {
+                "AverageMethod": "ARITHMETIC",
+                "AveragePower": 0,
+                "CellLayerAveraging": True,
+                "Interpolate": False,
+                "Name": "Poro",
+                "ThicknessWeighting": "MD_WEIGHT",
+            },
+            {
+                "AverageMethod": "ARITHMETIC",
+                "AveragePower": 2,
+                "CellLayerAveraging": True,
+                "Interpolate": True,
+                "Name": "Perm",
+                "ThicknessWeighting": "MD_WEIGHT",
+            },
+        ],
+        "CreateRawLogs": False,
+        "Discrete Blocked Log": [
+            {
+                "CellLayerAveraging": False,
+                "TreatLogAs": "INTERVAL",
+                "Name": "Facies",
+                "ThicknessWeighting": "MD_WEIGHT",
+            }
+        ],
+        "ExpandTruncatedGridCells": True,
+        "KeepOldLogs": True,
+        "KeepOldWells": True,
+        "UseDeprecatedAlgorithm": True,
+        "Wells": well_input,
+        "Zone Blocked Log": [
+            {
+                "CellLayerAveraging": True,
+                "TreatLogAs": "POINTS",
+                "Name": "Zonelog",
+                "ScaleUpType": "SUBGRID_BIAS",
+                "ThicknessWeighting": "MD_WEIGHT",
+                "ZoneLogArray": [1, 2, 3, 4],
+            }
+        ],
+    }
+
+    bw_job.set_arguments(params)
+    bw_job.save()
+
+    # execute the job
+    if not bw_job.execute(0):
+        raise RuntimeError("Could do execute job for well blocking")
+
+
 @pytest.mark.requires_roxar
 @pytest.fixture(name="roxar_project", scope="module")
 def fixture_create_project(tmpdir, roxinstance) -> str:
@@ -83,6 +164,7 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
 
     Returns a path (as str) to project for subsequent jobs.
     """
+    print("MANANA2")
     tmp_project_path = join(tmpdir, PROJNAME)
     project = roxinstance.project
 
@@ -127,6 +209,8 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
     poi = xtgeo.points_from_file(POINTSDATA2, fformat="rms_attr")
     poi.to_roxar(project, POINTSNAME2, "", stype="clipboard", attributes=True)
     logger.info("Initialised RMS project, done!")
+
+    _run_blocked_wells_job(project, GRIDNAME1, "BW", ["OP_2", "OP_6"])
 
     project.save_as(tmp_project_path)
     project.close()
@@ -459,8 +543,6 @@ def test_rox_well_update(roxar_project, update_option, expected_logs, expected_p
     )
     initial_well.to_roxar(roxar_project, wellname)
 
-    print("###############################################")
-
     well = xtgeo.well_from_roxar(
         roxar_project,
         wellname,
@@ -491,3 +573,85 @@ def test_rox_well_update(roxar_project, update_option, expected_logs, expected_p
     assert rox_lcurves["Poro"].get_values().mean() == pytest.approx(
         expected_poroavg, abs=0.001
     )
+
+
+@pytest.mark.requires_roxar
+def test_blocked_well_from_to_roxar(roxar_project):
+    """Test getting blocked wells from RMS API."""
+
+    rox = xtgeo.RoxUtils(roxar_project)
+
+    bw = xtgeo.blockedwell_from_roxar(
+        rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
+    )
+    assert list(bw.dataframe.columns) == [
+        "X_UTME",
+        "Y_UTMN",
+        "Z_TVDSS",
+        "I_INDEX",
+        "J_INDEX",
+        "K_INDEX",
+        "Zonelog",
+        "Poro",
+        "Perm",
+        "Facies",
+    ]
+
+    bw.delete_log("Zonelog")
+    bw.create_log("Some_new")
+    print(bw.dataframe)
+
+    bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
+
+    # read again from RMS
+    bw_2 = xtgeo.blockedwell_from_roxar(
+        rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
+    )
+    assert "Zonelog" not in list(bw_2.dataframe.columns)
+    assert "Some_new" in list(bw_2.dataframe.columns)
+
+    rox.project.close()
+
+
+@pytest.mark.requires_roxar
+def test_blocked_well_roxar_to_from_file(roxar_project, tmp_path):
+    """Test getting a single blocked well from RMS, store to file and import again."""
+
+    rox = xtgeo.RoxUtils(roxar_project)
+
+    bw = xtgeo.blockedwell_from_roxar(
+        rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
+    )
+    filename = tmp_path / "op2.bw"
+    bw.to_file(filename)
+    with open(filename, "r") as fhandle:
+        ff = str(fhandle.readlines())
+        assert "Unknown" in ff
+        assert "460297.7747" in ff
+
+    bw_op2 = xtgeo.blockedwell_from_file(filename)
+    assert bw_op2.name == "OP_2"
+    rox.project.close()
+
+
+@pytest.mark.requires_roxar
+def test_blocked_wells_roxar_to_from_file(roxar_project, tmp_path):
+    """Test getting blocked wells (plural) from RMS, store to files and import again."""
+
+    rox = xtgeo.RoxUtils(roxar_project)
+
+    bwells = xtgeo.blockedwells_from_roxar(rox.project, GRIDNAME1, "BW", lognames="all")
+    assert bwells.names == ["OP_2", "OP_6"]
+
+    filenames = []
+    for bw in bwells:
+        filename = tmp_path / f"{bw.name}.bw"
+        bw.to_file(filename)
+        filenames.append(filename)
+        with open(filename, "r") as fhandle:
+            ff = str(fhandle.readlines())
+            assert bw.name in ff
+
+    bwells2 = xtgeo.blockedwells_from_files(filenames)
+    assert bwells2.names == bwells.names
+    rox.project.close()
