@@ -9,6 +9,7 @@ Then run tests in Roxar API which focus on IO.
 This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if Equinor.
 """
 from os.path import join
+from typing import Any
 
 import numpy as np
 import pytest

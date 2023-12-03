@@ -923,6 +923,7 @@ class Well:
             A log can also be deleted by simply removing it from the dataframe.
 
         """
+        logger.debug("Deleting log(s) %s...", lname)
         return self._wdata.delete_attr(lname)
 
     delete_logs = delete_log  # alias function
