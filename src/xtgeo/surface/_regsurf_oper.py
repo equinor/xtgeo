@@ -564,13 +564,13 @@ def _proxy_map_polygons(surf, poly, inside=True):
     xvals, yvals = proxy.get_xy_values(asmasked=False)
     points = np.array([xvals.ravel(), yvals.ravel()]).T
 
-    import matplotlib as mpl
+    import matplotlib.path as mplpath
 
     for pol in usepolys:
         idgroups = pol.dataframe.groupby(pol.pname)
         for _, grp in idgroups:
             singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
-            poly_path = mpl.path.Path(singlepoly)
+            poly_path = mplpath.Path(singlepoly)
             is_inside = poly_path.contains_points(points)
             is_inside = is_inside.reshape(proxy.ncol, proxy.nrow)
             proxy.values = np.where(is_inside, inside_value, proxy.values)

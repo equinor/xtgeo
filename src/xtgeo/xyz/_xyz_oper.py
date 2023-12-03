@@ -39,13 +39,13 @@ def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
 
     self.dataframe[name] = outside_value
 
-    import matplotlib as mpl
+    import matplotlib.path as mplpath
 
     for pol in usepolys:
         idgroups = pol.dataframe.groupby(pol.pname)
         for _, grp in idgroups:
             singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
-            poly_path = mpl.path.Path(singlepoly)
+            poly_path = mplpath.Path(singlepoly)
             is_inside = poly_path.contains_points(points)
             self.dataframe.loc[is_inside, name] = inside_value
 

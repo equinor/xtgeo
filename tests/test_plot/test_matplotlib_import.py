@@ -2,6 +2,8 @@ import os
 import sys
 from unittest import mock
 
+import pytest
+
 
 def _clear_state(sys, os):
     delete = []
@@ -16,11 +18,12 @@ def _clear_state(sys, os):
         del os.environ["MPLBACKEND"]
 
 
+@pytest.mark.skipif("ROXENV" in os.environ, reason="Dismiss test in ROXENV")
 @mock.patch.dict(sys.modules)
 @mock.patch.dict(os.environ)
 def test_that_mpl_dynamically_imports():
     _clear_state(sys, os)
-    import xtgeo  # noqa
+    import xtgeo  # noqa  # type:ignore
 
     assert "matplotlib" not in sys.modules
     assert "matplotlib.pyplot" not in sys.modules
