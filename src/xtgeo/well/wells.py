@@ -178,33 +178,6 @@ class Wells:
         if not self._wells:
             xtg.warn("No wells imported!")
 
-    def from_roxar(self, *args, **kwargs):
-        """Import (retrieve) all wells (or based on a filter) from
-        roxar project.
-
-        Note this method works only when inside RMS, or when RMS license is
-        activated.
-
-        All the wells present in the bwname icon will be imported.
-
-        Args:
-            project (str): Magic string 'project' or file path to project
-            lognames (list): List of lognames to include, or use 'all' for
-                all current blocked logs for this well.
-            wfilter (str): This is a regular expression to tell which wells
-                that shall be included.
-            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
-            realisation (int): Realisation index (0 is default)
-
-        Example::
-
-            import xtgeo
-            mywells = xtgeo.Wells()
-            mywells.from_roxar(project, lognames='all', wfilter='31.*')
-
-        """
-        raise NotImplementedError("In prep...")
-
     # not having this as property but a get_ .. is intended, for flexibility
     def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
         """Get a big dataframe for all wells or blocked wells in instance,
