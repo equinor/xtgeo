@@ -283,7 +283,7 @@ _point_val_ijk(double xc,
      * iin, jin         I J column
      */
 
-    int score;
+    int score = 0;
 
     int k, nib;
 
