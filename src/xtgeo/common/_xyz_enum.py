@@ -5,7 +5,7 @@ from enum import Enum, unique
 class ExtendedEnum(Enum):
     @classmethod
     def list(cls):
-        return list(map(lambda c: c.value, cls))
+        return [c.value for c in cls]
 
 
 # default names of special column names

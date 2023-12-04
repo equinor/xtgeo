@@ -350,7 +350,7 @@ def get_fraction_per_zone(
     else:
         self.geometrics()
 
-    result = dict()
+    result = {}
     result[self.xname] = []
     result[self.yname] = []
     result["DFRAC"] = []
@@ -454,7 +454,7 @@ def get_surface_picks(self, surf):
 
         mres[mres > xtgeo.UNDEF_LIMIT] = np.nan
 
-        res = dict()
+        res = {}
         res[poi.xname] = xres[:nval]
         res[poi.yname] = yres[:nval]
         res[poi.zname] = zres[:nval]

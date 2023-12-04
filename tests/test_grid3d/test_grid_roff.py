@@ -302,19 +302,15 @@ def test_eq_transitivity(roff_grid1, roff_grid2, roff_grid3):
 
 
 def test_from_xtgeo_subgrids():
-    assert list(RoffGrid._from_xtgeo_subgrids(dict())) == []
-    assert list(RoffGrid._from_xtgeo_subgrids(dict([("subgrid_0", range(1, 2))]))) == [
-        1
-    ]
-    assert list(RoffGrid._from_xtgeo_subgrids(dict([("subgrid_0", [1])]))) == [1]
+    assert list(RoffGrid._from_xtgeo_subgrids({})) == []
+    assert list(RoffGrid._from_xtgeo_subgrids({"subgrid_0": range(1, 2)})) == [1]
+    assert list(RoffGrid._from_xtgeo_subgrids({"subgrid_0": [1]})) == [1]
     assert list(
-        RoffGrid._from_xtgeo_subgrids(
-            dict([("subgrid_0", [1, 2, 3]), ("subgrid_1", [4])])
-        )
+        RoffGrid._from_xtgeo_subgrids({"subgrid_0": [1, 2, 3], "subgrid_1": [4]})
     ) == [3, 1]
     assert list(
         RoffGrid._from_xtgeo_subgrids(
-            dict([("subgrid_0", range(1, 4)), ("subgrid_1", range(4, 5))])
+            {"subgrid_0": range(1, 4), "subgrid_1": range(4, 5)}
         )
     ) == [3, 1]
 

@@ -173,7 +173,7 @@ def test_roffbin_get_dataframe_for_grid(emerald_grid):
 def test_subgrids():
     grd = xtgeo.create_box_grid((10, 10, 46))
 
-    newsub = dict()
+    newsub = {}
     newsub["XX1"] = 20
     newsub["XX2"] = 2
     newsub["XX3"] = 24
@@ -257,13 +257,11 @@ def test_benchmark_get_xyz_cell_cornerns(benchmark, xtgformat):
 
 
 def test_roffbin_import_wsubgrids():
-    assert xtgeo.grid_from_file(REEKFIL5).subgrids == dict(
-        [
-            ("subgrid_0", range(1, 21)),
-            ("subgrid_1", range(21, 41)),
-            ("subgrid_2", range(41, 57)),
-        ]
-    )
+    assert xtgeo.grid_from_file(REEKFIL5).subgrids == {
+        "subgrid_0": range(1, 21),
+        "subgrid_1": range(21, 41),
+        "subgrid_2": range(41, 57),
+    }
 
 
 def test_import_grdecl_and_bgrdecl():
@@ -692,23 +690,19 @@ def test_grid_get_dxdydz_bad_metric():
 
 def test_grid_roff_subgrids_import_regression(tmp_path):
     grid = xtgeo.create_box_grid(dimension=(5, 5, 67))
-    grid.subgrids = dict(
-        [
-            ("subgrid_0", list(range(1, 21))),
-            ("subgrid_1", list(range(21, 53))),
-            ("subgrid_2", list(range(53, 68))),
-        ]
-    )
+    grid.subgrids = {
+        "subgrid_0": list(range(1, 21)),
+        "subgrid_1": list(range(21, 53)),
+        "subgrid_2": list(range(53, 68)),
+    }
     grid.to_file(tmp_path / "grid.roff")
 
     grid2 = xtgeo.grid_from_file(tmp_path / "grid.roff")
-    assert grid2.subgrids == dict(
-        [
-            ("subgrid_0", range(1, 21)),
-            ("subgrid_1", range(21, 53)),
-            ("subgrid_2", range(53, 68)),
-        ]
-    )
+    assert grid2.subgrids == {
+        "subgrid_0": range(1, 21),
+        "subgrid_1": range(21, 53),
+        "subgrid_2": range(53, 68),
+    }
 
 
 @pytest.mark.parametrize(

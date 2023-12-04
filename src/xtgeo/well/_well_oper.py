@@ -99,8 +99,8 @@ def make_zone_qual_log(self, zqname):
 
     dff[zqname] = dff[self.zonelogname] * 0
 
-    idlist = list()
-    seq = list()
+    idlist = []
+    seq = []
     for idx, grp in sgrp:
         izns = int(grp[self.zonelogname].mean())
         seq.append(izns)
@@ -115,7 +115,7 @@ def make_zone_qual_log(self, zqname):
         9: "INCOMPLETE",
     }
 
-    code = list()
+    code = []
     for ind, iseq in enumerate(seq):
         if ind in (0, len(seq) - 1):
             code.append(0)

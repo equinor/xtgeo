@@ -65,8 +65,8 @@ DEFAULT_SATURATIONS = {
     Phases.GAS_WATER: {
         "SOIL": 0.0,
     },
-    Phases.OIL_WATER_GAS: dict(),
-    Phases.E300_GENERIC: dict(),
+    Phases.OIL_WATER_GAS: {},
+    Phases.E300_GENERIC: {},
 }
 
 
@@ -84,14 +84,14 @@ def remainder_saturations(saturations):
         dictionary of saturation values that can be inferred.
     """
     if all(k in saturations for k in sat_keys):
-        return dict()
+        return {}
     if any(k not in sat_keys for k in saturations):
         raise ValueError(f"Unknown saturation keys: {list(saturations.keys())}")
     rest = sum(saturations.values())
     if len(saturations) == 2 or np.allclose(rest, 1.0):
         missing = set(sat_keys).difference(set(saturations.keys()))
         return {m: 1.0 - rest for m in missing}
-    return dict()
+    return {}
 
 
 def peek_headers(generator):
@@ -161,10 +161,10 @@ def read_values(generator, intehead, names, lengths="all"):
     def flatten(lst):
         return functools.reduce(operator.iconcat, lst, [])
 
-    fetch_names = set(flatten(list(get_fetch_names(name) for name in names)))
-    defaulted = list()
+    fetch_names = set(flatten([get_fetch_names(name) for name in names]))
+    defaulted = []
     if names == "all":
-        values = dict()
+        values = {}
     else:
         values = DEFAULT_SATURATIONS[intehead.phases].copy()
         defaulted = list(values.keys())
@@ -358,7 +358,7 @@ def date_from_intehead(intehead: InteHead) -> Optional[int]:
 
 def gridprop_params(values, name, date, grid, fracture):
     """Make dictionary of GridProperty parameters from imported values."""
-    result = dict()
+    result = {}
     result["name"] = name
     result["date"] = str(date) if date is not None else None
     result["fracture"] = fracture
@@ -377,7 +377,7 @@ def gridprop_params(values, name, date, grid, fracture):
         result["values"] = result["values"].astype(np.int32)
         result["discrete"] = True
     else:
-        result["codes"] = dict()
+        result["codes"] = {}
         result["values"] = result["values"].astype(np.float64)
         result["discrete"] = False
     return result
@@ -538,7 +538,7 @@ def find_gridprops_from_restart_file_sections(
     """
     first_date = None
     last_date = None
-    read_properties = dict()
+    read_properties = {}
     for section in sections:
         intehead, logihead, section = peek_headers(section)
         check_grid_match(intehead, logihead, grid)
@@ -564,7 +564,7 @@ def find_gridprops_from_restart_file_sections(
         elif dates == "last":
             if date != last_date:
                 last_date = date
-                read_properties = dict()
+                read_properties = {}
 
         for key in section_properties:
             if key not in read_properties:

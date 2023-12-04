@@ -5,13 +5,13 @@ from xtgeo.well._well_io import import_wlogs
 @pytest.mark.parametrize(
     "wlogs, expected_output",
     [
-        (dict(), {"wlogtypes": {}, "wlogrecords": {}}),
+        ({}, {"wlogtypes": {}, "wlogrecords": {}}),
         (
-            dict([("X_UTME", ("CONT", None))]),
+            {"X_UTME": ("CONT", None)},
             {"wlogtypes": {"X_UTME": "CONT"}, "wlogrecords": {"X_UTME": None}},
         ),
         (
-            dict([("ZONELOG", ("DISC", {"0": "ZONE00"}))]),
+            {"ZONELOG": ("DISC", {"0": "ZONE00"})},
             {
                 "wlogtypes": {"ZONELOG": "DISC"},
                 "wlogrecords": {"ZONELOG": {"0": "ZONE00"}},

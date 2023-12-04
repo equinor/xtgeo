@@ -129,7 +129,7 @@ class _OptionalMetaData:
 
     def get_meta(self):
         """Return metadata as an dict."""
-        meta = dict()
+        meta = {}
         for key in self.__slots__:
             newkey = key[1:]
             meta[newkey] = getattr(self, key)
@@ -142,15 +142,15 @@ class MetaData:
 
     def __init__(self):
         """Generic metadata class __init__, not be used directly."""
-        self._required = dict()
+        self._required = {}
         self._optional = _OptionalMetaData()
-        self._freeform = dict()
+        self._freeform = {}
 
         self._freeform = {"smda": "whatever"}
 
     def get_metadata(self):
         """Get all metadata that are present."""
-        allmeta = dict()
+        allmeta = {}
         allmeta["_required_"] = self._required
         allmeta["_optional_"] = self._optional.get_meta()
         allmeta["_freeform_"] = self._freeform
@@ -226,19 +226,17 @@ class MetaData:
 class MetaDataRegularSurface(MetaData):
     """Metadata for RegularSurface() objects."""
 
-    REQUIRED = dict(
-        [
-            ("ncol", 1),
-            ("nrow", 1),
-            ("xori", 0.0),
-            ("yori", 0.0),
-            ("xinc", 1.0),
-            ("yinc", 1.0),
-            ("yflip", 1),
-            ("rotation", 0.0),
-            ("undef", xtgeo.UNDEF),
-        ]
-    )
+    REQUIRED = {
+        "ncol": 1,
+        "nrow": 1,
+        "xori": 0.0,
+        "yori": 0.0,
+        "xinc": 1.0,
+        "yinc": 1.0,
+        "yflip": 1,
+        "rotation": 0.0,
+        "undef": xtgeo.UNDEF,
+    }
 
     def __init__(self):
         """Docstring."""
@@ -271,23 +269,21 @@ class MetaDataRegularCube(MetaData):
     """Metadata for Cube() objects."""
 
     # allowed optional keys; these are set to avoid discussions
-    REQUIRED = dict(
-        [
-            ("ncol", 1),
-            ("nrow", 1),
-            ("nlay", 1),
-            ("xori", 0.0),
-            ("yori", 0.0),
-            ("zori", 0.0),
-            ("xinc", 1.0),
-            ("yinc", 1.0),
-            ("zinc", 1.0),
-            ("yflip", 1),
-            ("zflip", 1),
-            ("rotation", 0.0),
-            ("undef", xtgeo.UNDEF),
-        ]
-    )
+    REQUIRED = {
+        "ncol": 1,
+        "nrow": 1,
+        "nlay": 1,
+        "xori": 0.0,
+        "yori": 0.0,
+        "zori": 0.0,
+        "xinc": 1.0,
+        "yinc": 1.0,
+        "zinc": 1.0,
+        "yflip": 1,
+        "zflip": 1,
+        "rotation": 0.0,
+        "undef": xtgeo.UNDEF,
+    }
 
     def __init__(self):
         """Docstring."""
@@ -323,19 +319,17 @@ class MetaDataRegularCube(MetaData):
 class MetaDataCPGeometry(MetaData):
     """Metadata for Grid() objects of type simplified CornerPoint Geometry."""
 
-    REQUIRED = dict(
-        [
-            ("ncol", 1),
-            ("nrow", 1),
-            ("nlay", 1),
-            ("xshift", 0.0),
-            ("yshift", 0.0),
-            ("zshift", 0.0),
-            ("xscale", 1.0),
-            ("yscale", 1.0),
-            ("zscale", 1.0),
-        ]
-    )
+    REQUIRED = {
+        "ncol": 1,
+        "nrow": 1,
+        "nlay": 1,
+        "xshift": 0.0,
+        "yshift": 0.0,
+        "zshift": 0.0,
+        "xscale": 1.0,
+        "yscale": 1.0,
+        "zscale": 1.0,
+    }
 
     def __init__(self):
         """Docstring."""
@@ -368,15 +362,13 @@ class MetaDataCPGeometry(MetaData):
 class MetaDataCPProperty(MetaData):
     """Metadata for GridProperty() objects belonging to CPGeometry."""
 
-    REQUIRED = dict(
-        [
-            ("ncol", 1),
-            ("nrow", 1),
-            ("nlay", 1),
-            ("codes", None),
-            ("discrete", False),
-        ]
-    )
+    REQUIRED = {
+        "ncol": 1,
+        "nrow": 1,
+        "nlay": 1,
+        "codes": None,
+        "discrete": False,
+    }
 
     def __init__(self):
         """Docstring."""
@@ -404,17 +396,15 @@ class MetaDataCPProperty(MetaData):
 class MetaDataWell(MetaData):
     """Metadata for single Well() objects."""
 
-    REQUIRED = dict(
-        [
-            ("rkb", 0.0),
-            ("xpos", 0.0),
-            ("ypos", 0.0),
-            ("name", "noname"),
-            ("wlogs", dict()),
-            ("mdlogname", None),
-            ("zonelogname", None),
-        ]
-    )
+    REQUIRED = {
+        "rkb": 0.0,
+        "xpos": 0.0,
+        "ypos": 0.0,
+        "name": "noname",
+        "wlogs": {},
+        "mdlogname": None,
+        "zonelogname": None,
+    }
 
     def __init__(self):
         """Initialisation for Well metadata."""

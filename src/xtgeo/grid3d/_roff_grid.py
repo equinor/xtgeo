@@ -291,7 +291,7 @@ class RoffGrid:
         """
         if self.subgrids is None:
             return None
-        result = dict()
+        result = {}
         next_ind = 1
         for i, current in enumerate(self.subgrids):
             result[f"subgrid_{i}"] = range(next_ind, current + next_ind)

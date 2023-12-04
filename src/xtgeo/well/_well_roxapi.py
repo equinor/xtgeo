@@ -70,8 +70,8 @@ def _roxapi_import_well(
     else:
         raise ValueError(f"No such logrun present for {wname}: {lrun}")
 
-    wlogtypes = dict()
-    wlogrecords = dict()
+    wlogtypes = {}
+    wlogrecords = {}
 
     # get logs repr trajecetry
     mdlogname, logs = _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey)
@@ -121,7 +121,7 @@ def _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey):  # pragma: no cover
             logger.warning("MD is %s, surveyinterpolation fails, CHECK RESULT!", mdv)
             geo_array[ino] = geo_array[ino - 1]
 
-    logs = dict()
+    logs = {}
     mdlogname = None
 
     logs[_AttrName.XNAME.value] = geo_array[:, 3]

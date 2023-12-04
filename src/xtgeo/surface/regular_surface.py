@@ -1757,9 +1757,15 @@ class RegularSurface:
         tstatus = True
 
         # consider refactor to getattr() instead!
-        chklist = set(
-            ["_ncol", "_nrow", "_xori", "_yori", "_xinc", "_yinc", "_rotation"]
-        )
+        chklist = {
+            "_ncol",
+            "_nrow",
+            "_xori",
+            "_yori",
+            "_xinc",
+            "_yinc",
+            "_rotation",
+        }
         for skey, sval in self.__dict__.items():
             if skey in chklist:
                 for okey, oval in other.__dict__.items():
@@ -1955,7 +1961,7 @@ class RegularSurface:
             order=order, activeonly=activeonly, fill_value=fill_value
         )
 
-        entry = dict()
+        entry = {}
 
         if ijcolumns or ij:
             ixn, jyn = self.get_ij_values1d(order=order, activeonly=activeonly)

@@ -37,7 +37,7 @@ def from_file(
     if not isinstance(gfile, _XTGeoFile):
         raise RuntimeError("Error gfile must be a _XTGeoFile instance")
 
-    result: dict[str, Any] = dict()
+    result: dict[str, Any] = {}
 
     result["filesrc"] = gfile.name
 

@@ -24,10 +24,10 @@ def test_set_remaining_saturations():
     assert xtg_im_ecl.remainder_saturations({"SWAT": 0.5, "SGAS": 0.5}) == {"SOIL": 0.0}
     assert xtg_im_ecl.remainder_saturations({"SOIL": 1.0}) == {"SWAT": 0.0, "SGAS": 0.0}
     assert xtg_im_ecl.remainder_saturations({"SOIL": 0.0, "SGAS": 0.0}) == {"SWAT": 1.0}
-    assert xtg_im_ecl.remainder_saturations({"SOIL": 0.25}) == dict()
+    assert xtg_im_ecl.remainder_saturations({"SOIL": 0.25}) == {}
     assert (
         xtg_im_ecl.remainder_saturations({"SOIL": 0.25, "SWAT": 0.5, "SGAS": 0.25})
-        == dict()
+        == {}
     )
     with pytest.raises(ValueError, match="Unknown saturation"):
         xtg_im_ecl.remainder_saturations({"MUD": 3.0})

@@ -24,7 +24,7 @@ def import_bgrdecl_prop(pfile, name, grid):
     Raises:
         xtgeo.KeywordNotFoundError: Cannot find property...
     """
-    result = dict()
+    result = {}
     result["ncol"] = grid.ncol
     result["nrow"] = grid.nrow
     result["nlay"] = grid.nlay
@@ -91,7 +91,7 @@ def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
 
 def import_grdecl_prop(pfile, name, grid):
     """Read a GRDECL ASCII property record"""
-    result = dict()
+    result = {}
     result["ncol"] = grid.ncol
     result["nrow"] = grid.nrow
     result["nlay"] = grid.nlay

@@ -191,8 +191,8 @@ def test_get_ijk_from_points_smallcase():
         y = df2["Y_UTMN"].values[inum]
         z = df2["Z_TVDSS"].values[inum]
 
-        ijkt = tuple((ijk_i[inum], ijk_j[inum], ijk_k[inum]))
-        df1t = tuple((df1_i[inum], df1_j[inum], df1_k[inum]))
+        ijkt = (ijk_i[inum], ijk_j[inum], ijk_k[inum])
+        df1t = (df1_i[inum], df1_j[inum], df1_k[inum])
 
         if ijkt != df1t:
             notok += 1
@@ -232,8 +232,8 @@ def test_get_ijk_from_points_full():
         y = df2["Y_UTMN"].values[inum]
         z = df2["Z_TVDSS"].values[inum]
 
-        ijkt = tuple((ijk_i[inum], ijk_j[inum], ijk_k[inum]))
-        df1t = tuple((df1_i[inum], df1_j[inum], df1_k[inum]))
+        ijkt = (ijk_i[inum], ijk_j[inum], ijk_k[inum])
+        df1t = (df1_i[inum], df1_j[inum], df1_k[inum])
 
         if ijkt != df1t:
             notok += 1

@@ -176,7 +176,7 @@ def gridproperties_dataframe(
 
     proplist = list(gridproperties)
 
-    dataframe_dict = dict()
+    dataframe_dict = {}
     if ijk:
         if activeonly:
             if grid:

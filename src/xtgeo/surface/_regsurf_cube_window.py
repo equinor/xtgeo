@@ -199,7 +199,7 @@ def _slice_cube_window_v1(
             deadtraces=deadtraces,
         )
 
-    results = dict()
+    results = {}
 
     for attr in attrlist:
         scopy = self.copy()
@@ -268,7 +268,7 @@ def _slice_constant_window(
     stacked = ma.dstack(npcollect)
     del npcollect
 
-    attvalues = dict()
+    attvalues = {}
     for attr in attrlist:
         logger.info("Running attribute %s", attr)
         attvalues[attr] = _attvalues(attr, stacked)
@@ -335,7 +335,7 @@ def _slice_between_surfaces(
     # for cases with erosion, the two surfaces are equal
     isovalues = mul * (other.values - this.values)
 
-    attvalues = dict()
+    attvalues = {}
     for attr in attrlist:
         attvaluestmp = _attvalues(attr, stacked)
         attvalues[attr] = ma.masked_where(isovalues < mthreshold, attvaluestmp)

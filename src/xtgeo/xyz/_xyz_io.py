@@ -118,7 +118,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
     dtypes = {_xn: np.float64, _yn: np.float64, _zn: np.float64}
 
     names = list(dtypes.keys())
-    _attrs = dict()
+    _attrs = {}
 
     # parse header
     skiprows = 0

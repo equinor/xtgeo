@@ -170,7 +170,7 @@ def test_import_well_selected_logs():
     [
         ("Poro", {0: "null"}, "Cannot set a log record for a continuous log"),
         ("not_in_lognames", {}, "No such attr_name"),
-        ("Facies", list(), "Input is not a dictionary"),
+        ("Facies", [], "Input is not a dictionary"),
     ],
 )
 def test_set_logrecord_invalid(simple_well, log_name, newdict, expected):

@@ -1393,7 +1393,7 @@ class Grid(_Grid3D):
         if not isinstance(sdict, dict):
             raise ValueError("Input sdict is not an dict")
 
-        newsub: dict[str, range | list[int]] = dict()
+        newsub: dict[str, range | list[int]] = {}
 
         inn1 = 1
         for name, nsub in sdict.items():
@@ -1411,7 +1411,7 @@ class Grid(_Grid3D):
         if not self.subgrids:
             return None
 
-        return dict((name, len(subb)) for name, subb in self.subgrids.items())
+        return {name: len(subb) for name, subb in self.subgrids.items()}
 
     def rename_subgrids(self, names: list[str] | tuple[str, ...]) -> None:
         """Rename the names in the subgrids with the new names.
@@ -1540,7 +1540,7 @@ class Grid(_Grid3D):
         minzone = int(zprval.min())
         maxzone = int(zprval.max())
 
-        newd: dict[str, range] = dict()
+        newd: dict[str, range] = {}
         for izone in range(minzone, maxzone + 1):
             mininzn = int(kval[zprval == izone].min())  # 1 base
             maxinzn = int(kval[zprval == izone].max())  # 1 base
