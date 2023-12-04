@@ -7,6 +7,8 @@ https://raw.githubusercontent.com/abduhbm/zmapio/main/examples/NSLCU.dat
 that header lines may end with trailing comma!
 """
 
+from __future__ import annotations
+
 import dataclasses
 import inspect
 from functools import wraps
