@@ -16,6 +16,7 @@ import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.sys import _XTGeoFile
+from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
 from xtgeo.metadata.metadata import MetaDataCPProperty
 
@@ -599,9 +600,9 @@ class GridProperty(_Grid3D):
         self._name = name
 
     @property
-    def dimensions(self) -> tuple[int, int, int]:
-        """Get the grid dimensions as a tuple of 3 integers."""
-        return (self.ncol, self.nrow, self.nlay)
+    def dimensions(self) -> Dimensions:
+        """Get the grid dimensions as a NamedTuple of 3 integers."""
+        return Dimensions(self.ncol, self.nrow, self.nlay)
 
     @property
     def nactive(self) -> int:
