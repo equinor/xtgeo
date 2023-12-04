@@ -1024,7 +1024,7 @@ class Cube:
         details=(
             "This functionality is no longer supported in xtgeo. "
             "Use the segyio library instead."
-        )
+        ),
     )
     def scan_segy_traces(sfile: str, outfile: FileLike = None):
         """Scan a SEGY file traces and print limits info to STDOUT or file.
@@ -1061,7 +1061,7 @@ class Cube:
         details=(
             "This functionality is no longer supported in xtgeo. "
             "Use the segyio library instead."
-        )
+        ),
     )
     def scan_segy_header(sfile: str, outfile: FileLike = None):
         """Scan a SEGY file header and print info to screen or file.

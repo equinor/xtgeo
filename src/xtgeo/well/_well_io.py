@@ -22,8 +22,8 @@ def import_rms_ascii(
 ):
     """Import RMS ascii table well"""
 
-    wlogtype = dict()
-    wlogrecords = dict()
+    wlogtype = {}
+    wlogrecords = {}
 
     xlognames_all = [
         _AttrName.XNAME.value,
@@ -284,8 +284,8 @@ def import_wlogs(wlogs: dict):
         dictionary with "wlogtypes" and "wlogrecords" as keys
         and corresponding values.
     """
-    wlogtypes = dict()
-    wlogrecords = dict()
+    wlogtypes = {}
+    wlogrecords = {}
     for key in wlogs.keys():
         typ, rec = wlogs[key]
 
@@ -318,7 +318,7 @@ def import_hdf5_well(wfile, **kwargs):
 
     meta = json.loads(jmeta, object_pairs_hook=dict)
     req = meta["_required_"]
-    result = dict()
+    result = {}
     for myattr in reqattrs:
         if myattr == "wlogs":
             result.update(import_wlogs(req[myattr]))

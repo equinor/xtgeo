@@ -500,7 +500,7 @@ class Points(XYZ):
         """Used in deprecated methods."""
         super()._reset(xname, yname, zname)
 
-        self._attrs = attributes if attributes is not None else dict()
+        self._attrs = attributes if attributes is not None else {}
         self._filesrc = filesrc
 
         if not isinstance(values, pd.DataFrame):
@@ -690,7 +690,7 @@ class Points(XYZ):
         if attributes and not all(item in dfr.columns for item in attributes.values()):
             raise ValueError("One or more attribute column names are not correct")
 
-        input_ = dict()
+        input_ = {}
         input_["X_UTME"] = dfr[east]
         input_["Y_UTMN"] = dfr[north]
         input_["Z_TVDSS"] = dfr[tvdmsl]

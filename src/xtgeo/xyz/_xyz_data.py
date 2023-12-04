@@ -285,12 +285,12 @@ class _XYZData:
 
         coords_dtypes = [str(entry) for entry in self._df[col[0:3]].dtypes]
 
-        if not all(["float64" in entry for entry in coords_dtypes]):
+        if not all("float64" in entry for entry in coords_dtypes):
             self._df[col[0:3]] = self._df.iloc[:, 0:3].astype("float64")
 
         attr_dtypes = [str(entry) for entry in self._df[col[3:]].dtypes]
 
-        if not all([self._floatbits in entry for entry in attr_dtypes]):
+        if not all(self._floatbits in entry for entry in attr_dtypes):
             self._df[col[3:]] = self._df.iloc[:, 3:].astype(self._floatbits)
 
         for name, attr_type in self._attr_types.items():

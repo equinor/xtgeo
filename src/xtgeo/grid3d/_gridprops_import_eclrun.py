@@ -108,7 +108,7 @@ def import_ecl_init_gridproperties(
         maxkeys=maxkeys,
     )
 
-    validnames = list()
+    validnames = []
 
     valid_lengths = valid_gridprop_lengths(grid)
 
@@ -211,7 +211,7 @@ def import_ecl_restart_gridproperties(
     if isinstance(dates, list) and strictdate is False:
         dates = _process_sloppydates(dates, validdates)
 
-    usenamedatepairs = list()
+    usenamedatepairs = []
     if names == "all" and dates == "all":
         usenamedatepairs = deepcopy(validnamedatepairs)
         usedates = dates
@@ -269,8 +269,8 @@ def import_ecl_restart_gridproperties(
 
 def _process_valid_namesdates(kwlist, grid):
     """Return lists with valid pairs, dates scanned from RESTART"""
-    validnamedatepairs = list()
-    validdates = list()
+    validnamedatepairs = []
+    validdates = []
     valid_lengths = valid_gridprop_lengths(grid)
     for kw in list(kwlist.itertuples(index=False, name=None)):
         kwname, kwtyp, nlen, _, date = kw

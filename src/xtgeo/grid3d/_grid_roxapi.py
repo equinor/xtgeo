@@ -203,7 +203,7 @@ def _convert_to_xtgeo_grid_v1(
     # subgrids
     if len(indexer.zonation) > 1:
         logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
-        subz = dict()
+        subz = {}
         for inum, zrange in indexer.zonation.items():
             logger.debug("inum: %s, zrange: %s", inum, zrange)
             zname = roxgrid.zone_names[inum]
@@ -297,7 +297,7 @@ def _convert_to_xtgeo_grid_v2(
     # subgrids
     if len(indexer.zonation) > 1:
         logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
-        subz = dict()
+        subz = {}
         for inum, zrange in indexer.zonation.items():
             logger.debug("inum: %s, zrange: %s", inum, zrange)
             zname = roxgrid.zone_names[inum]

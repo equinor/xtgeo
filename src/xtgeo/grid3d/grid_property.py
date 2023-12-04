@@ -465,7 +465,7 @@ class GridProperty(_Grid3D):
         self._isdiscrete = discrete
         self._geometry = grid
         self._fracture = fracture
-        self._codes = dict() if codes is None else codes
+        self._codes = {} if codes is None else codes
 
         # Not primary input:
         self._dualporo = dualporo

@@ -766,7 +766,7 @@ class Well:
 
         ``{"X_UTME": ["CONT", None], ... "Facies": ["DISC", {1: "BG", 2: "SAND"}]}``
         """
-        res = dict()
+        res = {}
 
         for key in self.get_lognames():
             wtype = _AttrType.CONT.value

@@ -63,7 +63,7 @@ def wellintersections(
         thisline1 = sg.LineString(np.stack([xcor, ycor], axis=1))
         thisline2 = sg.LineString(np.stack([xcor, ycor, mcor], axis=1))
 
-        nox[well.name] = list()
+        nox[well.name] = []
         # loop over other wells
         for other in self.wells:
             if other.name == well.name:

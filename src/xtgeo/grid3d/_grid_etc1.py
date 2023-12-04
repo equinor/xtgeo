@@ -349,7 +349,7 @@ def get_ijk_from_points(
         jarr -= 1
         karr -= 1
 
-    proplist = dict()
+    proplist = {}
     if includepoints:
         proplist["X_UTME"] = points.dataframe[points.xname].values
         proplist["Y_UTME"] = points.dataframe[points.yname].values
@@ -1065,7 +1065,7 @@ def crop(self, spec, props=None):
     self._nlay = nnlay
 
     if isinstance(self.subgrids, dict):
-        newsub = dict()
+        newsub = {}
         # easier to work with numpies than lists
         newarr = np.array(range(1, oldnlay + 1))
         newarr[newarr < kc1] = 0

@@ -56,14 +56,14 @@ def import_segy(sfile: xtgeo._XTGeoFile) -> dict:
     """
     sfile = sfile.file
 
-    attributes = dict()
+    attributes = {}
 
     try:
         # cube with all traces present
         with segyio.open(sfile, "r") as segyfile:
             attributes = _import_segy_all_traces(segyfile)
     except ValueError as verr:
-        if any([word in str(verr) for word in ["Invalid dimensions", "inconsistent"]]):
+        if any(word in str(verr) for word in ["Invalid dimensions", "inconsistent"]):
             # cube with missing traces is now handled but his is complex, hence users
             # shall be warned. With more experience, this warning can be removed.
             warn(
@@ -294,7 +294,7 @@ def _geometry_incomplete_traces(
     xspacing: int,
 ) -> list:
     """Compute xtgeo attributes (mostly geometries) for incomplete trace cube."""
-    attrs = dict()
+    attrs = {}
 
     ill = _inverse_anyline_map(ilines_case)
     xll = _inverse_anyline_map(xlines_case)

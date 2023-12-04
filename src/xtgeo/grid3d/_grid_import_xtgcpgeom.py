@@ -289,7 +289,7 @@ def filter_subgrids_partial(
         k1 -= 1
         k2 -= 1
 
-    partial_subgrid: dict[str, int] = dict()
+    partial_subgrid: dict[str, int] = {}
     start = 0
     for key, value in subgrids.items():
         end = value + start

@@ -307,7 +307,7 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
         elif kind == "cubic":
             splines = [UnivariateSpline(grp[gname], crd) for crd in points]
 
-            ip = np.vstack(list(spl(alpha) for spl in splines)).T
+            ip = np.vstack([spl(alpha) for spl in splines]).T
         else:
             raise ValueError(f"Invalid kind chosen: {kind}")
 

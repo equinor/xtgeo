@@ -117,7 +117,7 @@ class RoffParameter:
         if self.code_names is not None and self.code_values is not None:
             return dict(zip(self.code_values, self.code_names))
         else:
-            return dict()
+            return {}
 
     def xtgeo_values(self) -> np.ndarray:
         """

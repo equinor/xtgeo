@@ -395,7 +395,7 @@ def test_rox_get_modify_set_get_grid_with_subzones(roxar_project, roxinstance):
 
     grd = xtgeo.grid_from_roxar(roxar_project, GRIDNAME1)
 
-    zonation = dict()
+    zonation = {}
     zonation["intva"] = 4
     zonation["intvb"] = 7
     zonation["intvc"] = 3

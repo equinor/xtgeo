@@ -78,7 +78,7 @@ def _roxapi_import_bwell(
     else:
         raise WellNotFoundError(f"No such well in blocked well set: {wname}")
 
-    bwprops = [item for item in bwset.properties]
+    bwprops = list(bwset.properties)
     bwnames = [item.name for item in bwset.properties]
 
     bw_cellindices = bwset.get_cell_numbers(realisation=realisation)

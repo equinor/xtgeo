@@ -453,9 +453,9 @@ def test_hdf5_import(benchmark_grid, tmp_path):
     benchmark_grid._zcornsv += 1.0
 
     nlay = benchmark_grid.nlay
-    benchmark_grid._subgrids = dict({"1": range(1, nlay + 1)})
+    benchmark_grid._subgrids = {"1": range(1, nlay + 1)}
     fna = benchmark_grid.to_hdf(fname, compression="blosc")
 
     grd2 = xtgeo.grid_from_file(fna, fformat="hdf")
 
-    assert grd2._subgrids == dict({"1": range(1, nlay + 1)})
+    assert grd2._subgrids == {"1": range(1, nlay + 1)}

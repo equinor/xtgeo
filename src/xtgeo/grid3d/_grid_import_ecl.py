@@ -80,7 +80,7 @@ def import_ecl_bgrdecl(gfile, relative_to=GridRelative.MAP):
 
 
 def grid_from_ecl_grid(ecl_grid, relative_to=GridRelative.MAP):
-    result = dict()
+    result = {}
     result["coordsv"] = ecl_grid.xtgeo_coord(relative_to=relative_to)
     result["zcornsv"] = ecl_grid.xtgeo_zcorn(relative_to=relative_to)
     result["actnumsv"] = ecl_grid.xtgeo_actnum()

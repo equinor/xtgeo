@@ -274,7 +274,7 @@ class XSection(BasePlot):
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
         self._fig, _ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         self._allfigs.append(self._fig)
-        ax1 = dict()
+        ax1 = {}
 
         # since the plan is to at some point remove plotting from xtgeo:
         warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -554,7 +554,7 @@ class XSection(BasePlot):
         idx = self.colormap_zonelog_dict
 
         # adjust for zoneshift.
-        idx_zshift = dict()
+        idx_zshift = {}
         for key in idx:
             idx_zshift[key - zshift + 1] = idx[key]
 
@@ -575,7 +575,7 @@ class XSection(BasePlot):
             zrecord = self._well.get_logrecord(zonelogname)
             zrecord = {val: zname for val, zname in zrecord.items() if val >= 0}
 
-            zcolors = dict()
+            zcolors = {}
             for zone in zrecord:
                 if isinstance(idx[zone], str):
                     color = idx[zone]
@@ -621,7 +621,7 @@ class XSection(BasePlot):
             frecord = self._well.get_logrecord(facieslogname)
             frecord = {val: fname for val, fname in frecord.items() if val >= 0}
 
-            fcolors = dict()
+            fcolors = {}
             for facies in frecord:
                 if isinstance(idx[facies], str):
                     color = idx[facies]
@@ -669,7 +669,7 @@ class XSection(BasePlot):
             precord = self._well.get_logrecord(perflogname)
             precord = {val: pname for val, pname in precord.items() if val >= 0}
 
-            pcolors = dict()
+            pcolors = {}
             for perf in precord:
                 if isinstance(idx[perf], str):
                     color = idx[perf]
@@ -762,9 +762,10 @@ class XSection(BasePlot):
                     xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
                     xytext=placings[modulo],
                     textcoords="offset points",
-                    arrowprops=dict(
-                        arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"
-                    ),
+                    arrowprops={
+                        "arrowstyle": "->",
+                        "connectionstyle": "angle3,angleA=0,angleB=90",
+                    },
                     color="black",
                 )
 
