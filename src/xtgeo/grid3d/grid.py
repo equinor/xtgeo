@@ -15,6 +15,7 @@ import numpy.ma as ma
 import xtgeo
 from xtgeo.common import XTGDescription, _XTGeoFile, null_logger
 from xtgeo.common.sys import generic_hash
+from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
 
 from . import (
@@ -180,7 +181,7 @@ def grid_from_roxar(
 
 
 def create_box_grid(
-    dimension: tuple[int, int, int],
+    dimension: Dimensions,
     origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
     oricenter: bool = False,
     increment: tuple[int, int, int] = (1, 1, 1),
@@ -190,7 +191,7 @@ def create_box_grid(
     """Create a rectangular 'shoebox' grid from spec.
 
     Args:
-        dimension (tuple of int): A tuple of (NCOL, NROW, NLAY)
+        dimension (NamedTuple of int): A tuple of (NCOL, NROW, NLAY)
         origin (tuple of float): Startpoint of grid (x, y, z)
         oricenter (bool): If False, startpoint is node, if True, use cell center
         increment (tuple of float): Grid increments (xinc, yinc, zinc)
@@ -547,9 +548,9 @@ class Grid(_Grid3D):
         self._name = name
 
     @property
-    def dimensions(self) -> tuple[int, int, int]:
-        """3-tuple: The grid dimensions as a tuple of 3 integers (read only)."""
-        return (self.ncol, self.nrow, self.nlay)
+    def dimensions(self) -> Dimensions:
+        """Dimensions NamedTuple: The grid dimensions (read only)."""
+        return Dimensions(self.ncol, self.nrow, self.nlay)
 
     @property
     def vectordimensions(self) -> tuple[int, int, int]:

@@ -15,6 +15,7 @@ import numpy as np
 import xtgeo
 import xtgeo.common.sys as xtgeosys
 from xtgeo.common import XTGDescription, null_logger
+from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
@@ -323,8 +324,8 @@ class Cube:
 
     @property
     def dimensions(self):
-        """3-tuple: The cube dimensions as a tuple of 3 integers (read only)."""
-        return (self._ncol, self._nrow, self._nlay)
+        """NamedTuple: The cube dimensions with 3 integers (read only)."""
+        return Dimensions(self._ncol, self._nrow, self._nlay)
 
     @property
     def xori(self):

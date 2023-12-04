@@ -60,6 +60,8 @@ from typing import Any
 import numpy as np
 from resfo import Format, lazy_read, write
 
+from xtgeo.common.types import Dimensions
+
 from ._ecl_grid import (
     CoordinateType,
     EclGrid,
@@ -254,8 +256,9 @@ class EGridSubGrid:
             )
 
     @property
-    def dimensions(self) -> tuple[int, int, int]:
-        return (
+    def dimensions(self) -> Dimensions:
+        """Dimensions NamedTuple: The grid dimensions (read only)."""
+        return Dimensions(
             int(self.grid_head.num_x),
             int(self.grid_head.num_y),
             int(self.grid_head.num_z),
@@ -683,7 +686,7 @@ class EGrid(EclGrid):
         self.egrid_head.mapaxes = value
 
     @property
-    def dimensions(self) -> tuple[int, int, int]:
+    def dimensions(self) -> Dimensions:
         return self.global_grid.dimensions
 
     @property

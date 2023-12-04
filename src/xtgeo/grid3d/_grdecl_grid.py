@@ -27,6 +27,8 @@ from dataclasses import dataclass
 import numpy as np
 from resfo import Format, lazy_read, write
 
+from xtgeo.common.types import Dimensions
+
 from ._ecl_grid import (
     CoordinateType,
     EclGrid,
@@ -198,8 +200,11 @@ class GrdeclGrid(EclGrid):
         )
 
     @property
-    def dimensions(self):
-        return (self.specgrid.ndivix, self.specgrid.ndiviy, self.specgrid.ndiviz)
+    def dimensions(self) -> Dimensions:
+        """Dimensions NamedTuple: The grid dimensions (read only)."""
+        return Dimensions(
+            self.specgrid.ndivix, self.specgrid.ndiviy, self.specgrid.ndiviz
+        )
 
     @property
     def is_map_relative(self) -> bool:
