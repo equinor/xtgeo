@@ -14,8 +14,29 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
+    - name: Cache Python environment
+      id: cache-venv
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./venv
+        key: ${{ runner.os }}-python-${{ inputs.python-version }}-env-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: ${{ runner.os }}-python-${{ inputs.python-version }}-env-
+
     - name: Build and install xtgeo
+      if: steps.cache-venv.outputs.cache-hit != 'true'
       shell: bash
       run: |
+        python -m venv venv
+        source venv/bin/activate
         python -m pip install -U pip
         python -m pip install ".[dev]"
+
+    - name: Activate venv
+      if: steps.cache-venv.outputs.cache-hit == 'true'
+      shell: bash
+      run: source venv/bin/activate
+
+    - name: Set venv path output
+      shell: bash
+      run: echo "PATH=$(pwd)/venv/bin:$PATH" >> $GITHUB_ENV
