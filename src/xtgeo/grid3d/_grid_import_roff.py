@@ -1,14 +1,23 @@
-# coding: utf-8
 """Private module, Grid Import private functions for ROFF format."""
+from __future__ import annotations
 
 import pathlib
 import tempfile
 import warnings
 from contextlib import contextmanager
+from io import BufferedReader, BytesIO
+from typing import TYPE_CHECKING, Generator
 
 from xtgeo.common import null_logger
 
 from ._roff_grid import RoffGrid
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from xtgeo.common.sys import _XTGeoFile
+    from xtgeo.common.types import FileLike
+
 
 logger = null_logger(__name__)
 
@@ -35,7 +44,7 @@ def match_xtgeo_214_header(header: bytes) -> bool:
     return first_part_match and problem_area_match
 
 
-def replace_xtgeo_214_header(header):
+def replace_xtgeo_214_header(header: bytes) -> bytes:
     """
     Given that match_xtgeo_214_header(header), inserts
     a \0 in the correct place.
@@ -44,7 +53,13 @@ def replace_xtgeo_214_header(header):
 
 
 @contextmanager
-def handle_deprecated_xtgeo_roff_file(filelike):
+def handle_deprecated_xtgeo_roff_file(
+    filelike: FileLike,
+) -> Generator[
+    FileLike | tempfile._TemporaryFileWrapper[bytes],
+    None,
+    None,
+]:
     """
     A contextmanager that inplace fixes grid roff files
     that were written by XTGeo prior to version 2.15. This
@@ -64,12 +79,15 @@ def handle_deprecated_xtgeo_roff_file(filelike):
     correctly.
 
     """
-    header = None
-    inhandle = filelike
+    inhandle: FileLike | BufferedReader = filelike
     close = False
     if isinstance(filelike, (str, pathlib.Path)):
         inhandle = open(filelike, "rb")
         close = True
+
+    # MYPY is uanble to figur out that isinstance check
+    # above means we have an IO-based class now.
+    assert isinstance(inhandle, (BufferedReader, BytesIO))
     goback = inhandle.tell()
     header = inhandle.read(200)
 
@@ -82,6 +100,7 @@ def handle_deprecated_xtgeo_roff_file(filelike):
             " format detail written by XTGeo version <=2.14. Reading of such files"
             " is deprecated, consider re-exporting the file with XTGeo version >=2.15.3"
         )
+
         new_header = replace_xtgeo_214_header(header)
 
         with tempfile.NamedTemporaryFile() as outhandle:
@@ -104,7 +123,7 @@ def handle_deprecated_xtgeo_roff_file(filelike):
         yield filelike
 
 
-def import_roff(gfile):
+def import_roff(gfile: _XTGeoFile) -> dict[str, NDArray | dict[str, range] | None]:
     with handle_deprecated_xtgeo_roff_file(gfile._file) as converted_file:
         roff_grid = RoffGrid.from_file(converted_file)
     return {
