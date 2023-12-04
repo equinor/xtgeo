@@ -199,7 +199,7 @@ class XYZ(ABC):
 
     def protected_columns(self):
         """
-        Returns:
+        Returns
             Columns not deleted by :meth:`delete_columns`, for
             instance the coordinate columns.
         """
@@ -207,7 +207,7 @@ class XYZ(ABC):
 
     def geometry_columns(self):
         """
-        Returns:
+        Returns
             Columns can be deleted silently by :meth:`delete_columns`
         """
         return [self.hname, self.dhname, self.tname, self.dtname]
@@ -260,10 +260,10 @@ class XYZ(ABC):
     def get_boundary(self):
         """Get the square XYZ window (boundaries) of the instance.
 
-        Returns:
+        Returns
             (xmin, xmax, ymin, ymax, zmin, zmax)
 
-        See also:
+        See Also
             The class method :func:`Polygons.boundary_from_points()`
 
         """

@@ -976,7 +976,7 @@ class Well:
         Note that DISC logs will be casted to columns with integer
         as datatype.
 
-        Returns:
+        Returns
             A pandas dataframe where Nan er replaces with preset
                 high XTGeo UNDEF values, or user defined values.
 
@@ -1009,7 +1009,7 @@ class Well:
         These logs will be added to the dataframe. If the mdlogname
         attribute does not exist in advance, it will be set to 'Q_MDEPTH'.
 
-        Returns:
+        Returns
             False if geometrics cannot be computed
 
         """

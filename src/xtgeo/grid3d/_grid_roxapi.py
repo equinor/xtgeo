@@ -37,7 +37,7 @@ def import_grid_roxapi(
 ) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec.
 
-    Returns:
+    Returns
         dictionary of parameters to be used in the Grid constructor function.
 
     """

@@ -86,7 +86,7 @@ class RoffParameter:
     @property
     def undefined_value(self) -> int | float:
         """
-        Returns:
+        Returns
             The undefined value for the type of values in the
             roff parameter (either 255, -999, or -999.0)
         """
@@ -101,7 +101,7 @@ class RoffParameter:
     @property
     def is_discrete(self) -> bool:
         """
-        Returns:
+        Returns
             True if the RoffParameter is a discrete type
         """
         return isinstance(self.values, bytes) or np.issubdtype(
@@ -110,7 +110,7 @@ class RoffParameter:
 
     def xtgeo_codes(self) -> dict[int, str]:
         """
-        Returns:
+        Returns
             The discrete codes of the parameter in the format of
             xtgeo.GridProperty.
         """
@@ -124,6 +124,7 @@ class RoffParameter:
         Args:
             The value to use for undefined. Defaults to that defined by
             roff.
+
         Returns:
             The values in the format of xtgeo grid property
         """
@@ -209,7 +210,8 @@ class RoffParameter:
             filelike (str or byte stream): The file to read from.
             name(str or None): The name of the parameter to get from the file,
                 if name=None, returns the first parameter read.
-        Returns:
+
+        Returns
             The RoffGrid in the roff file.
         """
 

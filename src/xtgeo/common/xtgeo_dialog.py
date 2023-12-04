@@ -66,7 +66,7 @@ UNDERLINE = "\033[4m"
 
 
 def _printdebug(*args: Any) -> None:
-    """local unction to print debugging while initializing logging"""
+    """Local unction to print debugging while initializing logging"""
 
     if DEBUG:
         print("XTG DEBUG:", *args)

@@ -131,7 +131,17 @@ doctest_optionflags = "ELLIPSIS"
 write_to = "src/xtgeo/common/version.py"
 
 [tool.ruff]
+ignore = [
+    "D400",
+    "D401",
+    "D402",
+    "D404",
+    "D407",
+    "D415",
+    "D417",
+]
 select = [
+    "D4",
     "E",
     "F",
     "I",

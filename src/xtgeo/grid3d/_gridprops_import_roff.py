@@ -24,7 +24,7 @@ def import_roff_gridproperties(
     """
     Imports a list of properties from a ROFF file.
 
-    Parameters:
+    Parameters
         pfile:
             Reference to the file.
         names:
@@ -33,7 +33,7 @@ def import_roff_gridproperties(
             If strict=True, will raise error if key is not found.
             Defaults to True.
 
-    Returns:
+    Returns
         List of GridProperty objects fetched from the ROFF file.
 
     """

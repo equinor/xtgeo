@@ -31,7 +31,7 @@ def from_file(
 ) -> dict[str, Any]:
     """Import grid geometry from file, and makes an instance of this class.
 
-    Returns:
+    Returns
     dictionary of keyword arguments to be used in Grid constructor.
     """
     if not isinstance(gfile, _XTGeoFile):

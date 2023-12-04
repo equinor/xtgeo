@@ -224,7 +224,7 @@ class BasePlot(object):
     def show(self):
         """Call to matplotlib.pyplot show method.
 
-        Returns:
+        Returns
             True of plotting is done; otherwise False
         """
         if self._tight:

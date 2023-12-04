@@ -126,9 +126,11 @@ class Filehead:
         """
         Construct a Filehead given the list of values following
         the FILEHEAD keyword.
+
         Args:
             values(List[int]): list of values following the FILEHEAD keyword,
                 expected to contain at least 7 values (normally 100).
+
         Returns:
             A Filhead constructed from the given values.
         """
@@ -145,7 +147,7 @@ class Filehead:
 
     def to_egrid(self) -> np.ndarray:
         """
-        Returns:
+        Returns
             List of values, as layed out after the FILEHEAD keyword for
             the given filehead.
         """
@@ -627,7 +629,8 @@ class EGrid(EclGrid):
             filelike (str,Path,stream): The egrid file to be read.
             file_format (None or str): The format of the file (either "egrid"
                 or "fegrid") None means guess.
-        Returns:
+
+        Returns
             EGrid with the contents of the file.
         """
         file_format = None
@@ -642,6 +645,7 @@ class EGrid(EclGrid):
     def to_file(self, filelike, fileformat: str = "egrid"):
         """
         write the EGrid to file.
+
         Args:
             filelike (str,Path,stream): The egrid file to write to.
             file_format (resfo.Format): The format of the file.
@@ -781,6 +785,7 @@ class EGridReader:
     ):
         """
         Read a general egrid file section.
+
         Args:
             keyword_factories (dict[str, func]): The function used
                 to construct a section member.

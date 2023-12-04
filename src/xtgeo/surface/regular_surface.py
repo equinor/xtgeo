@@ -1997,7 +1997,6 @@ class RegularSurface:
             xylist, valuelist
 
         Example:
-
             >>> import xtgeo
             >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
             >>> xylist, valuelist = surf.get_xy_value_lists(valuefmt='6.2f')
@@ -2038,7 +2037,7 @@ class RegularSurface:
         instance will be updated with new values for xori, yori, ncol, etc. Rotation
         will never change
 
-        Returns:
+        Returns
             RegularSurface instance is updated in-place
 
         .. versionadded:: 2.12
@@ -2790,7 +2789,7 @@ class RegularSurface:
             # largest (first) polygon which is number 0:
             boundary.filter_byid([0])  # polygon is updated in-place
 
-        See also:
+        See Also:
             The :func:`Polygons.boundary_from_points()` class method.
 
         .. versionadded:: 3.1

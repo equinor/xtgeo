@@ -615,7 +615,6 @@ class Cube:
             ValueError: If cubes do not overlap
 
         Example:
-
             >>> import xtgeo
             >>> mycube1 = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
             >>> mycube2 = xtgeo.Cube(
@@ -650,7 +649,6 @@ class Cube:
             ValueError: If icol, jrow or klay are out of reasonable range
 
         Example:
-
             >>> mycube1 = Cube(cube_dir + "/ib_test_cube2.segy")
             >>> mycube1.do_thinning(2, 2, 1)  # keep every second column, row
             >>> mycube1.to_file(outdir + '/mysegy_smaller.segy')

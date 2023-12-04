@@ -873,6 +873,7 @@ def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False)
 
 def inactivate_by_dz(self, threshold: float, flip: bool = True):
     """Set cell to inactive if dz does not exceed threshold.
+
     Args:
         threshold (float): The threshold for which the absolute value
             of dz should exceed.
@@ -963,7 +964,7 @@ def collapse_inactive_cells(self):
 def copy(self):
     """Copy a grid instance (C pointers) and other props.
 
-    Returns:
+    Returns
         A new instance (attached grid properties will also be unique)
     """
     self._xtgformat2()

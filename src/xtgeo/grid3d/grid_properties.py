@@ -158,6 +158,7 @@ def gridproperties_dataframe(
             Note that coordinates (if xyz=True) is always 64 bit floats.
         grid (Grid): The grid geometry object. This is required for the
             xyz option.
+
     Returns:
         Pandas dataframe object
     Examples::

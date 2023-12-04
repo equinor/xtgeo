@@ -120,7 +120,8 @@ class GrdeclKeyword:
 
     def to_grdecl(self) -> List[Any]:
         """Convert the keyword to list of grdecl keyword values.
-        Returns:
+
+        Returns
             list of values of the given keyword. ie. The
             keyword read from "SPECGRID 1 1 1 F" should return
             [1,1,1,CoordinateType.CYLINDRICAL]
@@ -138,9 +139,11 @@ class GrdeclKeyword:
     @classmethod
     def from_grdecl(cls, values):
         """Convert list of grdecl keyword values to a keyword.
+
         Args:
             values(list): list of values given after the keyword in
                 the grdecl file.
+
         Returns:
             A GrdeclKeyword constructed from the given values.
         """
@@ -574,6 +577,7 @@ class EclGrid(ABC):
             relative_to: Specifies the axis system the coords should be
             relative to, either map or grid. Defaults to map. If relative_to is
             GridRelative.MAP then the resulting units are that of map_axis_units.
+
         Returns:
             coord in xtgeo format.
         """
@@ -590,7 +594,7 @@ class EclGrid(ABC):
 
     def xtgeo_actnum(self):
         """
-        Returns:
+        Returns
             actnum in xtgeo format.
         """
         self._check_xtgeo_compatible()
@@ -606,7 +610,8 @@ class EclGrid(ABC):
             relative to, either map or origin. Defaults to map. For zcorn
             this only affects which units zcorn will be in, grid units for
             relative to origin, map units for relative to map.
-        Returns:
+
+        Returns
             zcorn in xtgeo format.
         """
         self._check_xtgeo_compatible()

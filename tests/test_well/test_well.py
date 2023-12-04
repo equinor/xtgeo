@@ -743,7 +743,7 @@ def test_remove_parallel_parts():
 
 
 def test_get_zonation_holes():
-    """get a report of holes in the zonation, some samples with -999"""
+    """Get a report of holes in the zonation, some samples with -999"""
 
     mywell = xtgeo.well_from_file(WFILE_HOLES, zonelogname="Zonelog")
     report = mywell.report_zonation_holes()

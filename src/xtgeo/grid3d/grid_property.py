@@ -814,7 +814,7 @@ class GridProperty(_Grid3D):
         """
         Generates a sha256 hash id representing a GridProperty.
 
-        Returns:
+        Returns
             A unique hash id string.
 
         .. versionadded:: 2.10
@@ -833,7 +833,7 @@ class GridProperty(_Grid3D):
         """
         A list of methods in the class as a string.
 
-        Returns:
+        Returns
             The names of the methods in the class.
 
         Example::
@@ -1298,7 +1298,7 @@ class GridProperty(_Grid3D):
         """
         Get the active cells as a 1D numpy masked array.
 
-        Returns:
+        Returns
             The grid property as a 1D numpy masked array, active cells only.
 
         """

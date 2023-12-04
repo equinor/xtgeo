@@ -897,7 +897,6 @@ class Grid(_Grid3D):
             Used file object, or None if memory stream
 
         Example:
-
             >>> grid = create_box_grid((2,2,2))
             >>> filename = grid.to_hdf(outdir + "/myfile_grid.h5")
         """
@@ -1134,8 +1133,10 @@ class Grid(_Grid3D):
     def convert_units(self, units: Units) -> None:
         """
         Convert the units of the grid.
+
         Args:
             units: The unit to convert to.
+
         Raises:
             ValueError: When the grid is unitless (no initial
                 unit information available).
@@ -1290,7 +1291,7 @@ class Grid(_Grid3D):
     )
     def dataframe(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
-        Returns:
+        Returns
             A Pandas dataframe
         """
         return self.get_dataframe(*args, **kwargs)
@@ -1360,7 +1361,7 @@ class Grid(_Grid3D):
             grid.hide_cells(inactind, inplace=True)
             grid.plot(show_edges=True)
 
-        Returns:
+        Returns
             dims, corners, inactive_indices
 
         .. versionadded:: 2.18
@@ -2151,7 +2152,6 @@ class Grid(_Grid3D):
             icarray (np): On the form [ic1, ic2, ...] where ic is cell count (C order)
 
         Example:
-
             Return two arrays forr cell corner for bottom layer::
 
                 grd = xtgeo.grid_from_file(REEKFILE)

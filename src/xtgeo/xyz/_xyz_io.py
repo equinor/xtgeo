@@ -255,7 +255,7 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
 
     Filter is on the form {TopName: ['Name1', 'Name2']}
 
-    Returns:
+    Returns
         The number of values exported. If value is 0; then no file
         is made.
     """
@@ -350,6 +350,7 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
         hcolumn (str): Name of horizon/zone column in the point set
         wcolumn (str): Name of well column in the point set
         mdcolumn (str): Name of measured depht column (if any)
+
     Returns:
         The number of values exported. If value is 0; then no file
         is made.

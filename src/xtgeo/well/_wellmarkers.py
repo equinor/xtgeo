@@ -417,7 +417,7 @@ def get_fraction_per_zone(
 
 
 def get_surface_picks(self, surf):
-    """get Surface picks"""
+    """Get Surface picks"""
 
     xcor = self.dataframe[self.xname].values
     ycor = self.dataframe[self.yname].values

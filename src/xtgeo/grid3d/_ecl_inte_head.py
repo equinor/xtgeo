@@ -57,6 +57,7 @@ class InteHead:
             index: The index in the value array to look up
             constructor: Constructor function to wrap non-None values in, defaults
                 to identity.
+
         Returns:
             value at the index, None if out of bounds.
         """

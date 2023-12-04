@@ -280,7 +280,7 @@ def import_wlogs(wlogs: dict):
     >>> import_wlogs(dict([("X_UTME", ("CONT", None))]))
     {'wlogtypes': {'X_UTME': 'CONT'}, 'wlogrecords': {'X_UTME': None}}
 
-    Returns:
+    Returns
         dictionary with "wlogtypes" and "wlogrecords" as keys
         and corresponding values.
     """

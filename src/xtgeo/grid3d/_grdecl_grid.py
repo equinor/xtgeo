@@ -50,7 +50,7 @@ class SpecGrid(GrdeclKeyword):
     of the grid. The next is the number of reservoirs in the file and
     the last is the type of coordinates, see CoordinateType.
 
-    example:
+    Example:
         "SPECGRID 10 10 10 1 T /" meaning 10x10x10 grid with 1 reservoir
         and cylindrical coordinates.
 

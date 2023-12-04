@@ -421,7 +421,7 @@ class _XTGeoFile:
 
         if _cfhandle already exists, then _cfhandlecount is increased with 1
 
-        Returns:
+        Returns
             int indicating the file handle number.
 
         """
@@ -467,7 +467,7 @@ class _XTGeoFile:
         """
         Close SWIG C file handle by keeping track of _cfhandlecount.
 
-        Returns:
+        Returns
             True if cfhandle is closed.
 
         """

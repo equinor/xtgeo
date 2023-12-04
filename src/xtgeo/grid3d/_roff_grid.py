@@ -222,7 +222,7 @@ class RoffGrid:
 
     def xtgeo_coord(self) -> np.ndarray:
         """
-        Returns:
+        Returns
             The coordinates of nodes in the format of xtgeo.Grid.coordsv
         """
         offset = (self.xoffset, self.yoffset, self.zoffset)
@@ -235,7 +235,7 @@ class RoffGrid:
 
     def xtgeo_actnum(self) -> np.ndarray:
         """
-        Returns:
+        Returns
             The active field in the format of xtgeo.Grid.actnumsv
         """
         assert self.active is not None
@@ -245,7 +245,7 @@ class RoffGrid:
 
     def xtgeo_zcorn(self) -> np.ndarray:
         """
-        Returns:
+        Returns
             The z values for nodes in the format of xtgeo.Grid.zcornsv
         """
         zcornsv = np.zeros(
@@ -286,7 +286,7 @@ class RoffGrid:
 
     def xtgeo_subgrids(self) -> dict[str, range] | None:
         """
-        Returns:
+        Returns
             The z values for nodes in the format of xtgeo.Grid.zcornsv
         """
         if self.subgrids is None:
@@ -384,7 +384,8 @@ class RoffGrid:
         Read a RoffGrid from a roff file
         Args:
             filelike (str or byte stream): The file to read from.
-        Returns:
+
+        Returns
             The RoffGrid in the roff file.
         """
         translate_kws = {

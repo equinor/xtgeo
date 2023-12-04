@@ -579,7 +579,7 @@ class _XYZData:
         TODO: If the mdlogname
         attribute does not exist in advance, it will be set to 'Q_MDEPTH'.
 
-        Returns:
+        Returns
             False if geometrics cannot be computed
 
         """

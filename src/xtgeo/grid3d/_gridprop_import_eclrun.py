@@ -37,8 +37,10 @@ def import_gridprop_from_init(pfile, name, grid, fracture=False):
         grid: The grid used by the simulator to produce the init file.
         fracture: If a dual porosity module, indicates that the fracture
             (as apposed to the matrix) grid property should be imported.
+
     Raises:
         ValueError: If the parameter does not exist in the file.
+
     Returns:
         GridProperty parameter dictionary.
     """
@@ -122,8 +124,10 @@ def import_gridprop_from_restart(
         grid: The grid used by the simulator to produce the restart file.
         fracture: If a dual porosity module, indicates that the fracture
             (as apposed to the matrix) grid property should be imported.
+
     Raises:
         ValueError: If the parameter does not exist in the file.
+
     Returns:
         GridProperty parameter dictionary.
     """

@@ -230,6 +230,7 @@ def check_grid_match(intehead: InteHead, logihead: LogiHead, grid):
 
 def expand_scalar_values(value, num_cells, dualporo: bool) -> np.ndarray:
     """Convert from scalar value to filled array of expected size.
+
     Args:
         value: The potentially scalar value
         num_cells: The number of cells in the grid
@@ -255,6 +256,7 @@ def pick_dualporo_values(
         actind: Array of the indecies of active cells.
         num_cells: Total number of cells.
         fracture: Whether to give the fracture or matrix values.
+
     Returns:
         Array of either fracture or matrix values from the input values.
     """
@@ -294,6 +296,7 @@ def match_values_to_active_cells(
         values: Array of values from an ecl run file.
         actind: Array of the indecies of active cells.
         num_cells: Total number of cells.
+
     Returns:
         Array of input values, but guaranteed num_cells length.
 
@@ -389,6 +392,7 @@ def get_actnum_from_porv(init_filelike, grid):
     Args:
         init_filelike: The init file
         grid: The grid used by the simulator to produce the init file.
+
     Returns:
         None
     """
@@ -448,6 +452,7 @@ def find_gridprop_from_init_file(
         grid: The grid used by the simulator to produce the init file.
         fracture: If a dual porosity module, indicates that the fracture
             (as apposed to the matrix) grid property should be imported.
+
     Returns:
         List of GridProperty parameters matching the names.
 
@@ -533,6 +538,7 @@ def find_gridprops_from_restart_file_sections(
         grid: The grid used by the simulator to produce the init file.
         fracture: If a dual porosity module, indicates that the fracture
             (as apposed to the matrix) grid property should be imported.
+
     Returns:
         List of GridProperty parameters matching the names.
     """
@@ -593,6 +599,7 @@ def find_gridprops_from_restart_file(
         grid: The grid used by the simulator to produce the restart file.
         fracture: If a dual porosity module, indicates that the fracture
             (as apposed to the matrix) grid property should be imported.
+
     Returns:
         List of GridProperty parameters matching the names and dates.
     """

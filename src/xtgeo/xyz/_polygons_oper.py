@@ -153,6 +153,7 @@ def _alpha_shape(points, alpha):
         alpha: alpha value.
         only_outer TODO?: boolean value to specify if we keep only the outer border
             or also inner edges.
+
     Returns:
         Set of (i,j) pairs representing edges of the alpha-shape. (i,j) are
             the indices in the points array.
