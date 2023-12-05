@@ -2,6 +2,7 @@ import hashlib
 import io
 import pathlib
 import sys
+from collections import ChainMap
 
 import pytest
 import xtgeo
@@ -118,9 +119,9 @@ def test_file_splitext(filename, stem, extension, obj):
     assert (stem, extension) == xtgeo_file.splitext(lower=False)
 
 
-files_formats = {
-    **surface_files_formats,
-    **{
+files_formats = ChainMap(
+    surface_files_formats,
+    {
         pathlib.Path("3dgrids/reek/REEK.EGRID"): "egrid",
         pathlib.Path("3dgrids/reek/REEK.UNRST"): "unrst",
         pathlib.Path("3dgrids/reek/REEK.INIT"): "init",
@@ -128,7 +129,7 @@ files_formats = {
         pathlib.Path("3dgrids/reek/reek_geogrid.roffasc"): "roff_ascii",
         pathlib.Path("wells/battle/1/WELL12.rmswell"): "rmswell",
     },
-}
+)
 
 
 def test_xtgeo_file_reinstance(tmp_path):

@@ -496,7 +496,7 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
     grid_props = []
 
-    for i in range(0, 8):
+    for i in range(8):
         xname = names[0] + str(i)
         yname = names[1] + str(i)
         zname = names[2] + str(i)

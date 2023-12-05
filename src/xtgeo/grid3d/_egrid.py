@@ -80,8 +80,6 @@ class EGridFileFormatError(ValueError):
     format.
     """
 
-    pass
-
 
 @unique
 class RockModel(Enum):

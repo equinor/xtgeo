@@ -96,7 +96,7 @@ def test_more_statistics(constant_map_surfaces):
     res = constant_map_surfaces.statistics()
     # theoretical stdev:
     sum2 = 0.0
-    for inum in range(0, 101):
+    for inum in range(101):
         sum2 += (float(inum) - 50.0) ** 2
     stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
 

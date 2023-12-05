@@ -92,11 +92,11 @@ def rsg_grid_mock():
     mock_grid.zone_names = ["0", "1"]
 
     mock_grid.grid_indexer.zonation = {
-        0: [range(0, 1), range(2, 3)],
+        0: [range(1), range(2, 3)],
         1: [range(1, 2), range(3, 4)],
     }
     mock_grid.simbox_indexer.zonation = {
-        0: [range(0, 1)],
+        0: [range(1)],
         1: [range(1, 2)],
     }
 

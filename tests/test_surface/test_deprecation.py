@@ -44,7 +44,7 @@ def test_default_init_deprecation(missing_arg, expected_warning):
 @fail_if_not_removed(version_limit="4")
 def test_default_values_deprecation():
     with pytest.warns(DeprecationWarning, match="Default values") as record:
-        xtgeo.RegularSurface(**{"ncol": 5, "nrow": 3, "xinc": 25.0, "yinc": 25.0})
+        xtgeo.RegularSurface(ncol=5, nrow=3, xinc=25.0, yinc=25.0)
         assert len(record) == 1
 
 
