@@ -746,7 +746,7 @@ class GridProperty(_Grid3D):
         return self._values
 
     @values.setter
-    def values(self, values: np.ma.MaskedArray) -> None:
+    def values(self, values: np.ndarray) -> None:
         values = self.ensure_correct_values(self.ncol, self.nrow, self.nlay, values)
         self._values = values
 

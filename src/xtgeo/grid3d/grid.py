@@ -43,17 +43,9 @@ if TYPE_CHECKING:
 
     from xtgeo import Polygons, Well
     from xtgeo.common.types import FileLike
+    from xtgeo.grid3d.types import METRIC
     from xtgeo.xyz.points import Points
 
-METRIC = Literal[
-    "euclid",
-    "horizontal",
-    "east west vertical",
-    "north south vertical",
-    "x projection",
-    "y projection",
-    "z projection",
-]
 
 # --------------------------------------------------------------------------------------
 # Comment on "asmasked" vs "activeonly:
@@ -473,10 +465,10 @@ class Grid(_Grid3D):
 
         self._filesrc = filesrc
 
-        if props is None:
-            self._props = GridProperties(props=[])
-        else:
-            self._props = props
+        self._props: GridProperties | None = (
+            GridProperties(props=[]) if props is None else props
+        )
+
         self._name = name
         self._subgrids = subgrids
         self._ijk_handedness: Literal["left", "right"] | None = None
@@ -2319,7 +2311,7 @@ class Grid(_Grid3D):
         colcrop: tuple[int, int],
         rowcrop: tuple[int, int],
         laycrop: tuple[int, int],
-        props: str | list[GridProperty] | None = None,
+        props: Literal["all"] | list[GridProperty] | None = None,
     ) -> None:
         """Reduce the grid size by cropping.
 
@@ -2422,7 +2414,7 @@ class Grid(_Grid3D):
         _grid_etc1.reverse_row_axis(self, ijk_handedness=ijk_handedness)
         self._tmp = {}
 
-    def make_zconsistent(self, zsep: float = 1e-5) -> None:
+    def make_zconsistent(self, zsep: float | int = 1e-5) -> None:
         """Make the 3D grid consistent in Z, by a minimal gap (zsep).
 
         Args:
