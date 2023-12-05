@@ -3,6 +3,7 @@ import sys
 from unittest import mock
 
 import pytest
+from packaging.version import parse as versionparse
 
 
 def _clear_state(sys, os):
@@ -36,7 +37,13 @@ def test_that_mpl_dynamically_imports():
     baseplot = BasePlot()
 
     assert "matplotlib" in sys.modules
-    assert "matplotlib.pyplot" not in sys.modules
+
+    import matplotlib as mpl
+
+    if versionparse(mpl.__version__) < versionparse("3.6"):
+        assert "matplotlib.pyplot" in sys.modules
+    else:
+        assert "matplotlib.pyplot" not in sys.modules
 
     baseplot.close()
 
