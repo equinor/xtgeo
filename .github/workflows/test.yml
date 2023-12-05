@@ -61,6 +61,69 @@ jobs:
 
       - name: Run just hypothesis tests with more examples
         run: pytest -n 4 tests --disable-warnings -m hypothesis --generate-plots
+          
+  rms:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+              name: "RMS 12.1.4, 13.0.3, 13.1.0, 14.1.1",
+              os: ubuntu-20.04,
+              python: 3.8.6,
+              pip: 23.2.1,
+              wheel: 0.37.1,
+              setuptools: 63.4.3,
+              matplotlib: 3.3.2,
+              numpy: 1.19.2,
+              pandas: 1.1.3,
+              scipy: 1.5.3,
+            }
+          - {
+              name: "RMS 14.2",
+              os: ubuntu-latest,
+              python: 3.11.3,
+              pip: 23.3.1,
+              wheel: 0.37.1,
+              setuptools: 63.4.3,
+              matplotlib: 3.7.1,
+              numpy: 1.24.3,
+              pandas: 2.0.2,
+              scipy: 1.10.1,
+            }
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup testdata
+        uses: "./.github/actions/setup_testdata"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.config.python }}
+
+      - name: Build and install xtgeo
+        run: |
+          pip install pip==${{ matrix.config.pip }}
+          pip install \
+            wheel==${{ matrix.config.wheel }} \
+            setuptools==${{ matrix.config.setuptools }} \
+            matplotlib==${{ matrix.config.matplotlib }} \
+            numpy==${{ matrix.config.numpy }} \
+            pandas==${{ matrix.config.pandas }} \
+            scipy==${{ matrix.config.scipy }}
+          pip install ".[dev]"
+
+      - name: List dependencies
+        run: pip freeze
+
+      - name: Run tests
+        run: pytest -n 4 tests --disable-warnings
 
   big:
     runs-on: ubuntu-latest
