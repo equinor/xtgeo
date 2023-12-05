@@ -1,29 +1,39 @@
 """Private module for grid vs well zonelog checks."""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
-import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.grid3d.grid_property import GridProperty
+from xtgeo.well import Well
+
+if TYPE_CHECKING:
+    from xtgeo.grid3d import Grid
+
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
 def report_zone_mismatch(
-    self,
-    well=None,
-    zonelogname="ZONELOG",
-    zoneprop=None,
-    onelayergrid=None,  # redundant; will be computed internally
-    zonelogrange=(0, 9999),
-    zonelogshift=0,
-    depthrange=None,
-    perflogname=None,
-    perflogrange=(1, 9999),
-    filterlogname=None,
-    filterlogrange=(1e-32, 9999.0),
-    resultformat=1,
-):
+    self: Grid,
+    well: Well | None = None,
+    zonelogname: str = "ZONELOG",
+    zoneprop: GridProperty | None = None,
+    onelayergrid: Grid | None = None,  # redundant; will be computed internally
+    zonelogrange: tuple[int, int] = (0, 9999),
+    zonelogshift: int = 0,
+    depthrange: tuple[int | float, int | float] | None = None,
+    perflogname: str | None = None,
+    perflogrange: tuple[int | float, int | float] = (1, 9999),
+    filterlogname: str | None = None,
+    filterlogrange: tuple[int | float, int | float] = (1e-32, 9999.0),
+    resultformat: Literal[1, 2] = 1,
+) -> (
+    dict[str, float | int | Well] | tuple[float, int, int] | None
+):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Reports well to zone mismatch; this works together with a Well object.
 
     The idea is to sample the current zone property for the well in the grid as fast as
@@ -42,8 +52,11 @@ def report_zone_mismatch(
     if onelayergrid is not None:
         xtg.warndeprecated("Using key 'onelayergrid' is redundant and can be skipped")
 
-    if not isinstance(well, xtgeo.Well):
+    if not isinstance(well, Well):
         raise ValueError("Input well is not a Well() instance")
+
+    if zoneprop is None or not isinstance(zoneprop, GridProperty):
+        raise ValueError("Input zoneprop is missing or not a GridProperty() instance")
 
     if zonelogname not in well.dataframe.columns:
         logger.warning("Zonelog %s is missing for well %s", zonelogname, well.name)
@@ -64,7 +77,8 @@ def report_zone_mismatch(
         ]
 
     wll.get_gridproperties(zoneprop, self)
-    zmodel = zoneprop.name + "_model"
+    zonename = zoneprop.name if zoneprop.name is not None else "Zone"
+    zmodel = zonename + "_model"
 
     # from here, work with the dataframe only
     df = wll.dataframe
@@ -127,6 +141,9 @@ def report_zone_mismatch(
 
     res1 = dfuse1["zmatch1"].mean() * 100
 
+    if resultformat == 1:
+        return (res1, mcount1, tcount1)
+
     dfuse2 = df.copy(deep=True)
     dfuse2 = dfuse2.loc[(df[zmodel] > -888) | (df[zonelogname] > -888)]
     dfuse2["zmatch2"] = np.where(dfuse2[zmodel] == dfuse2[zonelogname], 1, 0)
@@ -142,10 +159,7 @@ def report_zone_mismatch(
     # update Well() copy (segment only)
     wll.dataframe = dfuse2
 
-    if resultformat == 1:
-        return (res1, mcount1, tcount1)
-
-    res = {
+    return {
         "MATCH1": res1,
         "MCOUNT1": mcount1,
         "TCOUNT1": tcount1,
@@ -154,4 +168,3 @@ def report_zone_mismatch(
         "TCOUNT2": tcount2,
         "WELLINTV": wll,
     }
-    return res
