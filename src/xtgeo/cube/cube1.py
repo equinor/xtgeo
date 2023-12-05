@@ -7,7 +7,7 @@ import os.path
 import pathlib
 import tempfile
 import warnings
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import deprecation
 import numpy as np
@@ -20,6 +20,9 @@ from xtgeo.common.version import __version__
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
 logger = null_logger(__name__)
+
+if TYPE_CHECKING:
+    from xtgeo.common.types import FileLike
 
 
 def _data_reader_factory(fformat):
@@ -66,7 +69,7 @@ def cube_from_roxar(project, name, folder=None):
     return obj
 
 
-def allow_deprecated_init(func):
+def _allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Cube and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -100,7 +103,7 @@ def allow_deprecated_init(func):
     return wrapper
 
 
-def allow_deprecated_default_init(func):
+def _allow_deprecated_default_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Cube and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -177,8 +180,8 @@ class Cube:
 
     """
 
-    @allow_deprecated_init
-    @allow_deprecated_default_init
+    @_allow_deprecated_init
+    @_allow_deprecated_default_init
     def __init__(
         self,
         ncol,
@@ -1014,7 +1017,16 @@ class Cube:
             )
 
     @staticmethod
-    def scan_segy_traces(sfile, outfile=None):
+    @deprecation.deprecated(
+        deprecated_in="3.6",
+        removed_in="4.0",
+        current_version=__version__,
+        details=(
+            "This functionality is no longer supported in xtgeo. "
+            "Use the segyio library instead."
+        )
+    )
+    def scan_segy_traces(sfile: str, outfile: FileLike = None):
         """Scan a SEGY file traces and print limits info to STDOUT or file.
 
         Args:
@@ -1042,7 +1054,16 @@ class Cube:
             os.remove(outfile)
 
     @staticmethod
-    def scan_segy_header(sfile, outfile=None):
+    @deprecation.deprecated(
+        deprecated_in="3.6",
+        removed_in="4.0",
+        current_version=__version__,
+        details=(
+            "This functionality is no longer supported in xtgeo. "
+            "Use the segyio library instead."
+        )
+    )
+    def scan_segy_header(sfile: str, outfile: FileLike = None):
         """Scan a SEGY file header and print info to screen or file.
 
         Args:
