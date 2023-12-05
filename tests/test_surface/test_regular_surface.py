@@ -920,7 +920,7 @@ def test_irapbin_io_loop(tmpdir):
 
     num = 10
 
-    for _i in range(0, num):
+    for _i in range(num):
         # print(i)
         x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 

@@ -107,7 +107,7 @@ def parse_header(zmap_data):
 
 
 def is_comment(line):
-    if line.startswith("!") or line.startswith("+"):
+    if line.startswith(("!", "+")):
         return True
     return False
 
