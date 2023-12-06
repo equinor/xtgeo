@@ -24,3 +24,7 @@ MAXDATES = _cxtgeo.MAXDATES  # maximum keywords for ECL scanning
 # for XYZ data, restricted to float32 and int32
 UNDEF_CONT = UNDEF
 UNDEF_DISC = UNDEF_INT
+
+# INT_MIN is the lowest 32 bit int value and is applied in some RMSAPI settings where
+# nan (for floats) cannot be applied
+INT_MIN = -2147483648
