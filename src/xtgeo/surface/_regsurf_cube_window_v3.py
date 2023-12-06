@@ -195,10 +195,7 @@ def _expand_attributes(attribute: str | list) -> list:
     """The 'attribute' may be a name, 'all', or a list of attributes"""
     useattrs = None
     if isinstance(attribute, str):
-        if attribute == "all":
-            useattrs = ALLATTRS
-        else:
-            useattrs = [attribute]
+        useattrs = ALLATTRS if attribute == "all" else [attribute]
     else:
         useattrs = attribute
 

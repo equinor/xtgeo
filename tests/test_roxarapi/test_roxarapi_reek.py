@@ -9,6 +9,7 @@ This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if E
 """
 from __future__ import annotations
 
+import contextlib
 from os.path import join
 from typing import Any
 
@@ -17,10 +18,8 @@ import pytest
 import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 
-try:
+with contextlib.suppress(ImportError):
     import roxar
-except ImportError:
-    pass
 
 xtg = XTGeoDialog()
 

@@ -191,7 +191,7 @@ def test_subgrids():
 
     # rename
     grd.rename_subgrids(["AAAA", "BBBB"])
-    assert "AAAA" in grd.subgrids.keys()
+    assert "AAAA" in grd.subgrids
 
     # set to None
     grd.subgrids = None

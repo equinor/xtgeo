@@ -108,11 +108,10 @@ def _wells_importer(
 
     attrs = {}
     for col in dfr.columns:
-        if col == "Zone":
+        col_lower = col.lower()
+        if col_lower == "Zone":
             attrs[col] = "int"
-        elif col == "ZoneName":
-            attrs[col] = "str"
-        elif col == "WellName":
+        elif col_lower == "ZoneName" or col_lower == "WellName":
             attrs[col] = "str"
         else:
             attrs[col] = "float"
@@ -149,11 +148,10 @@ def _wells_dfrac_importer(
 
     attrs = {}
     for col in dfr.columns[3:]:
-        if col.lower() == "zone":
+        col_lower = col.lower()
+        if col_lower == "zone":
             attrs[col] = "int"
-        elif col.lower() == "zonename":
-            attrs[col] = "str"
-        elif col.lower() == "wellname":
+        elif col_lower == "zonename" or col_lower == "wellname":
             attrs[col] = "str"
         else:
             attrs[col] = "float"

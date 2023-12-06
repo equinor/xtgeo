@@ -103,10 +103,7 @@ def update_carray(
     values = self.values.copy()
 
     if not dtype:
-        if dstatus:
-            values = values.astype(np.int32)
-        else:
-            values = values.astype(np.float64)
+        values = values.astype(np.int32) if dstatus else values.astype(np.float64)
     else:
         values = values.astype(dtype)
 

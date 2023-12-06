@@ -71,10 +71,7 @@ def _slice_cube_v1(
     if not self.compare_topology(other, strict=False):
         raise RuntimeError("Topology of maps differ. Stop!")
 
-    if mask:
-        opt2 = 0
-    else:
-        opt2 = 1
+    opt2 = 0 if mask else 1
 
     if deadtraces:
         # set dead traces to cxtgeo UNDEF -> special treatment in the C code
@@ -137,10 +134,7 @@ def _slice_cube_v2(
     """
 
     logger.info("Slice cube algorithm 2 with sampling %s", sampling)
-    if zsurf is not None:
-        other = zsurf
-    else:
-        other = self.copy()
+    other = zsurf if zsurf is not None else self.copy()
 
     if not self.compare_topology(other, strict=False):
         raise RuntimeError("Topology of maps differ. Stop!")

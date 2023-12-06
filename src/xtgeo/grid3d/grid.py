@@ -1503,7 +1503,7 @@ class Grid(_Grid3D):
             else:
                 raise ValueError("Key nsub of wrong type, must be a number or a name")
 
-            if nsubname not in self.subgrids.keys():
+            if nsubname not in self.subgrids:
                 return None
 
         return _grid_etc1.estimate_design(self, nsubname)

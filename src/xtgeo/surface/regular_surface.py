@@ -3194,19 +3194,6 @@ class RegularSurface:
 
             self._values = vals
 
-        elif isinstance(values, (list, tuple)):  # ie values ~ list-like
-            vals = ma.array(values, order="C", dtype=apply_dtype)
-            vals = ma.masked_greater(vals, self.undef_limit, copy=True)
-            vals = ma.masked_invalid(vals, copy=True)
-
-            if vals.shape != (self.ncol, self.nrow):
-                try:
-                    vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
-                except ValueError as emsg:
-                    raise ValueError(f"Cannot reshape array: {values}") from emsg
-
-            self._values = vals
-
         else:
             raise ValueError(f"Input values are in invalid format: {values}")
 

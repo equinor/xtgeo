@@ -146,10 +146,7 @@ def _slice_cube_window_v1(
         attrlist = attribute
         qattr_is_string = False
 
-    if zsurf is not None:
-        this = zsurf
-    else:
-        this = self.copy()
+    this = zsurf if zsurf is not None else self.copy()
 
     if other is not None:
         zdelta = np.absolute(this.values - other.values)
@@ -304,10 +301,7 @@ def _slice_between_surfaces(
     npcollect.append(zcenter.values)
 
     # collect below or above the original surface
-    if other_position == "above":
-        mul = -1
-    else:
-        mul = 1
+    mul = -1 if other_position == "above" else 1
 
     # collect above the original surface
     progress = XTGShowProgress(ndiv, show=showprogress, leadtext="progress: ")

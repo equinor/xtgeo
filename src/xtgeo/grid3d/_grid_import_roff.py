@@ -82,7 +82,7 @@ def handle_deprecated_xtgeo_roff_file(
     inhandle: FileLike | BufferedReader = filelike
     close = False
     if isinstance(filelike, (str, pathlib.Path)):
-        inhandle = open(filelike, "rb")
+        inhandle = open(filelike, "rb")  # noqa: SIM115
         close = True
 
     # MYPY is uanble to figur out that isinstance check

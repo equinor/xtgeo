@@ -219,10 +219,7 @@ def open_grdecl(
                 break
 
             if keyword is None:
-                if max_len:
-                    snubbed = line[0 : min(max_len, len(line))]
-                else:
-                    snubbed = line
+                snubbed = line[0 : min(max_len, len(line))] if max_len else line
                 simple_matched_keywords = [
                     kw for kw in simple_keywords if match_keyword(kw, snubbed)
                 ]

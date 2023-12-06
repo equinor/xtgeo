@@ -85,10 +85,7 @@ def _allow_deprecated_init(func):
                 DeprecationWarning,
             )
             cfile = args[0]
-            if len(args) > 1:
-                fformat = args[1]
-            else:
-                fformat = kwargs.get("fformat", None)
+            fformat = args[1] if len(args) > 1 else kwargs.get("fformat", None)
             mfile = xtgeosys._XTGeoFile(cfile)
             if fformat is None or fformat == "guess":
                 fformat = mfile.detect_fformat(suffixonly=True)

@@ -848,7 +848,7 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
     if depthrange:
         d1, d2 = depthrange
         wll.set_dataframe(
-            wll.dataframe[(d1 < wll.dataframe.Z_TVDSS) & (wll.dataframe.Z_TVDSS < d2)]
+            wll.dataframe[(d1 < wll.dataframe.Z_TVDSS) & (d2 > wll.dataframe.Z_TVDSS)]
         )
 
     # from here, work with the dataframe only

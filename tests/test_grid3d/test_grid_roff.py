@@ -106,10 +106,7 @@ def roff_grids(draw, dim=dimensions):
     split_enz = draw(
         arrays(shape=num_nodes, dtype=np.int8, elements=st.sampled_from([1, 4]))
     ).tobytes()
-    if split_enz is not None:
-        numz = sum(split_enz)
-    else:
-        numz = num_nodes
+    numz = sum(split_enz) if split_enz is not None else num_nodes
     zvals = draw(arrays(shape=int(numz), dtype=np.float32, elements=finites))
     active = draw(
         arrays(
@@ -339,8 +336,12 @@ def test_deprecated_fileread(roff_grid):
         )
     )
 
-    with pytest.warns(UserWarning, match="nonstandard but harmless roff"):
-        with handle_deprecated_xtgeo_roff_file(new_buff) as converted_buff:
-            new_grid = RoffGrid.from_file(converted_buff)
+    with pytest.warns(
+        UserWarning,
+        match="nonstandard but harmless roff",
+    ), handle_deprecated_xtgeo_roff_file(
+        new_buff,
+    ) as converted_buff:
+        new_grid = RoffGrid.from_file(converted_buff)
 
     assert new_grid == roff_grid

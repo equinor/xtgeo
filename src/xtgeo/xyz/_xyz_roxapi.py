@@ -398,7 +398,7 @@ def _check_category_etc(
 
     stypedict = {"horizons": proj.horizons, "zones": proj.zones, "faults": proj.faults}
 
-    if stype in stypedict.keys():
+    if stype in stypedict:
         if name not in stypedict[stype]:
             logger.error("Cannot access name in stype=%s: %s", stype, name)
             return False
@@ -432,7 +432,7 @@ def _check_category_etc(
         else:
             roxxyz = proj.clipboard
 
-        if name not in roxxyz.keys():
+        if name not in roxxyz:
             raise ValueError(f"Name {name} is not within Clipboard...")
 
     elif stype in ("clipboard", "general2d_data") and mode == "set":

@@ -119,17 +119,11 @@ def _slice_cube_window(
         optprogress = 1
 
     if not isinstance(attribute, list):
-        if attribute == "all":
-            attrlist = ALLATTRS
-        else:
-            attrlist = [attribute]
+        attrlist = ALLATTRS if attribute == "all" else [attribute]
     else:
         attrlist = attribute
 
-    if zsurf is not None:
-        this = zsurf
-    else:
-        this = self.copy()
+    this = zsurf if zsurf is not None else self.copy()
 
     if other is not None:
         zdelta = np.absolute(this.values - other.values)

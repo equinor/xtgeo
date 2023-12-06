@@ -238,7 +238,7 @@ class RoffParameter:
         # interested in with None as the initial value. We go through the
         # tag/tagkeys in the file and replace as they are found.
         found = {
-            tag_name: {key_name: None for key_name in tag_keys.keys()}
+            tag_name: {key_name: None for key_name in tag_keys}
             for tag_name, tag_keys in translate_kws.items()
         }
         found["filedata"] = {"filetype": None}
@@ -256,7 +256,7 @@ class RoffParameter:
                         if should_skip_parameter(tag, key):
                             # Found a parameter, but not the one we are looking for
                             # reset and look on
-                            for key_name in found["parameter"].keys():
+                            for key_name in found["parameter"]:
                                 found["parameter"][key_name] = None
                             break
                         if key[0] in found[tag]:

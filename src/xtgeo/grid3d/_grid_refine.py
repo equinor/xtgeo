@@ -50,9 +50,8 @@ def refine_vertically(
 
             subgrids = self.subgrids_from_zoneprop(zoneprop)
 
-            if oldsubgrids:
-                if subgrids.values() != oldsubgrids.values():
-                    xtg.warn("ISSUES!!!")
+            if oldsubgrids and subgrids.values() != oldsubgrids.values():
+                xtg.warn("ISSUES!!!")
 
         # 2b: zoneprop is not present
         elif zoneprop is None and self.subgrids:

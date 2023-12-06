@@ -13,7 +13,7 @@ from xtgeo.roxutils import RoxUtils
 try:
     import roxar  # type: ignore
 except ImportError:
-    pass
+    roxar = None
 
 logger = null_logger(__name__)
 

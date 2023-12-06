@@ -75,9 +75,13 @@ def sanitize_date(
         return [date]
     if date not in ("first", "last"):
         try:
-            if isinstance(date, str):
-                if len(date) == 10 and date[4] == "-" and date[7] == "-":
-                    date = date.replace("-", "")
+            if (
+                isinstance(date, str)
+                and len(date) == 10
+                and date[4] == "-"
+                and date[7] == "-"
+            ):
+                date = date.replace("-", "")
             return [int(date)]
         except ValueError as err:
             raise ValueError(

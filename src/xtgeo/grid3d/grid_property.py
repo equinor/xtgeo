@@ -874,10 +874,11 @@ class GridProperty(_Grid3D):
             The values as a masked numpy array.
 
         """
-        currentmask = None
-        if self._values is not None:
-            if isinstance(self._values, np.ma.MaskedArray):
-                currentmask = np.ma.getmaskarray(self._values)
+        currentmask = (
+            np.ma.getmaskarray(self._values)
+            if self._values is not None and isinstance(self._values, np.ma.MaskedArray)
+            else None
+        )
 
         if isinstance(invalues, (int, float)):
             vals = np.ma.zeros((ncol, nrow, nlay), order="C", dtype=self.dtype)

@@ -126,10 +126,7 @@ class Map(BasePlot):
         logger.info("Current colormap is %s, requested is %s", self.colormap, colormap)
         logger.info("Current colormap name is %s", self.colormap.name)
 
-        if ma.std(zi) > 1e-07:
-            uselevels = levels
-        else:
-            uselevels = 1
+        uselevels = levels if ma.std(zi) > 1e-07 else 1
 
         try:
             if logarithmic is False:

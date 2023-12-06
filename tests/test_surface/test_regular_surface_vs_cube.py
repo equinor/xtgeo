@@ -678,7 +678,7 @@ def test_cube_attr_mean_two_surfaces_multiattr(tmpdir, load_cube_rsgy1, generate
     assert xss.values.mean() == attrs["rms"].values.mean()
     assert xss.values.std() == attrs["rms"].values.std()
 
-    for attr in attrs.keys():
+    for attr in attrs:
         xxx = attrs[attr]
         xxx.to_file(join(tmpdir, "surf_slice_cube_2surf_" + attr + "multi.gri"))
 

@@ -203,7 +203,7 @@ class _Formatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         filename = "unset_filename"
 
-        if "pathname" in record.__dict__.keys():
+        if "pathname" in record.__dict__:
             # truncate the pathname
             filename = record.pathname
             if len(filename) > 40:
