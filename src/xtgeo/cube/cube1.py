@@ -82,7 +82,7 @@ def _allow_deprecated_init(func):
             warnings.warn(
                 "Initializing directly from file name is deprecated and will be "
                 "removed in xtgeo version 4.0. Use: "
-                "mcube = xtgeo.cube_from_file('some_name.gri') instead",
+                "mcube = xtgeo.cube_from_file('some_name.segy') instead",
                 DeprecationWarning,
             )
             cfile = args[0]
