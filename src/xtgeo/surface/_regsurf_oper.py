@@ -382,9 +382,7 @@ def get_fence(self, xyfence, sampling="bilinear"):
 
     xyfence[:, 2] = czarr
     xyfence = ma.masked_greater(xyfence, xtgeo.UNDEF_LIMIT)
-    xyfence = ma.mask_rows(xyfence)
-
-    return xyfence
+    return ma.mask_rows(xyfence)
 
 
 def get_randomline(
@@ -428,9 +426,7 @@ def get_randomline(
         logger.warning("Seem to be rotten")
 
     zcoords[zcoords > xtgeo.UNDEF_LIMIT] = np.nan
-    arr = np.vstack([hcoords, zcoords]).T
-
-    return arr
+    return np.vstack([hcoords, zcoords]).T
 
 
 def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):

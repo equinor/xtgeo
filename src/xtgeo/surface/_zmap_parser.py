@@ -120,13 +120,13 @@ def parse_values(zmap_data, nan_value):
     """
     values = []
     for line in zmap_data:
-        if is_comment(line):
-            continue
-        else:
+        if not is_comment(line):
             values += line.split()
-    values = np.array(values, dtype=np.float32)
-    values = np.ma.masked_equal(values, nan_value)
-    return values
+
+    return np.ma.masked_equal(
+        np.array(values, dtype=np.float32),
+        nan_value,
+    )
 
 
 @takes_stream("zmap_file", "r")

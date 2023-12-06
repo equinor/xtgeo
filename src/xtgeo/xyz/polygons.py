@@ -314,7 +314,7 @@ class Polygons(XYZ):
             attributes=attributes,
         )
 
-    def _reset(
+    def _reset(  # pylint: disable=arguments-renamed
         self,
         values: list | np.ndarray | pd.DataFrame,
         xname: str = "X_UTME",
@@ -327,7 +327,7 @@ class Polygons(XYZ):
         dtname: str = "T_DELTALEN",
         name: str = "poly",
         attributes: dict | None = None,
-    ):
+    ):  # pylint: disable=arguments-differ
         """Used in deprecated methods."""
 
         super()._reset(xname, yname, zname)
@@ -549,10 +549,7 @@ class Polygons(XYZ):
         # here for backward compatibility:
         self.dataframe = self.dataframe.drop("WellName", axis=1)
 
-        if nwells == 0:
-            return None
-        else:
-            return nwells
+        return None if nwells == 0 else nwells
 
     def to_roxar(
         self,

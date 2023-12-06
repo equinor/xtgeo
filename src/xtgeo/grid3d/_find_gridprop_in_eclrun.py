@@ -200,11 +200,10 @@ def read_values(generator, intehead, names, lengths="all"):
         # not include those to keep backwards compatability.
         # TODO: deprecate this behavior
         return values
-    else:
-        values.update(
-            **remainder_saturations({k: values[k] for k in sat_keys if k in values})
-        )
-        return {name: values[name] for name in names if name in values}
+    values.update(
+        **remainder_saturations({k: values[k] for k in sat_keys if k in values})
+    )
+    return {name: values[name] for name in names if name in values}
 
 
 def check_grid_match(intehead: InteHead, logihead: LogiHead, grid):
@@ -274,9 +273,9 @@ def valid_gridprop_lengths(grid):
         num_fracture = len(grid.get_dualactnum_indices(fracture=True))
         num_matrix = len(grid.get_dualactnum_indices(fracture=False))
         return [2 * num_cells, num_fracture + num_matrix]
-    else:
-        num_active = len(grid.get_actnum_indices())
-        return [num_cells, num_active]
+
+    num_active = len(grid.get_actnum_indices())
+    return [num_cells, num_active]
 
 
 def match_values_to_active_cells(

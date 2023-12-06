@@ -68,8 +68,7 @@ def import_roff_gridproperties(
                 name,
             )
 
-    props = [
+    return [
         xtgeo.gridproperty_from_file(pfile.file, fformat="roff", name=name)
         for name in usenames
     ]
-    return props

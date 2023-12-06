@@ -52,7 +52,7 @@ class EclRun:
         )
 
     def get_restart_properties(self, names, dates, **kwargs):
-        gps = xtgeo.gridproperties_from_file(
+        return xtgeo.gridproperties_from_file(
             self.restart_path,
             fformat="unrst",
             grid=self.grid,
@@ -60,13 +60,11 @@ class EclRun:
             names=names,
             **kwargs,
         )
-        return gps
 
     def get_init_properties(self, names, **kwargs):
-        gps = xtgeo.gridproperties_from_file(
+        return xtgeo.gridproperties_from_file(
             self.init_path, grid=self.grid, fformat="init", names=names, **kwargs
         )
-        return gps
 
 
 @pytest.fixture(name="grids_etc_path")

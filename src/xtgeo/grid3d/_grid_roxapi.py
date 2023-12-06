@@ -42,10 +42,11 @@ def import_grid_roxapi(
 
     """
     rox = RoxUtils(projectname, readonly=True)
-    if dimonly:
-        return _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info)
-    else:
-        return _import_grid_roxapi_v2(rox, gname, realisation, info)
+    return (
+        _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info)
+        if dimonly
+        else _import_grid_roxapi_v2(rox, gname, realisation, info)
+    )
 
 
 def _import_grid_roxapi_v1(

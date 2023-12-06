@@ -377,7 +377,7 @@ def _allow_deprecated_init(func):
                 fformat = kwargs.get("fformat", "guess")
                 return func(cls, **_file_importer(args[0], fformat))
 
-            elif isinstance(args[0], xtgeo.RegularSurface):
+            if isinstance(args[0], xtgeo.RegularSurface):
                 warnings.warn(
                     "Initializing directly from RegularSurface is deprecated "
                     "and will be removed in xtgeo version 4.0. Use: "
@@ -534,8 +534,7 @@ class Points(XYZ):
 
     def __repr__(self):
         # should be able to newobject = eval(repr(thisobject))
-        myrp = f"{self.__class__.__name__} (filesrc={self._filesrc!r}, ID={id(self)})"
-        return myrp
+        return f"{self.__class__.__name__} (filesrc={self._filesrc!r}, ID={id(self)})"
 
     def __str__(self):
         """User friendly print."""

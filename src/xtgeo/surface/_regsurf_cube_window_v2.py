@@ -242,9 +242,7 @@ def _attributes_betw_surfaces(
 
     logger.info("Results updated, with size %s", results.shape)
 
-    results = results.reshape((len(ALLATTRS), self.ncol * self.nrow), order="C")
-
-    return results
+    return results.reshape((len(ALLATTRS), self.ncol * self.nrow), order="C")
 
 
 def _slice_cube_window_resample(

@@ -203,7 +203,7 @@ class Well:
 
     def __repr__(self):  # noqa: D105
         # should (in theory...) be able to newobject = eval(repr(thisobject))
-        myrp = (
+        return (
             f"{self.__class__.__name__} (rkb={self._rkb}, xpos={self._xpos}, "
             f"ypos={self._ypos}, wname='{self._wname}', "
             f"filesrc='{self._filesrc}', mdlogname='{self._mdlogname}', "
@@ -212,8 +212,6 @@ class Well:
             f"\nwlogrecords='{self._wdata.attr_records}', "
             f"df=\n{repr(self._wdata.data)}))"
         )
-
-        return myrp
 
     def __str__(self):  # noqa: D105
         # user friendly print
@@ -319,8 +317,7 @@ class Well:
         """Get well name on syntax safe form; '/' and spaces replaced with '_'."""
         xname = self._wname
         xname = xname.replace("/", "_")
-        xname = xname.replace(" ", "_")
-        return xname
+        return xname.replace(" ", "_")
 
     @property
     def xwellname(self):
@@ -442,8 +439,7 @@ class Well:
 
         xname = "".join(newname)
         xname = xname.replace("_", "")
-        xname = xname.replace(" ", "")
-        return xname
+        return xname.replace(" ", "")
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout."""
@@ -1235,9 +1231,7 @@ class Well:
         Raises:
             RuntimeError if zonelog is not present
         """
-        dfr = _well_oper.report_zonation_holes(self, threshold=threshold)
-
-        return dfr
+        return _well_oper.report_zonation_holes(self, threshold=threshold)
 
     def get_zonation_points(
         self, tops=True, incl_limit=80, top_prefix="Top", zonelist=None, use_undef=False
@@ -1388,7 +1382,7 @@ class Well:
             if a zonelog is missing or or dlogname is missing,
             list is zero length for any reason.
         """
-        dfr = _wellmarkers.get_fraction_per_zone(
+        return _wellmarkers.get_fraction_per_zone(
             self,
             dlogname,
             dcodes,
@@ -1397,8 +1391,6 @@ class Well:
             count_limit=count_limit,
             zonelogname=zonelogname,
         )
-
-        return dfr
 
     def mask_shoulderbeds(
         self,

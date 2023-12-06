@@ -85,21 +85,21 @@ if TYPE_CHECKING:
 def _data_reader_factory(fformat: str) -> Callable:
     if fformat in ["roff_binary", "roff_ascii"]:
         return import_roff
-    elif fformat in ["finit", "init"]:
+    if fformat in ["finit", "init"]:
         return import_gridprop_from_init
 
-    elif fformat in ["funrst", "unrst"]:
+    if fformat in ["funrst", "unrst"]:
         return functools.partial(import_gridprop_from_restart, fformat=fformat)
-    elif fformat == "grdecl":
+    if fformat == "grdecl":
         return import_grdecl_prop
 
-    elif fformat == "bgrdecl":
+    if fformat == "bgrdecl":
         return import_bgrdecl_prop
 
-    elif fformat == "xtg":
+    if fformat == "xtg":
         return import_xtgcpprop
-    else:
-        raise ValueError(f"Invalid grid property file format {fformat}")
+
+    raise ValueError(f"Invalid grid property file format {fformat}")
 
 
 def gridproperty_from_file(
@@ -564,11 +564,10 @@ class GridProperty(_Grid3D):
         logger.debug("DELETING property instance %s", self.name)
 
     def __repr__(self) -> str:
-        myrp = (
+        return (
             f"{self.__class__.__name__} (id={id(self)}) ncol={self._ncol!r}, "
             f"nrow={self._nrow!r}, nlay={self._nlay!r}, filesrc={self._filesrc!r}"
         )
-        return myrp
 
     def __str__(self) -> str:
         return self.describe(flush=False)

@@ -15,8 +15,7 @@ if not xtg.testsetup():
 @pytest.fixture(name="testblockedwells")
 def fixture_testblockedwells(testpath):
     well_files = [join(testpath, "wells", "reek", "1", "OP_1.bw")]
-    bws = xtgeo.blockedwells_from_files(well_files)
-    return bws
+    return xtgeo.blockedwells_from_files(well_files)
 
 
 def test_blockedwells_empty_is_none():

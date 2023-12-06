@@ -67,20 +67,14 @@ class GridRelative(Enum):
     ORIGIN = auto()
 
     def to_grdecl(self) -> str:
-        if self == GridRelative.MAP:
-            return "MAP"
-        else:
-            return ""
+        return "MAP" if self == GridRelative.MAP else ""
 
     def to_bgrdecl(self) -> str:
         return self.to_grdecl().ljust(8)
 
     @classmethod
     def from_grdecl(cls, unit_string: str):
-        if match_keyword(unit_string, "MAP"):
-            return cls.MAP
-        else:
-            return cls.ORIGIN
+        return cls.MAP if match_keyword(unit_string, "MAP") else cls.ORIGIN
 
     @classmethod
     def from_bgrdecl(cls, unit_string):
@@ -171,6 +165,7 @@ class Order(Enum):
             return cls.INCREASING
         if match_keyword(order_string, "DEC"):
             return cls.DECREASING
+        return None
 
     @classmethod
     def from_bgrdecl(cls, unit_string: Union[bytes, str]):
@@ -326,23 +321,14 @@ class CoordinateType(Enum):
     CYLINDRICAL = auto()
 
     def to_grdecl(self) -> str:
-        if self == CoordinateType.CARTESIAN:
-            return "F"
-        else:
-            return "T"
+        return "F" if self == CoordinateType.CARTESIAN else "T"
 
     def to_bgrdecl(self) -> int:
-        if self == CoordinateType.CARTESIAN:
-            return 0
-        else:
-            return 1
+        return 0 if self == CoordinateType.CARTESIAN else 1
 
     @classmethod
     def from_bgrdecl(cls, coord_value: int):
-        if coord_value == 0:
-            return cls.CARTESIAN
-        else:
-            return cls.CYLINDRICAL
+        return cls.CARTESIAN if coord_value == 0 else cls.CYLINDRICAL
 
     @classmethod
     def from_grdecl(cls, coord_string: str):

@@ -242,18 +242,15 @@ class XYZ(ABC):
             if cname in self.geometry_columns():
                 if strict:
                     raise ValueError(f"The column {cname} is not present.")
-                else:
-                    logger.info(
-                        "The column %s is a geometry and will not be deleted.", cname
-                    )
+                logger.info(
+                    "The column %s is a geometry and will not be deleted.", cname
+                )
                 continue
 
             if cname not in self.dataframe:
                 if strict:
                     raise ValueError(f"The column {cname} is not present.")
-                else:
-                    logger.info("Trying to delete %s, but it is not present.", cname)
-                    # xtg.warnuser(f"Trying to delete {cname}, but it is not present.")
+                logger.info("Trying to delete %s, but it is not present.", cname)
             else:
                 self.dataframe.drop(cname, axis=1, inplace=True)
 

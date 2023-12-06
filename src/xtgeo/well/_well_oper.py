@@ -542,8 +542,7 @@ def _get_bseries_by_distance(depth, inseries, distance):
     if res != 0:
         raise RuntimeError("BUG: return from _cxtgeo.well_mask_shoulder not zero")
 
-    res = np.array(bseries, dtype=bool)
-    return res
+    return np.array(bseries, dtype=bool)
 
 
 def create_surf_distance_log(self, surf, name):

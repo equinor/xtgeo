@@ -24,7 +24,7 @@ BIGBOX_DIMENSIONS = (100, 100, 20)
 
 def create_box(testpath):
     # grid = xtgeo.Grid()
-    grid = xtgeo.create_box_grid(
+    return xtgeo.create_box_grid(
         BIGBOX_DIMENSIONS,
         origin=(10.0, 20.0, 1000.0),
         oricenter=False,
@@ -32,7 +32,6 @@ def create_box(testpath):
         rotation=30.0,
         flip=1,
     )
-    return grid
 
 
 @pytest.fixture(

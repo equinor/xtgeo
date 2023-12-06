@@ -592,8 +592,7 @@ class _XTGeoFile:
                                 break
 
                     return f"{main} {fmt} {provider}"
-                else:
-                    return main
+                return main
 
         # Irap binary regular surface format
         if len(buf) >= 8:
@@ -753,8 +752,7 @@ def _convert_carr_double_np(
     """Convert a C array to numpy, assuming double type."""
     if nlen is None:
         nlen = length
-    nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
-    return nparray
+    return _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
 
 
 def _get_carray(

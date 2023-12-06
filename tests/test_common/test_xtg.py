@@ -16,8 +16,7 @@ testpath = xtg.testpathobj
 @pytest.fixture()
 def mylogger():
     # need to do it like this...
-    mlog = xtg.basiclogger(__name__, logginglevel="DEBUG")
-    return mlog
+    return xtg.basiclogger(__name__, logginglevel="DEBUG")
 
 
 def test_info_logger(mylogger, caplog):

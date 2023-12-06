@@ -30,17 +30,11 @@ class OpmSetup:
 
     @property
     def restart_file(self):
-        if self.formatted:
-            return "TEST.FUNRST"
-        else:
-            return "TEST.UNRST"
+        return "TEST.FUNRST" if self.formatted else "TEST.UNRST"
 
     @property
     def init_file(self):
-        if self.formatted:
-            return "TEST.FINIT"
-        else:
-            return "TEST.INIT"
+        return "TEST.FINIT" if self.formatted else "TEST.INIT"
 
     def convert_pressure(self, value):
         if self.unit_system == UnitSystem.METRIC:
@@ -52,6 +46,7 @@ class OpmSetup:
         if self.unit_system == UnitSystem.LAB:
             # atma
             return 0.987 * value
+        return None
 
     def convert_length(self, value):
         if self.unit_system == UnitSystem.METRIC:
@@ -63,6 +58,7 @@ class OpmSetup:
         if self.unit_system == UnitSystem.LAB:
             # cm
             return 1000 * value
+        return None
 
     def convert_density(self, value):
         if self.unit_system == UnitSystem.METRIC:
@@ -74,6 +70,7 @@ class OpmSetup:
         if self.unit_system == UnitSystem.LAB:
             # gm/cc
             return 0.001 * value
+        return None
 
     def convert_volume_ratio(self, value):
         if self.unit_system == UnitSystem.METRIC:
@@ -85,6 +82,7 @@ class OpmSetup:
         if self.unit_system == UnitSystem.LAB:
             # scc/scc
             return value
+        return None
 
     def convert_time(self, value):
         if self.unit_system == UnitSystem.METRIC:
@@ -96,6 +94,7 @@ class OpmSetup:
         if self.unit_system == UnitSystem.LAB:
             # hours
             return 24 * value
+        return None
 
     def deck_contents(self):
         nx, ny, nz = self.grid.dimensions

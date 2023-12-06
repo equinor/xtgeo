@@ -229,7 +229,7 @@ def _xtgeo_to_roxapi_grid(self):  # pragma: no cover
             "roxar not available, this functionality is not available"
         ) from err
 
-    grid2d = roxar.RegularGrid2D.create(
+    return roxar.RegularGrid2D.create(
         x_origin=self.xori,
         y_origin=self.yori,
         i_inc=self.xinc,
@@ -238,5 +238,3 @@ def _xtgeo_to_roxapi_grid(self):  # pragma: no cover
         nj=self.nrow,
         rotation=self.rotation,
     )
-
-    return grid2d

@@ -660,9 +660,7 @@ class Grid(_Grid3D):
 
         """
         actnumv = self.get_actnum().values
-        actnumv = ma.filled(actnumv, fill_value=0)
-
-        return actnumv
+        return ma.filled(actnumv, fill_value=0)
 
     @property
     def actnum_indices(self) -> np.ndarray:
@@ -724,7 +722,7 @@ class Grid(_Grid3D):
 
         if isinstance(self._props, GridProperties):
             return self._props.props
-        elif isinstance(self._props, list):
+        if isinstance(self._props, list):
             raise RuntimeError(
                 "self._props is a list, not a GridProperties " "instance"
             )
@@ -1164,8 +1162,7 @@ class Grid(_Grid3D):
             >>> newgrd = grd.copy()
         """
         logger.info("Copy a Grid instance")
-        other = _grid_etc1.copy(self)
-        return other
+        return _grid_etc1.copy(self)
 
     def describe(
         self,
@@ -1388,7 +1385,7 @@ class Grid(_Grid3D):
 
         """
         if sdict is None:
-            return None
+            return
 
         if not isinstance(sdict, dict):
             raise ValueError("Input sdict is not an dict")
@@ -1509,9 +1506,7 @@ class Grid(_Grid3D):
             if nsubname not in self.subgrids.keys():
                 return None
 
-        res = _grid_etc1.estimate_design(self, nsubname)
-
-        return res
+        return _grid_etc1.estimate_design(self, nsubname)
 
     def estimate_flip(self) -> Literal[1, -1]:
         """Estimate flip (handedness) of grid returns as 1 or -1.
@@ -1573,8 +1568,7 @@ class Grid(_Grid3D):
         if inverse:
             actnumv -= 1
             return np.flatnonzero(actnumv)
-        else:
-            return np.flatnonzero(actnumv)
+        return np.flatnonzero(actnumv)
 
     def get_dualactnum_indices(
         self,

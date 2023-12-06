@@ -31,9 +31,7 @@ def report_zone_mismatch(
     filterlogname: str | None = None,
     filterlogrange: tuple[int | float, int | float] = (1e-32, 9999.0),
     resultformat: Literal[1, 2] = 1,
-) -> (
-    dict[str, float | int | Well] | tuple[float, int, int] | None
-):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+) -> dict[str, float | int | Well] | tuple[float, int, int] | None:  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Reports well to zone mismatch; this works together with a Well object.
 
     The idea is to sample the current zone property for the well in the grid as fast as

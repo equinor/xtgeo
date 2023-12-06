@@ -28,12 +28,11 @@ if TYPE_CHECKING:
 def _data_reader_factory(fformat):
     if fformat == "segy":
         return _cube_import.import_segy
-    elif fformat == "storm":
+    if fformat == "storm":
         return _cube_import.import_stormcube
-    elif fformat == "xtg":
+    if fformat == "xtg":
         return _cube_import.import_xtgregcube
-    else:
-        raise ValueError(f"File format fformat={fformat} is not supported")
+    raise ValueError(f"File format fformat={fformat} is not supported")
 
 
 def cube_from_file(mfile, fformat="guess"):
@@ -285,12 +284,11 @@ class Cube:
     def __repr__(self):
         """The __repr__ method."""
         avg = self.values.mean()
-        dsc = (
+        return (
             f"{self.__class__} (ncol={self.ncol!r}, nrow={self.nrow!r}, "
             f"nlay={self.nlay!r}, original file: {self._filesrc}), "
             f"average {avg}, ID=<{id(self)}>"
         )
-        return dsc
 
     def __str__(self):
         """The __str__ method for pretty print."""
@@ -425,8 +423,7 @@ class Cube:
         zslices = range(
             int(self.zori), int(self.zori + self.nlay * self.zinc), int(self.zinc)
         )
-        zslices = np.array(zslices)
-        return zslices
+        return np.array(zslices)
 
     @property
     def traceidcodes(self):
