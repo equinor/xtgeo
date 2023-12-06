@@ -239,7 +239,7 @@ def _data_reader_factory(file_format):
     raise ValueError(f"Unknown file format {file_format}")
 
 
-def allow_deprecated_init(func):
+def _allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of RegularSurface and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -277,7 +277,7 @@ def allow_deprecated_init(func):
     return wrapper
 
 
-def allow_deprecated_default_init(func):
+def _allow_deprecated_default_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of RegularSurface and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -346,8 +346,8 @@ class RegularSurface:
 
     """
 
-    @allow_deprecated_init
-    @allow_deprecated_default_init
+    @_allow_deprecated_init
+    @_allow_deprecated_default_init
     def __init__(
         self,
         ncol: int,

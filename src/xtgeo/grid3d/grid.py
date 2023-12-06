@@ -288,7 +288,7 @@ def grid_from_cube(
 IJKRange: tuple[int, int, int, int, int, int]
 
 
-def allow_deprecated_init(func: Callable) -> Callable:
+def _allow_deprecated_init(func: Callable) -> Callable:
     # This decorator is here to maintain backwards compatibility in the construction
     # of RegularSurface and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -375,7 +375,7 @@ class Grid(_Grid3D):
 
     """
 
-    @allow_deprecated_init
+    @_allow_deprecated_init
     def __init__(
         self,
         coordsv: np.ndarray,
