@@ -924,6 +924,12 @@ class Cube:
         else:
             raise ValueError(f"File format fformat={fformat} is not supported")
 
+    @deprecation.deprecated(
+        deprecated_in="3.6",
+        removed_in="4.0",
+        current_version=__version__,
+        details="Use xtgeo.cube_from_roxar() instead",
+    )
     def from_roxar(self, project, name, folder=None):  # pragma: no cover
         """Import (transfer) a cube from a Roxar seismic object to XTGeo.
 
