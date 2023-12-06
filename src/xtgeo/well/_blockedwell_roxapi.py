@@ -1,11 +1,14 @@
 """Blocked Well input and output, private module for ROXAPI"""
 
+import warnings
+
 import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
 from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
+from xtgeo.common.constants import INT_MIN
 from xtgeo.common.exceptions import WellNotFoundError
 from xtgeo.roxutils import RoxUtils
 
@@ -163,10 +166,6 @@ def _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisa
     else:
         raise WellNotFoundError(f"No such well in blocked well set: {wname}")
 
-    current_bwnames = [item.name for item in bwset.properties]
-    for bwname in current_bwnames:
-        if bwname not in self.lognames:
-            del bwset.properties[bwname]  # remove existing logs that are not in input
     bwnames = [item.name for item in bwset.properties]  # updated list
 
     # get the current indices for the well
@@ -209,9 +208,20 @@ def _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisa
         maskedvalues = np.ma.masked_invalid(self.dataframe[lname].values).astype(
             usedtype
         )
-        # there are cases where RMS API complains on the actual value of the masked data
-        # array being outside range; hence remedy is to set 'data' value to 0
-        maskedvalues.data[maskedvalues.mask] = 0
+
+        # there are cases where the RMS API complains on the actual value of the masked
+        # array being outside range; hence remedy is to set 'data' value to a usedtype
+        # dependent 'undef'. Hpwever still some flaky stuff here...
+        undef = INT_MIN if "int" in str(usedtype) else np.nan
+        maskedvalues.data[maskedvalues.mask] = undef
 
         bwprop[dind] = maskedvalues
-        bwlog.set_values(bwprop, realisation=realisation)
+        try:
+            bwlog.set_values(bwprop, realisation=realisation)
+        except ValueError as err:
+            msg = (
+                f"\nFailed setting blocked log for {lname} in RMS.\n"
+                f"Details:\n{maskedvalues.data}\n{maskedvalues.mask}\n{usedtype}"
+            )
+            logger.critical(msg)
+            raise err

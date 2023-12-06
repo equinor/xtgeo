@@ -200,7 +200,9 @@ class _XYZData:
             if "float" in str(dtype).lower():
                 datatypes[name] = _AttrType.CONT
             elif "int" in str(dtype).lower():
-                datatypes[name] = _AttrType.DISC
+                # although it looks like int, we keep as float since it is not
+                # _explicitly_ set, to preserve backward compatibility.
+                datatypes[name] = _AttrType.CONT  # CONT being INTENTIONAL!
             else:
                 raise RuntimeError(
                     "Log type seems to be something else than float or int for "
@@ -226,6 +228,29 @@ class _XYZData:
 
         self._infer_attr_dtypes()
 
+    def _infer_automatic_record(self, attr_name: str):
+        """Establish automatic record from name, type and values as first attempt."""
+        if self.get_attr_type(attr_name) == _AttrType.CONT.value:
+            self._attr_records[attr_name] = CONT_DEFAULT_RECORD
+        else:
+            # it is a discrete log with missing record; try to find
+            # a default one based on current values...
+            lvalues = self._df[attr_name].to_numpy().round(decimals=0)
+            lvalues = lvalues[~np.isnan(lvalues)]  # remove Nans
+
+            if len(lvalues) > 0:
+                lvalues = lvalues.astype("int")
+                unique = np.unique(lvalues).tolist()
+                codes = {value: str(value) for value in unique}
+                if self._undef_disc in codes:
+                    del codes[self._undef_disc]
+                if const.UNDEF_DISC in codes:
+                    del codes[const.UNDEF_DISC]
+            else:
+                codes = None
+
+            self._attr_records[attr_name] = codes
+
     def _ensure_consistency_attr_records(self):
         """Ensure that data and attr_records are consistent; cf attr_types.
 
@@ -235,35 +260,10 @@ class _XYZData:
         for attr_name, dtype in self._attr_types.items():
             logger.debug("attr_name: %s, and dtype: %s", attr_name, dtype)
             if attr_name not in self._attr_records or not isinstance(
-                self._attr_records[attr_name], (dict, list, tuple)
+                self._attr_records[attr_name],
+                (dict, list, tuple),
             ):
-                if dtype == _AttrType.CONT:
-                    self._attr_records[attr_name] = CONT_DEFAULT_RECORD
-
-                if dtype == _AttrType.DISC:
-                    # it is a discrete log with missing record; try to find
-                    # a default one based on current values...
-                    lvalues = self._df[attr_name].values.round(decimals=0)
-                    lvalues = lvalues[~np.isnan(lvalues)]
-
-                    if len(lvalues) > 0:
-                        lmin = int(lvalues.min())
-                        lmax = int(lvalues.max())
-
-                        lvalues = lvalues.astype("int")
-                        codes = {}
-                        for lval in range(lmin, lmax + 1):
-                            if lval in lvalues:
-                                codes[lval] = str(lval)
-
-                        if self._undef_disc in codes:
-                            del codes[self._undef_disc]
-                        if const.UNDEF_DISC in codes:
-                            del codes[const.UNDEF_DISC]
-                    else:
-                        codes = None
-
-                    self._attr_records[attr_name] = codes
+                self._infer_automatic_record(attr_name)
 
             # correct when attr_types is CONT but attr_records for that entry is a dict
             if (
@@ -365,6 +365,8 @@ class _XYZData:
         """
         logger.debug("Set the attribute type for %s as %s", name, attrtype)
         apply_attrtype = attrtype.upper()
+
+        # allow for optionally using INT and FLOAT in addation to DISC and CONT
         if "FLOAT" in apply_attrtype:
             apply_attrtype = _AttrType.CONT.value
         if "INT" in apply_attrtype:
@@ -373,6 +375,10 @@ class _XYZData:
         if name not in self._attr_types:
             raise ValueError(f"No such log name present: {name}")
 
+        if self.get_attr_type(name) == apply_attrtype:
+            logger.debug("Same attr_type as existing, return")
+            return
+
         if apply_attrtype in _AttrType.__members__:
             self._attr_types[name] = _AttrType[apply_attrtype]
         else:
@@ -380,6 +386,9 @@ class _XYZData:
                 f"Cannot set wlogtype as {attrtype}, not in "
                 f"{list(_AttrType.__members__)}"
             )
+
+        # need to update records with defaults
+        self._infer_automatic_record(name)
 
         self.ensure_consistency()
 

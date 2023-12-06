@@ -597,7 +597,6 @@ def test_blocked_well_from_to_roxar(roxar_project):
 
     bw.delete_log("Zonelog")
     bw.create_log("Some_new")
-    print(bw.dataframe)
 
     bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
 
@@ -605,7 +604,9 @@ def test_blocked_well_from_to_roxar(roxar_project):
     bw_2 = xtgeo.blockedwell_from_roxar(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
-    assert "Zonelog" not in list(bw_2.dataframe.columns)
+
+    # zonelog will still be in Roxar since it was there from before
+    assert "Zonelog" in list(bw_2.dataframe.columns)
     assert "Some_new" in list(bw_2.dataframe.columns)
 
     rox.project.close()

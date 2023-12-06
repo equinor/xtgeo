@@ -36,8 +36,14 @@ def test_well_xyzdata_ensure_attr(generate_data: pd.DataFrame):
     """Testing private method _ensure_attr_types and _ensure_attr_records"""
 
     instance = _XYZData(generate_data)
-    assert "FACIES" in instance._df.columns
+    instance.set_attr_type("FACIES", "CONT")
+    assert instance.get_attr_type("FACIES") == "CONT"
+    assert instance.get_attr_record("FACIES") == ("", "")
+
+    instance.set_attr_type("FACIES", "DISC")
     assert instance.get_attr_record("FACIES") == {1: "1", 3: "3", 4: "4"}
+
+    assert "FACIES" in instance._df.columns
     assert instance.dataframe.FACIES.values.tolist() == [
         1.0,
         2000000000.0,
@@ -57,14 +63,18 @@ def test_well_xyzdata_ensure_attr(generate_data: pd.DataFrame):
     instance._ensure_consistency_attr_types()
     assert "NEW" in instance.dataframe.columns
     assert "NEW" in instance.attr_types
-    assert instance.get_attr_type("NEW") == "DISC"
+    assert instance.get_attr_type("NEW") == "CONT"
 
     instance._ensure_consistency_attr_records()
+    assert instance.get_attr_record("NEW") == ("", "")
+
+    instance.set_attr_type("NEW", "INT")  # use INT as altenative to DISC
+    assert instance.get_attr_type("NEW") == "DISC"
     assert instance.get_attr_record("NEW") == {1: "1"}
 
 
 def test_infer_attr_dtypes(generate_data: pd.DataFrame):
-    """Testing private method _infer_log_dtypes"""
+    """Testing private method _infer_attr_dtypes"""
 
     instance = _XYZData(generate_data)
 
@@ -73,7 +83,7 @@ def test_infer_attr_dtypes(generate_data: pd.DataFrame):
     instance._infer_attr_dtypes()
     res = instance._attr_types
     assert res["X_UTME"].name == "CONT"
-    assert res["FACIES"].name == "DISC"
+    assert res["FACIES"].name == "CONT"
 
     # next, FACIES is predefined in attr_types prior to parsing; here as CONT
     # which shall 'win' in this setting
@@ -85,14 +95,12 @@ def test_infer_attr_dtypes(generate_data: pd.DataFrame):
 
 
 def test_ensure_dataframe_dtypes(generate_data: pd.DataFrame):
-    """Testing private method _ensure_cosistency_df_dtypes"""
+    """Testing private method _ensure_consistency_df_dtypes"""
 
     instance = _XYZData(generate_data, floatbits="float32")
 
     assert instance.data["FACIES"].dtype == "float32"
-    instance.data["FACIES"] = instance.data["FACIES"].astype("int32")
-    assert instance.data["FACIES"].dtype == "int32"
-
+    instance.set_attr_type("FACIES", "DISC")
     instance._ensure_consistency_df_dtypes()
     assert instance.data["FACIES"].dtype == "float32"
 
@@ -108,11 +116,11 @@ def test_well_xyzdata_consistency_add_column(generate_data: pd.DataFrame):
         "Z_TVDSS": _AttrType.CONT,
         "MDEPTH": _AttrType.CONT,
         "GR": _AttrType.CONT,
-        "FACIES": _AttrType.DISC,
-        "ZONES": _AttrType.DISC,
+        "FACIES": _AttrType.CONT,  # CONT as default; need to set explicitly to DISC
+        "ZONES": _AttrType.CONT,
     }
 
-    instance.data["NEW"] = 1.992
+    instance.dataframe["NEW"] = 1.992
     assert instance.ensure_consistency() is True
 
     assert instance.attr_types == {
@@ -121,15 +129,15 @@ def test_well_xyzdata_consistency_add_column(generate_data: pd.DataFrame):
         "Z_TVDSS": _AttrType.CONT,
         "MDEPTH": _AttrType.CONT,
         "GR": _AttrType.CONT,
-        "FACIES": _AttrType.DISC,
-        "ZONES": _AttrType.DISC,
+        "FACIES": _AttrType.CONT,
+        "ZONES": _AttrType.CONT,
         "NEW": _AttrType.CONT,
     }
 
-    instance.data["DNEW"] = [1, -999, 3, 4, 4, 1, 1]
-    assert instance.ensure_consistency() is True
-
-    # rerun on SAME data shall not run ensure_consistency(), hence -> False
+    dataframe = instance.dataframe.copy()
+    dataframe["DNEW"] = [1, -999, 3, 4, 4, 1, 1]
+    instance.set_dataframe(dataframe)
+    instance.set_attr_type("DNEW", "DISC")
     assert instance.ensure_consistency() is False
 
     assert instance.attr_types == {
@@ -138,8 +146,8 @@ def test_well_xyzdata_consistency_add_column(generate_data: pd.DataFrame):
         "Z_TVDSS": _AttrType.CONT,
         "MDEPTH": _AttrType.CONT,
         "GR": _AttrType.CONT,
-        "FACIES": _AttrType.DISC,
-        "ZONES": _AttrType.DISC,
+        "FACIES": _AttrType.CONT,
+        "ZONES": _AttrType.CONT,
         "NEW": _AttrType.CONT,
         "DNEW": _AttrType.DISC,
     }
@@ -152,8 +160,8 @@ def test_well_xyzdata_consistency_add_column(generate_data: pd.DataFrame):
         "Z_TVDSS": empty,
         "MDEPTH": empty,
         "GR": empty,
-        "FACIES": {1: "1", 3: "3", 4: "4"},
-        "ZONES": {1: "1", 2: "2", 3: "3", 4: "4"},
+        "FACIES": empty,
+        "ZONES": empty,
         "NEW": empty,
         "DNEW": {1: "1", 3: "3", 4: "4"},
     }
@@ -197,6 +205,8 @@ def test_well_xyzdata_dataframe_copy(generate_data: pd.DataFrame):
     """Test get dataframe method, with option"""
 
     instance = _XYZData(generate_data, floatbits="float32")
+    instance.set_attr_type("FACIES", "DISC")
+    instance.set_attr_type("ZONES", "DISC")
 
     copy = instance.get_dataframe_copy()
     col = list(copy)
