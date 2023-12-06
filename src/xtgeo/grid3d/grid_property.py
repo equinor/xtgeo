@@ -767,11 +767,23 @@ class GridProperty(_Grid3D):
         self._roxorigin = val
 
     @property
+    @deprecation.deprecated(
+        deprecated_in="3.6",
+        removed_in="4.0",
+        current_version=__version__,
+        details="Use gridprop.values instead",
+    )
     def values3d(self) -> np.ma.MaskedArray:
         """DEPRECATED: use values instead (kept for backwards compatibility)."""
         return self._values
 
     @values3d.setter
+    @deprecation.deprecated(
+        deprecated_in="3.6",
+        removed_in="4.0",
+        current_version=__version__,
+        details="Use gridprop.values instead",
+    )
     def values3d(self, values: np.ma.MaskedArray) -> None:
         self.values = values
 
