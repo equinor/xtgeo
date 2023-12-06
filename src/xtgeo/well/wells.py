@@ -40,7 +40,7 @@ def wells_from_files(filelist, *args, **kwargs):
     return Wells([xtgeo.well_from_file(wfile, *args, **kwargs) for wfile in filelist])
 
 
-def allow_deprecated_init(func):
+def _allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Wells and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -72,7 +72,7 @@ class Wells:
         wells: The list of Well objects.
     """
 
-    @allow_deprecated_init
+    @_allow_deprecated_init
     def __init__(self, wells: list[Well] = None):
         if wells is None:
             self._wells = []
