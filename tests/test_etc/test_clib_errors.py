@@ -204,18 +204,6 @@ def test_surf_sample_grd3d_lay():
         )
 
 
-def test_grd3d_read_eclrecord():
-    with pytest.raises(xtgeo.XTGeoCLibError, match="Cannot use file"):
-        _cxtgeo.grd3d_read_eclrecord(
-            None,
-            1,
-            1,
-            np.array([1], dtype=np.int32),
-            np.array([1], dtype=np.float32),
-            np.array([1], dtype=np.float64),
-        )
-
-
 def test_grd3d_reduce_onelayer():
     with pytest.raises(
         xtgeo.XTGeoCLibError,

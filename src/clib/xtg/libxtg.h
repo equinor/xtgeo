@@ -1192,28 +1192,6 @@ grd3d_conv_roxapi_grid(int nx,
                        long n_swig_np_int_inplace_v1    // nactnum
 );
 
-long
-grd3d_scan_eclbinary(FILE *fc,
-                     char *swig_out_char_msize,  // keywords (as one long string)
-                     int nswig_out_char_msize,
-                     int *swig_np_int_aout_v1,  // rectype
-                     long n_swig_np_int_aout_v1,
-                     long *swig_np_lng_aout_v1,  // reclengths
-                     long n_swig_np_lng_aout_v1,
-                     long *swig_np_lng_aout_v2,  // recstarts
-                     long n_swig_np_lng_aout_v2);
-
-int
-grd3d_read_eclrecord(FILE *fc,
-                     long recstart,
-                     int rectype,
-                     int *swig_np_int_inplace_v1,
-                     long n_swig_np_int_inplace_v1,
-                     float *swig_np_flt_inplace_v1,
-                     long n_swig_np_flt_inplace_v1,
-                     double *swig_np_dbl_inplace_v1,
-                     long n_swig_np_dbl_inplace_v1);
-
 int
 grd3d_roff2xtgeo_splitenz(int nz,
                           float zoffset,
@@ -1225,9 +1203,6 @@ grd3d_roff2xtgeo_splitenz(int nz,
                           float *swig_np_flt_inplace_v2,  // *zcornsv
                           long n_swig_np_flt_inplace_v2   // nzcorn
 );
-
-int
-grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax);
 
 int
 grd3d_conv_grid_roxapi(int ncol,

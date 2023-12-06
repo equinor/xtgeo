@@ -27,6 +27,7 @@ GFILE1 = TPATH / "3dgrids/reek/REEK.EGRID"
 IFILE1 = TPATH / "3dgrids/reek/REEK.INIT"
 RFILE1 = TPATH / "3dgrids/reek/REEK.UNRST"
 RFILE2 = TPATH / "3dgrids/simpleb8/E100_3LETTER_TRACER.UNRST"  # has kword with spaces
+SPEFILE1 = TPATH / "3dgrids/bench_spe9/BENCH_SPE9.UNRST"
 
 XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
 
@@ -127,11 +128,31 @@ def test_gridproperties_invalid_format(grid_property):
 def test_scan_dates():
     """A static method to scan dates in a RESTART file"""
     t1 = xtg.timer()
-    dl = GridProperties.scan_dates(RFILE1)  # no need to make instance
+    assert GridProperties.scan_dates(RFILE2) == [(0, 20220101)]
     t2 = xtg.timer(t1)
-    print(f"Dates scanned in {t2} seconds")
+    logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
 
-    assert dl[2][1] == 20000201
+    t1 = xtg.timer()
+    assert GridProperties.scan_dates(RFILE1) == [
+        (0, 19991201), (1, 20000101), (2, 20000201), (3, 20000301), (4, 20000401),
+        (5, 20000501), (6, 20000601), (7, 20000701), (8, 20000801), (9, 20000901),
+        (10, 20001001), (11, 20001101), (12, 20001201), (13, 20010101), (14, 20030101)
+    ]
+    t2 = xtg.timer(t1)
+    logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
+    t1 = xtg.timer()
+    assert GridProperties.scan_dates(SPEFILE1) == [
+        (0, 19900101), (1, 19900102), (2, 19900103), (3, 19900105), (4, 19900109),
+        (5, 19900117), (6, 19900129), (7, 19900210), (8, 19900302), (9, 19900322),
+        (10, 19900411), (11, 19900426), (12, 19900521), (13, 19900620), (14, 19900720),
+        (15, 19900908), (16, 19901028), (17, 19901117), (18, 19901207), (19, 19901227),
+        (20, 19910101), (21, 19910111), (22, 19910121), (23, 19910205), (24, 19910225),
+        (25, 19910327), (26, 19910426), (27, 19910526), (28, 19910625), (29, 19910824),
+        (30, 19911023), (31, 19911222), (32, 19920205), (33, 19920321), (34, 19920505),
+        (35, 19920619)
+    ]
+    t2 = xtg.timer(t1)
+    logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
 
 
 def test_scan_dates_invalid_file():
@@ -143,22 +164,63 @@ def test_scan_dates_invalid_file():
 def test_dates_from_restart():
     """A simpler static method to scan dates in a RESTART file"""
     t1 = xtg.timer()
-    dl = GridProperties.scan_dates(RFILE1, datesonly=True)  # no need to make instance
+    assert GridProperties.scan_dates(RFILE2, datesonly=True) == [20220101]
     t2 = xtg.timer(t1)
-    print(f"Dates scanned in {t2} seconds")
-
-    assert dl[4] == 20000401
+    logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
+    t1 = xtg.timer()
+    assert GridProperties.scan_dates(RFILE1, datesonly=True) == [
+        19991201, 20000101, 20000201, 20000301, 20000401,
+        20000501, 20000601, 20000701, 20000801, 20000901,
+        20001001, 20001101, 20001201, 20010101, 20030101,
+    ]
+    t2 = xtg.timer(t1)
+    logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
+    t1 = xtg.timer()
+    assert GridProperties.scan_dates(SPEFILE1, datesonly=True) == [
+        19900101, 19900102, 19900103, 19900105, 19900109,
+        19900117, 19900129, 19900210, 19900302, 19900322,
+        19900411, 19900426, 19900521, 19900620, 19900720,
+        19900908, 19901028, 19901117, 19901207, 19901227,
+        19910101, 19910111, 19910121, 19910205, 19910225,
+        19910327, 19910426, 19910526, 19910625, 19910824,
+        19911023, 19911222, 19920205, 19920321, 19920505,
+        19920619,
+    ]
+    t2 = xtg.timer(t1)
+    logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
 
 
 def test_scan_keywords():
     """A static method to scan quickly keywords in a RESTART/INIT/*GRID file"""
     t1 = xtg.timer()
+    df = GridProperties.scan_keywords(RFILE2, dataframe=True)
+    t2 = xtg.timer(t1)
+    logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
+    assert df.shape == (36, 4)
+    assert df.loc[0, "KEYWORD"] == "SEQNUM"
+    assert df.loc[12, "KEYWORD"] == "W2 F"
+    assert df.loc[35, "KEYWORD"] == "ENDSOL"
+
+    t1 = xtg.timer()
     df = GridProperties.scan_keywords(RFILE1, dataframe=True)
     t2 = xtg.timer(t1)
-    logger.info("Dates scanned in %s seconds", t2)
-    logger.info(df)
-
+    logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
+    assert df.shape == (627, 4)
+    assert df.loc[0, "KEYWORD"] == "SEQNUM"
     assert df.loc[12, "KEYWORD"] == "SWAT"
+    assert df.loc[300, "KEYWORD"] == "DLYTIM"
+    assert df.loc[626, "KEYWORD"] == "ENDSOL"
+
+    t1 = xtg.timer()
+    df = GridProperties.scan_keywords(SPEFILE1, dataframe=True)
+    t2 = xtg.timer(t1)
+    logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
+    assert df.shape == (3061, 4)
+    assert df.loc[0, "KEYWORD"] == "TNAVHEAD"
+    assert df.loc[12, "KEYWORD"] == "XCON"
+    assert df.loc[1500, "KEYWORD"] == "FLROILK+"
+    assert df.loc[3060, "KEYWORD"] == "ENDSOL"
+
 
 
 def test_scan_ecl_keywords_with_spaces():
