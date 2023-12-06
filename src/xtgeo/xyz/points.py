@@ -561,10 +561,27 @@ class Points(XYZ):
     @property
     def dataframe(self) -> pd.DataFrame:
         """Returns or set the Pandas dataframe object."""
+        warnings.warn(
+            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
+            "Use `get_dataframe()` instead.",
+            PendingDeprecationWarning,
+        )
         return self._df
 
     @dataframe.setter
     def dataframe(self, df):
+        warnings.warn(
+            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
+            "Use `set_dataframe(df)` instead.",
+            PendingDeprecationWarning,
+        )
+        self.set_dataframe(df)
+
+    def get_dataframe(self) -> pd.DataFrame:
+        """Returns or set the Pandas dataframe object."""
+        return self._df.copy()
+
+    def set_dataframe(self, df):
         self._df = df.apply(deepcopy)
 
     def _random(self, nrandom=10):
