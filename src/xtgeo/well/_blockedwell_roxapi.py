@@ -1,7 +1,5 @@
 """Blocked Well input and output, private module for ROXAPI"""
 
-import warnings
-
 import numpy as np
 import numpy.ma as npma
 import pandas as pd
