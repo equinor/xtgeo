@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import warnings
 from copy import deepcopy
 from pathlib import Path
 
@@ -371,10 +372,20 @@ class Well:
     @property
     def dataframe(self):
         """Returns or set the Pandas dataframe object for all logs."""
+        warnings.warn(
+            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
+            "Use `get_dataframe()` instead.",
+            PendingDeprecationWarning,
+        )
         return self._wdata.get_dataframe()
 
     @dataframe.setter
     def dataframe(self, dfr):
+        warnings.warn(
+            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
+            "Use `set_dataframe(df)` instead.",
+            PendingDeprecationWarning,
+        )
         self.set_dataframe(dfr)  # this will include consistency checking!
 
     @property
@@ -576,6 +587,12 @@ class Well:
 
         return wfile.file
 
+    @deprecation.deprecated(
+        deprecated_in="3.6",
+        removed_in="4.0",
+        current_version=__version__,
+        details="Use xtgeo.well_from_file() instead",
+    )
     def from_hdf(
         self,
         wfile: str | Path,
