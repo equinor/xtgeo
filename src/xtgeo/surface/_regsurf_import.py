@@ -30,10 +30,11 @@ def import_irap_binary(mfile, values=True, engine="cxtgeo", **_):
         RuntimeError: Error in reading Irap binary file
         RuntimeError: Problem....
     """
-    if mfile.memstream is True or engine == "python":
-        return _import_irap_binary_purepy(mfile)
-    else:
-        return _import_irap_binary(mfile, values=values)
+    return (
+        _import_irap_binary_purepy(mfile)
+        if mfile.memstream is True or engine == "python"
+        else _import_irap_binary(mfile, values=values)
+    )
 
 
 def _import_irap_binary_purepy(mfile, values=True):
@@ -162,10 +163,11 @@ def import_irap_ascii(mfile, engine="cxtgeo", **_):
     #     1680.5016    1680.7480    1680.9969    1681.2479    1681.5004    1681.7538
     #
 
-    if mfile.memstream is True or engine == "python":
-        return _import_irap_ascii_purepy(mfile)
-    else:
-        return _import_irap_ascii(mfile)
+    return (
+        _import_irap_ascii_purepy(mfile)
+        if mfile.memstream is True or engine == "python"
+        else _import_irap_ascii(mfile)
+    )
 
 
 def _import_irap_ascii_purepy(mfile):
@@ -250,11 +252,7 @@ def _import_irap_ascii(mfile):
 
 def import_ijxyz(mfile, template=None, **_):
     """Import OW/DSG IJXYZ ascii format."""
-
-    if not template:
-        return _import_ijxyz(mfile)
-    else:
-        return _import_ijxyz_tmpl(mfile, template)
+    return _import_ijxyz_tmpl(mfile, template) if template else _import_ijxyz(mfile)
 
 
 def _import_ijxyz(mfile):
@@ -339,7 +337,7 @@ def _import_ijxyz_tmpl(mfile, template):
             "and use e.g. resampling instead."
         )
 
-    elif ier != 0:
+    if ier != 0:
         raise RuntimeError("Unknown error when trying to import the IJXYZ based file!")
 
     val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)

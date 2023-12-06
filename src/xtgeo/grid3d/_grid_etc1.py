@@ -484,8 +484,7 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
     for i in range(24):
         cornerlist.append(_cxtgeo.doublearray_getitem(pcorners, i))
 
-    clist = tuple(cornerlist)
-    return clist
+    return tuple(cornerlist)
 
 
 def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
@@ -684,8 +683,7 @@ def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False, preci
             pcorners,
         )
 
-    cellvol = _cxtgeo.x_hexahedron_volume(pcorners, 24, precision)
-    return cellvol
+    return _cxtgeo.x_hexahedron_volume(pcorners, 24, precision)
 
 
 def get_layer_slice(self, layer, top=True, activeonly=True):
@@ -1317,9 +1315,7 @@ def estimate_flip(self):
     v1 = (corners[3] - corners[0], corners[4] - corners[1], 0.0)
     v2 = (corners[6] - corners[0], corners[7] - corners[1], 0.0)
 
-    flipvalue = find_flip(v1, v2)
-
-    return flipvalue
+    return find_flip(v1, v2)
 
 
 def _convert_xtgformat2to1(self):

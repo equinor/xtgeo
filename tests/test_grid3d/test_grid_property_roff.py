@@ -53,13 +53,10 @@ def roff_parameters(draw, dim=dimensions):
             )
         return RoffParameter(*dims, name, values, code_names, code_values)
 
-    else:
-        values = draw(
-            arrays(
-                shape=dims[0] * dims[1] * dims[2], dtype=np.float32, elements=finites
-            )
-        )
-        return RoffParameter(*dims, name, values)
+    values = draw(
+        arrays(shape=dims[0] * dims[1] * dims[2], dtype=np.float32, elements=finites)
+    )
+    return RoffParameter(*dims, name, values)
 
 
 @given(roff_parameters())

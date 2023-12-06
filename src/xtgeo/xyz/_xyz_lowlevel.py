@@ -40,6 +40,4 @@ def convert_carr_double_np(xyz, carray, nlen=None):  # pragma: no cover
     if nlen is None:
         nlen = len(xyz._df.index)
 
-    nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
-
-    return nparray
+    return _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)

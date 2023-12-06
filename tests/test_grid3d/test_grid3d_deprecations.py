@@ -14,8 +14,7 @@ from .gridprop_generator import grid_properties
 
 @pytest.fixture(name="any_grid")
 def fixture_any_grid():
-    grd = xtgeo.create_box_grid((5, 5, 5))
-    return grd
+    return xtgeo.create_box_grid((5, 5, 5))
 
 
 @pytest.fixture(name="any_gridprop")

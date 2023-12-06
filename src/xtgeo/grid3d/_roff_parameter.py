@@ -114,10 +114,11 @@ class RoffParameter:
             The discrete codes of the parameter in the format of
             xtgeo.GridProperty.
         """
-        if self.code_names is not None and self.code_values is not None:
-            return dict(zip(self.code_values, self.code_names))
-        else:
-            return {}
+        return (
+            dict(zip(self.code_values, self.code_names))
+            if self.code_names is not None and self.code_values is not None
+            else {}
+        )
 
     def xtgeo_values(self) -> np.ndarray:
         """

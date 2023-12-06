@@ -455,7 +455,7 @@ class RegularSurface:
 
     def __repr__(self):
         """Magic method __repr__."""
-        myrp = (
+        return (
             f"{self.__class__.__name__} (xori={self._xori!r}, yori={self._yori!r}, "
             f"xinc={self._xinc!r}, yinc={self._yinc!r}, ncol={self._ncol!r}, "
             f"nrow={self._nrow!r}, rotation={self._rotation!r}, yflip={self._yflip!r}, "
@@ -464,7 +464,6 @@ class RegularSurface:
             f"xlines={self.xlines.shape!r}, values={self.values.shape!r}) "
             f"ID={id(self)}."
         )
-        return myrp
 
     def __str__(self):
         """Magic method __str__ for user friendly print."""
@@ -856,8 +855,7 @@ class RegularSurface:
         # Ignore the mask
         gid += self._values.data.tobytes().hex()
 
-        hash_ = xtgeosys.generic_hash(gid, hashmethod=hashmethod)
-        return hash_
+        return xtgeosys.generic_hash(gid, hashmethod=hashmethod)
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout."""
@@ -1601,8 +1599,7 @@ class RegularSurface:
             args["values"] = jvalues
             jvals._reset(**args)
             return ivals, jvals
-        else:
-            return None
+        return None
 
     def copy(self):
         """Deep copy of a RegularSurface object to another instance.
@@ -1835,9 +1832,7 @@ class RegularSurface:
 
         .. versionchanged:: 2.14 Added keyword option `sampling`
         """
-        zcoord = _regsurf_oper.get_value_from_xy(self, point=point, sampling=sampling)
-
-        return zcoord
+        return _regsurf_oper.get_value_from_xy(self, point=point, sampling=sampling)
 
     def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
         """Returns x, y, z(value) from a single i j location.
@@ -1970,8 +1965,7 @@ class RegularSurface:
 
         entry.update([("X_UTME", xcoord), ("Y_UTMN", ycoord), ("VALUES", values)])
 
-        dataframe = pd.DataFrame(entry)
-        return dataframe
+        return pd.DataFrame(entry)
 
     dataframe = get_dataframe  # for compatibility backwards
 
@@ -2723,7 +2717,7 @@ class RegularSurface:
                 PendingDeprecationWarning,
             )
 
-        asurfs = _regsurf_cube_window.slice_cube_window(
+        return _regsurf_cube_window.slice_cube_window(
             self,
             cube,
             zsurf=zsurf,
@@ -2740,8 +2734,6 @@ class RegularSurface:
             deadtraces=deadtraces,
             algorithm=algorithm,
         )
-
-        return asurfs
 
     # ==================================================================================
     # Special methods
@@ -2820,9 +2812,7 @@ class RegularSurface:
                 snapping to nearest node.
 
         """
-        xyfence = _regsurf_oper.get_fence(self, xyfence, sampling=sampling)
-
-        return xyfence
+        return _regsurf_oper.get_fence(self, xyfence, sampling=sampling)
 
     def get_randomline(
         self,
@@ -2884,7 +2874,7 @@ class RegularSurface:
               The method :meth:`~xtgeo.xyz.polygons.Polygons.get_fence()` which can be
               used to pregenerate `fencespec`
         """
-        xyfence = _regsurf_oper.get_randomline(
+        return _regsurf_oper.get_randomline(
             self,
             fencespec,
             hincrement=hincrement,
@@ -2892,8 +2882,6 @@ class RegularSurface:
             nextend=nextend,
             sampling=sampling,
         )
-
-        return xyfence
 
     def hc_thickness_from_3dprops(
         self,

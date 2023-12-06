@@ -192,9 +192,11 @@ class RoffGrid:
 
         if split == 1:
             return np.array([self.zvals[pos]] * 8)
-        elif split == 2:
+
+        if split == 2:
             return np.array([self.zvals[pos]] * 4 + [self.zvals[pos + 1]] * 4)
-        elif split == 4:
+
+        if split == 4:
             return np.array(
                 [
                     self.zvals[pos],
@@ -204,7 +206,8 @@ class RoffGrid:
                 ]
                 * 2
             )
-        elif split == 8:
+
+        if split == 8:
             return np.array(
                 [
                     self.zvals[pos],
@@ -217,8 +220,8 @@ class RoffGrid:
                     self.zvals[pos + 7],
                 ]
             )
-        else:
-            raise ValueError("Only split types 1, 2, 4 and 8 are supported!")
+
+        raise ValueError("Only split types 1, 2, 4 and 8 are supported!")
 
     def xtgeo_coord(self) -> np.ndarray:
         """
@@ -260,29 +263,34 @@ class RoffGrid:
             self.zvals,
             zcornsv,
         )
+
         if retval == 0:
             return zcornsv.reshape((self.nx + 1, self.ny + 1, self.nz + 1, 4))
-        elif retval == -1:
+
+        if retval == -1:
             raise ValueError("Unsupported split type in split_enz")
-        elif retval == -2:
+
+        if retval == -2:
             expected_size = (self.nx + 1) * (self.ny + 1) * (self.nz + 1)
             raise ValueError(
                 "Incorrect size of splitenz,"
                 f" expected {expected_size} got {len(self.split_enz)}"
             )
-        elif retval == -3:
+
+        if retval == -3:
             expected_size = sum(self.split_enz)
             raise ValueError(
                 "Incorrect size of zdata,"
                 f" expected {expected_size} got {len(self.zvals)}"
             )
-        elif retval == -4:
+
+        if retval == -4:
             raise ValueError(
                 "Incorrect size of zcorn,"
                 f" found {zcornsv.shape} should be multiple of {4 * self.nz}"
             )
-        else:
-            raise ValueError(f"Unknown error {retval} occurred")
+
+        raise ValueError(f"Unknown error {retval} occurred")
 
     def xtgeo_subgrids(self) -> dict[str, range] | None:
         """

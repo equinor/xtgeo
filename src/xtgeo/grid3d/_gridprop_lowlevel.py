@@ -26,8 +26,7 @@ def f2c_order(obj: Grid | GridProperty, values1d: np.ndarray) -> np.ndarray:
     """
     val = np.reshape(values1d, (obj.ncol, obj.nrow, obj.nlay), order="F")
     val = np.asanyarray(val, order="C")
-    val = val.ravel()
-    return val
+    return val.ravel()
 
 
 def c2f_order(obj: Grid | GridProperty, values1d: np.ndarray) -> np.ndarray:
@@ -36,8 +35,7 @@ def c2f_order(obj: Grid | GridProperty, values1d: np.ndarray) -> np.ndarray:
     """
     val = np.reshape(values1d, (obj.ncol, obj.nrow, obj.nlay), order="C")
     val = np.asanyarray(val, order="F")
-    val = val.ravel(order="F")
-    return val
+    return val.ravel(order="F")
 
 
 def update_values_from_carray(
@@ -146,19 +144,19 @@ def delete_carray(self: GridProperty, carray: cArray) -> None:
 
     logger.debug("Enter delete carray values method for %d", id(self))
     if carray is None:
-        return None
+        return
 
     if "int" in str(carray):
         _cxtgeo.delete_intarray(carray)
-        return None
-    elif "float" in str(carray):
+        return
+    if "float" in str(carray):
         _cxtgeo.delete_floatarray(carray)
-        return None
-    elif "double" in str(carray):
+        return
+    if "double" in str(carray):
         _cxtgeo.delete_doublearray(carray)
-        return None
-    else:
-        raise RuntimeError("BUG?")
+        return
+
+    raise RuntimeError("BUG?")
 
 
 def check_shape_ok(self: GridProperty, values: np.ndarray) -> bool:

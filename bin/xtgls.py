@@ -24,8 +24,7 @@ def extract_meta_regsurf(fil):
     with open(fil, "rb") as fhandle:
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
-    meta = json.loads(jmeta, object_pairs_hook=dict)
-    return meta
+    return json.loads(jmeta, object_pairs_hook=dict)
 
 
 def extract_meta_regcube(fil):
@@ -43,9 +42,7 @@ def extract_meta_regcube(fil):
     with open(fil, "rb") as fhandle:
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
-    meta = json.loads(jmeta, object_pairs_hook=dict)
-
-    return meta
+    return json.loads(jmeta, object_pairs_hook=dict)
 
 
 def extract_meta_cpgeom(fil):
@@ -69,9 +66,7 @@ def extract_meta_cpgeom(fil):
     with open(fil, "rb") as fhandle:
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
-    meta = json.loads(jmeta, object_pairs_hook=dict)
-
-    return meta
+    return json.loads(jmeta, object_pairs_hook=dict)
 
 
 def extract_meta(fil):

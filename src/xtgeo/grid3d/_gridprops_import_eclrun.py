@@ -130,12 +130,11 @@ def import_ecl_init_gridproperties(
                     f"Requested keyword {name} is not in INIT file,"
                     f"valid entries are {validnames}, set strict=False to warn instead."
                 )
-            else:
-                logger.warning(
-                    "Requested keyword %s is not in INIT file."
-                    "Entry will not be read, set strict=True to raise Error instead.",
-                    name,
-                )
+            logger.warning(
+                "Requested keyword %s is not in INIT file."
+                "Entry will not be read, set strict=True to raise Error instead.",
+                name,
+            )
 
     results = find_gridprop_from_init_file(
         pfile.file,
@@ -241,15 +240,14 @@ def import_ecl_restart_gridproperties(
                     f"Keyword data combo {name} {date} is not in RESTART file."
                     f"Possible entries are: {validnamedatepairs}"
                 )
-            else:
-                logger.warning(
-                    "Keyword data combo %s %s is not in RESTART file."
-                    "Possible entries are: %s"
-                    "Value will not be imported",
-                    name,
-                    date,
-                    validnamedatepairs,
-                )
+            logger.warning(
+                "Keyword data combo %s %s is not in RESTART file."
+                "Possible entries are: %s"
+                "Value will not be imported",
+                name,
+                date,
+                validnamedatepairs,
+            )
 
     results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
     properties_list = []

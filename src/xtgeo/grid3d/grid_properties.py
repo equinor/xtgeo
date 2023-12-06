@@ -93,7 +93,7 @@ def gridproperties_from_file(
         )
         return GridProperties(props=props)
 
-    elif _fformat.lower() == "init":
+    if _fformat.lower() == "init":
         return GridProperties(
             props=_gridprops_import_eclrun.import_ecl_init_gridproperties(
                 pfile,
@@ -103,7 +103,8 @@ def gridproperties_from_file(
                 maxkeys=MAXKEYWORDS,
             )
         )
-    elif _fformat.lower() == "unrst":
+
+    if _fformat.lower() == "unrst":
         return GridProperties(
             props=_gridprops_import_eclrun.import_ecl_restart_gridproperties(
                 pfile,
@@ -115,8 +116,8 @@ def gridproperties_from_file(
                 maxkeys=MAXKEYWORDS,
             )
         )
-    else:
-        raise ValueError("Invalid file format {_fformat}")
+
+    raise ValueError("Invalid file format {_fformat}")
 
 
 # --------------------------------------------------------------------------------------

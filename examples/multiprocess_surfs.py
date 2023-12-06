@@ -29,8 +29,7 @@ def _get_files_as_regularsurfaces_thread(option=1):
             else:
                 surfs.append(surf)
 
-        regular_surfaces = xtgeo.Surfaces(surfs)
-        return regular_surfaces
+        return xtgeo.Surfaces(surfs)
 
 
 def _get_files_as_regularsurfaces_multiprocess(option=1):
@@ -50,8 +49,7 @@ def _get_files_as_regularsurfaces_multiprocess(option=1):
             else:
                 surfs.append(surf)
 
-        regular_surfaces = xtgeo.Surfaces(surfs)
-        return regular_surfaces
+        return xtgeo.Surfaces(surfs)
 
 
 def _get_regsurff(i):

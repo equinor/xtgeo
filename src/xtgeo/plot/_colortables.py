@@ -11,7 +11,7 @@ logger = null_logger(__name__)
 def random40():
     """Random but fixed color table with 40 entries, mostly for testing."""
 
-    ctable = [
+    return [
         (0.83345071168299956, 0.2382011018575051, 0.6457693086399422),
         (0.541018453798349, 0.48038587236806063, 0.9151873938263322),
         (0.10882072036344093, 0.8838633180878654, 0.5133890790690832),
@@ -54,8 +54,6 @@ def random40():
         (0.18715791502874501, 0.8748052205404021, 0.43694647042971213),
     ]
 
-    return ctable
-
 
 def randomc(nlen):
     """Get a truly random color table with nlen entries."""
@@ -73,7 +71,7 @@ def randomc(nlen):
 def xtgeocolors():
     """Get the XTGeo color table which is basic inherited from old IRAP."""
 
-    ctable = [
+    return [
         (0.500, 0.500, 0.500),  # CGM colour 0 is "dummy" grey
         (0.000, 0.000, 0.000),
         (1.000, 0.000, 0.000),
@@ -331,8 +329,6 @@ def xtgeocolors():
         (1.000, 1.000, 1.000),
         (1.000, 1.000, 1.000),
     ]
-
-    return ctable
 
 
 def colorsfromfile(fname, fformat="rms"):

@@ -50,14 +50,14 @@ def grid_properties(draw, name=keywords, grid=xtgeo_grids):
         )
         gp.dtype = np.int32
         return gp
-    else:
-        values = draw(arrays(shape=dims, dtype=np.float64, elements=finites))
-        return GridProperty(
-            grid,
-            *dims,
-            _name,
-            discrete=is_discrete,
-            values=values,
-            grid=grid,
-            roxar_dtype=np.float32,
-        )
+
+    values = draw(arrays(shape=dims, dtype=np.float64, elements=finites))
+    return GridProperty(
+        grid,
+        *dims,
+        _name,
+        discrete=is_discrete,
+        values=values,
+        grid=grid,
+        roxar_dtype=np.float32,
+    )
