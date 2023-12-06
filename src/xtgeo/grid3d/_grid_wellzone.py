@@ -71,7 +71,7 @@ def report_zone_mismatch(
     if depthrange:
         d1, d2 = depthrange
         wll.dataframe = wll.dataframe[
-            (d1 < wll.dataframe.Z_TVDSS) & (wll.dataframe.Z_TVDSS < d2)
+            (d1 < wll.dataframe.Z_TVDSS) & (d2 > wll.dataframe.Z_TVDSS)
         ]
 
     wll.get_gridproperties(zoneprop, self)

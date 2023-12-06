@@ -269,9 +269,9 @@ class _XYZData:
             if (
                 attr_name in self._attr_records
                 and self._attr_types[attr_name] == _AttrType.CONT
+                and isinstance(self._attr_records[attr_name], dict)
             ):
-                if isinstance(self._attr_records[attr_name], dict):
-                    self._attr_records[attr_name] = CONT_DEFAULT_RECORD
+                self._attr_records[attr_name] = CONT_DEFAULT_RECORD
 
     def _ensure_consistency_df_dtypes(self):
         """Ensure that dataframe float32/64 for all logs, except for XYZ -> float64.

@@ -55,7 +55,7 @@ def attribute_around_surface_symmetric():
     myattrs = mysurf.slice_cube_window(
         mycube, attribute=attrs, sampling="trilinear", zrange=10.0
     )
-    for attr in myattrs.keys():
+    for attr in myattrs:
         myattrs[attr].to_file(
             TMPDIR / ("myfile_symmetric_" + attr + ".dat"), fformat="ijxyz"
         )
@@ -90,7 +90,7 @@ def attribute_around_surface_asymmetric():
     myattrs = mysurf.slice_cube_window(
         mycube, attribute=attrs, sampling="trilinear", zsurf=sabove, other=sbelow
     )
-    for attr in myattrs.keys():
+    for attr in myattrs:
         if DEBUG:
             myattrs[attr].describe()
 
@@ -123,7 +123,7 @@ def attribute_around_constant_cube_slices():
     myattrs = sabove.slice_cube_window(
         mycube, attribute=attrs, sampling="trilinear", zsurf=sabove, other=sbelow
     )
-    for attr in myattrs.keys():
+    for attr in myattrs:
         if DEBUG:
             myattrs[attr].describe()
 

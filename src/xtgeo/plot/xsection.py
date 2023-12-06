@@ -577,10 +577,7 @@ class XSection(BasePlot):
 
             zcolors = {}
             for zone in zrecord:
-                if isinstance(idx[zone], str):
-                    color = idx[zone]
-                else:
-                    color = ctable[idx[zone]]
+                color = idx[zone] if isinstance(idx[zone], str) else ctable[idx[zone]]
 
                 zcolors[zrecord[zone]] = color
 
@@ -671,10 +668,7 @@ class XSection(BasePlot):
 
             pcolors = {}
             for perf in precord:
-                if isinstance(idx[perf], str):
-                    color = idx[perf]
-                else:
-                    color = ctable[idx[perf]]
+                color = idx[perf] if isinstance(idx[perf], str) else ctable[idx[perf]]
 
                 pcolors[precord[perf]] = color
 
@@ -750,10 +744,7 @@ class XSection(BasePlot):
                 text = Well.get_short_wellname(row.CWELL)
 
             if years:
-                if names:
-                    text = text + "\n" + row.CYEAR
-                else:
-                    text = row.CYEAR
+                text = text + "\n" + row.CYEAR if names else row.CYEAR
 
             if names or years:
                 ax.annotate(
@@ -1037,7 +1028,7 @@ class XSection(BasePlot):
 
             slegend = surfacenames
 
-        if self._colormap.N < nlen:
+        if nlen > self._colormap.N:
             raise ValueError(
                 f"Too few colors in color table ({self._colormap.N}) "
                 f"vs number of surfaces ({nlen})"

@@ -347,11 +347,10 @@ class _XTGeoFile:
         if raisetext is None:
             raisetext = f"File {self.name} does not exist or cannot be accessed"
 
-        if "r" in self._mode:
-            if not self.file.is_file() or not self.exists():
-                if raiseerror is not None:
-                    raise raiseerror(raisetext)
-                return False
+        if "r" in self._mode and (not self.file.is_file() or not self.exists()):
+            if raiseerror is not None:
+                raise raiseerror(raisetext)
+            return False
 
         return True
 
@@ -582,7 +581,7 @@ class _XTGeoFile:
                 if details:
                     with h5py.File(self.file, "r") as hstream:
                         for xtgtype in ["RegularSurface", "Well", "CornerPointGrid"]:
-                            if xtgtype in hstream.keys():
+                            if xtgtype in hstream:
                                 fmt = xtgtype
                                 grp = hstream.require_group(xtgtype)
                                 try:
@@ -692,7 +691,7 @@ class _XTGeoFile:
     @staticmethod
     def _validate_format(fmt: str) -> str:
         """Validate format."""
-        if fmt in SUPPORTED_FORMATS.keys() or fmt == "unknown":
+        if fmt in SUPPORTED_FORMATS or fmt == "unknown":
             return fmt
         raise RuntimeError(f"Invalid format: {fmt}")
 

@@ -377,7 +377,7 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
     if isinstance(pmd_dataunits, tuple) and len(pmd_dataunits) == 2:
         unitd, unitz = pmd_dataunits
         if isinstance(unitd, int) and isinstance(unitz, int):
-            if unitd in PMD_DATAUNITDISTANCE.keys() and unitz in PMD_DATAUNITZ.keys():
+            if unitd in PMD_DATAUNITDISTANCE and unitz in PMD_DATAUNITZ:
                 validunits = True
 
             if unitd <= 0 or unitz <= 0:

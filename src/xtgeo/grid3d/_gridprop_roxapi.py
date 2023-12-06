@@ -2,6 +2,7 @@
 """Roxar API functions for XTGeo Grid Property."""
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
@@ -11,10 +12,8 @@ from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.roxutils import RoxUtils
 
-try:
+with contextlib.suppress(ImportError):
     import roxar
-except ImportError:
-    pass
 
 if TYPE_CHECKING:
     from xtgeo.grid3d.grid_property import GridProperty
@@ -207,7 +206,7 @@ def _fix_codes(
         if not name:
             name = str(code)
 
-        if code not in codes_data.keys():
+        if code not in codes_data:
             continue
 
         newcodes[code] = name

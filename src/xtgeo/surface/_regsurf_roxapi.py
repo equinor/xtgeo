@@ -83,10 +83,7 @@ def _roxapi_import_surface(
     elif stype in ("clipboard", "general2d_data"):
         styperef = getattr(proj, stype)
         if category:
-            if "|" in category:
-                folders = category.split("|")
-            else:
-                folders = category.split("/")
+            folders = category.split("|" if "|" in category else "/")
             rox = styperef.folders[folders]
         else:
             rox = styperef
@@ -181,10 +178,7 @@ def _roxapi_export_surface(
     elif stype in ("clipboard", "general2d_data"):
         folders = []
         if category:
-            if "|" in category:
-                folders = category.split("|")
-            else:
-                folders = category.split("/")
+            folders = category.split("|" if "|" in category else "/")
         styperef = getattr(proj, stype)
         if folders:
             styperef.folders.create(folders)

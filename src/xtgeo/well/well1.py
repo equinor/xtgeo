@@ -794,7 +794,7 @@ class Well:
 
         """
         for key in self.get_lognames():
-            if key in wlogs.keys():
+            if key in wlogs:
                 typ, rec = wlogs[key]
                 self._wdata.set_attr_type(key, typ)
                 self._wdata.set_attr_record(key, deepcopy(rec))

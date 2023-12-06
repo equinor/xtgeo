@@ -118,10 +118,7 @@ def import_ecl_init_gridproperties(
         if nlen in valid_lengths and kwname not in validnames:
             validnames.append(kwname)
 
-    if names == "all":
-        usenames = deepcopy(validnames)
-    else:
-        usenames = list(names)
+    usenames = deepcopy(validnames) if names == "all" else list(names)
 
     for name in usenames:
         if name not in validnames:

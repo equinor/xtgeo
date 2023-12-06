@@ -87,10 +87,7 @@ def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=Tr
         pxcor = grp[poly.xname].values
         pycor = grp[poly.yname].values
         pvalue = value
-        if usepoly:
-            pvalue = grp[poly.zname].values.mean()
-        else:
-            pvalue = value
+        pvalue = grp[poly.zname].values.mean() if usepoly else value
 
         logger.info("C function for polygon %s...", id_)
 
@@ -383,7 +380,7 @@ def get_fence(
 
     df = fence.dataframe
     df0 = df.drop(df.index[1:])  # keep always first which has per def H_DELTALEN=0
-    df2 = df[df.H_DELTALEN > updated_distance * 0.01]  # skip very close points
+    df2 = df[updated_distance * 0.01 < df.H_DELTALEN]  # skip very close points
     fence.dataframe = pd.concat([df0, df2], axis=0, ignore_index=True)
 
     # duplicates may still exist; skip those

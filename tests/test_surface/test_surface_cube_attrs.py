@@ -235,7 +235,7 @@ def test_avg_surface(loadsfile1):
         showprogress=False,
     )
 
-    for name in attributes.keys():
+    for name in attributes:
         print(attrs[name].values.mean())
         assert attributes[name] == pytest.approx(attrs[name].values.mean(), abs=0.001)
 
@@ -251,7 +251,7 @@ def test_avg_surface(loadsfile1):
     )
 
     # less strict abs using relative 1%:
-    for name in attributes.keys():
+    for name in attributes:
         assert attributes[name] == pytest.approx(attrs[name].values.mean(), rel=0.01)
 
 

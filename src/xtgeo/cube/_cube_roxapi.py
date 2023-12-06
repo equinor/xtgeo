@@ -51,7 +51,7 @@ def _roxapi_import_cube(self, rox, proj, name, folder):  # pragma: no cover
         fld = folder.split("/")
         path = fld + path
 
-    if path not in proj.seismic.data.keys():
+    if path not in proj.seismic.data:
         raise ValueError(f"Path {path} is not within RMS Seismic Cube container")
     try:
         rcube = proj.seismic.data[path]
@@ -134,11 +134,10 @@ def export_cube_roxapi(
 def _roxapi_export_cube(
     self, proj, rox, name, folder=None, domain="time", compression=("wavelet", 5)
 ):  # type: ignore # pragma: no cover
-    roxar = None
     try:
         import roxar  # type: ignore
     except ImportError:
-        pass
+        roxar = None
 
     logger.info(
         "There are issues with compression %s, hence it is ignored", compression

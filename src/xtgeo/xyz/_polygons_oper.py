@@ -242,8 +242,8 @@ def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
     except AttributeError:
         pass
 
-    recompute_hlen = True if self.hname in self.dataframe else False
-    recompute_tlen = True if self.tname in self.dataframe else False
+    recompute_hlen = self.hname in self.dataframe
+    recompute_tlen = self.tname in self.dataframe
 
     orig_len = len(self.dataframe)
 
@@ -277,4 +277,4 @@ def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
 
     new_len = len(self.dataframe)
 
-    return True if new_len < orig_len else False
+    return new_len < orig_len

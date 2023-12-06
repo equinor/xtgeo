@@ -38,49 +38,64 @@ def test_grid_relative():
     ],
 )
 def test_mapaxes(inp_str, values):
-    with patch("builtins.open", mock_open(read_data=inp_str)) as mock_file:
-        with open_grdecl(mock_file, keywords=["MAPAXES"]) as kw:
-            keyword, values = next(kw)
-            assert keyword == "MAPAXES"
-            mapaxes = ggrid.MapAxes.from_grdecl(values)
-            assert list(mapaxes.origin) == [float(v) for v in values[2:4]]
-            assert list(mapaxes.y_line) == [float(v) for v in values[0:2]]
-            assert list(mapaxes.x_line) == [float(v) for v in values[4:6]]
+    with patch(
+        "builtins.open",
+        mock_open(read_data=inp_str),
+    ) as mock_file, open_grdecl(
+        mock_file,
+        keywords=["MAPAXES"],
+    ) as kw:
+        keyword, values = next(kw)
+        assert keyword == "MAPAXES"
+        mapaxes = ggrid.MapAxes.from_grdecl(values)
+        assert list(mapaxes.origin) == [float(v) for v in values[2:4]]
+        assert list(mapaxes.y_line) == [float(v) for v in values[0:2]]
+        assert list(mapaxes.x_line) == [float(v) for v in values[4:6]]
 
-            assert mapaxes.to_grdecl() == [float(v) for v in values]
+        assert mapaxes.to_grdecl() == [float(v) for v in values]
 
 
 def test_gdorient():
     inp_str = "GDORIENT\n INC INC INC DOWN LEFT /"
-    with patch("builtins.open", mock_open(read_data=inp_str)) as mock_file:
-        with open_grdecl(mock_file, keywords=["GDORIENT"]) as kw:
-            keyword, values = next(kw)
-            assert keyword == "GDORIENT"
-            gdorient = ecl_grid.GdOrient.from_grdecl(values)
+    with patch(
+        "builtins.open",
+        mock_open(read_data=inp_str),
+    ) as mock_file, open_grdecl(
+        mock_file,
+        keywords=["GDORIENT"],
+    ) as kw:
+        keyword, values = next(kw)
+        assert keyword == "GDORIENT"
+        gdorient = ecl_grid.GdOrient.from_grdecl(values)
 
-            assert gdorient.i_order == ecl_grid.Order.INCREASING
-            assert gdorient.k_order == ecl_grid.Order.INCREASING
-            assert gdorient.k_order == ecl_grid.Order.INCREASING
-            assert gdorient.z_direction == ecl_grid.Orientation.DOWN
-            assert gdorient.handedness == ecl_grid.Handedness.LEFT
+        assert gdorient.i_order == ecl_grid.Order.INCREASING
+        assert gdorient.k_order == ecl_grid.Order.INCREASING
+        assert gdorient.k_order == ecl_grid.Order.INCREASING
+        assert gdorient.z_direction == ecl_grid.Orientation.DOWN
+        assert gdorient.handedness == ecl_grid.Handedness.LEFT
 
-            assert gdorient.to_grdecl() == values
+        assert gdorient.to_grdecl() == values
 
 
 def test_specgrid():
     inp_str = "SPECGRID\n 64 118 263 1 F /"
-    with patch("builtins.open", mock_open(read_data=inp_str)) as mock_file:
-        with open_grdecl(mock_file, keywords=["SPECGRID"]) as kw:
-            keyword, values = next(kw)
-            assert keyword == "SPECGRID"
-            specgrid = ggrid.SpecGrid.from_grdecl(values)
-            assert specgrid.ndivix == 64
-            assert specgrid.ndiviy == 118
-            assert specgrid.ndiviz == 263
-            assert specgrid.numres == 1
-            assert specgrid.coordinate_type == ggrid.CoordinateType.CARTESIAN
+    with patch(
+        "builtins.open",
+        mock_open(read_data=inp_str),
+    ) as mock_file, open_grdecl(
+        mock_file,
+        keywords=["SPECGRID"],
+    ) as kw:
+        keyword, values = next(kw)
+        assert keyword == "SPECGRID"
+        specgrid = ggrid.SpecGrid.from_grdecl(values)
+        assert specgrid.ndivix == 64
+        assert specgrid.ndiviy == 118
+        assert specgrid.ndiviz == 263
+        assert specgrid.numres == 1
+        assert specgrid.coordinate_type == ggrid.CoordinateType.CARTESIAN
 
-            assert [str(v) for v in specgrid.to_grdecl()] == values
+        assert [str(v) for v in specgrid.to_grdecl()] == values
 
 
 @pytest.mark.parametrize(
@@ -96,14 +111,19 @@ def test_specgrid():
     ],
 )
 def test_gridunit(inp_str, expected_unit, expected_relative):
-    with patch("builtins.open", mock_open(read_data=inp_str)) as mock_file:
-        with open_grdecl(mock_file, keywords=["GRIDUNIT"]) as kw:
-            keyword, values = next(kw)
-            assert keyword == "GRIDUNIT"
-            gridunit = ggrid.GridUnit.from_grdecl(values)
+    with patch(
+        "builtins.open",
+        mock_open(read_data=inp_str),
+    ) as mock_file, open_grdecl(
+        mock_file,
+        keywords=["GRIDUNIT"],
+    ) as kw:
+        keyword, values = next(kw)
+        assert keyword == "GRIDUNIT"
+        gridunit = ggrid.GridUnit.from_grdecl(values)
 
-            assert gridunit.unit == expected_unit
-            assert gridunit.grid_relative == expected_relative
+        assert gridunit.unit == expected_unit
+        assert gridunit.grid_relative == expected_relative
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])

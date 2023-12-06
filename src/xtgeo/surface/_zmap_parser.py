@@ -80,9 +80,7 @@ def parse_header(zmap_data):
                     keys["precision"],
                     keys["start_column"],
                 ) = line
-                keys["nan_value"] = (
-                    user_nan_value if not dft_nan_value else dft_nan_value
-                )
+                keys["nan_value"] = dft_nan_value if dft_nan_value else user_nan_value
             elif line_nr == 2:
                 (
                     keys["nrow"],

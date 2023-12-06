@@ -35,9 +35,13 @@ def test_gridproperties_init_deprecations(any_gridprop):
     with pytest.warns(DeprecationWarning):
         GridProperties(nlay=10)
 
-    with pytest.raises(ValueError, match="Giving both ncol/nrow/nlay and props"):
-        with pytest.warns(DeprecationWarning):
-            GridProperties(nlay=10, props=[any_gridprop])
+    with pytest.raises(
+        ValueError,
+        match="Giving both ncol/nrow/nlay and props",
+    ), pytest.warns(
+        DeprecationWarning,
+    ):
+        GridProperties(nlay=10, props=[any_gridprop])
 
 
 def test_grid_from_file_warns(tmp_path, any_grid):

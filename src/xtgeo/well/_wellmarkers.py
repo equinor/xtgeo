@@ -62,10 +62,7 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
         use_undef=use_undef,
     )
 
-    if tops:
-        zlist = ztops
-    else:
-        zlist = zisos
+    zlist = ztops if tops else zisos
 
     logger.debug(zlist)
 

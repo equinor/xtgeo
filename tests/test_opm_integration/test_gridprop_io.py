@@ -251,10 +251,7 @@ def test_init_props_reading(case):
 @given(opm_setups)
 def test_restart_prop_reading(case):
     case.run()
-    if case.formatted:
-        fformat = "funrst"
-    else:
-        fformat = "unrst"
+    fformat = "funrst" if case.formatted else "unrst"
 
     pressure = xtgeo.gridproperty_from_file(
         case.restart_file, fformat=fformat, name="PRESSURE", date="last", grid=case.grid

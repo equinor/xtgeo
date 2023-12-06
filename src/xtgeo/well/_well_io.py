@@ -55,14 +55,13 @@ def import_rms_ascii(
                         except ValueError:
                             item = str(item)
                         newrow.append(item)
-                    if all(isinstance(var, float) for var in newrow[-3:]):
-                        if abs(newrow[-1] < 1000.0):
-                            assume_rkb = True
 
-                if assume_rkb:
-                    rkb = float(row.pop())
-                else:
-                    rkb = None
+                    if all(isinstance(var, float) for var in newrow[-3:]) and abs(
+                        newrow[-1] < 1000.0
+                    ):
+                        assume_rkb = True
+
+                rkb = float(row.pop()) if assume_rkb else None
                 ypos = float(row.pop())
                 xpos = float(row.pop())
                 wname = " ".join(map(str, row))
@@ -168,30 +167,28 @@ def _check_special_logs(dfr, mdlogname, zonelogname, strict, wname):
     mname = mdlogname
     zname = zonelogname
 
-    if mdlogname is not None:
-        if mdlogname not in dfr.columns:
-            msg = (
-                f"mdlogname={mdlogname} was requested but no such log found for "
-                f"well {wname}"
-            )
-            mname = None
-            if strict:
-                raise ValueError(msg)
+    if mdlogname is not None and mdlogname not in dfr.columns:
+        msg = (
+            f"mdlogname={mdlogname} was requested but no such log found for "
+            f"well {wname}"
+        )
+        mname = None
+        if strict:
+            raise ValueError(msg)
 
-            logger.warning(msg)
+        logger.warning(msg)
 
     # check for zone log:
-    if zonelogname is not None:
-        if zonelogname not in dfr.columns:
-            msg = (
-                f"zonelogname={zonelogname} was requested but no such log found "
-                f"for well {wname}"
-            )
-            zname = None
-            if strict:
-                raise ValueError(msg)
+    if zonelogname is not None and zonelogname not in dfr.columns:
+        msg = (
+            f"zonelogname={zonelogname} was requested but no such log found "
+            f"for well {wname}"
+        )
+        zname = None
+        if strict:
+            raise ValueError(msg)
 
-            logger.warning(msg)
+        logger.warning(msg)
 
     return mname, zname
 
@@ -286,7 +283,7 @@ def import_wlogs(wlogs: dict):
     """
     wlogtypes = {}
     wlogrecords = {}
-    for key in wlogs.keys():
+    for key in wlogs:
         typ, rec = wlogs[key]
 
         if typ in {_AttrType.DISC.value, _AttrType.CONT.value}:

@@ -320,7 +320,7 @@ def point_in_hexahedron(
 
     status = _cxtgeo.x_point_in_hexahedron(x0, y0, z0, vertices, _algorithm)
 
-    return True if status >= 1 else False
+    return status >= 1
 
 
 def vectorpair_angle3d(

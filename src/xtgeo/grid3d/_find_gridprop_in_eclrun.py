@@ -173,9 +173,8 @@ def read_values(generator, intehead, names, lengths="all"):
         if all(name in values for name in fetch_names):
             break
         kw = entry.read_keyword()
-        if lengths != "all":
-            if entry.read_length() not in lengths:
-                continue
+        if lengths != "all" and entry.read_length() not in lengths:
+            continue
         if names == "all":
             key = kw.rstrip()
             array = entry.read_array()
@@ -258,10 +257,7 @@ def pick_dualporo_values(
         Array of either fracture or matrix values from the input values.
     """
     active_size = len(actind)
-    if len(values) == 2 * num_cells:
-        indsize = num_cells
-    else:
-        indsize = active_size
+    indsize = num_cells if len(values) == 2 * num_cells else active_size
     if fracture:
         return values[-indsize:]
     return values[:indsize]
@@ -304,10 +300,7 @@ def match_values_to_active_cells(
             f"number of active cells {len(actind)}"
         )
 
-    if np.issubdtype(values.dtype, np.integer):
-        undef = xtgeo.UNDEF_INT
-    else:
-        undef = xtgeo.UNDEF
+    undef = xtgeo.UNDEF_INT if np.issubdtype(values.dtype, np.integer) else xtgeo.UNDEF
     result = np.full(fill_value=undef, shape=num_cells, dtype=values.dtype)
     result[actind] = values
     return result
@@ -543,9 +536,8 @@ def find_gridprops_from_restart_file_sections(
         check_grid_match(intehead, logihead, grid)
         date = date_from_intehead(intehead)
 
-        if dates not in ("all", "first", "last"):
-            if date not in dates:
-                continue
+        if dates not in ("all", "first", "last") and date not in dates:
+            continue
 
         section_properties = {
             (name, date): gridprop_params(v, name, date, grid, fracture)
@@ -560,10 +552,9 @@ def find_gridprops_from_restart_file_sections(
             elif date != first_date:
                 break
 
-        elif dates == "last":
-            if date != last_date:
-                last_date = date
-                read_properties = {}
+        elif dates == "last" and date != last_date:
+            last_date = date
+            read_properties = {}
 
         for key in section_properties:
             if key not in read_properties:
@@ -598,11 +589,11 @@ def find_gridprops_from_restart_file(
     close = False
     if isinstance(restart_filelike, (pathlib.Path, str)):
         if fformat == resfo.Format.UNFORMATTED:
-            filehandle = open(restart_filelike, "rb")
+            filehandle = open(restart_filelike, "rb")  # noqa: SIM115
             close = True
             assume_init_file = (str(restart_filelike)).replace(".UNRST", ".INIT")
         elif fformat == resfo.Format.FORMATTED:
-            filehandle = open(restart_filelike, "rt", encoding="ascii")
+            filehandle = open(restart_filelike, "rt", encoding="ascii")  # noqa: SIM115
             close = True
             assume_init_file = (str(restart_filelike)).replace(".FUNRST", ".FINIT")
         else:

@@ -1,10 +1,8 @@
 """Private module for etc functions"""
+import contextlib
 
-
-try:
+with contextlib.suppress(ImportError):
     import roxar
-except ImportError:
-    pass
 
 from xtgeo.common import null_logger
 
@@ -82,13 +80,8 @@ def delete_whatever_category(self, category, stype="horizons"):
         categories.extend(category)
 
     for catg in categories:
-        if stype.lower() == "horizons":
-            try:
-                del project.horizons.representations[catg]
-            except KeyError as kerr:
-                if kerr == catg:
-                    print(f"Cannot delete {kerr}, does not exist")
-        elif stype.lower() == "zones":
+        stype_lower = stype.lower()
+        if stype_lower == "horizons" or stype_lower == "zones":
             try:
                 del project.horizons.representations[catg]
             except KeyError as kerr:

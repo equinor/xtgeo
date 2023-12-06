@@ -161,10 +161,7 @@ def avgsum_from_3dprops_gridding(
         dzv = dzv[xcc < 1e20]
         wei = wei[xcc < 1e20]
 
-        if summing:
-            mvdz = mvv * wei
-        else:
-            mvdz = mvv * dzv * wei
+        mvdz = mvv * wei if summing else mvv * dzv * wei
 
         if qmcompute:
             try:
@@ -194,10 +191,9 @@ def avgsum_from_3dprops_gridding(
     else:
         vvz = msum
 
-    if trimbydz:
-        vvz = ma.masked_where(dzsum < 1.1e-20, vvz)
-    else:
-        vvz = ma.array(vvz)  # so the result becomes a ma array
+    vvz = (
+        ma.masked_where(dzsum < 1.1e-20, vvz) if trimbydz else ma.array(vvz)
+    )  # so the result becomes a ma array
 
     if truncate_le:
         vvz = ma.masked_less(vvz, truncate_le)

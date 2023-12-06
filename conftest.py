@@ -24,19 +24,16 @@ def pytest_runtest_setup(item):
     markers = [value.name for value in item.iter_markers()]
 
     # pytest.mark.bigtest
-    if "bigtest" in markers:
-        if "XTG_BIGTEST" not in os.environ:
-            pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
+    if "bigtest" in markers and "XTG_BIGTEST" not in os.environ:
+        pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
     # pytest.mark.requires_roxar:
-    if "requires_roxar" in markers:
-        if "ROXENV" not in os.environ:
-            pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
+    if "requires_roxar" in markers and "ROXENV" not in os.environ:
+        pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
 
     # pytest.mark.requires_opm:
-    if "requires_opm" in markers:
-        if "HAS_OPM" not in os.environ:
-            pytest.skip("Skip as requires OPM")
+    if "requires_opm" in markers and "HAS_OPM" not in os.environ:
+        pytest.skip("Skip as requires OPM")
 
 
 @pytest.fixture(name="show_plot")

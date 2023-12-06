@@ -1,6 +1,7 @@
 """Roxar API functions for XTGeo Grid Geometry."""
 from __future__ import annotations
 
+import contextlib
 import os
 import tempfile
 from typing import TYPE_CHECKING, Any, Literal
@@ -19,10 +20,8 @@ logger = null_logger(__name__)
 if TYPE_CHECKING:
     from xtgeo.grid3d.grid import Grid
 
-    try:
+    with contextlib.suppress(ImportError):
         import roxar
-    except ImportError:
-        pass
 
 # self is Grid() instance
 

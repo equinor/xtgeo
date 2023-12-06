@@ -454,21 +454,18 @@ def _mask_shoulderbeds_checks(self, inputlogs, targetlogs, nsamples, strict):
     # check that inputlogs exists and that they are discrete, and targetlogs
     useinputs = []
     for inlog in inputlogs:
-        if inlog not in self.wlogtypes.keys() and strict is True:
+        if inlog not in self.wlogtypes and strict is True:
             raise ValueError(f"Input log {inlog} is missing and strict=True")
-        if (
-            inlog in self.wlogtypes.keys()
-            and self.wlogtypes[inlog] != _AttrType.DISC.value
-        ):
+        if inlog in self.wlogtypes and self.wlogtypes[inlog] != _AttrType.DISC.value:
             raise ValueError(f"Input log {inlog} is not of type DISC")
-        if inlog in self.wlogtypes.keys():
+        if inlog in self.wlogtypes:
             useinputs.append(inlog)
 
     usetargets = []
     for target in targetlogs:
-        if target not in self.wlogtypes.keys() and strict is True:
+        if target not in self.wlogtypes and strict is True:
             raise ValueError(f"Target log {target} is missing and strict=True")
-        if target in self.wlogtypes.keys():
+        if target in self.wlogtypes:
             usetargets.append(target)
 
     use_numeric = True
@@ -477,7 +474,7 @@ def _mask_shoulderbeds_checks(self, inputlogs, targetlogs, nsamples, strict):
         if nsamples < 1 or nsamples > maxlen:
             raise ValueError(f"Keyword nsamples must be an int > 1 and < {maxlen}")
     elif isinstance(nsamples, dict):
-        if len(nsamples) == 1 and any(key in nsamples.keys() for key in ["md", "tvd"]):
+        if len(nsamples) == 1 and any(key in nsamples for key in ["md", "tvd"]):
             use_numeric = False
         else:
             raise ValueError(f"Keyword nsamples is incorrect in some way: {nsamples}")

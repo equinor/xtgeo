@@ -467,7 +467,7 @@ def test_polygons_operation_in_polygons(
         )
     )
 
-    inside = True if "inside" in where else False
+    inside = "inside" in where
 
     if shorthand:
         if func == "eli":
