@@ -3046,6 +3046,8 @@ class RegularSurface:
             xtg.warn(f"None or too few map nodes for plotting. Skip output {filename}!")
             return
 
+        import xtgeo.plot
+
         mymap = xtgeo.plot.Map()
 
         logger.info("Infotext is <%s>", infotext)

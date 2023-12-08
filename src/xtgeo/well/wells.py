@@ -222,6 +222,7 @@ class Wells:
             title (str): Title of plot
 
         """
+        import xtgeo.plot
 
         mymap = xtgeo.plot.Map()
 
