@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import io
 from copy import deepcopy
-from typing import Literal
+from typing import TYPE_CHECKING, Generator, Literal
+
+import resfo
 
 import xtgeo
 from xtgeo.common import null_logger
@@ -20,9 +23,49 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = null_logger(__name__)
 
+if TYPE_CHECKING:
+    from xtgeo.common.sys import _XTGeoFile
+
+
+def read_eclrun_properties(xtg_file: _XTGeoFile) -> Generator[str, None, None]:
+    """Generates property names from Eclipse files.
+
+    Args:
+        xtg_file: The _XTGeoFile representing an Eclipse INIT or restart file.
+
+    Returns:
+        Names of properties within the Eclipse file.
+    """
+    is_stream = isinstance(xtg_file.file, (io.BytesIO, io.StringIO))
+    try:
+        if is_stream:
+            mark = xtg_file.file.tell()
+        ntotal = 0
+        nactive = 0
+        for item in resfo.lazy_read(xtg_file.file):
+            keyword = item.read_keyword().strip()
+
+            if keyword == "INTEHEAD":
+                data = item.read_array()
+                # nx * ny * nz
+                ntotal = data[8] * data[9] * data[10]
+                nactive = data[11]
+                continue
+
+            # Do some simple filtering of things that cannot be properties
+            if item.read_length() in (ntotal, nactive) and item.read_type() in (
+                b"INTE",
+                b"REAL",
+                b"DOUB",
+            ):
+                yield keyword
+    finally:
+        if is_stream:
+            xtg_file.file.seek(mark)
+
 
 def sanitize_date_list(
-    dates: list[int] | list[str] | Literal["first", "all", "last"]
+    dates: list[int] | list[str] | Literal["first", "all", "last"],
 ) -> list[int] | Literal["first", "all", "last"]:
     """
     Converts dateformats of the form 'YYYY-MM-DD', 'YYYYMMDD' or YYYYMMDD to

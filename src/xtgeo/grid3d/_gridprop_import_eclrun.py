@@ -52,7 +52,7 @@ def import_gridprop_from_init(pfile, name, grid, fracture=False):
 
 
 def sanitize_date(
-    date: int | str | Literal["first", "last"]
+    date: int | str | Literal["first", "last"],
 ) -> list[int] | Literal["first", "last"]:
     """
     Converts dateformats of the form 'YYYY-MM-DD', 'YYYYMMDD' or YYYYMMDD to

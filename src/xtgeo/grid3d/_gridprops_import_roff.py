@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import io
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Generator, Literal
 
 import roffio
 
@@ -16,59 +16,68 @@ if TYPE_CHECKING:
 logger = null_logger(__name__)
 
 
+def read_roff_properties(xtg_file: _XTGeoFile) -> Generator[str, None, None]:
+    """Generates parameter names from roff files.
+
+    Args:
+        xtg_file: The _XTGeoFile representing a roff file.
+
+    Returns:
+        Names of parameters within the roff file.
+    """
+    is_stream = isinstance(xtg_file.file, (io.BytesIO, io.StringIO))
+    try:
+        if is_stream:
+            mark = xtg_file.file.tell()
+        with roffio.lazy_read(xtg_file.file) as roff_iter:
+            for tag_name, tag_group in roff_iter:
+                for keyword, value in tag_group:
+                    if tag_name == "parameter" and keyword == "name":
+                        yield value
+    finally:
+        if is_stream:
+            xtg_file.file.seek(mark)
+
+
 def import_roff_gridproperties(
     pfile: _XTGeoFile,
-    names: list[str] | Literal["all"],
+    names: list[str] | Literal["all"] = "all",
     strict: bool = True,
 ) -> list[GridProperty]:
     """
     Imports a list of properties from a ROFF file.
 
-    Parameters:
-        pfile:
-            Reference to the file.
-        names:
-            List of names to fetch, can also be "all" to fetch all properties.
-        strict:
-            If strict=True, will raise error if key is not found.
+    Args:
+        pfile: Reference to the file.
+        names: List of names to fetch, can also be "all" to fetch all properties.
+        strict: If strict=True, will raise error if key is not found.
             Defaults to True.
 
     Returns:
         List of GridProperty objects fetched from the ROFF file.
-
     """
-    validnames = set()
-    with roffio.lazy_read(pfile.file) as contents:
-        for tagname, tagkeys in contents:
-            for keyname, values in tagkeys:
-                if tagname == "parameter" and keyname == "name":
-                    validnames.add(values)
-
-    # Rewind if this file is in memory
-    if isinstance(pfile.file, (io.BytesIO, io.StringIO)):
-        pfile.file.seek(0)
-
-    usenames = set()
     if names == "all":
-        usenames = validnames
-    else:
-        for name in names:
-            if name in validnames:
-                usenames.add(name)
-                continue
+        return [
+            xtgeo.gridproperty_from_file(pfile.file, fformat="roff", name=name)
+            for name in read_roff_properties(pfile)
+        ]
 
-            if strict:
-                raise ValueError(
-                    f"Requested keyword {name} is not in ROFF file, valid "
-                    f"entries are {validnames}, set strict=False to warn instead."
-                )
+    prop_names = list(read_roff_properties(pfile))
+    props = []
+    for name in names:
+        if name in prop_names:
+            props.append(
+                xtgeo.gridproperty_from_file(pfile.file, fformat="roff", name=name)
+            )
+        elif strict:
+            raise ValueError(
+                f"Requested keyword {name} is not in ROFF file. Valid "
+                f"entries are {prop_names}. Set strict=False to warn instead."
+            )
+        else:
             logger.warning(
                 "Requested keyword %s is not in ROFF file. Entry will"
-                "not be read, set strict=True to raise Error instead.",
+                "not be read. Set strict=True to raise Error instead.",
                 name,
             )
-
-    return [
-        xtgeo.gridproperty_from_file(pfile.file, fformat="roff", name=name)
-        for name in usenames
-    ]
+    return props

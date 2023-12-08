@@ -10,5 +10,5 @@ from xtgeo.common.exceptions import (
 
 from ._ecl_grid import GridRelative, Units
 from .grid import Grid
-from .grid_properties import GridProperties
+from .grid_properties import GridProperties, list_gridproperties
 from .grid_property import GridProperty

@@ -97,6 +97,7 @@ from xtgeo.grid3d.grid_properties import (
     GridProperties,
     gridproperties_dataframe,
     gridproperties_from_file,
+    list_gridproperties,
 )
 from xtgeo.grid3d.grid_property import (
     GridProperty,
