@@ -15,13 +15,14 @@ from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 from xtgeo.common.version import __version__
 
-from . import (
-    _grid3d_utils as utils,
-    _grid_etc1,
-    _gridprops_import_eclrun,
-    _gridprops_import_roff,
-)
+from . import _grid3d_utils as utils, _grid_etc1
 from ._grid3d import _Grid3D
+from ._gridprops_import_eclrun import (
+    import_ecl_init_gridproperties,
+    import_ecl_restart_gridproperties,
+    read_eclrun_properties,
+)
+from ._gridprops_import_roff import import_roff_gridproperties, read_roff_properties
 from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
@@ -29,7 +30,6 @@ logger = null_logger(__name__)
 
 if TYPE_CHECKING:
     from xtgeo import Grid
-    from xtgeo.common import _XTGeoFile
     from xtgeo.common.types import FileLike
 
 KeywordTuple = Tuple[str, str, int, int]
@@ -39,8 +39,48 @@ GridPropertiesKeywords = Union[
 ]
 
 
+def list_gridproperties(
+    property_file: FileLike,
+    fformat: Literal["roffasc", "roff", "finit", "init", "funrst", "unrst"] = None,
+) -> list[str]:
+    """List the properties in a ROFF or Eclipse INIT/UNRST file.
+
+    Args:
+        property_file: The `FileLike` containing the file to inspect.
+        fformat: The optional format of the provided file. If not provided will
+            attempt to detect it. None by default.
+
+    Returns:
+        A list of property names within the file.
+
+    Raises:
+        ValueError: Unknown or invalid file format.
+
+    Example::
+        >>> static_props = xtgeo.list_gridproperties(reek_dir + "/REEK.INIT")
+        >>> roff_props = xtgeo.list_gridproperties(
+        ...     reek_dir + "/reek_grd_w_props.roff",
+        ...     fformat="roff",
+        ... )
+    """
+    xtg_file = xtgeo._XTGeoFile(property_file, mode="rb")
+    xtg_file.check_file(raiseerror=ValueError)
+
+    _fformat = (
+        xtg_file.generic_format_by_proposal(fformat)
+        if fformat
+        else xtg_file.detect_fformat()
+    ).lower()
+
+    if _fformat in ("roff_ascii", "roff_binary"):
+        return list(read_roff_properties(xtg_file))
+    if _fformat in ("finit", "init", "funrst", "unrst"):
+        return list(read_eclrun_properties(xtg_file))
+    raise ValueError(f"Cannot read properties from file format {fformat}")
+
+
 def gridproperties_from_file(
-    pfile: _XTGeoFile,
+    pfile: FileLike,
     fformat: str | None = None,
     names: list[str] | None = None,
     dates: list[str] | None = None,
@@ -78,25 +118,24 @@ def gridproperties_from_file(
         ...     grid=grd,
         ... )
     """
-    pfile = xtgeo._XTGeoFile(pfile, mode="rb")
+    xtg_file = xtgeo._XTGeoFile(pfile, mode="rb")
+    xtg_file.check_file(raiseerror=ValueError)
 
-    pfile.check_file(raiseerror=ValueError)
+    _fformat = (
+        xtg_file.detect_fformat()
+        if not fformat or fformat == "guess"
+        else xtg_file.generic_format_by_proposal(fformat)
+    ).lower()
 
-    if fformat is None or fformat == "guess":
-        _fformat: str = pfile.detect_fformat()
-    else:
-        _fformat = pfile.generic_format_by_proposal(fformat)  # default
-
-    if _fformat.lower() in ["roff_ascii", "roff_binary"]:
-        props = _gridprops_import_roff.import_roff_gridproperties(
-            pfile, names, strict=strict
-        )
-        return GridProperties(props=props)
-
-    if _fformat.lower() == "init":
+    if _fformat in ("roff_binary", "roff_ascii"):
         return GridProperties(
-            props=_gridprops_import_eclrun.import_ecl_init_gridproperties(
-                pfile,
+            props=import_roff_gridproperties(xtg_file, names, strict=strict)
+        )
+
+    if _fformat in ("init", "finit"):
+        return GridProperties(
+            props=import_ecl_init_gridproperties(
+                xtg_file,
                 grid=grid,
                 names=names,
                 strict=strict[0],
@@ -104,10 +143,10 @@ def gridproperties_from_file(
             )
         )
 
-    if _fformat.lower() == "unrst":
+    if _fformat in ("unrst", "funrst"):
         return GridProperties(
-            props=_gridprops_import_eclrun.import_ecl_restart_gridproperties(
-                pfile,
+            props=import_ecl_restart_gridproperties(
+                xtg_file,
                 dates=dates,
                 grid=grid,
                 names=names,
