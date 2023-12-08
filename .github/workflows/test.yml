@@ -42,7 +42,7 @@ jobs:
         uses: "./.github/actions/setup_testdata"
 
       - name: Run tests
-        run: pytest -n 4 tests --disable-warnings
+        run: pytest -n 4 tests --disable-warnings --generate-plots
 
   hypothesis:
     runs-on: ubuntu-latest
@@ -123,7 +123,7 @@ jobs:
         run: pip freeze
 
       - name: Run tests
-        run: pytest -n 4 tests --disable-warnings
+        run: pytest -n 4 tests --disable-warnings --generate-plots
 
   big:
     runs-on: ubuntu-latest
