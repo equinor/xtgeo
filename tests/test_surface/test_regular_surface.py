@@ -219,7 +219,7 @@ def test_irapbin_import_use_pathib():
 
 def test_irapbin_import_quickplot(tmpdir, show_plot, generate_plot):
     """Import Reek Irap binary and do quickplot."""
-    if not show_plot or generate_plot:
+    if not show_plot and not generate_plot:
         pytest.skip()
 
     xsurf = xtgeo.surface_from_file(TESTSET2)
