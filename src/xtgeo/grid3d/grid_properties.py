@@ -817,6 +817,12 @@ class GridProperties(_Grid3D):
                 raise ValueError("Mismatching dimensions in GridProperties members.")
 
     @staticmethod
+    @deprecation.deprecated(
+        deprecated_in="3.6",
+        removed_in="4.0",
+        current_version=__version__,
+        details="Use xtgeo.list_gridproperties() instead",
+    )
     def scan_keywords(
         pfile: FileLike,
         fformat: Literal["roff", "xecl"] = "xecl",
