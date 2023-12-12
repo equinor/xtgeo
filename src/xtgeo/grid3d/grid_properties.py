@@ -572,7 +572,7 @@ class GridProperties(_Grid3D):
 
         return None
 
-    def append_props(self, proplist: list[GridProperties]) -> None:
+    def append_props(self, proplist: list[GridProperty]) -> None:
         """Add a list of GridProperty objects to current GridProperties instance."""
         if not self._props and proplist:
             self._ncol = proplist[0].ncol

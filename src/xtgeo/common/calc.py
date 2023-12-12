@@ -164,7 +164,9 @@ def averageangle(anglelist: Sequence[float]) -> float:
     return _cxtgeo.x_avg_angles(anglelist)
 
 
-def find_flip(xv: tuple[float], yv: tuple[float]) -> Literal[-1, 1]:
+def find_flip(
+    xv: tuple[float, float, float], yv: tuple[float, float, float]
+) -> Literal[-1, 1]:
     """Find the XY flip status by computing the cross products.
 
     If flip is 1, then the system is right handed in school algebra
