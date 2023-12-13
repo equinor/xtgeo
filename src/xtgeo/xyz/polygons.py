@@ -860,9 +860,9 @@ class Polygons(XYZ):
             linewidth (float): Width of line.
             color (str): Name of color (may use matplotib shortcuts, e.g. 'r' for 'red')
         """
-        import xtgeo.plot
+        import xtgeoviz.plot
 
-        mymap = xtgeo.plot.Map()
+        mymap = xtgeoviz.plot.Map()
         mymap.canvas(title=title, subtitle=subtitle, infotext=infotext)
 
         if others:

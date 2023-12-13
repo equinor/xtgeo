@@ -222,9 +222,9 @@ class Wells:
             title (str): Title of plot
 
         """
-        import xtgeo.plot
+        import xtgeoviz.plot
 
-        mymap = xtgeo.plot.Map()
+        mymap = xtgeoviz.plot.Map()
 
         mymap.canvas(title=title)
 

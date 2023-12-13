@@ -5,6 +5,7 @@
 
 
 import os
+import sys
 import timeit
 import warnings
 
@@ -38,10 +39,10 @@ _xprint("XTGEO __init__ ...")
 ROXAR = True
 try:
     import roxar
-except Exception:
+except ImportError:
     ROXAR = False
 
-if not ROXAR:
+if sys.platform == "linux" and not ROXAR:
     _display = os.environ.get("DISPLAY", "")
     _hostname = os.environ.get("HOSTNAME", "")
     _host = os.environ.get("HOST", "")
@@ -169,3 +170,6 @@ from xtgeo.xyz.polygons import (
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 
 _xprint("XTGEO __init__ done")
+
+# Remove symbols imported for internal use
+del os, sys, timeit, warnings, TIME0, DEBUG, ROXAR, _timer, _xprint

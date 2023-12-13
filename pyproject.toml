@@ -62,6 +62,7 @@ dependencies = [
     "tables;platform_system != 'Darwin' and python_version > '3.8'",      # TODO: mac...
     "tables<3.9;platform_system != 'Darwin' and python_version == '3.8'", # TODO: mac...
     "typing_extensions",
+    "xtgeoviz",
 ]
 
 [project.urls]
