@@ -1180,7 +1180,7 @@ class RegularSurface:
         deprecated_in="2.15",
         removed_in="4.0",
         current_version=__version__,
-        details="Use xtgeo.surface_from_hdf() instead",
+        details="Use xtgeo.surface_from_file() instead",
     )
     def from_hdf(
         self,
