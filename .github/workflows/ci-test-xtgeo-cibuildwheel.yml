@@ -8,22 +8,23 @@ on:
 
 jobs:
   build_and_upload_with_cibw:
-    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os.runs_on }}
-    runs-on: ${{ matrix.os.runs_on }}
+    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os_arch[0] }}
+    runs-on: ${{ matrix.os_arch[0] }}
     strategy:
       fail-fast: false
       matrix:
         cibw_python: [cp38, cp39, cp310, cp311, cp312]
-        os:
-          - runs_on: ubuntu-latest
-            cibw_image: manylinux_x86_64
-          - runs_on: windows-latest
-            cibw_image: win_amd64
-          - runs_on: macos-latest
-            cibw_image: macosx_x86_64
-
+        os_arch: 
+          - [ubuntu-latest, manylinux_x86_64]
+          - [windows-latest, win_amd64]
+          - [macos-latest, macosx_x86_64]
+          - [macos-latest-xlarge, macosx_arm64]
+        exclude:
+          - os_arch: [macos-latest-xlarge, macosx_arm64]
+            cibw_python: cp39
     env:
-      CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os.cibw_image }}
+      CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os_arch[1] }}
+
     steps:
       - uses: actions/checkout@v4
         with:
