@@ -308,7 +308,7 @@ class RoffGrid:
 
     @staticmethod
     def _from_xtgeo_subgrids(
-        xtgeo_subgrids: MutableMapping[str, range | Sequence]
+        xtgeo_subgrids: MutableMapping[str, range | Sequence],
     ) -> np.ndarray:
         """
         Args:

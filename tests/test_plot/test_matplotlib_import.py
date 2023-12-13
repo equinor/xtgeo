@@ -50,6 +50,7 @@ def test_that_mpl_dynamically_imports():
     assert "matplotlib.pyplot" in sys.modules
 
 
+@mock.patch.object(sys, "platform", "linux")
 @mock.patch.dict(sys.modules)
 @mock.patch.dict(os.environ, {"LSB_JOBID": "1"})
 def test_that_agg_backend_set_when_lsf_job():
