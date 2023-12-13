@@ -18,6 +18,7 @@ Contents
    datamodels
    usage
    usextgeoroxar
+   xtgeo_4_migration
    authors
    apireference
 
