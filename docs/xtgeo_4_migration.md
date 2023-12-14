@@ -30,6 +30,9 @@ of deprecation.
 | `Points`         | `Points("x.xyz")`                        | `xtgeo.points_from_file("x.xyz")`
 | `Points`         | `Points().from_file("x.xyz")`            | `xtgeo.points_from_file("x.xyz")`
 | `Points`         | `Points().from_roxar(...)`               | `xtgeo.points_from_roxar(...)`
+| `Points`         | `Points().from_surface(...)`             | `xtgeo.points_from_surface(...)`
+| `Points`         | `Points().from_wells(...)`               | `xtgeo.points_from_wells(...)`
+| `Points`         | `Points().dfrac_from_wells(...)`         | `xtgeo.points_from_wells_dfrac(...)`
 | `Polygons`       | `Polygons("x.xyz")`                      | `xtgeo.polygons_from_file("x.xyz")`
 | `Polygons`       | `Polygons().from_file("x.xyz")`          | `xtgeo.polygons_from_file("x.xyz")`
 | `RegularSurface` | `RegularSurface("x.gri")`                | `xtgeo.surface_from_file("x.gri")`
@@ -170,8 +173,8 @@ import xtgeo
 surf = xtgeo.RegularSurface()  # ⛔️ no longer allowed!
 ```
 
-This is now deprecated and these values must be provided explicitly. Note that
-if `values=...` is not provided it will be default to an array of zeroes.
+These values must be provided explicitly. Note that if `values=...` is not
+provided it defaults to an array of zeroes.
 
 ```python
 import xtgeo
@@ -203,3 +206,124 @@ well = xtgeo.Well(
     df=some_dataframe
 )
 ```
+
+## xtgeo.plot
+
+The `xtgeo.plot` module is now deprecated. This functionality has been moved
+to its own package called `xtgeoviz` which maintains the same API. To update
+just change
+
+```python
+import xtgeo.plot  # ⛔️ no longer allowed! use:
+import xtgeoviz.plot  # same functionality, new package
+```
+
+In the near term we no longer automatically expose the `plot` module directly
+from the `xtgeo` namespace. This means that you cannot use a pattern like
+this:
+
+```python
+import xtgeo
+
+someplot = xtgeo.plot.Map()  # ⛔️ no longer allowed!
+```
+
+You must import `xtgeo.plot` explicitly:
+
+```python
+import xtgeo.plot
+
+someplot = xtgeo.plot.Map()  # ✅
+```
+
+For more information about xtgeoviz feel free to check out its repository at
+[https://github.com/equinor/xtgeoviz](https://github.com/equinor/xtgeoviz)
+and its documentation at
+[https://equinor.github.io/xtgeoviz/](https://equinor.github.io/xtgeoviz/).
+
+## API Deprecations
+
+This section describes method or property deprecations that apply to class
+methods.
+
+### Cube
+
+segy scanning methods have been deprecated. Please use
+[segyio](https://segyio.readthedocs.io/en/latest/) if you still need the
+information these functions provided.
+
+- `Cube.scan_segy_traces()` - deprecated
+- `Cube.scan_segy_header()` - deprecated
+
+### Grid
+
+The following methods are deprecated but with replacements already in place.
+
+- `Grid().create_box()` is deprecated. Use `xtgeo.create_box_grid()` instead.
+- `Grid().dataframe` is deprecated. Use `Grid().get_dataframe()` instead.
+- `Grid().get_gridproperties()` is deprecated. Use `Grid().gridprops` instead.
+- `Grid().get_dxdy()` is deprecated. Use `Grid().get_dx()` and
+  `Grid().get_dy()` instead.
+
+These methods are deprecating the `mask` argument that they can receive. This
+argument has been changed to `asmasked` which is already in place.
+
+- `Grid().get_actnum(mask=True)` is deprecated.
+  Use `asmasked` instead, e.g. `Grid().get_actnum(asmasked=True)`.
+- `Grid().get_dz(mask=True)` is deprecated.
+  Use `asmasked` instead, e.g. `Grid().get_dz(asmasked=True)`.
+- `Grid().get_ijk(mask=True)` is deprecated.
+  Use `asmasked` instead, e.g. `Grid().get_ijk(asmasked=True)`.
+- `Grid().get_xyz(mask=True)` is deprecated.
+  Use `asmasked` instead, e.g. `Grid().get_xyz(asmasked=True)`.
+
+Additionally,
+
+- `Grid().report_zone_mismatch()` has deprecated the `onelayergrid` option.
+  This option is redundant and unneeded.
+
+### GridProperties
+
+- Setting `GridProperties().names` has been deprecated. Names can still be set
+  in the following manner:
+  ```python
+  for prop in gridprops:
+      prop.name = newname
+  ```
+- `GridProperties().dataframe()` has been deprecated. Use
+  `GridProperties().get_dataframe()` instead.
+- `GridProperties.scan_keywords()` has been deprecated. Use
+  `xtgeo.list_gridproperties()` instead.
+
+These methods are deprecating the `mask` argument that they can receive. This
+argument has been changed to `asmasked` which is already in place.
+
+- `GridProperties().get_actnum(mask=True)` is deprecated.
+  Use `asmasked` instead, e.g. `GridProperties().get_actnum(asmasked=True)`.
+- `GridProperties().get_ijk(mask=True)` is deprecated.
+  Use `asmasked` instead, e.g. `GridProperties().get_ijk(asmasked=True)`.
+
+### GridProperty
+
+- `GridProperty().values3d` has been deprecated. Use `GridProperty().values`
+  instead.
+- `GridProperty().get_actnum(mask=True)` is deprecated.
+  Use `asmasked` instead, e.g. `GridProperty().get_actnum(asmasked=True)`.
+
+### Points
+
+- `Points().from_list()` is deprecated. Use a direct initialization instead as
+  `Points(values=plist)`.
+- `Points().from_dataframe()` is deprecated. Use
+  `Points(values=df[[east, north, tvdmsl]], xname=east, yname=north, zname=tvdmsl)`
+  instead.
+
+### Polygons
+
+- `Polygons().from_list()` is deprecated. Use a direct initialization instead as
+  `Polygons(plist)`.
+
+### RegularSurface
+
+- `RegularSurface().quickplot(colortable=...)` the `colortable=` argument is
+  deprecated. Use `quickplot(colormap=...)` instead.
