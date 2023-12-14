@@ -28,6 +28,10 @@ jobs:
       - name: List dependencies
         run: pip freeze
 
-      - name: Ruff
+      - name: Ruff check
         if: ${{ always() }}
         run: ruff check .
+
+      - name: Ruff format
+        if: ${{ always() }}
+        run: ruff format . --check
