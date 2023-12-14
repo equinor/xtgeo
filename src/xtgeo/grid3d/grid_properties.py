@@ -787,7 +787,7 @@ class GridProperties(_Grid3D):
         deprecated_in="2.16",
         removed_in="4.0",
         current_version=__version__,
-        details="Use GridProperty.get_dataframe() instead",
+        details="Use GridProperties().get_dataframe() instead",
     )
     def dataframe(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
@@ -796,7 +796,7 @@ class GridProperties(_Grid3D):
 
         This method is deprecated as of version 2.16 and will be
         removed in version 4.0. Users are advised to use the
-        `GridProperty.get_dataframe()` method instead for similar
+        `GridProperties.get_dataframe()` method instead for similar
         functionality.
 
         Returns:
