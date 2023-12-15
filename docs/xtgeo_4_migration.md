@@ -281,6 +281,8 @@ Additionally,
 
 - `Grid().report_zone_mismatch()` has deprecated the `onelayergrid` option.
   This option is redundant and unneeded.
+- `Grid().grid_from_roxar()` has deprecated the `dimensions_only` option.
+  This option is redundant and unneeded.
 
 ### GridProperties
 
