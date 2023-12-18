@@ -42,7 +42,7 @@ try:
 except ImportError:
     ROXAR = False
 
-if sys.platform == "linux" and not ROXAR:
+if not ROXAR:
     _display = os.environ.get("DISPLAY", "")
     _hostname = os.environ.get("HOSTNAME", "")
     _host = os.environ.get("HOST", "")
