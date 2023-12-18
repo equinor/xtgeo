@@ -453,6 +453,14 @@ class RegularSurface:
         args = _data_reader_factory("zmap_ascii")(mfile, values=values)
         return cls(**args)
 
+    @classmethod
+    def _read_ijxyz(
+        cls, mfile: xtgeo._XTGeoFile, template: xtgeo.RegularSurface | xtgeo.Cube | None
+    ):
+        mfile = xtgeosys._XTGeoFile(mfile)
+        args = _data_reader_factory("ijxyz")(mfile, template=template)
+        return cls(**args)
+
     def __repr__(self):
         """Magic method __repr__."""
         return (
@@ -938,7 +946,7 @@ class RegularSurface:
             engine: Default is "cxtgeo" which use a C backend. Optionally a pure
                 python "python" reader will be used, which in general is slower
                 but may be safer when reading memory streams and/or threading.
-                Engine is relevant for Irap binary, Irap ascii and zmap.
+                Keyword engine is only relevant for Irap binary, Irap ascii and zmap.
 
         Returns:
             Object instance.

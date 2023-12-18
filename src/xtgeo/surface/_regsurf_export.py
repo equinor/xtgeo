@@ -1,7 +1,9 @@
 """Export RegularSurface data."""
+from __future__ import annotations
 
 import json
 import struct
+from typing import TYPE_CHECKING
 
 import h5py
 import hdf5plugin
@@ -11,6 +13,10 @@ import xtgeo
 from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
+
+if TYPE_CHECKING:
+    from xtgeo.common.sys import _XTGeoFile
+    from xtgeo.surface.regular_surface import RegularSurface
 
 logger = null_logger(__name__)
 
@@ -204,8 +210,43 @@ def _export_irap_binary_cxtgeo(self, mfile):
     mfile.cfclose()
 
 
-def export_ijxyz_ascii(self, mfile):
-    """Export to DSG IJXYZ ascii format."""
+def export_ijxyz_ascii(self: RegularSurface, mfile: _XTGeoFile) -> None:
+    # cxtgeo is default since twice as fas as python, but use python if memstreams
+    if mfile.memstream:
+        _export_ijxyz_ascii_python(self, mfile)
+    else:
+        _export_ijxyz_ascii_cxtgeo(self, mfile)
+
+
+def _export_ijxyz_ascii_python(self: RegularSurface, mfile: _XTGeoFile) -> None:
+    """Export to DSG IJXYZ ascii format, using python."""
+    # the python version is ~twice as slow as the cxtgeo version
+
+    dfr = self.get_dataframe(ij=True, order="F")  # order F since this was in cxtgeo
+    ix = dfr.IX - 1  # since dataframe indexing starts at 1
+    jy = dfr.JY - 1
+    inlines = self.ilines[ix]
+    xlines = self.xlines[jy]
+    dfr["IL"] = inlines
+    dfr["XL"] = xlines
+    dfr = dfr[["IL", "XL", "X_UTME", "Y_UTMN", "VALUES"]]
+
+    fmt = "%f"
+
+    if mfile.memstream:
+        buf = dfr.to_csv(sep="\t", float_format=fmt, index=False, header=False)
+        buf = buf.encode("latin1")
+        mfile.file.write(buf)
+    else:
+        dfr.to_csv(mfile.name, sep="\t", float_format=fmt, index=False, header=False)
+
+
+def _export_ijxyz_ascii_cxtgeo(self: RegularSurface, mfile: _XTGeoFile) -> None:
+    """Export to DSG IJXYZ ascii format, using cxtgeo.
+
+    Keep this for while since it was the original solution, and faster,
+    but consider remove in e.g. 4.0."""
+
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
     ier = _cxtgeo.surf_export_ijxyz(
         mfile.get_cfhandle(),

@@ -62,8 +62,8 @@ def surfaces(draw):
         "irap_binary",
         "irap_ascii",
         "zmap_ascii",
-        # "ijxyz",  # This fails horribly
         "petromod",
+        "ijxyz",
         "zmap",
         "zmap_ascii",
         "xtgregsurf",
@@ -84,6 +84,7 @@ def test_simple_io(input_val, expected_result, fformat, engine):
         "irap_ascii",
         "irap_binary",
         "zmap_ascii",
+        "ijxyz",
     ]:
         pytest.skip("Only one engine available")
     surf = RegularSurface(ncol=2, nrow=2, xinc=2.0, yinc=2.0, values=input_val)
@@ -105,7 +106,6 @@ def test_simple_io(input_val, expected_result, fformat, engine):
         "irap_ascii",
         "zmap",
         "zmap_ascii",
-        # "ijxyz",  # This fails horribly
         "petromod",
         "xtgregsurf",
     ],
