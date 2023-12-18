@@ -1,7 +1,9 @@
 """Import RegularSurface data."""
+from __future__ import annotations
 
 import json
 from struct import unpack
+from typing import TYPE_CHECKING
 
 import h5py
 import numpy as np
@@ -12,7 +14,12 @@ import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
+from xtgeo.surface._regsurf_ijxyz_parser import parse_ijxyz
 from xtgeo.surface._zmap_parser import parse_zmap
+
+if TYPE_CHECKING:
+    from xtgeo.cube.cube1 import Cube
+    from xtgeo.surface.regular_surface import RegularSurface
 
 xtg = XTGeoDialog()
 
@@ -250,114 +257,27 @@ def _import_irap_ascii(mfile):
     return args
 
 
-def import_ijxyz(mfile, template=None, **_):
+def import_ijxyz(
+    mfile: xtgeo._XTGeoFile,
+    template: RegularSurface | Cube | None = None,
+    **_,
+) -> dict:
     """Import OW/DSG IJXYZ ascii format."""
-    return _import_ijxyz_tmpl(mfile, template) if template else _import_ijxyz(mfile)
+    ijxyz_data = parse_ijxyz(mfile, template)
 
-
-def _import_ijxyz(mfile):
-    """Import OW/DSG IJXYZ ascii format."""
-    # import of seismic column system on the form:
-    # 2588	1179	476782.2897888889	6564025.6954	1000.0
-    # 2588	1180	476776.7181777778	6564014.5058	1000.0
-    logger.debug("Read data from file... (scan for dimensions)")
-
-    cfhandle = mfile.get_cfhandle()
-
-    xlist = _cxtgeo.surf_import_ijxyz(cfhandle, 0, 1, 1, 1, 0)
-
-    (
-        ier,
-        ncol,
-        nrow,
-        _,
-        xori,
-        yori,
-        xinc,
-        yinc,
-        rot,
-        iln,
-        xln,
-        val,
-        yflip,
-    ) = xlist
-
-    if ier != 0:
-        mfile.cfclose()
-        raise RuntimeError("Import from C is wrong...")
-
-    # now real read mode
-    xlist = _cxtgeo.surf_import_ijxyz(cfhandle, 1, ncol, nrow, ncol * nrow, 0)
-
-    ier, ncol, nrow, _, xori, yori, xinc, yinc, rot, iln, xln, val, yflip = xlist
-
-    if ier != 0:
-        raise RuntimeError("Import from C is wrong...")
-
-    logger.info(xlist)
-
-    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
-    args = {}
-    args["xori"] = xori
-    args["xinc"] = xinc
-    args["yori"] = yori
-    args["yinc"] = yinc
-    args["ncol"] = ncol
-    args["nrow"] = nrow
-    args["rotation"] = rot
-    args["yflip"] = yflip
-
-    args["values"] = val.reshape((args["ncol"], args["nrow"]))
-
-    args["ilines"] = iln
-    args["xlines"] = xln
-
-    mfile.cfclose()
-    return args
-
-
-def _import_ijxyz_tmpl(mfile, template):
-    """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface as template."""
-    cfhandle = mfile.get_cfhandle()
-
-    if isinstance(template, (xtgeo.cube.Cube, xtgeo.surface.RegularSurface)):
-        logger.info("OK template")
-    else:
-        raise ValueError(f"Template is of wrong type: {type(template)}")
-
-    nxy = template.ncol * template.nrow
-    ier, val = _cxtgeo.surf_import_ijxyz_tmpl(
-        cfhandle, template.ilines, template.xlines, nxy, 0
-    )
-
-    if ier == -1:
-        raise ValueError(
-            f"The file {mfile.name} and template map or cube has inconsistent "
-            "inline and/or xlines numbering. Try importing without template "
-            "and use e.g. resampling instead."
-        )
-
-    if ier != 0:
-        raise RuntimeError("Unknown error when trying to import the IJXYZ based file!")
-
-    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
-
-    args = {}
-    args["xori"] = template.xori
-    args["xinc"] = template.xinc
-    args["yori"] = template.yori
-    args["yinc"] = template.yinc
-    args["ncol"] = template.ncol
-    args["nrow"] = template.nrow
-    args["rotation"] = template.rotation
-    args["yflip"] = template.yflip
-    args["values"] = val.reshape((args["ncol"], args["nrow"]))
-
-    args["ilines"] = template._ilines.copy()
-    args["xlines"] = template._xlines.copy()
-
-    mfile.cfclose()
-    return args
+    return {
+        "ncol": ijxyz_data.ncol,
+        "nrow": ijxyz_data.nrow,
+        "xori": ijxyz_data.xori,
+        "yori": ijxyz_data.yori,
+        "xinc": ijxyz_data.xinc,
+        "yinc": ijxyz_data.yinc,
+        "values": ijxyz_data.values,
+        "ilines": ijxyz_data.ilines,
+        "xlines": ijxyz_data.xlines,
+        "yflip": ijxyz_data.yflip,
+        "rotation": ijxyz_data.rotation,
+    }
 
 
 def import_petromod(mfile, **_):

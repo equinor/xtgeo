@@ -264,36 +264,6 @@ surf_import_irap_ascii(FILE *fc,
                        long n_swig_np_dbl_aout_v1,   // nmap
                        int option);
 
-int
-surf_import_ijxyz(FILE *fc,
-                  int mode,
-                  int *swig_int_out_p1,         // *nx
-                  int *swig_int_out_p2,         // *ny
-                  long *swig_lon_out_p1,        // *ndef,
-                  double *swig_dbl_out_p1,      // *xori,
-                  double *swig_dbl_out_p2,      // *yori,
-                  double *swig_dbl_out_p3,      // *xinc,
-                  double *swig_dbl_out_p4,      // *yinc,
-                  double *swig_dbl_out_p5,      // *rot,
-                  int *swig_np_int_aout_v1,     // *ilines,
-                  long n_swig_np_int_aout_v1,   // nilines or ncol,
-                  int *swig_np_int_aout_v2,     // *xlines,
-                  long n_swig_np_int_aout_v2,   // nxlines or nrow,
-                  double *swig_np_dbl_aout_v1,  // *p_map_v
-                  long n_swig_np_dbl_aout_v1,   // nmap = nrow*ncol
-                  int *swig_int_out_p3,         // yflip
-                  int option);
-
-int
-surf_import_ijxyz_tmpl(FILE *fc,
-                       int *swig_np_int_in_v1,       // *ilines,
-                       long n_swig_np_int_in_v1,     // nilines or ncol,
-                       int *swig_np_int_in_v2,       // *xlines,
-                       long n_swig_np_int_in_v2,     // nxlines or nrow,
-                       double *swig_np_dbl_aout_v1,  // *p_map_v
-                       long n_swig_np_dbl_aout_v1,   // nmap = nrow*ncol
-                       int option);
-
 void
 surf_import_petromod_bin(FILE *fhandle,
                          int mode,

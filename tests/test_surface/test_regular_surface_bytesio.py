@@ -215,3 +215,30 @@ def test_export_import_hdf5_bytesio(tmp_path):
 
     xsurf4 = xtgeo.surface_from_file(stream, fformat="hdf")
     assert xsurf4.values.mean() == xsurf.values.mean()
+
+
+def test_export_import_ijxyz_bytesio(tmp_path):
+    """Test ijxyz format via files and memory streams."""
+    # just the input, and save as hdf5
+    xsurf = xtgeo.surface_from_file(TESTSET2, fformat="irap_ascii")
+    assert xsurf.ncol == 554
+    assert xsurf.nrow == 451
+
+    ijxyzfile = tmp_path / "ijxyz_tset2.fgr"
+    xsurf.to_file(ijxyzfile, fformat="ijxyz")
+
+    xsurf2 = xtgeo.surface_from_file(ijxyzfile, fformat="ijxyz")
+
+    # if surface is undefined in areas at border, the ijxyz format will not be
+    # able to know the original ncol, nrow, so a reduction may be expected
+    assert xsurf2.ncol == 525
+    assert xsurf2.nrow == 442
+    assert xsurf2.values.mean() == pytest.approx(xsurf.values.mean())
+
+    stream = io.BytesIO()
+
+    xsurf.to_file(stream, fformat="ijxyz")
+
+    xsurf3 = xtgeo.surface_from_file(stream, fformat="ijxyz")
+    assert xsurf3.ncol == xsurf2.ncol
+    assert xsurf3.values.mean() == pytest.approx(xsurf2.values.mean())
