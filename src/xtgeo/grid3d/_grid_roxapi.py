@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def import_grid_roxapi(
-    projectname: str, gname: str, realisation: int, dimonly: bool, info: bool
+    projectname: str, gname: str, realisation: int, info: bool
 ) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec.
 
@@ -40,48 +40,9 @@ def import_grid_roxapi(
         dictionary of parameters to be used in the Grid constructor function.
 
     """
+
     rox = RoxUtils(projectname, readonly=True)
-    return (
-        _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info)
-        if dimonly
-        else _import_grid_roxapi_v2(rox, gname, realisation, info)
-    )
-
-
-def _import_grid_roxapi_v1(
-    rox: RoxUtils, gname: str, realisation: int, dimonly: bool, info: bool
-) -> dict[str, Any]:
-    """Import a Grid via ROXAR API spec."""
-
-    proj = rox.project
-
-    logger.info("Loading grid with realisation %s...", realisation)
-    try:
-        if gname not in proj.grid_models:
-            raise KeyError(f"No such gridmodel: {gname}")
-
-        logger.info("Get roxgrid...")
-        roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
-
-        if dimonly:
-            corners = None
-        else:
-            logger.info("Get corners...")
-            corners = roxgrid.get_cell_corners_by_index()
-            logger.info("Get corners... done")
-
-        if info:
-            _display_roxapi_grid_info(roxgrid)
-
-        result = _convert_to_xtgeo_grid_v1(roxgrid, corners, gname)
-
-    except KeyError as keyerror:
-        raise RuntimeError(keyerror)
-
-    if rox._roxexternal:
-        rox.safe_close()
-
-    return result
+    return _import_grid_roxapi(rox, gname, realisation, info)
 
 
 def _display_roxapi_grid_info(roxgrid: roxar.grids.Grid3D) -> None:
@@ -105,121 +66,7 @@ def _display_roxapi_grid_info(roxgrid: roxar.grids.Grid3D) -> None:
             xtg.say(f"Depths\n{zco}")
 
 
-def _convert_to_xtgeo_grid_v1(
-    roxgrid: roxar.grids.Grid3D, corners: np.ndarray | None, gname: str
-) -> dict[str, Any]:
-    """Convert from RMS API to XTGeo API."""
-
-    logger.info("Converting to XTGeo internals...")
-    logger.info("Call the ROXAPI grid indexer")
-    indexer = roxgrid.grid_indexer
-
-    ncol, nrow, nlay = indexer.dimensions
-    ntot = ncol * nrow * nlay
-
-    result: dict[str, Any] = {}
-    result["name"] = gname
-
-    if corners is None:
-        logger.info("Asked for dimensions_only: No geometry read!")
-        # return empty dict for mypy now
-        # bug with "dimension only" not working #1042 will be adressed later
-        return {}
-
-    logger.info("Get active cells")
-    mybuffer: np.ndarray = np.ndarray(indexer.dimensions, dtype=np.int32)
-
-    mybuffer.fill(0)
-
-    logger.info("Get cell numbers")
-    cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
-
-    logger.info("Reorder...")
-    ijk = indexer.get_indices(cellno)
-
-    iind = ijk[:, 0]
-    jind = ijk[:, 1]
-    kind = ijk[:, 2]
-
-    pvalues = np.ones(len(cellno))
-    pvalues[cellno] = 1
-    mybuffer[iind, jind, kind] = pvalues[cellno]
-
-    actnum = mybuffer
-
-    logger.info("Handedness (new) %s", indexer.ijk_handedness)
-
-    corners = corners.ravel()
-    actnum = actnum.ravel()
-
-    ntot = ncol * nrow * nlay
-    ncoord = (ncol + 1) * (nrow + 1) * 2 * 3
-    nzcorn = ncol * nrow * (nlay + 1) * 4
-
-    coordsv = np.zeros(ncoord, dtype=np.float64)
-    zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    actnumsv = np.zeros(ntot, dtype=np.int32)
-
-    # next task is to convert geometry to cxtgeo internal format
-    logger.info("Run XTGeo C code...")
-    _cxtgeo.grd3d_conv_roxapi_grid(
-        ncol,
-        nrow,
-        nlay,
-        ntot,
-        actnum,
-        corners,
-        coordsv,
-        zcornsv,
-        actnumsv,
-    )
-
-    # convert to xtgformat=2
-    newcoordsv = np.zeros((ncol + 1, nrow + 1, 6), dtype=np.float64)
-    newzcornsv = np.zeros((ncol + 1, nrow + 1, nlay + 1, 4), dtype=np.float32)
-    newactnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
-
-    _cxtgeo.grd3cp3d_xtgformat1to2_geom(
-        ncol,
-        nrow,
-        nlay,
-        coordsv,
-        newcoordsv,
-        zcornsv,
-        newzcornsv,
-        actnumsv,
-        newactnumsv,
-    )
-
-    result["coordsv"] = newcoordsv
-    result["zcornsv"] = newzcornsv
-    result["actnumsv"] = newactnumsv
-    logger.info("Run XTGeo C code... done")
-    logger.info("Converting to XTGeo internals... done")
-
-    del corners
-    del actnum
-
-    # subgrids
-    if len(indexer.zonation) > 1:
-        logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
-        subz = {}
-        for inum, zrange in indexer.zonation.items():
-            logger.debug("inum: %s, zrange: %s", inum, zrange)
-            zname = roxgrid.zone_names[inum]
-            logger.debug("zname is: %s", zname)
-            zra = [nn + 1 for ira in zrange for nn in ira]  # nested lists
-            subz[zname] = zra
-
-        result["subgrids"] = subz
-
-    result["roxgrid"] = roxgrid
-    result["roxindexer"] = indexer
-
-    return result
-
-
-def _import_grid_roxapi_v2(
+def _import_grid_roxapi(
     rox: RoxUtils, gname: str, realisation: int, info: bool
 ) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec."""
@@ -243,7 +90,7 @@ def _import_grid_roxapi_v2(
         if info:
             _display_roxapi_grid_info(roxgrid)
 
-        result = _convert_to_xtgeo_grid_v2(roxgrid, gname)
+        result = _convert_to_xtgeo_grid(roxgrid, gname)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
@@ -254,9 +101,7 @@ def _import_grid_roxapi_v2(
     return result
 
 
-def _convert_to_xtgeo_grid_v2(
-    roxgrid: roxar.grids.Grid3D, gname: str
-) -> dict[str, Any]:
+def _convert_to_xtgeo_grid(roxgrid: roxar.grids.Grid3D, gname: str) -> dict[str, Any]:
     """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2."""
     indexer = roxgrid.grid_indexer
 

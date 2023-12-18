@@ -142,7 +142,7 @@ def grid_from_roxar(
     project: str,
     gname: str,
     realisation: int = 0,
-    dimensions_only: bool = False,
+    dimensions_only: bool | None = None,
     info: bool = False,
 ) -> Grid:
     """Read a 3D grid inside a RMS project and return a Grid() instance.
@@ -165,11 +165,16 @@ def grid_from_roxar(
         mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
 
     """
-    return Grid(
-        **_grid_roxapi.import_grid_roxapi(
-            project, gname, realisation, dimensions_only, info
+
+    if dimensions_only is not None:
+        warnings.warn(
+            "Argument 'dimension_only' is redundant and has no effect "
+            "It will no longer be supported in xtgeo version 4.0 and "
+            "can safely be removed.",
+            DeprecationWarning,
         )
-    )
+
+    return Grid(**_grid_roxapi.import_grid_roxapi(project, gname, realisation, info))
 
 
 def create_box_grid(
@@ -1097,7 +1102,7 @@ class Grid(_Grid3D):
         projectname: str,
         gname: str,
         realisation: int = 0,
-        dimensions_only: bool = False,
+        dimensions_only: bool | None = None,
         info: bool = False,
     ) -> None:
         """Import grid model geometry from RMS project, and makes an instance.
@@ -1116,9 +1121,16 @@ class Grid(_Grid3D):
 
 
         """
-        kwargs = _grid_roxapi.import_grid_roxapi(
-            projectname, gname, realisation, dimensions_only, info
-        )
+
+        if dimensions_only is not None:
+            warnings.warn(
+                "Argument 'dimension_only' is redundant and has no effect "
+                "It will no longer be supported in xtgeo version 4.0 and "
+                "can safely be removed.",
+                DeprecationWarning,
+            )
+
+        kwargs = _grid_roxapi.import_grid_roxapi(projectname, gname, realisation, info)
         self._reset(**kwargs)
 
     def convert_units(self, units: Units) -> None:
