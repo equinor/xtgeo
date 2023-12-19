@@ -1824,21 +1824,6 @@ grdcp3d_quality_indicators(long ncol,
                            long n_swig_np_int_inplaceflat_v1,   // nactnum
                            float *swig_np_flt_inplaceflat_v2,   // fresults
                            long n_swig_np_flt_inplaceflat_v2);  // nactnum
-void
-grdcp3d_cellvol(long ncol,
-                long nrow,
-                long nlay,
-                double *swig_np_dbl_inplaceflat_v1,  // coordsv,
-                long n_swig_np_dbl_inplaceflat_v1,   // ncoordin,
-                float *swig_np_flt_inplaceflat_v1,   // zcornsv,
-                long n_swig_np_flt_inplaceflat_v1,   // nzcorn,
-                int *swig_np_int_inplaceflat_v1,     // actnumsv,
-                long n_swig_np_int_inplaceflat_v1,   // nactnum
-                double *swig_np_dbl_inplaceflat_v2,  // cellvolsv
-                long n_swig_np_dbl_inplaceflat_v2,   // ncell
-                int precision,
-                int option);
-
 /*
  *======================================================================================
  * WELL spesific

@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from packaging.version import parse as versionparse
 
+import xtgeo._internal
 from xtgeo import _cxtgeo  # type: ignore[attr-defined]
 from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
@@ -203,6 +204,9 @@ def get_bulk_volume(
     precision: Literal[1, 2, 4] = 2,
 ) -> GridProperty:
     """Get cell bulk volume as a GridProperty() instance."""
+    if precision not in (1, 2, 4):
+        raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
+
     self._xtgformat2()
 
     bulk = GridProperty(
@@ -215,19 +219,16 @@ def get_bulk_volume(
 
     bval = np.zeros(bulk.dimensions)
 
-    if precision not in (1, 2, 4):
-        raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
-
-    _cxtgeo.grdcp3d_cellvol(
+    xtgeo._internal.grdcp3d_cellvol(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        self._actnumsv.ravel(),
         bval,
         precision,
-        0 if asmasked else 1,
+        asmasked,
     )
 
     if asmasked:
