@@ -1,13 +1,14 @@
 include_directories(${CMAKE_CURRENT_LIST_DIR}/xtg)
 set(SRC "${CMAKE_CURRENT_LIST_DIR}/xtg")
 
-# TODO: replace globbing with unique list, as globbing is bad practice
-FILE(GLOB SOURCES ${SRC}/*.c)
-add_library(xtg STATIC ${SOURCES})
-
 find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 find_package(SWIG 3.0.1 COMPONENTS REQUIRED)
 include(UseSWIG)
+find_package(pybind11 REQUIRED)
+
+# TODO: replace globbing with unique list, as globbing is bad practice
+FILE(GLOB SOURCES ${SRC}/*.c)
+add_library(xtg STATIC ${SOURCES})
 
 message(STATUS "Compiling swig bindings")
 
@@ -18,6 +19,9 @@ else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -fPIC)
   set(CXTGEOFLAGS -Wl,--no-undefined)
 endif()
+
+set(PYBIND_SOURCES "${SRC}/grdcp3d_cellvol.cpp")
+pybind11_add_module(_internal ${PYBIND_SOURCES} ${SOURCES})
 
 # This will end up set as the `_cxtgeo` module, located in
 # `wheel.install-dir` from pyproject.toml
@@ -36,7 +40,8 @@ target_include_directories(
 target_compile_options(xtg PRIVATE ${XTGFLAGS})
 target_compile_options(${SWIG_TARGET} PUBLIC ${CXTGEOFLAGS})
 target_link_libraries(
-  ${SWIG_TARGET} xtg ${Python_LIBRARIES} Python::Module Python::NumPy)
+  ${SWIG_TARGET} xtg
+  ${Python_LIBRARIES} Python::Module Python::NumPy)
 
 message(STATUS "XTGeo Python executable  : ${Python_EXECUTABLE}")
 message(STATUS "XTGeo Python include dirs: ${Python_INCLUDE_DIRS}")
@@ -52,4 +57,4 @@ else()
 endif()
 
 # Installation directory is set in pyproject.toml
-install(TARGETS ${SWIG_TARGET} LIBRARY DESTINATION .)
+install(TARGETS ${SWIG_TARGET} _internal LIBRARY DESTINATION .)
