@@ -494,7 +494,7 @@ class GridProperty(_Grid3D):
                 self.geometry = gridlike
             gridlike.append_prop(self)
 
-        self._metadata = MetaDataCPProperty()
+        self._metadata: MetaDataCPProperty = MetaDataCPProperty()
 
     def _set_initial_dimensions(
         self,
@@ -1020,7 +1020,7 @@ class GridProperty(_Grid3D):
     def to_file(
         self,
         pfile: FileLike,
-        fformat: str = "roff",
+        fformat: Literal["roff", "roffasc", "grdecl", "bgrdecl", "xtgcpprop"] = "roff",
         name: str | None = None,
         append: bool = False,
         dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,

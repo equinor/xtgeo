@@ -1,137 +1,162 @@
-"""GridProperty (not GridProperies) export functions."""
+"""GridProperty export functions."""
+from __future__ import annotations
+
+import io
 import json
+import os
 import struct
+from contextlib import ExitStack
+from typing import IO, TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import resfo
 import roffio
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common import _XTGeoFile, null_logger
 
 from ._roff_parameter import RoffParameter
+
+if TYPE_CHECKING:
+    from xtgeo.common.types import FileLike
+
+    from .grid_property import GridProperty
 
 logger = null_logger(__name__)
 
 
-def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None):
+def to_file(
+    gridprop: GridProperty,
+    pfile: FileLike,
+    fformat: Literal["roff", "roffasc", "grdecl", "bgrdecl", "xtgcpprop"] = "roff",
+    name: str | None = None,
+    append: bool = False,
+    dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,
+    fmt: str | None = None,
+) -> None:
     """Export the grid property to file."""
-    logger.info("Export property to file %s as %s", pfile, fformat)
+    logger.debug("Export property to file %s as %s", pfile, fformat)
 
-    fobj = xtgeo._XTGeoFile(pfile, mode="rb")
-    if not fobj.memstream:
-        fobj.check_folder(raiseerror=OSError)
+    binary = fformat in ("roff", "bgrdecl", "xtgcpprop")
 
-    if name is None:
-        name = self.name
+    if not name:
+        name = gridprop.name or ""
 
-    if "roff" in fformat:
-        binary = True
-        if "asc" in fformat:
-            binary = False
+    xtg_file = _XTGeoFile(pfile, mode="rb")
+    if not xtg_file.memstream:
+        xtg_file.check_folder(raiseerror=OSError)
 
-        if append:
-            logger.warning(
-                "Append is not implemented for roff format, defaulting to write."
-            )
-
-        export_roff(self, fobj.name, name, binary=binary)
-
-    elif fformat == "grdecl":
-        export_grdecl(
-            self, fobj.name, name, append=append, binary=False, dtype=dtype, fmt=fmt
+    if fformat in ("roff", "roffasc"):
+        _export_roff(gridprop, xtg_file.name, name, binary, append=append)
+    elif fformat in ("grdecl", "bgrdecl"):
+        _export_grdecl(
+            gridprop,
+            xtg_file.name,
+            name,
+            dtype=dtype or np.int32 if gridprop.isdiscrete else np.float32,
+            append=append,
+            binary=binary,
+            fmt=fmt,
         )
-
-    elif fformat == "bgrdecl":
-        export_grdecl(self, fobj.name, name, append=append, binary=True, dtype=dtype)
-
     elif fformat == "xtgcpprop":
-        export_xtgcpprop(self, fobj.name)
-
+        _export_xtgcpprop(gridprop, xtg_file.name)
     else:
         raise ValueError(f"Cannot export, invalid fformat: {fformat}")
 
 
-# Export ascii or binary ROFF format
+def _export_roff(
+    gridprop: GridProperty,
+    pfile: str | io.BytesIO | io.StringIO,
+    name: str,
+    binary: bool,
+    append: bool = False,
+) -> None:
+    if append:
+        logger.warning(
+            "Append is not implemented for roff format, defaulting to write."
+        )
+    roff = RoffParameter.from_xtgeo_grid_property(gridprop)
+    roff.name = name
+    roff.to_file(pfile, roffio.Format.BINARY if binary else roffio.format.ASCII)
 
 
-def export_roff(self, pfile, name, binary=True):
-    logger.info("Export roff to %s", pfile)
-    roff_param = RoffParameter.from_xtgeo_grid_property(self)
-    roff_param.name = name
-    roff_format = roffio.Format.ASCII
-    if binary:
-        roff_format = roffio.Format.BINARY
-
-    roff_param.to_file(pfile, roff_format)
-
-
-def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt=None):
+def _export_grdecl(
+    gridprop: GridProperty,
+    pfile: str | io.BytesIO | io.StringIO,
+    name: str,
+    dtype: type[np.float32] | type[np.float64] | type[np.int32],
+    append: bool = False,
+    binary: bool = False,
+    fmt: str | None = None,
+) -> None:
     """Export ascii or binary GRDECL"""
-    vals = self.values.ravel(order="F")
+    vals = gridprop.values.ravel(order="F")
     if np.ma.isMaskedArray(vals):
-        vals = np.ma.filled(vals, self.undef)
+        vals = np.ma.filled(vals, gridprop.undef)
 
+    mode = "a" if append else "w"
     if binary:
-        mode = "wb"
-        if append:
-            mode = "ab"
+        mode += "b"
 
-        with open(pfile, mode) as fh:
-            if dtype is not None:
-                resfo.write(fh, [(name.ljust(8), vals.astype(dtype))])
-            elif self.isdiscrete:
-                resfo.write(fh, [(name.ljust(8), vals.astype(np.int32))])
-            else:
-                resfo.write(fh, [(name.ljust(8), vals.astype(np.float32))])
+    with ExitStack() as stack:
+        fout = (
+            stack.enter_context(open(pfile, mode)) if isinstance(pfile, str) else pfile
+        )
 
-    else:
-        mode = "w"
         if append:
-            mode = "a"
-        with open(pfile, mode) as fh:
-            fh.write(name)
-            fh.write("\n")
+            fout.seek(os.SEEK_END)
+
+        if binary:
+            resfo.write(
+                fout,
+                [(name.ljust(8), vals.astype(dtype))],
+                fileformat=resfo.Format.UNFORMATTED,
+            )
+        else:
+            # Always the case when not binary
+            assert isinstance(fout, io.TextIOWrapper)
+            fout.write(name)
+            fout.write("\n")
             for i, v in enumerate(vals):
-                fh.write(" ")
+                fout.write(" ")
                 if fmt:
-                    fh.write(fmt % v)
-                elif self.isdiscrete:
-                    fh.write(str(v))
+                    fout.write(fmt % v)
+                elif gridprop.isdiscrete:
+                    fout.write(str(v))
                 else:
-                    fh.write(f"{v:3e}")
+                    fout.write(f"{v:3e}")
                 if i % 6 == 5:
-                    fh.write("\n")
+                    fout.write("\n")
+            fout.write(" /\n")
 
-            fh.write(" /\n")
 
-
-def export_xtgcpprop(self, mfile):
+def _export_xtgcpprop(
+    gridprop: GridProperty, pfile: str | io.BytesIO | io.StringIO
+) -> None:
     """Export to experimental xtgcpproperty format, python version."""
-    logger.info("Export as xtgcpprop...")
-    self._metadata.required = self
+    logger.debug("Export as xtgcpprop...")
+    gridprop._metadata.required = gridprop
 
-    magic = 1351
-    if self.isdiscrete:
-        magic = 1352
-
-    prevalues = (1, magic, 4, self.ncol, self.nrow, self.nlay)
+    magic = 1352 if gridprop.isdiscrete else 1351
+    prevalues = (1, magic, 4, gridprop.ncol, gridprop.nrow, gridprop.nlay)
     mystruct = struct.Struct("= i i i q q q")
     pre = mystruct.pack(*prevalues)
 
-    meta = self.metadata.get_metadata()
+    meta = gridprop.metadata.get_metadata()
 
-    with open(mfile, "wb") as fout:
+    # Convert StringIO to BytesIO as this is a binary format
+    with ExitStack() as stack:
+        if isinstance(pfile, io.StringIO):
+            data = pfile.getvalue().encode("utf-8")
+            fout: IO[Any] = io.BytesIO(data)
+        elif isinstance(pfile, io.BytesIO):
+            fout = pfile
+        else:
+            fout = stack.enter_context(open(pfile, "wb"))
         fout.write(pre)
-
-    with open(mfile, "ab") as fout:
-        vv = self.get_npvalues1d(fill_value=self.undef)
-        vv.astype(np.float32).tofile(fout)
-
-    with open(mfile, "ab") as fout:
+        gridprop.get_npvalues1d(fill_value=gridprop.undef).astype(np.float32).tofile(
+            fout
+        )
         fout.write("\nXTGMETA.v01\n".encode())
-
-    with open(mfile, "ab") as fout:
         fout.write(json.dumps(meta).encode())
 
-    logger.info("Export as xtgcpprop... done")
+    logger.debug("Export as xtgcpprop... done")
