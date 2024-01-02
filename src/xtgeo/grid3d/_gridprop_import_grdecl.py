@@ -1,19 +1,27 @@
 """Importing grid props from GRDECL, ascii or binary"""
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.ma as ma
 import resfo
 
-import xtgeo
 from xtgeo.common import null_logger
+from xtgeo.common.exceptions import KeywordNotFoundError
 
 from ._grdecl_format import match_keyword, open_grdecl
 
 logger = null_logger(__name__)
 
+if TYPE_CHECKING:
+    from xtgeo.common import _XTGeoFile
+    from xtgeo.common.types import FileLike
 
-def import_bgrdecl_prop(pfile, name, grid):
+    from .grid import Grid
+
+
+def import_bgrdecl_prop(pfile: _XTGeoFile, name: str, grid: Grid) -> dict[str, Any]:
     """Import prop for binary files with GRDECL layout.
 
     Args:
@@ -22,9 +30,12 @@ def import_bgrdecl_prop(pfile, name, grid):
         grid (Grid()): XTGeo Grid instance.
 
     Raises:
-        xtgeo.KeywordNotFoundError: Cannot find property...
+        KeywordNotFoundError: Cannot find property...
+
+    Returns:
+        GridProperty parameter dictionary.
     """
-    result = {}
+    result: dict[str, Any] = {}
     result["ncol"] = grid.ncol
     result["nrow"] = grid.nrow
     result["nlay"] = grid.nlay
@@ -51,12 +62,15 @@ def import_bgrdecl_prop(pfile, name, grid):
             )
             return result
 
-    raise xtgeo.KeywordNotFoundError(
-        f"Cannot find property name {name} in file {pfile.name}"
-    )
+    raise KeywordNotFoundError(f"Cannot find property name {name} in file {pfile.name}")
 
 
-def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
+def read_grdecl_3d_property(
+    filename: FileLike,
+    keyword: str,
+    dimensions: tuple[int, int, int],
+    dtype: type[float] | type[int] = float,
+) -> np.ndarray:
     """
     Read a 3d grid property from a grdecl file, see open_grdecl for description
     of format.
@@ -67,20 +81,18 @@ def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
         dimensions ((int,int,int)): Triple of the size of grid.
         dtype (function): The datatype to be read, ie., float.
 
-    Raises:
-        xtgeo.KeywordNotFoundError: If keyword is not found in the file.
-
     Returns:
         numpy array with given dimensions and data type read
         from the grdecl file.
-    """
-    result = None
 
-    with open_grdecl(filename, keywords=[], simple_keywords=(keyword,)) as kw_generator:
+    Raises:
+        KeywordNotFoundError: If keyword is not found in the file.
+    """
+    with open_grdecl(filename, keywords=[], simple_keywords=[keyword]) as kw_generator:
         try:
             _, result = next(kw_generator)
         except StopIteration as si:
-            raise xtgeo.KeywordNotFoundError(
+            raise KeywordNotFoundError(
                 f"Cannot import {keyword}, not present in file {filename}?"
             ) from si
 
@@ -89,9 +101,21 @@ def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
     return np.ascontiguousarray(f_order_values.reshape(dimensions, order="F"))
 
 
-def import_grdecl_prop(pfile, name, grid):
-    """Read a GRDECL ASCII property record"""
-    result = {}
+def import_grdecl_prop(pfile: _XTGeoFile, name: str, grid: Grid) -> dict[str, Any]:
+    """Import prop for ascii files with GRDECL layout.
+
+    Args:
+        pfile (_XTgeoCFile): xtgeo file instance
+        name (str): Name of parameter.
+        grid (Grid()): XTGeo Grid instance.
+
+    Raises:
+        KeywordNotFoundError: Cannot find property...
+
+    Returns:
+        GridProperty parameter dictionary.
+    """
+    result: dict[str, Any] = {}
     result["ncol"] = grid.ncol
     result["nrow"] = grid.nrow
     result["nlay"] = grid.nlay

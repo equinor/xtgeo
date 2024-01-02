@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import resfo
 
@@ -9,8 +9,15 @@ from ._find_gridprop_in_eclrun import (
     find_gridprops_from_restart_file,
 )
 
+if TYPE_CHECKING:
+    from xtgeo.common import _XTGeoFile
 
-def decorate_name(name, dual_porosity, fracture, date=None):
+    from .grid import Grid
+
+
+def decorate_name(
+    name: str, dual_porosity: bool, fracture: bool, date: int | None = None
+) -> str:
     """Decorate a property name with date and matrix/fracture.
 
     >>> decorate_name('PORO', True, False, 19991231)
@@ -28,7 +35,9 @@ def decorate_name(name, dual_porosity, fracture, date=None):
     return decorated_name
 
 
-def import_gridprop_from_init(pfile, name, grid, fracture=False):
+def import_gridprop_from_init(
+    pfile: _XTGeoFile, name: str, grid: Grid, fracture: bool = False
+) -> dict[str, Any]:
     """Import one parameter with the given name from an init file.
 
     Args:
@@ -37,8 +46,10 @@ def import_gridprop_from_init(pfile, name, grid, fracture=False):
         grid: The grid used by the simulator to produce the init file.
         fracture: If a dual porosity module, indicates that the fracture
             (as apposed to the matrix) grid property should be imported.
+
     Raises:
         ValueError: If the parameter does not exist in the file.
+
     Returns:
         GridProperty parameter dictionary.
     """
@@ -89,7 +100,8 @@ def sanitize_date(
                 "form 'YYYY-MM-DD', 'YYYYMMDD' or 'first'/'last' "
                 f"got {date}"
             ) from err
-    return date
+    # Satisfy mypy that we're not returning a str
+    return "first" if date == "first" else "last"
 
 
 def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> resfo.Format:
@@ -108,13 +120,13 @@ def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> resfo.Format:
 
 
 def import_gridprop_from_restart(
-    pfile,
+    pfile: _XTGeoFile,
     name: str,
-    grid,
+    grid: Grid,
     date: int | str | Literal["first", "last"],
     fracture: bool = False,
     fformat: Literal["unrst", "funrst"] = "unrst",
-):
+) -> dict[str, Any]:
     """Import one parameter for the given name and date in a restart file.
 
     Args:
@@ -128,6 +140,7 @@ def import_gridprop_from_restart(
             (as apposed to the matrix) grid property should be imported.
     Raises:
         ValueError: If the parameter does not exist in the file.
+
     Returns:
         GridProperty parameter dictionary.
     """
