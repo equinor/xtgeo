@@ -1,14 +1,14 @@
-name: cibuildwheel
+name: Build & Publish
 
 on:
   pull_request:
     branches: [main, "*postfix"]
   release:
-    types: [created]
+    types: [published]
 
 jobs:
-  build_and_upload_with_cibw:
-    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os_arch[0] }}
+  build:
+    name: CIBW Python ${{ matrix.cibw_python }} on ${{ matrix.os_arch[0] }}
     runs-on: ${{ matrix.os_arch[0] }}
     strategy:
       fail-fast: false
@@ -34,16 +34,39 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Install cibuildwheel
-        run: pip install wheel cibuildwheel
+        run: pip install wheel cibuildwheel twine
 
       - name: Run cibuildwheel
         run: cibuildwheel --output-dir wheelhouse
 
-      - name: Publish
+      - name: Check metadata
+        run: twine check wheelhouse/*
+
+      - uses: actions/upload-artifact@v4
         if: ${{ github.event_name == 'release' }}
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
-        run: >
-          python -m pip install twine &&
-          twine upload wheelhouse/*
+        with:
+          name: cibw-sdist
+          path: wheelhouse/*.whl
+
+  publish:
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment:
+      name: pypi
+      url: https://pypi.org/p/xtgeo
+    permissions:
+      id-token: write
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: cibw-*
+        path: wheelhouse
+        merge-multiple: true
+
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip-existing: true
+        packages-dir: wheelhouse
+        verbose: true
