@@ -67,7 +67,7 @@ def polygon_set_in_roxvalues(polygons_set, mocker):
 @pytest.mark.usefixtures("mock_roxutils", "point_set_in_roxvalues")
 def test_load_points_from_roxar():
     poi = xtgeo.points_from_roxar("project", "Name", "Category")
-    assert poi.dataframe["X_UTME"][3] == 1.3
+    assert poi.get_dataframe()["X_UTME"][3] == 1.3
 
 
 @pytest.mark.usefixtures("mock_roxutils", "point_set_in_roxvalues")
@@ -87,7 +87,7 @@ def test_load_polygons_from_roxar():
     pol = xtgeo.polygons_from_roxar("project", "Name", "Category")
 
     assert_frame_equal(
-        pol.dataframe,
+        pol.get_dataframe(),
         pd.DataFrame(
             [
                 [1.0, 2.0, 44.0, 0],

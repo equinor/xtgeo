@@ -175,7 +175,7 @@ class Map(BasePlot):
         """
         import matplotlib as mpl
 
-        aff = fpoly.dataframe.groupby(idname)
+        aff = fpoly.get_dataframe(copy=False).groupby(idname)
 
         for name, _group in aff:
             # make a dataframe sorted on faults (groupname)
@@ -208,7 +208,7 @@ class Map(BasePlot):
 
         .. _Matplotlib: http://matplotlib.org/api/colors_api.html
         """
-        aff = fpoly.dataframe.groupby(idname)
+        aff = fpoly.get_dataframe(copy=False).groupby(idname)
 
         for _name, group in aff:
             # make a dataframe sorted on groupname
@@ -232,7 +232,7 @@ class Map(BasePlot):
         """
         # This function is "in prep"
 
-        dataframe = points.dataframe
+        dataframe = points.get_dataframe(copy=False)
 
         self._ax.scatter(
             dataframe["X_UTME"].values, dataframe["Y_UTMN"].values, marker="x"
@@ -247,7 +247,7 @@ class Map(BasePlot):
 
         """
         for well in wells.wells:
-            dataframe = well.dataframe
+            dataframe = well.get_dataframe(copy=False)
 
             xval = dataframe["X_UTME"].values
             yval = dataframe["Y_UTMN"].values

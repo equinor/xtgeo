@@ -194,7 +194,7 @@ class Wells:
 
         bigdflist = []
         for well in self._wells:
-            dfr = well.dataframe.copy()
+            dfr = well.get_dataframe()
             dfr["WELLNAME"] = well.name
             logger.debug(well.name)
             if filled:

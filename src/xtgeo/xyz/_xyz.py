@@ -96,14 +96,16 @@ class XYZ(ABC):
     @property
     def nrow(self):
         """Returns the Pandas dataframe object number of rows."""
-        if self.dataframe is None:
+        if self.get_dataframe(copy=False) is None:
             return 0
-        return len(self.dataframe.index)
+        return len(self.get_dataframe(copy=False).index)
 
     def _df_column_rename(self, newname, oldname):
         if isinstance(newname, str):
-            if oldname and self.dataframe is not None:
-                self.dataframe.rename(columns={oldname: newname}, inplace=True)
+            if oldname and self.get_dataframe(copy=False) is not None:
+                dataframe = self.get_dataframe()
+                dataframe.rename(columns={oldname: newname}, inplace=True)
+                self.set_dataframe(dataframe)
         else:
             raise ValueError(f"Wrong type of input to {newname}; must be string")
 
@@ -111,10 +113,10 @@ class XYZ(ABC):
         if not isinstance(value, str):
             raise ValueError(f"Wrong type of input; must be string, was {type(value)}")
 
-        if value not in self.dataframe.columns:
+        if value not in self.get_dataframe(copy=False).columns:
             raise ValueError(
                 f"{value} does not exist as a column name, must be "
-                f"one of: f{self.dataframe.columns}"
+                f"one of: f{self.get_dataframe(copy=False).columns}"
             )
 
     @abstractmethod
@@ -197,6 +199,16 @@ class XYZ(ABC):
         """
         ...
 
+    @abstractmethod
+    def get_dataframe(self, copy=True) -> pd.DataFrame:
+        """Return the Pandas dataframe object."""
+        ...
+
+    @abstractmethod
+    def set_dataframe(self, dataframe: pd.DataFrame) -> None:
+        """Set the Pandas dataframe object."""
+        ...
+
     def protected_columns(self):
         """
         Returns:
@@ -247,12 +259,14 @@ class XYZ(ABC):
                 )
                 continue
 
-            if cname not in self.dataframe:
+            dataframe = self.get_dataframe()
+            if cname not in dataframe:
                 if strict:
                     raise ValueError(f"The column {cname} is not present.")
                 logger.info("Trying to delete %s, but it is not present.", cname)
             else:
-                self.dataframe.drop(cname, axis=1, inplace=True)
+                dataframe.drop(cname, axis=1, inplace=True)
+                self.set_dataframe(dataframe)
 
     def get_boundary(self):
         """Get the square XYZ window (boundaries) of the instance.
@@ -264,12 +278,12 @@ class XYZ(ABC):
             The class method :func:`Polygons.boundary_from_points()`
 
         """
-        xmin = np.nanmin(self.dataframe[self.xname].values)
-        xmax = np.nanmax(self.dataframe[self.xname].values)
-        ymin = np.nanmin(self.dataframe[self.yname].values)
-        ymax = np.nanmax(self.dataframe[self.yname].values)
-        zmin = np.nanmin(self.dataframe[self.zname].values)
-        zmax = np.nanmax(self.dataframe[self.zname].values)
+        xmin = np.nanmin(self.get_dataframe(copy=False)[self.xname].values)
+        xmax = np.nanmax(self.get_dataframe(copy=False)[self.xname].values)
+        ymin = np.nanmin(self.get_dataframe(copy=False)[self.yname].values)
+        ymax = np.nanmax(self.get_dataframe(copy=False)[self.yname].values)
+        zmin = np.nanmin(self.get_dataframe(copy=False)[self.zname].values)
+        zmax = np.nanmax(self.get_dataframe(copy=False)[self.zname].values)
 
         return (xmin, xmax, ymin, ymax, zmin, zmax)
 

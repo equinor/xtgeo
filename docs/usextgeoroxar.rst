@@ -368,7 +368,7 @@ Get average properties per zone
     def compute_avg_per_zone(wll):
         """Compute avg per zone without any other criteria"""
 
-        df = wll.dataframe
+        df = wll.get_dataframe()
         df_avgs = df.groupby(ZONELOGNAME).mean()
         df_avgs.rename(index=ZNAMES, inplace=True)  # rename zonelog numbers with true name
 
@@ -390,7 +390,8 @@ Get average properties per zone
         # cf: https://xtgeo.readthedocs.io/en/latest/apiref/xtgeo.well.well1.html#
         # xtgeo.well.well1.Well.make_zone_qual_log
 
-        df = wll.dataframe[wll.dataframe.QUAL == 1]  # only get the increasing part
+        df = wll.get_dataframe()
+        df = df[df.QUAL == 1]  # only get the increasing part
         df_avgs = df.groupby(ZONELOGNAME).mean()
         df_avgs.rename(index=ZNAMES, inplace=True)  # rename zonelog numbers with name
 
@@ -429,28 +430,29 @@ are filtered. Here is a small example on how to do this:
 
 
     def filter_shoulder():
-        """Filter should bed data."""
+        """Filter shoulder bed data."""
         for rms_well in PRJ.wells:
             wll = xtgeo.well_from_roxar(
                 PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME
-            )  # wll is a xtgeo Well() object
+            )
 
             # skip wells without facies
-            if FACIESLOGNAME not in wll.dataframe or not rms_well.name.startswith("55"):
+            if FACIESLOGNAME not in wll.get_dataframe() or not rms_well.name.startswith("55"):
                 continue
 
             print("Use: ", rms_well.name)
 
             # keep the original logs and work on copy:
+            well_df = wll.get_dataframe()
             for target, orig in PETROLOGS.items():
-                if target in wll.dataframe.columns:
-                    if orig not in wll.dataframe.columns:
+                if target in well_df.columns:
+                    if orig not in well_df.columns:
                         # first time; create an "_orig" column
                         print("Create", orig)
                         wll.create_log(orig)
-                        wll.dataframe[orig] = wll.dataframe[target].copy()
-
-                    wll.dataframe[target] = wll.dataframe[orig].copy()
+                        dataframe = wll.get_dataframe()
+                        dataframe[orig] = dataframe[target].copy()
+                        wll.set_dataframe(dataframe)
 
             uselogs = list(PETROLOGS.keys())
 
@@ -458,8 +460,8 @@ are filtered. Here is a small example on how to do this:
             wll.to_roxar(PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
 
 
-if __name__ == "__main__":
-    filter_shoulder()
+    if __name__ == "__main__":
+        filter_shoulder()
 
 
 Blocked well data
@@ -500,7 +502,7 @@ be input to Equinor's APS module.
             blw = xtgeo.blockedwell_from_roxar(
                 PRJ, GNAME, BWNAME, well.name, lognames=[FACIES]
             )
-            dfr = blw.dataframe.copy(deep=True)
+            dfr = blw.get_dataframe()
             for code, faciesname in APS_FACIES.items():
                 newname = PREFIX + faciesname
                 dfr[newname] = MINPROB
@@ -509,7 +511,7 @@ be input to Equinor's APS module.
                 # if facies is undefined, also probability shall be undefined
                 dfr[newname][np.isnan(dfr[FACIES])] = np.nan
 
-            blw.dataframe = dfr
+            blw.set_dataframe(dfr)
             blw.to_roxar(PRJ, GNAME, BWNAME, well.name)
 
 

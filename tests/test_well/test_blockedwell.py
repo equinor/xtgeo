@@ -39,4 +39,4 @@ def test_import_blockedwell(loadwell1):
         2: "Crevasse",
     }
 
-    assert mywell.dataframe["Poro"][4] == pytest.approx(0.224485, abs=0.0001)
+    assert mywell.get_dataframe()["Poro"][4] == pytest.approx(0.224485, abs=0.0001)

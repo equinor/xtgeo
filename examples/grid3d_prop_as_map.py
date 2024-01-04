@@ -32,7 +32,7 @@ def make_map():
 
     points = xtgeo.Points()
     points.zname = "PORO"
-    points.dataframe = df
+    points.set_dataframe(df)
 
     # do gridding:
     surf.gridding(points)

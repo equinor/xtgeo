@@ -11,8 +11,8 @@ y = x.copy()
 
 y.rescale(10)
 
-IDGROUPSX = x.dataframe.groupby(x.pname)
-IDGROUPSY = y.dataframe.groupby(y.pname)
+IDGROUPSX = x.get_dataframe().groupby(x.pname)
+IDGROUPSY = y.get_dataframe().groupby(y.pname)
 
 plt.figure(figsize=(7, 7))
 for idx, grp in IDGROUPSX:
@@ -27,4 +27,4 @@ else:
     plt.show()
 
 
-print(y.dataframe)
+print(y.get_dataframe())

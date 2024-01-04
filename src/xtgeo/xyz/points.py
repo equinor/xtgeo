@@ -508,26 +508,27 @@ class Points(XYZ):
             self._dataframe_consistency_check()
 
     def _dataframe_consistency_check(self):
-        if self.xname not in self.dataframe:
+        dataframe = self.get_dataframe(copy=False)
+        if self.xname not in dataframe:
             raise ValueError(
                 f"xname={self.xname} is not a column "
-                f"of dataframe {self.dataframe.columns}"
+                f"of dataframe {dataframe.columns}"
             )
-        if self.yname not in self.dataframe:
+        if self.yname not in dataframe:
             raise ValueError(
                 f"yname={self.yname} is not a column "
-                f"of dataframe {self.dataframe.columns}"
+                f"of dataframe {dataframe.columns}"
             )
-        if self.zname not in self.dataframe:
+        if self.zname not in dataframe:
             raise ValueError(
                 f"zname={self.zname} is not a column "
-                f"of dataframe {self.dataframe.columns}"
+                f"of dataframe {dataframe.columns}"
             )
         for attr in self._attrs:
-            if attr not in self.dataframe:
+            if attr not in dataframe:
                 raise ValueError(
                     f"Attribute {attr} is not a column "
-                    f"of dataframe {self.dataframe.columns}"
+                    f"of dataframe {dataframe.columns}"
                 )
 
     def __repr__(self):
@@ -540,19 +541,19 @@ class Points(XYZ):
 
     def __eq__(self, value):
         """Magic method for ==."""
-        return self.dataframe[self.zname] == value
+        return self.get_dataframe(copy=False)[self.zname] == value
 
     def __gt__(self, value):
-        return self.dataframe[self.zname] > value
+        return self.get_dataframe(copy=False)[self.zname] > value
 
     def __ge__(self, value):
-        return self.dataframe[self.zname] >= value
+        return self.get_dataframe(copy=False)[self.zname] >= value
 
     def __lt__(self, value):
-        return self.dataframe[self.zname] < value
+        return self.get_dataframe(copy=False)[self.zname] < value
 
     def __le__(self, value):
-        return self.dataframe[self.zname] <= value
+        return self.get_dataframe(copy=False)[self.zname] <= value
 
     # ----------------------------------------------------------------------------------
     # Methods
@@ -562,8 +563,8 @@ class Points(XYZ):
     def dataframe(self) -> pd.DataFrame:
         """Returns or set the Pandas dataframe object."""
         warnings.warn(
-            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
-            "Use `get_dataframe()` instead.",
+            "Direct access to the dataframe property in Points class will be "
+            "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
             PendingDeprecationWarning,
         )
         return self._df
@@ -587,8 +588,7 @@ class Points(XYZ):
         .. versionchanged:: 3.7 Add keyword `copy`, defaulted to True
 
         """
-        if copy:
-            return self._df.copy()
+        return self._df.copy() if copy else self._df
 
     def set_dataframe(self, df):
         self._df = df.apply(deepcopy)
@@ -816,7 +816,7 @@ class Points(XYZ):
         self._reset(
             **_wells_importer(wells, tops, incl_limit, top_prefix, zonelist, use_undef)
         )
-        return self.dataframe["WellName"].nunique()
+        return self.get_dataframe(copy=False)["WellName"].nunique()
 
     @inherit_docstring(inherit_from=XYZ.from_list)
     @deprecation.deprecated(

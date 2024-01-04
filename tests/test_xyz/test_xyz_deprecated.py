@@ -44,7 +44,7 @@ def test_points_from_list_deprecated():
 
         old_points = xtgeo.Points()
         old_points.from_list(plist)
-        assert mypoints.dataframe.equals(old_points.dataframe)
+        assert mypoints.get_dataframe().equals(old_points.get_dataframe())
 
 
 def test_import_from_dataframe_deprecated(testpath):
@@ -57,7 +57,7 @@ def test_import_from_dataframe_deprecated(testpath):
     with pytest.warns(DeprecationWarning):
         mypoints.from_dataframe(dfr, east="X", north="Y", tvdmsl="Z", attributes=attr)
 
-    assert mypoints.dataframe.X_UTME.mean() == dfr.X.mean()
+    assert mypoints.get_dataframe().X_UTME.mean() == dfr.X.mean()
 
 
 @pytest.mark.parametrize(
@@ -83,9 +83,15 @@ def test_polygons_from_file_alternatives_with_deprecated(testpath, filename, ffo
         polygons3 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
         polygons4 = xtgeo.polygons_from_file(testpath / filename)
 
-        pd.testing.assert_frame_equal(polygons1.dataframe, polygons2.dataframe)
-        pd.testing.assert_frame_equal(polygons2.dataframe, polygons3.dataframe)
-        pd.testing.assert_frame_equal(polygons3.dataframe, polygons4.dataframe)
+        pd.testing.assert_frame_equal(
+            polygons1.get_dataframe(), polygons2.get_dataframe()
+        )
+        pd.testing.assert_frame_equal(
+            polygons2.get_dataframe(), polygons3.get_dataframe()
+        )
+        pd.testing.assert_frame_equal(
+            polygons3.get_dataframe(), polygons4.get_dataframe()
+        )
 
 
 def test_get_polygons_one_well_deprecated(testpath, tmp_path):
@@ -118,7 +124,7 @@ def test_get_polygons_many_wells_deprecated(testpath, tmp_path):
     mypoly2.to_file(tmp_path / "poly_w1_many_new.irapasc")
 
     pd.testing.assert_frame_equal(
-        mypoly.dataframe.iloc[:, 0:4], mypoly2.dataframe.iloc[:, 0:4]
+        mypoly.get_dataframe().iloc[:, 0:4], mypoly2.get_dataframe().iloc[:, 0:4]
     )
 
 
@@ -132,7 +138,7 @@ def test_init_with_surface_deprecated(testpath):
         poi = xtgeo.Points(surf)
 
     poi.zname = "VALUES"
-    pd.testing.assert_frame_equal(poi.dataframe, surf.dataframe())
+    pd.testing.assert_frame_equal(poi.get_dataframe(), surf.get_dataframe())
 
 
 def test_get_zone_tops_one_well_deprecated(testpath):
@@ -146,7 +152,9 @@ def test_get_zone_tops_one_well_deprecated(testpath):
 
     mypoints_new = xtgeo.points_from_wells(wlist)
 
-    pd.testing.assert_frame_equal(mypoints.dataframe, mypoints_new.dataframe)
+    pd.testing.assert_frame_equal(
+        mypoints.get_dataframe(), mypoints_new.get_dataframe()
+    )
 
 
 def test_get_zone_tops_some_wells_deprecated(testpath):
@@ -165,7 +173,7 @@ def test_get_zone_tops_some_wells_deprecated(testpath):
 
     # classmethod
     p2 = xtgeo.points_from_wells(wlist)
-    assert p1.dataframe.equals(p2.dataframe)
+    assert p1.get_dataframe().equals(p2.get_dataframe())
 
 
 def test_get_faciesfraction_some_wells_deprecated(testpath):
@@ -186,6 +194,6 @@ def test_get_faciesfraction_some_wells_deprecated(testpath):
     mypoints.zname = "FACFRAC"
 
     myquery = 'WELLNAME == "OP_1" and ZONE == 1'
-    usedf = mypoints.dataframe.query(myquery)
+    usedf = mypoints.get_dataframe().query(myquery)
 
     assert abs(usedf[mypoints.zname].values[0] - 0.86957) < 0.001

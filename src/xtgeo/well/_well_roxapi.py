@@ -206,12 +206,12 @@ def _store_log_in_roxapi(self, lrun: Any, logname: str) -> None:
 
     values = thelog.generate_values()
 
-    if values.size != self.dataframe[logname].values.size:
+    if values.size != self.get_dataframe(copy=False)[logname].values.size:
         raise ValueError("New logs have different sampling or size, not possible")
 
     usedtype = values.dtype
 
-    vals = np.ma.masked_invalid(self.dataframe[logname].values)
+    vals = np.ma.masked_invalid(self.get_dataframe(copy=False)[logname].values)
     vals = np.ma.masked_greater(vals, xtglimit)
     vals = vals.astype(usedtype)
     thelog.set_values(vals)
@@ -279,9 +279,11 @@ def _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisat
     traj = roxwell.wellbore.trajectories.create(trajectory)
 
     series = traj.survey_point_series
-    east = self.dataframe[self.xname].values
-    north = self.dataframe[self.yname].values
-    tvd = self.dataframe[self.zname].values
+
+    dataframe = self.get_dataframe(copy=False)
+    east = dataframe[self.xname].values
+    north = dataframe[self.yname].values
+    tvd = dataframe[self.zname].values
     values = np.array([east, north, tvd]).transpose()
     series.set_points(values)
 

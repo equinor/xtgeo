@@ -215,7 +215,7 @@ def to_file(
     pfile.check_folder(raiseerror=OSError)
 
     ncount = 0
-    if xyz.dataframe is None:
+    if xyz.get_dataframe(copy=False) is None:
         logger.warning("Nothing to export!")
         return ncount
 
@@ -260,7 +260,7 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
         is made.
     """
 
-    df = self.dataframe.copy()
+    df = self.get_dataframe()
 
     if not df.index.any():
         logger.warning("Nothing to export")
@@ -356,7 +356,7 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
 
     """
 
-    df = self.dataframe.copy()
+    df = self.get_dataframe()
 
     if not df.index.any():
         logger.warning("Nothing to export")

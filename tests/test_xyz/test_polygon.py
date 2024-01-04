@@ -28,7 +28,7 @@ def test_polygons_from_file_alternatives(testpath, filename, fformat):
     polygons1 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
     polygons2 = xtgeo.polygons_from_file(testpath / filename)
 
-    pd.testing.assert_frame_equal(polygons1.dataframe, polygons2.dataframe)
+    pd.testing.assert_frame_equal(polygons1.get_dataframe(), polygons2.get_dataframe())
 
 
 def test_polygons_from_lists():
@@ -36,8 +36,8 @@ def test_polygons_from_lists():
 
     mypol = Polygons(plist)
 
-    assert mypol.dataframe["X_UTME"].values[0] == 234
-    assert mypol.dataframe["Z_TVDSS"].values[2] == 12
+    assert mypol.get_dataframe()["X_UTME"].values[0] == 234
+    assert mypol.get_dataframe()["Z_TVDSS"].values[2] == 12
 
     plist = [
         (234, 556, 11, 0),
@@ -46,11 +46,11 @@ def test_polygons_from_lists():
     ]
 
     mypol = Polygons(plist)
-    assert mypol.dataframe["POLY_ID"].values[2] == 1
+    assert mypol.get_dataframe()["POLY_ID"].values[2] == 1
 
-    somedf = mypol.dataframe.copy()
+    somedf = mypol.get_dataframe()
     mypol2 = Polygons(somedf)
-    assert mypol.dataframe.equals(mypol2.dataframe)
+    assert mypol.get_dataframe().equals(mypol2.get_dataframe())
 
 
 def test_polygons_from_list_and_attrs():
@@ -64,11 +64,11 @@ def test_polygons_from_list_and_attrs():
     attrs["somefloat"] = "float"
 
     mypol = Polygons(plist, attributes=attrs)
-    assert mypol.dataframe["POLY_ID"].values[2] == 1
+    assert mypol.get_dataframe()["POLY_ID"].values[2] == 1
 
-    somedf = mypol.dataframe.copy()
+    somedf = mypol.get_dataframe()
     mypol2 = Polygons(somedf, attributes=attrs)
-    assert mypol.dataframe.equals(mypol2.dataframe)
+    assert mypol.get_dataframe().equals(mypol2.get_dataframe())
 
 
 def test_polygons_from_attrs_not_ordereddict():
@@ -88,7 +88,7 @@ def test_polygons_from_attrs_not_ordereddict():
     attrs["somefloat"] = "float"
 
     mypol = Polygons(plist, attributes=attrs)
-    assert mypol.dataframe["POLY_ID"].values[2] == 1
+    assert mypol.get_dataframe()["POLY_ID"].values[2] == 1
 
 
 def test_import_zmap_and_xyz(testpath):
@@ -102,7 +102,9 @@ def test_import_zmap_and_xyz(testpath):
     assert mypol2b.nrow == mypol2c.nrow
 
     for col in ["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]:
-        assert np.allclose(mypol2a.dataframe[col].values, mypol2b.dataframe[col].values)
+        assert np.allclose(
+            mypol2a.get_dataframe()[col].values, mypol2b.get_dataframe()[col].values
+        )
 
 
 def test_import_export_polygons(testpath, tmp_path):
@@ -110,18 +112,22 @@ def test_import_export_polygons(testpath, tmp_path):
 
     mypoly = xtgeo.polygons_from_file(testpath / PFILE, fformat="xyz")
 
-    z0 = mypoly.dataframe["Z_TVDSS"].values[0]
+    z0 = mypoly.get_dataframe()["Z_TVDSS"].values[0]
 
     assert z0 == pytest.approx(2266.996338, abs=0.001)
 
-    mypoly.dataframe["Z_TVDSS"] += 100
+    dataframe = mypoly.get_dataframe()
+    dataframe["Z_TVDSS"] += 100
+    mypoly.set_dataframe(dataframe)
 
     mypoly.to_file(tmp_path / "polygon_export.xyz", fformat="xyz")
 
     # reimport and check
     mypoly2 = xtgeo.polygons_from_file(tmp_path / "polygon_export.xyz")
 
-    assert z0 + 100 == pytest.approx(mypoly2.dataframe["Z_TVDSS"].values[0], 0.001)
+    assert z0 + 100 == pytest.approx(
+        mypoly2.get_dataframe()["Z_TVDSS"].values[0], 0.001
+    )
 
 
 def test_polygon_boundary(testpath):
@@ -141,23 +147,23 @@ def test_polygon_filter_byid(testpath):
 
     pol = xtgeo.polygons_from_file(testpath / POLSET3)
 
-    assert pol.dataframe["POLY_ID"].iloc[0] == 0
-    assert pol.dataframe["POLY_ID"].iloc[-1] == 3
+    assert pol.get_dataframe()["POLY_ID"].iloc[0] == 0
+    assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 3
 
     pol.filter_byid()
-    assert pol.dataframe["POLY_ID"].iloc[-1] == 0
+    assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 0
 
     pol = xtgeo.polygons_from_file(testpath / POLSET3)
     pol.filter_byid([1, 3])
 
-    assert pol.dataframe["POLY_ID"].iloc[0] == 1
-    assert pol.dataframe["POLY_ID"].iloc[-1] == 3
+    assert pol.get_dataframe()["POLY_ID"].iloc[0] == 1
+    assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 3
 
     pol = xtgeo.polygons_from_file(testpath / POLSET3)
     pol.filter_byid(2)
 
-    assert pol.dataframe["POLY_ID"].iloc[0] == 2
-    assert pol.dataframe["POLY_ID"].iloc[-1] == 2
+    assert pol.get_dataframe()["POLY_ID"].iloc[0] == 2
+    assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 2
 
     pol = xtgeo.polygons_from_file(testpath / POLSET3)
     pol.filter_byid(99)  # not present; should remove all rows
@@ -171,13 +177,13 @@ def test_polygon_tlen_hlen(testpath):
     pol.tlen()
     pol.hlen()
 
-    assert pol.dataframe[pol.hname].all() <= pol.dataframe[pol.tname].all()
-    assert pol.dataframe[pol.hname].any() <= pol.dataframe[pol.tname].any()
+    assert pol.get_dataframe()[pol.hname].all() <= pol.get_dataframe()[pol.tname].all()
+    assert pol.get_dataframe()[pol.hname].any() <= pol.get_dataframe()[pol.tname].any()
 
     pol.filter_byid(0)
     hlen = pol.get_shapely_objects()[0].length  # shapely length is 2D!
-    assert (abs(pol.dataframe[pol.hname].iloc[-1] - hlen)) < 0.001
-    assert (abs(pol.dataframe[pol.dhname].iloc[0] - 1761.148)) < 0.01
+    assert (abs(pol.get_dataframe()[pol.hname].iloc[-1] - hlen)) < 0.001
+    assert (abs(pol.get_dataframe()[pol.dhname].iloc[0] - 1761.148)) < 0.01
 
 
 @pytest.mark.parametrize(
@@ -202,8 +208,8 @@ def test_rescale_polygon(testpath, dorescale, kind, expectmax, expectlen):
         pol.name = kind if kind else "none"
         pol.hlen()
 
-    assert pol.dataframe.H_CUMLEN.max() == pytest.approx(expectmax, rel=0.02)
-    assert pol.dataframe.shape == (expectlen, 6)
+    assert pol.get_dataframe().H_CUMLEN.max() == pytest.approx(expectmax, rel=0.02)
+    assert pol.get_dataframe().shape == (expectlen, 6)
 
 
 def test_fence_from_polygon(testpath):
@@ -211,7 +217,7 @@ def test_fence_from_polygon(testpath):
 
     pol = xtgeo.polygons_from_file(testpath / POLSET2)
 
-    df = pol.dataframe[0:3]
+    df = pol.get_dataframe()[0:3]
 
     df.at[0, "X_UTME"] = 0.0
     df.at[1, "X_UTME"] = 100.0
@@ -225,13 +231,13 @@ def test_fence_from_polygon(testpath):
     df.at[1, "Z_TVDSS"] = 1000.0
     df.at[2, "Z_TVDSS"] = 2000.0
 
-    pol.dataframe = df
+    pol.set_dataframe(df)
 
     fence = pol.get_fence(
         distance=100, nextend=4, name="SOMENAME", asnumpy=False, atleast=10
     )
-    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(19.98, abs=0.01)
-    assert fence.dataframe.H_DELTALEN.std() <= 0.05
+    assert fence.get_dataframe().H_DELTALEN.mean() == pytest.approx(19.98, abs=0.01)
+    assert fence.get_dataframe().H_DELTALEN.std() <= 0.05
 
 
 def test_fence_from_vertical_polygon():
@@ -245,17 +251,17 @@ def test_fence_from_vertical_polygon():
         pol.zname: [0, 50, 60],
         pol.pname: [1, 1, 1],
     }
-    pol.dataframe = pd.DataFrame(mypoly)
+    pol.set_dataframe(pd.DataFrame(mypoly))
 
     fence = pol.get_fence(
         distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
     )
 
-    assert len(fence.dataframe) == 161
-    assert fence.dataframe.H_DELTALEN.mean() == 0.125
-    assert fence.dataframe.H_DELTALEN.std() <= 0.001
-    assert fence.dataframe.H_CUMLEN.max() == 10
-    assert fence.dataframe.H_CUMLEN.min() == -10.0
+    assert len(fence.get_dataframe()) == 161
+    assert fence.get_dataframe().H_DELTALEN.mean() == 0.125
+    assert fence.get_dataframe().H_DELTALEN.std() <= 0.001
+    assert fence.get_dataframe().H_CUMLEN.max() == 10
+    assert fence.get_dataframe().H_CUMLEN.min() == -10.0
 
 
 def test_fence_from_almost_vertical_polygon():
@@ -269,17 +275,17 @@ def test_fence_from_almost_vertical_polygon():
         pol.zname: [0, 50, 60],
         pol.pname: [1, 1, 1],
     }
-    pol.dataframe = pd.DataFrame(mypoly)
+    pol.set_dataframe(pd.DataFrame(mypoly))
 
     fence = pol.get_fence(
         distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
     )
 
-    assert len(fence.dataframe) == 145
-    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(0.1414, abs=0.01)
-    assert fence.dataframe.H_DELTALEN.std() <= 0.001
-    assert fence.dataframe.H_CUMLEN.max() == pytest.approx(10.0, abs=0.5)
-    assert fence.dataframe.H_CUMLEN.min() == pytest.approx(-10.0, abs=0.5)
+    assert len(fence.get_dataframe()) == 145
+    assert fence.get_dataframe().H_DELTALEN.mean() == pytest.approx(0.1414, abs=0.01)
+    assert fence.get_dataframe().H_DELTALEN.std() <= 0.001
+    assert fence.get_dataframe().H_CUMLEN.max() == pytest.approx(10.0, abs=0.5)
+    assert fence.get_dataframe().H_CUMLEN.min() == pytest.approx(-10.0, abs=0.5)
 
 
 def test_fence_from_slanted_polygon():
@@ -293,15 +299,15 @@ def test_fence_from_slanted_polygon():
         pol.zname: [0, 50, 60],
         pol.pname: [1, 1, 1],
     }
-    pol.dataframe = pd.DataFrame(mypoly)
+    pol.set_dataframe(pd.DataFrame(mypoly))
 
     fence = pol.get_fence(
         distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
     )
 
-    assert len(fence.dataframe) == 9
-    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(3.6, abs=0.02)
-    assert fence.dataframe.H_DELTALEN.std() <= 0.001
+    assert len(fence.get_dataframe()) == 9
+    assert fence.get_dataframe().H_DELTALEN.mean() == pytest.approx(3.6, abs=0.02)
+    assert fence.get_dataframe().H_DELTALEN.std() <= 0.001
 
 
 def test_fence_from_more_slanted_polygon():
@@ -315,15 +321,15 @@ def test_fence_from_more_slanted_polygon():
         pol.zname: [0, 50, 60],
         pol.pname: [1, 1, 1],
     }
-    pol.dataframe = pd.DataFrame(mypoly)
+    pol.set_dataframe(pd.DataFrame(mypoly))
 
     fence = pol.get_fence(
         distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
     )
 
-    assert len(fence.dataframe) == 5
-    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(12.49, abs=0.02)
-    assert fence.dataframe.H_DELTALEN.std() <= 0.001
+    assert len(fence.get_dataframe()) == 5
+    assert fence.get_dataframe().H_DELTALEN.mean() == pytest.approx(12.49, abs=0.02)
+    assert fence.get_dataframe().H_DELTALEN.std() <= 0.001
 
 
 def test_rename_columns(testpath):
@@ -335,13 +341,13 @@ def test_rename_columns(testpath):
     pol.xname = "NEWX"
     assert pol.xname == "NEWX"
 
-    assert "NEWX" in pol.dataframe
+    assert "NEWX" in pol.get_dataframe()
 
     pol.yname = "NEWY"
     assert pol.yname == "NEWY"
     assert pol.xname != "NEWY"
 
-    assert "NEWY" in pol.dataframe
+    assert "NEWY" in pol.get_dataframe()
 
 
 def test_empty_polygon_has_default_name():
@@ -352,7 +358,7 @@ def test_empty_polygon_has_default_name():
 def test_check_column_names():
     pol = Polygons()
     data = pd.DataFrame({"T_DELTALEN": [1, 2]})
-    pol.dataframe = data
+    pol.set_dataframe(data)
     assert pol.dtname == "T_DELTALEN"
     assert pol.dhname is None
 
@@ -372,9 +378,9 @@ def test_delete_columns_protected_columns():
     with pytest.warns(UserWarning, match="protected and will not be deleted"):
         pol.delete_columns([pol.zname])
 
-    assert pol.xname in pol.dataframe
-    assert pol.yname in pol.dataframe
-    assert pol.zname in pol.dataframe
+    assert pol.xname in pol.get_dataframe()
+    assert pol.yname in pol.get_dataframe()
+    assert pol.zname in pol.get_dataframe()
 
 
 def test_delete_columns_strict_raises():
@@ -395,7 +401,7 @@ def test_raise_incorrect_name_type(test_name):
             "T_DELTALEN": [2.0, 1.0],
         }
     )
-    pol.dataframe = data
+    pol.set_dataframe(data)
     pol._pname = "POLY_ID"
     pol._tname = "T_DELTALEN"
 
@@ -418,7 +424,7 @@ def test_raise_special_name_name_type(name_attribute):
         }
     )
     pol._pname = "POLY_ID"
-    pol.dataframe = data
+    pol.set_dataframe(data)
 
     with pytest.raises(ValueError, match="does not exist as a column"):
         setattr(pol, name_attribute, "anyname")
@@ -476,7 +482,7 @@ def test_polygons_operation_in_polygons(
             getattr(pointset, f"{func}_{where}")(closed_poly, value)
     else:
         pointset.operation_polygons(closed_poly, value, opname=func, inside=inside)
-    assert list(pointset.dataframe["Z_TVDSS"]) == expected_result
+    assert list(pointset.get_dataframe()["Z_TVDSS"]) == expected_result
 
 
 @pytest.mark.parametrize(
@@ -521,7 +527,7 @@ def test_shortform_polygons_overlap(functionname, expected):
     else:
         getattr(poi, functionname)(pol, 2.0)
 
-    assert list(poi.dataframe[poi.zname].values) == expected
+    assert list(poi.get_dataframe()[poi.zname].values) == expected
 
 
 def test_polygons_simplify_preserve_topology():
@@ -537,10 +543,9 @@ def test_polygons_simplify_preserve_topology():
     pol = Polygons(polygon)
 
     status = pol.simplify(tolerance=0.3)
-    print(pol.dataframe)
     assert status is True
 
-    assert pol.dataframe[pol.xname].values.tolist() == [3.0, 5.0, 5.0, 3.0, 3.0]
+    assert pol.get_dataframe()[pol.xname].values.tolist() == [3.0, 5.0, 5.0, 3.0, 3.0]
 
 
 def test_polygons_simplify_not_preserve_topology():
@@ -556,7 +561,6 @@ def test_polygons_simplify_not_preserve_topology():
     pol = Polygons(polygon)
 
     status = pol.simplify(tolerance=0.3, preserve_topology=False)
-    print(pol.dataframe)
     assert status is True
 
-    assert pol.dataframe[pol.xname].values.tolist() == [3.0, 5.0, 5.0, 3.0, 3.0]
+    assert pol.get_dataframe()[pol.xname].values.tolist() == [3.0, 5.0, 5.0, 3.0, 3.0]

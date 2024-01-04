@@ -317,9 +317,11 @@ def test_points_gridding(tmpdir, reek_map, generate_plot):
 
     xyz = Points(xs)
 
-    xyz.dataframe["Z_TVDSS"] = xyz.dataframe["Z_TVDSS"] + 300
+    dataframe = xyz.get_dataframe()
+    dataframe["Z_TVDSS"] = dataframe["Z_TVDSS"] + 300
+    xyz.set_dataframe(dataframe)
 
-    logger.info("Avg of points: %s", xyz.dataframe["Z_TVDSS"].mean())
+    logger.info("Avg of points: %s", xyz.get_dataframe()["Z_TVDSS"].mean())
 
     xscopy = xs.copy()
 

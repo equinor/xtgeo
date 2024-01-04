@@ -34,9 +34,9 @@ def test_points_from_file_alternatives(testpath, filename, fformat):
     points3 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
     points4 = xtgeo.points_from_file(testpath / filename)
 
-    pd.testing.assert_frame_equal(points1.dataframe, points2.dataframe)
-    pd.testing.assert_frame_equal(points2.dataframe, points3.dataframe)
-    pd.testing.assert_frame_equal(points3.dataframe, points4.dataframe)
+    pd.testing.assert_frame_equal(points1.get_dataframe(), points2.get_dataframe())
+    pd.testing.assert_frame_equal(points2.get_dataframe(), points3.get_dataframe())
+    pd.testing.assert_frame_equal(points3.get_dataframe(), points4.get_dataframe())
 
 
 def test_points_from_list_of_tuples():
@@ -44,8 +44,8 @@ def test_points_from_list_of_tuples():
 
     mypoints = Points(plist)
 
-    x0 = mypoints.dataframe["X_UTME"].values[0]
-    z2 = mypoints.dataframe["Z_TVDSS"].values[2]
+    x0 = mypoints.get_dataframe()["X_UTME"].values[0]
+    z2 = mypoints.get_dataframe()["Z_TVDSS"].values[2]
     assert x0 == 234
     assert z2 == 12
 
@@ -69,9 +69,15 @@ def test_create_pointset(points):
 
     assert len(points) == pointset.nrow
 
-    np.testing.assert_array_almost_equal(pointset.dataframe["X_UTME"], points[:, 0])
-    np.testing.assert_array_almost_equal(pointset.dataframe["Y_UTMN"], points[:, 1])
-    np.testing.assert_array_almost_equal(pointset.dataframe["Z_TVDSS"], points[:, 2])
+    np.testing.assert_array_almost_equal(
+        pointset.get_dataframe()["X_UTME"], points[:, 0]
+    )
+    np.testing.assert_array_almost_equal(
+        pointset.get_dataframe()["Y_UTMN"], points[:, 1]
+    )
+    np.testing.assert_array_almost_equal(
+        pointset.get_dataframe()["Z_TVDSS"], points[:, 2]
+    )
 
 
 def test_import(testpath):
@@ -81,7 +87,7 @@ def test_import(testpath):
         testpath / PFILE
     )  # should guess based on extesion
 
-    x0 = mypoints.dataframe["X_UTME"].values[0]
+    x0 = mypoints.get_dataframe()["X_UTME"].values[0]
     assert x0 == pytest.approx(460842.434326, 0.001)
 
 
@@ -95,7 +101,7 @@ def test_import_from_dataframe(testpath):
         values=dfr, xname="X", yname="Y", zname="Z", attributes=attr
     )
 
-    assert mypoints.dataframe.X.mean() == dfr.X.mean()
+    assert mypoints.get_dataframe().X.mean() == dfr.X.mean()
 
     with pytest.raises(ValueError):
         mypoints = Points(dfr, xname="NOTTHERE", yname="Y", zname="Z", attributes=attr)
@@ -111,9 +117,11 @@ def test_export_and_load_points(tmp_path):
 
     exported_points = xtgeo.points_from_file(export_path)
 
-    pd.testing.assert_frame_equal(test_points.dataframe, exported_points.dataframe)
+    pd.testing.assert_frame_equal(
+        test_points.get_dataframe(), exported_points.get_dataframe()
+    )
     assert list(itertools.chain.from_iterable(plist)) == list(
-        test_points.dataframe.values.flatten()
+        test_points.get_dataframe().values.flatten()
     )
 
 
@@ -130,7 +138,9 @@ def test_export_load_rmsformatted_points(testpath, tmp_path):
 
     reloaded_points = xtgeo.points_from_file(export_path)
 
-    pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
+    pd.testing.assert_frame_equal(
+        orig_points.get_dataframe(), reloaded_points.get_dataframe()
+    )
 
 
 @pytest.mark.bigtest
@@ -147,7 +157,9 @@ def test_import_rmsattr_format(testpath, tmp_path):
 
     reloaded_points = Points()
     reloaded_points.from_file(export_path, fformat="rms_attr")
-    pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
+    pd.testing.assert_frame_equal(
+        orig_points.get_dataframe(), reloaded_points.get_dataframe()
+    )
 
 
 def test_export_points_rmsattr(testpath, tmp_path):
@@ -161,9 +173,9 @@ def test_export_points_rmsattr(testpath, tmp_path):
     mypoints.to_file(output_path, fformat="rms_attr")
     mypoints2 = xtgeo.points_from_file(output_path)
 
-    assert mypoints.dataframe["Seg"].equals(mypoints2.dataframe["Seg"])
+    assert mypoints.get_dataframe()["Seg"].equals(mypoints2.get_dataframe()["Seg"])
 
     np.testing.assert_array_almost_equal(
-        mypoints.dataframe["MyNum"].values,
-        mypoints2.dataframe["MyNum"].values,
+        mypoints.get_dataframe()["MyNum"].values,
+        mypoints2.get_dataframe()["MyNum"].values,
     )

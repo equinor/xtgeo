@@ -56,7 +56,7 @@ def report_zone_mismatch(
     if zoneprop is None or not isinstance(zoneprop, GridProperty):
         raise ValueError("Input zoneprop is missing or not a GridProperty() instance")
 
-    if zonelogname not in well.dataframe.columns:
+    if zonelogname not in well.get_dataframe(copy=False).columns:
         logger.warning("Zonelog %s is missing for well %s", zonelogname, well.name)
         return None
 
@@ -66,20 +66,20 @@ def report_zone_mismatch(
 
     # get the IJK along the well as logs; use a copy of the well instance
     wll = well.copy()
-    wll.dataframe[zonelogname] += zonelogshift
+    wll_df = wll.get_dataframe()
+    wll_df[zonelogname] += zonelogshift
 
     if depthrange:
         d1, d2 = depthrange
-        wll.dataframe = wll.dataframe[
-            (d1 < wll.dataframe.Z_TVDSS) & (d2 > wll.dataframe.Z_TVDSS)
-        ]
+        wll_df = wll_df[(d1 < wll_df.Z_TVDSS) & (d2 > wll_df.Z_TVDSS)]
+    wll.set_dataframe(wll_df)
 
     wll.get_gridproperties(zoneprop, self)
     zonename = zoneprop.name if zoneprop.name is not None else "Zone"
     zmodel = zonename + "_model"
 
     # from here, work with the dataframe only
-    df = wll.dataframe
+    df = wll.get_dataframe()
 
     # zonelogrange
     z1, z2 = zonelogrange
@@ -155,7 +155,7 @@ def report_zone_mismatch(
     res2 = dfuse2["zmatch2"].mean() * 100
 
     # update Well() copy (segment only)
-    wll.dataframe = dfuse2
+    wll.set_dataframe(dfuse2)
 
     return {
         "MATCH1": res1,

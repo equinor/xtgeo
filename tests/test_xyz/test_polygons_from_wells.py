@@ -23,5 +23,4 @@ def test_get_polygons_many_wells(testpath):
         for wpath in glob.glob(str(testpath / WFILES2))
     ]
     mypoly = xtgeo.polygons_from_wells(wlist, 2, resample=10)
-    print(mypoly.dataframe)
     assert mypoly.nrow == 29

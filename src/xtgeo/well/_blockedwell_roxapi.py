@@ -199,13 +199,13 @@ def _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisa
         usedtype = bwprop.dtype
         dind = bwset.get_data_indices([self._wname], realisation=realisation)
 
-        if self.dataframe[lname].values.size != dind.size:
+        if self.get_dataframe(copy=False)[lname].values.size != dind.size:
             raise ValueError(
                 "Dataframe is of wrong size, changing numbers of rows is not possible"
             )
-        maskedvalues = np.ma.masked_invalid(self.dataframe[lname].values).astype(
-            usedtype
-        )
+        maskedvalues = np.ma.masked_invalid(
+            self.get_dataframe(copy=False)[lname].values
+        ).astype(usedtype)
 
         # there are cases where the RMS API complains on the actual value of the masked
         # array being outside range; hence remedy is to set 'data' value to a usedtype

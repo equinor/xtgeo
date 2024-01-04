@@ -103,7 +103,7 @@ def test_import(loadwell1, snapshot, helpers):
     }
 
     snapshot.assert_match(
-        helpers.df2csv(mywell.dataframe.head(10).round()),
+        helpers.df2csv(mywell.get_dataframe().head(10).round()),
         "loadwell1.csv",
     )
 
@@ -129,7 +129,7 @@ def test_import_long_well(loadwell3):
     logger.debug("True well name: %s", mywell.truewellname)
 
     mywell.geometrics()
-    dfr = mywell.dataframe
+    dfr = mywell.get_dataframe()
 
     assert dfr["Q_AZI"][27] == pytest.approx(91.856158, abs=0.0001)
 
@@ -138,17 +138,17 @@ def test_import_well_selected_logs():
     """Import a well but restrict on lognames"""
 
     mywell = xtgeo.well_from_file(WELL1, lognames="all")
-    assert "ZONELOG" in mywell.dataframe
+    assert "ZONELOG" in mywell.get_dataframe()
 
     mywell = xtgeo.well_from_file(WELL1, lognames="GR")
-    assert "ZONELOG" not in mywell.dataframe
+    assert "ZONELOG" not in mywell.get_dataframe()
 
     mywell = xtgeo.well_from_file(WELL1, lognames=["GR"])
-    assert "ZONELOG" not in mywell.dataframe
+    assert "ZONELOG" not in mywell.get_dataframe()
 
     mywell = xtgeo.well_from_file(WELL1, lognames=["DUMMY"])
-    assert "ZONELOG" not in mywell.dataframe
-    assert "GR" not in mywell.dataframe
+    assert "ZONELOG" not in mywell.get_dataframe()
+    assert "GR" not in mywell.get_dataframe()
 
     with pytest.raises(ValueError) as msg:
         logger.info(msg)
@@ -280,7 +280,7 @@ def test_shortwellname(create_well):
 
 #     t0 = xtg.timer()
 #     result = xtgeo.well_from_file(wuse, fformat="hdf5")
-#     assert result.dataframe.equals(simple_well.dataframe)
+#     assert result.get_dataframe().equals(simple_well.get_dataframe())
 #     print("Time for load HDF: ", xtg.timer(t0))
 
 
@@ -292,7 +292,7 @@ def test_import_export_rmsasc(tmp_path, simple_well):
 
     t0 = xtg.timer()
     result = xtgeo.well_from_file(wuse)
-    assert result.dataframe.equals(result.dataframe)
+    assert result.get_dataframe().equals(result.get_dataframe())
     print("Time for load RMSASC: ", xtg.timer(t0))
 
 
@@ -308,7 +308,7 @@ def test_create_and_delete_logs(loadwell3):
 
     status = mywell.create_log("NEWLOG", force=True, value=200)
     assert status is True
-    assert mywell.dataframe.NEWLOG.mean() == 200.0
+    assert mywell.get_dataframe().NEWLOG.mean() == 200.0
 
     ndeleted = mywell.delete_log("NEWLOG")
 
@@ -320,16 +320,18 @@ def test_create_and_delete_logs(loadwell3):
 
 
 def test_create_and_delete_logs_implicit(loadwell3):
-    """Test create and delete logs, using implicit dataframe operations."""
+    """Test create and delete logs, using implicit get_dataframe() operations."""
     mywell = loadwell3
 
-    mywell.dataframe["NEWLOG"] = 1234.0
-    assert mywell.dataframe.NEWLOG.mean() == 1234.0
+    dfr = mywell.get_dataframe()
+    dfr["NEWLOG"] = 1234.0
+    mywell.set_dataframe(dfr)
+    assert mywell.get_dataframe().NEWLOG.mean() == 1234.0
     assert "NEWLOG" in mywell.get_lognames()
 
     # status = mywell.create_log("NEWLOG", force=True, value=200)
     # assert status is True
-    # assert mywell.dataframe.NEWLOG.mean() == 200.0
+    # assert mywell.get_dataframe().NEWLOG.mean() == 200.0
 
     # ndeleted = mywell.delete_log("NEWLOG")
 
@@ -383,7 +385,7 @@ def test_make_hlen(loadwell1):
     mywell = loadwell1
     mywell.create_relative_hlen()
 
-    logger.debug(mywell.dataframe)
+    logger.debug(mywell.get_dataframe())
 
 
 def test_make_zqual_log(loadwell3):
@@ -404,7 +406,9 @@ def test_make_zqual_log(loadwell3):
         4: "INV_U_TURN",
         9: "INCOMPLETE",
     }
-    unique, counts = np.unique(mywell.dataframe["ZQUAL"].values, return_counts=True)
+    unique, counts = np.unique(
+        mywell.get_dataframe()["ZQUAL"].values, return_counts=True
+    )
     assert unique.tolist() == [0.0, 1.0, 2.0, 3.0, 9.0]
     assert counts.tolist() == [714, 123, 612, 782, 90]
 
@@ -501,15 +505,15 @@ def test_mask_shoulderbeds(loadwell3, loadwell1):
     usewell = mywell.copy()
     usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples=3)
 
-    assert not np.isnan(mywell.dataframe.at[1595, "GR"])
-    assert np.isnan(usewell.dataframe.at[1595, "GR"])
+    assert not np.isnan(mywell.get_dataframe().at[1595, "GR"])
+    assert np.isnan(usewell.get_dataframe().at[1595, "GR"])
 
     # another well set with more discrete logs and several logs to modify
     mywell = loadwell1
     usewell = mywell.copy()
     usewell.mask_shoulderbeds(["Zonelog", "Facies"], ["Perm", "Poro"], nsamples=2)
-    assert np.isnan(usewell.dataframe.at[4763, "Perm"])
-    assert np.isnan(usewell.dataframe.at[4763, "Poro"])
+    assert np.isnan(usewell.get_dataframe().at[4763, "Perm"])
+    assert np.isnan(usewell.get_dataframe().at[4763, "Poro"])
 
     # corner cases
     with pytest.raises(ValueError):
@@ -533,8 +537,8 @@ def test_mask_shoulderbeds_use_tvd_md(loadwell3):
     # small distance for this test since almost horizontal well
     usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples={"tvd": 0.01})
 
-    assert not np.isnan(mywell.dataframe.at[1595, "GR"])
-    assert np.isnan(usewell.dataframe.at[1595, "GR"])
+    assert not np.isnan(mywell.get_dataframe().at[1595, "GR"])
+    assert np.isnan(usewell.get_dataframe().at[1595, "GR"])
 
     usewell = mywell.copy()
 
@@ -545,8 +549,8 @@ def test_mask_shoulderbeds_use_tvd_md(loadwell3):
 
     usewell.geometrics()  # to create Q_MDEPTH as mdlogname
     usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples={"md": 1.6})
-    assert not np.isnan(mywell.dataframe.at[1595, "GR"])
-    assert np.isnan(usewell.dataframe.at[1595, "GR"])
+    assert not np.isnan(mywell.get_dataframe().at[1595, "GR"])
+    assert np.isnan(usewell.get_dataframe().at[1595, "GR"])
 
 
 def test_geometrics_exception(string_to_well):
@@ -583,9 +587,9 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
     }
     well.geometrics()
     result = {
-        "Q_MDEPTH": well.dataframe["Q_MDEPTH"].values.tolist(),
-        "Q_INCL": well.dataframe["Q_INCL"].values.tolist(),
-        "Q_AZI": well.dataframe["Q_AZI"].values.tolist(),
+        "Q_MDEPTH": well.get_dataframe()["Q_MDEPTH"].values.tolist(),
+        "Q_INCL": well.get_dataframe()["Q_INCL"].values.tolist(),
+        "Q_AZI": well.get_dataframe()["Q_AZI"].values.tolist(),
     }
     assert result == expected_result
 
@@ -624,7 +628,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
 def test_geometrics(string_to_well, well_input, expected):
     well = string_to_well(well_input)
     well.geometrics()
-    assert well.dataframe["Q_MDEPTH"].values.tolist() == expected
+    assert well.get_dataframe()["Q_MDEPTH"].values.tolist() == expected
 
 
 def test_rescale_well(loadwell1):
@@ -632,12 +636,12 @@ def test_rescale_well(loadwell1):
 
     mywell = loadwell1
 
-    df1 = mywell.dataframe.copy()
+    df1 = mywell.get_dataframe().copy()
     df1 = df1[(df1["Zonelog"] == 1)]
 
     mywell.rescale(delta=0.2)
 
-    df2 = mywell.dataframe.copy()
+    df2 = mywell.get_dataframe().copy()
     df2 = df2[(df2["Zonelog"] == 1)]
 
     assert df1["Perm"].mean() == pytest.approx(df2["Perm"].mean(), abs=20.0)
@@ -649,10 +653,10 @@ def test_rescale_well_tvdrange(tmpdir):
 
     mywell = xtgeo.well_from_file(WELL1)
     mywell.to_file(join(tmpdir, "wll1_pre_rescale.w"))
-    gr_avg1 = mywell.dataframe["GR"].mean()
+    gr_avg1 = mywell.get_dataframe()["GR"].mean()
     mywell.rescale(delta=2, tvdrange=(1286, 1333))
     mywell.to_file(join(tmpdir, "wll1_post_rescale.w"))
-    gr_avg2 = mywell.dataframe["GR"].mean()
+    gr_avg2 = mywell.get_dataframe()["GR"].mean()
     assert gr_avg1 == pytest.approx(gr_avg2, abs=0.9)
 
     mywell1 = xtgeo.well_from_file(WELL1)
@@ -660,8 +664,8 @@ def test_rescale_well_tvdrange(tmpdir):
 
     mywell2 = xtgeo.well_from_file(WELL1)
     mywell2.rescale(delta=2, tvdrange=(0, 9999))
-    assert mywell1.dataframe["GR"].mean() == mywell2.dataframe["GR"].mean()
-    assert mywell1.dataframe["GR"].all() == mywell2.dataframe["GR"].all()
+    assert mywell1.get_dataframe()["GR"].mean() == mywell2.get_dataframe()["GR"].mean()
+    assert mywell1.get_dataframe()["GR"].all() == mywell2.get_dataframe()["GR"].all()
 
 
 def test_rescale_well_tvdrange_coarsen_upper(tmpdir):
@@ -670,7 +674,7 @@ def test_rescale_well_tvdrange_coarsen_upper(tmpdir):
     mywell = xtgeo.well_from_file(WELL1)
     mywell.rescale(delta=20, tvdrange=(0, 1200))
     mywell.to_file(join(tmpdir, "wll1_rescale_coarsen.w"))
-    assert mywell.dataframe.iat[10, 3] == pytest.approx(365.8254, abs=0.1)
+    assert mywell.get_dataframe().iat[10, 3] == pytest.approx(365.8254, abs=0.1)
 
 
 def test_fence():
@@ -685,8 +689,8 @@ def test_fence2():
     """Return a resampled fence, another dataset that troubled in scipy interpd."""
     mywell = xtgeo.well_from_file(WFILE2)
     pline = mywell.get_fence_polyline(tvdmin=0, asnumpy=False)
-    assert pline.dataframe.shape == (137, 6)
-    assert pline.dataframe.at[136, "H_CUMLEN"] == pytest.approx(2713.7405)
+    assert pline.get_dataframe().shape == (137, 6)
+    assert pline.get_dataframe().at[136, "H_CUMLEN"] == pytest.approx(2713.7405)
 
 
 def test_fence_as_polygons():
@@ -696,7 +700,7 @@ def test_fence_as_polygons():
     pline = mywell.get_fence_polyline(nextend=3, tvdmin=1000, asnumpy=False)
 
     assert isinstance(pline, Polygons)
-    dfr = pline.dataframe
+    dfr = pline.get_dataframe()
     assert dfr["X_UTME"][5] == pytest.approx(462569.00, abs=2.0)
 
 
@@ -709,7 +713,7 @@ def test_fence_as_polygons_drogon():
     )
 
     assert isinstance(pline, Polygons)
-    dfr = pline.dataframe
+    dfr = pline.get_dataframe()
     assert dfr.H_CUMLEN.max() == pytest.approx(62.858, abs=0.01)
 
 
@@ -757,7 +761,7 @@ def test_get_filled_dataframe():
 
     mywell = xtgeo.well_from_file(WFILE)
 
-    df1 = mywell.dataframe
+    df1 = mywell.get_dataframe()
 
     df2 = mywell.get_filled_dataframe(fill_value=-999, fill_value_int=-888)
 
@@ -779,13 +783,13 @@ def test_create_surf_distance_log(loadwell1):
     well.create_surf_distance_log(surf1, name="DIST_TOP")
     well.create_surf_distance_log(surf2, name="DIST_BASE")
 
-    assert well.dataframe.loc[0, "DIST_TOP"] == pytest.approx(1653.303263)
-    assert well.dataframe.loc[0, "DIST_BASE"] == pytest.approx(1696.573171)
+    assert well.get_dataframe().loc[0, "DIST_TOP"] == pytest.approx(1653.303263)
+    assert well.get_dataframe().loc[0, "DIST_BASE"] == pytest.approx(1696.573171)
 
     # moving the surface so it is outside the well
     surf1.translate_coordinates((10000, 10000, 0))
     well.create_surf_distance_log(surf1, name="DIST_BASE_NEW")
-    assert np.isnan(well.dataframe.loc[0, "DIST_BASE_NEW"])
+    assert np.isnan(well.get_dataframe().loc[0, "DIST_BASE_NEW"])
 
 
 def test_create_surf_distance_log_more(tmp_path, loadwell1):
@@ -812,23 +816,30 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
     well.create_log("MEGAZONE1", logtype="DISC", logrecord=lrec)
     well.create_log("MEGAZONE2", logtype="DISC", logrecord=lrec)
 
-    zl = well.dataframe["Zonelog"].copy()
-    # well.dataframe["MEGAZONE1"][(zl > 0) & (zl < 4)] = 1   # << get Pd warnings
-    well.dataframe.loc[(zl > 0) & (zl < 4), "MEGAZONE1"] = 1
+    dfr = well.get_dataframe()
+    zlog_df = well.get_dataframe()["Zonelog"]
+    # well.get_dataframe()["MEGAZONE1"][(zl > 0) & (zl < 4)] = 1   # << get Pd warnings
 
-    well.dataframe.loc[zl > 3, "MEGAZONE1"] = 2
-    _, counts = np.unique(well.dataframe["MEGAZONE1"].values, return_counts=True)
+    dfr.loc[(zlog_df > 0) & (zlog_df < 4), "MEGAZONE1"] = 1
+    dfr.loc[zlog_df > 3, "MEGAZONE1"] = 2
+    well.set_dataframe(dfr)
+
+    _, counts = np.unique(well.get_dataframe()["MEGAZONE1"].values, return_counts=True)
     assert counts.tolist() == [4780, 75, 11]
 
-    well.dataframe.loc[np.isnan(zl), "MEGAZONE1"] = np.nan
-    _, counts = np.unique(well.dataframe["MEGAZONE1"].values, return_counts=True)
+    dfr.loc[np.isnan(zlog_df), "MEGAZONE1"] = np.nan
+    well.set_dataframe(dfr)
+    _, counts = np.unique(well.get_dataframe()["MEGAZONE1"].values, return_counts=True)
     assert counts.tolist() == [4779, 75, 11, 1]
 
     # derive from distance log:
-    d1 = well.dataframe["DIST_TOP"]
-    d2 = well.dataframe["DIST_BASE"]
-    well.dataframe.loc[(d1 <= 0.0) & (d2 > 0), "MEGAZONE2"] = 1
-    _, counts = np.unique(well.dataframe["MEGAZONE2"].values, return_counts=True)
+    d1 = well.get_dataframe()["DIST_TOP"]
+    d2 = well.get_dataframe()["DIST_BASE"]
+    dfr = well.get_dataframe()
+    dfr.loc[(d1 <= 0.0) & (d2 > 0), "MEGAZONE2"] = 1
+    well.set_dataframe(dfr)
+
+    _, counts = np.unique(well.get_dataframe()["MEGAZONE2"].values, return_counts=True)
     assert counts.tolist() == [4788, 78]
 
     # now use logics from Grid() report_zone_mismatch()...
@@ -847,30 +858,29 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
 
     if depthrange:
         d1, d2 = depthrange
-        wll.set_dataframe(
-            wll.dataframe[(d1 < wll.dataframe.Z_TVDSS) & (d2 > wll.dataframe.Z_TVDSS)]
-        )
+        dfr = wll.get_dataframe()
+        wll.set_dataframe(dfr[(d1 < dfr.Z_TVDSS) & (d2 > dfr.Z_TVDSS)])
 
     # from here, work with the dataframe only
-    df = wll.dataframe.copy()
+    dfr = wll.get_dataframe().copy()
 
     # zonelogrange
     z1, z2 = zonelogrange
-    zmin = int(df[zonelogname].min())
-    zmax = int(df[zonelogname].max())
+    zmin = int(dfr[zonelogname].min())
+    zmax = int(dfr[zonelogname].max())
     skiprange = list(range(zmin, z1)) + list(range(z2 + 1, zmax + 1))
 
     for zname in (zonelogname, zmodel):
         if skiprange:  # needed check; du to a bug in pandas version 0.21 .. 0.23
-            df[zname].replace(skiprange, -888, inplace=True)
-        df[zname].fillna(-999, inplace=True)
+            dfr[zname].replace(skiprange, -888, inplace=True)
+        dfr[zname].fillna(-999, inplace=True)
     # now there are various variotions on how to count mismatch:
     # dfuse 1: count matches when zonelogname is valid (exclude -888)
     # dfuse 2: count matches when zonelogname OR zmodel are valid (exclude < -888
     # or -999)
     # The first one is the original approach
 
-    dfuse1 = df.copy(deep=True)
+    dfuse1 = dfr.copy(deep=True)
     dfuse1 = dfuse1.loc[dfuse1[zonelogname] > -888]
 
     dfuse1["zmatch1"] = np.where(dfuse1[zmodel] == dfuse1[zonelogname], 1, 0)
@@ -883,8 +893,8 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
 
     res1 = dfuse1["zmatch1"].mean() * 100
 
-    dfuse2 = df.copy(deep=True)
-    dfuse2 = dfuse2.loc[(df[zmodel] > -888) | (df[zonelogname] > -888)]
+    dfuse2 = dfr.copy(deep=True)
+    dfuse2 = dfuse2.loc[(dfr[zmodel] > -888) | (dfr[zonelogname] > -888)]
     dfuse2["zmatch2"] = np.where(dfuse2[zmodel] == dfuse2[zonelogname], 1, 0)
     mcount2 = dfuse2["zmatch2"].sum()
     tcount2 = dfuse2["zmatch2"].count()
@@ -925,7 +935,7 @@ def test_copy(string_to_well):
     13 14 15 3"""
     well = string_to_well(wellstring)
     well_copy = well.copy()
-    assert well.dataframe.equals(well_copy.dataframe)
+    assert well.get_dataframe().equals(well_copy.get_dataframe())
     assert well.lognames == well_copy.lognames
     assert well.name == well_copy.name
     assert well.wname == well_copy.wname
@@ -1027,7 +1037,7 @@ def test_copy(string_to_well):
 def test_create_relative_hlen(string_to_well, well_definition, expected_hlen):
     well = string_to_well(well_definition)
     well.create_relative_hlen()
-    assert well.dataframe["R_HLEN"].to_list() == pytest.approx(expected_hlen)
+    assert well.get_dataframe()["R_HLEN"].to_list() == pytest.approx(expected_hlen)
 
 
 def test_truncate_parallel_path_too_short(string_to_well):
@@ -1082,7 +1092,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
 4 4 1 1"""
     )
     well_1.truncate_parallel_path(well_2)
-    assert well_1.dataframe.to_dict() == {
+    assert well_1.get_dataframe().to_dict() == {
         "X_UTME": {0: 1.0, 1: 5.0},
         "Y_UTMN": {0: 1.0, 1: 5.0},
         "Z_TVDSS": {0: 1.0, 1: 1.0},
@@ -1165,7 +1175,7 @@ def test_limit_tvd(string_to_well, upper_limit, lower_limit, expected_result):
 
     well = string_to_well(well_definition)
     well.limit_tvd(lower_limit, upper_limit)
-    assert well.dataframe["Z_TVDSS"].to_list() == expected_result
+    assert well.get_dataframe()["Z_TVDSS"].to_list() == expected_result
 
 
 @pytest.mark.parametrize(
@@ -1183,13 +1193,12 @@ def test_downsample(string_to_well, input_points, expected_points):
         well_definition += f"\n        {i} {i} {i} 1"
 
     well = string_to_well(well_definition)
-    print(well.dataframe)
     well.downsample()
-    print(well.dataframe)
+    dataframe = well.get_dataframe()
     assert {
-        "X_UTME": well.dataframe["X_UTME"].values.tolist(),
-        "Y_UTMN": well.dataframe["Y_UTMN"].values.tolist(),
-        "Z_TVDSS": well.dataframe["Z_TVDSS"].values.tolist(),
+        "X_UTME": dataframe["X_UTME"].values.tolist(),
+        "Y_UTMN": dataframe["Y_UTMN"].values.tolist(),
+        "Z_TVDSS": dataframe["Z_TVDSS"].values.tolist(),
     } == {
         "X_UTME": expected_points,
         "Y_UTMN": expected_points,
@@ -1213,10 +1222,11 @@ def test_downsample_not_keeplast(string_to_well, input_points, expected_points):
 
     well = string_to_well(well_definition)
     well.downsample(keeplast=False)
+    dataframe = well.get_dataframe()
     assert {
-        "X_UTME": well.dataframe["X_UTME"].to_list(),
-        "Y_UTMN": well.dataframe["Y_UTMN"].to_list(),
-        "Z_TVDSS": well.dataframe["Z_TVDSS"].to_list(),
+        "X_UTME": dataframe["X_UTME"].to_list(),
+        "Y_UTMN": dataframe["Y_UTMN"].to_list(),
+        "Z_TVDSS": dataframe["Z_TVDSS"].to_list(),
     } == {
         "X_UTME": expected_points,
         "Y_UTMN": expected_points,
@@ -1238,17 +1248,20 @@ def test_get_polygons(string_to_well):
 
     well = string_to_well(well_definition)
     polygons = well.get_polygons()
-    assert well.dataframe["X_UTME"].to_list() == pytest.approx(
-        polygons.dataframe["X_UTME"].to_list()
+    dataframe = well.get_dataframe()
+    poly_dataframe = polygons.get_dataframe()
+
+    assert dataframe["X_UTME"].to_list() == pytest.approx(
+        poly_dataframe["X_UTME"].to_list()
     )
-    assert well.dataframe["Y_UTMN"].to_list() == pytest.approx(
-        polygons.dataframe["Y_UTMN"].to_list()
+    assert dataframe["Y_UTMN"].to_list() == pytest.approx(
+        poly_dataframe["Y_UTMN"].to_list()
     )
-    assert well.dataframe["X_UTME"].to_list() == pytest.approx(
-        polygons.dataframe["X_UTME"].to_list()
+    assert dataframe["X_UTME"].to_list() == pytest.approx(
+        poly_dataframe["X_UTME"].to_list()
     )
-    assert "Zonelog" not in polygons.dataframe.columns
-    assert "NAME" in polygons.dataframe.columns
+    assert "Zonelog" not in poly_dataframe.columns
+    assert "NAME" in poly_dataframe.columns
     assert polygons.name == "custom_name"
 
 
@@ -1262,5 +1275,24 @@ def test_get_polygons_skipname(string_to_well):
 
     well = string_to_well(well_definition)
     polygons = well.get_polygons(skipname=True)
-    assert "NAME" not in polygons.dataframe.columns
+    assert "NAME" not in polygons.get_dataframe().columns
     assert polygons.name == "custom_name"
+
+
+def test_welldf_view_vs_copy(loadwell1):
+    well = loadwell1
+
+    df1 = well.get_dataframe(copy=False)
+    df2 = well.get_dataframe(copy=False)
+    assert id(df1) == id(df2)
+
+    df1 = well.get_dataframe(copy=True)
+    df2 = well.get_dataframe(copy=True)
+    assert id(df1) != id(df2)
+
+
+def test_well_dataframe_deprecation(loadwell1):
+    well = loadwell1
+
+    with pytest.warns(PendingDeprecationWarning):
+        well.dataframe

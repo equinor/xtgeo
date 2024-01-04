@@ -318,7 +318,8 @@ def get_ijk_from_points(
 
     _update_tmpvars(self, force=True)
 
-    arrsize = points.dataframe[points.xname].values.size
+    points_df = points.get_dataframe(copy=False)
+    arrsize = points_df[points.xname].values.size
 
     useflip = -1 if self.ijk_handedness == "left" else 1
 
@@ -326,9 +327,9 @@ def get_ijk_from_points(
 
     logger.info("Running C routine...")
     _, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
-        points.dataframe[points.xname].values,
-        points.dataframe[points.yname].values,
-        points.dataframe[points.zname].values,
+        points_df[points.xname].values,
+        points_df[points.yname].values,
+        points_df[points.zname].values,
         self._tmp["topd"].ncol,
         self._tmp["topd"].nrow,
         self._tmp["topd"].xori,
@@ -363,9 +364,9 @@ def get_ijk_from_points(
 
     proplist = {}
     if includepoints:
-        proplist["X_UTME"] = points.dataframe[points.xname].values
-        proplist["Y_UTME"] = points.dataframe[points.yname].values
-        proplist["Z_TVDSS"] = points.dataframe[points.zname].values
+        proplist["X_UTME"] = points_df[points.xname].values
+        proplist["Y_UTME"] = points_df[points.yname].values
+        proplist["Z_TVDSS"] = points_df[points.zname].values
 
     proplist[columnnames[0]] = iarr
     proplist[columnnames[1]] = jarr

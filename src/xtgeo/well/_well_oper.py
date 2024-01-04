@@ -22,15 +22,15 @@ def rescale(self, delta=0.15, tvdrange=None):
     pdrows = pd.options.display.max_rows
     pd.options.display.max_rows = 999
 
-    dfrcolumns0 = self.dataframe.columns
+    dfrcolumns0 = self.get_dataframe(copy=False).columns
 
     if self.mdlogname is None:
         self.geometrics()
 
-    dfrcolumns1 = self.dataframe.columns
+    dfrcolumns1 = self.get_dataframe(copy=False).columns
     columnsadded = list(set(dfrcolumns1) - set(dfrcolumns0))  # new tmp columns, if any
 
-    dfr = self.dataframe.copy().set_index(self.mdlogname)
+    dfr = self.get_dataframe().set_index(self.mdlogname)
 
     logger.debug("Initial dataframe\n %s", dfr)
 
@@ -78,17 +78,17 @@ def rescale(self, delta=0.15, tvdrange=None):
 
     pd.options.display.max_rows = pdrows  # reset
 
-    self.dataframe = dfr
+    self.set_dataframe(dfr)
     if columnsadded:
         self.delete_log(columnsadded)
 
 
 def make_zone_qual_log(self, zqname):
     """Make a flag log based on stratigraphic relations."""
-    if zqname in self.dataframe:
+    if zqname in self.get_dataframe(copy=False):
         logger.warning("Quality log %s exists, will be overwritten", zqname)
 
-    if not self.zonelogname or self.zonelogname not in self.dataframe:
+    if not self.zonelogname or self.zonelogname not in self.get_dataframe(copy=False):
         raise ValueError("Cannot find a zonelog")
 
     dff = self.get_filled_dataframe()
@@ -136,9 +136,11 @@ def make_zone_qual_log(self, zqname):
 
     # now create the new log
     self.create_log(zqname, logtype=_AttrType.DISC.value, logrecord=codes)
+    dataframe = self.get_dataframe()
     for key, val in dcode.items():
-        self.dataframe.loc[dff["ztmp"] == key, zqname] = val
+        dataframe.loc[dff["ztmp"] == key, zqname] = val
 
+    self.set_dataframe(dataframe)
     # set the metadata
     self.set_logtype(zqname, _AttrType.DISC.value)
     self.set_logrecord(zqname, codes)
@@ -166,9 +168,9 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
     """
     logger.debug("Using algorithm 1 in %s", __name__)
 
-    wxarr = _get_carray(self.dataframe, self.wlogtypes, self.xname)
-    wyarr = _get_carray(self.dataframe, self.wlogtypes, self.yname)
-    wzarr = _get_carray(self.dataframe, self.wlogtypes, self.zname)
+    wxarr = _get_carray(self.get_dataframe(copy=False), self.wlogtypes, self.xname)
+    wyarr = _get_carray(self.get_dataframe(copy=False), self.wlogtypes, self.yname)
+    wzarr = _get_carray(self.get_dataframe(copy=False), self.wlogtypes, self.zname)
 
     nlen = self.nrow
     wivec = _cxtgeo.new_intarray(nlen)
@@ -241,9 +243,9 @@ def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
     """
     # establish a Points instance and make points dataframe from well trajectory X Y Z
     wpoints = xtgeo.Points()
-    wpdf = self.dataframe.loc[:, [self.xname, self.yname, self.zname]].copy()
-    wpoints.dataframe = wpdf
-    wpoints.dataframe.reset_index(inplace=True, drop=True)
+    wpdf = self.get_dataframe().loc[:, [self.xname, self.yname, self.zname]]
+    wpdf.reset_index(inplace=True, drop=True)
+    wpoints.set_dataframe(wpdf)
 
     # column names
     cna = ("ICELL" + grid_id, "JCELL" + grid_id, "KCELL" + grid_id)
@@ -262,12 +264,12 @@ def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
     # The resulting df shall have same length as the well's dataframe,
     # but the well index may not start from one. So first ignore index, then
     # re-establish
-    wellindex = self.dataframe.index
+    wellindex = self.get_dataframe(copy=False).index
 
-    newdf = pd.concat([self.dataframe.reset_index(drop=True), df], axis=1)
+    newdf = pd.concat([self.get_dataframe().reset_index(drop=True), df], axis=1)
     newdf.index = wellindex
 
-    self.dataframe = newdf
+    self.set_dataframe(newdf)
 
 
 def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id=""):
@@ -296,9 +298,9 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
         raise ValueError("The 'grid' is of wrong type, must be a tuple or a Grid")
 
     # let grid values have base 1 when looking up cells for gridprops
-    iind = self.dataframe[icl].to_numpy(copy=True) - 1
-    jind = self.dataframe[jcl].to_numpy(copy=True) - 1
-    kind = self.dataframe[kcl].to_numpy(copy=True) - 1
+    iind = self.get_dataframe(copy=False)[icl].to_numpy(copy=True) - 1
+    jind = self.get_dataframe(copy=False)[jcl].to_numpy(copy=True) - 1
+    kind = self.get_dataframe(copy=False)[kcl].to_numpy(copy=True) - 1
 
     xind = iind.copy()
 
@@ -309,7 +311,7 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     iind = iind.astype("int")
     jind = jind.astype("int")
     kind = kind.astype("int")
-    dfr = self.dataframe.copy()
+    dfr = self.get_dataframe()
 
     pnames = {}
     for prop in gprops.props:
@@ -550,13 +552,16 @@ def create_surf_distance_log(self, surf, name):
         raise ValueError("Input surface is not a RegularSurface instance.")
 
     # make a Points instance since points has the snap
-    zvalues = self.dataframe[self.zname]
+    zvalues = self.get_dataframe()[self.zname]
     points = xtgeo.Points()
-    points.dataframe = self.dataframe.iloc[:, 0:3]
+    dframe = self.get_dataframe().iloc[:, 0:3]
+    points.set_dataframe(dframe)
     points.snap_surface(surf)
-    snapped = points.dataframe[self.zname]
+    snapped = points.get_dataframe(copy=False)[self.zname]
     diff = snapped - zvalues
 
     # create log (default is force overwrite if it exists)
     self.create_log(name)
-    self.dataframe[name] = diff
+    dframe = self.get_dataframe()
+    dframe[name] = diff
+    self.set_dataframe(dframe)

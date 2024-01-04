@@ -26,7 +26,7 @@ def points_gridding(self, points, method="linear", coarsen=1):
 
     xiv, yiv = self.get_xy_values()
 
-    dfra = points.dataframe
+    dfra = points.get_dataframe(copy=False)
 
     xcv = dfra[points.xname].values
     ycv = dfra[points.yname].values

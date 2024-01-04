@@ -28,8 +28,8 @@ def test_well_xyzdata_initialize(generate_data: pd.DataFrame):
 
     instance = _XYZData(generate_data)
 
-    assert instance.dataframe.columns[0] == instance.xname
-    assert instance.dataframe.columns[2] == instance.zname
+    assert instance.get_dataframe().columns[0] == instance.xname
+    assert instance.get_dataframe().columns[2] == instance.zname
 
 
 def test_well_xyzdata_ensure_attr(generate_data: pd.DataFrame):
@@ -44,7 +44,7 @@ def test_well_xyzdata_ensure_attr(generate_data: pd.DataFrame):
     assert instance.get_attr_record("FACIES") == {1: "1", 3: "3", 4: "4"}
 
     assert "FACIES" in instance._df.columns
-    assert instance.dataframe.FACIES.values.tolist() == [
+    assert instance.get_dataframe().FACIES.values.tolist() == [
         1.0,
         2000000000.0,
         3.0,
@@ -54,14 +54,18 @@ def test_well_xyzdata_ensure_attr(generate_data: pd.DataFrame):
         1.0,
     ]
 
-    del instance.dataframe["FACIES"]
+    dataframe = instance.get_dataframe()
+    del dataframe["FACIES"]
+    instance.set_dataframe(dataframe)
 
     instance._ensure_consistency_attr_types()
-    assert "FACIES" not in instance.dataframe.columns
+    assert "FACIES" not in instance.get_dataframe().columns
 
-    instance.dataframe["NEW"] = 1
+    dataframe = instance.get_dataframe()
+    dataframe["NEW"] = 1
+    instance.set_dataframe(dataframe)
     instance._ensure_consistency_attr_types()
-    assert "NEW" in instance.dataframe.columns
+    assert "NEW" in instance.get_dataframe().columns
     assert "NEW" in instance.attr_types
     assert instance.get_attr_type("NEW") == "CONT"
 
@@ -119,9 +123,12 @@ def test_well_xyzdata_consistency_add_column(generate_data: pd.DataFrame):
         "FACIES": _AttrType.CONT,  # CONT as default; need to set explicitly to DISC
         "ZONES": _AttrType.CONT,
     }
+    dataframe = instance.get_dataframe(copy=False)
+    dataframe["NEW"] = 1.992
+    instance.set_dataframe(dataframe)
 
-    instance.dataframe["NEW"] = 1.992
-    assert instance.ensure_consistency() is True
+    # since set_dataframe() will run ensure_consistency() internally:
+    assert instance.ensure_consistency() is False  # no need to rerun consistency
 
     assert instance.attr_types == {
         "X_UTME": _AttrType.CONT,
@@ -134,7 +141,7 @@ def test_well_xyzdata_consistency_add_column(generate_data: pd.DataFrame):
         "NEW": _AttrType.CONT,
     }
 
-    dataframe = instance.dataframe.copy()
+    dataframe = instance.get_dataframe()
     dataframe["DNEW"] = [1, -999, 3, 4, 4, 1, 1]
     instance.set_dataframe(dataframe)
     instance.set_attr_type("DNEW", "DISC")
@@ -184,10 +191,8 @@ def test_attrtype_class():
 def test_create_attr(generate_data: pd.DataFrame):
     """Try to create attribute"""
     instance = _XYZData(generate_data)
-    print(instance.dataframe)
 
     instance.create_attr("NEWATTR", attr_type="CONT", value=823.0)
-    print(instance.dataframe)
     assert instance.attr_records["NEWATTR"] == ("", "")
 
 
