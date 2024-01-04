@@ -438,9 +438,19 @@ class Polygons(XYZ):
         )
         self.set_dataframe(df)
 
-    def get_dataframe(self) -> pd.DataFrame:
-        """Returns or set the Pandas dataframe object."""
-        return self._df.copy()
+    def get_dataframe(self, copy: bool = True) -> pd.DataFrame:
+        """Returns the Pandas dataframe object.
+
+        Args:
+            copy: If True, return a deep copy of the dataframe
+
+
+        .. versionchanged: 3.7  Add keyword `copy` defaulted to True
+        """
+        if copy:
+            return self._df.copy()
+
+        return self._df
 
     def set_dataframe(self, df):
         self._df = df.apply(deepcopy)
