@@ -324,8 +324,7 @@ class _XYZData:
 
         # the purpose of this hash check is to avoid spending time on consistency
         # checks if no changes
-        
-        return
+
         hash_proposed = (
             jhash(self._df),
             jhash(self._attr_types),

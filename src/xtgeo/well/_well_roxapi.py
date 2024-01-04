@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import functools
-from typing import Any, Literal, Optional
 import contextlib
+import functools
 from datetime import datetime
+from typing import Any, Literal, Optional
 
 import numpy as np
 import numpy.ma as npma
@@ -22,7 +22,6 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-
 @contextlib.contextmanager
 def timer():
     enter = datetime.now()
@@ -31,6 +30,8 @@ def timer():
         yield lambda: ((done or datetime.now()) - enter).total_seconds()
     finally:
         done = datetime.now()
+
+
 # Well() instance: self
 
 
@@ -87,15 +88,42 @@ def _roxapi_import_well(
     wlogrecords = {}
 
     # get logs repr trajecetry
-    nele, logs = _roxapi_traj(roxtraj, roxlrun)
-    for logcurv in roxlrun.log_curves:
-        logs[logcurv.name] = functools.partial(
-            _get_roxlog,
-            wlogtypes,
-            wlogrecords,
-            roxlrun,
-            logcurv.name,
-        )
+    mdlogname, nele, logs = _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey)
+    if lognames and lognames == "all":
+        for logcurv in roxlrun.log_curves:
+            # logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
+            logs[logcurv.name] = functools.partial(
+                _get_roxlog,
+                wlogtypes,
+                wlogrecords,
+                roxlrun,
+                logcurv.name,
+            )
+    elif lognames:
+        for lname in lognames:
+            if lname in roxlrun.log_curves:
+                # logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
+                logs[lname] = functools.partial(
+                    _get_roxlog,
+                    wlogtypes,
+                    wlogrecords,
+                    roxlrun,
+                    lname,
+                )
+            else:
+                if lognames_strict:
+                    validlogs = [logname.name for logname in roxlrun.log_curves]
+                    raise ValueError(
+                        f"Could not get log name {lname}, validlogs are {validlogs}"
+                    )
+    # for logcurv in roxlrun.log_curves:
+    # logs[logcurv.name] = functools.partial(
+    #     _get_roxlog,
+    #     wlogtypes,
+    #     wlogrecords,
+    #     roxlrun,
+    #     logcurv.name,
+    # )
 
     return {
         "rkb": roxwell.rkb,
@@ -104,12 +132,12 @@ def _roxapi_import_well(
         "wname": wname,
         "wlogtypes": wlogtypes,
         "wlogrecords": wlogrecords,
-        "mdlogname": _AttrName.M_MD_NAME.value,
+        "mdlogname": mdlogname,
         "df": pd.DataFrame.from_dict({k: LazyArray(v, nele) for k, v in logs.items()}),
     }
 
 
-def _roxapi_traj(roxtraj, roxlrun):  # pragma: no cover
+def _roxapi_traj(roxtraj, roxlrun, inclmd: bool, inclsurvey: bool):  # pragma: no cover
     """Get trajectory in ROXAPI."""
 
     surveyset_ = None
@@ -130,14 +158,20 @@ def _roxapi_traj(roxtraj, roxlrun):  # pragma: no cover
 
     # Callabole key/values(callabole)
     # XYZ must be first, see _ensure_consistency_attr_types(...)
-    logs[_AttrName.XNAME.value] = lambda : interpolate_survey_point(3)
-    logs[_AttrName.YNAME.value] = lambda : interpolate_survey_point(4)
-    logs[_AttrName.ZNAME.value] = lambda : interpolate_survey_point(5)
-    logs[_AttrName.M_MD_NAME.value] = lambda : interpolate_survey_point(0)
-    logs[_AttrName.M_INCL_NAME.value] = lambda : interpolate_survey_point(1)
-    logs[_AttrName.M_AZI_NAME.value] = lambda : interpolate_survey_point(2)
+    logs[_AttrName.XNAME.value] = lambda: interpolate_survey_point(3)
+    logs[_AttrName.YNAME.value] = lambda: interpolate_survey_point(4)
+    logs[_AttrName.ZNAME.value] = lambda: interpolate_survey_point(5)
 
-    return shape, logs
+    mdlogname = None
+
+    if inclmd or inclsurvey:
+        logs[_AttrName.M_MD_NAME.value] = lambda: interpolate_survey_point(0)
+        mdlogname = _AttrName.M_MD_NAME.value
+    if inclsurvey:
+        logs[_AttrName.M_INCL_NAME.value] = lambda: interpolate_survey_point(1)
+        logs[_AttrName.M_AZI_NAME.value] = lambda: interpolate_survey_point(2)
+
+    return shape, mdlogname, logs
 
 
 def _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname):  # pragma: no cover
