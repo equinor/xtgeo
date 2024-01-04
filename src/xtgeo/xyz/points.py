@@ -571,15 +571,24 @@ class Points(XYZ):
     @dataframe.setter
     def dataframe(self, df):
         warnings.warn(
-            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
-            "Use `set_dataframe(df)` instead.",
+            "Direct access to the dataframe property in Points class will be "
+            "deprecated in xtgeo 5.0. Use `set_dataframe(df)` instead.",
             PendingDeprecationWarning,
         )
         self.set_dataframe(df)
 
-    def get_dataframe(self) -> pd.DataFrame:
-        """Returns or set the Pandas dataframe object."""
-        return self._df.copy()
+    def get_dataframe(self, copy: bool = True) -> pd.DataFrame:
+        """Returns the Pandas dataframe object.
+
+        Args:
+            copy: If True (default) the a deep copy is returned; otherwise a view
+                which may be faster in some cases)
+
+        .. versionchanged:: 3.7 Add keyword `copy`, defaulted to True
+
+        """
+        if copy:
+            return self._df.copy()
 
     def set_dataframe(self, df):
         self._df = df.apply(deepcopy)
