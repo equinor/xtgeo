@@ -59,12 +59,12 @@ def test_map_to_points(tmpdir, reek_map):
     outf = join(tmpdir, "points_from_surf_reek.poi")
     px.to_file(outf)
 
-    assert px.dataframe["X_UTME"].min() == 456719.75
-    assert px.dataframe["Z_TVDSS"].mean() == pytest.approx(0.57558, abs=0.001)
+    assert px.get_dataframe()["X_UTME"].min() == 456719.75
+    assert px.get_dataframe()["Z_TVDSS"].mean() == pytest.approx(0.57558, abs=0.001)
 
     # read the output for comparison
     pxx = xtgeo.points_from_file(outf)
 
-    assert px.dataframe["Z_TVDSS"].mean() == pytest.approx(
-        pxx.dataframe["Z_TVDSS"].mean(), abs=0.00001
+    assert px.get_dataframe()["Z_TVDSS"].mean() == pytest.approx(
+        pxx.get_dataframe()["Z_TVDSS"].mean(), abs=0.00001
     )

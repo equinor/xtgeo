@@ -170,7 +170,7 @@ def test_get_ijk_from_points_smallcase():
     df2 = g1.get_dataframe(ijk=False, xyz=True)
 
     po = xtgeo.Points()
-    po.dataframe = df2
+    po.set_dataframe(df2)
 
     ijk = g1.get_ijk_from_points(po, includepoints=False)
 
@@ -211,7 +211,7 @@ def test_get_ijk_from_points_full():
     df2 = g1.get_dataframe(ijk=False, xyz=True)
 
     po = xtgeo.Points()
-    po.dataframe = df2
+    po.set_dataframe(df2)
 
     ijk = g1.get_ijk_from_points(po, includepoints=False)
 
@@ -285,7 +285,7 @@ def test_point_in_cell_compare_rms():
     dfr = grd.get_ijk_from_points(p1)
 
     for cname, cxname in {"I": "IX", "J": "JY", "K": "KZ"}.items():
-        list1 = p1.dataframe[cname].tolist()
+        list1 = p1.get_dataframe(copy=False)[cname].tolist()
         list2 = dfr[cxname].tolist()
 
         nall = len(list1)

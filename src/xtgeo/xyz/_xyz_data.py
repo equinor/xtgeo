@@ -444,7 +444,7 @@ class _XYZData:
         since int32 do not support np.nan, the value for undefined values will be
         ``fill_value_int``
         """
-        dfr = self._df.copy()
+        dfr = self._df.copy(deep=True)
         if infer_dtype:
             for name, attrtype in self._attr_types.items():
                 if attrtype.name == _AttrType.DISC.value:
@@ -463,8 +463,11 @@ class _XYZData:
 
         return dfr
 
-    def get_dataframe(self):
-        """Get the dataframe."""
+    def get_dataframe(self, copy=True):
+        """Get the dataframe, as view or deep copy."""
+        if copy:
+            return self._df.copy(deep=True)
+
         return self._df
 
     def set_dataframe(self, dfr: pd.DataFrame):

@@ -50,7 +50,7 @@ def wellintersections(
             logger.debug("Skip %s (cannot compute geometrics)", well.name)
             continue
 
-        welldfr = well.dataframe.copy()
+        welldfr = well.get_dataframe()
 
         xcor = welldfr[well.xname].values
         ycor = welldfr[well.yname].values
@@ -95,9 +95,10 @@ def wellintersections(
                     well, xtol=xtol, ytol=ytol, ztol=ztol, itol=itol, atol=atol
                 )
 
-            xcorc = owell.dataframe[well.xname].values
-            ycorc = owell.dataframe[well.yname].values
-            zcorc = owell.dataframe[well.zname].values
+            other_dframe = owell.get_dataframe()
+            xcorc = other_dframe[well.xname].values
+            ycorc = other_dframe[well.yname].values
+            zcorc = other_dframe[well.zname].values
 
             if xcorc.size < 2:
                 continue

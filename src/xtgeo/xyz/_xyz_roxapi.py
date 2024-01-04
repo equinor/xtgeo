@@ -315,10 +315,13 @@ def _roxapi_export_xyz(
 
     roxxyz = _get_roxitem(self, proj, name, category, stype, mode="set")
 
-    if self.dataframe is None or len(self.dataframe.index) == 0:
+    if (
+        self.get_dataframe(copy=False) is None
+        or len(self.get_dataframe(copy=False).index) == 0
+    ):
         return
 
-    dfrcopy = self.dataframe.copy()
+    dfrcopy = self.get_dataframe()
     # apply pfilter if any
     if pfilter:
         for key, val in pfilter.items():
@@ -350,7 +353,11 @@ def _roxapi_export_xyz(
 
     roxxyz.set_values(arrxyz)
 
-    if attributes and isinstance(self, xtgeo.Points) and len(self.dataframe) >= 1:
+    if (
+        attributes
+        and isinstance(self, xtgeo.Points)
+        and len(self.get_dataframe(copy=False)) >= 1
+    ):
         dfr = _cast_dataframe_attrs_to_numeric(dfrcopy)
         for name in dfr.columns[3:]:
             values = dfr[name].values

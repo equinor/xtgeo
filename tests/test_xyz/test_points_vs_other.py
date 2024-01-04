@@ -19,7 +19,9 @@ def test_snap_to_surface(testpath):
     mypoints.snap_surface(surf1)
     assert mypoints.nrow == 11
 
-    assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1661.45, abs=0.01)
+    assert mypoints.get_dataframe()["Z_TVDSS"].mean() == pytest.approx(
+        1661.45, abs=0.01
+    )
 
     # repeat,using surface whithg rotaion and partial masks
 
@@ -28,10 +30,14 @@ def test_snap_to_surface(testpath):
 
     mypoints.snap_surface(surf2)
     assert mypoints.nrow == 12
-    assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1687.45, abs=0.01)
+    assert mypoints.get_dataframe()["Z_TVDSS"].mean() == pytest.approx(
+        1687.45, abs=0.01
+    )
 
     # alternative; keep values as is using activeobnly=False
     mypoints = xtgeo.points_from_file(testpath / PFILE3)
     mypoints.snap_surface(surf2, activeonly=False)
     assert mypoints.nrow == 20
-    assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1012.47, abs=0.01)
+    assert mypoints.get_dataframe()["Z_TVDSS"].mean() == pytest.approx(
+        1012.47, abs=0.01
+    )

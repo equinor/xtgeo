@@ -50,9 +50,9 @@ def boundary_from_points(points, alpha_factor=1.0, alpha=None, concave=False):
 
     usepoints = points.copy()  # make a copy since points may be filtered
 
-    xvec = usepoints.dataframe[usepoints.xname].values
-    yvec = usepoints.dataframe[usepoints.yname].values
-    zvec = usepoints.dataframe[usepoints.zname].values
+    xvec = usepoints.get_dataframe(copy=False)[usepoints.xname].values
+    yvec = usepoints.get_dataframe(copy=False)[usepoints.yname].values
+    zvec = usepoints.get_dataframe(copy=False)[usepoints.zname].values
 
     if alpha is None:
         # use scipy to detect average distance; 30 points should be sufficient
@@ -242,12 +242,12 @@ def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
     except AttributeError:
         pass
 
-    recompute_hlen = self.hname in self.dataframe
-    recompute_tlen = self.tname in self.dataframe
+    recompute_hlen = self.hname in self.get_dataframe(copy=False)
+    recompute_tlen = self.tname in self.get_dataframe(copy=False)
 
-    orig_len = len(self.dataframe)
+    orig_len = len(self.get_dataframe(copy=False))
 
-    idgroups = self.dataframe.groupby(self.pname)
+    idgroups = self.get_dataframe(copy=False).groupby(self.pname)
     dfrlist = []
     for idx, grp in idgroups:
         if len(grp.index) < 2:
@@ -268,13 +268,13 @@ def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
         dfrlist.append(dfr)
 
     dfr = pd.concat(dfrlist)
-    self.dataframe = dfr.reset_index(drop=True)
+    self.set_dataframe(dfr.reset_index(drop=True))
 
     if recompute_hlen:
         self.hlen()
     if recompute_tlen:
         self.tlen()
 
-    new_len = len(self.dataframe)
+    new_len = len(self.get_dataframe(copy=False))
 
     return new_len < orig_len

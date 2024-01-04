@@ -18,37 +18,38 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
 
     Args, see calling routine
     """
-    # get the relevant logs:
+    scopy = self.copy()  # avoid altering original instance
 
-    self.geometrics()  # note the caller has made a copy of the true self
+    scopy.geometrics()
+    dataframe = scopy.get_dataframe()
 
     # as zlog is float64; need to convert to int array with high number as undef
-    if self.zonelogname is not None:
+    if scopy.zonelogname is not None:
         if use_undef:
-            self.dataframe.dropna(subset=[self.zonelogname], inplace=True)
-        zlog = self.dataframe[self.zonelogname].values
+            dataframe.dropna(subset=[scopy.zonelogname], inplace=True)
+        zlog = dataframe[scopy.zonelogname].values
         zlog[np.isnan(zlog)] = const.UNDEF_DISC
         zlog = np.rint(zlog).astype(int)
     else:
         return None
 
-    xvv = self.dataframe[self.xname].values.copy()
-    yvv = self.dataframe[self.yname].values.copy()
-    zvv = self.dataframe[self.zname].values.copy()
-    incl = self.dataframe["Q_INCL"].values.copy()
-    mdv = self.dataframe["Q_MDEPTH"].values.copy()
+    xvv = dataframe[scopy.xname].values
+    yvv = dataframe[scopy.yname].values
+    zvv = dataframe[scopy.zname].values
+    incl = dataframe["Q_INCL"].values
+    mdv = dataframe["Q_MDEPTH"].values
 
-    if self.mdlogname is not None:
-        mdv = self.dataframe[self.mdlogname].values.copy()
+    if scopy.mdlogname is not None:
+        mdv = dataframe[scopy.mdlogname].values
 
     if zonelist is None:
         # need to declare as list; otherwise Py3 will get dict.keys
-        zonelist = list(self.get_logrecord(self.zonelogname).keys())
+        zonelist = list(scopy.get_logrecord(scopy.zonelogname).keys())
 
     logger.debug("Find values for %s", zonelist)
 
     ztops, ztopnames, zisos, zisonames = _extract_ztops(
-        self,
+        scopy,
         zonelist,
         xvv,
         yvv,
@@ -67,11 +68,9 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
     logger.debug(zlist)
 
     if tops:
-        dfr = pd.DataFrame(zlist, columns=ztopnames)
-    else:
-        dfr = pd.DataFrame(zlist, columns=zisonames)
+        return pd.DataFrame(zlist, columns=ztopnames)
 
-    return dfr
+    return pd.DataFrame(zlist, columns=zisonames)
 
 
 def _extract_ztops(
@@ -342,7 +341,7 @@ def get_fraction_per_zone(
         zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
     useinclname = "Q_INCL"
-    if "M_INCL" in self.dataframe:
+    if "M_INCL" in self.get_dataframe(copy=False):
         useinclname = "M_INCL"
     else:
         self.geometrics()
@@ -416,12 +415,13 @@ def get_fraction_per_zone(
 def get_surface_picks(self, surf):
     """get Surface picks"""
 
-    xcor = self.dataframe[self.xname].values
-    ycor = self.dataframe[self.yname].values
-    zcor = self.dataframe[self.zname].values
+    dataframe = self.get_dataframe(copy=False)
+    xcor = dataframe[self.xname].values
+    ycor = dataframe[self.yname].values
+    zcor = dataframe[self.zname].values
 
     if self.mdlogname:
-        mcor = self.dataframe[self.mdlogname].values
+        mcor = dataframe[self.mdlogname].values
     else:
         mcor = np.zeros(xcor.size, dtype=np.float64) + xtgeo.UNDEF
 
@@ -460,7 +460,7 @@ def get_surface_picks(self, surf):
         res["DIRECTION"] = dres[:nval]
         res["WELLNAME"] = self.wellname
 
-        poi.dataframe = pd.DataFrame.from_dict(res)
+        poi.set_dataframe(pd.DataFrame.from_dict(res))
 
         return poi
 

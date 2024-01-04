@@ -110,7 +110,7 @@ def operation_polygons(
     proxy.values *= 0.0
     cvals = gl.update_carray(proxy)
 
-    idgroups = poly.dataframe.groupby(poly.pname)
+    idgroups = poly.get_dataframe(copy=False).groupby(poly.pname)
 
     for id_, grp in idgroups:
         xcor = grp[poly.xname].values

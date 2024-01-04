@@ -373,17 +373,17 @@ class Well:
     def dataframe(self):
         """Returns or set the Pandas dataframe object for all logs."""
         warnings.warn(
-            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
-            "Use `get_dataframe()` instead.",
+            "Direct access to the dataframe property in Well class will be deprecated "
+            "in xtgeo 5.0. Use `get_dataframe()` instead.",
             PendingDeprecationWarning,
         )
-        return self._wdata.get_dataframe()
+        return self._wdata.get_dataframe(copy=False)  # get a view, for backward compat.
 
     @dataframe.setter
     def dataframe(self, dfr):
         warnings.warn(
-            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
-            "Use `set_dataframe(df)` instead.",
+            "Direct access to the dataframe property in Well class will be deprecated "
+            "in xtgeo 5.0. Use `set_dataframe()` instead.",
             PendingDeprecationWarning,
         )
         self.set_dataframe(dfr)  # this will include consistency checking!
@@ -569,7 +569,9 @@ class Well:
         Example::
 
             >>> xwell = Well(well_dir + '/OP_1.w')
-            >>> xwell.dataframe['Poro'] += 0.1
+            >>> dfr = xwell.get_dataframe()
+            >>> dfr['Poro'] += 0.1
+            >>> xwell.set_dataframe(dfr)
             >>> filename = xwell.to_file(outdir + "/somefile_copy.rmswell")
 
         """
@@ -719,8 +721,11 @@ class Well:
 
             # assume that existing logs in RMS are ["PORO", "PERMH", "GR", "DT", "FAC"]
             # read only one existing log (faster)
+
             wll = xtgeo.well_from_roxar(project, "WELL1", lognames=["PORO"])
-            wll.dataframe["PORO"] += 0.2  # add 0.2 to PORO log
+            dfr = wll.get_dataframe()
+            dfr["PORO"] += 0.2  # add 0.2 to PORO log
+            wll.set_dataframe(dfr)
             wll.create_log("NEW", value=0.333)  # create a new log with constant value
 
             # the "option" is a variable... for output, ``lognames="all"`` is default
@@ -974,9 +979,17 @@ class Well:
 
         return None
 
-    def get_dataframe(self):
-        """Get, by intention, a copy of the dataframe"""
-        return self._wdata.get_dataframe_copy(infer_dtype=False, filled=False)
+    def get_dataframe(self, copy: bool = True):
+        """Get a copy (default) or a view of the dataframe.
+
+        Args:
+            copy: If True, return a deep copy. A view (copy=False) will be faster and
+                more memory efficient, but less "safe" for some cases when manipulating
+                dataframes.
+
+        .. versionchanged:: 3.7 Added `copy` keyword
+        """
+        return self._wdata.get_dataframe(copy=copy)
 
     def get_filled_dataframe(
         self, fill_value=const.UNDEF, fill_value_int=const.UNDEF_INT
@@ -1057,10 +1070,13 @@ class Well:
         if atol is None:
             atol = 0.0
 
-        if self.dataframe.shape[0] < 3 or other.dataframe.shape[0] < 3:
+        this_df = self.get_dataframe()
+        other_df = other.get_dataframe()
+
+        if this_df.shape[0] < 3 or other_df.shape[0] < 3:
             raise ValueError(
                 f"Too few points to truncate parallel path, was "
-                f"{self._wdata.data.size} and {other.dataframe.size}, must be >3"
+                f"{this_df.size} and {other_df.size}, must be >3"
             )
 
         # extract numpies from XYZ trajectory logs
@@ -1068,9 +1084,9 @@ class Well:
         yv1 = self._wdata.data[self.yname].values
         zv1 = self._wdata.data[self.zname].values
 
-        xv2 = other.dataframe[self.xname].values
-        yv2 = other.dataframe[self.yname].values
-        zv2 = other.dataframe[self.zname].values
+        xv2 = other_df[self.xname].values
+        yv2 = other_df[self.yname].values
+        zv2 = other_df[self.zname].values
 
         ier = _cxtgeo.well_trunc_parallel(
             xv1, yv1, zv1, xv2, yv2, zv2, xtol, ytol, ztol, itol, atol, 0
@@ -1079,25 +1095,28 @@ class Well:
         if ier != 0:
             raise RuntimeError("Unexpected error")
 
-        dfr = self.dataframe.copy()
+        dfr = self.get_dataframe()
         dfr = dfr[dfr[self.xname] < const.UNDEF_LIMIT]
         self.set_dataframe(dfr)
 
     def may_overlap(self, other):
         """Consider if well overlap in X Y coordinates with other well, True/False."""
-        if self.dataframe.size < 2 or other.dataframe.size < 2:
+        dataframe = self.get_dataframe()
+        other_dataframe = other.get_dataframe()
+
+        if dataframe.size < 2 or other_dataframe.size < 2:
             return False
 
         # extract numpies from XYZ trajectory logs
-        xmin1 = np.nanmin(self.dataframe[self.xname].values)
-        xmax1 = np.nanmax(self.dataframe[self.xname].values)
-        ymin1 = np.nanmin(self.dataframe[self.yname].values)
-        ymax1 = np.nanmax(self.dataframe[self.yname].values)
+        xmin1 = np.nanmin(dataframe[self.xname].values)
+        xmax1 = np.nanmax(dataframe[self.xname].values)
+        ymin1 = np.nanmin(dataframe[self.yname].values)
+        ymax1 = np.nanmax(dataframe[self.yname].values)
 
-        xmin2 = np.nanmin(other.dataframe[self.xname].values)
-        xmax2 = np.nanmax(other.dataframe[self.xname].values)
-        ymin2 = np.nanmin(other.dataframe[self.yname].values)
-        ymax2 = np.nanmax(other.dataframe[self.yname].values)
+        xmin2 = np.nanmin(other_dataframe[self.xname].values)
+        xmax2 = np.nanmax(other_dataframe[self.xname].values)
+        ymin2 = np.nanmin(other_dataframe[self.yname].values)
+        ymax2 = np.nanmax(other_dataframe[self.yname].values)
 
         if xmin1 > xmax2 or ymin1 > ymax2:
             return False
@@ -1115,7 +1134,7 @@ class Well:
             tvdmin (float): Minimum TVD
             tvdmax (float): Maximum TVD
         """
-        dfr = self.dataframe.copy()
+        dfr = self.get_dataframe()
         dfr = dfr[dfr[self.zname] >= tvdmin]
         dfr = dfr[dfr[self.zname] <= tvdmax]
         self.set_dataframe(dfr)
@@ -1128,13 +1147,15 @@ class Well:
             keeplast (bool): If True, the last element from the original
                 dataframe is kept, to avoid that the well is shortened.
         """
-        if self.dataframe.size < 2 * interval:
+        dataframe = self.get_dataframe()
+
+        if dataframe.size < 2 * interval:
             return
 
-        dfr = self.dataframe[::interval].copy()
+        dfr = dataframe[::interval].copy()
 
         if keeplast:
-            dfr = pd.concat([dfr, self.dataframe.iloc[-1:]], ignore_index=True)
+            dfr = pd.concat([dfr, dataframe.iloc[-1:]], ignore_index=True)
 
         self.set_dataframe(dfr.reset_index(drop=True))
 
@@ -1169,7 +1190,7 @@ class Well:
         if not skipname:
             dfr["NAME"] = self.xwellname
         poly = xtgeo.Polygons()
-        poly.dataframe = dfr
+        poly.set_dataframe(dfr)
         poly.name = self.xwellname
 
         return poly
@@ -1198,8 +1219,10 @@ class Well:
         poly = self.get_polygons()
 
         if tvdmin is not None:
-            poly.dataframe = poly.dataframe[poly.dataframe[poly.zname] >= tvdmin]
-            poly.dataframe.reset_index(drop=True, inplace=True)
+            poly_df = poly.get_dataframe()
+            poly_df = poly_df[poly_df[poly.zname] >= tvdmin]
+            poly_df.reset_index(drop=True, inplace=True)
+            poly.set_dataframe(poly_df)
 
         return poly.get_fence(distance=sampling, nextend=nextend, asnumpy=asnumpy)
 
@@ -1285,16 +1308,10 @@ class Well:
             A pandas dataframe (ready for the xyz/Points class), None
             if a zonelog is missing
         """
-        # make a copy of the well instance as some tmp well logs are made
-        scopy = self.copy()
 
-        dfr = _wellmarkers.get_zonation_points(
-            scopy, tops, incl_limit, top_prefix, zonelist, use_undef
+        return _wellmarkers.get_zonation_points(
+            self, tops, incl_limit, top_prefix, zonelist, use_undef
         )
-
-        del scopy
-
-        return dfr
 
     def get_zone_interval(self, zonevalue, resample=1, extralogs=None):
         """Extract the X Y Z ID line (polyline) segment for a given zonevalue.

@@ -31,9 +31,8 @@ def test_randomline_fence_from_well(show_plot):
 
     # get the polygon for the well, limit it to 1200
     fspec = wll.get_fence_polyline(sampling=10, nextend=2, asnumpy=False, tvdmin=1200)
-    print(fspec.dataframe)
 
-    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(12.6335, abs=0.001)
+    assert fspec.get_dataframe()[fspec.dhname][4] == pytest.approx(12.6335, abs=0.001)
 
     fspec = wll.get_fence_polyline(sampling=10, nextend=2, asnumpy=True, tvdmin=1200)
 
@@ -62,7 +61,7 @@ def test_randomline_fence_from_polygon(show_plot):
 
     # get the polygons
     fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
-    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(10, abs=1)
+    assert fspec.get_dataframe()[fspec.dhname][4] == pytest.approx(10, abs=1)
 
     fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
 

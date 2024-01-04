@@ -4,6 +4,7 @@ from os.path import join
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import xtgeo
 from packaging import version
@@ -806,18 +807,18 @@ def test_dataframe_simple():
 
     xmap = xtgeo.surface_from_file(TESTSET1)
 
-    dfrc = xmap.dataframe(ijcolumns=True, order="C", activeonly=True)
+    dfrc = xmap.get_dataframe(ijcolumns=True, order="C", activeonly=True)
 
     assert dfrc["X_UTME"][2] == pytest.approx(465956.274, abs=0.01)
 
     xmap = xtgeo.surface_from_file(TESTSET2)
 
-    dfrc = xmap.dataframe()
+    dfrc = xmap.get_dataframe()
 
     assert dfrc["X_UTME"][2] == pytest.approx(461582.562498, abs=0.01)
 
     xmap.coarsen(2)
-    dfrc = xmap.dataframe()
+    dfrc = xmap.get_dataframe()
 
     assert dfrc["X_UTME"][2] == pytest.approx(461577.5575, abs=0.01)
 
@@ -830,8 +831,8 @@ def test_dataframe_more(tmpdir):
 
     xmap.describe()
 
-    dfrc = xmap.dataframe(ijcolumns=True, order="C", activeonly=True)
-    dfrf = xmap.dataframe(ijcolumns=True, order="F", activeonly=True)
+    dfrc = xmap.get_dataframe(ijcolumns=True, order="C", activeonly=True)
+    dfrf = xmap.get_dataframe(ijcolumns=True, order="F", activeonly=True)
 
     dfrc.to_csv(join(tmpdir, "regsurf_df_c.csv"))
     dfrf.to_csv(join(tmpdir, "regsurf_df_f.csv"))
@@ -840,9 +841,9 @@ def test_dataframe_more(tmpdir):
     assert dfrc["X_UTME"][2] == pytest.approx(465956.274, abs=0.01)
     assert dfrf["X_UTME"][2] == pytest.approx(462679.773, abs=0.01)
 
-    dfrcx = xmap.dataframe(ijcolumns=False, order="C", activeonly=True)
+    dfrcx = xmap.get_dataframe(ijcolumns=False, order="C", activeonly=True)
     dfrcx.to_csv(join(tmpdir, "regsurf_df_noij_c.csv"))
-    dfrcy = xmap.dataframe(
+    dfrcy = xmap.get_dataframe(
         ijcolumns=False, order="C", activeonly=False, fill_value=None
     )
     dfrcy.to_csv(join(tmpdir, "regsurf_df_noij_c_all.csv"))
@@ -1095,7 +1096,7 @@ def test_get_randomline_frompolygon(show_plot):
 
     # get the polygon
     fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
-    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(10, abs=1)
+    assert fspec.get_dataframe()[fspec.dhname][4] == pytest.approx(10, abs=1)
 
     fspec = fence.get_fence(distance=20, nextend=5, asnumpy=True)
 
@@ -1283,7 +1284,7 @@ def test_get_boundary_polygons_simple(show_plot):
                 "linewidth": 2,
             },
         )
-    assert boundary.dataframe[boundary.yname].values.tolist() == pytest.approx(
+    assert boundary.get_dataframe()[boundary.yname].values.tolist() == pytest.approx(
         [
             20,
             20,
@@ -1323,8 +1324,10 @@ def test_get_boundary_polygons_complex(show_plot):
     # reveal any major issues by asserting averages (polygons are checked visually)
     # for some reasons, macos tests gives slightly different result; that is why a large
     # tolerance is given
-    assert boundary.dataframe[boundary.xname].mean() == pytest.approx(462208.0, abs=2.5)
-    assert boundary.dataframe[boundary.yname].mean() == pytest.approx(
+    assert boundary.get_dataframe()[boundary.xname].mean() == pytest.approx(
+        462208.0, abs=2.5
+    )
+    assert boundary.get_dataframe()[boundary.yname].mean() == pytest.approx(
         5933427.0, abs=4.0
     )
 

@@ -26,6 +26,7 @@ def test_well_to_polygons():
     poly = mywell.get_polygons()
 
     assert isinstance(poly, xtgeo.xyz.Polygons)
-    print(poly.dataframe)
 
-    assert mywell.dataframe["X_UTME"].mean() == poly.dataframe["X_UTME"].mean()
+    assert (
+        mywell.get_dataframe()["X_UTME"].mean() == poly.get_dataframe()["X_UTME"].mean()
+    )

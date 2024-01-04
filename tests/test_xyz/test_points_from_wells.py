@@ -19,8 +19,8 @@ def test_get_zone_tops_one_well_classmethod(testpath, tmp_path):
 
     mypoints = xtgeo.points_from_wells(wlist)
 
-    assert mypoints.dataframe["TopName"][2] == "TopBelow_TopLowerReek"
-    assert mypoints.dataframe["X_UTME"][2] == pytest.approx(462698.333)
+    assert mypoints.get_dataframe()["TopName"][2] == "TopBelow_TopLowerReek"
+    assert mypoints.get_dataframe()["X_UTME"][2] == pytest.approx(462698.333)
 
     mypoints.to_file(
         tmp_path / "points_w1_classmethod.rmsasc",
@@ -46,10 +46,10 @@ def test_get_zone_tops_one_well_w_undef(testpath):
     p2 = xtgeo.points_from_wells(wlist, use_undef=True)
     p3 = xtgeo.points_from_wells(wlist, use_undef=False)
 
-    assert p1.dataframe.equals(p2.dataframe)
+    assert p1.get_dataframe().equals(p2.get_dataframe())
 
-    assert p2.dataframe["Zone"][0] == 0
-    assert p3.dataframe["Zone"][0] == 1
+    assert p2.get_dataframe()["Zone"][0] == 0
+    assert p3.get_dataframe()["Zone"][0] == 1
 
 
 def test_get_zone_thickness_one_well(testpath):
@@ -60,7 +60,7 @@ def test_get_zone_thickness_one_well(testpath):
     mypoints = Points()
     mypoints = xtgeo.points_from_wells(wlist, tops=False, zonelist=[1, 2, 3])
     mypoints.zname = "THICKNESS"
-    assert mypoints.dataframe["THICKNESS"][0] == pytest.approx(16.8397)
+    assert mypoints.get_dataframe()["THICKNESS"][0] == pytest.approx(16.8397)
 
 
 def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot, helpers):
@@ -88,7 +88,7 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot, helpers):
     )
 
     # not the order in the dataframe may vary randomly so do a sort
-    dfr = mypoints.dataframe.sort_values(["WellName", "Zone", "Z_TVDSS"])
+    dfr = mypoints.get_dataframe().sort_values(["WellName", "Zone", "Z_TVDSS"])
     snapshot.assert_match(
         helpers.df2csv(dfr.head(10).round(), index=False),
         "zpoints_w_so622.csv",
@@ -114,7 +114,7 @@ def test_get_faciesfraction_some_wells_classmethod(testpath, tmp_path):
     mypoints.zname = "FACFRAC"
 
     myquery = 'WELLNAME == "OP_1" and ZONE == 1'
-    usedf = mypoints.dataframe.query(myquery)
+    usedf = mypoints.get_dataframe().query(myquery)
 
     assert abs(usedf[mypoints.zname].values[0] - 0.86957) < 0.001
 

@@ -52,7 +52,7 @@ def test_make_ijk_grid(loadwell1, loadgrid1):
 
     mywell.make_ijk_from_grid(mygrid)
 
-    df = mywell.dataframe
+    df = mywell.get_dataframe(copy=False)
 
     assert int(df.iloc[4850]["ICELL"]) == 29
     assert int(df.iloc[4850]["JCELL"]) == 28
@@ -79,8 +79,10 @@ def test_well_get_gridprops(tmpdir, loadwell1, loadgrid1, loadporo1):
 
     mywell.get_gridproperties(myactnum, mygrid)
     mywell.to_file(join(tmpdir, "w_from_gprops.w"))
-    assert mywell.dataframe.iloc[4775]["PORO_model"] == pytest.approx(0.2741, abs=0.001)
-    assert mywell.dataframe.iloc[4775]["ACTNUM_model"] == 1
+    assert mywell.get_dataframe().iloc[4775]["PORO_model"] == pytest.approx(
+        0.2741, abs=0.001
+    )
+    assert mywell.get_dataframe().iloc[4775]["ACTNUM_model"] == 1
     assert mywell.isdiscrete("ACTNUM_model") is True
 
 

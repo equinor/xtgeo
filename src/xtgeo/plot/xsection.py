@@ -392,13 +392,13 @@ class XSection(BasePlot):
         wo = self._well
 
         # reduce the well data by Pandas operations
-        dfr = wo.dataframe
-        wo.dataframe = dfr[dfr["Z_TVDSS"] > self._zmin]
+        dfr = wo.get_dataframe()
+        wo.set_dataframe(dfr[dfr["Z_TVDSS"] > self._zmin])
 
         # Create a relative XYLENGTH vector (0.0 where well starts)
         wo.create_relative_hlen()
 
-        dfr = wo.dataframe
+        dfr = wo.get_dataframe()
         if dfr.empty:
             self._showok = False
             return
@@ -436,7 +436,7 @@ class XSection(BasePlot):
 
     def set_xaxis_md(self, gridlines=False):
         """Set x-axis labels to measured depth."""
-        md_start = self._well.dataframe["MDEPTH"].iloc[0]
+        md_start = self._well.get_dataframe(copy=False)["MDEPTH"].iloc[0]
         md_start_round = int(math.floor(md_start / 100.0)) * 100
         md_start_delta = md_start - md_start_round
 
@@ -1116,7 +1116,7 @@ class XSection(BasePlot):
         data_well = data_well.loc[data_well["WELL"] == well.xwellname]
         del data_well["WELL"]
 
-        md_start = well.dataframe["MDEPTH"].iloc[0]
+        md_start = well.get_dataframe(copy=False)["MDEPTH"].iloc[0]
         data_well["R_HLEN"] = data_well["MDEPTH"]
         data_well["R_HLEN"] = data_well["R_HLEN"].subtract(md_start)
 
@@ -1147,8 +1147,8 @@ class XSection(BasePlot):
         ax = self._ax2
 
         if self.fence is not None:
-            xwellarray = self._well.dataframe["X_UTME"].values
-            ywellarray = self._well.dataframe["Y_UTMN"].values
+            xwellarray = self._well.get_dataframe(copy=False)["X_UTME"].values
+            ywellarray = self._well.get_dataframe(copy=False)["Y_UTMN"].values
 
             ax.plot(xwellarray, ywellarray, linewidth=4, c="cyan")
 
@@ -1171,8 +1171,8 @@ class XSection(BasePlot):
                     continue
                 if poly.name == self._well.xwellname:
                     continue
-                xwp = poly.dataframe[poly.xname].values
-                ywp = poly.dataframe[poly.yname].values
+                xwp = poly.get_dataframe(copy=False)[poly.xname].values
+                ywp = poly.get_dataframe(copy=False)[poly.yname].values
                 ax.plot(xwp, ywp, linewidth=1, c="grey")
                 ax.annotate(poly.name, xy=(xwp[-1], ywp[-1]), color="grey", size=5)
 
@@ -1186,9 +1186,9 @@ class XSection(BasePlot):
 
         ax = self._ax3
         if self.fence is not None:
-            xp = self._outline.dataframe["X_UTME"].values
-            yp = self._outline.dataframe["Y_UTMN"].values
-            ip = self._outline.dataframe["POLY_ID"].values
+            xp = self._outline.get_dataframe(copy=False)["X_UTME"].values
+            yp = self._outline.get_dataframe(copy=False)["Y_UTMN"].values
+            ip = self._outline.get_dataframe(copy=False)["POLY_ID"].values
 
             ax.plot(self._fence[:, 0], self._fence[:, 1], linewidth=3, c="red")
 

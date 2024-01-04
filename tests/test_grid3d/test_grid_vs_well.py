@@ -116,7 +116,7 @@ def test_report_zlog_mismatch_resultformat3(tmpdir):
         resultformat=3,
     )
     mywell = res["WELLINTV"]
-    logger.info("\n%s", mywell.dataframe.to_string())
+    logger.info("\n%s", mywell.get_dataframe().to_string())
     mywell.to_file(join(tmpdir, "w1_zlog_report.rmswell"))
 
 
@@ -128,7 +128,7 @@ def test_report_zlog_mismatch_perflog(tmpdir):
 
     w1 = xtgeo.well_from_file(PWELL1)
 
-    w1.dataframe.to_csv(join(tmpdir, "testw1.csv"))
+    w1.get_dataframe().to_csv(join(tmpdir, "testw1.csv"))
 
     res = g1.report_zone_mismatch(
         well=w1,
@@ -140,7 +140,7 @@ def test_report_zlog_mismatch_perflog(tmpdir):
         resultformat=2,
     )
     mywell = res["WELLINTV"]
-    logger.info("\n%s", mywell.dataframe.to_string())
+    logger.info("\n%s", mywell.get_dataframe().to_string())
     mywell.to_file(join(tmpdir, "w1_perf_report.rmswell"))
 
     assert res["MATCH2"] == pytest.approx(81, 1.5)

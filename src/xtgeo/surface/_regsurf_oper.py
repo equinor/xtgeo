@@ -473,7 +473,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
         # turn scalar value into numpy array
         value = self.values.copy() * 0 + value
 
-    idgroups = poly.dataframe.groupby(poly.pname)
+    idgroups = poly.get_dataframe(copy=False).groupby(poly.pname)
 
     for _, grp in idgroups:
         xcor = grp[poly.xname].values
@@ -563,7 +563,7 @@ def _proxy_map_polygons(surf, poly, inside=True):
     import matplotlib.path as mplpath
 
     for pol in usepolys:
-        idgroups = pol.dataframe.groupby(pol.pname)
+        idgroups = pol.get_dataframe(copy=False).groupby(pol.pname)
         for _, grp in idgroups:
             singlepoly = np.array([grp[pol.xname].values, grp[pol.yname].values]).T
             poly_path = mplpath.Path(singlepoly)

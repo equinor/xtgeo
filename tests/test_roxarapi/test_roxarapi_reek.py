@@ -338,7 +338,7 @@ def test_rox_wells(roxar_project):
     )
     assert "Zonelog" in well.lognames
 
-    assert well.dataframe["Poro"].mean() == pytest.approx(0.1637623936)
+    assert well.get_dataframe()["Poro"].mean() == pytest.approx(0.1637623936)
 
 
 @pytest.mark.requires_roxar
@@ -417,14 +417,14 @@ def test_rox_get_modify_set_get_grid_with_subzones(roxar_project, roxinstance):
 def test_rox_get_modify_set_polygons(roxar_project, roxinstance):
     """Get, modify and set a polygons from a RMS project."""
     poly = xtgeo.polygons_from_roxar(roxar_project, POLYNAME1, "", stype="clipboard")
-    assert poly.dataframe.iloc[-1, 2] == pytest.approx(1595.161377)
-    assert poly.dataframe.shape[0] == 25
-    assert poly.dataframe.shape[1] == 4
+    assert poly.get_dataframe().iloc[-1, 2] == pytest.approx(1595.161377)
+    assert poly.get_dataframe().shape[0] == 25
+    assert poly.get_dataframe().shape[1] == 4
 
     poly.rescale(300)
     # store in RMS
     poly.to_roxar(roxar_project, "RESCALED", "", stype="clipboard")
-    assert poly.dataframe.shape[0] == 127
+    assert poly.get_dataframe().shape[0] == 127
 
     # store and retrieve in general2d_data just to see that it works
     if roxinstance.version_required("1.6"):
@@ -432,8 +432,8 @@ def test_rox_get_modify_set_polygons(roxar_project, roxinstance):
         poly2 = xtgeo.polygons_from_roxar(
             roxar_project, "xxx", "folder/sub", stype="general2d_data"
         )
-        assert poly.dataframe[poly.xname].values.tolist() == pytest.approx(
-            poly2.dataframe[poly.xname].values.tolist()
+        assert poly.get_dataframe()[poly.xname].values.tolist() == pytest.approx(
+            poly2.get_dataframe()[poly.xname].values.tolist()
         )
     else:
         with pytest.raises(NotImplementedError):
@@ -444,15 +444,15 @@ def test_rox_get_modify_set_polygons(roxar_project, roxinstance):
 def test_rox_get_modify_set_points(roxar_project):
     """Get, modify and set a points from a RMS project."""
     poi = xtgeo.points_from_roxar(roxar_project, POINTSNAME1, "", stype="clipboard")
-    assert poi.dataframe.iloc[-1, 1] == pytest.approx(5.932977e06)
-    assert poi.dataframe.shape[0] == 20
-    assert poi.dataframe.shape[1] == 3
+    assert poi.get_dataframe().iloc[-1, 1] == pytest.approx(5.932977e06)
+    assert poi.get_dataframe().shape[0] == 20
+    assert poi.get_dataframe().shape[1] == 3
 
     # snap to a surface as operation and store in RMS
     surf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
     poi.to_roxar(roxar_project, "SNAPPED", "", stype="clipboard")
-    assert poi.dataframe.iloc[-1, 2] == pytest.approx(1651.805261)
+    assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1651.805261)
 
 
 @pytest.mark.requires_roxar
@@ -461,15 +461,15 @@ def test_rox_get_modify_set_points_with_attrs(roxar_project):
     poi = xtgeo.points_from_roxar(
         roxar_project, POINTSNAME2, "", stype="clipboard", attributes=True
     )
-    assert poi.dataframe["Well"].values[-1] == "WI_3"
-    assert poi.dataframe.shape[0] == 8
-    assert poi.dataframe.shape[1] == 7
+    assert poi.get_dataframe()["Well"].values[-1] == "WI_3"
+    assert poi.get_dataframe().shape[0] == 8
+    assert poi.get_dataframe().shape[1] == 7
 
     # snap to a surface as operation and store in RMS
     surf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
     poi.to_roxar(roxar_project, "SNAPPED2", "", stype="clipboard")
-    assert poi.dataframe.iloc[-1, 2] == pytest.approx(1706.1469, abs=0.01)
+    assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1706.1469, abs=0.01)
 
 
 @pytest.mark.requires_roxar
@@ -493,9 +493,9 @@ def test_rox_get_modify_set_points_with_attrs_pfilter(roxar_project):
         roxar_project, "PFILTER_POINTS", "", stype="clipboard", attributes=True
     )
 
-    assert "OP_4" in poi.dataframe["Well"].values.tolist()
-    assert "OP_4" not in poi2.dataframe["Well"].values.tolist()
-    assert poi2.dataframe.shape[0] == 2
+    assert "OP_4" in poi.get_dataframe()["Well"].values.tolist()
+    assert "OP_4" not in poi2.get_dataframe()["Well"].values.tolist()
+    assert poi2.get_dataframe().shape[0] == 2
 
 
 @pytest.mark.requires_roxar
@@ -507,10 +507,12 @@ def test_rox_well_with_added_logs(roxar_project):
         logrun="log",
         trajectory="My trajectory",
     )
-    assert well.dataframe["Facies"].mean() == pytest.approx(0.357798165)
+    assert well.get_dataframe()["Facies"].mean() == pytest.approx(0.357798165)
     well.to_roxar(roxar_project, "dummy1", logrun="log", trajectory="My trajectory")
-    well.dataframe["Facies"] = np.nan
-    assert np.isnan(well.dataframe["Facies"].values).all()
+    dataframe = well.get_dataframe()
+    dataframe["Facies"] = np.nan
+    well.set_dataframe(dataframe)
+    assert np.isnan(well.get_dataframe()["Facies"].values).all()
     well.to_roxar(roxar_project, "dummy2", logrun="log", trajectory="My trajectory")
     # check that export with set codes
     well.set_logrecord("Facies", {1: "name"})
@@ -546,7 +548,9 @@ def test_rox_well_update(roxar_project, update_option, expected_logs, expected_p
         lognames=["Poro"],
     )
     well.create_log("NewPoro")
-    well.dataframe["Poro"] += 0.1
+    dataframe = well.get_dataframe()
+    dataframe["Poro"] += 0.1
+    well.set_dataframe(dataframe)
 
     well.to_roxar(
         roxar_project,
@@ -581,7 +585,7 @@ def test_blocked_well_from_to_roxar(roxar_project):
     bw = xtgeo.blockedwell_from_roxar(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
-    assert list(bw.dataframe.columns) == [
+    assert list(bw.get_dataframe().columns) == [
         "X_UTME",
         "Y_UTMN",
         "Z_TVDSS",
@@ -605,8 +609,8 @@ def test_blocked_well_from_to_roxar(roxar_project):
     )
 
     # zonelog will still be in Roxar since it was there from before
-    assert "Zonelog" in list(bw_2.dataframe.columns)
-    assert "Some_new" in list(bw_2.dataframe.columns)
+    assert "Zonelog" in list(bw_2.get_dataframe().columns)
+    assert "Some_new" in list(bw_2.get_dataframe().columns)
 
     rox.project.close()
 

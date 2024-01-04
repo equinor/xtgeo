@@ -423,8 +423,8 @@ class Polygons(XYZ):
     def dataframe(self) -> pd.DataFrame:
         """Returns or set the Pandas dataframe object."""
         warnings.warn(
-            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
-            "Use `get_dataframe()` instead.",
+            "Direct access to the dataframe property in Polygons class will be "
+            "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
             PendingDeprecationWarning,
         )
         return self._df
@@ -432,8 +432,8 @@ class Polygons(XYZ):
     @dataframe.setter
     def dataframe(self, df):
         warnings.warn(
-            "Direct access to the dataframe property will be deprecated in xtgeo 5.0. "
-            "Use `set_dataframe(df)` instead.",
+            "Direct access to the dataframe property in Polygons class will be "
+            "deprecated in xtgeo 5.0. Use `set_dataframe()` instead.",
             PendingDeprecationWarning,
         )
         self.set_dataframe(df)
@@ -447,10 +447,7 @@ class Polygons(XYZ):
 
         .. versionchanged: 3.7  Add keyword `copy` defaulted to True
         """
-        if copy:
-            return self._df.copy()
-
-        return self._df
+        return self._df.copy() if copy else self._df
 
     def set_dataframe(self, df):
         self._df = df.apply(deepcopy)
@@ -571,10 +568,11 @@ class Polygons(XYZ):
 
         self._reset(**_wells_importer(wells, zone, resample))
 
-        nwells = self.dataframe["WellName"].nunique()
+        dataframe = self.get_dataframe()
+        nwells = dataframe["WellName"].nunique()
         # as the previous versions did not have the WellName column, this is dropped
         # here for backward compatibility:
-        self.dataframe = self.dataframe.drop("WellName", axis=1)
+        self.set_dataframe(dataframe.drop("WellName", axis=1))
 
         return None if nwells == 0 else nwells
 
@@ -664,7 +662,7 @@ class Polygons(XYZ):
         Convert from POLY_ID based to XYZ, where a new polygon is marked with a 999
         value as flag.
         """
-        return _convert_idbased_xyz(self, self.dataframe)
+        return _convert_idbased_xyz(self, self.get_dataframe())
 
     def get_shapely_objects(self):
         """Returns a list of Shapely LineString objects, one per POLY_ID.
@@ -672,7 +670,7 @@ class Polygons(XYZ):
         .. versionadded:: 2.1
         """
         spolys = []
-        idgroups = self.dataframe.groupby(self.pname)
+        idgroups = self.get_dataframe(copy=False).groupby(self.pname)
 
         for _idx, grp in idgroups:
             pxcor = grp[self.xname].values
@@ -724,17 +722,19 @@ class Polygons(XYZ):
 
         .. versionadded:: 2.1
         """
+        dataframe = self.get_dataframe()
         if polyid is None:
-            polyid = int(self.dataframe[self.pname].iloc[0])
+            polyid = int(dataframe[self.pname].iloc[0])
 
         if not isinstance(polyid, list):
             polyid = [polyid]
 
         dflist = []
         for pid in polyid:
-            dflist.append(self.dataframe[self.dataframe[self.pname] == pid])
+            dflist.append(dataframe[dataframe[self.pname] == pid])
 
-        self.dataframe = pd.concat(dflist)
+        dataframe = pd.concat(dflist)
+        self.set_dataframe(dataframe)
 
     def tlen(self, tname="T_CUMLEN", dtname="T_DELTALEN", atindex=0):
         """Compute and add or replace columns for cum. total 3D length and delta length.
