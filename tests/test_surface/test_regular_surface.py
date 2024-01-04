@@ -1343,3 +1343,31 @@ def test_get_boundary_polygons_complex(show_plot):
                 "linewidth": 2,
             },
         )
+
+
+def test_regsurface_get_dataframe(default_surface):
+    """Test getting a dataframe from a surface."""
+
+    surf = RegularSurface(**default_surface)
+    dataframe = surf.get_dataframe()
+    assert dataframe.VALUES.to_list() == [
+        1.0,
+        6.0,
+        11.0,
+        2.0,
+        7.0,
+        12.0,
+        3.0,
+        8.0,
+        4.0,
+        9.0,
+        14.0,
+        5.0,
+        10.0,
+        15.0,
+    ]
+
+    with pytest.warns(PendingDeprecationWarning):
+        dataframe2 = surf.dataframe()
+
+    pd.testing.assert_frame_equal(dataframe, dataframe2)
