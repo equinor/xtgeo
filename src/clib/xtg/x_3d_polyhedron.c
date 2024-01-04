@@ -250,7 +250,7 @@ x_hexahedron_volume(double *corners, long ndim, int precision)
         vol = (vol * (ialt - 1) + altvol) / ialt;
     }
 
-    free(crn);
+    x_free_2d_double(crn);
 
     return vol;
 }
@@ -586,7 +586,7 @@ _x_point_in_hexahedron_v2(double x0, double y0, double z0, double *corners, long
         }
     }
 
-    free(crn);
+    x_free_2d_double(crn);
 
     return status * 50;
 }
