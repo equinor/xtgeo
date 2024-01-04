@@ -1975,7 +1975,15 @@ class RegularSurface:
 
         return pd.DataFrame(entry)
 
-    dataframe = get_dataframe  # for compatibility backwards
+    def dataframe(self, **kwargs):
+        """Deprecated; see method get_dataframe()."""
+        warnings.warn(
+            "The dataframe() is deprecated and will be removed in xtgeo "
+            "version 5. Use get_dataframe() instead",
+            PendingDeprecationWarning,
+        )
+
+        return self.get_dataframe(**kwargs)
 
     def get_xy_value_lists(self, lformat="webportal", xyfmt=None, valuefmt=None):
         """Returns two lists for coordinates (x, y) and values.
