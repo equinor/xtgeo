@@ -60,7 +60,7 @@ def unary_operators() -> object:
     ),
 )
 def test_lazy_array_binery_operators(
-    op: Callable,
+    op: Callable[[float, float], float],
     left: float,
     right: float,
     length: int,
@@ -97,7 +97,7 @@ def test_lazy_array_binery_operators(
     ),
 )
 def test_lazy_array_unary_operators(
-    op: Callable,
+    op: Callable[[float], float],
     value: float,
     length: int,
 ) -> None:
@@ -130,3 +130,28 @@ def test_lazy_array_eval_accses() -> None:
     assert cc.count == 0
     df.x.to_numpy()  # Trigger evel of lazy array
     assert cc.count == 1
+
+
+def test_lazy_combine() -> None:
+    c1 = CallableCounter()
+    df1 = pd.DataFrame({"x": LazyArray(lambda :np.array(c1()), length=1)})
+    c2 = CallableCounter()
+    df2 = pd.DataFrame({"x": LazyArray(lambda : np.array(c2()), length=1)})
+
+    assert c1.count == c2.count == 0
+    df3 = df1 + df2
+    assert c1.count == c2.count == 1
+    assert df3.to_numpy() == [2]
+    assert c1.count == c2.count == 1
+
+    c1 = CallableCounter()
+    df1 = pd.DataFrame({"x": LazyArray(lambda :np.array(c1()), length=1)})
+    c2 = CallableCounter()
+    df2 = pd.DataFrame({"y": LazyArray(lambda : np.array(c2()), length=1)})
+
+    assert c1.count == c2.count == 0
+    df3 = df1.join(df2)
+    assert c1.count == c2.count == 1
+    assert df3.x.to_numpy() == [1]
+    assert df3.y.to_numpy() == [1]
+    assert c1.count == c2.count == 1
