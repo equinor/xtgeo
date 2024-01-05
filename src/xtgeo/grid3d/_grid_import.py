@@ -49,11 +49,16 @@ def from_file(
 
     gfile.check_file(raiseerror=IOError, raisetext=f"Cannot access file {gfile.name}")
 
-    if _fformat in ["roff_binary", "roff_ascii"]:
+    if _fformat in ("roff_binary", "roff_ascii"):
         result.update(_grid_import_roff.import_roff(gfile, **kwargs))
-    elif _fformat in ["egrid", "fegrid"]:
+    elif _fformat in ("egrid", "fegrid"):
         result.update(
-            _grid_import_ecl.import_ecl_egrid(gfile, fileformat=_fformat, **kwargs)
+            _grid_import_ecl.import_ecl_egrid(
+                gfile,
+                # Satisfy mypy that this is a literal
+                fileformat="egrid" if _fformat == "egrid" else "fegrid",
+                **kwargs,
+            )
         )
     elif _fformat == "grdecl":
         result.update(_grid_import_ecl.import_ecl_grdecl(gfile, **kwargs))
