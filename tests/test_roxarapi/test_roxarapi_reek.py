@@ -63,6 +63,13 @@ POLYNAME1 = "Polys"
 POINTSNAME1 = "Points"
 POINTSNAME2 = "PointsAttrs"
 
+WELL_PICK_SET = "MyWellPicks"
+WELL_PICK_DATA = [
+    ["OP_2", 1585.5, "TopReek"],
+    ["OP_2", 1602.4, "MidReek"],
+    ["OP_2", 1615.8, "BaseReek"],
+]
+
 
 @pytest.fixture(name="tmpdir", scope="module")
 def fixture_tmpdir(tmpdir_factory):
@@ -154,6 +161,22 @@ def _run_blocked_wells_job(
         raise RuntimeError("Could do execute job for well blocking")
 
 
+def _add_well_pick_to_project(project: Any, well_pick_data: dict, trajectory: str):
+    """Add well picks to the project."""
+    import roxar.well_picks as wp
+
+    mypicks = [
+        wp.WellPick.create(
+            intersection_object=project.horizons[horizon],
+            trajectory=project.wells[well].wellbore.trajectories[trajectory],
+            md=md,
+        )
+        for well, md, horizon in well_pick_data
+    ]
+    rox_wps = project.well_picks.sets.create(WELL_PICK_SET)
+    rox_wps.append(mypicks)
+
+
 @pytest.mark.requires_roxar
 @pytest.fixture(name="roxar_project", scope="module")
 def fixture_create_project(tmpdir, roxinstance) -> str:
@@ -208,6 +231,7 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
     logger.info("Initialised RMS project, done!")
 
     _run_blocked_wells_job(project, GRIDNAME1, "BW", ["OP_2", "OP_6"])
+    _add_well_pick_to_project(project, WELL_PICK_DATA, trajectory="My trajectory")
 
     project.save_as(tmp_project_path)
     project.close()
@@ -496,6 +520,158 @@ def test_rox_get_modify_set_points_with_attrs_pfilter(roxar_project):
     assert "OP_4" in poi.get_dataframe()["Well"].values.tolist()
     assert "OP_4" not in poi2.get_dataframe()["Well"].values.tolist()
     assert poi2.get_dataframe().shape[0] == 2
+
+
+@pytest.mark.requires_roxar
+def test_get_well_picks_as_points(roxar_project):
+    """Get, well picks as points with attributes"""
+
+    rox = xtgeo.RoxUtils(roxar_project)
+    project = rox.project
+
+    assert set(project.well_picks.sets.keys()) == {"Default", "MyWellPicks"}
+    if not rox.version_required("1.6"):
+        return
+
+    # collect well pick set as points
+    poi = xtgeo.points_from_roxar(
+        project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=True
+    )
+
+    poi_df = poi.get_dataframe()
+    assert poi_df.shape[0] == 3
+    assert "My attribute" not in poi.dataframe
+    assert (poi.dataframe["Depth Uncertainty"] == xtgeo.UNDEF).all()
+
+    # update regular well pick attribute
+    poi_df["Depth Uncertainty"] = 10
+    # create user defined well pick attribute
+    poi_df.loc[poi_df["HORIZON"] == "TopReek", "My attribute"] = "OK"
+    poi.set_dataframe(poi_df)
+
+    # store to new well pick set
+    poi.to_roxar(
+        project,
+        WELL_PICK_SET + "_new",
+        "horizon",
+        stype="well_picks",
+        attributes=True,
+    )
+
+    # test reading the new well pick set
+    poi2 = xtgeo.points_from_roxar(
+        project, WELL_PICK_SET + "_new", "horizon", stype="well_picks", attributes=True
+    )
+    poi2_df = poi2.get_dataframe()
+
+    # check that the attributes are present and updated
+    assert "My attribute" in poi2_df
+    assert (poi2_df["Depth Uncertainty"] == 10).all()
+
+    # test store to clipboard using a pfilter
+    poi2.to_roxar(
+        project,
+        WELL_PICK_SET,
+        "",
+        stype="clipboard",
+        pfilter={"HORIZON": ["TopReek"]},
+        attributes=True,
+    )
+
+    # reread from clipboard; should now have only 1 rows
+    poi3 = xtgeo.points_from_roxar(
+        project, WELL_PICK_SET, "", stype="clipboard", attributes=True
+    )
+    poi3_df = poi3.get_dataframe()
+
+    assert set(poi2_df["HORIZON"].unique()) == {"TopReek", "MidReek", "BaseReek"}
+    assert set(poi3_df["HORIZON"].unique()) == {"TopReek"}
+    assert poi3_df.shape[0] == 1
+    assert (poi3_df["Depth Uncertainty"] == 10).all()
+
+    # store once more as a well pick set without attributes and reread
+    poi3.to_roxar(
+        project,
+        WELL_PICK_SET + "_newest",
+        "horizon",
+        stype="well_picks",
+        attributes=False,
+    )
+    poi4 = xtgeo.points_from_roxar(
+        project,
+        WELL_PICK_SET + "_newest",
+        "horizon",
+        stype="well_picks",
+        attributes=True,
+    )
+    poi4_df = poi4.get_dataframe()
+
+    # should now have undefined Depth Uncertainty and only one horizon
+    assert (poi4_df["Depth Uncertainty"] == xtgeo.UNDEF).all()
+    assert set(poi4_df["HORIZON"].unique()) == {"TopReek"}
+    assert poi4_df.shape[0] == 1
+
+    # check that new wll pick sets have been created in the project
+    assert set(project.well_picks.sets.keys()) == {
+        "Default",
+        "MyWellPicks",
+        "MyWellPicks_new",
+        "MyWellPicks_newest",
+    }
+
+
+@pytest.mark.requires_roxar
+def test_well_picks_version_requirement(roxar_project):
+    """Chech rox version requirement for well picks"""
+
+    rox = xtgeo.RoxUtils(roxar_project)
+    project = rox.project
+
+    if not rox.version_required("1.6"):
+        with pytest.raises(NotImplementedError) as exc_info:
+            xtgeo.points_from_roxar(
+                project, WELL_PICK_SET, "horizon", stype="well_picks"
+            )
+        assert str(exc_info.value).startswith("API Support for well_picks is missing")
+
+    rox.safe_close()
+
+
+@pytest.mark.requires_roxar
+def test_get_well_picks_attributes(roxar_project):
+    """Get, well picks as points with attributes"""
+
+    rox = xtgeo.RoxUtils(roxar_project)
+    project = rox.project
+
+    if not rox.version_required("1.6"):
+        return
+
+    poi = xtgeo.points_from_roxar(
+        project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=True
+    )
+
+    poi_df = poi.get_dataframe()
+    assert "Depth Uncertainty" in poi_df
+    assert "Azimuth" in poi_df
+
+    poi = xtgeo.points_from_roxar(
+        project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=False
+    )
+    poi_df = poi.get_dataframe()
+    assert "Depth Uncertainty" not in poi_df
+    assert "Azimuth" not in poi_df
+
+    poi = xtgeo.points_from_roxar(
+        project,
+        WELL_PICK_SET,
+        "horizon",
+        stype="well_picks",
+        attributes=["Azimuth"],
+    )
+    poi_df = poi.get_dataframe()
+    assert "Depth Uncertainty" not in poi_df
+    assert "Azimuth" in poi_df
 
 
 @pytest.mark.requires_roxar

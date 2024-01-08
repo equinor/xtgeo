@@ -75,7 +75,7 @@ def _roxar_importer(
     category: str,
     stype: str = "horizons",
     realisation: int = 0,
-    attributes: bool = False,
+    attributes: bool | list[str] = False,
 ):
     return _xyz_roxapi.import_xyz_roxapi(
         project, name, category, stype, realisation, attributes, False
@@ -193,7 +193,7 @@ def points_from_roxar(
     category: str,
     stype: str = "horizons",
     realisation: int = 0,
-    attributes: bool = False,
+    attributes: bool | list[str] = False,
 ):
     """Load a Points instance from Roxar RMS project.
 
@@ -206,13 +206,16 @@ def points_from_roxar(
     Args:
         project: Name of project (as folder) if outside RMS, or just use the
             magic `project` word if within RMS.
-        name: Name of points item
+        name (str): Name of points item, or name of well pick set if
+            well picks.
         category: For horizons/zones/faults: for example 'DL_depth'
             or use a folder notation on clipboard/general2d_data.
+            For well picks it is the well pick type: 'horizon' or 'fault'.
         stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
-            'general2d_data'
+            'general2d_data', 'faults' or 'well_picks'
         realisation: Realisation number, default is 0
-        attributes: If True, attributes will be preserved (from RMS 11)
+        attributes (bool): Bool or list with attribute names to collect.
+            If True, all attributes are collected.
 
     Example::
 
@@ -631,7 +634,7 @@ class Points(XYZ):
         category: str,
         stype: str = "horizons",
         realisation: int = 0,
-        attributes: bool = False,
+        attributes: bool | list[str] = False,
     ):  # pragma: no cover
         """Load a points/polygons item from a Roxar RMS project (deprecated).
 
@@ -655,13 +658,16 @@ class Points(XYZ):
         Args:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of polygons item
-            category (str): For horizons/zones/faults: for example 'DL_depth'
+            name (str): Name of points item, or name of well pick set if
+                well picks.
+            category: For horizons/zones/faults: for example 'DL_depth'
                 or use a folder notation on clipboard/general2d_data.
-
-            stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
+                For well picks it is the well pick type: 'horizon' or 'fault'.
+            stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+                'general2d_data', 'faults' or 'well_picks'
             realisation (int): Realisation number, default is 0
-            attributes (bool): If True, attributes will be preserved (from RMS 11)
+            attributes (bool): Bool or list with attribute names to collect.
+                If True, all attributes are collected.
 
         Returns:
             Object instance updated
@@ -899,15 +905,17 @@ class Points(XYZ):
         Args:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of polygons item
+            name (str): Name of points item, or name of well pick set if
+                well picks.
             category (str): For horizons/zones/faults: for example 'DL_depth'
+                or use a folder notation on clipboard/general2d_data.
+                For well picks it is the well pick type: "horizon" or "fault".
             pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
-            stype (str): RMS folder type, 'horizons' (default), 'zones'
-                or 'faults' or 'clipboard', general2d_data (in prep: well picks)
+            stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+                'general2d_data', 'faults' or 'well_picks'
             realisation (int): Realisation number, default is 0
             attributes (bool): If True, attributes will be preserved (from RMS 11)
-
 
         Returns:
             Object instance updated
@@ -918,18 +926,6 @@ class Points(XYZ):
 
         .. versionadded:: 2.19 general2d_data support is added
         """
-
-        valid_stypes = [
-            "horizons",
-            "zones",
-            "faults",
-            "clipboard",
-            "general2d_data",
-            "horizon_picks",
-        ]
-
-        if stype.lower() not in valid_stypes:
-            raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
 
         _xyz_roxapi.export_xyz_roxapi(
             self,

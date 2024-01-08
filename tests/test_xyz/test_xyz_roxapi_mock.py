@@ -45,7 +45,7 @@ def polygons_set():
 @pytest.fixture
 def mock_roxutils(mocker):
     mocker.patch("xtgeo.xyz._xyz_roxapi.RoxUtils")
-    mocker.patch("xtgeo.xyz._xyz_roxapi._check_category_etc", return_value=True)
+    mocker.patch("xtgeo.xyz._xyz_roxapi._check_presence_in_project", return_value=True)
 
 
 @pytest.fixture
