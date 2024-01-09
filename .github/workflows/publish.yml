@@ -43,9 +43,9 @@ jobs:
         run: twine check wheelhouse/*
 
       - uses: actions/upload-artifact@v4
-        if: ${{ github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
         with:
-          name: cibw-sdist
+          name: cibw-${{ env.CIBW_BUILD }}
           path: wheelhouse/*.whl
 
   publish:
@@ -54,7 +54,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
     environment:
       name: pypi
-      url: https://pypi.org/p/xtgeo
+      url: https://pypi.org/project/xtgeo
     permissions:
       id-token: write
 
