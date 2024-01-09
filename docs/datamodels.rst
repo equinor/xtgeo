@@ -1,6 +1,5 @@
-=================================
-XTGeo data models and i/o formats
-=================================
+Data model and formats
+======================
 
 Here is a description of the internal datamodels used for various datatypes in
 XTGeo, and the input/output formats that are supported in the current version.

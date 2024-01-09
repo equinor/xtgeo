@@ -1,15 +1,15 @@
 .. highlight:: python
 
-==============================
-Examples in standalone scripts
-==============================
+
+Examples
+========
 
 .. comments
    These examples are ran in Jupyter notebook...
 
 XTGeo is Python library to work with surfaces, grids, cubes, wells, etc,
-possibly in combinations. It is easy to make small user scripts that runs from
-the command line in Linux, Mac and Windows.
+possibly in combination. It is easy to make small user scripts that run from
+the command line in Linux, macOS, and Windows.
 
 ------------------
 Surface operations
@@ -72,13 +72,13 @@ of these properties can be changed, which actually changes the map
 Sample a surface from a 3D grid
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../examples/surface_slice_grid3d.py
+.. literalinclude:: ../../examples/surface_slice_grid3d.py
    :language: python
 
 Sample a surface or a window attribute from a cube
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../examples/surface_slice_cube.py
+.. literalinclude:: ../../examples/surface_slice_cube.py
    :language: python
 
 ---------------
@@ -230,14 +230,14 @@ The root mean scquare (rms) value over a surface, +- 10 units
 Crop a 3D grid with properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../examples/grid3d_crop.py
+.. literalinclude:: ../../examples/grid3d_crop.py
    :language: python
 
 
 Extract Pandas dataframe from 3D grid and props
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../examples/grid3d_get_df.py
+.. literalinclude:: ../../examples/grid3d_get_df.py
    :language: python
 
 
@@ -248,7 +248,7 @@ In this example, how to extract Mean ans Stddev from
 some geo properties, filtered on facies. An RMS inside
 version is also shown.
 
-.. literalinclude:: ../examples/grid3d_properties_qc.py
+.. literalinclude:: ../../examples/grid3d_properties_qc.py
    :language: python
 
 
@@ -258,7 +258,7 @@ Compute a grid property average across realisations
 In this example, a technique that keeps memory usage
 under control when computing averages is also presented.
 
-.. literalinclude:: ../examples/grid3d_compute_stats.py
+.. literalinclude:: ../../examples/grid3d_compute_stats.py
    :language: python
 
 Make a CSV file from Eclipse INIT data (aka ERT ECL)
@@ -268,5 +268,5 @@ Example on how to create a CSV file from all INIT
 properties. Example is for Eclipse format, but shall
 work also with ROFF input.
 
-.. literalinclude:: ../examples/grid3d_print_init_csv.py
+.. literalinclude:: ../../examples/grid3d_print_init_csv.py
    :language: python

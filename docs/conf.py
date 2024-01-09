@@ -12,11 +12,11 @@ copyright = "Equinor 2019 - " + str(current_year) + f" (XTGeo release {release})
 extensions = [
     "autoclasstoc",
     "myst_parser",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.autodoc",
     "sphinx_toolbox.more_autosummary",
     "sphinx_autodoc_typehints",
 ]
