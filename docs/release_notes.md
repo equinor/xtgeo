@@ -1,6 +1,12 @@
 # Release notes
 
-For version 2.21 and later, see https://github.com/equinor/xtgeo/releases !
+Go to the
+[XTGeo GitHub releases page](https://github.com/equinor/xtgeo/releases)
+to see new releases and their notes.
+
+This page contains releaes notes for XTGeo versions 2.21 and older and is kept
+for preservation reasons.
+
 
 ## Version 2.20
 
@@ -119,14 +125,14 @@ For version 2.21 and later, see https://github.com/equinor/xtgeo/releases !
     -   The names setter of `GridProperties` has been deprecated as its behavior
         was inconsistent.
 
-# New features
+### New features
 
 -   Grid can now be imported from FEGRID (text formatted EGRID) files. #602
 -   Introduced unit parameter to Grid #602
 -   Grid get_dx and get_dy introduced as replacement for get_dxdy. #624
 -   Added explicit close function to plots. #632
 
-## Bugfixes
+### Bugfixes
 
 -   Fixed conversion of grid mapaxes when grid is already relative to map. #602
 -   Fixed inconsistent gridproperty initialization #659

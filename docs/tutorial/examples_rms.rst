@@ -1,12 +1,11 @@
 .. highlight:: python
 
-==========================
-Examples on use inside RMS
-==========================
+Examples inside RMS
+===================
 
-.. _RMS: https://www.emerson.com/no-no/automation/operations-business-management/reservoir-management-software
+.. _RMS: https://www.aspentech.com/en/products/sse/aspen-rms
 
-RMS_ is a licensed proprietary modeling software developed by Emerson.
+RMS_ is a licensed proprietary modeling software developed by AspenTech.
 From version 10 it has its own python engine integrated, and XTGeo is designed
 to work inside this environment. The integration will be continuously improved.
 
