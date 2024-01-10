@@ -59,6 +59,7 @@ WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
 POLYDATA1 = TPATH / "polygons/reek/1/polset2.pol"
 POINTSDATA1 = TPATH / "points/reek/1/pointset3.poi"
 POINTSDATA2 = TPATH / "points/reek/1/poi_attr.rmsattr"
+POINTSCAT1 = "DP_whatever"
 POLYNAME1 = "Polys"
 POINTSNAME1 = "Points"
 POINTSNAME2 = "PointsAttrs"
@@ -225,6 +226,11 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
     poi = xtgeo.points_from_file(POINTSDATA1)
     poi.to_roxar(project, POINTSNAME1, "", stype="clipboard")
     logger.info("Initialised RMS project, done!")
+    # add some points into the horizon folder as well
+
+    # populate with surface data
+    roxinstance.create_horizons_category(POINTSCAT1, htype="points")
+    poi.to_roxar(project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
     poi = xtgeo.points_from_file(POINTSDATA2, fformat="rms_attr")
     poi.to_roxar(project, POINTSNAME2, "", stype="clipboard", attributes=True)
@@ -477,6 +483,51 @@ def test_rox_get_modify_set_points(roxar_project):
     poi.snap_surface(surf, activeonly=False)
     poi.to_roxar(roxar_project, "SNAPPED", "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1651.805261)
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_points_from_horizons(roxar_project):
+    """Get, modify and set a points from a RMS project."""
+    poi = xtgeo.points_from_roxar(
+        roxar_project, SURFNAMES1[0], POINTSCAT1, stype="horizons"
+    )
+    assert poi.get_dataframe().iloc[-1, 1] == pytest.approx(5.932977e06)
+    assert poi.get_dataframe().shape[0] == 20
+    assert poi.get_dataframe().shape[1] == 3
+    poi.to_roxar(roxar_project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+
+
+@pytest.mark.requires_roxar
+def test_check_presence_in_project_errors(roxar_project):
+    # test category not existing in project
+    with pytest.raises(ValueError) as exc_info:
+        name = "I_dont_exist"
+        xtgeo.points_from_roxar(roxar_project, name, POINTSCAT1, stype="horizons")
+    assert str(exc_info.value) == f"Cannot access {name=} in horizons"
+
+    # test category not given
+    with pytest.raises(ValueError) as exc_info:
+        xtgeo.points_from_roxar(
+            roxar_project, SURFNAMES1[0], category=None, stype="horizons"
+        )
+    assert (
+        str(exc_info.value) == "Need to specify category for horizons, zones and faults"
+    )
+
+    # test category not existing in project
+    with pytest.raises(ValueError) as exc_info:
+        category = "I_dont_exist"
+        xtgeo.points_from_roxar(
+            roxar_project, SURFNAMES1[0], category, stype="horizons"
+        )
+    assert str(exc_info.value) == f"Cannot access {category=} in horizons"
+
+    # test empty data in project
+    with pytest.raises(ValueError) as exc_info:
+        name = SURFNAMES1[1]
+        category = POINTSCAT1
+        xtgeo.points_from_roxar(roxar_project, name, category, stype="horizons")
+    assert str(exc_info.value) == f"'{name}' is empty for horizons {category=}"
 
 
 @pytest.mark.requires_roxar
