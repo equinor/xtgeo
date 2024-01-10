@@ -100,8 +100,10 @@ def _check_presence_in_project(
             raise ValueError(f"Cannot access {name=} in {stype}")
         if category is None:
             raise ValueError("Need to specify category for horizons, zones and faults")
-        if isinstance(category, list) or category not in project_attr:
+        if isinstance(category, list) or category not in project_attr.representations:
             raise ValueError(f"Cannot access {category=} in {stype}")
+        if mode == "get" and project_attr[name][category].is_empty():
+            raise ValueError(f"'{name}' is empty for {stype} {category=}")
 
     # only need to check presence in clipboard/general2d_data/well_picks if mode = get.
     if mode == "get":
