@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import io
 from copy import deepcopy
-from typing import TYPE_CHECKING, Generator, Literal
+from typing import Generator, Literal
 
 import resfo
 
 import xtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXKEYWORDS
+from xtgeo.io._file_wrapper import FileWrapper
 
 from . import _grid3d_utils as utils
 from ._find_gridprop_in_eclrun import (
@@ -23,15 +24,12 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = null_logger(__name__)
 
-if TYPE_CHECKING:
-    from xtgeo.common.sys import _XTGeoFile
 
-
-def read_eclrun_properties(xtg_file: _XTGeoFile) -> Generator[str, None, None]:
+def read_eclrun_properties(xtg_file: FileWrapper) -> Generator[str, None, None]:
     """Generates property names from Eclipse files.
 
     Args:
-        xtg_file: The _XTGeoFile representing an Eclipse INIT or restart file.
+        xtg_file: The FileWrapper representing an Eclipse INIT or restart file.
 
     Returns:
         Names of properties within the Eclipse file.
@@ -133,8 +131,8 @@ def import_ecl_init_gridproperties(
     Returns:
         List of GridProperty objects fetched from the init file.
     """
-    if not isinstance(pfile, xtgeo._XTGeoFile):
-        pfile = xtgeo._XTGeoFile(pfile)
+    if not isinstance(pfile, FileWrapper):
+        pfile = FileWrapper(pfile)
 
     if not grid:
         raise ValueError("Grid Geometry object is missing")

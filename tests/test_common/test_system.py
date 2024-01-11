@@ -7,17 +7,18 @@ from collections import ChainMap
 import pytest
 import xtgeo
 import xtgeo.common.sys as xsys
+from xtgeo.io._file_wrapper import FileWrapper
 
 xtg = xtgeo.XTGeoDialog()
 
 
 def test_xtgeo_file_memstream_string_fformat_unknown():
-    assert xtgeo._XTGeoFile(io.StringIO()).detect_fformat() == "unknown"
+    assert FileWrapper(io.StringIO()).detect_fformat() == "unknown"
 
 
 @pytest.mark.parametrize("length", [0, 4, 8, 24, 9])
 def test_xtgeo_file_memstream_bytes_fformat_unknown(length):
-    assert xtgeo._XTGeoFile(io.BytesIO(b"\00" * length)).detect_fformat() == "unknown"
+    assert FileWrapper(io.BytesIO(b"\00" * length)).detect_fformat() == "unknown"
 
 
 def test_generic_hash():
@@ -53,20 +54,20 @@ def test_resolve_alias(testpath, filename):
     surf = xtgeo.surface_from_file(testpath / filename)
     md5hash = surf.generate_hash("md5")
 
-    mname = xtgeo._XTGeoFile("whatever/$md5sum.gri", obj=surf)
+    mname = FileWrapper("whatever/$md5sum.gri", obj=surf)
     assert str(mname.file) == f"whatever/{md5hash}.gri"
 
-    mname = xtgeo._XTGeoFile(pathlib.Path("whatever/$md5sum.gri"), obj=surf)
+    mname = FileWrapper(pathlib.Path("whatever/$md5sum.gri"), obj=surf)
     assert str(mname.file) == f"whatever/{md5hash}.gri"
 
-    mname = xtgeo._XTGeoFile("whatever/$random.gri", obj=surf)
+    mname = FileWrapper("whatever/$random.gri", obj=surf)
     assert len(str(mname.file)) == 45
 
     # use $fmu.v1 schema
     surf.metadata.opt.shortname = "topValysar"
     surf.metadata.opt.description = "Depth surface"
 
-    mname = xtgeo._XTGeoFile(pathlib.Path("whatever/$fmu-v1.gri"), obj=surf)
+    mname = FileWrapper(pathlib.Path("whatever/$fmu-v1.gri"), obj=surf)
     assert str(mname.file) == "whatever/topvalysar--depth_surface.gri"
 
 
@@ -77,25 +78,25 @@ def fixture_reek_grid_path(testpath):
 
 @pytest.mark.parametrize("filename", ["REEK.EGRID", "."])
 def test_file_does_exist(reek_grid_path, filename):
-    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
+    xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.exists() is True
 
 
 @pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
 def test_file_does_not_exist(reek_grid_path, filename):
-    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
+    xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.exists() is False
 
 
 @pytest.mark.parametrize("filename", ["REEK.EGRID", "REEK.INIT"])
 def test_check_file_is_ok(reek_grid_path, filename):
-    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
+    xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.check_file() is True
 
 
 @pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
 def test_check_file(reek_grid_path, filename):
-    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
+    xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.check_file() is False
 
     with pytest.raises(OSError):
@@ -115,7 +116,7 @@ def test_check_file(reek_grid_path, filename):
     ],
 )
 def test_file_splitext(filename, stem, extension, obj):
-    xtgeo_file = xtgeo._XTGeoFile(filename, obj=obj)
+    xtgeo_file = FileWrapper(filename, obj=obj)
     assert (stem, extension) == xtgeo_file.splitext(lower=False)
 
 
@@ -133,40 +134,40 @@ files_formats = ChainMap(
 
 
 def test_xtgeo_file_reinstance(tmp_path):
-    gfile = xtgeo._XTGeoFile(tmp_path / "test.txt")
+    gfile = FileWrapper(tmp_path / "test.txt")
 
     with pytest.raises(RuntimeError, match="Cannot instantiate"):
-        xtgeo._XTGeoFile(gfile)
+        FileWrapper(gfile)
 
 
 def test_xtgeo_file_bad_input():
     with pytest.raises(RuntimeError, match="Cannot instantiate"):
-        xtgeo._XTGeoFile(1.0)
+        FileWrapper(1.0)
 
 
 def test_xtgeo_file_resolve_alias_on_stream_doesnt_modify_or_raise():
     stream = io.BytesIO()
-    xtg_file = xtgeo._XTGeoFile(stream)
+    xtg_file = FileWrapper(stream)
     xtg_file.resolve_alias(xtgeo.create_box_grid((1, 1, 1)))
     assert stream == xtg_file.file
 
 
 def test_xtgeo_file_bad_alias(tmp_path):
     with pytest.raises(ValueError, match="not a valid alias"):
-        xtgeo._XTGeoFile(tmp_path / "$NO_ALIAS").resolve_alias(
+        FileWrapper(tmp_path / "$NO_ALIAS").resolve_alias(
             xtgeo.create_box_grid((1, 1, 1))
         )
 
 
 def test_xtgeo_file_memstream_check_ok():
-    assert xtgeo._XTGeoFile(io.StringIO()).check_file()
+    assert FileWrapper(io.StringIO()).check_file()
 
 
 @pytest.mark.parametrize("filename", files_formats.keys())
 def test_xtgeo_file_properties(testpath, filename):
-    gfile = xtgeo._XTGeoFile(testpath / filename)
+    gfile = FileWrapper(testpath / filename)
 
-    assert isinstance(gfile, xtgeo._XTGeoFile)
+    assert isinstance(gfile, FileWrapper)
     assert isinstance(gfile._file, pathlib.Path)
 
     assert gfile.memstream is False
@@ -180,7 +181,7 @@ def test_xtgeo_file_properties(testpath, filename):
 
 @pytest.mark.parametrize("filename", files_formats.keys())
 def test_file_c_handle(testpath, filename):
-    any_xtgeo_file = xtgeo._XTGeoFile(testpath / filename)
+    any_xtgeo_file = FileWrapper(testpath / filename)
 
     handle_count = any_xtgeo_file._cfhandlecount
 
@@ -206,7 +207,7 @@ def test_surface_file_roundtrip_stream(testpath, filename):
     stream = io.BytesIO()
     surf = xtgeo.surface_from_file(testpath / filename)
     surf.to_file(stream)
-    stream_file = xtgeo._XTGeoFile(stream)
+    stream_file = FileWrapper(stream)
 
     assert stream_file.memstream is True
     assert stream_file.detect_fformat() == "irap_binary"
@@ -214,7 +215,7 @@ def test_surface_file_roundtrip_stream(testpath, filename):
 
 @pytest.mark.parametrize("filename, expected_format", files_formats.items())
 def test_detect_fformat(testpath, filename, expected_format):
-    xtgeo_file = xtgeo._XTGeoFile(testpath / filename)
+    xtgeo_file = FileWrapper(testpath / filename)
     assert xtgeo_file.detect_fformat() == expected_format
 
 
@@ -223,7 +224,7 @@ def test_detect_fformat_hdf_stream(testpath, filename):
     stream = io.BytesIO()
     surf = xtgeo.surface_from_file(testpath / filename)
     surf.to_hdf(stream)
-    sfile = xtgeo._XTGeoFile(stream)
+    sfile = FileWrapper(stream)
     assert sfile.memstream is True
     assert sfile.detect_fformat() == "hdf"
 
@@ -233,7 +234,7 @@ def test_detect_fformat_hdf_to_file(tmp_path, testpath, filename):
     newfile = tmp_path / "hdf_surf.hdf"
     surf = xtgeo.surface_from_file(testpath / filename)
     surf.to_hdf(newfile)
-    gfile = xtgeo._XTGeoFile(newfile)
+    gfile = FileWrapper(newfile)
     assert gfile.detect_fformat() == "hdf"
     assert gfile.detect_fformat(details=True) == "hdf RegularSurface xtgeo"
 
@@ -243,5 +244,5 @@ def test_detect_fformat_hdf_to_file(tmp_path, testpath, filename):
     list(files_formats.items()) + [(pathlib.Path("README.md"), "unknown")],
 )
 def test_detect_fformat_suffix_only(testpath, filename, expected_format):
-    xtgeo_file = xtgeo._XTGeoFile(testpath / filename)
+    xtgeo_file = FileWrapper(testpath / filename)
     assert xtgeo_file.detect_fformat(suffixonly=True) == expected_format

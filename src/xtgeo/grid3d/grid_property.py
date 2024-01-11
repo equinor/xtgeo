@@ -15,9 +15,9 @@ import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
-from xtgeo.common.sys import _XTGeoFile
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
+from xtgeo.io._file_wrapper import FileWrapper
 from xtgeo.metadata.metadata import MetaDataCPProperty
 
 from . import (
@@ -225,7 +225,7 @@ def _allow_deprecated_init(func: Callable) -> Callable:
         # from file and raise a deprecation warning if
         # we are.
         if "pfile" in kwargs or (
-            len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, _XTGeoFile))
+            len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, FileWrapper))
         ):
             pfile = kwargs.get("pfile", args[0])
             warnings.warn(
@@ -235,7 +235,7 @@ def _allow_deprecated_init(func: Callable) -> Callable:
                 DeprecationWarning,
             )
             fformat = kwargs.get("fformat", None)
-            mfile = _XTGeoFile(pfile)
+            mfile = FileWrapper(pfile)
             if fformat is None or fformat == "guess":
                 fformat = mfile.detect_fformat()
             else:
@@ -245,7 +245,7 @@ def _allow_deprecated_init(func: Callable) -> Callable:
                 del kwargs["pfile"]
             if "fformat" in kwargs:
                 del kwargs["fformat"]
-            if len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, _XTGeoFile)):
+            if len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, FileWrapper)):
                 args = args[min(len(args), 2) :]
 
             kwargs = _data_reader_factory(fformat)(mfile, *args, **kwargs)
@@ -991,7 +991,7 @@ class GridProperty(_Grid3D):
         .. versionchanged:: 2.8 Added gridlink option, default is True
 
         """
-        xtg_file = _XTGeoFile(pfile)
+        xtg_file = FileWrapper(pfile)
         if fformat is None or fformat == "guess":
             _fformat = xtg_file.detect_fformat()
         else:
@@ -1008,7 +1008,7 @@ class GridProperty(_Grid3D):
         fformat: str | None = None,
         **kwargs: Any,
     ) -> GridProperty:
-        xtg_file = _XTGeoFile(pfile)
+        xtg_file = FileWrapper(pfile)
         if fformat is None or fformat == "guess":
             _fformat = xtg_file.detect_fformat()
         else:

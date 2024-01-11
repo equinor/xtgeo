@@ -55,6 +55,7 @@ import xtgeo.common.sys as xtgeosys
 from xtgeo.common import null_logger
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 from xtgeo.common.version import __version__
+from xtgeo.io._file_wrapper import FileWrapper
 
 from . import (
     _regsurf_boundary,
@@ -262,7 +263,7 @@ def _allow_deprecated_init(func):
                 load_values = False
             else:
                 load_values = True
-            mfile = xtgeosys._XTGeoFile(sfile)
+            mfile = xtgeosys.FileWrapper(sfile)
             if fformat is None or fformat == "guess":
                 fformat = mfile.detect_fformat()
             else:
@@ -449,15 +450,15 @@ class RegularSurface:
 
     @classmethod
     def _read_zmap_ascii(cls, mfile, values):
-        mfile = xtgeosys._XTGeoFile(mfile)
+        mfile = xtgeosys.FileWrapper(mfile)
         args = _data_reader_factory("zmap_ascii")(mfile, values=values)
         return cls(**args)
 
     @classmethod
     def _read_ijxyz(
-        cls, mfile: xtgeo._XTGeoFile, template: xtgeo.RegularSurface | xtgeo.Cube | None
+        cls, mfile: FileWrapper, template: xtgeo.RegularSurface | xtgeo.Cube | None
     ):
-        mfile = xtgeosys._XTGeoFile(mfile)
+        mfile = xtgeosys.FileWrapper(mfile)
         args = _data_reader_factory("ijxyz")(mfile, template=template)
         return cls(**args)
 
@@ -968,7 +969,7 @@ class RegularSurface:
         """
         logger.info("Import RegularSurface from file or memstream...")
 
-        mfile = xtgeosys._XTGeoFile(mfile)
+        mfile = xtgeosys.FileWrapper(mfile)
 
         if fformat is None or fformat == "guess":
             fformat = mfile.detect_fformat()
@@ -1046,7 +1047,7 @@ class RegularSurface:
         .. versionadded:: 2.14
 
         """
-        mfile = xtgeosys._XTGeoFile(mfile)
+        mfile = xtgeosys.FileWrapper(mfile)
         mfile.check_file(raiseerror=ValueError)
         if fformat is None or fformat == "guess":
             fformat = mfile.detect_fformat()
@@ -1084,7 +1085,7 @@ class RegularSurface:
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-                mfile = xtgeosys._XTGeoFile(self.filesrc)
+                mfile = xtgeosys.FileWrapper(self.filesrc)
                 kwargs = _data_reader_factory(self._fformat)(mfile, values=True)
                 self.values = kwargs.get("values", self._values)
 
@@ -1146,7 +1147,7 @@ class RegularSurface:
         .. versionchanged:: 2.14 Support for alias file name and return value
         """
         logger.info("Export RegularSurface to file or memstream...")
-        mfile = xtgeosys._XTGeoFile(mfile, mode="wb", obj=self)
+        mfile = xtgeosys.FileWrapper(mfile, mode="wb", obj=self)
 
         if not mfile.memstream:
             mfile.check_folder(raiseerror=OSError)
@@ -1219,7 +1220,7 @@ class RegularSurface:
         .. versionadded:: 2.14
         """
         # developing, in prep and experimental!
-        mfile = xtgeosys._XTGeoFile(mfile, mode="rb", obj=self)
+        mfile = xtgeosys.FileWrapper(mfile, mode="rb", obj=self)
 
         kwargs = _regsurf_import.import_hdf5_regsurf(mfile, values=values)
 
@@ -1258,7 +1259,7 @@ class RegularSurface:
 
         """
         # developing, in prep and experimental!
-        mfile = xtgeosys._XTGeoFile(mfile, mode="wb", obj=self)
+        mfile = xtgeosys.FileWrapper(mfile, mode="wb", obj=self)
 
         if not mfile.memstream:
             mfile.check_folder(raiseerror=OSError)

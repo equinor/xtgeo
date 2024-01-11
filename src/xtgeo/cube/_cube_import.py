@@ -43,12 +43,13 @@ import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.io._file_wrapper import FileWrapper
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-def import_segy(sfile: xtgeo._XTGeoFile) -> dict:
+def import_segy(sfile: FileWrapper) -> dict:
     """Import SEGY via the SegyIO library.
 
     Args:
@@ -474,7 +475,7 @@ def _scan_segy_trace(sfile, outfile):
 
 
 def import_stormcube(
-    sfile: xtgeo._XTGeoFile,
+    sfile: FileWrapper,
 ) -> dict:
     """Import on StormCube format."""
     # The ASCII header has all the metadata on the form:

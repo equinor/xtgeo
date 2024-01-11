@@ -1,5 +1,5 @@
-# flake8: noqa
+# ruff: noqa: F401
 """XTGeo surface package"""
 
-
-from xtgeo.surface.regular_surface import RegularSurface
+from .regular_surface import RegularSurface
+from .surfaces import Surfaces

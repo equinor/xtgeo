@@ -9,18 +9,18 @@ import xtgeo
 from xtgeo.common import null_logger
 
 if TYPE_CHECKING:
-    from xtgeo.common.sys import _XTGeoFile
+    from xtgeo.io._file_wrapper import FileWrapper
 
     from .grid_property import GridProperty
 
 logger = null_logger(__name__)
 
 
-def read_roff_properties(xtg_file: _XTGeoFile) -> Generator[str, None, None]:
+def read_roff_properties(xtg_file: FileWrapper) -> Generator[str, None, None]:
     """Generates parameter names from roff files.
 
     Args:
-        xtg_file: The _XTGeoFile representing a roff file.
+        xtg_file: The FileWrapper representing a roff file.
 
     Returns:
         Names of parameters within the roff file.
@@ -40,7 +40,7 @@ def read_roff_properties(xtg_file: _XTGeoFile) -> Generator[str, None, None]:
 
 
 def import_roff_gridproperties(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     names: list[str] | Literal["all"] = "all",
     strict: bool = True,
 ) -> list[GridProperty]:

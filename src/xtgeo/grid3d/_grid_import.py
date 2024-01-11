@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 from xtgeo.common import null_logger
-from xtgeo.common.sys import _XTGeoFile
 from xtgeo.grid3d import _grid_import_ecl, _grid_import_roff
+from xtgeo.io._file_wrapper import FileWrapper
 
 from . import _grid_import_xtgcpgeom
 
@@ -14,7 +14,7 @@ logger = null_logger(__name__)
 
 
 def from_file(
-    gfile: _XTGeoFile,
+    gfile: FileWrapper,
     fformat: Literal[
         "bgrdecl",
         "egrid",
@@ -34,8 +34,8 @@ def from_file(
     Returns:
     dictionary of keyword arguments to be used in Grid constructor.
     """
-    if not isinstance(gfile, _XTGeoFile):
-        raise RuntimeError("Error gfile must be a _XTGeoFile instance")
+    if not isinstance(gfile, FileWrapper):
+        raise RuntimeError("Error gfile must be a FileWrapper instance")
 
     result: dict[str, Any] = {}
 

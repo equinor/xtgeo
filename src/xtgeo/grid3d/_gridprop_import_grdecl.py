@@ -15,13 +15,13 @@ from ._grdecl_format import match_keyword, open_grdecl
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
-    from xtgeo.common import _XTGeoFile
     from xtgeo.common.types import FileLike
+    from xtgeo.io._file_wrapper import FileWrapper
 
     from .grid import Grid
 
 
-def import_bgrdecl_prop(pfile: _XTGeoFile, name: str, grid: Grid) -> dict[str, Any]:
+def import_bgrdecl_prop(pfile: FileWrapper, name: str, grid: Grid) -> dict[str, Any]:
     """Import prop for binary files with GRDECL layout.
 
     Args:
@@ -101,7 +101,7 @@ def read_grdecl_3d_property(
     return np.ascontiguousarray(f_order_values.reshape(dimensions, order="F"))
 
 
-def import_grdecl_prop(pfile: _XTGeoFile, name: str, grid: Grid) -> dict[str, Any]:
+def import_grdecl_prop(pfile: FileWrapper, name: str, grid: Grid) -> dict[str, Any]:
     """Import prop for ascii files with GRDECL layout.
 
     Args:

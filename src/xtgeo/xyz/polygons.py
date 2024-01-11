@@ -20,6 +20,7 @@ import shapely.geometry as sg
 import xtgeo
 from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.common.version import __version__
+from xtgeo.io._file_wrapper import FileWrapper
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _polygons_oper, _xyz_oper
@@ -42,7 +43,7 @@ def _file_importer(
     fformat: str | None = None,
 ):
     """General function for polygons_from_file and (deprecated) method from_file."""
-    pfile = xtgeo._XTGeoFile(pfile)
+    pfile = FileWrapper(pfile)
     if fformat is None or fformat == "guess":
         fformat = pfile.detect_fformat()
     else:

@@ -4,10 +4,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Literal
 
 from xtgeo.common import null_logger
-from xtgeo.common.sys import _XTGeoFile
 from xtgeo.grid3d._egrid import EGrid, RockModel
 from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
 from xtgeo.grid3d.grid_properties import GridProperties, gridproperties_from_file
+from xtgeo.io._file_wrapper import FileWrapper
 
 logger = null_logger(__name__)
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def import_ecl_egrid(
-    gfile: _XTGeoFile,
+    gfile: FileWrapper,
     relative_to: GridRelative = GridRelative.MAP,
     fileformat: Literal["egrid", "fegrid"] = "egrid",
 ) -> dict[str, Any]:
@@ -43,8 +43,8 @@ def import_ecl_run(
 ) -> None:
     """Import Eclipse run suite: EGrid and properties from INIT and UNRST.
     For the INIT and UNRST files, property dates shall be selected."""
-    ecl_init = _XTGeoFile(f"{groot}.INIT")
-    ecl_rsta = _XTGeoFile(f"{groot}.UNRST")
+    ecl_init = FileWrapper(f"{groot}.INIT")
+    ecl_rsta = FileWrapper(f"{groot}.UNRST")
     grdprops = GridProperties()
 
     # import the init properties unless list is empty
@@ -70,7 +70,7 @@ def import_ecl_run(
 
 
 def import_ecl_grdecl(
-    gfile: _XTGeoFile, relative_to: GridRelative = GridRelative.MAP
+    gfile: FileWrapper, relative_to: GridRelative = GridRelative.MAP
 ) -> dict[str, Any]:
     """Import grdecl format."""
     grdecl_grid = GrdeclGrid.from_file(gfile.file, fileformat="grdecl")
@@ -78,7 +78,7 @@ def import_ecl_grdecl(
 
 
 def import_ecl_bgrdecl(
-    gfile: _XTGeoFile, relative_to: GridRelative = GridRelative.MAP
+    gfile: FileWrapper, relative_to: GridRelative = GridRelative.MAP
 ) -> dict[str, Any]:
     """Import binary files with GRDECL layout."""
     grdecl_grid = GrdeclGrid.from_file(gfile.file, fileformat="bgrdecl")

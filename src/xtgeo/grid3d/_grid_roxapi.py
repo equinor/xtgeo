@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
-from xtgeo import _cxtgeo  # type: ignore[attr-defined]
+from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.roxutils.roxutils import RoxUtils

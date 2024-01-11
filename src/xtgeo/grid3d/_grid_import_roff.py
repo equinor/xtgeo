@@ -15,8 +15,8 @@ from ._roff_grid import RoffGrid
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from xtgeo.common.sys import _XTGeoFile
     from xtgeo.common.types import FileLike
+    from xtgeo.io._file_wrapper import FileWrapper
 
 
 logger = null_logger(__name__)
@@ -123,7 +123,7 @@ def handle_deprecated_xtgeo_roff_file(
         yield filelike
 
 
-def import_roff(gfile: _XTGeoFile) -> dict[str, NDArray | dict[str, range] | None]:
+def import_roff(gfile: FileWrapper) -> dict[str, NDArray | dict[str, range] | None]:
     with handle_deprecated_xtgeo_roff_file(gfile._file) as converted_file:
         roff_grid = RoffGrid.from_file(converted_file)
     return {

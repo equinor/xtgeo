@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from xtgeo import _cxtgeo  # type: ignore[attr-defined]
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_INT
 

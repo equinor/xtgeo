@@ -11,7 +11,7 @@ import pandas as pd
 from packaging.version import parse as versionparse
 
 import xtgeo._internal
-from xtgeo import _cxtgeo  # type: ignore[attr-defined]
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
 from xtgeo.common.constants import UNDEF_INT, UNDEF_LIMIT

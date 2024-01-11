@@ -2,9 +2,10 @@ import sys
 from pathlib import Path
 
 import pytest
-from xtgeo.common import XTGeoDialog, _XTGeoFile
+from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import list_gridproperties
 from xtgeo.grid3d._gridprops_import_roff import read_roff_properties
+from xtgeo.io._file_wrapper import FileWrapper
 
 xtg = XTGeoDialog()
 
@@ -45,7 +46,7 @@ def test_raise_on_invalid_filetype(tmp_path, test_file):
     ],
 )
 def test_read_roff_properties(test_file, expected):
-    xtg_file = _XTGeoFile(test_file)
+    xtg_file = FileWrapper(test_file)
     assert list(read_roff_properties(xtg_file)) == expected
 
 

@@ -12,14 +12,14 @@ from xtgeo.common import null_logger
 from ._roff_parameter import RoffParameter
 
 if TYPE_CHECKING:
-    from xtgeo.common import _XTGeoFile
     from xtgeo.grid3d import Grid
+    from xtgeo.io._file_wrapper import FileWrapper
 
 logger = null_logger(__name__)
 
 
 def import_roff(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     name: str | None = None,
     grid: Grid | None = None,
 ) -> dict[str, Any]:

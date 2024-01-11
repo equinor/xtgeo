@@ -6,6 +6,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common import null_logger
+from xtgeo.io._file_wrapper import FileWrapper
 
 logger = null_logger(__name__)
 
@@ -211,7 +212,7 @@ def to_file(
     if filter_deprecated is not None and pfilter is None:
         pfilter = filter_deprecated
 
-    pfile = xtgeo._XTGeoFile(pfile)
+    pfile = FileWrapper(pfile)
     pfile.check_folder(raiseerror=OSError)
 
     ncount = 0
