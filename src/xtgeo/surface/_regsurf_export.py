@@ -15,7 +15,7 @@ from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 
 if TYPE_CHECKING:
-    from xtgeo.common.sys import _XTGeoFile
+    from xtgeo.io._file_wrapper import FileWrapper
     from xtgeo.surface.regular_surface import RegularSurface
 
 logger = null_logger(__name__)
@@ -184,7 +184,7 @@ def _export_irap_binary_cxtgeo(self, mfile):
     """Export to Irap binary using C backend.
 
     Args:
-        mfile (_XTGeoFile): xtgeo file instance
+        mfile (FileWrapper): xtgeo file instance
 
     Raises:
         RuntimeError: Export to Irap Binary went wrong...
@@ -210,7 +210,7 @@ def _export_irap_binary_cxtgeo(self, mfile):
     mfile.cfclose()
 
 
-def export_ijxyz_ascii(self: RegularSurface, mfile: _XTGeoFile) -> None:
+def export_ijxyz_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
     # cxtgeo is default since twice as fas as python, but use python if memstreams
     if mfile.memstream:
         _export_ijxyz_ascii_python(self, mfile)
@@ -218,7 +218,7 @@ def export_ijxyz_ascii(self: RegularSurface, mfile: _XTGeoFile) -> None:
         _export_ijxyz_ascii_cxtgeo(self, mfile)
 
 
-def _export_ijxyz_ascii_python(self: RegularSurface, mfile: _XTGeoFile) -> None:
+def _export_ijxyz_ascii_python(self: RegularSurface, mfile: FileWrapper) -> None:
     """Export to DSG IJXYZ ascii format, using python."""
     # the python version is ~twice as slow as the cxtgeo version
 
@@ -241,7 +241,7 @@ def _export_ijxyz_ascii_python(self: RegularSurface, mfile: _XTGeoFile) -> None:
         dfr.to_csv(mfile.name, sep="\t", float_format=fmt, index=False, header=False)
 
 
-def _export_ijxyz_ascii_cxtgeo(self: RegularSurface, mfile: _XTGeoFile) -> None:
+def _export_ijxyz_ascii_cxtgeo(self: RegularSurface, mfile: FileWrapper) -> None:
     """Export to DSG IJXYZ ascii format, using cxtgeo.
 
     Keep this for while since it was the original solution, and faster,

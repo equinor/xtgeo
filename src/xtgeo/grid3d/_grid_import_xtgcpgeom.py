@@ -16,7 +16,7 @@ from xtgeo.grid3d._gridprop_import_xtgcpprop import _read_filelike
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
-    from xtgeo.common.sys import _XTGeoFile
+    from xtgeo.io._file_wrapper import FileWrapper
 
 LMIN: TypeAlias = Literal["min"]
 LMAX: TypeAlias = Literal["max"]
@@ -120,7 +120,7 @@ def handle_metadata(
 
 
 def import_xtgcpgeom(
-    mfile: _XTGeoFile,
+    mfile: FileWrapper,
     mmap: bool = False,
 ) -> _RESULT:
     """Using pure python for experimental grid geometry import."""
@@ -191,7 +191,7 @@ def import_xtgcpgeom(
 
 
 def import_hdf5_cpgeom(
-    mfile: _XTGeoFile,
+    mfile: FileWrapper,
     ijkrange: IJKRANGE | None = None,
     zerobased: bool = False,
 ) -> _RESULT:

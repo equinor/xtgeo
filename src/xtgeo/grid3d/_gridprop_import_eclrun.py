@@ -10,7 +10,7 @@ from ._find_gridprop_in_eclrun import (
 )
 
 if TYPE_CHECKING:
-    from xtgeo.common import _XTGeoFile
+    from xtgeo.io._file_wrapper import FileWrapper
 
     from .grid import Grid
 
@@ -36,7 +36,7 @@ def decorate_name(
 
 
 def import_gridprop_from_init(
-    pfile: _XTGeoFile, name: str, grid: Grid, fracture: bool = False
+    pfile: FileWrapper, name: str, grid: Grid, fracture: bool = False
 ) -> dict[str, Any]:
     """Import one parameter with the given name from an init file.
 
@@ -120,7 +120,7 @@ def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> resfo.Format:
 
 
 def import_gridprop_from_restart(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     name: str,
     grid: Grid,
     date: int | str | Literal["first", "last"],

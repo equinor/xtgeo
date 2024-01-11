@@ -13,11 +13,12 @@ import deprecation
 import numpy as np
 
 import xtgeo
-import xtgeo.common.sys as xtgeosys
 from xtgeo.common import XTGDescription, null_logger
+from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
+from xtgeo.io._file_wrapper import FileWrapper
 
 logger = null_logger(__name__)
 
@@ -86,7 +87,7 @@ def _allow_deprecated_init(func):
             )
             cfile = args[0]
             fformat = args[1] if len(args) > 1 else kwargs.get("fformat", None)
-            mfile = xtgeosys._XTGeoFile(cfile)
+            mfile = FileWrapper(cfile)
             if fformat is None or fformat == "guess":
                 fformat = mfile.detect_fformat(suffixonly=True)
             else:
@@ -513,7 +514,7 @@ class Cube:
         for req in required:
             gid += f"{getattr(self, '_' + req)}"
 
-        return xtgeosys.generic_hash(gid, hashmethod=hashmethod)
+        return generic_hash(gid, hashmethod=hashmethod)
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout or return.
@@ -846,7 +847,7 @@ class Cube:
     )
     def from_file(self, sfile, fformat="guess", engine=None):
         """Deprecated, see :func:`cube_from_file`."""
-        mfile = xtgeosys._XTGeoFile(sfile)
+        mfile = FileWrapper(sfile)
         if fformat is None or fformat == "guess":
             fformat = mfile.detect_fformat(suffixonly=True)
         else:
@@ -887,7 +888,7 @@ class Cube:
 
 
         """
-        mfile = xtgeosys._XTGeoFile(sfile)
+        mfile = FileWrapper(sfile)
         if fformat is None or fformat == "guess":
             fformat = mfile.detect_fformat(suffixonly=True)
         else:
@@ -911,7 +912,7 @@ class Cube:
             >>> zz = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
             >>> zz.to_file(outdir + '/some.rmsreg')
         """
-        fobj = xtgeosys._XTGeoFile(sfile, mode="wb")
+        fobj = FileWrapper(sfile, mode="wb")
 
         fobj.check_folder(raiseerror=OSError)
 

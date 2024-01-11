@@ -11,9 +11,10 @@ import numpy as np
 import pandas as pd
 
 from xtgeo import ROXAR  # type: ignore
-from xtgeo.common import _XTGeoFile, null_logger
+from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.io._file_wrapper import FileWrapper
 from xtgeo.roxutils import RoxUtils
 from xtgeo.xyz import _xyz_io, points, polygons
 
@@ -211,7 +212,7 @@ def _roxapi_import_xyz_viafile(
             logger.info("Made a tmp folder: %s", tmpdir)
             tfile = os.path.join(tmpdir, "generic.rmsattr")
             rox_xyz.save(tfile, roxar.FileFormat.RMS_POINTS)
-            pfile = _XTGeoFile(tfile)
+            pfile = FileWrapper(tfile)
             kwargs = _xyz_io.import_rms_attr(pfile)
 
     except KeyError as kwe:

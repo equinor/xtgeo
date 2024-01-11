@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import xtgeo
 from xtgeo import _cxtgeo
+from xtgeo.io._file_wrapper import FileWrapper
 
 
 @pytest.fixture()
@@ -129,7 +130,7 @@ def test_surf_export_petromod_exception_no_file():
 
 
 def test_surf_export_petromod_exception():
-    gfile = xtgeo._XTGeoFile(io.BytesIO(b"\x00"))
+    gfile = FileWrapper(io.BytesIO(b"\x00"))
     with pytest.raises(
         xtgeo.XTGeoCLibError,
         match="Error writing to Storm format. Bug in: surf_export_petromod_bi",
@@ -143,7 +144,7 @@ def test_surf_export_petromod_exception():
 
 # @pytest.mark.xfail(reason="Quite hard to make test case")
 # def test_grd3d_ecl_tsteps():
-#     gfile = xtgeo._XTGeoFile(io.BytesIO(b"\x00"))
+#     gfile = FileWrapper(io.BytesIO(b"\x00"))
 #     seq = _cxtgeo.new_intarray(10)
 #     day = _cxtgeo.new_intarray(10)
 #     mon = _cxtgeo.new_intarray(10)
@@ -172,7 +173,7 @@ def test_surf_export_petromod_exception():
     ],
 )
 def test_surf_import_petromod_bin(bytestring, mx, expected_msg):
-    gfile = xtgeo._XTGeoFile(io.BytesIO((bytestring)))
+    gfile = FileWrapper(io.BytesIO((bytestring)))
     with pytest.raises(xtgeo.XTGeoCLibError, match=expected_msg):
         _cxtgeo.surf_import_petromod_bin(gfile.get_cfhandle(), 1, 0.0, mx, 2, 4)
 

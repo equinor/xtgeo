@@ -15,6 +15,7 @@ import pandas as pd
 import xtgeo
 from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.common.version import __version__
+from xtgeo.io._file_wrapper import FileWrapper
 from xtgeo.xyz import XYZ, _xyz_io, _xyz_oper, _xyz_roxapi
 
 logger = null_logger(__name__)
@@ -35,7 +36,7 @@ def _file_importer(
     fformat: str | None = None,
 ):
     """General function for points_from_file and (deprecated) method from_file."""
-    xtgeo_file = xtgeo._XTGeoFile(pfile)
+    xtgeo_file = FileWrapper(pfile)
     if fformat is None or fformat == "guess":
         fformat = xtgeo_file.detect_fformat()
     else:

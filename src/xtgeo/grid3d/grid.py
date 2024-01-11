@@ -13,10 +13,11 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-from xtgeo.common import XTGDescription, _XTGeoFile, null_logger
+from xtgeo.common import XTGDescription, null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
+from xtgeo.io._file_wrapper import FileWrapper
 
 from . import (
     _grid3d_fence,
@@ -65,7 +66,7 @@ if TYPE_CHECKING:
 # METHODS as wrappers to class init + import
 def _handle_import(
     grid_constructor: Callable[..., Grid],
-    gfile: FileLike | _XTGeoFile,
+    gfile: FileLike | FileWrapper,
     fformat: str | None = None,
     **kwargs: dict,
 ) -> Grid:
@@ -80,11 +81,11 @@ def _handle_import(
     resulting arguments.
 
     """
-    gfile = xtgeo._XTGeoFile(gfile, mode="rb")
+    gfile = FileWrapper(gfile, mode="rb")
     if fformat == "eclipserun":
         ecl_grid = grid_constructor(
             **_grid_import.from_file(
-                xtgeo._XTGeoFile(gfile.name + ".EGRID", mode="rb"), fformat="egrid"
+                FileWrapper(gfile.name + ".EGRID", mode="rb"), fformat="egrid"
             )
         )
         _grid_import_ecl.import_ecl_run(gfile.name, ecl_grid=ecl_grid, **kwargs)
@@ -295,7 +296,7 @@ def _allow_deprecated_init(func: Callable) -> Callable:
         # from file and raise a deprecation warning if
         # we are.
         if "gfile" in kwargs or (
-            len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, _XTGeoFile))
+            len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, FileWrapper))
         ):
             warnings.warn(
                 "Initializing directly from file name is deprecated and will be "
@@ -837,7 +838,7 @@ class Grid(_Grid3D):
             >>> grid = create_box_grid((2,2,2))
             >>> grid.to_file(outdir + "/myfile.roff")
         """
-        _gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+        _gfile = FileWrapper(gfile, mode="wb")
 
         if not _gfile.memstream:
             _gfile.check_folder(raiseerror=OSError)
@@ -896,7 +897,7 @@ class Grid(_Grid3D):
             >>> grid = create_box_grid((2,2,2))
             >>> filename = grid.to_hdf(outdir + "/myfile_grid.h5")
         """
-        _gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+        _gfile = FileWrapper(gfile, mode="wb", obj=self)
         _gfile.check_folder(raiseerror=OSError)
 
         _grid_export.export_hdf5_cpgeom(
@@ -928,7 +929,7 @@ class Grid(_Grid3D):
             >>> grid = create_box_grid((2,2,2))
             >>> filename = grid.to_xtgf(outdir + "/myfile.xtg")
         """
-        _gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+        _gfile = FileWrapper(gfile, mode="wb", obj=self)
         _gfile.check_folder(raiseerror=OSError)
 
         _grid_export.export_xtgcpgeom(self, _gfile, subformat=subformat)
@@ -1060,7 +1061,7 @@ class Grid(_Grid3D):
             >>> filename = xg.to_hdf(outdir + "/myfile_grid.h5")
             >>> xg.from_hdf(filename, ijkrange=(1, 10, 10, 15, 1, 4))
         """
-        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+        gfile = FileWrapper(gfile, mode="wb", obj=self)
 
         kwargs = _grid_import_xtgcpgeom.import_hdf5_cpgeom(
             gfile, ijkrange=ijkrange, zerobased=zerobased
@@ -1086,7 +1087,7 @@ class Grid(_Grid3D):
             >>> filename = xg.to_xtgf(outdir + "/myfile_grid.xtg")
             >>> xg.from_xtgf(filename)
         """
-        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+        gfile = FileWrapper(gfile, mode="wb", obj=self)
 
         kwargs = _grid_import_xtgcpgeom.import_xtgcpgeom(gfile, mmap)
         self._reset(**kwargs)

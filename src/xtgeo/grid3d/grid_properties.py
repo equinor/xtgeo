@@ -10,10 +10,10 @@ import deprecation
 import numpy as np
 import pandas as pd
 
-import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 from xtgeo.common.version import __version__
+from xtgeo.io._file_wrapper import FileWrapper
 
 from . import _grid3d_utils as utils, _grid_etc1
 from ._grid3d import _Grid3D
@@ -63,7 +63,7 @@ def list_gridproperties(
         ...     fformat="roff",
         ... )
     """
-    xtg_file = xtgeo._XTGeoFile(property_file, mode="rb")
+    xtg_file = FileWrapper(property_file, mode="rb")
     xtg_file.check_file(raiseerror=ValueError)
 
     _fformat = (
@@ -118,7 +118,7 @@ def gridproperties_from_file(
         ...     grid=grd,
         ... )
     """
-    xtg_file = xtgeo._XTGeoFile(pfile, mode="rb")
+    xtg_file = FileWrapper(pfile, mode="rb")
     xtg_file.check_file(raiseerror=ValueError)
 
     _fformat = (
@@ -864,7 +864,7 @@ class GridProperties(_Grid3D):
             >>> dlist = GridProperties.scan_keywords(reek_dir + "/REEK.UNRST")
 
         """
-        xtg_file = xtgeo._XTGeoFile(pfile)
+        xtg_file = FileWrapper(pfile)
         xtg_file.check_file(raiseerror=ValueError)
 
         return utils.scan_keywords(
@@ -908,7 +908,7 @@ class GridProperties(_Grid3D):
         """
         logger.info("Format supported as default is %s", fformat)
 
-        _pfile = xtgeo._XTGeoFile(pfile)
+        _pfile = FileWrapper(pfile)
         _pfile.check_file(raiseerror=ValueError)
 
         dlist = utils.scan_dates(_pfile, maxdates=maxdates, dataframe=dataframe)

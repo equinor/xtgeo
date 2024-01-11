@@ -13,7 +13,7 @@ from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 if TYPE_CHECKING:
-    from xtgeo.common.sys import _XTGeoFile
+    from xtgeo.io._file_wrapper import FileWrapper
 
     from .grid_properties import GridPropertiesKeywords, KeywordDateTuple, KeywordTuple
 
@@ -21,7 +21,7 @@ logger = null_logger(__name__)
 
 
 def scan_keywords(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     fformat: Literal["xecl", "roff"] = "xecl",
     maxkeys: int = MAXKEYWORDS,
     dataframe: bool = False,
@@ -45,7 +45,7 @@ def scan_keywords(
 
 
 def scan_dates(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     maxdates: int = MAXDATES,
     dataframe: bool = False,
 ) -> list | pd.DataFrame:
@@ -79,7 +79,7 @@ def scan_dates(
 
 
 def _scan_ecl_keywords(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     maxkeys: int = MAXKEYWORDS,
     dataframe: bool = False,
 ) -> list[KeywordTuple] | pd.DataFrame:
@@ -105,7 +105,7 @@ def _scan_ecl_keywords(
 
 
 def _scan_ecl_keywords_w_dates(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     maxkeys: int = MAXKEYWORDS,
     dataframe: bool = False,
 ) -> list[KeywordDateTuple] | pd.DataFrame:
@@ -139,7 +139,7 @@ def _scan_ecl_keywords_w_dates(
 
 
 def _scan_roff_keywords(
-    pfile: _XTGeoFile,
+    pfile: FileWrapper,
     maxkeys: int = MAXKEYWORDS,
     dataframe: bool = False,
 ) -> list[KeywordTuple] | pd.DataFrame:

@@ -16,6 +16,7 @@ import xtgeo.common.constants as const
 from xtgeo import _cxtgeo  # type: ignore
 from xtgeo.common import _AttrType, null_logger
 from xtgeo.common.version import __version__
+from xtgeo.io._file_wrapper import FileWrapper
 from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
 
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
@@ -498,7 +499,7 @@ class Well:
     ):
         """Deprecated, see :meth:`xtgeo.well_from_file`"""
 
-        wfile = xtgeo._XTGeoFile(wfile)
+        wfile = FileWrapper(wfile)
         if fformat is None or fformat == "guess":
             fformat = wfile.detect_fformat()
         else:
@@ -545,7 +546,7 @@ class Well:
         .. versionchanged:: 2.1 ``strict`` now defaults to False
         """
 
-        wfile = xtgeo._XTGeoFile(wfile)
+        wfile = FileWrapper(wfile)
 
         if fformat is None or fformat == "guess":
             fformat = wfile.detect_fformat()
@@ -575,7 +576,7 @@ class Well:
             >>> filename = xwell.to_file(outdir + "/somefile_copy.rmswell")
 
         """
-        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
+        wfile = FileWrapper(wfile, mode="wb", obj=self)
 
         wfile.check_folder(raiseerror=OSError)
 
@@ -621,7 +622,7 @@ class Well:
 
         .. versionadded:: 2.14
         """
-        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
+        wfile = FileWrapper(wfile, mode="wb", obj=self)
 
         wfile.check_folder(raiseerror=OSError)
 

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from xtgeo import _cxtgeo  # type: ignore
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.grid3d import _gridprop_lowlevel as gl

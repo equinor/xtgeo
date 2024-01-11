@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 import numpy.ma as ma
 
-from xtgeo import _cxtgeo  # type: ignore[attr-defined]
+from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT
 

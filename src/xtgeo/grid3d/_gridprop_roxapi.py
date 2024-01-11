@@ -20,8 +20,6 @@ if TYPE_CHECKING:
 
 logger = null_logger(__name__)
 
-# self is the XTGeo GridProperty instance
-
 VALID_ROXAR_DTYPES = [np.uint8, np.uint16, np.float32]
 
 

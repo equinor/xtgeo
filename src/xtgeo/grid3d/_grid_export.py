@@ -22,8 +22,8 @@ logger = null_logger(__name__)
 if TYPE_CHECKING:
     import numpy as np
 
-    from xtgeo.common import _XTGeoFile
     from xtgeo.common.types import FileLike
+    from xtgeo.io._file_wrapper import FileWrapper
     from xtgeo.metadata.metata import MetaData
 
     from .grid import Grid
@@ -65,7 +65,7 @@ def export_fegrid(grid: Grid, gfile: FileLike) -> None:
     EGrid.from_xtgeo_grid(grid).to_file(gfile, fileformat="fegrid")
 
 
-def export_xtgcpgeom(grid: Grid, gfile: _XTGeoFile, subformat: int = 844) -> None:
+def export_xtgcpgeom(grid: Grid, gfile: FileWrapper, subformat: int = 844) -> None:
     """Export grid to binary XTGeo xtgcpgeom format, in prep. and experimental."""
     logger.info("Export to native binary xtgeo...")
 
@@ -108,7 +108,7 @@ def export_xtgcpgeom(grid: Grid, gfile: _XTGeoFile, subformat: int = 844) -> Non
 
 def export_hdf5_cpgeom(
     grid: Grid,
-    gfile: _XTGeoFile,
+    gfile: FileWrapper,
     compression: Literal["blosc"] | None = None,
     chunks: bool = False,
     subformat: int = 844,

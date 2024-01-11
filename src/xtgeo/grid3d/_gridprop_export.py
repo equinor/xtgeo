@@ -12,7 +12,8 @@ import numpy as np
 import resfo
 import roffio
 
-from xtgeo.common import _XTGeoFile, null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.io._file_wrapper import FileWrapper
 
 from ._roff_parameter import RoffParameter
 
@@ -41,7 +42,7 @@ def to_file(
     if not name:
         name = gridprop.name or ""
 
-    xtg_file = _XTGeoFile(pfile, mode="rb")
+    xtg_file = FileWrapper(pfile, mode="rb")
     if not xtg_file.memstream:
         xtg_file.check_folder(raiseerror=OSError)
 

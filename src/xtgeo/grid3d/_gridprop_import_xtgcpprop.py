@@ -21,7 +21,7 @@ logger = null_logger(__name__)
 if TYPE_CHECKING:
     from numpy.typing import DTypeLike
 
-    from xtgeo.common.sys import _XTGeoFile
+    from xtgeo.io._file_wrapper import FileWrapper
 
 
 @contextmanager
@@ -69,14 +69,14 @@ def _read_filelike(
 
 
 def import_xtgcpprop(
-    mfile: _XTGeoFile,
+    mfile: FileWrapper,
     ijrange: Sequence[int] | None = None,
     zerobased: bool = False,
 ) -> dict[str, Any]:
     """Using pure python for experimental xtgcpprop import.
 
     Args:
-        mfile (_XTGeoFile): Input file reference
+        mfile (FileWrapper): Input file reference
         ijrange (list-like): List or tuple with 4 members [i_from, i_to, j_from, j_to]
             where cell indices are zero based (starts with 0)
         zerobased (bool): If ijrange basis is zero or one.
@@ -131,7 +131,7 @@ def import_xtgcpprop(
 
 
 def _import_xtgcpprop_partial(
-    mfile: _XTGeoFile,
+    mfile: FileWrapper,
     nbyte: int,
     dtype: DTypeLike,
     offset: int,

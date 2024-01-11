@@ -71,7 +71,6 @@ from xtgeo.common.exceptions import (
     KeywordNotFoundError,
     WellNotFoundError,
 )
-from xtgeo.common.sys import _XTGeoFile
 
 try:
     from xtgeo.common.version import __version__, version

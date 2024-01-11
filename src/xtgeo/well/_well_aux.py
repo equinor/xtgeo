@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pandas as pd
 
-import xtgeo
 from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
+from xtgeo.io._file_wrapper import FileWrapper
 
 from . import _well_io
 
@@ -62,7 +62,7 @@ def allow_deprecated_init(func: Callable):
         # Checking if we are doing an initialization from file and raise a
         # deprecation warning if we are.
         if "wfile" in kwargs or (
-            len(args) >= 1 and isinstance(args[0], (str, Path, xtgeo._XTGeoFile))
+            len(args) >= 1 and isinstance(args[0], (str, Path, FileWrapper))
         ):
             warnings.warn(
                 "Initializing directly from file name is deprecated and will be "
@@ -81,7 +81,7 @@ def allow_deprecated_init(func: Callable):
             else:
                 fformat = kwargs.pop("fformat", None)
 
-            mfile = xtgeo._XTGeoFile(wfile)
+            mfile = FileWrapper(wfile)
             if fformat is None or fformat == "guess":
                 fformat = mfile.detect_fformat()
             else:

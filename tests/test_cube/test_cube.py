@@ -12,6 +12,7 @@ from xtgeo.cube._cube_import import (
     _import_segy_all_traces,
     _import_segy_incomplete_traces,
 )
+from xtgeo.io._file_wrapper import FileWrapper
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -171,7 +172,7 @@ def test_internal_segy_import_full_vs_partial():
     Most prominent, a full SEGY cube should be possible to parse using the same routine
     as used for cubes with missing traces.
     """
-    segyfile = xtgeo._XTGeoFile(SFILE5)
+    segyfile = FileWrapper(SFILE5)
 
     with segyio.open(SFILE5, "r") as segyfile:
         attrs1 = _import_segy_all_traces(segyfile)

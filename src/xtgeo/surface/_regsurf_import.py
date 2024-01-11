@@ -14,6 +14,7 @@ import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
+from xtgeo.io._file_wrapper import FileWrapper
 from xtgeo.surface._regsurf_ijxyz_parser import parse_ijxyz
 from xtgeo.surface._zmap_parser import parse_zmap
 
@@ -30,7 +31,7 @@ def import_irap_binary(mfile, values=True, engine="cxtgeo", **_):
     """Import Irap binary format.
 
     Args:
-        mfile (_XTGeoFile): Instance of xtgeo file class
+        mfile (FileWrapper): Instance of xtgeo file class
         values (bool, optional): Getting values or just scan. Defaults to True.
 
     Raises:
@@ -159,7 +160,7 @@ def _import_irap_binary(mfile, values=True):
 
 
 def import_irap_ascii(mfile, engine="cxtgeo", **_):
-    """Import Irap ascii format, where mfile is a _XTGeoFile instance."""
+    """Import Irap ascii format, where mfile is a FileWrapper instance."""
     #   -996  2010      5.000000      5.000000
     #    461587.553724   467902.553724  5927061.430176  5937106.430176
     #   1264       30.000011   461587.553724  5927061.430176
@@ -258,7 +259,7 @@ def _import_irap_ascii(mfile):
 
 
 def import_ijxyz(
-    mfile: xtgeo._XTGeoFile,
+    mfile: FileWrapper,
     template: RegularSurface | Cube | None = None,
     **_,
 ) -> dict:
