@@ -8,4 +8,4 @@ if(NOT SKBUILD)
     "Use 'pip install ${CMAKE_SOURCE_DIR}' to install this as a Python package.")
 endif()
 
-add_subdirectory(src/clib)
+add_subdirectory(src/lib)
