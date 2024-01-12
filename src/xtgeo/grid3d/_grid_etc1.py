@@ -219,7 +219,7 @@ def get_bulk_volume(
 
     bval = np.zeros(bulk.dimensions)
 
-    xtgeo._internal.grdcp3d_cellvol(
+    xtgeo._internal.grid3d_cellvol(
         self._ncol,
         self._nrow,
         self._nlay,
