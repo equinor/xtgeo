@@ -104,7 +104,7 @@ def _check_presence_in_project(
         if isinstance(category, list) or category not in project_attr.representations:
             raise ValueError(f"Cannot access {category=} in {stype}")
         if mode == "get" and project_attr[name][category].is_empty():
-            raise ValueError(f"'{name}' is empty for {stype} {category=}")
+            raise RuntimeError(f"'{name}' is empty for {stype} {category=}")
 
     # only need to check presence in clipboard/general2d_data/well_picks if mode = get.
     if mode == "get":
@@ -444,7 +444,7 @@ def _roxapi_export_xyz(
     if attributes and isinstance(self, points.Points):
         for attr in _get_attribute_names_from_dataframe(df):
             values = _replace_undefined_values(
-                values=df[attr].values, dtype=self._attrs.get(attr)
+                values=df[attr].values, dtype=self._attrs.get(attr), asmasked=True
             )
 
             logger.info("Store Point attribute %s to Roxar API", name)
@@ -464,17 +464,26 @@ def _get_attribute_type_from_values(values: np.ndarray) -> str:
 
 
 def _replace_undefined_values(
-    values: np.ndarray, dtype: str | None = None
-) -> np.ndarray:
-    """Set xtgeo UNDEF values to np.nan or empty string dependent on type"""
+    values: np.ndarray,
+    dtype: str | None = None,
+    asmasked: bool = False,
+) -> np.ndarray | np.ma.MaskedArray:
+    """
+    Set xtgeo UNDEF values to np.nan or empty string dependent on type.
+    With option to return array with masked values instead of np.nan.
+    """
     values = pd.to_numeric(values, errors="ignore")
 
     dtype = dtype or _get_attribute_type_from_values(values)
 
     if dtype == "float":
+        if asmasked:
+            return np.ma.masked_greater(values, UNDEF_LIMIT)
         return np.where(values > UNDEF_LIMIT, np.nan, values)
 
     if dtype == "int":
+        if asmasked:
+            return np.ma.masked_greater(values, UNDEF_INT_LIMIT)
         return np.where(values > UNDEF_INT_LIMIT, np.nan, values)
 
     # string attributes does not support nan values
@@ -684,7 +693,7 @@ def _roxapi_export_xyz_well_picks(
         )
         for attr in rox_wp_attributes:
             df[attr] = _replace_undefined_values(
-                values=df[attr].values, dtype=attr_types.get(attr)
+                values=df[attr].values, dtype=attr_types.get(attr), asmasked=False
             )
 
     mypicks = []
