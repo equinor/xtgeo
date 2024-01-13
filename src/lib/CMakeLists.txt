@@ -6,6 +6,11 @@ find_package(SWIG 3.0.1 COMPONENTS REQUIRED)
 include(UseSWIG)
 find_package(pybind11 REQUIRED)
 
+message(STATUS "Python executable     : ${Python_EXECUTABLE}")
+message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
+message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
+message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
+
 # TODO: replace globbing with unique list, as globbing is bad practice
 FILE(GLOB SOURCES ${SRC}/*.c)
 add_library(xtgeo STATIC ${SOURCES})
@@ -46,10 +51,6 @@ target_link_libraries(${SWIG_TARGET}
   ${Python_LIBRARIES}
   Python::Module
   Python::NumPy)
-
-message(STATUS "Python executable  : ${Python_EXECUTABLE}")
-message(STATUS "Python include dirs: ${Python_INCLUDE_DIRS}")
-message(STATUS "numpy include path : ${Python_NumPy_INCLUDE_DIRS}")
 
 # scikit-build-core docs recommend this
 if(WIN32)

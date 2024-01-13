@@ -513,10 +513,16 @@ def test_bulkvol():
     """Test cell bulk volume calculation."""
     grd = xtgeo.grid_from_file(GRIDQC1)
     cellvol_rms = xtgeo.gridproperty_from_file(GRIDQC1_CELLVOL)
+    bulkvol = grd.get_bulk_volume()
 
-    bulk = grd.get_bulk_volume()
-    logger.info("Sum this: %s", bulk.values.sum())
-    logger.info("Sum RMS: %s", cellvol_rms.values.sum())
+    rms_sum = np.sum(cellvol_rms.values)
+    bulkvol_sum = np.sum(bulkvol.values)
+
+    print(f"RMS sum: {rms_sum}")
+    print(f"bulkvol sum: {bulkvol_sum}")
+
+    assert grd.dimensions == bulkvol.dimensions
+    assert np.allclose(cellvol_rms.values, bulkvol.values)
 
 
 @pytest.mark.benchmark(group="bulkvol")
