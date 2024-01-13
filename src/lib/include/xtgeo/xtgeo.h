@@ -16,7 +16,6 @@
 #define _GNU_SOURCE 1
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 
 #define PI 3.14159265358979323846264338327950288

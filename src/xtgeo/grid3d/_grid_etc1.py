@@ -217,16 +217,13 @@ def get_bulk_volume(
         discrete=False,
     )
 
-    bval = np.zeros(bulk.dimensions)
-
-    xtgeo._internal.grid3d_cellvol(
+    bval = xtgeo._internal.grid3d_cellvol(
         self._ncol,
         self._nrow,
         self._nlay,
         self._coordsv.ravel(),
         self._zcornsv.ravel(),
         self._actnumsv.ravel(),
-        bval,
         precision,
         asmasked,
     )
@@ -234,7 +231,7 @@ def get_bulk_volume(
     if asmasked:
         bval = np.ma.masked_greater(bval, UNDEF_LIMIT)
 
-    bulk.values = bval  # type: ignore
+    bulk.values = bval
 
     return bulk
 

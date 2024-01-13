@@ -83,3 +83,4 @@ pip-wheel-metadata/
 .nfs*
 tmp/
 .DS_Store
+compile_commands.json
