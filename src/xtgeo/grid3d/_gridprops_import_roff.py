@@ -9,7 +9,7 @@ import xtgeo
 from xtgeo.common import null_logger
 
 if TYPE_CHECKING:
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
     from .grid_property import GridProperty
 

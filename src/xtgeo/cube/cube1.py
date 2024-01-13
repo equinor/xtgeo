@@ -18,7 +18,7 @@ from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
 from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 logger = null_logger(__name__)
 
@@ -26,14 +26,14 @@ if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
 
 
-def _data_reader_factory(fformat):
-    if fformat == "segy":
+def _data_reader_factory(fmt: FileFormat):
+    if fmt == FileFormat.SEGY:
         return _cube_import.import_segy
-    if fformat == "storm":
+    if fmt == FileFormat.STORM:
         return _cube_import.import_stormcube
-    if fformat == "xtg":
+    if fmt == FileFormat.XTG:
         return _cube_import.import_xtgregcube
-    raise ValueError(f"File format fformat={fformat} is not supported")
+    raise ValueError("File format is not supported")
 
 
 def cube_from_file(mfile, fformat="guess"):
@@ -87,12 +87,10 @@ def _allow_deprecated_init(func):
             )
             cfile = args[0]
             fformat = args[1] if len(args) > 1 else kwargs.get("fformat", None)
+
             mfile = FileWrapper(cfile)
-            if fformat is None or fformat == "guess":
-                fformat = mfile.detect_fformat(suffixonly=True)
-            else:
-                fformat = mfile.generic_format_by_proposal(fformat)  # default
-            kwargs = _data_reader_factory(fformat)(mfile)
+            fmt = mfile.fileformat(fformat)
+            kwargs = _data_reader_factory(fmt)(mfile)
             kwargs["filesrc"] = mfile.file
             return func(cls, **kwargs)
         return func(cls, *args, **kwargs)
@@ -848,10 +846,7 @@ class Cube:
     def from_file(self, sfile, fformat="guess", engine=None):
         """Deprecated, see :func:`cube_from_file`."""
         mfile = FileWrapper(sfile)
-        if fformat is None or fformat == "guess":
-            fformat = mfile.detect_fformat(suffixonly=True)
-        else:
-            fformat = mfile.generic_format_by_proposal(fformat)  # default
+        fmt = mfile.fileformat(fformat)
 
         if engine is not None:
             warnings.warn(
@@ -859,7 +854,7 @@ class Cube:
                 DeprecationWarning,
             )
 
-        kwargs = _data_reader_factory(fformat)(mfile)
+        kwargs = _data_reader_factory(fmt)(mfile)
         kwargs["filesrc"] = mfile.file
         self._reset(**kwargs)
 
@@ -889,11 +884,8 @@ class Cube:
 
         """
         mfile = FileWrapper(sfile)
-        if fformat is None or fformat == "guess":
-            fformat = mfile.detect_fformat(suffixonly=True)
-        else:
-            fformat = mfile.generic_format_by_proposal(fformat)  # default
-        kwargs = _data_reader_factory(fformat)(mfile)
+        fmt = mfile.fileformat(fformat)
+        kwargs = _data_reader_factory(fmt)(mfile)
         kwargs["filesrc"] = mfile.file
         return cls(**kwargs)
 

@@ -12,7 +12,7 @@ from xtgeo.cube._cube_import import (
     _import_segy_all_traces,
     _import_segy_incomplete_traces,
 )
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)

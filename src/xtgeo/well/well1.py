@@ -16,7 +16,7 @@ import xtgeo.common.constants as const
 from xtgeo import _cxtgeo  # type: ignore
 from xtgeo.common import _AttrType, null_logger
 from xtgeo.common.version import __version__
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
 
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
@@ -500,12 +500,8 @@ class Well:
         """Deprecated, see :meth:`xtgeo.well_from_file`"""
 
         wfile = FileWrapper(wfile)
-        if fformat is None or fformat == "guess":
-            fformat = wfile.detect_fformat()
-        else:
-            fformat = wfile.generic_format_by_proposal(fformat)  # default
-
-        kwargs = _well_aux._data_reader_factory(fformat)(wfile, **kwargs)
+        fmt = wfile.fileformat(fformat)
+        kwargs = _well_aux._data_reader_factory(fmt)(wfile, **kwargs)
         self._reset(**kwargs)
         return self
 
@@ -547,13 +543,9 @@ class Well:
         """
 
         wfile = FileWrapper(wfile)
+        fmt = wfile.fileformat(fformat)
 
-        if fformat is None or fformat == "guess":
-            fformat = wfile.detect_fformat()
-        else:
-            fformat = wfile.generic_format_by_proposal(fformat)  # default
-
-        kwargs = _well_aux._data_reader_factory(fformat)(wfile, **kwargs)
+        kwargs = _well_aux._data_reader_factory(fmt)(wfile, **kwargs)
         return cls(**kwargs)
 
     def to_file(

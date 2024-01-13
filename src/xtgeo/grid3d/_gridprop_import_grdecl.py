@@ -16,7 +16,7 @@ logger = null_logger(__name__)
 
 if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
     from .grid import Grid
 

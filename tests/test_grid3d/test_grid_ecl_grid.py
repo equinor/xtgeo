@@ -10,6 +10,7 @@ from xtgeo.grid3d._ecl_grid import (
     inverse_transform_xtgeo_coord_by_mapaxes,
     transform_xtgeo_coord_by_mapaxes,
 )
+from xtgeo.io._file import FileFormat
 
 from .egrid_generator import (
     egrids,
@@ -73,10 +74,14 @@ def test_grid_to_file_conversion(tmp_path, xtgeo_grid, unit1, unit2, fformat):
     xtgeo_grid.units = unit1
     xtgeo_grid.to_file(filepath, fformat=fformat)
     eclgrid = None
-    if fformat in ["grdecl", "bgrdecl"]:
-        eclgrid = ggrid.GrdeclGrid.from_file(filepath, fileformat=fformat)
-    elif fformat in ["egrid", "fegrid"]:
-        eclgrid = xtg_egrid.EGrid.from_file(filepath, fileformat=fformat)
+    if fformat == "grdecl":
+        eclgrid = ggrid.GrdeclGrid.from_file(filepath, fileformat=FileFormat.GRDECL)
+    elif fformat == "bgrdecl":
+        eclgrid = ggrid.GrdeclGrid.from_file(filepath, fileformat=FileFormat.BGRDECL)
+    elif fformat == "egrid":
+        eclgrid = xtg_egrid.EGrid.from_file(filepath, fileformat=FileFormat.EGRID)
+    elif fformat == "fegrid":
+        eclgrid = xtg_egrid.EGrid.from_file(filepath, fileformat=FileFormat.FEGRID)
     else:
         assert False
 

@@ -17,7 +17,7 @@ from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataCPProperty
 
 from . import (
@@ -82,23 +82,19 @@ if TYPE_CHECKING:
 # ======================================================================================
 
 
-def _data_reader_factory(fformat: str) -> Callable:
-    if fformat in ["roff_binary", "roff_ascii"]:
+def _data_reader_factory(fformat: FileFormat) -> Callable:
+    if fformat in (FileFormat.ROFF_BINARY, FileFormat.ROFF_ASCII):
         return import_roff
-    if fformat in ["finit", "init"]:
+    if fformat in (FileFormat.FINIT, FileFormat.INIT):
         return import_gridprop_from_init
-
-    if fformat in ["funrst", "unrst"]:
+    if fformat in (FileFormat.FUNRST, FileFormat.UNRST):
         return functools.partial(import_gridprop_from_restart, fformat=fformat)
-    if fformat == "grdecl":
+    if fformat == FileFormat.GRDECL:
         return import_grdecl_prop
-
-    if fformat == "bgrdecl":
+    if fformat == FileFormat.BGRDECL:
         return import_bgrdecl_prop
-
-    if fformat == "xtg":
+    if fformat == FileFormat.XTG:
         return import_xtgcpprop
-
     raise ValueError(f"Invalid grid property file format {fformat}")
 
 
@@ -236,10 +232,7 @@ def _allow_deprecated_init(func: Callable) -> Callable:
             )
             fformat = kwargs.get("fformat", None)
             mfile = FileWrapper(pfile)
-            if fformat is None or fformat == "guess":
-                fformat = mfile.detect_fformat()
-            else:
-                fformat = mfile.generic_format_by_proposal(fformat)  # default
+            fmt = mfile.fileformat(fformat)
 
             if "pfile" in kwargs:
                 del kwargs["pfile"]
@@ -248,7 +241,7 @@ def _allow_deprecated_init(func: Callable) -> Callable:
             if len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, FileWrapper)):
                 args = args[min(len(args), 2) :]
 
-            kwargs = _data_reader_factory(fformat)(mfile, *args, **kwargs)
+            kwargs = _data_reader_factory(fmt)(mfile, *args, **kwargs)
             kwargs["filesrc"] = mfile.file
             return func(self, **kwargs)
         return func(self, *args, **kwargs)
@@ -941,7 +934,7 @@ class GridProperty(_Grid3D):
     )
     def from_file(
         self,
-        pfile: FileLike,
+        filelike: FileLike,
         fformat: str | None = None,
         **kwargs: Any,
     ) -> GridProperty:
@@ -953,7 +946,7 @@ class GridProperty(_Grid3D):
         for most Eclipse input.
 
         Args:
-            pfile: Name of file to be imported
+            filelike: Name of file to be imported
             fformat: File format to be used (roff/init/unrst/grdecl).
                 Defaults to None and tries to infer from file extension.
             name: Name of property to import
@@ -991,30 +984,24 @@ class GridProperty(_Grid3D):
         .. versionchanged:: 2.8 Added gridlink option, default is True
 
         """
-        xtg_file = FileWrapper(pfile)
-        if fformat is None or fformat == "guess":
-            _fformat = xtg_file.detect_fformat()
-        else:
-            _fformat = xtg_file.generic_format_by_proposal(fformat)  # default
-        kwargs = _data_reader_factory(_fformat)(xtg_file, **kwargs)
-        kwargs["filesrc"] = xtg_file.file
+        pfile = FileWrapper(filelike)
+        fmt = pfile.fileformat(fformat)
+        kwargs = _data_reader_factory(fmt)(pfile, **kwargs)
+        kwargs["filesrc"] = pfile.file
         self._reset(**kwargs)
         return self
 
     @classmethod
     def _read_file(
         cls,
-        pfile: FileLike,
+        filelike: FileLike,
         fformat: str | None = None,
         **kwargs: Any,
     ) -> GridProperty:
-        xtg_file = FileWrapper(pfile)
-        if fformat is None or fformat == "guess":
-            _fformat = xtg_file.detect_fformat()
-        else:
-            _fformat = xtg_file.generic_format_by_proposal(fformat)  # default
-        kwargs = _data_reader_factory(_fformat)(xtg_file, **kwargs)
-        kwargs["filesrc"] = xtg_file.file
+        pfile = FileWrapper(filelike)
+        fmt = pfile.fileformat(fformat)
+        kwargs = _data_reader_factory(fmt)(pfile, **kwargs)
+        kwargs["filesrc"] = pfile.file
         return cls(**kwargs)
 
     def to_file(

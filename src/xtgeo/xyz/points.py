@@ -15,35 +15,32 @@ import pandas as pd
 import xtgeo
 from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.common.version import __version__
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.xyz import XYZ, _xyz_io, _xyz_oper, _xyz_roxapi
 
 logger = null_logger(__name__)
 
 
-def _data_reader_factory(file_format):
-    if file_format == "xyz":
+def _data_reader_factory(file_format: FileFormat):
+    if file_format == FileFormat.XYZ:
         return _xyz_io.import_xyz
-    if file_format == "zmap_ascii":
+    if file_format == FileFormat.ZMAP_ASCII:
         return _xyz_io.import_zmap
-    if file_format == "rms_attr":
+    if file_format == FileFormat.RMS_ATTR:
         return _xyz_io.import_rms_attr
     raise ValueError(f"Unknown file format {file_format}")
 
 
 def _file_importer(
-    pfile: str | pathlib.Path | io.BytesIO,
+    points_file: str | pathlib.Path | io.BytesIO,
     fformat: str | None = None,
 ):
     """General function for points_from_file and (deprecated) method from_file."""
-    xtgeo_file = FileWrapper(pfile)
-    if fformat is None or fformat == "guess":
-        fformat = xtgeo_file.detect_fformat()
-    else:
-        fformat = xtgeo_file.generic_format_by_proposal(fformat)  # default
-    kwargs = _data_reader_factory(fformat)(xtgeo_file)
+    pfile = FileWrapper(points_file)
+    fmt = pfile.fileformat(fformat)
+    kwargs = _data_reader_factory(fmt)(pfile)
     kwargs["values"].dropna(inplace=True)
-    kwargs["filesrc"] = xtgeo_file.name
+    kwargs["filesrc"] = pfile.name
     return kwargs
 
 

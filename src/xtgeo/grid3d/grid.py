@@ -17,7 +17,7 @@ from xtgeo.common import XTGDescription, null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import (
     _grid3d_fence,
@@ -85,12 +85,14 @@ def _handle_import(
     if fformat == "eclipserun":
         ecl_grid = grid_constructor(
             **_grid_import.from_file(
-                FileWrapper(gfile.name + ".EGRID", mode="rb"), fformat="egrid"
+                FileWrapper(gfile.name + ".EGRID", mode="rb"), fformat=FileFormat.EGRID
             )
         )
         _grid_import_ecl.import_ecl_run(gfile.name, ecl_grid=ecl_grid, **kwargs)
         return ecl_grid
-    return grid_constructor(**_grid_import.from_file(gfile, fformat, **kwargs))
+
+    fmt = gfile.fileformat(fformat)
+    return grid_constructor(**_grid_import.from_file(gfile, fmt, **kwargs))
 
 
 def grid_from_file(

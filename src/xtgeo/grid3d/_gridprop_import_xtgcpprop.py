@@ -21,7 +21,7 @@ logger = null_logger(__name__)
 if TYPE_CHECKING:
     from numpy.typing import DTypeLike
 
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
 
 @contextmanager

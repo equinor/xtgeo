@@ -43,7 +43,7 @@ import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
