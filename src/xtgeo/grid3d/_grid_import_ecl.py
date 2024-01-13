@@ -1,13 +1,13 @@
 """Grid import functions for Eclipse, new approach (i.e. version 2)."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from xtgeo.common import null_logger
 from xtgeo.grid3d._egrid import EGrid, RockModel
 from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
 from xtgeo.grid3d.grid_properties import GridProperties, gridproperties_from_file
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 logger = null_logger(__name__)
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 def import_ecl_egrid(
     gfile: FileWrapper,
     relative_to: GridRelative = GridRelative.MAP,
-    fileformat: Literal["egrid", "fegrid"] = "egrid",
+    fileformat: FileFormat = FileFormat.EGRID,
 ) -> dict[str, Any]:
     egrid = EGrid.from_file(gfile.file, fileformat=fileformat)
     result = grid_from_ecl_grid(egrid, relative_to=relative_to)
@@ -73,7 +73,7 @@ def import_ecl_grdecl(
     gfile: FileWrapper, relative_to: GridRelative = GridRelative.MAP
 ) -> dict[str, Any]:
     """Import grdecl format."""
-    grdecl_grid = GrdeclGrid.from_file(gfile.file, fileformat="grdecl")
+    grdecl_grid = GrdeclGrid.from_file(gfile.file, fileformat=FileFormat.GRDECL)
     return grid_from_ecl_grid(grdecl_grid, relative_to=relative_to)
 
 
@@ -81,7 +81,7 @@ def import_ecl_bgrdecl(
     gfile: FileWrapper, relative_to: GridRelative = GridRelative.MAP
 ) -> dict[str, Any]:
     """Import binary files with GRDECL layout."""
-    grdecl_grid = GrdeclGrid.from_file(gfile.file, fileformat="bgrdecl")
+    grdecl_grid = GrdeclGrid.from_file(gfile.file, fileformat=FileFormat.BGRDECL)
     return grid_from_ecl_grid(grdecl_grid, relative_to=relative_to)
 
 

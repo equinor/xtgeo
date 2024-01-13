@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 
 @pytest.fixture()

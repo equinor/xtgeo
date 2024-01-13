@@ -25,9 +25,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from resfo import Format, lazy_read, write
+import resfo
 
 from xtgeo.common.types import Dimensions
+from xtgeo.io._file import FileFormat
 
 from ._ecl_grid import (
     CoordinateType,
@@ -237,16 +238,16 @@ class GrdeclGrid(EclGrid):
             self.gridunit.unit = value
 
     @classmethod
-    def from_file(cls, filename, fileformat="grdecl"):
+    def from_file(cls, filename, fileformat: FileFormat = FileFormat.GRDECL):
         """
         write the grdeclgrid to a file.
         :param filename: path to file to write.
         :param fileformat: Either "grdecl" or "bgrdecl" to
             indicate binary or ascii format.
         """
-        if fileformat == "grdecl":
+        if fileformat == FileFormat.GRDECL:
             return cls._from_grdecl_file(filename)
-        if fileformat == "bgrdecl":
+        if fileformat == FileFormat.BGRDECL:
             return cls._from_bgrdecl_file(filename)
         raise ValueError(b"Unknown grdecl file format {fileformat}")
 
@@ -263,7 +264,7 @@ class GrdeclGrid(EclGrid):
             "GDORIENT": GdOrient.from_bgrdecl,
         }
         results = {}
-        for entry in lazy_read(filename, fileformat=fileformat):
+        for entry in resfo.lazy_read(filename, fileformat=fileformat):
             if len(results) == len(keyword_factories):
                 break
             kw = entry.read_keyword().rstrip()
@@ -349,7 +350,7 @@ class GrdeclGrid(EclGrid):
 
                 filestream.write("\n /\n")
 
-    def _to_bgrdecl_file(self, filename, fileformat=Format.UNFORMATTED):
+    def _to_bgrdecl_file(self, filename, fileformat=resfo.Format.UNFORMATTED):
         contents = filter(
             lambda x: x[1] is not None,
             [
@@ -366,7 +367,7 @@ class GrdeclGrid(EclGrid):
                 ),
             ],
         )
-        write(
+        resfo.write(
             filename,
             contents,
         )

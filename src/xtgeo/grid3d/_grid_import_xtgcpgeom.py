@@ -16,7 +16,7 @@ from xtgeo.grid3d._gridprop_import_xtgcpprop import _read_filelike
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
 LMIN: TypeAlias = Literal["min"]
 LMAX: TypeAlias = Literal["max"]

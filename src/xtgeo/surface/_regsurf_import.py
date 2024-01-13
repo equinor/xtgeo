@@ -14,7 +14,7 @@ import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 from xtgeo.surface._regsurf_ijxyz_parser import parse_ijxyz
 from xtgeo.surface._zmap_parser import parse_zmap
 

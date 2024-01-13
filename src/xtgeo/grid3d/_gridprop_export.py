@@ -13,7 +13,7 @@ import resfo
 import roffio
 
 from xtgeo.common.log import null_logger
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 from ._roff_parameter import RoffParameter
 

@@ -13,7 +13,7 @@ from ._roff_parameter import RoffParameter
 
 if TYPE_CHECKING:
     from xtgeo.grid3d import Grid
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
 logger = null_logger(__name__)
 

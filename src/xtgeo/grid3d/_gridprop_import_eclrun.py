@@ -4,13 +4,15 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import resfo
 
+from xtgeo.io._file import FileFormat
+
 from ._find_gridprop_in_eclrun import (
     find_gridprop_from_init_file,
     find_gridprops_from_restart_file,
 )
 
 if TYPE_CHECKING:
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
     from .grid import Grid
 
@@ -104,7 +106,7 @@ def sanitize_date(
     return "first" if date == "first" else "last"
 
 
-def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> resfo.Format:
+def sanitize_fformat(fformat: FileFormat) -> resfo.Format:
     """Converts 'unrst' and 'funrst' to the corresponding resfo.Format.
 
     >>> sanitize_fformat('unrst')
@@ -112,9 +114,9 @@ def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> resfo.Format:
     >>> sanitize_fformat('funrst')
     <Format.FORMATTED: 1>
     """
-    if fformat == "unrst":
+    if fformat == FileFormat.UNRST:
         return resfo.Format.UNFORMATTED
-    if fformat == "funrst":
+    if fformat == FileFormat.FUNRST:
         return resfo.Format.FORMATTED
     raise ValueError(f"fformat must be either 'unrst' or 'funrst' got {fformat}")
 
@@ -125,7 +127,7 @@ def import_gridprop_from_restart(
     grid: Grid,
     date: int | str | Literal["first", "last"],
     fracture: bool = False,
-    fformat: Literal["unrst", "funrst"] = "unrst",
+    fformat: FileFormat = FileFormat.UNRST,
 ) -> dict[str, Any]:
     """Import one parameter for the given name and date in a restart file.
 

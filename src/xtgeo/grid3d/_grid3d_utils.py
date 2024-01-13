@@ -13,7 +13,7 @@ from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 
 if TYPE_CHECKING:
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
     from .grid_properties import GridPropertiesKeywords, KeywordDateTuple, KeywordTuple
 

@@ -5,7 +5,7 @@ import pytest
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import list_gridproperties
 from xtgeo.grid3d._gridprops_import_roff import read_roff_properties
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 xtg = XTGeoDialog()
 

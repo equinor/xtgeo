@@ -6,7 +6,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common import null_logger
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 logger = null_logger(__name__)
 

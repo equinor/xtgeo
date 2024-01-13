@@ -15,17 +15,17 @@ import pandas as pd
 
 from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import _well_io
 
 logger = null_logger(__name__)
 
 
-def _data_reader_factory(file_format: str | None = None):
-    if file_format in ["rmswell", "irap_ascii", None]:
+def _data_reader_factory(file_format: FileFormat):
+    if file_format in (FileFormat.RMSWELL, FileFormat.IRAP_ASCII, FileFormat.UNKNOWN):
         return _well_io.import_rms_ascii
-    if file_format == "hdf":
+    if file_format == FileFormat.HDF:
         return _well_io.import_hdf5_well
     raise ValueError(
         f"Unknown file format {file_format}, supported formats are "
@@ -82,11 +82,8 @@ def allow_deprecated_init(func: Callable):
                 fformat = kwargs.pop("fformat", None)
 
             mfile = FileWrapper(wfile)
-            if fformat is None or fformat == "guess":
-                fformat = mfile.detect_fformat()
-            else:
-                fformat = mfile.generic_format_by_proposal(fformat)
-            kwargs = _data_reader_factory(fformat)(mfile, *args, **kwargs)
+            fmt = mfile.fileformat(fformat)
+            kwargs = _data_reader_factory(fmt)(mfile, *args, **kwargs)
             kwargs["filesrc"] = mfile.file
             return func(self, **kwargs)
         return func(self, *args, **kwargs)
