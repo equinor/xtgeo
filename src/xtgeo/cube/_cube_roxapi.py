@@ -87,16 +87,14 @@ def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
     if roxhandedness == "right":
         self._yflip = -1
 
-    ilstart = rcube.get_inline(0)
-    xlstart = rcube.get_crossline(0)
-    ilincr, xlincr = rcube.inline_crossline_increment
+    il_start = rcube.get_inline(0)
+    xl_start = rcube.get_crossline(0)
+    il_incr, xl_incr = rcube.inline_crossline_increment
+    il_end = (self._ncol) * il_incr + il_start
+    xl_end = (self._nrow) * xl_incr + xl_start
 
-    self._ilines = np.array(
-        range(ilstart, self._ncol + ilstart, ilincr), dtype=np.int32
-    )
-    self._xlines = np.array(
-        range(xlstart, self._nrow + xlstart, xlincr), dtype=np.int32
-    )
+    self._ilines = np.array(range(il_start, il_end, il_incr), dtype=np.int32)
+    self._xlines = np.array(range(xl_start, xl_end, xl_incr), dtype=np.int32)
 
     # roxar API does not store traceid codes, assume 1
     self._traceidcodes = np.ones((self._ncol, self._nrow), dtype=np.int32)
