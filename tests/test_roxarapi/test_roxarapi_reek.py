@@ -502,13 +502,13 @@ def test_check_presence_in_project_errors(roxar_project):
     # test category not existing in project
     with pytest.raises(ValueError) as exc_info:
         name = "I_dont_exist"
-        xtgeo.points_from_roxar(roxar_project, name, POINTSCAT1, stype="horizons")
+        xtgeo.points_from_roxar(rox.project, name, POINTSCAT1, stype="horizons")
     assert str(exc_info.value) == f"Cannot access {name=} in horizons"
 
     # test category not given
     with pytest.raises(ValueError) as exc_info:
         xtgeo.points_from_roxar(
-            roxar_project, SURFNAMES1[0], category=None, stype="horizons"
+            rox.project, SURFNAMES1[0], category=None, stype="horizons"
         )
     assert (
         str(exc_info.value) == "Need to specify category for horizons, zones and faults"
@@ -517,17 +517,19 @@ def test_check_presence_in_project_errors(roxar_project):
     # test category not existing in project
     with pytest.raises(ValueError) as exc_info:
         category = "I_dont_exist"
-        xtgeo.points_from_roxar(
-            roxar_project, SURFNAMES1[0], category, stype="horizons"
-        )
+        xtgeo.points_from_roxar(rox.project, SURFNAMES1[0], category, stype="horizons")
+        rox.project.close()
     assert str(exc_info.value) == f"Cannot access {category=} in horizons"
 
     # test empty data in project
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(RuntimeError) as exc_info:
         name = SURFNAMES1[1]
         category = POINTSCAT1
-        xtgeo.points_from_roxar(roxar_project, name, category, stype="horizons")
+        xtgeo.points_from_roxar(rox.project, name, category, stype="horizons")
+        rox.project.close()
     assert str(exc_info.value) == f"'{name}' is empty for horizons {category=}"
+
+    rox.project.close()
 
 
 @pytest.mark.requires_roxar
