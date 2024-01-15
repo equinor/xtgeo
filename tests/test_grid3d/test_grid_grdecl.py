@@ -12,6 +12,7 @@ from hypothesis import HealthCheck, assume, given, settings
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d._grdecl_format import open_grdecl
 from xtgeo.grid3d._grid_import_ecl import grid_from_ecl_grid
+from xtgeo.io._file import FileFormat
 
 from .grdecl_grid_generator import (
     grdecl_grids,
@@ -127,12 +128,16 @@ def test_gridunit(inp_str, expected_unit, expected_relative):
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(grdecl_grids(), st.sampled_from(["grdecl", "bgrdecl"]))
-def test_grdecl_grid_read_write(tmp_path, grgrid, fileformat):
+@given(
+    grdecl_grids(),
+    st.sampled_from([("grdecl", FileFormat.GRDECL), ("bgrdecl", FileFormat.BGRDECL)]),
+)
+def test_grdecl_grid_read_write(tmp_path, grgrid, fileformats):
+    fileformat, fmt = fileformats
     assume(grgrid.mapaxes is None or fileformat != "bgrdecl")
     tmp_file = tmp_path / ("grid." + fileformat)
     grgrid.to_file(tmp_file, fileformat)
-    assert ggrid.GrdeclGrid.from_file(tmp_file, fileformat) == grgrid
+    assert ggrid.GrdeclGrid.from_file(tmp_file, fmt) == grgrid
 
 
 @given(grdecl_grids())
@@ -206,8 +211,12 @@ def test_to_from_grdeclgrid(grdecl_grid):
     print_blob=True,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-@given(xtgeo_compatible_grdecl_grids, st.sampled_from(["grdecl", "bgrdecl"]))
-def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
+@given(
+    xtgeo_compatible_grdecl_grids,
+    st.sampled_from([("grdecl", FileFormat.GRDECL), ("bgrdecl", FileFormat.BGRDECL)]),
+)
+def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformats):
+    fileformat, fmt = fileformats
     assume(grdecl_grid.mapaxes is None or fileformat != "bgrdecl")
     filepath = tmp_path / ("xtggrid." + fileformat)
     xtggrid = Grid(
@@ -215,7 +224,7 @@ def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
     )
 
     xtggrid.to_file(filepath, fformat=fileformat)
-    grdecl_grid2 = ggrid.GrdeclGrid.from_file(filepath, fileformat=fileformat)
+    grdecl_grid2 = ggrid.GrdeclGrid.from_file(filepath, fileformat=fmt)
 
     grdecl_grid2.convert_grid_units(grdecl_grid.grid_units)
     assert grdecl_grid.zcorn == pytest.approx(grdecl_grid2.zcorn, abs=0.02)

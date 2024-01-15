@@ -15,7 +15,7 @@ from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 
 if TYPE_CHECKING:
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
     from xtgeo.surface.regular_surface import RegularSurface
 
 logger = null_logger(__name__)

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 
 from xtgeo import _cxtgeo
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 from . import null_logger
 from ._xyz_enum import _AttrType

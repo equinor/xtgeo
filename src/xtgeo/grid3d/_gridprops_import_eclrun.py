@@ -9,7 +9,7 @@ import resfo
 import xtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXKEYWORDS
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileWrapper
 
 from . import _grid3d_utils as utils
 from ._find_gridprop_in_eclrun import (

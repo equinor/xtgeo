@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from xtgeo.common.types import FileLike
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
 
 
 logger = null_logger(__name__)

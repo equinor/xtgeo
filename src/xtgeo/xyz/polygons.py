@@ -20,7 +20,7 @@ import shapely.geometry as sg
 import xtgeo
 from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.common.version import __version__
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _polygons_oper, _xyz_oper
@@ -30,10 +30,10 @@ from ._xyz_io import _convert_idbased_xyz
 logger = null_logger(__name__)
 
 
-def _data_reader_factory(file_format):
-    if file_format == "xyz":
+def _data_reader_factory(file_format: FileFormat):
+    if file_format == FileFormat.XYZ:
         return _xyz_io.import_xyz
-    if file_format == "zmap_ascii":
+    if file_format == FileFormat.ZMAP_ASCII:
         return _xyz_io.import_zmap
     raise ValueError(f"Unknown file format {file_format}")
 
@@ -44,11 +44,8 @@ def _file_importer(
 ):
     """General function for polygons_from_file and (deprecated) method from_file."""
     pfile = FileWrapper(pfile)
-    if fformat is None or fformat == "guess":
-        fformat = pfile.detect_fformat()
-    else:
-        fformat = pfile.generic_format_by_proposal(fformat)  # default
-    kwargs = _data_reader_factory(fformat)(pfile)
+    fmt = pfile.fileformat(fformat)
+    kwargs = _data_reader_factory(fmt)(pfile)
 
     if "POLY_ID" not in kwargs["values"].columns:
         kwargs["values"]["POLY_ID"] = (

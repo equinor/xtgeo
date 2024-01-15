@@ -51,11 +51,11 @@ import pandas as pd
 import scipy.ndimage
 
 import xtgeo
-import xtgeo.common.sys as xtgeosys
 from xtgeo.common import null_logger
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
+from xtgeo.common.sys import generic_hash
 from xtgeo.common.version import __version__
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import (
     _regsurf_boundary,
@@ -222,20 +222,20 @@ def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=
     )
 
 
-def _data_reader_factory(file_format):
-    if file_format == "irap_binary":
+def _data_reader_factory(file_format: FileFormat):
+    if file_format == FileFormat.IRAP_BINARY:
         return _regsurf_import.import_irap_binary
-    if file_format == "irap_ascii":
+    if file_format == FileFormat.IRAP_ASCII:
         return _regsurf_import.import_irap_ascii
-    if file_format == "ijxyz":
+    if file_format == FileFormat.IJXYZ:
         return _regsurf_import.import_ijxyz
-    if file_format == "petromod":
+    if file_format == FileFormat.PETROMOD:
         return _regsurf_import.import_petromod
-    if file_format == "zmap_ascii":
+    if file_format == FileFormat.ZMAP_ASCII:
         return _regsurf_import.import_zmap_ascii
-    if file_format == "xtg":
+    if file_format == FileFormat.XTG:
         return _regsurf_import.import_xtg
-    if file_format == "hdf":
+    if file_format == FileFormat.HDF:
         return _regsurf_import.import_hdf5_regsurf
     raise ValueError(f"Unknown file format {file_format}")
 
@@ -263,14 +263,11 @@ def _allow_deprecated_init(func):
                 load_values = False
             else:
                 load_values = True
-            mfile = xtgeosys.FileWrapper(sfile)
-            if fformat is None or fformat == "guess":
-                fformat = mfile.detect_fformat()
-            else:
-                fformat = mfile.generic_format_by_proposal(fformat)  # default
-            kwargs = _data_reader_factory(fformat)(mfile, values=load_values)
+            mfile = FileWrapper(sfile)
+            fmt = mfile.fileformat(fformat)
+            kwargs = _data_reader_factory(fmt)(mfile, values=load_values)
             kwargs["filesrc"] = mfile.file
-            kwargs["fformat"] = fformat
+            kwargs["fformat"] = fmt
             return func(cls, **kwargs)
 
         return func(cls, *args, **kwargs)
@@ -450,16 +447,16 @@ class RegularSurface:
 
     @classmethod
     def _read_zmap_ascii(cls, mfile, values):
-        mfile = xtgeosys.FileWrapper(mfile)
-        args = _data_reader_factory("zmap_ascii")(mfile, values=values)
+        mfile = FileWrapper(mfile)
+        args = _data_reader_factory(FileFormat.ZMAP_ASCII)(mfile, values=values)
         return cls(**args)
 
     @classmethod
     def _read_ijxyz(
         cls, mfile: FileWrapper, template: xtgeo.RegularSurface | xtgeo.Cube | None
     ):
-        mfile = xtgeosys.FileWrapper(mfile)
-        args = _data_reader_factory("ijxyz")(mfile, template=template)
+        mfile = FileWrapper(mfile)
+        args = _data_reader_factory(FileFormat.IJXYZ)(mfile, template=template)
         return cls(**args)
 
     def __repr__(self):
@@ -864,7 +861,7 @@ class RegularSurface:
         # Ignore the mask
         gid += self._values.data.tobytes().hex()
 
-        return xtgeosys.generic_hash(gid, hashmethod=hashmethod)
+        return generic_hash(gid, hashmethod=hashmethod)
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout."""
@@ -968,15 +965,10 @@ class RegularSurface:
             ZMAP + import is added, and io.BytesIO input is extended to more formats
         """
         logger.info("Import RegularSurface from file or memstream...")
+        mfile = FileWrapper(mfile)
 
-        mfile = xtgeosys.FileWrapper(mfile)
-
-        if fformat is None or fformat == "guess":
-            fformat = mfile.detect_fformat()
-        else:
-            fformat = mfile.generic_format_by_proposal(fformat)  # default
-
-        kwargs = _data_reader_factory(fformat)(mfile, values=values, **kwargs)
+        fmt = mfile.fileformat(fformat)
+        kwargs = _data_reader_factory(fmt)(mfile, values=values, **kwargs)
         if values:
             self._isloaded = True
         self._reset(**kwargs)
@@ -1047,15 +1039,13 @@ class RegularSurface:
         .. versionadded:: 2.14
 
         """
-        mfile = xtgeosys.FileWrapper(mfile)
+        mfile = FileWrapper(mfile)
         mfile.check_file(raiseerror=ValueError)
-        if fformat is None or fformat == "guess":
-            fformat = mfile.detect_fformat()
-        else:
-            fformat = mfile.generic_format_by_proposal(fformat)  # default
-        new_kwargs = _data_reader_factory(fformat)(mfile, values=load_values, **kwargs)
+        fmt = mfile.fileformat(fformat)
+
+        new_kwargs = _data_reader_factory(fmt)(mfile, values=load_values, **kwargs)
         new_kwargs["filesrc"] = mfile.file
-        new_kwargs["fformat"] = fformat
+        new_kwargs["fformat"] = fmt
         new_kwargs["dtype"] = kwargs.get("dtype", np.float64)
         return cls(**new_kwargs)
 
@@ -1084,8 +1074,7 @@ class RegularSurface:
 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-                mfile = xtgeosys.FileWrapper(self.filesrc)
+                mfile = FileWrapper(self.filesrc)
                 kwargs = _data_reader_factory(self._fformat)(mfile, values=True)
                 self.values = kwargs.get("values", self._values)
 
@@ -1147,7 +1136,7 @@ class RegularSurface:
         .. versionchanged:: 2.14 Support for alias file name and return value
         """
         logger.info("Export RegularSurface to file or memstream...")
-        mfile = xtgeosys.FileWrapper(mfile, mode="wb", obj=self)
+        mfile = FileWrapper(mfile, mode="wb", obj=self)
 
         if not mfile.memstream:
             mfile.check_folder(raiseerror=OSError)
@@ -1220,7 +1209,7 @@ class RegularSurface:
         .. versionadded:: 2.14
         """
         # developing, in prep and experimental!
-        mfile = xtgeosys.FileWrapper(mfile, mode="rb", obj=self)
+        mfile = FileWrapper(mfile, mode="rb", obj=self)
 
         kwargs = _regsurf_import.import_hdf5_regsurf(mfile, values=values)
 
@@ -1259,7 +1248,7 @@ class RegularSurface:
 
         """
         # developing, in prep and experimental!
-        mfile = xtgeosys.FileWrapper(mfile, mode="wb", obj=self)
+        mfile = FileWrapper(mfile, mode="wb", obj=self)
 
         if not mfile.memstream:
             mfile.check_folder(raiseerror=OSError)

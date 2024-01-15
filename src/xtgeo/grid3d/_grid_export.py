@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     import numpy as np
 
     from xtgeo.common.types import FileLike
-    from xtgeo.io._file_wrapper import FileWrapper
+    from xtgeo.io._file import FileWrapper
     from xtgeo.metadata.metata import MetaData
 
     from .grid import Grid

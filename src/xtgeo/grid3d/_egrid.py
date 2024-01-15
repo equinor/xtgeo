@@ -58,9 +58,10 @@ from itertools import chain
 from typing import Any
 
 import numpy as np
-from resfo import Format, lazy_read, write
+import resfo
 
 from xtgeo.common.types import Dimensions
+from xtgeo.io._file import FileFormat
 
 from ._ecl_grid import (
     CoordinateType,
@@ -618,7 +619,7 @@ class EGrid(EclGrid):
         return self.global_grid.actnum
 
     @classmethod
-    def from_file(cls, filelike, fileformat: str = None):
+    def from_file(cls, filelike, fileformat: FileFormat = None):
         """
         Read an egrid file
         Args:
@@ -629,10 +630,10 @@ class EGrid(EclGrid):
             EGrid with the contents of the file.
         """
         file_format = None
-        if fileformat == "egrid":
-            file_format = Format.UNFORMATTED
-        elif fileformat == "fegrid":
-            file_format = Format.FORMATTED
+        if fileformat == FileFormat.EGRID:
+            file_format = resfo.Format.UNFORMATTED
+        elif fileformat == FileFormat.FEGRID:
+            file_format = resfo.Format.FORMATTED
         elif fileformat is not None:
             raise ValueError(f"Unrecognized egrid file format {fileformat}")
         return EGridReader(filelike, file_format=file_format).read()
@@ -646,9 +647,9 @@ class EGrid(EclGrid):
         """
         file_format = None
         if fileformat == "egrid":
-            file_format = Format.UNFORMATTED
+            file_format = resfo.Format.UNFORMATTED
         elif fileformat == "fegrid":
-            file_format = Format.FORMATTED
+            file_format = resfo.Format.FORMATTED
         elif fileformat is not None:
             raise ValueError(f"Unrecognized egrid file format {fileformat}")
         contents = []
@@ -658,7 +659,7 @@ class EGrid(EclGrid):
             contents += lgr.to_egrid()
         for nnc in self.nnc_sections:
             contents += nnc.to_egrid()
-        write(filelike, contents, file_format)
+        resfo.write(filelike, contents, file_format)
 
     def _check_xtgeo_compatible(self):
         self.global_grid._check_xtgeo_compatible()
@@ -765,9 +766,9 @@ class EGridReader:
 
     """
 
-    def __init__(self, filelike, file_format: Format = None):
+    def __init__(self, filelike, file_format: resfo.Format = None):
         self.filelike = filelike
-        self.keyword_generator = lazy_read(filelike, file_format)
+        self.keyword_generator = resfo.lazy_read(filelike, file_format)
 
     def read_section(
         self,

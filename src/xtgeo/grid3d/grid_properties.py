@@ -13,7 +13,7 @@ import pandas as pd
 from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 from xtgeo.common.version import __version__
-from xtgeo.io._file_wrapper import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import _grid3d_utils as utils, _grid_etc1
 from ._grid3d import _Grid3D
@@ -63,24 +63,24 @@ def list_gridproperties(
         ...     fformat="roff",
         ... )
     """
-    xtg_file = FileWrapper(property_file, mode="rb")
-    xtg_file.check_file(raiseerror=ValueError)
+    pfile = FileWrapper(property_file, mode="rb")
+    pfile.check_file(raiseerror=ValueError)
 
-    _fformat = (
-        xtg_file.generic_format_by_proposal(fformat)
-        if fformat
-        else xtg_file.detect_fformat()
-    ).lower()
-
-    if _fformat in ("roff_ascii", "roff_binary"):
-        return list(read_roff_properties(xtg_file))
-    if _fformat in ("finit", "init", "funrst", "unrst"):
-        return list(read_eclrun_properties(xtg_file))
+    fmt = pfile.fileformat(fformat)
+    if fmt in (FileFormat.ROFF_ASCII, FileFormat.ROFF_BINARY):
+        return list(read_roff_properties(pfile))
+    if fmt in (
+        FileFormat.FINIT,
+        FileFormat.INIT,
+        FileFormat.FUNRST,
+        FileFormat.UNRST,
+    ):
+        return list(read_eclrun_properties(pfile))
     raise ValueError(f"Cannot read properties from file format {fformat}")
 
 
 def gridproperties_from_file(
-    pfile: FileLike,
+    property_file: FileLike,
     fformat: str | None = None,
     names: list[str] | None = None,
     dates: list[str] | None = None,
@@ -94,7 +94,7 @@ def gridproperties_from_file(
     (number of total or active cells in the grid) will be read
 
     Args:
-        pfile (str or Path): Name of file with properties
+        property_file (str or Path): Name of file with properties
         fformat (str): roff/init/unrst
         names: list of property names, e.g. ['PORO', 'PERMX'] or 'all'
         dates: list of dates on YYYYMMDD format, for restart files, or 'all'
@@ -118,35 +118,28 @@ def gridproperties_from_file(
         ...     grid=grd,
         ... )
     """
-    xtg_file = FileWrapper(pfile, mode="rb")
-    xtg_file.check_file(raiseerror=ValueError)
+    pfile = FileWrapper(property_file, mode="rb")
+    pfile.check_file(raiseerror=ValueError)
 
-    _fformat = (
-        xtg_file.detect_fformat()
-        if not fformat or fformat == "guess"
-        else xtg_file.generic_format_by_proposal(fformat)
-    ).lower()
-
-    if _fformat in ("roff_binary", "roff_ascii"):
+    fmt = pfile.fileformat(fformat)
+    if fmt in (FileFormat.ROFF_ASCII, FileFormat.ROFF_BINARY):
         return GridProperties(
-            props=import_roff_gridproperties(xtg_file, names, strict=strict)
+            props=import_roff_gridproperties(pfile, names, strict=strict)
         )
-
-    if _fformat in ("init", "finit"):
+    if fmt in (FileFormat.FINIT, FileFormat.INIT):
         return GridProperties(
             props=import_ecl_init_gridproperties(
-                xtg_file,
+                pfile,
                 grid=grid,
                 names=names,
                 strict=strict[0],
                 maxkeys=MAXKEYWORDS,
             )
         )
-
-    if _fformat in ("unrst", "funrst"):
+    if fmt in (FileFormat.FUNRST, FileFormat.UNRST):
         return GridProperties(
             props=import_ecl_restart_gridproperties(
-                xtg_file,
+                pfile,
                 dates=dates,
                 grid=grid,
                 names=names,
@@ -155,8 +148,7 @@ def gridproperties_from_file(
                 maxkeys=MAXKEYWORDS,
             )
         )
-
-    raise ValueError("Invalid file format {_fformat}")
+    raise ValueError("Invalid file format {fformat}")
 
 
 # --------------------------------------------------------------------------------------

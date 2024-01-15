@@ -8,14 +8,14 @@ import platform
 import re
 import struct
 import uuid
+from enum import Enum
 from os.path import join
 from tempfile import mkstemp
 from typing import TYPE_CHECKING, Literal, Union
 
-import h5py
-
 import xtgeo._cxtgeo
 from xtgeo.common import null_logger
+from xtgeo.common.types import FileLike
 
 logger = null_logger(__name__)
 
@@ -43,32 +43,34 @@ if TYPE_CHECKING:
         Wells,
     ]
 
-SUPPORTED_FORMATS = {
-    "rmswell": ["rmswell", "rmsw", "w", "bw"],
-    "roff_binary": ["roff_binary", "roff", "roff_bin", "roff-bin", "roffbin", "roff.*"],
-    "roff_ascii": ["roff_ascii", "roff_asc", "roff-asc", "roffasc", "asc"],
-    "egrid": ["egrid"],
-    "fegrid": ["fegrid"],
-    "init": ["init"],
-    "finit": ["finit"],
-    "unrst": ["unrst"],
-    "funrst": ["funrst"],
-    "grdecl": ["grdecl"],
-    "bgrdecl": ["bgrdecl"],
-    "irap_binary": ["irap_binary", "irap_bin", "rms_binary", "irapbin", "gri"],
-    "irap_ascii": ["irap_ascii", "irap_asc", "rms_ascii", "irapasc", "fgr"],
-    "hdf": ["hdf", "hdf5", "h5"],
-    "segy": ["segy", "sgy", "segy.*"],
-    "storm": ["storm"],
-    "zmap_ascii": ["zmap", "zmap+", "zmap_ascii", "zmap-ascii", "zmap-asc", "zmap.*"],
-    "ijxyz": ["ijxyz"],
-    "petromod": ["pmd", "petromod"],
-    "xtg": ["xtg", "xtgeo", "xtgf", "xtg.*"],
-    "xyz": ["xyz", "poi", "pol"],
-    "rms_attr": ["rms_attr", "rms_attrs", "rmsattr.*"],
-}
 
 VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]
+
+
+class FileFormat(Enum):
+    RMSWELL = ["rmswell", "rmsw", "w", "bw"]
+    ROFF_BINARY = ["roff_binary", "roff", "roff_bin", "roff-bin", "roffbin", "roff.*"]
+    ROFF_ASCII = ["roff_ascii", "roff_asc", "roff-asc", "roffasc", "asc"]
+    EGRID = ["egrid", "eclipserun"]
+    FEGRID = ["fegrid"]
+    INIT = ["init"]
+    FINIT = ["finit"]
+    UNRST = ["unrst"]
+    FUNRST = ["funrst"]
+    GRDECL = ["grdecl"]
+    BGRDECL = ["bgrdecl"]
+    IRAP_BINARY = ["irap_binary", "irap_bin", "rms_binary", "irapbin", "gri"]
+    IRAP_ASCII = ["irap_ascii", "irap_asc", "rms_ascii", "irapasc", "fgr"]
+    HDF = ["hdf", "hdf5", "h5"]
+    SEGY = ["segy", "sgy", "segy.*"]
+    STORM = ["storm"]
+    ZMAP_ASCII = ["zmap", "zmap+", "zmap_ascii", "zmap-ascii", "zmap-asc", "zmap.*"]
+    IJXYZ = ["ijxyz"]
+    PETROMOD = ["pmd", "petromod"]
+    XTG = ["xtg", "xtgeo", "xtgf", "xtgcpprop", "xtg.*"]
+    XYZ = ["xyz", "poi", "pol"]
+    RMS_ATTR = ["rms_attr", "rms_attrs", "rmsattr.*"]
+    UNKNOWN = ["unknown"]
 
 
 class FileWrapper:
@@ -94,8 +96,8 @@ class FileWrapper:
 
     def __init__(
         self,
-        filelike: str | pathlib.Path | io.BytesIO | io.StringIO,
-        mode: Literal["rb", "wb"] = "rb",
+        filelike: FileLike,
+        mode: Literal["r", "w", "rb", "wb"] = "rb",
         obj: XTGeoObject = None,
     ) -> None:
         logger.debug("Init ran for FileWrapper")
@@ -107,24 +109,23 @@ class FileWrapper:
                 f"a str, pathlib.Path, io.BytesIO, or io.StringIO."
             )
 
-        self._tmpfile: str | None = None
-        self._delete_after = False  # delete file (e.g. tmp) afterwards
-        self._mode = mode
-
-        self._cfhandle = 0
-        self._cfhandlecount = 0
-
-        # for internal usage in tests; mimick window/mac with no fmemopen in C
-        self._fake_nofmem = False
-
         if isinstance(filelike, str):
             filelike = pathlib.Path(filelike)
 
         self._file: pathlib.Path | io.BytesIO | io.StringIO = filelike
         self._memstream = isinstance(self._file, (io.BytesIO, io.StringIO))
+        self._mode = mode
+        # String streams cannot be binary
+        if isinstance(self._file, io.StringIO) and mode in ("rb", "wb"):
+            self._mode = "r" if mode == "rb" else "w"
 
         if obj and not self._memstream:
             self.resolve_alias(obj)
+
+        self._cfhandle = 0
+        self._cfhandlecount = 0
+
+        self._tmpfile: str | None = None
 
         logger.debug("Ran init of %s, ID is %s", __name__, id(self))
 
@@ -219,7 +220,6 @@ class FileWrapper:
             if isinstance(self.file, (io.BytesIO, io.StringIO)):
                 return True
             return self.file.exists()
-
         # Writes and appends will always exist after writing
         return True
 
@@ -299,23 +299,6 @@ class FileWrapper:
             return False
 
         return True
-
-    def splitext(self, lower: bool = False) -> tuple[str, str]:
-        """Return file stem and suffix, always lowercase if lower is True."""
-        if self.memstream or isinstance(self.file, (io.BytesIO, io.StringIO)):
-            raise ValueError("Cannot split extension of an in-memory file")
-
-        logger.debug("Run splitext to get stem and suffix...")
-
-        stem = self.file.stem
-        suffix = self.file.suffix
-        suffix = suffix.replace(".", "")
-
-        if lower:
-            stem = stem.lower()
-            suffix = suffix.lower()
-
-        return stem, suffix
 
     def get_cfhandle(self) -> int:
         """
@@ -428,123 +411,139 @@ class FileWrapper:
         )
         return True
 
-    def detect_fformat(
-        self, details: bool | None = False, suffixonly: bool | None = False
-    ) -> str:
+    def fileformat(self, fileformat: str | None = None) -> FileFormat:
         """
-        Try to deduce format from looking at file signature.
+        Try to deduce format from looking at file suffix or contents.
 
         The file signature may be the initial part of the binary file/stream but if
         that fails, the file extension is used.
 
         Args:
-            details: If True, more info is added to the return string (useful for some
-                formats) e.g. "hdf RegularSurface xtgeo". Defaults for False.
-            suffixonly: If True, look at file suffix only. Defaults to False.
+            fileformat (str, None): An optional user-provided string indicating what
+              kind of file this is.
+
+        Raises:
+            A ValueError if an invalid or unsupported format is encountered.
 
         Returns:
-            A string with format specification, e.g. "hdf".
-
+            A FileFormat.
         """
+        if fileformat:
+            fileformat = fileformat.lower()
+        self._validate_fileformat(fileformat)
 
-        if not suffixonly:
-            fformat = self._detect_fformat_by_contents(details)
-            if fformat is not None:
-                return fformat
+        fmt = self._format_from_suffix(fileformat)
+        if fmt == FileFormat.UNKNOWN:
+            fmt = self._format_from_contents()
+        if fmt == FileFormat.UNKNOWN:
+            raise ValueError(
+                f"Unknown or unsupported file format for file {self._file}"
+            )
+        return fmt
 
-        # if looking at contents failed, look at extension
-        fmt = self._detect_format_by_extension()
-        return self._validate_format(fmt)
+    def _validate_fileformat(self, fileformat: str | None) -> None:
+        """Validate that the pass format string is one XTGeo supports.
 
-    def _detect_fformat_by_contents(self, details: bool | None = False) -> str | None:
-        # Try the read the N first bytes
-        maxbuf = 100
+        Raises:
+            ValueError: if format is unknown or unsupported
+        """
+        if not fileformat or fileformat == "guess":
+            return
+        for fmt in FileFormat:
+            if fileformat in fmt.value:
+                return
+            for regex in fmt.value:
+                if "*" in regex and re.compile(regex).match(fileformat):
+                    return
+        raise ValueError("Unknown or unsupported file format: {fileformat}")
+
+    def _format_from_suffix(self, fileformat: str | None = None) -> FileFormat:
+        """Detect format by the file suffix."""
+        if not fileformat or fileformat == "guess":
+            if isinstance(self.file, (io.BytesIO, io.StringIO)):
+                return FileFormat.UNKNOWN
+            fileformat = self.file.suffix[1:].lower()
+
+        for fmt in FileFormat:
+            if fileformat in fmt.value:
+                logger.debug("Extension hints: %s", fmt)
+                return fmt
+
+        # Fall back to regex
+        for fmt in FileFormat:
+            for regex in fmt.value:
+                if "*" in regex and re.compile(regex).match(fileformat):
+                    logger.debug("Extension by regexp hints %s", fmt)
+                    return fmt
+
+        return FileFormat.UNKNOWN
+
+    def _format_from_contents(self) -> FileFormat:
+        BUFFER_SIZE = 128
+        buffer = bytearray(BUFFER_SIZE)
 
         if isinstance(self.file, (io.BytesIO, io.StringIO)):
-            self.file.seek(0)
-            buf = self.file.read(maxbuf)
-            self.file.seek(0)
+            mark = self.file.tell()
+            # Encode to bytes if string
+            if isinstance(self.file, io.StringIO):
+                strbuf = self.file.read(BUFFER_SIZE)
+                buffer = bytearray(strbuf.encode())
+            else:
+                self.file.readinto(buffer)
+            self.file.seek(mark)
         else:
-            assert isinstance(self.file, pathlib.Path)
             if not self.exists():
                 raise ValueError(f"File {self.name} does not exist")
             with open(self.file, "rb") as fhandle:
-                buf = fhandle.read(maxbuf)
-
-        if not isinstance(buf, bytes):
-            return None
+                fhandle.readinto(buffer)
 
         # HDF format, different variants
-        if len(buf) >= 4:
-            _, hdf = struct.unpack("b 3s", buf[:4])
+        if len(buffer) >= 4:
+            _, hdf = struct.unpack("b 3s", buffer[:4])
             if hdf == b"HDF":
                 logger.debug("Signature is hdf")
-
-                main = self._validate_format("hdf")
-                fmt = ""
-                provider = ""
-                if details:
-                    with h5py.File(self.file, "r") as hstream:
-                        for xtgtype in ["RegularSurface", "Well", "CornerPointGrid"]:
-                            if xtgtype in hstream:
-                                fmt = xtgtype
-                                grp = hstream.require_group(xtgtype)
-                                try:
-                                    provider = grp.attrs["provider"]
-                                except KeyError:
-                                    provider = "unknown"
-                                break
-
-                    return f"{main} {fmt} {provider}"
-                return main
+                return FileFormat.HDF
 
         # Irap binary regular surface format
-        if len(buf) >= 8:
-            fortranblock, gricode = struct.unpack(">ii", buf[:8])
+        if len(buffer) >= 8:
+            fortranblock, gricode = struct.unpack(">ii", buffer[:8])
             if fortranblock == 32 and gricode == -996:
                 logger.debug("Signature is irap binary")
-                return self._validate_format("irap_binary")
+                return FileFormat.IRAP_BINARY
 
         # Petromod binary regular surface
-        if b"Content=Map" in buf and b"DataUnitDistance" in buf:
+        if b"Content=Map" in buffer and b"DataUnitDistance" in buffer:
             logger.debug("Signature is petromod")
-            return self._validate_format("petromod")
+            return FileFormat.PETROMOD
 
         # Eclipse binary 3D EGRID, look at FILEHEAD:
         #  'FILEHEAD'         100 'INTE'
         #   3        2016           0           0           0           0
         #  (ver)    (release)      (reserved)   (backw)    (gtype)      (dualporo)
-
-        if len(buf) >= 24:
-            fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
+        if len(buffer) >= 24:
+            fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buffer[:24])
             if fort1 == 16 and name == b"FILEHEAD" and num == 100 and fort2 == 16:
-                # Eclipse corner point EGRID
                 logger.debug("Signature is egrid")
-                return self._validate_format("egrid")
+                return FileFormat.EGRID
             # Eclipse binary 3D UNRST, look for SEQNUM:
             #  'SEQNUM'         1 'INTE'
             if fort1 == 16 and name == b"SEQNUM  " and num == 1 and fort2 == 16:
-                # Eclipse UNRST
                 logger.debug("Signature is unrst")
-                return self._validate_format("unrst")
+                return FileFormat.UNRST
             # Eclipse binary 3D INIT, look for INTEHEAD:
             #  'INTEHEAD'         411 'INTE'
             if fort1 == 16 and name == b"INTEHEAD" and num > 400 and fort2 == 16:
-                # Eclipse INIT
                 logger.debug("Signature is init")
+                return FileFormat.INIT
 
-                return self._validate_format("init")
-
-        if len(buf) >= 9:
-            name, _ = struct.unpack("8s b", buf[:9])
-            # ROFF binary 3D
+        if len(buffer) >= 9:
+            name, _ = struct.unpack("8s b", buffer[:9])
             if name == b"roff-bin":
                 logger.debug("Signature is roff_binary")
-                return self._validate_format("roff_binary")
-            # ROFF ascii 3D
+                return FileFormat.ROFF_BINARY
             if name == b"roff-asc":
                 logger.debug("Signature is roff_ascii")
-                return self._validate_format("roff_ascii")
+                return FileFormat.ROFF_ASCII
 
         # RMS well format (ascii)
         # 1.0
@@ -554,9 +553,9 @@ class FileWrapper:
         # The signature here is one float in first line with values 1.0; one string
         # in second line; and 3 or 4 items in the next (sometimes RKB is missing)
         try:
-            xbuf = buf.decode().split("\n")
+            xbuf = buffer.decode().split("\n")
         except UnicodeDecodeError:
-            return None
+            return FileFormat.UNKNOWN
 
         if (
             len(xbuf) >= 3
@@ -565,54 +564,6 @@ class FileWrapper:
             and len(xbuf[2]) >= 10
         ):
             logger.debug("Signature is rmswell")
-            return self._validate_format("rmswell")
+            return FileFormat.RMSWELL
 
-        return None
-
-    def _detect_format_by_extension(self) -> str:
-        """Detect format by extension."""
-        if self.memstream or isinstance(self.file, (io.BytesIO, io.StringIO)):
-            return "unknown"
-
-        suffix = self.file.suffix[1:].lower()
-
-        for fmt, variants in SUPPORTED_FORMATS.items():
-            if suffix in variants:
-                logger.debug("Extension hints: %s", fmt)
-                return fmt
-
-        # if none of these above are accepted, check regular expression
-        # (intentional to complete all variant in loop above first before trying re())
-        for fmt, variants in SUPPORTED_FORMATS.items():
-            for var in variants:
-                if "*" in var:
-                    pattern = re.compile(var)
-                    if pattern.match(suffix):
-                        logger.debug("Extension by regexp hints %s", fmt)
-                        return fmt
-
-        return "unknown"
-
-    @staticmethod
-    def _validate_format(fmt: str) -> str:
-        """Validate format."""
-        if fmt in SUPPORTED_FORMATS or fmt == "unknown":
-            return fmt
-        raise RuntimeError(f"Invalid format: {fmt}")
-
-    @staticmethod
-    def generic_format_by_proposal(propose: str) -> str:
-        """Get generic format by proposal."""
-        for fmt, variants in SUPPORTED_FORMATS.items():
-            if propose in variants:
-                return fmt
-
-        # if none of these above are accepted, check regular expression
-        for fmt, variants in SUPPORTED_FORMATS.items():
-            for var in variants:
-                if "*" in var:
-                    pattern = re.compile(var)
-                    if pattern.match(propose):
-                        return fmt
-
-        raise ValueError(f"Non-supportred file extension: {propose}")
+        return FileFormat.UNKNOWN
