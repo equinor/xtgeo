@@ -62,10 +62,11 @@ def cube_from_roxar(project, name, folder=None):
         mycube = xtgeo.cube_from_roxar(project, "DepthCube")
 
     """
-    obj = Cube(ncol=9, nrow=9, nlay=9, xinc=9.99, yinc=9.99, zinc=9.99)
-
-    obj.from_roxar(project, name, folder=folder)
-
+    # this is certainly hackish, and shall be rewritten to a proper class method
+    # -> replaces currently the from_roxar() method which is deprecated
+    obj = Cube(ncol=9, nrow=9, nlay=9, xinc=9.99, yinc=9.99, zinc=9.99)  # dummy
+    _cube_roxapi.import_cube_roxapi(obj, project, name, folder=folder)
+    obj._metadata.required = obj
     return obj
 
 
