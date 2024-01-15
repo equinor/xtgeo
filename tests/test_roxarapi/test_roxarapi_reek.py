@@ -34,6 +34,7 @@ PROJNAME = "tmp_project.rmsxxx"
 
 CUBEDATA1 = TPATH / "cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
 CUBENAME1 = "synth1"
+CUBENAME2 = "synth2"
 
 SURFTOPS1 = [
     TPATH / "surfaces/reek/1/topreek_rota.gri",
@@ -204,6 +205,21 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
     cube = xtgeo.cube_from_file(CUBEDATA1)
     cube.to_roxar(project, CUBENAME1, domain="depth")
 
+    # make a small synthetic cube with jumps in inline/crossline
+    cube2 = xtgeo.Cube(
+        ncol=4,
+        nrow=5,
+        nlay=3,
+        xinc=10,
+        yinc=12,
+        zinc=2,
+        values=99,
+        ilines=[12, 14, 16, 18],
+        xlines=[10030, 10040, 10050, 10060, 10070],
+        rotation=20,
+    )
+    cube2.to_roxar(project, CUBENAME2)
+
     # populate with surface data
     roxinstance.create_horizons_category(SURFCAT1)
     for num, name in enumerate(SURFNAMES1):
@@ -255,6 +271,18 @@ def test_rox_getset_cube(roxar_project):
     assert cube.values.mean() == pytest.approx(100.000718, abs=0.001)
     cube.to_roxar(roxar_project, CUBENAME1 + "_copy1")
     cube.to_roxar(roxar_project, CUBENAME1 + "_copy2", folder="somefolder")
+
+
+@pytest.mark.requires_roxar
+def test_rox_getset_cube_with_ilxl_jumps(roxar_project, tmp_path):
+    """Get a cube from a RMS project which has jumps in inline/xline"""
+    cube = xtgeo.cube_from_roxar(roxar_project, CUBENAME2)
+    cube.to_roxar(roxar_project, CUBENAME2 + "_copy1")
+    cube2 = xtgeo.cube_from_roxar(roxar_project, CUBENAME2 + "_copy1")
+    cube2.to_file(tmp_path / "cube2.segy")
+    cube3 = xtgeo.cube_from_file(tmp_path / "cube2.segy")
+    assert cube3.ilines.tolist() == [12, 14, 16, 18]
+    assert cube3.xlines.tolist() == [10030, 10040, 10050, 10060, 10070]
 
 
 @pytest.mark.requires_roxar
@@ -500,6 +528,8 @@ def test_rox_get_modify_set_points_from_horizons(roxar_project):
 @pytest.mark.requires_roxar
 def test_check_presence_in_project_errors(roxar_project):
     # test category not existing in project
+
+    rox = xtgeo.RoxUtils(roxar_project)
     with pytest.raises(ValueError) as exc_info:
         name = "I_dont_exist"
         xtgeo.points_from_roxar(rox.project, name, POINTSCAT1, stype="horizons")
