@@ -38,7 +38,6 @@
 #include <xtgeo/xtgeo.h>
 
 #include "common.h"
-#include "logger.h"
 
 void
 grdcp3d_corners(long ic,
@@ -51,7 +50,7 @@ grdcp3d_corners(long ic,
                 long ncoordin,
                 float *zcornsv,
                 long nzcornin,
-                double corners[])
+                double *corners)
 
 {
     double coor[4][6];
@@ -61,7 +60,6 @@ grdcp3d_corners(long ic,
     long nnrow = nrow + 1;
     long nnlay = nlay + 1;
     /* each cell is defined by 4 pillars */
-
     long nn = 0;
     long i, j, k;
     for (j = 0; j < 2; j++) {

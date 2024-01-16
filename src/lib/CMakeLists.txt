@@ -19,12 +19,15 @@ if(MSVC)
   set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
   set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
 else()
-  set(XTGFLAGS -Wall -Wno-unused-but-set-variable -fPIC)
-  set(CXTGEOFLAGS -Wl,--no-undefined)
+  set(XTGFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
+  set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef)
 endif()
 
 pybind11_add_module(_internal
-  "${SRC}/grid3d/cellvol.cpp"
+  "${SRC}/init.cpp"
+  "${SRC}/common/geometry.cpp"
+  "${SRC}/grid3d/cell.cpp"
+  "${SRC}/grid3d/grid.cpp"
   ${SOURCES})
 target_include_directories(_internal
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)

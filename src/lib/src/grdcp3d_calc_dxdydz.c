@@ -32,8 +32,6 @@
 
 #include <xtgeo/xtgeo.h>
 
-#include "logger.h"
-
 /**
  * The planar map of a corner line maps height to coordinates in the plane,
  * i.e.

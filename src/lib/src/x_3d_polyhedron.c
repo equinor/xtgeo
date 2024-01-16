@@ -1,12 +1,12 @@
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <xtgeo/xtgeo.h>
 
 #include "common.h"
-#include "logger.h"
 
-int TETRACOMBS[4][6][4] = {
+const int TETRACOMBS[4][6][4] = {
     // cell top/base hinge is splittet 0 - 3 / 4 - 7
     {
       // lower right common vertex 5
@@ -56,19 +56,15 @@ int TETRACOMBS[4][6][4] = {
 
 };
 
-static double
-_x_hexahedron_dz(double *corners)
+static inline double
+x_hexahedron_dz(double *corners)
 {
     // TODO: This does not account for overall zflip ala Petrel or cells that
     // are malformed
-
-    int ico;
     double dzsum = 0.0;
-    for (ico = 0; ico < 4; ico++) {
-        double zcsum = fabs(corners[3 * ico + 2] - corners[3 * ico + 2 + 12]);
-        dzsum += zcsum;
+    for (int i = 0; i < 4; i++) {
+        dzsum += fabs(corners[3 * i + 2] - corners[3 * i + 2 + 12]);
     }
-
     return dzsum / 4.0;
 }
 
@@ -84,11 +80,10 @@ _x_point_outside_hexahedron_simple(double px, double py, double pz, double *corn
     double ymax = VERYLARGENEGATIVE;
     double zmax = VERYLARGENEGATIVE;
 
-    int nc;
     double xarr[8];
     double yarr[8];
     double zarr[8];
-    for (nc = 0; nc < 8; nc++) {
+    for (int nc = 0; nc < 8; nc++) {
         xarr[nc] = corners[0 + nc * 3];
         yarr[nc] = corners[1 + nc * 3];
         zarr[nc] = corners[2 + nc * 3];
@@ -140,15 +135,13 @@ _x_point_outside_hexahedron_simple(double px, double py, double pz, double *corn
 double
 x_tetrahedron_volume(double *pv, long ndim)
 {
-    double a, b, c, d, e, f;
-
     // length of each edge
-    a = x_vector_len3dx(pv[0], pv[1], pv[2], pv[3], pv[4], pv[5]);
-    b = x_vector_len3dx(pv[0], pv[1], pv[2], pv[6], pv[7], pv[8]);
-    c = x_vector_len3dx(pv[0], pv[1], pv[2], pv[9], pv[10], pv[11]);
-    d = x_vector_len3dx(pv[3], pv[4], pv[5], pv[6], pv[7], pv[8]);
-    e = x_vector_len3dx(pv[3], pv[4], pv[5], pv[9], pv[10], pv[11]);
-    f = x_vector_len3dx(pv[6], pv[7], pv[8], pv[9], pv[10], pv[11]);
+    double a = x_vector_len3dx(pv[0], pv[1], pv[2], pv[3], pv[4], pv[5]);
+    double b = x_vector_len3dx(pv[0], pv[1], pv[2], pv[6], pv[7], pv[8]);
+    double c = x_vector_len3dx(pv[0], pv[1], pv[2], pv[9], pv[10], pv[11]);
+    double d = x_vector_len3dx(pv[3], pv[4], pv[5], pv[6], pv[7], pv[8]);
+    double e = x_vector_len3dx(pv[3], pv[4], pv[5], pv[9], pv[10], pv[11]);
+    double f = x_vector_len3dx(pv[6], pv[7], pv[8], pv[9], pv[10], pv[11]);
 
     if (a < FLOATEPS || b < FLOATEPS || c < FLOATEPS || d < FLOATEPS || e < FLOATEPS ||
         f < FLOATEPS)
@@ -169,91 +162,6 @@ x_tetrahedron_volume(double *pv, long ndim)
         return 0.0;
 
     vol = sqrt(vol) / 12.0;
-
-    return vol;
-}
-
-/*
- ***************************************************************************************
- *
- * NAME:
- *    x_hexahedron_volume.c
- *
- *
- * DESCRIPTION:
- *    Estimate the volume of a hexahedron i.e. a cornerpoint cell. This is a nonunique
- *    entity, but it is approximated by computing two different ways of top/base
- *    splitting and average those.
- *
- *    6          7
- *     2        3
- *      |------|   Example of split along
- *      |    / |   0 - 3 at top and 4 - 7
- *      |   /  |   at base. Alternative is
- *      |  /   |   1 - 2 at top and 5 - 6
- *      | /    |   at base
- *      |------|
- *     0       1
- *    4         5
- *
- *    Note however... this fails if the cell is concave and convace cells needs special
- *    attention
- *
- *
- * ARGUMENTS:
- *   corners       i     a [24] array with X Y Z of 8 vertices, x1, y1, z1, x2, y2, ...
- *                        arranged as usual for corner point cells
- *   precision     i     Use 2, 4, .... numbers of ways to compute tetrahedrons, and a
- *                       higher number will increate CPU time
- * RETURNS:
- *    Volume
- *
- * LICENCE:
- *    cf. XTGeo LICENSE
- ***************************************************************************************
- */
-
-double
-x_hexahedron_volume(double *corners, long ndim, int precision)
-{
-
-    // first avoid cells that collapsed in some way
-    if (_x_hexahedron_dz(corners) < FLOATEPS) {
-        return 0.0;
-    }
-
-    double **crn = x_allocate_2d_double(8, 3);
-
-    int i, j;
-    int ic = 0;
-    for (i = 0; i < 8; i++) {
-        for (j = 0; j < 3; j++) {
-            crn[i][j] = corners[ic++];
-        }
-    }
-
-    double thd[12];
-
-    double vol = 0.0;
-    int icset;
-    int nalt = precision;
-    int ialt;
-    for (ialt = 1; ialt <= nalt; ialt++) {
-        double altvol = 0.0;
-        for (icset = 0; icset < 6; icset++) {
-            ic = 0;
-            for (i = 0; i < 4; i++) {
-                thd[ic + 0] = crn[TETRACOMBS[ialt - 1][icset][i]][0];
-                thd[ic + 1] = crn[TETRACOMBS[ialt - 1][icset][i]][1];
-                thd[ic + 2] = crn[TETRACOMBS[ialt - 1][icset][i]][2];
-                ic += 3;
-            }
-            altvol += x_tetrahedron_volume(thd, 12);
-        }
-        vol = (vol * (ialt - 1) + altvol) / ialt;
-    }
-
-    x_free_2d_double(crn);
 
     return vol;
 }
@@ -406,7 +314,7 @@ _x_point_in_hexahedron_v1(double x0, double y0, double z0, double *corners, long
 {
 
     // first avoid cells that collapsed in some way
-    if (_x_hexahedron_dz(corners) < FLOATEPS) {
+    if (x_hexahedron_dz(corners) < FLOATEPS) {
         return 0;
     }
 
@@ -415,8 +323,8 @@ _x_point_in_hexahedron_v1(double x0, double y0, double z0, double *corners, long
         return 0;
     }
 
-    double **crn = x_allocate_2d_double(8, 3);
-    int **cset = x_allocate_2d_int(4, 5);
+    double crn[8][3];
+    int cset[4][5];
 
     int i, j;
     int ic = 0;
@@ -537,9 +445,6 @@ _x_point_in_hexahedron_v1(double x0, double y0, double z0, double *corners, long
 
     int status = status1 + status2;
 
-    x_free_2d_double(crn);
-    x_free_2d_int(cset);
-
     return status;
 }
 
@@ -549,7 +454,7 @@ _x_point_in_hexahedron_v2(double x0, double y0, double z0, double *corners, long
 {
 
     // first avoid cells that collapsed in some way
-    if (_x_hexahedron_dz(corners) < FLOATEPS) {
+    if (x_hexahedron_dz(corners) < FLOATEPS) {
         return 0;
     }
 
@@ -558,7 +463,7 @@ _x_point_in_hexahedron_v2(double x0, double y0, double z0, double *corners, long
         return 0;
     }
 
-    double **crn = x_allocate_2d_double(8, 3);
+    double crn[8][3];
 
     int i, j;
     int ic = 0;
@@ -588,9 +493,6 @@ _x_point_in_hexahedron_v2(double x0, double y0, double z0, double *corners, long
             }
         }
     }
-
-    x_free_2d_double(crn);
-
     return status * 50;
 }
 
