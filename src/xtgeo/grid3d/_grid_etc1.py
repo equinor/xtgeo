@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from packaging.version import parse as versionparse
 
-import xtgeo._internal
+import xtgeo._internal as _internal
 from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
@@ -198,7 +198,7 @@ def get_dy(
 
 
 def get_bulk_volume(
-    self: Grid,
+    grid: Grid,
     name: str = "bulkvol",
     asmasked: bool = True,
     precision: Literal[1, 2, 4] = 2,
@@ -206,34 +206,29 @@ def get_bulk_volume(
     """Get cell bulk volume as a GridProperty() instance."""
     if precision not in (1, 2, 4):
         raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
+    grid._xtgformat2()
 
-    self._xtgformat2()
-
-    bulk = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        name=name,
-        discrete=False,
-    )
-
-    bval = xtgeo._internal.grid3d_cellvol(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv.ravel(),
-        self._zcornsv.ravel(),
-        self._actnumsv.ravel(),
+    bulk_values = _internal.grid3d.grid_cell_volumes(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv.ravel(),
+        grid._zcornsv.ravel(),
+        grid._actnumsv.ravel(),
         precision,
         asmasked,
     )
-
     if asmasked:
-        bval = np.ma.masked_greater(bval, UNDEF_LIMIT)
+        bulk_values = np.ma.masked_greater(bulk_values, UNDEF_LIMIT)
 
-    bulk.values = bval
-
-    return bulk
+    return GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name=name,
+        values=bulk_values,
+        discrete=False,
+    )
 
 
 def get_ijk(
@@ -342,9 +337,9 @@ def get_ijk_from_points(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        self._actnumsv.ravel(),
         self._tmp["onegrid"]._zcornsv,
         actnumoption,
         arrsize,
@@ -448,54 +443,37 @@ def get_xyz(
 
 
 def get_xyz_cell_corners(
-    self: Grid,
+    grid: Grid,
     ijk: tuple[int, int, int] = (1, 1, 1),
     activeonly: bool = True,
     zerobased: bool = False,
 ) -> tuple[int, ...] | None:
     """Get X Y Z cell corners for one cell."""
-    self._xtgformat1()
-
+    grid._xtgformat2()
     i, j, k = ijk
-
     shift = 1 if zerobased else 0
 
     if activeonly:
-        actnum = self.get_actnum()
+        actnum = grid.get_actnum()
         iact = actnum.values[i - 1 + shift, j - 1 + shift, k - 1 + shift]
         if np.all(iact == 0):
             return None
 
-    pcorners = _cxtgeo.new_doublearray(24)
-
-    if self._xtgformat == 1:
-        logger.info("Use xtgformat 1...")
-        _cxtgeo.grd3d_corners(
-            i + shift,
-            j + shift,
-            k + shift,
-            self.ncol,
-            self.nrow,
-            self.nlay,
-            self._coordsv,
-            self._zcornsv,
-            pcorners,
-        )
-    else:
-        logger.info("Use xtgformat 2...")
-        _cxtgeo.grdcp3d_corners(
-            i + shift - 1,
-            j + shift - 1,
-            k + shift - 1,
-            self.ncol,
-            self.nrow,
-            self.nlay,
-            self._coordsv,
-            self._zcornsv,
-            pcorners,
-        )
-
-    return tuple(_cxtgeo.doublearray_getitem(pcorners, i) for i in range(24))
+    corners = _internal.grid3d.cell_corners(
+        i + shift - 1,
+        j + shift - 1,
+        k + shift - 1,
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv.ravel(),
+        grid._zcornsv.ravel(),
+    )
+    # Existing functionality relies on the grid being in xtgformat1 after this
+    # function returns. Most probably as a result of some invocation of
+    # `estimate_flip` or `ijk_handedness` or `reverse_row_axis` somewhere.
+    grid._xtgformat1()
+    return tuple(corners)
 
 
 def get_xyz_corners(
@@ -647,58 +625,37 @@ def get_vtk_geometries(self: Grid) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 def get_cell_volume(
-    self: Grid,
+    grid: Grid,
     ijk: tuple[int, int, int] = (1, 1, 1),
     activeonly: bool = True,
     zerobased: bool = False,
     precision: Literal[1, 2, 4] = 2,
 ) -> float | None:
     """Get bulk cell volume for one cell."""
-    self._xtgformat1()
-
-    i, j, k = ijk
-
     if precision not in (1, 2, 4):
         raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
+    grid._xtgformat2()
 
+    i, j, k = ijk
     shift = 1 if zerobased else 0
 
     if activeonly:
-        actnum = self.get_actnum()
+        actnum = grid.get_actnum()
         iact = actnum.values[i - 1 + shift, j - 1 + shift, k - 1 + shift]
         if np.all(iact == 0):
             return None
 
-    pcorners = _cxtgeo.new_doublearray(24)
-
-    if self._xtgformat == 1:
-        logger.info("Use xtgformat 1...")
-        _cxtgeo.grd3d_corners(
-            i + shift,
-            j + shift,
-            k + shift,
-            self.ncol,
-            self.nrow,
-            self.nlay,
-            self._coordsv,
-            self._zcornsv,
-            pcorners,
-        )
-    else:
-        logger.info("Use xtgformat 2...")
-        _cxtgeo.grdcp3d_corners(
-            i + shift - 1,
-            j + shift - 1,
-            k + shift - 1,
-            self.ncol,
-            self.nrow,
-            self.nlay,
-            self._coordsv,
-            self._zcornsv,
-            pcorners,
-        )
-
-    return _cxtgeo.x_hexahedron_volume(pcorners, 24, precision)
+    corners = _internal.grid3d.cell_corners(
+        i + shift - 1,
+        j + shift - 1,
+        k + shift - 1,
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv,
+        grid._zcornsv,
+    )
+    return _internal.geometry.hexahedron_volume(corners, precision)
 
 
 def get_layer_slice(
@@ -1172,18 +1129,18 @@ def reverse_row_axis(
     self: Grid, ijk_handedness: Literal["left", "right"] | None = None
 ) -> None:
     """Reverse rows (aka flip) for geometry and assosiated properties."""
-    self._xtgformat1()
-
     if ijk_handedness == self.ijk_handedness:
         return
+
+    self._xtgformat1()
 
     ier = _cxtgeo.grd3d_reverse_jrows(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        self._actnumsv.ravel(),
     )
 
     if ier != 0:

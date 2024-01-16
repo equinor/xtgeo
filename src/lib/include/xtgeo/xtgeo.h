@@ -1,17 +1,22 @@
 #ifndef XTGEO_H_
 #define XTGEO_H_
 
-/*
- * -------------------------------------------------------------------------------------
- * Python stuff SWIG (examples...; see cxtgeo.i):
- * -------------------------------------------------------------------------------------
- * int    *swig_int_out_p1,         // Value of output pointers
- * double *swig_np_dbl_aout_v1,     // *p_xx_v to update argout for numpy
- * long   n_swig_np_dbl_aout_v1,    // length of nmpy array
- *
- * char    *swig_bnd_char_10k,      // bounded characters up to 10000
- *
- */
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
+    /*
+     * -------------------------------------------------------------------------------------
+     * Python stuff SWIG (examples...; see cxtgeo.i):
+     * -------------------------------------------------------------------------------------
+     * int    *swig_int_out_p1,         // Value of output pointers
+     * double *swig_np_dbl_aout_v1,     // *p_xx_v to update argout for numpy
+     * long   n_swig_np_dbl_aout_v1,    // length of nmpy array
+     *
+     * char    *swig_bnd_char_10k,      // bounded characters up to 10000
+     *
+     */
 
 #define _GNU_SOURCE 1
 
@@ -85,11 +90,6 @@
 /* eclipse and roff binary read max keywords and dates */
 #define MAXKEYWORDS 1000000
 #define MAXDATES 1000
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif  // __cplusplus
 
     /*
      *======================================================================================
@@ -246,8 +246,6 @@ extern "C"
                                   double *swig_dbl_out_p1,
                                   double *swig_dbl_out_p2,
                                   int degrees);
-
-    double x_hexahedron_volume(double *corners, long ndim, int presision);
 
     /*
      * =====================================================================================

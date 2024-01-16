@@ -2,6 +2,7 @@
 #define COMMON_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #define FORTRANRECLEN 4000 /* Max record length of Fortran files */
@@ -32,10 +33,6 @@ extern "C"
     double **x_allocate_2d_double(int n1, int n2);
 
     void x_free_2d_double(double **ptr_array);
-
-    int **x_allocate_2d_int(int n1, int n2);
-
-    void x_free_2d_int(int **ptr_array);
 
     bool **x_allocate_2d_bool(int n1, int n2);
 
