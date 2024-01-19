@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 from scipy.spatial import Delaunay, cKDTree
+from shapely.geometry import MultiLineString
+from shapely.ops import polygonize
 
 import xtgeo
 from xtgeo.common import null_logger
@@ -133,14 +135,15 @@ def _create_boundary_polygon(
             "Your alpha or alpha_factor value is too low, try increasing it!"
         )
 
-    # sort edges and group into separate polygons
-    sorted_edges = _sort_edges_and_split_in_polygons(edges)
+    polygons = _get_shapely_polygons_from_edges(coords, edges)
+
+    # sort polygons by their size to get the largest polygons first
+    sorted(polygons, key=lambda pol: len(pol.exterior.coords), reverse=True)
 
     data = []
-    for pol, pol_edges in enumerate(sorted_edges):
-        for edg_start, edg_stop in pol_edges:
-            data.append(list(coords[edg_start]) + [pol])
-            data.append(list(coords[edg_stop]) + [pol])
+    for polid, pol in enumerate(polygons):
+        for coord in pol.exterior.coords:
+            data.append(list(coord) + [polid])
 
     return data
 
@@ -200,31 +203,10 @@ def _alpha_shape(points, alpha):
     return edges
 
 
-def _sort_edges_and_split_in_polygons(edges):
-    """Divide the edges list into polygons and sort them to be connected."""
-    edges = list(edges)
-    sorted_pol_lines = {}
-    pol_nr = 1
-
-    while edges:
-        iter_edges = iter(edges)
-
-        if pol_nr not in sorted_pol_lines:
-            sorted_pol_lines[pol_nr] = []
-            edge = edges[-1]
-        else:
-            prev_edgepoint = sorted_pol_lines[pol_nr][-1][1]
-            edge = next((x for x in iter_edges if x[0] == prev_edgepoint), None)
-
-        # if edge is None it belongs to a new polygon
-        if edge is not None:
-            edges.remove(edge)
-            sorted_pol_lines[pol_nr].append(edge)
-        else:
-            pol_nr += 1
-
-    # return list of polygons sorted on the length of points
-    return sorted(sorted_pol_lines.values(), key=len, reverse=True)
+def _get_shapely_polygons_from_edges(coords, edges):
+    """Split and connect edges into shapely polygons"""
+    lines = MultiLineString([(coords[e[0]], coords[e[1]]) for e in edges])
+    return polygonize(lines)
 
 
 def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
