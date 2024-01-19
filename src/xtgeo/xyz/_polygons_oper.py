@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 from scipy.spatial import Delaunay, cKDTree
-from shapely.geometry import MultiLineString
 from shapely.ops import polygonize
 
 import xtgeo
@@ -205,7 +204,7 @@ def _alpha_shape(points, alpha):
 
 def _get_shapely_polygons_from_edges(coords, edges):
     """Split and connect edges into shapely polygons"""
-    lines = MultiLineString([(coords[e[0]], coords[e[1]]) for e in edges])
+    lines = sg.MultiLineString([(coords[e[0]], coords[e[1]]) for e in edges])
     return polygonize(lines)
 
 
