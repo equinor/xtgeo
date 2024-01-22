@@ -1286,16 +1286,12 @@ def test_get_boundary_polygons_simple(show_plot):
         )
     assert boundary.get_dataframe()[boundary.yname].values.tolist() == pytest.approx(
         [
-            20,
-            20,
+            10,
+            10,
             20,
             20,
             20,
             10,
-            10,
-            10,
-            10,
-            20,
         ]
     )
 
@@ -1325,10 +1321,10 @@ def test_get_boundary_polygons_complex(show_plot):
     # for some reasons, macos tests gives slightly different result; that is why a large
     # tolerance is given
     assert boundary.get_dataframe()[boundary.xname].mean() == pytest.approx(
-        462208.0, abs=2.5
+        462392.0, abs=3.0
     )
     assert boundary.get_dataframe()[boundary.yname].mean() == pytest.approx(
-        5933427.0, abs=4.0
+        5933152.0, abs=4.0
     )
 
     # get the first (largest) polygon

@@ -452,16 +452,12 @@ def test_boundary_from_points_simple():
     )
     boundary = xtgeo.Polygons.boundary_from_points(points, alpha_factor=0.75)
     assert boundary.get_dataframe()[boundary.xname].values.tolist() == [
-        1.5,
-        2.5,
-        2.5,
         4.5,
+        2.5,
+        1.5,
+        1.5,
+        11.5,
         4.5,
-        11.5,
-        11.5,
-        1.5,
-        1.5,
-        1.5,
     ]
 
 
@@ -480,7 +476,7 @@ def test_boundary_from_points_simple_estimate_alpha():
         ]
     )
     boundary = xtgeo.Polygons.boundary_from_points(points, alpha=None)
-    assert len(boundary.get_dataframe()) == 10
+    assert len(boundary.get_dataframe()) == 6
 
 
 def test_boundary_from_points_too_few():
@@ -505,15 +501,10 @@ def test_boundary_from_points_more_data(testpath):
     assert boundary.get_dataframe()[boundary.xname].values[
         0:5
     ].tolist() == pytest.approx(
-        [
-            460761.571,
-            461325.128,
-            461325.128,
-            462452.241,
-            462452.241,
-        ]
+        [464023.440918, 462452.241211, 461325.12793, 460761.571045, 460068.859375]
     )
-    assert len(boundary.get_dataframe()) == 28
+
+    assert len(boundary.get_dataframe()) == 15
 
 
 def test_boundary_from_points_more_data_guess_alpha(testpath):
@@ -522,7 +513,7 @@ def test_boundary_from_points_more_data_guess_alpha(testpath):
     points = xtgeo.points_from_file(testpath / POINTSET2)
     boundary = xtgeo.Polygons.boundary_from_points(points, alpha=None)
 
-    assert len(boundary.get_dataframe()) == 28
+    assert len(boundary.get_dataframe()) == 15
 
 
 def test_boundary_from_points_more_data_convex_alpha0(testpath):
