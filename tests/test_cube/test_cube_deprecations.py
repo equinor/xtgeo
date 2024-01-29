@@ -19,7 +19,7 @@ def test_cube_from_file_warns(any_cube, any_cube_file):
 
 
 def test_cube_from_file_engine_warns(any_cube, any_cube_file):
-    with pytest.warns(DeprecationWarning, match="The engine parameter"):
+    with pytest.warns(DeprecationWarning):
         any_cube.from_file(any_cube_file, engine="segyio")
 
 

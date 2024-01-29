@@ -154,7 +154,7 @@ def test_transform_map_relative_no_double(egrid):
 
 @given(xtgeo_compatible_egrids())
 def test_conversion_warning(egrid):
-    with pytest.warns(None) as warnlog:
+    with pytest.warns(UserWarning) as warnlog:
         egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP)
 
     axis_unit_warnings = [w for w in warnlog if "Axis units" in str(w.message)]
