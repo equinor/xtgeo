@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
+import functools
+from datetime import datetime
 from typing import Any, Literal, Optional
 
 import numpy as np
@@ -12,10 +15,21 @@ import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.pandas_extensions import LazyArray
 from xtgeo.roxutils import RoxUtils
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
+
+
+@contextlib.contextmanager
+def timer():
+    enter = datetime.now()
+    done = None
+    try:
+        yield lambda: ((done or datetime.now()) - enter).total_seconds()
+    finally:
+        done = datetime.now()
 
 
 # Well() instance: self
@@ -74,22 +88,42 @@ def _roxapi_import_well(
     wlogrecords = {}
 
     # get logs repr trajecetry
-    mdlogname, logs = _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey)
-
+    mdlogname, nele, logs = _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey)
     if lognames and lognames == "all":
         for logcurv in roxlrun.log_curves:
-            lname = logcurv.name
-            logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
+            # logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
+            logs[logcurv.name] = functools.partial(
+                _get_roxlog,
+                wlogtypes,
+                wlogrecords,
+                roxlrun,
+                logcurv.name,
+            )
     elif lognames:
         for lname in lognames:
             if lname in roxlrun.log_curves:
-                logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
+                # logs[lname] = _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname)
+                logs[lname] = functools.partial(
+                    _get_roxlog,
+                    wlogtypes,
+                    wlogrecords,
+                    roxlrun,
+                    lname,
+                )
             else:
                 if lognames_strict:
                     validlogs = [logname.name for logname in roxlrun.log_curves]
                     raise ValueError(
                         f"Could not get log name {lname}, validlogs are {validlogs}"
                     )
+    # for logcurv in roxlrun.log_curves:
+    # logs[logcurv.name] = functools.partial(
+    #     _get_roxlog,
+    #     wlogtypes,
+    #     wlogrecords,
+    #     roxlrun,
+    #     logcurv.name,
+    # )
 
     return {
         "rkb": roxwell.rkb,
@@ -99,42 +133,45 @@ def _roxapi_import_well(
         "wlogtypes": wlogtypes,
         "wlogrecords": wlogrecords,
         "mdlogname": mdlogname,
-        "df": pd.DataFrame.from_dict(logs),
+        "df": pd.DataFrame.from_dict({k: LazyArray(v, nele) for k, v in logs.items()}),
     }
 
 
-def _roxapi_traj(roxtraj, roxlrun, inclmd, inclsurvey):  # pragma: no cover
+def _roxapi_traj(roxtraj, roxlrun, inclmd: bool, inclsurvey: bool):  # pragma: no cover
     """Get trajectory in ROXAPI."""
 
-    surveyset = roxtraj.survey_point_series
-    measured_depths = roxlrun.get_measured_depths()
+    surveyset_ = None
+    measured_depths_ = None
+    shape = next(roxlrun.log_curves.values()).shape[0]
+    interpolated_survey_points_ = np.zeros((shape, 6))
 
-    mds = measured_depths.tolist()
-
-    geo_array_shape = (len(measured_depths), 6)
-    geo_array = np.empty(geo_array_shape)
-
-    for ino, mdv in enumerate(mds):
-        try:
-            geo_array[ino] = surveyset.interpolate_survey_point(mdv)
-        except ValueError:
-            logger.warning("MD is %s, surveyinterpolation fails, CHECK RESULT!", mdv)
-            geo_array[ino] = geo_array[ino - 1]
+    def interpolate_survey_point(idx: int):
+        nonlocal surveyset_, measured_depths_
+        if surveyset_ is None and measured_depths_ is None:
+            surveyset_ = roxtraj.survey_point_series
+            measured_depths_ = roxlrun.get_measured_depths()
+            for i, p in enumerate(measured_depths_):
+                interpolated_survey_points_[i] = surveyset_.interpolate_survey_point(p)
+        return interpolated_survey_points_[:, idx]
 
     logs = {}
+
+    # Callabole key/values(callabole)
+    # XYZ must be first, see _ensure_consistency_attr_types(...)
+    logs[_AttrName.XNAME.value] = lambda: interpolate_survey_point(3)
+    logs[_AttrName.YNAME.value] = lambda: interpolate_survey_point(4)
+    logs[_AttrName.ZNAME.value] = lambda: interpolate_survey_point(5)
+
     mdlogname = None
 
-    logs[_AttrName.XNAME.value] = geo_array[:, 3]
-    logs[_AttrName.YNAME.value] = geo_array[:, 4]
-    logs[_AttrName.ZNAME.value] = geo_array[:, 5]
     if inclmd or inclsurvey:
-        logs[_AttrName.M_MD_NAME.value] = geo_array[:, 0]
+        logs[_AttrName.M_MD_NAME.value] = lambda: interpolate_survey_point(0)
         mdlogname = _AttrName.M_MD_NAME.value
     if inclsurvey:
-        logs[_AttrName.M_INCL_NAME.value] = geo_array[:, 1]
-        logs[_AttrName.M_AZI_NAME.value] = geo_array[:, 2]
+        logs[_AttrName.M_INCL_NAME.value] = lambda: interpolate_survey_point(1)
+        logs[_AttrName.M_AZI_NAME.value] = lambda: interpolate_survey_point(2)
 
-    return mdlogname, logs
+    return shape, mdlogname, logs
 
 
 def _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname):  # pragma: no cover
