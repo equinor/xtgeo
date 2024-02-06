@@ -299,6 +299,6 @@ class RoffParameter:
             nz=roff["nz"],
             name=roff["name"],
             values=roff["values"],
-            code_names=roff.get("code_names", None),
-            code_values=roff.get("code_values", None),
+            code_names=roff.get("code_names"),
+            code_values=roff.get("code_values"),
         )
