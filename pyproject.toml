@@ -134,6 +134,9 @@ doctest_optionflags = "ELLIPSIS"
 write_to = "src/xtgeo/common/version.py"
 
 [tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
 ignore = [
     "C901",
 ]
@@ -148,11 +151,7 @@ select = [
     "RSE",
     "SIM",
     "W",
-    # "C90",
-    # "NPY",
-    # "PD",
-    # "PL",
 ]
-line-length = 88
+
 [tool.ruff.lint.isort]
 combine-as-imports = true
