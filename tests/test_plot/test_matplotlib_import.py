@@ -50,12 +50,14 @@ def test_that_mpl_dynamically_imports():
     assert "matplotlib.pyplot" in sys.modules
 
 
-@mock.patch.object(sys, "platform", "linux")
+@mock.patch("platform.system", return_value="Linux")
 @mock.patch.dict(sys.modules)
 @mock.patch.dict(os.environ, {"LSB_JOBID": "1"})
-def test_that_agg_backend_set_when_lsf_job():
+def test_that_agg_backend_set_when_lsf_job(mock_system):
     _clear_state(sys, os)
     import xtgeo  # noqa
+
+    mock_system.assert_called_once()
 
     try:
         import roxar  # noqa
@@ -63,6 +65,28 @@ def test_that_agg_backend_set_when_lsf_job():
         assert os.environ.get("MPLBACKEND", "") == ""
     except ImportError:
         assert os.environ.get("MPLBACKEND", "") == "Agg"
+
+
+@mock.patch("platform.system", return_value="Windows")
+@mock.patch.dict(sys.modules)
+def test_that_agg_backend_not_set_windows(mock_system):
+    _clear_state(sys, os)
+    import xtgeo  # noqa
+
+    mock_system.assert_called_once()
+
+    assert os.environ.get("MPLBACKEND", "") == ""
+
+
+@mock.patch("platform.system", return_value="Darwin")
+@mock.patch.dict(sys.modules)
+def test_that_agg_backend_not_set_darwin(mock_system):
+    _clear_state(sys, os)
+    import xtgeo  # noqa
+
+    mock_system.assert_called_once()
+
+    assert os.environ.get("MPLBACKEND", "") == ""
 
 
 @mock.patch.dict(sys.modules)

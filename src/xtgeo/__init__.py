@@ -1,10 +1,9 @@
-# flake8: noqa
+# ruff: noqa
 # type: ignore
-
 """The XTGeo Python library."""
 
-
 import os
+import platform
 import sys
 import timeit
 import warnings
@@ -42,7 +41,7 @@ try:
 except ImportError:
     ROXAR = False
 
-if not ROXAR:
+if platform.system() == "Linux" and not ROXAR:
     _display = os.environ.get("DISPLAY", "")
     _hostname = os.environ.get("HOSTNAME", "")
     _host = os.environ.get("HOST", "")
@@ -60,6 +59,11 @@ if not ROXAR:
         _xprint("=" * 79)
         os.environ["MPLBACKEND"] = "Agg"
 
+try:
+    from xtgeo.common.version import __version__, version
+except ImportError:
+    __version__ = version = "0.0.0"
+
 from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
@@ -72,22 +76,12 @@ from xtgeo.common.exceptions import (
     WellNotFoundError,
 )
 
-try:
-    from xtgeo.common.version import __version__, version
-except ImportError:
-    __version__ = version = "0.0.0"
-
 _xprint("Import common... done")
 
 _xprint("Import various XTGeo modules...")
 
 from xtgeo.roxutils import roxutils
 from xtgeo.roxutils.roxutils import RoxUtils
-from xtgeo.well import blocked_well, blocked_wells, well1, wells
-from xtgeo.well.blocked_well import BlockedWell
-from xtgeo.well.blocked_wells import BlockedWells
-from xtgeo.well.well1 import Well
-from xtgeo.well.wells import Wells
 
 _xprint("Import various XTGeo modules... wells...")
 
@@ -124,7 +118,6 @@ from xtgeo.cube.cube1 import Cube
 
 _xprint("Import various XTGeo modules... cube...")
 
-
 from xtgeo.metadata.metadata import (
     MetaDataCPGeometry,
     MetaDataCPProperty,
@@ -132,12 +125,14 @@ from xtgeo.metadata.metadata import (
     MetaDataRegularSurface,
     MetaDataWell,
 )
+
+_xprint("Import various XTGeo modules... metadata...")
+
 from xtgeo.xyz import points, polygons
 from xtgeo.xyz.points import Points
 from xtgeo.xyz.polygons import Polygons
 
 _xprint("Import various XTGeo modules... xyz...")
-
 _xprint("Import various XTGeo modules...DONE")
 
 # some function wrappers to initiate objects from imports
@@ -149,10 +144,19 @@ from xtgeo.grid3d.grid import (
     grid_from_file,
     grid_from_roxar,
 )
-from xtgeo.well.blocked_well import blockedwell_from_file, blockedwell_from_roxar
-from xtgeo.well.blocked_wells import blockedwells_from_files, blockedwells_from_roxar
-from xtgeo.well.well1 import well_from_file, well_from_roxar
-from xtgeo.well.wells import wells_from_files
+from xtgeo.well import blocked_well, blocked_wells, well1, wells
+from xtgeo.well.blocked_well import (
+    BlockedWell,
+    blockedwell_from_file,
+    blockedwell_from_roxar,
+)
+from xtgeo.well.blocked_wells import (
+    BlockedWells,
+    blockedwells_from_files,
+    blockedwells_from_roxar,
+)
+from xtgeo.well.well1 import Well, well_from_file, well_from_roxar
+from xtgeo.well.wells import Wells, wells_from_files
 from xtgeo.xyz.points import (
     points_from_file,
     points_from_roxar,
@@ -171,4 +175,90 @@ warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 _xprint("XTGEO __init__ done")
 
 # Remove symbols imported for internal use
-del os, sys, timeit, warnings, TIME0, DEBUG, ROXAR, _timer, _xprint
+del os, platform, sys, timeit, warnings, TIME0, DEBUG, ROXAR, _timer, _xprint
+
+# Let type-checkers know what is exported
+__all__ = [
+    "BlockedWell",
+    "BlockedWells",
+    "BlockedWellsNotFoundError",
+    "Cube",
+    "DateNotFoundError",
+    "Grid",
+    "GridNotFoundError",
+    "GridProperties",
+    "GridProperty",
+    "GridRelative",
+    "GridRelative",
+    "KeywordFoundNoDateError",
+    "KeywordNotFoundError",
+    "MetaDataCPGeometry",
+    "MetaDataCPProperty",
+    "MetaDataRegularCube",
+    "MetaDataRegularSurface",
+    "MetaDataWell",
+    "Points",
+    "Polygons",
+    "RegularSurface",
+    "RoxUtils",
+    "Surfaces",
+    "UNDEF",
+    "UNDEF_INT",
+    "UNDEF_INT_LIMIT",
+    "UNDEF_LIMIT",
+    "Units",
+    "Units",
+    "Well",
+    "WellNotFoundError",
+    "Wells",
+    "XTGeoCLibError",
+    "XTGeoDialog",
+    "__version__",
+    "blocked_well",
+    "blocked_wells",
+    "blockedwell_from_file",
+    "blockedwell_from_roxar",
+    "blockedwells_from_file",
+    "blockedwells_from_files",
+    "blockedwells_from_roxar",
+    "create_box_grid",
+    "cube1",
+    "cube_from_file",
+    "cube_from_roxar",
+    "grid",
+    "grid",
+    "grid_from_cube",
+    "grid_from_file",
+    "grid_from_roxar",
+    "grid_properties",
+    "grid_properties",
+    "grid_property",
+    "grid_property",
+    "gridproperties_dataframe",
+    "gridproperties_from_file",
+    "gridproperty_from_file",
+    "gridproperty_from_roxar",
+    "list_gridproperties",
+    "points",
+    "points_from_file",
+    "points_from_roxar",
+    "points_from_surface",
+    "points_from_wells",
+    "points_from_wells_dfrac",
+    "polygons",
+    "polygons_from_file",
+    "polygons_from_roxar",
+    "polygons_from_wells",
+    "regular_surface",
+    "roxutils",
+    "surface_from_cube",
+    "surface_from_file",
+    "surface_from_grid3d",
+    "surface_from_roxar",
+    "version",
+    "well1",
+    "well_from_file",
+    "well_from_roxar",
+    "wells",
+    "wells_from_files",
+]
