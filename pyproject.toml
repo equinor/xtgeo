@@ -74,15 +74,17 @@ Documentation = "https://xtgeo.readthedocs.io"
 
 [project.optional-dependencies]
 dev = [
+    "clang-format",
+    "cmake-format",
     "coverage>=4.1",
     "hypothesis",
     "mypy",
+    "pydocstyle",
     "pytest",
     "pytest-benchmark",
     "pytest-cov",
-    "pydocstyle",
-    "pytest-runner",
     "pytest-mock",
+    "pytest-runner",
     "pytest-snapshot",
     "pytest-xdist",
     "ruff",

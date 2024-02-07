@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 if(NOT SKBUILD)
   message(
-    WARNING
-    "This CMakeLists.txt file should not be used directly.\n"
-    "Use 'pip install ${CMAKE_SOURCE_DIR}' to install this as a Python package.")
+    WARNING "This CMakeLists.txt file should not be used directly.\n"
+            "Use 'pip install ${CMAKE_SOURCE_DIR}' to install this as a Python "
+            "package.")
 endif()
 
 add_subdirectory(src/lib)
