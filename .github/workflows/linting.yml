@@ -35,3 +35,15 @@ jobs:
       - name: Ruff format
         if: ${{ always() }}
         run: ruff format . --check
+
+      - name: cmake-format
+        if: ${{ always() }}
+        run: |
+          shopt -s globstar
+          cmake-format --check **/CMakeLists.txt
+
+      - name: clang-format
+        if: ${{ always() }}
+        run: |
+          shopt -s globstar
+          clang-format **/*.{c,h,cpp,hpp} -Werror -n --verbose
