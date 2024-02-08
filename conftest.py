@@ -1,4 +1,5 @@
 """Setup common stuff for pytests."""
+
 import os
 
 import pytest
@@ -63,6 +64,15 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
     )
+
+
+def pytest_configure(config):
+    # Set the Agg backend for all test runs. This should be removed once
+    # xtgeo.plot is removed. This is to ensure that CI runs do not fail
+    # on Windows and macOS.
+    import matplotlib as mpl
+
+    mpl.use("Agg")
 
 
 @pytest.fixture(name="generate_plot")
