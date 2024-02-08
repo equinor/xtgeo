@@ -1,5 +1,7 @@
-# flake8: noqa
 """XTGeo roxutils package"""
 
+from .roxutils import RoxUtils
 
-from xtgeo.roxutils.roxutils import RoxUtils
+__all__ = [
+    "RoxUtils",
+]

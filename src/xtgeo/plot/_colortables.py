@@ -3,7 +3,7 @@
 import os
 import random
 
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 

@@ -1,13 +1,12 @@
 """Well marker data; private module"""
 
-
 import numpy as np
 import pandas as pd
 
-import xtgeo
 import xtgeo.common.constants as const
 from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
+from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
 
@@ -423,7 +422,7 @@ def get_surface_picks(self, surf):
     if self.mdlogname:
         mcor = dataframe[self.mdlogname].values
     else:
-        mcor = np.zeros(xcor.size, dtype=np.float64) + xtgeo.UNDEF
+        mcor = np.zeros(xcor.size, dtype=np.float64) + const.UNDEF
 
     nval, xres, yres, zres, mres, dres = _cxtgeo.well_surf_picks(
         xcor,
@@ -447,9 +446,9 @@ def get_surface_picks(self, surf):
     )
 
     if nval > 0:
-        poi = xtgeo.Points()
+        poi = Points()
 
-        mres[mres > xtgeo.UNDEF_LIMIT] = np.nan
+        mres[mres > const.UNDEF_LIMIT] = np.nan
 
         res = {}
         res[poi.xname] = xres[:nval]

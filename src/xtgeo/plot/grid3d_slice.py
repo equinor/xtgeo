@@ -1,7 +1,8 @@
 """Module for 3D Grid slice plots, using matplotlib."""
 
-from xtgeo.common import null_logger
-from xtgeo.plot.baseplot import BasePlot
+from xtgeo.common.log import null_logger
+
+from .baseplot import BasePlot
 
 logger = null_logger(__name__)
 

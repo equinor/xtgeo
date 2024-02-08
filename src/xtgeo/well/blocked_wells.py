@@ -1,18 +1,16 @@
 """BlockedWells module, (collection of BlockedWell objects)"""
 
-# ======================================================================================
-
-
 import deprecation
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from . import _blockedwells_roxapi
+from .blocked_well import blockedwell_from_file
 from .wells import Wells
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
@@ -43,7 +41,7 @@ def blockedwells_from_files(
     """
     return BlockedWells(
         [
-            xtgeo.blockedwell_from_file(
+            blockedwell_from_file(
                 wfile,
                 fformat=fformat,
                 mdlogname=mdlogname,
@@ -141,7 +139,7 @@ class BlockedWells(Wells):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = xtgeo.blockedwell_from_file(
+                wll = blockedwell_from_file(
                     wfile,
                     fformat=fformat,
                     mdlogname=mdlogname,

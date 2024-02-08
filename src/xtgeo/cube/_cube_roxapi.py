@@ -16,8 +16,8 @@ Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering
 
 import numpy as np
 
-from xtgeo import RoxUtils
 from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.roxutils import RoxUtils
 
 xtg = XTGeoDialog()
 

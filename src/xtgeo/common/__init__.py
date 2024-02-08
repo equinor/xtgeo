@@ -1,14 +1,10 @@
 """The XTGeo common package"""
 
-
-from xtgeo.common._xyz_enum import _AttrName, _AttrType, _XYZType
-from xtgeo.common.exceptions import WellNotFoundError
-from xtgeo.common.log import null_logger
-from xtgeo.common.sys import inherit_docstring
-
-# flake8: noqa
-from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog, XTGShowProgress
-from xtgeo.xyz._xyz_data import _XYZData
+from ._xyz_enum import _AttrName, _AttrType, _XYZType
+from .exceptions import WellNotFoundError
+from .log import null_logger
+from .sys import inherit_docstring
+from .xtgeo_dialog import XTGDescription, XTGeoDialog, XTGShowProgress
 
 __all__ = [
     "inherit_docstring",
@@ -19,6 +15,5 @@ __all__ = [
     "XTGShowProgress",
     "_AttrName",
     "_AttrType",
-    "_XYZData",
     "_XYZType",
 ]

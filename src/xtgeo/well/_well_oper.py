@@ -5,11 +5,11 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-import xtgeo
 from xtgeo import _cxtgeo
 from xtgeo.common import constants as const, null_logger
 from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.sys import _get_carray
+from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
 
@@ -242,7 +242,7 @@ def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
     is believed to be more precise!
     """
     # establish a Points instance and make points dataframe from well trajectory X Y Z
-    wpoints = xtgeo.Points()
+    wpoints = Points()
     wpdf = self.get_dataframe().loc[:, [self.xname, self.yname, self.zname]]
     wpdf.reset_index(inplace=True, drop=True)
     wpoints.set_dataframe(wpdf)
@@ -278,11 +278,15 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     The routine will make grid_coordinates from grid with make_ijk_from_grid(), or reuse
     existing vectors if grid is a tuple (much faster).
     """
-    if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
+    from xtgeo.grid3d.grid import Grid
+    from xtgeo.grid3d.grid_properties import GridProperties
+    from xtgeo.grid3d.grid_property import GridProperty
+
+    if not isinstance(gridprops, (GridProperty, GridProperties)):
         raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
 
-    if isinstance(gridprops, xtgeo.GridProperty):
-        gprops = xtgeo.GridProperties()
+    if isinstance(gridprops, GridProperty):
+        gprops = GridProperties()
         gprops.append_props([gridprops])
     else:
         gprops = gridprops
@@ -290,7 +294,7 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     ijk_logs_created_tmp = False
     if isinstance(grid, tuple):
         icl, jcl, kcl = grid
-    elif isinstance(grid, xtgeo.Grid):
+    elif isinstance(grid, Grid):
         self.make_ijk_from_grid(grid, grid_id="_tmp", algorithm=2)
         icl, jcl, kcl = ("ICELL_tmp", "JCELL_tmp", "KCELL_tmp")
         ijk_logs_created_tmp = True
@@ -527,11 +531,11 @@ def _get_bseries_by_distance(depth, inseries, distance):
 
     bseries = pd.Series(np.zeros(inseries.values.size), dtype="int32").values
     try:
-        inseries = np.nan_to_num(inseries.values, nan=xtgeo.UNDEF_INT).astype("int32")
+        inseries = np.nan_to_num(inseries.values, nan=const.UNDEF_INT).astype("int32")
     except TypeError:
         # for older numpy version
         inseries = inseries.values
-        inseries[np.isnan(inseries)] = xtgeo.UNDEF_INT
+        inseries[np.isnan(inseries)] = const.UNDEF_INT
         inseries = inseries.astype("int32")
 
     res = _cxtgeo.well_mask_shoulder(
@@ -546,14 +550,16 @@ def _get_bseries_by_distance(depth, inseries, distance):
 
 def create_surf_distance_log(self, surf, name):
     """Create a log which is vertical distance from a RegularSurface."""
+    from xtgeo.surface.regular_surface import RegularSurface
+
     logger.debug("Create a log which is distance to surface")
 
-    if not isinstance(surf, xtgeo.RegularSurface):
+    if not isinstance(surf, RegularSurface):
         raise ValueError("Input surface is not a RegularSurface instance.")
 
     # make a Points instance since points has the snap
     zvalues = self.get_dataframe()[self.zname]
-    points = xtgeo.Points()
+    points = Points()
     dframe = self.get_dataframe().iloc[:, 0:3]
     points.set_dataframe(dframe)
     points.snap_surface(surf)

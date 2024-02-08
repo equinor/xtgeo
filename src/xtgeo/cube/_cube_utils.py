@@ -1,12 +1,15 @@
 """Cube utilities (basic low level)"""
+
 import warnings
 
 import numpy as np
 
-import xtgeo
-from xtgeo import XTGeoCLibError, _cxtgeo
+import xtgeo.common.constants as const
+from xtgeo import _cxtgeo
+from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import null_logger
 from xtgeo.common.calc import _swap_axes
+from xtgeo.xyz.polygons import Polygons
 
 logger = null_logger(__name__)
 
@@ -205,7 +208,7 @@ def get_randomline(
 ):
     """Get a random line from a fence spesification"""
 
-    if isinstance(fencespec, xtgeo.Polygons):
+    if isinstance(fencespec, Polygons):
         logger.info("Estimate hincrement from Polygons instance...")
         fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
         logger.info("Estimate hincrement from Polygons instance... DONE")
@@ -261,7 +264,7 @@ def get_randomline(
         option,
     )
 
-    values[values > xtgeo.UNDEF_LIMIT] = np.nan
+    values[values > const.UNDEF_LIMIT] = np.nan
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)

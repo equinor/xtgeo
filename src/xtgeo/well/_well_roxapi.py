@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
-import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.roxutils import RoxUtils
+
+if TYPE_CHECKING:
+    from .well1 import Well
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -153,7 +155,7 @@ def _get_roxlog(wlogtypes, wlogrecords, roxlrun, lname):  # pragma: no cover
 
 
 def export_well_roxapi(
-    self: xtgeo.Well,
+    self: Well,
     project,
     wname,
     lognames: str | list[str] = "all",
@@ -228,7 +230,7 @@ def _store_log_in_roxapi(self, lrun: Any, logname: str) -> None:
 
 
 def _roxapi_update_well(
-    self: xtgeo.Well,
+    self: Well,
     rox: Any,
     wname: str,
     lognames: str | list[str],

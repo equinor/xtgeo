@@ -26,6 +26,7 @@ Indices is fastest along "J" (C order), and xlines and ilines spacing may vary (
 xline, 1 for iline in this example) but shall be constant per axis
 
 """
+
 from __future__ import annotations
 
 import json
@@ -38,12 +39,13 @@ import numpy as np
 import segyio
 from segyio import TraceField as TF
 
-import xtgeo
 import xtgeo.common.calc as xcalc
+import xtgeo.common.constants as const
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.io._file import FileWrapper
+from xtgeo.metadata.metadata import MetaDataRegularCube
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -202,7 +204,7 @@ def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> dict:
     nrow = int(abs(xlines_case.min() - xlines_case.max()) / xspacing) + 1
     nlay = data.shape[1]
 
-    values = np.full((ncol, nrow, nlay), xtgeo.UNDEF, dtype=np.float32)
+    values = np.full((ncol, nrow, nlay), const.UNDEF, dtype=np.float32)
     traceidcodes = np.full((ncol, nrow), 2, dtype=np.int64)
 
     ilines_shifted = (ilines_case / ispacing).astype(np.int64)
@@ -600,7 +602,7 @@ def import_xtgregcube(mfile, values=True):
     meta = json.loads(jmeta, object_pairs_hook=dict)
     req = meta["_required_"]
 
-    reqattrs = xtgeo.MetaDataRegularCube.REQUIRED
+    reqattrs = MetaDataRegularCube.REQUIRED
 
     results = {myattr: req[myattr] for myattr in reqattrs}
 
@@ -608,7 +610,7 @@ def import_xtgregcube(mfile, values=True):
     # although we do not support initializing with any other value.
     # As xtgeo-format is only written/read by xtgeo as far as we know, this should
     # be unproblematic for now.
-    if results.pop("undef", None) != xtgeo.UNDEF:
+    if results.pop("undef", None) != const.UNDEF:
         raise ValueError(
             f"File {mfile.file} has non-standard undef, not supported by xtgeo"
         )

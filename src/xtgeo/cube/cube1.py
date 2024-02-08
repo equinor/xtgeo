@@ -1,4 +1,5 @@
 """Module for a seismic (or whatever) cube."""
+
 from __future__ import annotations
 
 import functools
@@ -12,13 +13,17 @@ from typing import TYPE_CHECKING, Any
 import deprecation
 import numpy as np
 
-import xtgeo
+import xtgeo.common.constants as const
 from xtgeo.common import XTGDescription, null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
-from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
+from xtgeo.grid3d.grid import grid_from_cube
 from xtgeo.io._file import FileFormat, FileWrapper
+from xtgeo.metadata.metadata import MetaDataRegularCube
+from xtgeo.xyz.polygons import Polygons
+
+from . import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
 logger = null_logger(__name__)
 
@@ -273,9 +278,9 @@ class Cube:
         else:
             self._traceidcodes = traceidcodes
         self._segyfile = segyfile
-        self.undef = xtgeo.UNDEF
+        self.undef = const.UNDEF
 
-        self._metadata = xtgeo.MetaDataRegularCube()
+        self._metadata = MetaDataRegularCube()
         self._metadata.required = self
 
     def __repr__(self):
@@ -300,7 +305,7 @@ class Cube:
     def metadata(self, obj):
         # The current metadata object can be replaced. This is a bit dangerous so
         # further check must be done to validate. TODO.
-        if not isinstance(obj, xtgeo.MetaDataRegularCube):
+        if not isinstance(obj, MetaDataRegularCube):
             raise ValueError("Input obj not an instance of MetaDataRegularCube")
 
         self._metadata = obj  # checking is currently missing! TODO
@@ -814,7 +819,7 @@ class Cube:
               used to pregenerate `fencespec`
 
         """
-        if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
+        if not isinstance(fencespec, (np.ndarray, Polygons)):
             raise ValueError(
                 "fencespec must be a numpy or a Polygons() object. "
                 f"Current type is {type(fencespec)}"
@@ -994,7 +999,7 @@ class Cube:
         """
 
         if "grid" in target.lower():
-            _tmpgrd = xtgeo.grid_from_cube(self, propname=name)
+            _tmpgrd = grid_from_cube(self, propname=name)
             _tmpprop = _tmpgrd.props[0]
             _tmpprop.name = propname if propname else "seismic_attribute"
             _tmpgrd.to_roxar(project, name)

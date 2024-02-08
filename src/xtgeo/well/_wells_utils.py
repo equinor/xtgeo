@@ -1,13 +1,12 @@
 """Utilities for Wells class"""
 
-
 import logging
 
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 
-from xtgeo.common import XTGeoDialog, XTGShowProgress
+from xtgeo.common.xtgeo_dialog import XTGeoDialog, XTGShowProgress
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

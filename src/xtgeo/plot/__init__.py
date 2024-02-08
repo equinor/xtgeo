@@ -1,11 +1,10 @@
 """The XTGeo plot package"""
-# flake8: noqa
 
 import warnings
 
-from xtgeo.plot.grid3d_slice import Grid3DSlice
-from xtgeo.plot.xsection import XSection
-from xtgeo.plot.xtmap import Map
+from .grid3d_slice import Grid3DSlice
+from .xsection import XSection
+from .xtmap import Map
 
 warnings.warn(
     "xtgeo.plot is deprecated and will be removed in xtgeo 4.0. "
@@ -13,3 +12,9 @@ warnings.warn(
     DeprecationWarning,
     stacklevel=2,
 )
+
+__all__ = [
+    "Grid3DSlice",
+    "XSection",
+    "Map",
+]

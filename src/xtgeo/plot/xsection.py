@@ -1,6 +1,5 @@
 """Module for fast XSection plots of wells/surfaces etc, using matplotlib."""
 
-
 import math
 import warnings
 
@@ -9,9 +8,10 @@ import numpy.ma as ma
 import pandas as pd
 from scipy.ndimage import gaussian_filter
 
-from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.well import Well
-from xtgeo.xyz import Polygons
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.well.well1 import Well
+from xtgeo.xyz.polygons import Polygons
 
 from .baseplot import BasePlot, _get_colormap
 
