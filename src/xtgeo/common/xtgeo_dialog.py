@@ -47,8 +47,8 @@ import warnings
 from datetime import datetime as dtime
 from typing import Any, Literal
 
-import xtgeo
-from xtgeo.common.log import null_logger
+from .log import null_logger
+from .version import __version__
 
 DEBUG = 0
 MLS = 10000000.0
@@ -344,7 +344,7 @@ class XTGeoDialog:
 
         if variant == "clibinfo":
             return (
-                f"XTGeo version {xtgeo.__version__} (Python "
+                f"XTGeo version {__version__} (Python "
                 f"{platform.python_version()} on {platform.system()})"
             )
 
@@ -380,7 +380,7 @@ class XTGeoDialog:
         print(f"#{app.center(77)}#")
         print("#" * 79)
         nowtime = dtime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ver = "Using XTGeo version " + xtgeo.__version__
+        ver = f"Using XTGeo version {__version__}"
         cur_version += f" @ {nowtime} on {platform.node()} by {getpass.getuser()}"
         print(f"#{ver.center(77)}#")
         print(f"#{cur_version.center(77)}#")

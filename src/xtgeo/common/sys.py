@@ -14,8 +14,8 @@ import numpy as np
 from xtgeo import _cxtgeo
 from xtgeo.io._file import FileWrapper
 
-from . import null_logger
 from ._xyz_enum import _AttrType
+from .log import null_logger
 
 if TYPE_CHECKING:
     import numpy.typing as npt

@@ -1,4 +1,5 @@
 """Export Cube data via SegyIO library or XTGeo CLIB."""
+
 import json
 import shutil
 import struct
@@ -6,8 +7,8 @@ import struct
 import numpy as np
 import segyio
 
-import xtgeo
-from xtgeo import XTGeoCLibError, _cxtgeo
+from xtgeo import _cxtgeo
+from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog, null_logger
 
 logger = null_logger(__name__)
@@ -25,9 +26,6 @@ def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):
             existing SEGY file.
         engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
-    if not isinstance(self, xtgeo.cube.Cube):
-        raise ValueError("first argument is not a Cube instance")
-
     if engine == "segyio":
         _export_segy_segyio(self, sfile, template=template, pristine=pristine)
     else:

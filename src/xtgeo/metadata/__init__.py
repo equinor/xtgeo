@@ -1,4 +1,17 @@
-# flake8: noqa
 """XTGeo metadata package."""
 
-from xtgeo.metadata.metadata import MetaDataRegularCube, MetaDataRegularSurface
+from .metadata import (
+    MetaDataCPGeometry,
+    MetaDataCPProperty,
+    MetaDataRegularCube,
+    MetaDataRegularSurface,
+    MetaDataWell,
+)
+
+__all__ = [
+    "MetaDataRegularCube",
+    "MetaDataRegularSurface",
+    "MetaDataCPGeometry",
+    "MetaDataCPProperty",
+    "MetaDataWell",
+]

@@ -1,11 +1,10 @@
 """XTGeo blockedwell module"""
 
-
 import deprecation
 import pandas as pd
 
-from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
+from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
 
 from . import _blockedwell_roxapi

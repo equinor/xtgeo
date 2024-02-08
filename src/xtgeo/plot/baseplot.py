@@ -1,7 +1,9 @@
 """The baseplot module."""
+
 from packaging.version import parse as versionparse
 
-from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from . import _colortables as _ctable
 

@@ -10,8 +10,8 @@ The metadata works through the various datatypes in XTGeo. For example::
 
 """
 
-# from datetime import date
 import xtgeo
+import xtgeo.common.constants as const
 from xtgeo.common import null_logger
 
 logger = null_logger(__name__)
@@ -235,7 +235,7 @@ class MetaDataRegularSurface(MetaData):
         "yinc": 1.0,
         "yflip": 1,
         "rotation": 0.0,
-        "undef": xtgeo.UNDEF,
+        "undef": const.UNDEF,
     }
 
     def __init__(self):
@@ -282,7 +282,7 @@ class MetaDataRegularCube(MetaData):
         "yflip": 1,
         "zflip": 1,
         "rotation": 0.0,
-        "undef": xtgeo.UNDEF,
+        "undef": const.UNDEF,
     }
 
     def __init__(self):

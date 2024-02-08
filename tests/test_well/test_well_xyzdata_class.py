@@ -1,7 +1,9 @@
 """Test _XYZData class, in a Well context"""
+
 import pandas as pd
 import pytest
-from xtgeo.common import _AttrType, _XYZData
+from xtgeo.common import _AttrType
+from xtgeo.xyz._xyz_data import _XYZData
 
 
 @pytest.fixture(name="generate_data")

@@ -11,13 +11,16 @@ import deprecation
 import numpy as np
 import pandas as pd
 
-import xtgeo
 import xtgeo.common.constants as const
-from xtgeo import _cxtgeo  # type: ignore
-from xtgeo.common import _AttrType, null_logger
+from xtgeo import _cxtgeo
+from xtgeo.commn._xyz_enum import _AttrType
+from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGDescription
 from xtgeo.io._file import FileWrapper
-from xtgeo.xyz import _xyz_data  # type: ignore[attr-defined]
+from xtgeo.metadata.metadata import MetaDataWell
+from xtgeo.xyz import _xyz_data
+from xtgeo.xyz.polygons import Polygons
 
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
 
@@ -78,7 +81,7 @@ def well_from_roxar(
     lognames_strict: bool | None = False,
     inclmd: bool | None = False,
     inclsurvey: bool | None = False,
-) -> xtgeo.Well:
+) -> Well:
     """This makes an instance of a Well directly from Roxar RMS.
 
     Note this method works only when inside RMS, or when RMS license is
@@ -198,7 +201,7 @@ class Well:
         self._ensure_consistency()
 
         # additional state variables
-        self._metadata = xtgeo.MetaDataWell()
+        self._metadata = MetaDataWell()
         self._metadata.required = self
 
     _reset = __init__  # workaround until deprecation .from_file(), etc are removed
@@ -277,7 +280,7 @@ class Well:
     def metadata(self, obj):
         # The current metadata object can be replaced. This is a bit dangerous so
         # further check must be done to validate. TODO.
-        if not isinstance(obj, xtgeo.MetaDataWell):
+        if not isinstance(obj, MetaDataWell):
             raise ValueError("Input obj not an instance of MetaDataRegularCube")
 
         self._metadata = obj
@@ -455,7 +458,7 @@ class Well:
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout."""
-        dsc = xtgeo.common.XTGDescription()
+        dsc = XTGDescription()
 
         dsc.title("Description of Well instance")
         dsc.txt("Object ID", id(self))
@@ -1182,7 +1185,7 @@ class Well:
 
         if not skipname:
             dfr["NAME"] = self.xwellname
-        poly = xtgeo.Polygons()
+        poly = Polygons()
         poly.set_dataframe(dfr)
         poly.name = self.xwellname
 

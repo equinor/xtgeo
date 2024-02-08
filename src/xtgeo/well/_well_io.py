@@ -1,13 +1,14 @@
 """Well input and ouput, private module"""
+
 import json
 from copy import deepcopy
 
 import numpy as np
 import pandas as pd
 
-import xtgeo
 from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
+from xtgeo.metadata.metadata import MetaDataWell
 
 logger = null_logger(__name__)
 
@@ -301,7 +302,7 @@ def import_wlogs(wlogs: dict):
 def import_hdf5_well(wfile, **kwargs):
     """Load from HDF5 format."""
     logger.debug("The kwargs may be unused: %s", kwargs)
-    reqattrs = xtgeo.MetaDataWell.REQUIRED
+    reqattrs = MetaDataWell.REQUIRED
 
     with pd.HDFStore(wfile.file, "r") as store:
         data = store.get("Well")

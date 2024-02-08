@@ -1,6 +1,5 @@
 """Wells module, which has the Wells class (collection of Well objects)"""
 
-
 from __future__ import annotations
 
 import functools
@@ -9,14 +8,14 @@ import warnings
 import deprecation
 import pandas as pd
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 
 from . import _wells_utils
-from .well1 import Well
+from .well1 import Well, well_from_file
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
@@ -37,7 +36,7 @@ def wells_from_files(filelist, *args, **kwargs):
             ...     [well_dir + '/OP_1.w', well_dir + '/OP_2.w']
             ... )
     """
-    return Wells([xtgeo.well_from_file(wfile, *args, **kwargs) for wfile in filelist])
+    return Wells([well_from_file(wfile, *args, **kwargs) for wfile in filelist])
 
 
 def _allow_deprecated_init(func):
@@ -56,7 +55,7 @@ def _allow_deprecated_init(func):
                 "mywells = xtgeo.wells_from_files(['some_name.w']) instead",
                 DeprecationWarning,
             )
-            return func(xtgeo.wells_from_files(*args, **kwargs))
+            return func(wells_from_files(*args, **kwargs))
         return func(cls, *args, **kwargs)
 
     return wrapper
@@ -103,7 +102,7 @@ class Wells:
     @wells.setter
     def wells(self, well_list):
         for well in well_list:
-            if not isinstance(well, xtgeo.well.Well):
+            if not isinstance(well, Well):
                 raise ValueError("Well in list not valid Well object")
 
         self._wells = well_list
@@ -111,7 +110,7 @@ class Wells:
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = xtgeo.common.XTGDescription()
+        dsc = XTGDescription()
         dsc.title(f"Description of {self.__class__.__name__} instance")
         dsc.txt("Object ID", id(self))
 
@@ -164,7 +163,7 @@ class Wells:
         for wfile in filelist:
             try:
                 self._wells.append(
-                    xtgeo.well_from_file(
+                    well_from_file(
                         wfile,
                         fformat=fformat,
                         mdlogname=mdlogname,
