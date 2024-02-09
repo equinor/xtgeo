@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import pathlib
 from collections import defaultdict
-from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass
 from typing import IO, TYPE_CHECKING, Any
 
@@ -12,6 +10,9 @@ import roffio
 from xtgeo import _cxtgeo
 
 if TYPE_CHECKING:
+    import pathlib
+    from collections.abc import MutableMapping, Sequence
+
     from xtgeo.grid3d import Grid
 
 

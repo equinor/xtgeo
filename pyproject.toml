@@ -152,6 +152,8 @@ select = [
     "RET",
     "RSE",
     "SIM",
+    "TCH",
+    "TID",
     "W",
 ]
 

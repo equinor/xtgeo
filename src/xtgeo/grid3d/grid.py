@@ -1,11 +1,11 @@
 """Module/class for 3D grids (corner point geometry) with XTGeo."""
+
 from __future__ import annotations
 
 import functools
 import json
 import pathlib
 import warnings
-from collections.abc import Callable, Hashable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, NoReturn
 
 import deprecation
@@ -32,21 +32,24 @@ from . import (
     _grid_wellzone,
     _gridprop_lowlevel,
 )
-from ._ecl_grid import Units
 from ._grid3d import _Grid3D
-from .grid_properties import GridProperties, GridProperty
-
-xtg = xtgeo.common.XTGeoDialog()
-logger = null_logger(__name__)
+from .grid_properties import GridProperties
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Hashable, Sequence
+
     import pandas as pd
 
     from xtgeo import Polygons, Well
     from xtgeo.common.types import FileLike
-    from xtgeo.grid3d.types import METRIC
     from xtgeo.xyz.points import Points
 
+    from ._ecl_grid import Units
+    from .grid_property import GridProperty
+    from .types import METRIC
+
+xtg = xtgeo.common.XTGeoDialog()
+logger = null_logger(__name__)
 
 # --------------------------------------------------------------------------------------
 # Comment on "asmasked" vs "activeonly:

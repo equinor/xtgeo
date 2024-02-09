@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import io
 import warnings
 from copy import deepcopy
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import deprecation
 import numpy as np
@@ -13,7 +12,7 @@ import pandas as pd
 
 import xtgeo.common.constants as const
 from xtgeo import _cxtgeo
-from xtgeo.commn._xyz_enum import _AttrType
+from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription
@@ -23,6 +22,10 @@ from xtgeo.xyz import _xyz_data
 from xtgeo.xyz.polygons import Polygons
 
 from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
+
+if TYPE_CHECKING:
+    import io
+    from pathlib import Path
 
 logger = null_logger(__name__)
 

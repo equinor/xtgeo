@@ -1,4 +1,5 @@
 """Import RegularSurface data."""
+
 from __future__ import annotations
 
 import json
@@ -14,12 +15,12 @@ import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
-from xtgeo.io._file import FileWrapper
 from xtgeo.surface._regsurf_ijxyz_parser import parse_ijxyz
 from xtgeo.surface._zmap_parser import parse_zmap
 
 if TYPE_CHECKING:
     from xtgeo.cube.cube1 import Cube
+    from xtgeo.io._file import FileWrapper
     from xtgeo.surface.regular_surface import RegularSurface
 
 xtg = XTGeoDialog()

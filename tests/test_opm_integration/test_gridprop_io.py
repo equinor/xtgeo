@@ -11,7 +11,7 @@ from xtgeo.grid3d._ecl_inte_head import InteHead
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Simulator, TypeOfGrid, UnitSystem
 
-from ..test_grid3d.grid_generator import xtgeo_grids
+from ..test_grid3d.grid_generator import xtgeo_grids  # noqa
 
 
 @dataclass

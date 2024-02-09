@@ -1,16 +1,20 @@
 """XTGeo XYZ module (abstract base class)"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 
 from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 
 from . import _xyz_oper
+
+if TYPE_CHECKING:
+    import pandas as pd
+
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)

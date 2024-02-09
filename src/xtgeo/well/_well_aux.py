@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import functools
 import warnings
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -18,6 +18,9 @@ from xtgeo.common._xyz_enum import _AttrName
 from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import _well_io
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = null_logger(__name__)
 

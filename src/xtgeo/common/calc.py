@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
@@ -13,6 +12,9 @@ from xtgeo._cxtgeo import XTGeoCLibError
 from . import _angles
 from .log import null_logger
 from .xtgeo_dialog import XTGeoDialog
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)

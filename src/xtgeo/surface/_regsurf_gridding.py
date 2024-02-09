@@ -1,8 +1,8 @@
 """Do gridding from 3D parameters"""
+
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -14,6 +14,8 @@ import xtgeo
 from xtgeo.common import null_logger
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from xtgeo.surface import RegularSurface
 
 logger = null_logger(__name__)

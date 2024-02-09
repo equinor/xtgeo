@@ -30,12 +30,12 @@ If a column is added to the dataframe, then the methods here will try to guess t
 attr_type and attr_record, and add those; similarly of a column is removed, the
 corresponding entries in attr_types and attr_records will be deleted.
 """
+
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
 from copy import deepcopy
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -44,9 +44,12 @@ from joblib import hash as jhash
 import xtgeo.common.constants as const
 from xtgeo import XTGeoCLibError, _cxtgeo
 from xtgeo.common import null_logger
+from xtgeo.common._xyz_enum import _AttrName, _AttrType, _XYZType
 from xtgeo.common.sys import _convert_carr_double_np, _get_carray
 
-from ..common._xyz_enum import _AttrName, _AttrType, _XYZType
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
 
 logger = null_logger(__name__)
 
