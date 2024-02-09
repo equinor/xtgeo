@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 
 from xtgeo import _cxtgeo
-from xtgeo.common import constants as const, null_logger
 from xtgeo.common._xyz_enum import _AttrType
+from xtgeo.common.constants import UNDEF_INT, UNDEF_INT_LIMIT
+from xtgeo.common.log import null_logger
 from xtgeo.common.sys import _get_carray
 from xtgeo.xyz.points import Points
 
@@ -122,7 +123,7 @@ def make_zone_qual_log(self, zqname):
         else:
             prev_ = seq[ind - 1]
             next_ = seq[ind + 1]
-            if prev_ > const.UNDEF_INT_LIMIT or next_ > const.UNDEF_INT_LIMIT:
+            if prev_ > UNDEF_INT_LIMIT or next_ > UNDEF_INT_LIMIT:
                 code.append(9)
             elif next_ > iseq > prev_:
                 code.append(1)
@@ -357,32 +358,32 @@ def report_zonation_holes(self, threshold=5):
     xvv = self._wdata.data[self.xname].values
     yvv = self._wdata.data[self.yname].values
     zvv = self._wdata.data[self.zname].values
-    zlog[np.isnan(zlog)] = const.UNDEF_INT
+    zlog[np.isnan(zlog)] = UNDEF_INT
 
     ncv = 0
     first = True
     hole = False
     for ind, zone in np.ndenumerate(zlog):
         ino = ind[0]
-        if zone > const.UNDEF_INT_LIMIT and first:
+        if zone > UNDEF_INT_LIMIT and first:
             continue
 
-        if zone < const.UNDEF_INT_LIMIT and first:
+        if zone < UNDEF_INT_LIMIT and first:
             first = False
             continue
 
-        if zone > const.UNDEF_INT_LIMIT:
+        if zone > UNDEF_INT_LIMIT:
             ncv += 1
             hole = True
 
-        if zone > const.UNDEF_INT_LIMIT and ncv > threshold:
+        if zone > UNDEF_INT_LIMIT and ncv > threshold:
             logger.debug("Restart first (bigger hole)")
             hole = False
             first = True
             ncv = 0
             continue
 
-        if hole and zone < const.UNDEF_INT_LIMIT and ncv <= threshold:
+        if hole and zone < UNDEF_INT_LIMIT and ncv <= threshold:
             # here we have a hole that fits criteria
             if mdlog is not None:
                 entry = (
@@ -403,7 +404,7 @@ def report_zonation_holes(self, threshold=5):
             hole = False
             ncv = 0
 
-        if hole and zone < const.UNDEF_INT_LIMIT and ncv > threshold:
+        if hole and zone < UNDEF_INT_LIMIT and ncv > threshold:
             hole = False
             ncv = 0
 
@@ -531,11 +532,11 @@ def _get_bseries_by_distance(depth, inseries, distance):
 
     bseries = pd.Series(np.zeros(inseries.values.size), dtype="int32").values
     try:
-        inseries = np.nan_to_num(inseries.values, nan=const.UNDEF_INT).astype("int32")
+        inseries = np.nan_to_num(inseries.values, nan=UNDEF_INT).astype("int32")
     except TypeError:
         # for older numpy version
         inseries = inseries.values
-        inseries[np.isnan(inseries)] = const.UNDEF_INT
+        inseries[np.isnan(inseries)] = UNDEF_INT
         inseries = inseries.astype("int32")
 
     res = _cxtgeo.well_mask_shoulder(

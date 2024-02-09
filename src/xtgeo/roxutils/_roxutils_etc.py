@@ -1,10 +1,11 @@
 """Private module for etc functions"""
+
 import contextlib
 
 with contextlib.suppress(ImportError):
     import roxar
 
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 

@@ -1,10 +1,9 @@
 """Private low level routines (SWIG vs C)"""
 
-
 import numpy as np
 
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 

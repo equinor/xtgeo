@@ -3,9 +3,15 @@
 import numpy as np
 import pandas as pd
 
-import xtgeo.common.constants as const
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.constants import (
+    UNDEF,
+    UNDEF_DISC,
+    UNDEF_INT,
+    UNDEF_INT_LIMIT,
+    UNDEF_LIMIT,
+)
+from xtgeo.common.log import null_logger
 from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
@@ -27,7 +33,7 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
         if use_undef:
             dataframe.dropna(subset=[scopy.zonelogname], inplace=True)
         zlog = dataframe[scopy.zonelogname].values
-        zlog[np.isnan(zlog)] = const.UNDEF_DISC
+        zlog[np.isnan(zlog)] = UNDEF_DISC
         zlog = np.rint(zlog).astype(int)
     else:
         return None
@@ -139,8 +145,8 @@ def _extract_ztops(
             f" was {usezonerange}"
         )
 
-    iundef = const.UNDEF_INT
-    iundeflimit = const.UNDEF_INT_LIMIT
+    iundef = UNDEF_INT
+    iundeflimit = UNDEF_INT_LIMIT
     pzone = iundef
 
     if use_undef:
@@ -382,7 +388,7 @@ def get_fraction_per_zone(
             if dseries.size < count_limit:  # interval too short for fraction
                 logger.debug("Skipped due to too few values %s", dseries.size)
                 continue
-            if dseries.max() > const.UNDEF_INT_LIMIT:
+            if dseries.max() > UNDEF_INT_LIMIT:
                 logger.debug("Skipped due to too missing/undef value(s)")
                 continue
 
@@ -422,7 +428,7 @@ def get_surface_picks(self, surf):
     if self.mdlogname:
         mcor = dataframe[self.mdlogname].values
     else:
-        mcor = np.zeros(xcor.size, dtype=np.float64) + const.UNDEF
+        mcor = np.zeros(xcor.size, dtype=np.float64) + UNDEF
 
     nval, xres, yres, zres, mres, dres = _cxtgeo.well_surf_picks(
         xcor,
@@ -448,7 +454,7 @@ def get_surface_picks(self, surf):
     if nval > 0:
         poi = Points()
 
-        mres[mres > const.UNDEF_LIMIT] = np.nan
+        mres[mres > UNDEF_LIMIT] = np.nan
 
         res = {}
         res[poi.xname] = xres[:nval]

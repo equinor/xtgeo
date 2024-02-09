@@ -90,7 +90,6 @@ from xtgeo.metadata.metadata import (
 
 _xprint("Import various XTGeo modules... metadata...")
 
-
 from xtgeo.roxutils import roxutils
 from xtgeo.roxutils.roxutils import RoxUtils
 

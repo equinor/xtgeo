@@ -15,9 +15,7 @@ from tempfile import mkstemp
 from typing import TYPE_CHECKING, Literal, Union
 
 import xtgeo._cxtgeo
-from xtgeo.common import null_logger
-
-logger = null_logger(__name__)
+from xtgeo.common.log import null_logger
 
 if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
@@ -42,6 +40,7 @@ if TYPE_CHECKING:
         Wells,
     ]
 
+logger = null_logger(__name__)
 
 VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]
 

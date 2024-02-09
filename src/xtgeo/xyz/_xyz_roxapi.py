@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 
 from xtgeo import ROXAR  # type: ignore
-from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileWrapper
 from xtgeo.roxutils import RoxUtils
 from xtgeo.xyz import _xyz_io, points, polygons

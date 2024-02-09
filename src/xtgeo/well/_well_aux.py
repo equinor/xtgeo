@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName
+from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import _well_io

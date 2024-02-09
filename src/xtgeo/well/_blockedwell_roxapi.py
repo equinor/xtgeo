@@ -4,10 +4,10 @@ import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
-from xtgeo.common import null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import INT_MIN
 from xtgeo.common.exceptions import WellNotFoundError
+from xtgeo.common.log import null_logger
 from xtgeo.roxutils import RoxUtils
 
 try:

@@ -9,7 +9,9 @@ from scipy.interpolate import UnivariateSpline, interp1d
 
 import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common.constants import UNDEF_LIMIT
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -105,7 +107,7 @@ def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=Tr
         if ies != 0:
             raise RuntimeError(f"Something went wrong, code {ies}")
 
-    zcor[zcor > xtgeo.UNDEF_LIMIT] = np.nan
+    zcor[zcor > UNDEF_LIMIT] = np.nan
     dataframe = self.get_dataframe()
     dataframe[self.zname] = zcor
     # removing rows where Z column is undefined

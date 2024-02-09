@@ -1,6 +1,7 @@
 """Well input and output, private module for ROXAPI"""
 
-from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
 
 from .blocked_well import blockedwell_from_roxar

@@ -13,11 +13,12 @@ from typing import TYPE_CHECKING, Any
 import deprecation
 import numpy as np
 
-import xtgeo.common.constants as const
-from xtgeo.common import XTGDescription, null_logger
+from xtgeo.common.constants import UNDEF
+from xtgeo.common.log import null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGDescription
 from xtgeo.grid3d.grid import grid_from_cube
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataRegularCube
@@ -278,7 +279,7 @@ class Cube:
         else:
             self._traceidcodes = traceidcodes
         self._segyfile = segyfile
-        self.undef = const.UNDEF
+        self.undef = UNDEF
 
         self._metadata = MetaDataRegularCube()
         self._metadata.required = self

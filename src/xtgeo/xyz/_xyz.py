@@ -8,7 +8,8 @@ from warnings import warn
 
 import numpy as np
 
-from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 
 from . import _xyz_oper
 

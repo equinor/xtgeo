@@ -4,11 +4,11 @@ import warnings
 
 import numpy as np
 
-import xtgeo.common.constants as const
 from xtgeo import _cxtgeo
 from xtgeo._cxtgeo import XTGeoCLibError
-from xtgeo.common import null_logger
 from xtgeo.common.calc import _swap_axes
+from xtgeo.common.constants import UNDEF_LIMIT
+from xtgeo.common.log import null_logger
 from xtgeo.xyz.polygons import Polygons
 
 logger = null_logger(__name__)
@@ -264,7 +264,7 @@ def get_randomline(
         option,
     )
 
-    values[values > const.UNDEF_LIMIT] = np.nan
+    values[values > UNDEF_LIMIT] = np.nan
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)

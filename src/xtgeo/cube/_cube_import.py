@@ -40,11 +40,12 @@ import numpy as np
 import segyio
 from segyio import TraceField as TF
 
-import xtgeo.common.calc as xcalc
-import xtgeo.common.constants as const
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common import calc
+from xtgeo.common.constants import UNDEF
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.metadata.metadata import MetaDataRegularCube
 
 if TYPE_CHECKING:
@@ -141,22 +142,22 @@ def _segy_all_traces_attributes(
     traceidcodes = segyfile.attributes(trcode)[:].reshape(ncol, nrow)
 
     # need positions in corners for making vectors to compute geometries
-    c1v = xcalc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)
-    c2v = xcalc.ijk_to_ib(ncol, 1, 1, ncol, nrow, 1, forder=False)
-    c3v = xcalc.ijk_to_ib(1, nrow, 1, ncol, nrow, 1, forder=False)
+    c1v = calc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)
+    c2v = calc.ijk_to_ib(ncol, 1, 1, ncol, nrow, 1, forder=False)
+    c3v = calc.ijk_to_ib(1, nrow, 1, ncol, nrow, 1, forder=False)
 
     xori, yori, zori, zinc = _get_coordinate(segyfile, c1v)
     point_x1, point_y1, _, _ = _get_coordinate(segyfile, c2v)
     point_x2, point_y2, _, _ = _get_coordinate(segyfile, c3v)
 
-    slen1, _, rotation = xcalc.vectorinfo2(xori, point_x1, yori, point_y1)
+    slen1, _, rotation = calc.vectorinfo2(xori, point_x1, yori, point_y1)
     xinc = slen1 / (ncol - 1)
 
-    slen2, _, _ = xcalc.vectorinfo2(xori, point_x2, yori, point_y2)
+    slen2, _, _ = calc.vectorinfo2(xori, point_x2, yori, point_y2)
     yinc = slen2 / (nrow - 1)
 
     # find YFLIP by cross products
-    yflip = xcalc.find_flip(
+    yflip = calc.find_flip(
         (point_x1 - xori, point_y1 - yori, 0), (point_x2 - xori, point_y2 - yori, 0)
     )
 
@@ -207,7 +208,7 @@ def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> dict:
     nrow = int(abs(xlines_case.min() - xlines_case.max()) / xspacing) + 1
     nlay = data.shape[1]
 
-    values = np.full((ncol, nrow, nlay), const.UNDEF, dtype=np.float32)
+    values = np.full((ncol, nrow, nlay), UNDEF, dtype=np.float32)
     traceidcodes = np.full((ncol, nrow), 2, dtype=np.int64)
 
     ilines_shifted = (ilines_case / ispacing).astype(np.int64)
@@ -327,19 +328,17 @@ def _geometry_incomplete_traces(
     jl1x, jl1y, _, _ = _get_coordinate(segyfile, jnd1)
     jl2x, jl2y, _, _ = _get_coordinate(segyfile, jnd2)
 
-    xslen, _, rot1 = xcalc.vectorinfo2(il1x, il2x, il1y, il2y)
+    xslen, _, rot1 = calc.vectorinfo2(il1x, il2x, il1y, il2y)
     xinc = ispacing * xslen / (abs(ilines_case[ind1] - ilines_case[ind2]))
-    yslen, _, _ = xcalc.vectorinfo2(jl1x, jl2x, jl1y, jl2y)
+    yslen, _, _ = calc.vectorinfo2(jl1x, jl2x, jl1y, jl2y)
     yinc = xspacing * yslen / (abs(xlines_case[jnd1] - xlines_case[jnd2]))
 
-    yflip = xcalc.find_flip(
-        (il2x - il1x, il2y - il1y, 0), (jl2x - jl1x, jl2y - jl1y, 0)
-    )
+    yflip = calc.find_flip((il2x - il1x, il2y - il1y, 0), (jl2x - jl1x, jl2y - jl1y, 0))
 
     # need to compute xori and yori from 'case' I J indices with known x y and
     # (iline, xline); use ind1 with assosiated coordinates il1x il1y
     i_use, j_use = reverseindex_full[index_case[ind1]]
-    xori, yori = xcalc.xyori_from_ij(
+    xori, yori = calc.xyori_from_ij(
         i_use, j_use, il1x, il1y, xinc, yinc, ncol, nrow, yflip, rot1
     )
 
@@ -613,7 +612,7 @@ def import_xtgregcube(mfile, values=True):
     # although we do not support initializing with any other value.
     # As xtgeo-format is only written/read by xtgeo as far as we know, this should
     # be unproblematic for now.
-    if results.pop("undef", None) != const.UNDEF:
+    if results.pop("undef", None) != UNDEF:
         raise ValueError(
             f"File {mfile.file} has non-standard undef, not supported by xtgeo"
         )
