@@ -1,12 +1,11 @@
 """Regular surface vs Grid3D"""
 
-
 import numpy as np
 import numpy.ma as ma
 
-import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
+from xtgeo.common.log import null_logger
 from xtgeo.grid3d import _gridprop_lowlevel
 
 logger = null_logger(__name__)
@@ -92,9 +91,9 @@ def from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
     # call C function to make a map
     val = args["values"]
     val = val.ravel()
-    val = ma.filled(val, fill_value=xtgeo.UNDEF)
+    val = ma.filled(val, fill_value=UNDEF)
 
-    svalues = val * 0.0 + xtgeo.UNDEF
+    svalues = val * 0.0 + UNDEF
     ivalues = svalues.copy()
     jvalues = svalues.copy()
 
@@ -121,9 +120,9 @@ def from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
     )
 
     logger.info("Extracted surfaces from 3D grid...")
-    svalues = np.ma.masked_greater(svalues, xtgeo.UNDEF_LIMIT)
-    ivalues = np.ma.masked_greater(ivalues, xtgeo.UNDEF_LIMIT)
-    jvalues = np.ma.masked_greater(jvalues, xtgeo.UNDEF_LIMIT)
+    svalues = np.ma.masked_greater(svalues, UNDEF_LIMIT)
+    ivalues = np.ma.masked_greater(ivalues, UNDEF_LIMIT)
+    jvalues = np.ma.masked_greater(jvalues, UNDEF_LIMIT)
 
     if mode == "i":
         ivalues = ivalues.reshape((args["ncol"], args["nrow"]))

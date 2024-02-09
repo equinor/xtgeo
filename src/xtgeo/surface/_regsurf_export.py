@@ -1,4 +1,5 @@
 """Export RegularSurface data."""
+
 from __future__ import annotations
 
 import json
@@ -9,10 +10,9 @@ import h5py
 import hdf5plugin
 import numpy as np
 
-import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
-from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
+from xtgeo.common.constants import UNDEF, UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
+from xtgeo.common.log import null_logger
 
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper
@@ -90,7 +90,7 @@ def _export_irap_ascii_purepy(self, mfile):
 
 def _export_irap_ascii(self, mfile):
     """Export to Irap RMS ascii format using cxtgeo."""
-    vals = self.get_values1d(fill_value=xtgeo.UNDEF)
+    vals = self.get_values1d(fill_value=UNDEF)
 
     ier = _cxtgeo.surf_export_irap_ascii(
         mfile.get_cfhandle(),
@@ -247,7 +247,7 @@ def _export_ijxyz_ascii_cxtgeo(self: RegularSurface, mfile: FileWrapper) -> None
     Keep this for while since it was the original solution, and faster,
     but consider remove in e.g. 4.0."""
 
-    vals = self.get_values1d(fill_value=xtgeo.UNDEF)
+    vals = self.get_values1d(fill_value=UNDEF)
     ier = _cxtgeo.surf_export_ijxyz(
         mfile.get_cfhandle(),
         self._ncol,
@@ -349,7 +349,7 @@ def _export_zmap_ascii(self, mfile):
 
     yinc = scopy._yinc * scopy._yflip
 
-    vals = scopy.get_values1d(order="C", asmasked=False, fill_value=xtgeo.UNDEF)
+    vals = scopy.get_values1d(order="C", asmasked=False, fill_value=UNDEF)
 
     ier = _cxtgeo.surf_export_zmap_ascii(
         mfile.get_cfhandle(),

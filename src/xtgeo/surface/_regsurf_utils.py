@@ -1,11 +1,10 @@
 """RegularSurface utilities"""
 
-
 import numpy as np
 
-import xtgeo
-from xtgeo.common import null_logger
 from xtgeo.common.calc import _swap_axes
+from xtgeo.common.constants import UNDEF
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 
@@ -15,7 +14,7 @@ def swapaxes(self):
     self._rotation, self._yflip, swapped_values = _swap_axes(
         self._rotation,
         self._yflip,
-        values=self.values.filled(xtgeo.UNDEF),
+        values=self.values.filled(UNDEF),
     )
     self._ncol, self._nrow = self._nrow, self._ncol
     self._xinc, self._yinc = self._yinc, self._xinc

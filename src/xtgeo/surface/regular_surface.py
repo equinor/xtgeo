@@ -49,12 +49,19 @@ import numpy.ma as ma
 import pandas as pd
 import scipy.ndimage
 
-import xtgeo
-from xtgeo.common import null_logger
-from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
+from xtgeo.common.constants import (
+    UNDEF,
+    UNDEF_LIMIT,
+    VERYLARGENEGATIVE,
+    VERYLARGEPOSITIVE,
+)
+from xtgeo.common.log import null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 from xtgeo.io._file import FileFormat, FileWrapper
+from xtgeo.metadata.metadata import MetaDataRegularSurface
+from xtgeo.xyz.points import Points
 
 from . import (
     _regsurf_boundary,
@@ -73,8 +80,10 @@ if TYPE_CHECKING:
     import io
     import pathlib
 
+    from xtgeo.cube.cube1 import Cube
 
-xtg = xtgeo.common.XTGeoDialog()
+
+xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 # valid argumentts for seismic attributes
@@ -367,7 +376,7 @@ class RegularSurface:
         name: Optional[str] = "unknown",
         filesrc: Optional[str] = None,
         fformat: Optional[str] = None,
-        undef: Optional[float] = xtgeo.UNDEF,
+        undef: Optional[float] = UNDEF,
         dtype: Union[Type[np.float64], Type[np.float32]] = np.float64,
     ):
         """Instantiating a RegularSurface::
@@ -423,12 +432,12 @@ class RegularSurface:
         self._name = name
 
         self._undef = undef
-        self._undef_limit = xtgeo.UNDEF_LIMIT
+        self._undef_limit = UNDEF_LIMIT
 
         self._filesrc = filesrc  # Name of original input file or stream, if any
 
         self._fformat = fformat  # current fileformat, useful for load()
-        self._metadata = xtgeo.MetaDataRegularSurface()
+        self._metadata = MetaDataRegularSurface()
 
         self._values = None
 
@@ -456,9 +465,7 @@ class RegularSurface:
         return cls(**args)
 
     @classmethod
-    def _read_ijxyz(
-        cls, mfile: FileWrapper, template: xtgeo.RegularSurface | xtgeo.Cube | None
-    ):
+    def _read_ijxyz(cls, mfile: FileWrapper, template: RegularSurface | Cube | None):
         mfile = FileWrapper(mfile)
         args = _data_reader_factory(FileFormat.IJXYZ)(mfile, template=template)
         return cls(**args)
@@ -595,7 +602,7 @@ class RegularSurface:
     def metadata(self, obj):
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj, xtgeo.MetaDataRegularSurface):
+        if not isinstance(obj, MetaDataRegularSurface):
             raise ValueError("Input obj not an instance of MetaDataRegularSurface")
 
         self._metadata = obj  # checking is currently missing! TODO
@@ -870,7 +877,7 @@ class RegularSurface:
     def describe(self, flush=True):
         """Describe an instance by printing to stdout."""
         #
-        dsc = xtgeo.common.XTGDescription()
+        dsc = XTGDescription()
         dsc.title("Description of RegularSurface instance")
         dsc.txt("Object ID", id(self))
         dsc.txt("File source", self._filesrc)
@@ -1634,7 +1641,7 @@ class RegularSurface:
         return xsurf
 
     def get_values1d(
-        self, order="C", asmasked=False, fill_value=xtgeo.UNDEF, activeonly=False
+        self, order="C", asmasked=False, fill_value=UNDEF, activeonly=False
     ):
         """Get a 1D numpy or masked array of the map values.
 
@@ -2263,7 +2270,7 @@ class RegularSurface:
             ValueError: If invalid input
 
         """
-        if not isinstance(points, xtgeo.xyz.Points):
+        if not isinstance(points, Points):
             raise ValueError("Argument not a Points instance")
 
         logger.info("Do gridding...")
@@ -2511,7 +2518,10 @@ class RegularSurface:
         Raises:
             Exception if maps have different definitions (topology)
         """
-        if not isinstance(grid, xtgeo.grid3d.Grid):
+        # TODO: Remove this when circular dependency untangled
+        from xtgeo.grid3d.grid import Grid
+
+        if not isinstance(grid, Grid):
             raise ValueError("First argument must be a grid instance")
 
         ier = _regsurf_grid3d.slice_grid3d(
@@ -2573,9 +2583,11 @@ class RegularSurface:
 
         .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is 2
         """
+        scube = surface_from_cube(cube, 0)
         ier = _regsurf_cube.slice_cube(
             self,
             cube,
+            scube,
             zsurf=zsurf,
             sampling=sampling,
             mask=mask,
@@ -2592,9 +2604,9 @@ class RegularSurface:
 
     def slice_cube_window(
         self,
-        cube: xtgeo.Cube,
-        zsurf: Optional[xtgeo.RegularSurface] = None,
-        other: Optional[xtgeo.RegularSurface] = None,
+        cube: Cube,
+        zsurf: Optional[RegularSurface] = None,
+        other: Optional[RegularSurface] = None,
         other_position: str = "below",
         sampling: Literal["nearest", "cube", "trilinear"] = "nearest",
         mask: bool = True,
@@ -2606,7 +2618,7 @@ class RegularSurface:
         showprogress: bool = False,
         deadtraces: bool = True,
         algorithm: Literal[1, 2, 3] = 2,
-    ) -> Optional[Dict[xtgeo.RegularSurface]]:
+    ) -> Optional[Dict[RegularSurface]]:
         """Slice the cube within a vertical window and get the statistical attrubutes.
 
         The statistical attributes can be min, max etc. Attributes are:
@@ -2727,9 +2739,11 @@ class RegularSurface:
                 PendingDeprecationWarning,
             )
 
+        scube = surface_from_cube(cube, 0)
         return _regsurf_cube_window.slice_cube_window(
             self,
             cube,
+            scube,
             zsurf=zsurf,
             other=other,
             other_position=other_position,

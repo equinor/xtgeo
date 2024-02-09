@@ -8,10 +8,12 @@ from typing import Any
 import numpy as np
 import numpy.ma as ma
 
-import xtgeo
-from xtgeo import XTGeoCLibError, _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.xyz import Polygons
+from xtgeo import _cxtgeo
+from xtgeo._cxtgeo import XTGeoCLibError
+from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.xyz.polygons import Polygons
 
 xtg = XTGeoDialog()
 
@@ -125,8 +127,8 @@ def resample(self, other, mask=True, sampling="bilinear"):
         self.values = other.values.copy()
         return
 
-    svalues = np.ma.filled(self.values, fill_value=xtgeo.UNDEF)
-    ovalues = np.ma.filled(other.values, fill_value=xtgeo.UNDEF)
+    svalues = np.ma.filled(self.values, fill_value=UNDEF)
+    ovalues = np.ma.filled(other.values, fill_value=UNDEF)
 
     _cxtgeo.surf_resample(
         other._ncol,
@@ -151,7 +153,7 @@ def resample(self, other, mask=True, sampling="bilinear"):
         2 if sampling == "nearest" else 0,
     )
 
-    self.values = np.ma.masked_greater(svalues, xtgeo.UNDEF_LIMIT)
+    self.values = np.ma.masked_greater(svalues, UNDEF_LIMIT)
 
     self.set_values1d(svalues)
     self._filesrc = "Resampled"
@@ -207,7 +209,7 @@ def get_value_from_xy(self, point=(0.0, 0.0), sampling="bilinear"):
         self.get_values1d(),
         option,
     )
-    if zcoord > xtgeo.UNDEF_LIMIT:
+    if zcoord > UNDEF_LIMIT:
         return None
 
     return zcoord
@@ -237,7 +239,7 @@ def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
     except XTGeoCLibError:
         raise ValueError(f"Index i {iloc} and/or j {jloc} out of bounds")
 
-    if value > xtgeo.UNDEF_LIMIT:
+    if value > UNDEF_LIMIT:
         value = None
 
     return xval, yval, value
@@ -381,7 +383,7 @@ def get_fence(self, xyfence, sampling="bilinear"):
         logger.warning("Seem to be rotten")
 
     xyfence[:, 2] = czarr
-    xyfence = ma.masked_greater(xyfence, xtgeo.UNDEF_LIMIT)
+    xyfence = ma.masked_greater(xyfence, UNDEF_LIMIT)
     return ma.mask_rows(xyfence)
 
 
@@ -390,7 +392,7 @@ def get_randomline(
 ):
     """Get surface values along fence."""
 
-    if hincrement is None and isinstance(fencespec, xtgeo.Polygons):
+    if hincrement is None and isinstance(fencespec, Polygons):
         logger.info("Estimate hincrement from instance...")
         fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
         logger.info("Estimate hincrement from instance... DONE")
@@ -425,7 +427,7 @@ def get_randomline(
     if istat != 0:
         logger.warning("Seem to be rotten")
 
-    zcoords[zcoords > xtgeo.UNDEF_LIMIT] = np.nan
+    zcoords[zcoords > UNDEF_LIMIT] = np.nan
     return np.vstack([hcoords, zcoords]).T
 
 
@@ -460,7 +462,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     proxy = self.copy()
     proxy.values *= 0.0
-    vals = proxy.get_values1d(fill_value=xtgeo.UNDEF)
+    vals = proxy.get_values1d(fill_value=UNDEF)
 
     # value could be a scalar or another surface; if another surface,
     # must ensure same topology
@@ -532,8 +534,8 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
     elif opname == "set":
         tmp = value
     elif opname == "eli":
-        tmp = value * 0 + xtgeo.UNDEF
-        tmp = ma.masked_greater(tmp, xtgeo.UNDEF_LIMIT)
+        tmp = value * 0 + UNDEF
+        tmp = ma.masked_greater(tmp, UNDEF_LIMIT)
 
     self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
     del tmp
@@ -547,11 +549,9 @@ def _proxy_map_polygons(surf, poly, inside=True):
     proxy = surf.copy()
 
     # allow a single Polygons instance or a list of Polygons instances
-    if isinstance(poly, xtgeo.Polygons):
+    if isinstance(poly, Polygons):
         usepolys = [poly]
-    elif isinstance(poly, list) and all(
-        isinstance(pol, xtgeo.Polygons) for pol in poly
-    ):
+    elif isinstance(poly, list) and all(isinstance(pol, Polygons) for pol in poly):
         usepolys = poly
     else:
         raise ValueError("The poly values is not a Polygons or a list of Polygons")
@@ -623,8 +623,8 @@ def operation_polygons_v2(self, poly, value: float | Any, opname="add", inside=T
     elif opname == "set":
         result.values = np.ma.where(proxy.values == 1, value, result.values)
     elif opname == "eli":
-        result.values = np.ma.where(proxy.values == 1, xtgeo.UNDEF, result.values)
-        result.values = ma.masked_greater(result.values, xtgeo.UNDEF_LIMIT)
+        result.values = np.ma.where(proxy.values == 1, UNDEF, result.values)
+        result.values = ma.masked_greater(result.values, UNDEF_LIMIT)
     else:
         raise KeyError(f"The opname={opname} is not one of {VALID_OPER_POLYS}")
 

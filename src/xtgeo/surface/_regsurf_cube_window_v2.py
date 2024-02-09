@@ -1,11 +1,10 @@
 """Regular surface vs Cube, slice a window interval v2"""
 
-
 import numpy as np
 
-import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.constants import UNDEF
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 
@@ -31,6 +30,7 @@ ALLATTRS = [
 def slice_cube_window(
     self,
     cube,
+    scube,
     zsurf=None,
     other=None,
     other_position="below",
@@ -48,6 +48,7 @@ def slice_cube_window(
         attrs = _slice_cube_window_resample(
             self,
             cube,
+            scube,
             zsurf,
             other,
             other_position,
@@ -112,7 +113,7 @@ def _slice_cube_window(
 
     olddead = None
     if deadtraces:
-        olddead = cube.values_dead_traces(xtgeo.UNDEF)
+        olddead = cube.values_dead_traces(UNDEF)
 
     optprogress = 0
     if showprogress:
@@ -242,6 +243,7 @@ def _attributes_betw_surfaces(
 def _slice_cube_window_resample(
     self,
     cube,
+    scube,
     zsurf,
     other,
     other_position,
@@ -257,8 +259,6 @@ def _slice_cube_window_resample(
     """Makes a resample from original surfaces first to fit cube topology"""
 
     logger.info("Attributes between surfaces, resampling version")
-
-    scube = xtgeo.surface_from_cube(cube, 0.0)
 
     scube.resample(self)
 

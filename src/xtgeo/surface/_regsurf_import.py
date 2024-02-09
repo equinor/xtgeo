@@ -10,13 +10,15 @@ import h5py
 import numpy as np
 import numpy.ma as ma
 
-import xtgeo
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
-from xtgeo.surface._regsurf_ijxyz_parser import parse_ijxyz
-from xtgeo.surface._zmap_parser import parse_zmap
+from xtgeo.common.constants import UNDEF, UNDEF_LIMIT, UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.metadata.metadata import MetaDataRegularSurface
+
+from ._regsurf_ijxyz_parser import parse_ijxyz
+from ._zmap_parser import parse_zmap
 
 if TYPE_CHECKING:
     from xtgeo.cube.cube1 import Cube
@@ -148,7 +150,7 @@ def _import_irap_binary(mfile, values=True):
 
         val = np.reshape(val, (args["ncol"], args["nrow"]), order="C")
 
-        val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
+        val = ma.masked_greater(val, UNDEF_LIMIT)
 
         if np.isnan(val).any():
             logger.info("NaN values are found, will mask...")
@@ -233,7 +235,7 @@ def _import_irap_ascii(mfile):
 
     val = np.reshape(val, (ncol, nrow), order="C")
 
-    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
+    val = ma.masked_greater(val, UNDEF_LIMIT)
 
     if np.isnan(val).any():
         logger.info("NaN values are found, will mask...")
@@ -332,7 +334,7 @@ def import_petromod(mfile, **_):
         cfhandle, 1, undef, args["ncol"], args["nrow"], args["ncol"] * args["nrow"]
     )
 
-    values = np.ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
+    values = np.ma.masked_greater(values, UNDEF_LIMIT)
 
     args["values"] = values.reshape(args["ncol"], args["nrow"])
 
@@ -405,7 +407,7 @@ def import_xtg(mfile, values=True, **kwargs):
     meta = json.loads(jmeta, object_pairs_hook=dict)
     req = meta["_required_"]
 
-    reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
+    reqattrs = MetaDataRegularSurface.REQUIRED
 
     args = {}
     for myattr in reqattrs:
@@ -413,7 +415,7 @@ def import_xtg(mfile, values=True, **kwargs):
 
     if values:
         args["values"] = np.ma.masked_equal(
-            vals.reshape(args["ncol"], args["nrow"]), xtgeo.UNDEF
+            vals.reshape(args["ncol"], args["nrow"]), UNDEF
         )
 
     return args
@@ -421,7 +423,7 @@ def import_xtg(mfile, values=True, **kwargs):
 
 def import_hdf5_regsurf(mfile, values=True, **_):
     """Importing h5/hdf5 storage."""
-    reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
+    reqattrs = MetaDataRegularSurface.REQUIRED
 
     invalues = None
     with h5py.File(mfile.name, "r") as h5h:
@@ -446,7 +448,7 @@ def import_hdf5_regsurf(mfile, values=True, **_):
 
     if values:
         args["values"] = np.ma.masked_equal(
-            invalues.reshape(args["ncol"], args["nrow"]), xtgeo.UNDEF
+            invalues.reshape(args["ncol"], args["nrow"]), UNDEF
         )
 
     return args

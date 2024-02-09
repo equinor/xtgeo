@@ -1,7 +1,7 @@
 """RegularSurface utilities (low level)"""
 
 from xtgeo import _cxtgeo
-from xtgeo.common import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
 

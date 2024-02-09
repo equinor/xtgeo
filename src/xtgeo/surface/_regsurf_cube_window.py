@@ -1,10 +1,10 @@
 """Regular surface vs Cube, slice a window interval"""
 
-
 import numpy as np
 import numpy.ma as ma
 
-from xtgeo.common import XTGShowProgress, null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGShowProgress
 
 from . import _regsurf_cube_window_v2 as cwv2, _regsurf_cube_window_v3 as cwv3
 
@@ -32,6 +32,7 @@ ALLATTRS = [
 def slice_cube_window(
     self,
     cube,
+    scube,
     zsurf=None,
     other=None,
     other_position="below",
@@ -71,6 +72,7 @@ def slice_cube_window(
         attrs = cwv2.slice_cube_window(
             self,
             cube,
+            scube,
             zsurf=zsurf,
             other=other,
             other_position=other_position,
@@ -88,6 +90,7 @@ def slice_cube_window(
         attrs = cwv3.slice_cube_window(
             self,
             cube,
+            scube,
             zsurf=zsurf,
             other=other,
             other_position=other_position,

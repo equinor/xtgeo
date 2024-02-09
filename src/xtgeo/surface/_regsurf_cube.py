@@ -1,11 +1,10 @@
 """Regular surface vs Cube"""
 
-
 import numpy as np
 
-import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.constants import UNDEF
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 
@@ -13,6 +12,7 @@ logger = null_logger(__name__)
 def slice_cube(
     self,
     cube,
+    scube,
     zsurf=None,
     sampling="nearest",
     mask=True,
@@ -35,6 +35,7 @@ def slice_cube(
         return _slice_cube_v2_resample(
             self,
             cube,
+            scube,
             zsurf=zsurf,
             sampling=sampling,
             mask=mask,
@@ -75,7 +76,7 @@ def _slice_cube_v1(
 
     if deadtraces:
         # set dead traces to cxtgeo UNDEF -> special treatment in the C code
-        olddead = cube.values_dead_traces(xtgeo.UNDEF)
+        olddead = cube.values_dead_traces(UNDEF)
 
     cubeval1d = np.ravel(cube.values, order="C")
 
@@ -145,7 +146,7 @@ def _slice_cube_v2(
 
     if deadtraces:
         # set dead traces to cxtgeo UNDEF -> special treatment in the C code
-        olddead = cube.values_dead_traces(xtgeo.UNDEF)
+        olddead = cube.values_dead_traces(UNDEF)
 
     optnearest = 1
     if sampling == "trilinear":
@@ -177,16 +178,13 @@ def _slice_cube_v2(
 
 
 def _slice_cube_v2_resample(
-    self, cube, zsurf=None, sampling="nearest", mask=True, deadtraces=True
+    self, cube, scube, zsurf=None, sampling="nearest", mask=True, deadtraces=True
 ):
     """Slicing with surfaces that not match the cube geometry, snapxy=False
 
     The idea here is to resample the surface to the cube, then afterwards
     do an inverse sampling
     """
-
-    scube = xtgeo.surface_from_cube(cube, 0)
-
     if self.compare_topology(scube, strict=False):
         return _slice_cube_v2(self, cube, zsurf, sampling, mask, deadtraces)
 
