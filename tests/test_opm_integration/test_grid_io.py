@@ -5,7 +5,7 @@ import xtgeo
 from hypothesis import given, settings
 from numpy.testing import assert_allclose
 
-from ..test_grid3d.grid_generator import xtgeo_grids
+from ..test_grid3d.grid_generator import xtgeo_grids  # noqa
 
 
 def deck_contents(dimensions, load_statement):

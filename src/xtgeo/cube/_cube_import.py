@@ -33,6 +33,7 @@ import json
 from collections import defaultdict
 from copy import deepcopy
 from struct import unpack
+from typing import TYPE_CHECKING
 from warnings import warn
 
 import numpy as np
@@ -44,8 +45,10 @@ import xtgeo.common.constants as const
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.io._file import FileWrapper
 from xtgeo.metadata.metadata import MetaDataRegularCube
+
+if TYPE_CHECKING:
+    from xtgeo.io._file import FileWrapper
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)

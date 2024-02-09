@@ -1,8 +1,8 @@
 """GridProperty import function of xtgcpprop format."""
+
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
 from contextlib import contextmanager
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -19,6 +19,8 @@ from xtgeo.metadata.metadata import MetaDataCPProperty
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from numpy.typing import DTypeLike
 
     from xtgeo.io._file import FileWrapper

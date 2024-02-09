@@ -6,18 +6,16 @@
 from __future__ import annotations
 
 import functools
-import io
 import pathlib
 import warnings
 from copy import deepcopy
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import deprecation
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 
-import xtgeo
 from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
@@ -26,6 +24,11 @@ from xtgeo.xyz import _xyz_io, _xyz_roxapi
 from . import _polygons_oper, _xyz_oper
 from ._xyz import XYZ
 from ._xyz_io import _convert_idbased_xyz
+
+if TYPE_CHECKING:
+    import io
+
+    from xtgeo.well.well1 import Well
 
 logger = null_logger(__name__)
 
@@ -73,7 +76,7 @@ def _roxar_importer(
 
 
 def _wells_importer(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     zone: int | None = None,
     resample: int | None = 1,
 ):
@@ -167,7 +170,7 @@ def polygons_from_roxar(
 
 
 def polygons_from_wells(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     zone: int | None = 1,
     resample: int | None = 1,
 ):

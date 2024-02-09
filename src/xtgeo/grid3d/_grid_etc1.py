@@ -15,7 +15,6 @@ from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
 from xtgeo.common.constants import UNDEF_INT, UNDEF_LIMIT
-from xtgeo.common.types import Dimensions
 from xtgeo.grid3d.grid_properties import GridProperties
 from xtgeo.xyz.polygons import Polygons
 
@@ -23,11 +22,13 @@ from . import _gridprop_lowlevel
 from ._grid3d_fence import _update_tmpvars
 from .grid_property import GridProperty
 
-logger = null_logger(__name__)
 if TYPE_CHECKING:
+    from xtgeo.common.types import Dimensions
     from xtgeo.grid3d import Grid
     from xtgeo.grid3d.types import METRIC
     from xtgeo.xyz.points import Points
+
+logger = null_logger(__name__)
 
 
 def create_box(

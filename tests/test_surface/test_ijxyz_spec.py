@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface._regsurf_ijxyz_parser import SurfaceIJXYZ
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)

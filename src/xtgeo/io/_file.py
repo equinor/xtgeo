@@ -1,4 +1,5 @@
 """A FileWrapper class to wrap around files and streams representing files."""
+
 from __future__ import annotations
 
 import io
@@ -15,13 +16,11 @@ from typing import TYPE_CHECKING, Literal, Union
 
 import xtgeo._cxtgeo
 from xtgeo.common import null_logger
-from xtgeo.common.types import FileLike
 
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
-    import pathlib.Path
-
+    from xtgeo.common.types import FileLike
     from xtgeo.cube import Cube
     from xtgeo.grid3d import Grid, GridProperties, GridProperty
     from xtgeo.surface import RegularSurface, Surfaces

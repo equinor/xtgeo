@@ -48,14 +48,14 @@ GridHead(type_of_grid=<TypeOfGrid.COMPOSITE...
 >>> head.to_egrid().tolist() == grid_head_contents
 True
 """
+
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum, unique
 from itertools import chain
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import resfo
@@ -73,6 +73,9 @@ from ._ecl_grid import (
     Units,
 )
 from ._ecl_output_file import TypeOfGrid
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Sequence
 
 
 class EGridFileFormatError(ValueError):

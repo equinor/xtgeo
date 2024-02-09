@@ -5,7 +5,6 @@ import functools
 import hashlib
 import pathlib
 import warnings
-from collections.abc import Callable
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -40,6 +39,7 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Union
 
     import numpy.typing as npt
@@ -1114,8 +1114,9 @@ class GridProperty(_Grid3D):
         gridname: str,
         propertyname: str,
         realisation: int = 0,
-        casting: Literal["no", "equiv", "safe", "same_kind", "unsafe"]
-        | None = "unsafe",
+        casting: (
+            Literal["no", "equiv", "safe", "same_kind", "unsafe"] | None
+        ) = "unsafe",
     ) -> None:
         """
         Store a grid model property into a RMS project.

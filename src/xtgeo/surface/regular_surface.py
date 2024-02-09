@@ -20,6 +20,7 @@ or::
  mysurf = xtgeo.surface_from_roxar('some_rms_project', 'TopX', 'DepthSurface')
 
 """
+
 # --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 # 'asmasked'=True will return a np.ma array, with some fill_value if
@@ -35,14 +36,12 @@ or::
 from __future__ import annotations
 
 import functools
-import io
 import math
 import numbers
-import pathlib
 import warnings
 from copy import deepcopy
 from types import FunctionType
-from typing import Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import deprecation
 import numpy as np
@@ -69,6 +68,11 @@ from . import (
     _regsurf_roxapi,
     _regsurf_utils,
 )
+
+if TYPE_CHECKING:
+    import io
+    import pathlib
+
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = null_logger(__name__)

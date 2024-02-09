@@ -1,12 +1,12 @@
 """The XTGeo xyz.points module, which contains the Points class."""
+
 from __future__ import annotations
 
 import functools
-import io
 import pathlib
 import warnings
 from copy import deepcopy
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import deprecation
 import numpy as np
@@ -17,6 +17,9 @@ from xtgeo.common import inherit_docstring, null_logger
 from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.xyz import XYZ, _xyz_io, _xyz_oper, _xyz_roxapi
+
+if TYPE_CHECKING:
+    import io
 
 logger = null_logger(__name__)
 

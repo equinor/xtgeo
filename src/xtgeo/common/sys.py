@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import io
 import pathlib
-from collections.abc import Callable
 from types import BuiltinFunctionType
 from typing import TYPE_CHECKING, Literal
 
@@ -18,6 +17,8 @@ from ._xyz_enum import _AttrType
 from .log import null_logger
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import numpy.typing as npt
     import pandas as pd
 

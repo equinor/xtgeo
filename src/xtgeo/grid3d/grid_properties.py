@@ -1,9 +1,9 @@
 """Module for Grid Properties."""
+
 from __future__ import annotations
 
 import hashlib
 import warnings
-from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, List, Literal, Tuple, Union
 
 import deprecation
@@ -23,14 +23,17 @@ from ._gridprops_import_eclrun import (
     read_eclrun_properties,
 )
 from ._gridprops_import_roff import import_roff_gridproperties, read_roff_properties
-from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
     from xtgeo import Grid
     from xtgeo.common.types import FileLike
+
+    from .grid_property import GridProperty
 
 KeywordTuple = Tuple[str, str, int, int]
 KeywordDateTuple = Tuple[str, str, int, int, Union[str, int]]
