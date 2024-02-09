@@ -41,10 +41,11 @@ import numpy as np
 import pandas as pd
 from joblib import hash as jhash
 
-import xtgeo.common.constants as const
-from xtgeo import XTGeoCLibError, _cxtgeo
-from xtgeo.common import null_logger
+from xtgeo import _cxtgeo
+from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common._xyz_enum import _AttrName, _AttrType, _XYZType
+from xtgeo.common.constants import UNDEF_CONT, UNDEF_DISC
+from xtgeo.common.log import null_logger
 from xtgeo.common.sys import _convert_carr_double_np, _get_carray
 
 if TYPE_CHECKING:
@@ -247,8 +248,8 @@ class _XYZData:
                 codes = {value: str(value) for value in unique}
                 if self._undef_disc in codes:
                     del codes[self._undef_disc]
-                if const.UNDEF_DISC in codes:
-                    del codes[const.UNDEF_DISC]
+                if UNDEF_DISC in codes:
+                    del codes[UNDEF_DISC]
             else:
                 codes = None
 
@@ -301,13 +302,13 @@ class _XYZData:
                 logger.debug("Replacing CONT undef...")
                 self._df[name].replace(
                     self._undef_cont,
-                    np.float64(const.UNDEF_CONT).astype(self._floatbits),
+                    np.float64(UNDEF_CONT).astype(self._floatbits),
                     inplace=True,
                 )
             else:
                 logger.debug("Replacing INT undef...")
                 self._df[name].replace(
-                    self._undef_disc, np.int32(const.UNDEF_DISC), inplace=True
+                    self._undef_disc, np.int32(UNDEF_DISC), inplace=True
                 )
         logger.info("Processed dataframe: %s", list(self._df.dtypes))
 
@@ -438,8 +439,8 @@ class _XYZData:
         self,
         infer_dtype: bool = False,
         filled=False,
-        fill_value=const.UNDEF_CONT,
-        fill_value_int=const.UNDEF_DISC,
+        fill_value=UNDEF_CONT,
+        fill_value_int=UNDEF_DISC,
     ):
         """Get a deep copy of the dataframe, with options.
 

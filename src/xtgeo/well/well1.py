@@ -10,9 +10,9 @@ import deprecation
 import numpy as np
 import pandas as pd
 
-import xtgeo.common.constants as const
 from xtgeo import _cxtgeo
 from xtgeo.common._xyz_enum import _AttrType
+from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription
@@ -990,9 +990,7 @@ class Well:
         """
         return self._wdata.get_dataframe(copy=copy)
 
-    def get_filled_dataframe(
-        self, fill_value=const.UNDEF, fill_value_int=const.UNDEF_INT
-    ):
+    def get_filled_dataframe(self, fill_value=UNDEF, fill_value_int=UNDEF_INT):
         """Fill the Nan's in the dataframe with real UNDEF values.
 
         This module returns a copy of the dataframe in the object; it
@@ -1095,7 +1093,7 @@ class Well:
             raise RuntimeError("Unexpected error")
 
         dfr = self.get_dataframe()
-        dfr = dfr[dfr[self.xname] < const.UNDEF_LIMIT]
+        dfr = dfr[dfr[self.xname] < UNDEF_LIMIT]
         self.set_dataframe(dfr)
 
     def may_overlap(self, other):

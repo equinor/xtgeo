@@ -8,6 +8,7 @@ First order functions here are:
 
 Functions starting with '_' are local helper functions
 """
+
 from math import ceil
 
 import numpy as np
@@ -17,7 +18,7 @@ from scipy.spatial import Delaunay, cKDTree
 from shapely.ops import polygonize
 
 import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 MINIMUM_NUMBER_POINTS = 4

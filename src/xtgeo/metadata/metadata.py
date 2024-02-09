@@ -11,8 +11,8 @@ The metadata works through the various datatypes in XTGeo. For example::
 """
 
 import xtgeo
-import xtgeo.common.constants as const
-from xtgeo.common import null_logger
+from xtgeo.common.constants import UNDEF
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 
@@ -110,7 +110,7 @@ class _OptionalMetaData:
             raise ValueError("The description length must less or equal 64 letters.")
         invalids = r"/$<>[]:\&%"
         if set(invalids).intersection(newstr):
-            raise ValueError("The description constains invalid characters such as /.")
+            raise ValueError("The description contains invalid characters such as /.")
 
         self._description = newstr
 
@@ -235,7 +235,7 @@ class MetaDataRegularSurface(MetaData):
         "yinc": 1.0,
         "yflip": 1,
         "rotation": 0.0,
-        "undef": const.UNDEF,
+        "undef": UNDEF,
     }
 
     def __init__(self):
@@ -282,7 +282,7 @@ class MetaDataRegularCube(MetaData):
         "yflip": 1,
         "zflip": 1,
         "rotation": 0.0,
-        "undef": const.UNDEF,
+        "undef": UNDEF,
     }
 
     def __init__(self):

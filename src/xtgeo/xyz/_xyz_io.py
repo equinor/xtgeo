@@ -1,11 +1,10 @@
 """Private import and export routines for XYZ stuff."""
 
-
 import numpy as np
 import pandas as pd
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.constants import UNDEF, UNDEF_INT
+from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileWrapper
 
 logger = null_logger(__name__)
@@ -159,9 +158,9 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
     for col in dfr.columns[3:]:
         if col in _attrs:
             if _attrs[col] == "float":
-                dfr[col].replace("UNDEF", xtgeo.UNDEF, inplace=True)
+                dfr[col].replace("UNDEF", UNDEF, inplace=True)
             elif _attrs[col] == "int":
-                dfr[col].replace("UNDEF", xtgeo.UNDEF_INT, inplace=True)
+                dfr[col].replace("UNDEF", UNDEF_INT, inplace=True)
             # cast to numerical if possible
         dfr[col] = pd.to_numeric(dfr[col], errors="ignore")
 
@@ -308,9 +307,9 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
                 if col in df.columns:
                     fout.write(transl[self._attrs[col]] + " " + col + "\n")
                     if self._attrs[col] == "int":
-                        df[col].replace(xtgeo.UNDEF_INT, "UNDEF", inplace=True)
+                        df[col].replace(UNDEF_INT, "UNDEF", inplace=True)
                     elif self._attrs[col] == "float":
-                        df[col].replace(xtgeo.UNDEF, "UNDEF", inplace=True)
+                        df[col].replace(UNDEF, "UNDEF", inplace=True)
 
     with open(pfile, mode) as fc:
         df.to_csv(fc, sep=" ", header=None, columns=columns, index=False)

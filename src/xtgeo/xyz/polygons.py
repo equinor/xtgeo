@@ -16,7 +16,8 @@ import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 
-from xtgeo.common import inherit_docstring, null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.common.sys import inherit_docstring
 from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
