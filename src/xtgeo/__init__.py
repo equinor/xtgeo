@@ -80,12 +80,44 @@ _xprint("Import common... done")
 
 _xprint("Import various XTGeo modules...")
 
+from xtgeo.metadata.metadata import (
+    MetaDataCPGeometry,
+    MetaDataCPProperty,
+    MetaDataRegularCube,
+    MetaDataRegularSurface,
+    MetaDataWell,
+)
+
+_xprint("Import various XTGeo modules... metadata...")
+
+
 from xtgeo.roxutils import roxutils
 from xtgeo.roxutils.roxutils import RoxUtils
 
+from xtgeo.well import blocked_well, blocked_wells, well1, wells
+from xtgeo.well.blocked_well import (
+    BlockedWell,
+    blockedwell_from_file,
+    blockedwell_from_roxar,
+)
+from xtgeo.well.blocked_wells import (
+    BlockedWells,
+    blockedwells_from_files,
+    blockedwells_from_roxar,
+)
+from xtgeo.well.well1 import Well, well_from_file, well_from_roxar
+from xtgeo.well.wells import Wells, wells_from_files
+from xtgeo.xyz.points import (
+    points_from_file,
+    points_from_roxar,
+    points_from_surface,
+    points_from_wells,
+    points_from_wells_dfrac,
+)
+
 _xprint("Import various XTGeo modules... wells...")
 
-from xtgeo.grid3d import GridRelative, Units, grid, grid_properties, grid_property
+from xtgeo.grid3d._ecl_grid import GridRelative, Units
 from xtgeo.grid3d.grid import Grid
 from xtgeo.grid3d.grid_properties import (
     GridProperties,
@@ -118,16 +150,6 @@ from xtgeo.cube.cube1 import Cube
 
 _xprint("Import various XTGeo modules... cube...")
 
-from xtgeo.metadata.metadata import (
-    MetaDataCPGeometry,
-    MetaDataCPProperty,
-    MetaDataRegularCube,
-    MetaDataRegularSurface,
-    MetaDataWell,
-)
-
-_xprint("Import various XTGeo modules... metadata...")
-
 from xtgeo.xyz import points, polygons
 from xtgeo.xyz.points import Points
 from xtgeo.xyz.polygons import Polygons
@@ -143,26 +165,6 @@ from xtgeo.grid3d.grid import (
     grid_from_cube,
     grid_from_file,
     grid_from_roxar,
-)
-from xtgeo.well import blocked_well, blocked_wells, well1, wells
-from xtgeo.well.blocked_well import (
-    BlockedWell,
-    blockedwell_from_file,
-    blockedwell_from_roxar,
-)
-from xtgeo.well.blocked_wells import (
-    BlockedWells,
-    blockedwells_from_files,
-    blockedwells_from_roxar,
-)
-from xtgeo.well.well1 import Well, well_from_file, well_from_roxar
-from xtgeo.well.wells import Wells, wells_from_files
-from xtgeo.xyz.points import (
-    points_from_file,
-    points_from_roxar,
-    points_from_surface,
-    points_from_wells,
-    points_from_wells_dfrac,
 )
 from xtgeo.xyz.polygons import (
     polygons_from_file,

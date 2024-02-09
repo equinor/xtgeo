@@ -63,17 +63,22 @@ This seems to lack obvious patterns (mostly due to many undefied cells?). Hence 
 need to detect minimum spacing and min/max of both ilines and xlines, unless a template
 is applied.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import numpy as np
 from numpy.ma import MaskedArray
 
-import xtgeo
 from xtgeo.common.calc import find_flip, xyori_from_ij
 from xtgeo.common.log import null_logger
+
+if TYPE_CHECKING:
+    from xtgeo.cube.cube1 import Cube
+
+    from .regular_surface import RegularSurface
 
 logger = null_logger(__name__)
 
@@ -96,7 +101,7 @@ class SurfaceIJXYZ:
     values_in: MaskedArray
     ilines_in: np.ndarray
     xlines_in: np.ndarray
-    template: Optional[xtgeo.RegularSurface | xtgeo.Cube] = None
+    template: Optional[RegularSurface | Cube] = None
 
     ncol: int = field(default=1, init=False)
     nrow: int = field(default=1, init=False)
@@ -168,7 +173,13 @@ class SurfaceIJXYZ:
     def _map_on_template(self) -> None:
         """An existing RegularSurface or Cube forms the geometrical template."""
         logger.debug("Parse ijxyz with template")
-        if not isinstance(self.template, (xtgeo.RegularSurface, xtgeo.Cube)):
+
+        # TODO: Remove these when moved to xtgeo.io
+        from xtgeo.cube.cube1 import Cube
+
+        from .regular_surface import RegularSurface
+
+        if not isinstance(self.template, (RegularSurface, Cube)):
             raise ValueError(
                 "The provided template is not of type RegularSurface or Cube"
             )

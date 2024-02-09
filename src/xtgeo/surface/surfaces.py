@@ -8,13 +8,14 @@ from typing import Literal
 import deprecation
 import numpy as np
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 
 from . import _surfs_import
+from .regular_surface import RegularSurface, surface_from_file
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
@@ -46,7 +47,7 @@ class Surfaces:
 
     def __init__(
         self,
-        surfaces: list[xtgeo.RegularSurface] | None = None,
+        surfaces: list[RegularSurface] | None = None,
         subtype: Literal["tops", "isochores"] | None = None,
         order: Literal["same", "stratigraphic"] | None = None,
     ):
@@ -67,7 +68,7 @@ class Surfaces:
             raise ValueError("Input not a list")
 
         for elem in slist:
-            if not isinstance(elem, xtgeo.RegularSurface):
+            if not isinstance(elem, RegularSurface):
                 raise ValueError("Element in list not a valid type of Surface")
 
         self._surfaces = slist
@@ -76,11 +77,11 @@ class Surfaces:
         """Append surfaces from either a list of RegularSurface objects,
         a list of files, or a mix."""
         for item in slist:
-            if isinstance(item, xtgeo.RegularSurface):
+            if isinstance(item, RegularSurface):
                 self.surfaces.append(item)
             else:
                 try:
-                    sobj = xtgeo.surface_from_file(item, fformat="guess")
+                    sobj = surface_from_file(item, fformat="guess")
                     self.surfaces.append(sobj)
                 except OSError:
                     xtg.warnuser(f"Cannot read as file, skip: {item}")
@@ -88,7 +89,7 @@ class Surfaces:
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = xtgeo.common.XTGDescription()
+        dsc = XTGDescription()
         dsc.title(f"Description of {self.__class__.__name__} instance")
         dsc.txt("Object ID", id(self))
 

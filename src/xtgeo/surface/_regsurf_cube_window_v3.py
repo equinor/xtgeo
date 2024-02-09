@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.interpolate import interp1d
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
+
+if TYPE_CHECKING:
+    from xtgeo.cube.cube1 import Cube
+
+    from .regular_surface import RegularSurface
+
 
 warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
 warnings.filterwarnings(action="ignore", message="Mean of empty slice")
@@ -40,7 +46,7 @@ ALLATTRS = STATATTRS + SUMATTRS
 # self ~ RegularSurface() instance
 
 
-def _cut_cube_deadtraces(cube: xtgeo.Cube, deadtraces: bool) -> np.ndarray:
+def _cut_cube_deadtraces(cube: Cube, deadtraces: bool) -> np.ndarray:
     """Take the cube numpy values and filter away dead traces as np.nan."""
     logger.info("Assign dead traces")
     dvalues = cube.values.copy()
@@ -55,10 +61,10 @@ def _cut_cube_deadtraces(cube: xtgeo.Cube, deadtraces: bool) -> np.ndarray:
 
 
 def _get_iso_maskthreshold_surface(
-    upper: xtgeo.RegularSurface,
-    lower: xtgeo.RegularSurface,
+    upper: RegularSurface,
+    lower: RegularSurface,
     maskthreshold: float,
-) -> xtgeo.RegularSurface:
+) -> RegularSurface:
     """Return a surface with value 0 where isochore <= threshold"""
     logger.info("Maskthreshold based on isochore")
     result = upper.copy()
@@ -70,27 +76,28 @@ def _get_iso_maskthreshold_surface(
 
 def _proxy_surf_outside_cube(
     self,
-    cube: xtgeo.Cube,
-) -> xtgeo.RegularSurface:
+    cube: Cube,
+    scube: RegularSurface,
+) -> RegularSurface:
     """Proxy for the part of input surface that is outside the cube area."""
     logger.info("Get a proxy for part of original surface being outside the cube")
     outside = self.copy()
     outside.values = 0.0
 
-    tmp_surf = xtgeo.surface_from_cube(cube, 0.0)
-    boundary = tmp_surf.get_boundary_polygons()
+    boundary = scube.get_boundary_polygons()
     outside.set_outside(boundary, 1.0)
     return outside  # is 1 outside the cube area, 0 within the cube
 
 
 def _upper_lower_surface(
     self,
-    cube: xtgeo.Cube,
-    zsurf: xtgeo.RegularSurface,
-    other: xtgeo.RegularSurface,
+    cube: Cube,
+    scube: RegularSurface,
+    zsurf: RegularSurface,
+    other: RegularSurface,
     other_position: str,
     zrange: float,
-) -> tuple[xtgeo.RegularSurface, xtgeo.RegularSurface]:
+) -> tuple[RegularSurface, RegularSurface]:
     """Return upper and lower surface, sampled to cube resolution."""
 
     logger.info("Define surfaces to apply...")
@@ -110,20 +117,19 @@ def _upper_lower_surface(
         surf2.values += zrange
 
     # get the surfaces on cube resolution
-    upper = xtgeo.surface_from_cube(cube, 0)
-    lower = upper.copy()
-    upper.resample(surf1)
+    lower = scube.copy()
+    scube.resample(surf1)
     lower.resample(surf2)
 
     logger.info(
         "Return resmapled surfaces, avg for upper and lower is %s, %s",
-        upper.values.mean(),
+        scube.values.mean(),
         lower.values.mean(),
     )
-    return upper, lower
+    return scube, lower
 
 
-def _create_depth_cube(cube: xtgeo.Cube) -> np.ndarray:
+def _create_depth_cube(cube: Cube) -> np.ndarray:
     """Create a cube (np array) where values are cube depths; to be used as filter."""
     logger.info("Create a depth cube...")
     dcube = cube.values.copy()
@@ -210,12 +216,12 @@ def _expand_attributes(attribute: str | list) -> list:
 def _compute_stats(
     cref: np.ndarray,
     attr: str,
-    self: xtgeo.RegularSurface,
-    upper: xtgeo.RegularSurface,
-    masksurf: xtgeo.RegularSurface,
+    self: RegularSurface,
+    upper: RegularSurface,
+    masksurf: RegularSurface,
     sampling: str,
     snapxy: bool,
-) -> xtgeo.RegularSurface:
+) -> RegularSurface:
     """Compute the attribute and return the attribute map"""
     logger.info("Compute stats...")
 
@@ -290,9 +296,10 @@ def _compute_stats(
 
 def slice_cube_window(
     self,
-    cube: xtgeo.Cube,
-    zsurf: xtgeo.RegularSurface | None = None,
-    other: xtgeo.RegularSurface | None = None,
+    cube: Cube,
+    scube: RegularSurface,
+    zsurf: RegularSurface | None = None,
+    other: RegularSurface | None = None,
     other_position: str = "below",
     sampling: str = "nearest",
     mask: bool = True,
@@ -311,12 +318,12 @@ def slice_cube_window(
     cvalues = _cut_cube_deadtraces(cube, deadtraces)
 
     upper, lower = _upper_lower_surface(
-        self, cube, zsurf, other, other_position, zrange
+        self, cube, scube, zsurf, other, other_position, zrange
     )
 
     outside_proxy = None
     if not mask:
-        outside_proxy = _proxy_surf_outside_cube(self, cube)
+        outside_proxy = _proxy_surf_outside_cube(self, cube, scube)
 
     masksurf = _get_iso_maskthreshold_surface(upper, lower, maskthreshold)
 

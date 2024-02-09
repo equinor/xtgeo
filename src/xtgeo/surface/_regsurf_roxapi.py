@@ -5,8 +5,8 @@ import tempfile
 
 import numpy as np
 
-from xtgeo import RoxUtils
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.roxutils import RoxUtils
 
 logger = null_logger(__name__)
 

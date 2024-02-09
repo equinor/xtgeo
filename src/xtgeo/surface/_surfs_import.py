@@ -1,7 +1,8 @@
 """Import multiple surfaces"""
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
+
+from .regular_surface import surface_from_grid3d
 
 logger = null_logger(__name__)
 
@@ -33,9 +34,7 @@ def from_grid3d(grid, subgrids, rfactor):
     # next extract these layers
     layerstack = []
     for inum, lay in enumerate(layers):
-        layer = xtgeo.surface_from_grid3d(
-            grid, template=None, where=lay, rfactor=rfactor
-        )
+        layer = surface_from_grid3d(grid, template=None, where=lay, rfactor=rfactor)
         layer.name = names[inum]
         layerstack.append(layer)
 
