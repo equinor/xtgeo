@@ -137,6 +137,7 @@ write_to = "src/xtgeo/common/version.py"
 
 [tool.ruff]
 line-length = 88
+exclude = ["examples"]
 
 [tool.ruff.lint]
 ignore = [
@@ -159,3 +160,13 @@ select = [
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+
+[tool.ruff.lint.flake8-import-conventions.aliases]
+# Enforce `import numpy as np`
+numpy = "np"
+pandas = "pd"
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Ban certain modules from being imported at module level, instead requiring
+# that they're imported lazily (e.g., within a function definition).
+banned-module-level-imports = ["matplotlib", "xtgeoviz"]
