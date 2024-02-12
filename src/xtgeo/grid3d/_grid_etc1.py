@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import lru_cache
 from math import atan2, degrees
 from typing import TYPE_CHECKING, Literal
 
@@ -134,6 +135,7 @@ def get_dz(
     )
 
 
+@lru_cache(maxsize=1)
 def get_dx(
     self: Grid, name: str = "dX", asmasked: bool = False, metric: METRIC = "horizontal"
 ) -> GridProperty:
@@ -166,6 +168,7 @@ def get_dx(
     )
 
 
+@lru_cache(maxsize=1)
 def get_dy(
     self: Grid, name: str = "dY", asmasked: bool = False, metric: METRIC = "horizontal"
 ) -> GridProperty:
@@ -384,6 +387,7 @@ def get_ijk_from_points(
     return list(mydataframe.itertuples(index=False, name=None))
 
 
+@lru_cache(maxsize=1)
 def get_xyz(
     self: Grid,
     names: tuple[str, str, str] = ("X_UTME", "Y_UTMN", "Z_TVDSS"),

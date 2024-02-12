@@ -22,6 +22,7 @@ from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import (
     _grid3d_fence,
+    _grid_boundary,
     _grid_etc1,
     _grid_export,
     _grid_hybrid,
@@ -516,6 +517,10 @@ class Grid(_Grid3D):
         logger.debug("Invoke __str__ for grid", stack_info=True)
 
         return self.describe(flush=False) or ""
+
+    def __hash__(self):
+        """The __hash__ method."""
+        return hash(self.generate_hash())
 
     # ==================================================================================
     # Public Properties:
@@ -1567,6 +1572,62 @@ class Grid(_Grid3D):
         """Make a XTGeo GridProperty instance for a Zone property subgrid index."""
         raise NotImplementedError("Not yet; todo")
 
+    def get_boundary_polygons(
+        self: Grid,
+        alpha_factor: float = 1.0,
+        convex: bool = False,
+        simplify: bool | dict[str, Any] = True,
+        filter_array: np.ndarray | None = None,
+    ) -> Polygons:
+        """Extract boundary polygons from the grid cell centers.
+
+        A ``filter_array`` can be applied to extract boundaries around specific
+        parts of the grid e.g. a region or a zone.
+
+        The concavity and precision of the boundaries are controlled by the
+        ``alpha_factor``. A low ``alpha_factor`` makes more precise boundaries,
+        while a larger value makes more rough polygons.
+
+        Note that the ``alpha_factor`` is a multiplier (default value 1) on top
+        of an auto estimated value, derived from the maximum xinc and yinc from
+        the grid cells. Dependent on the regularity of the grid, tuning of the
+        alpha_factor (up/down) is sometimes necessary to get satisfactory results.
+
+        Args:
+            alpha_factor: An alpha multiplier, which controls the precision of the
+                boundaries. A higher number will produce smoother and less accurate
+                polygons. Not applied if convex is set to True.
+            convex: The default is False, which means that a "concave hull" algorithm
+                is used. If convex is True, the alpha factor is overridden to a large
+                number, producing a 'convex' shape boundary instead.
+            simplify: If True, a simplification is done in order to reduce the number
+                of points in the polygons, where tolerance is 0.1. Another
+                alternative to True is to input a Dict on the form
+                ``{"tolerance": 2.0, "preserve_topology": True}``, cf. the
+                :func:`Polygons.simplify()` method. For details on e.g. tolerance, see
+                Shapely's simplify() method.
+            filter_array: An numpy boolean array with equal shape as the grid dimension,
+                used to filter the grid cells and define where to extract boundaries.
+
+        Returns:
+            A XTGeo Polygons instance
+
+        Example::
+
+            grid = xtgeo.grid_from_roxar(project, "Simgrid")
+            # extract polygon for a specific region, here region 3
+            region = xtgeo.gridproperty_from_roxar(project, "Simgrid", "Regions")
+            filter_array = (region.values==3)
+            boundary = grid.get_boundary_polygons(filter_array=filter_array)
+
+        See also:
+            The :func:`Polygons.boundary_from_points()` class method.
+
+        """
+        return _grid_boundary.create_boundary(
+            self, alpha_factor, convex, simplify, filter_array
+        )
+
     def get_actnum_indices(
         self,
         order: Literal["C", "F", "A", "K"] = "C",
@@ -2047,7 +2108,7 @@ class Grid(_Grid3D):
             )
             asmasked = self._evaluate_mask(mask)
 
-        return _grid_etc1.get_xyz(self, names=names, asmasked=asmasked)
+        return _grid_etc1.get_xyz(self, names=tuple(names), asmasked=asmasked)
 
     def get_xyz_cell_corners(
         self,
