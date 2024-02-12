@@ -11,7 +11,7 @@ import h5py
 import hdf5plugin
 import roffio
 
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 from ._egrid import EGrid
 from ._grdecl_grid import GrdeclGrid

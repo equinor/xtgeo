@@ -1,6 +1,6 @@
 """Private baseclass for Grid and GridProperties, not to be used by itself."""
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
 

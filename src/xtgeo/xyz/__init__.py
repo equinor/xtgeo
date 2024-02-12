@@ -1,7 +1,11 @@
 """The XTGeo xyz (points and polygons) package."""
 
+from ._xyz import XYZ
+from .points import Points
+from .polygons import Polygons
 
-# flake8: noqa
-from xtgeo.xyz._xyz import XYZ
-from xtgeo.xyz.points import Points
-from xtgeo.xyz.polygons import Polygons
+__all__ = [
+    "XYZ",
+    "Points",
+    "Polygons",
+]

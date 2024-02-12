@@ -17,8 +17,9 @@ import shapely.geometry as sg
 from scipy.spatial import Delaunay, cKDTree
 from shapely.ops import polygonize
 
-import xtgeo
 from xtgeo.common.log import null_logger
+
+from .points import Points
 
 logger = null_logger(__name__)
 MINIMUM_NUMBER_POINTS = 4
@@ -30,7 +31,7 @@ class BoundaryError(ValueError):
 
 def boundary_from_points(points, alpha_factor=1.0, alpha=None, concave=False):
     """From a Point instance, make boundary polygons (generic)."""
-    if not isinstance(points, xtgeo.Points):
+    if not isinstance(points, Points):
         raise ValueError("The input points is not an instance of xtgeo.Points")
 
     if points.nrow < MINIMUM_NUMBER_POINTS:

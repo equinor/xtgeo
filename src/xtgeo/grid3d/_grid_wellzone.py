@@ -1,16 +1,19 @@
 """Private module for grid vs well zonelog checks."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
-from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.grid3d.grid_property import GridProperty
-from xtgeo.well import Well
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.well.well1 import Well
+
+from .grid_property import GridProperty
 
 if TYPE_CHECKING:
-    from xtgeo.grid3d import Grid
+    from .grid import Grid
 
 
 xtg = XTGeoDialog()

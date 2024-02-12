@@ -12,12 +12,14 @@ import deprecation
 import numpy as np
 import numpy.ma as ma
 
-import xtgeo
-from xtgeo.common import XTGDescription, null_logger
+from xtgeo.common.log import null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 from xtgeo.io._file import FileFormat, FileWrapper
+from xtgeo.metadata.metadata import MetaDataCPGeometry
+from xtgeo.xyz.polygons import Polygons
 
 from . import (
     _grid3d_fence,
@@ -34,21 +36,22 @@ from . import (
 )
 from ._grid3d import _Grid3D
 from .grid_properties import GridProperties
+from .grid_property import GridProperty
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Hashable, Sequence
 
     import pandas as pd
 
-    from xtgeo import Polygons, Well
     from xtgeo.common.types import FileLike
+    from xtgeo.cube.cube1 import Cube
+    from xtgeo.well.well1 import Well
     from xtgeo.xyz.points import Points
 
     from ._ecl_grid import Units
-    from .grid_property import GridProperty
     from .types import METRIC
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 # --------------------------------------------------------------------------------------
@@ -220,7 +223,7 @@ def create_box_grid(
 
 
 def grid_from_cube(
-    cube: xtgeo.Cube,
+    cube: Cube,
     propname: str | None = "seismics",
     oricenter: bool = True,
 ) -> Grid:
@@ -252,7 +255,7 @@ def grid_from_cube(
     )
     if propname is not None:
         grd.props = [
-            xtgeo.GridProperty(
+            GridProperty(
                 ncol=cube.ncol,
                 nrow=cube.nrow,
                 nlay=cube.nlay,
@@ -491,7 +494,7 @@ class Grid(_Grid3D):
             acttmp.values[acttmp.values >= 1] = 1
             self.set_actnum(acttmp)
 
-        self._metadata = xtgeo.MetaDataCPGeometry()
+        self._metadata = MetaDataCPGeometry()
         self._metadata.required = self
 
         # Roxar api spesific:
@@ -521,15 +524,15 @@ class Grid(_Grid3D):
     # ==================================================================================
 
     @property
-    def metadata(self) -> xtgeo.MetaDataCPGeometry:
+    def metadata(self) -> MetaDataCPGeometry:
         """obj: Return or set metadata instance of type MetaDataCPGeometry."""
         return self._metadata
 
     @metadata.setter
-    def metadata(self, obj: xtgeo.MetaDataCPGeometry) -> None:
+    def metadata(self, obj: MetaDataCPGeometry) -> None:
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj, xtgeo.MetaDataCPGeometry):
+        if not isinstance(obj, MetaDataCPGeometry):
             raise ValueError("Input obj not an instance of MetaDataCPGeometry")
 
         self._metadata = obj  # checking is currently missing! TODO
@@ -1674,7 +1677,7 @@ class Grid(_Grid3D):
         if dual and self._dualactnum:
             act = self._dualactnum.copy()
         else:
-            act = xtgeo.grid3d.GridProperty(
+            act = GridProperty(
                 ncol=self._ncol,
                 nrow=self._nrow,
                 nlay=self._nlay,
@@ -2725,7 +2728,7 @@ class Grid(_Grid3D):
               used to pregenerate `fencespec`
 
         """
-        if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
+        if not isinstance(fencespec, (np.ndarray, Polygons)):
             raise ValueError("fencespec must be a numpy or a Polygons() object")
         logger.info("Getting randomline...")
 

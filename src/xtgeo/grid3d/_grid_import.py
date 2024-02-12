@@ -1,14 +1,14 @@
 """Grid import functions for various formats."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from xtgeo.common import null_logger
-from xtgeo.grid3d import _grid_import_ecl, _grid_import_roff
+from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
 
-from . import _grid_import_xtgcpgeom
+from . import _grid_import_ecl, _grid_import_roff, _grid_import_xtgcpgeom
 
 logger = null_logger(__name__)
 

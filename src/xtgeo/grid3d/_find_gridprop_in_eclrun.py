@@ -9,7 +9,7 @@ from typing import Dict, List, Literal, Optional, Union
 import numpy as np
 import resfo
 
-import xtgeo
+from xtgeo.common.constants import UNDEF, UNDEF_INT
 
 from ._ecl_inte_head import InteHead
 from ._ecl_logi_head import LogiHead
@@ -300,7 +300,7 @@ def match_values_to_active_cells(
             f"number of active cells {len(actind)}"
         )
 
-    undef = xtgeo.UNDEF_INT if np.issubdtype(values.dtype, np.integer) else xtgeo.UNDEF
+    undef = UNDEF_INT if np.issubdtype(values.dtype, np.integer) else UNDEF
     result = np.full(fill_value=undef, shape=num_cells, dtype=values.dtype)
     result[actind] = values
     return result

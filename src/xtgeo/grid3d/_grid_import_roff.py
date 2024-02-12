@@ -1,4 +1,5 @@
 """Private module, Grid Import private functions for ROFF format."""
+
 from __future__ import annotations
 
 import pathlib
@@ -8,7 +9,7 @@ from contextlib import contextmanager
 from io import BufferedReader, BytesIO
 from typing import TYPE_CHECKING, Generator
 
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 from ._roff_grid import RoffGrid
 

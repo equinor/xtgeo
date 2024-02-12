@@ -1,4 +1,5 @@
 """Private module, Grid Import private functions for xtgeo based formats."""
+
 from __future__ import annotations
 
 import json
@@ -10,8 +11,9 @@ import numpy as np
 from typing_extensions import NotRequired, TypeAlias
 
 import xtgeo.common.sys as xsys
-from xtgeo.common import null_logger
-from xtgeo.grid3d._gridprop_import_xtgcpprop import _read_filelike
+from xtgeo.common.log import null_logger
+
+from ._gridprop_import_xtgcpprop import _read_filelike
 
 logger = null_logger(__name__)
 

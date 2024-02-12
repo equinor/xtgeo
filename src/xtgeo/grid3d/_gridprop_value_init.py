@@ -1,18 +1,17 @@
 """GridProperty (not GridProperies) some etc functions"""
+
 from __future__ import annotations
 
 import numbers
-from typing import TYPE_CHECKING
 
 import numpy as np
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
+
+from .grid import Grid
+from .grid_property import GridProperty
 
 logger = null_logger(__name__)
-
-if TYPE_CHECKING:
-    from xtgeo.grid3d import Grid, GridProperty
 
 
 def gridproperty_non_dummy_values(
@@ -42,11 +41,11 @@ def gridproperty_non_dummy_values(
         _values = initial_gridprop_values_from_array(dimensions, values, isdiscrete)
 
     if gridlike:
-        if isinstance(gridlike, xtgeo.grid3d.Grid):
+        if isinstance(gridlike, Grid):
             act = gridlike.get_actnum(asmasked=True)
             _values = np.ma.array(_values, mask=np.ma.getmaskarray(act.values))
         else:
-            assert isinstance(gridlike, xtgeo.grid3d.GridProperty)
+            assert isinstance(gridlike, GridProperty)
             _values = np.ma.array(_values, mask=np.ma.getmaskarray(gridlike.values))
 
     return _values

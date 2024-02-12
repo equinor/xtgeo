@@ -7,11 +7,13 @@ import pandas as pd
 import shapely.geometry as sg
 from scipy.interpolate import UnivariateSpline, interp1d
 
-import xtgeo
 from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.surface.regular_surface import RegularSurface
+
+from .polygons import Polygons
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -30,11 +32,9 @@ def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
         raise ValueError("The proposed name: {name}, is protected and cannot be used")
 
     # allow a single Polygons instance or a list of Polygons instances
-    if isinstance(poly, xtgeo.Polygons):
+    if isinstance(poly, Polygons):
         usepolys = [poly]
-    elif isinstance(poly, list) and all(
-        isinstance(pol, xtgeo.Polygons) for pol in poly
-    ):
+    elif isinstance(poly, list) and all(isinstance(pol, Polygons) for pol in poly):
         usepolys = poly
     else:
         raise ValueError("The poly values is not a Polygons or a list of Polygons")
@@ -78,7 +78,7 @@ def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=Tr
         insidevalue = 1
 
     logger.info("Operations of points inside polygon(s)...")
-    if not isinstance(poly, xtgeo.xyz.Polygons):
+    if not isinstance(poly, Polygons):
         raise ValueError("The poly input is not a single Polygons instance")
 
     idgroups = poly.get_dataframe(copy=False).groupby(poly.pname)
@@ -136,7 +136,7 @@ def operation_polygons_v2(self, poly, value, opname="add", inside=True, where=Tr
     allowed_opname = ("set", "add", "sub", "mul", "div", "eli")
 
     logger.warning("Where is not implemented: %s", where)
-    if not isinstance(poly, xtgeo.xyz.Polygons):
+    if not isinstance(poly, Polygons):
         raise ValueError("The poly input is not a Polygons instance")
 
     tmp = self.copy()
@@ -428,7 +428,7 @@ def snap_surface(self, surf, activeonly=True):
     if activeonly. Otherwise, the old values will be kept.
     """
 
-    if not isinstance(surf, xtgeo.RegularSurface):
+    if not isinstance(surf, RegularSurface):
         raise ValueError("Input object of wrong data type, must be RegularSurface")
 
     dataframe = self.get_dataframe()
@@ -454,11 +454,11 @@ def snap_surface(self, surf, activeonly=True):
         raise RuntimeError(f"Error code from C routine surf_get_zv_from_xyv is {ier}")
     if activeonly:
         dataframe[self.zname] = zval
-        dataframe = dataframe[dataframe[self.zname] < xtgeo.UNDEF_LIMIT]
+        dataframe = dataframe[dataframe[self.zname] < UNDEF_LIMIT]
         dataframe.reset_index(inplace=True, drop=True)
     else:
         out = np.where(
-            zval < xtgeo.UNDEF_LIMIT, zval, self.get_dataframe()[self.zname].values
+            zval < UNDEF_LIMIT, zval, self.get_dataframe()[self.zname].values
         )
         dataframe[self.zname] = out
 
@@ -490,7 +490,7 @@ def _generic_length(
     # Potential todo: Add an option that dH never gets 0.0 to avoid numerical trouble
     # for e.g. rescale?
 
-    if not isinstance(self, xtgeo.Polygons):
+    if not isinstance(self, Polygons):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
     # delete existing self.hname and self.dhname columns
@@ -550,7 +550,7 @@ def extend(self, distance, nsamples, addhlen=True):
     It is default to recompute HLEN from nsamples.
     """
 
-    if not isinstance(self, xtgeo.Polygons):
+    if not isinstance(self, Polygons):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
     dataframe = self.get_dataframe()

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     import pathlib
     from collections.abc import MutableMapping, Sequence
 
-    from xtgeo.grid3d import Grid
+    from .grid import Grid
 
 
 @dataclass

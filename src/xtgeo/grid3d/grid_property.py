@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING, Any, Literal
 import deprecation
 import numpy as np
 
-import xtgeo
-from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.log import null_logger
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataCPProperty
 
@@ -34,6 +34,7 @@ from ._gridprop_import_eclrun import (
 from ._gridprop_import_grdecl import import_bgrdecl_prop, import_grdecl_prop
 from ._gridprop_import_roff import import_roff
 from ._gridprop_import_xtgcpprop import import_xtgcpprop
+from .grid import Grid
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -48,7 +49,6 @@ if TYPE_CHECKING:
     from xtgeo.xyz.polygons import Polygons
 
     from ._gridprop_op1 import XYValueLists
-    from .grid import Grid
 
     GridProperty_DType = Union[
         type[np.uint8],
@@ -480,7 +480,7 @@ class GridProperty(_Grid3D):
             gridlike, self.dimensions, values, discrete
         )
 
-        if isinstance(gridlike, xtgeo.grid3d.Grid):
+        if isinstance(gridlike, Grid):
             if linkgeometry:
                 # Associate this grid property with a Grid instance. This is not default
                 # since sunch links may affect garbage collection
@@ -610,7 +610,7 @@ class GridProperty(_Grid3D):
     def geometry(self, grid: Grid | None) -> None:
         if grid is None:
             self._geometry = None
-        elif isinstance(grid, xtgeo.grid3d.Grid) and grid.dimensions == self.dimensions:
+        elif isinstance(grid, Grid) and grid.dimensions == self.dimensions:
             self._geometry = grid
         else:
             raise ValueError("Could not set geometry; wrong type or size")

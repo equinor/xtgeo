@@ -10,9 +10,10 @@ import deprecation
 import numpy as np
 import pandas as pd
 
-from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
+from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
+from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import _grid3d_utils as utils, _grid_etc1
@@ -30,9 +31,9 @@ logger = null_logger(__name__)
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
-    from xtgeo import Grid
     from xtgeo.common.types import FileLike
 
+    from .grid import Grid
     from .grid_property import GridProperty
 
 KeywordTuple = Tuple[str, str, int, int]

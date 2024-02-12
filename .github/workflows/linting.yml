@@ -36,6 +36,16 @@ jobs:
         if: ${{ always() }}
         run: ruff format . --check
 
+      - name: Check bare xtgeo imports
+        if: ${{ always() }}
+        run: |
+          if ! grep -rE '^import xtgeo(\s*#.*)?$' src; then
+              echo "✅ No 'import xtgeo' used"
+          else
+              echo "⛔️ Bare 'import xtgeo' used."
+              echo "Use a more specific import, e.g. 'import xtgeo.something'"
+          fi
+
       - name: cmake-format
         if: ${{ always() }}
         run: |

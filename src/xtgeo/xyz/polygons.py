@@ -20,9 +20,8 @@ from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
 from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
-from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
-from . import _polygons_oper, _xyz_oper
+from . import _polygons_oper, _xyz_io, _xyz_oper, _xyz_roxapi
 from ._xyz import XYZ
 from ._xyz_io import _convert_idbased_xyz
 

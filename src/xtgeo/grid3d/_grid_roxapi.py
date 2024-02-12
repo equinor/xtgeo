@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING, Any, Literal
 import numpy as np
 
 from xtgeo import _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF_LIMIT
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.roxutils.roxutils import RoxUtils
 
 xtg = XTGeoDialog()
@@ -20,7 +21,7 @@ logger = null_logger(__name__)
 if TYPE_CHECKING:
     import contextlib
 
-    from xtgeo.grid3d.grid import Grid
+    from .grid import Grid
 
     with contextlib.suppress(ImportError):
         import roxar
