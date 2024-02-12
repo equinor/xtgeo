@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 from ._roff_parameter import RoffParameter
 
 if TYPE_CHECKING:
-    from xtgeo.grid3d import Grid
     from xtgeo.io._file import FileWrapper
+
+    from .grid import Grid
 
 logger = null_logger(__name__)
 

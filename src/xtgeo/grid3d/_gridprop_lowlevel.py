@@ -1,4 +1,5 @@
 """GridProperty (not GridProperies) low level functions"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
@@ -7,8 +8,8 @@ import numpy as np
 import numpy.ma as ma
 
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 
@@ -17,7 +18,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import DTypeLike
 
-    from xtgeo.grid3d import Grid, GridProperty
+    from .grid import Grid
+    from .grid_property import GridProperty
 
 
 def f2c_order(obj: Grid | GridProperty, values1d: np.ndarray) -> np.ndarray:

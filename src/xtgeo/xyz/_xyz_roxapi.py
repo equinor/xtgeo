@@ -16,7 +16,10 @@ from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMI
 from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileWrapper
 from xtgeo.roxutils import RoxUtils
-from xtgeo.xyz import _xyz_io, points, polygons
+
+from ._xyz_io import import_rms_attr
+from .points import Points
+from .polygons import Polygons
 
 if ROXAR:
     import roxar
@@ -213,7 +216,7 @@ def _roxapi_import_xyz_viafile(
             tfile = os.path.join(tmpdir, "generic.rmsattr")
             rox_xyz.save(tfile, roxar.FileFormat.RMS_POINTS)
             pfile = FileWrapper(tfile)
-            kwargs = _xyz_io.import_rms_attr(pfile)
+            kwargs = import_rms_attr(pfile)
 
     except KeyError as kwe:
         logger.error(kwe)
@@ -326,7 +329,7 @@ def _add_attributes_to_dataframe(
 
 
 def export_xyz_roxapi(
-    self: points.Points | polygons.Polygons,
+    self: Points | Polygons,
     project: roxar.Project,
     name: str,
     category: str | list[str] | None,
@@ -336,7 +339,7 @@ def export_xyz_roxapi(
     attributes: bool = False,
 ) -> None:
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
-    is_polygons = isinstance(self, polygons.Polygons)
+    is_polygons = isinstance(self, Polygons)
     rox = RoxUtils(project, readonly=False)
     stype = STYPE(stype.lower())
 
@@ -350,7 +353,7 @@ def export_xyz_roxapi(
             self, rox, name, category, stype, pfilter, realisation, attributes
         )
     elif stype == STYPE.WELL_PICKS:
-        assert isinstance(self, points.Points)
+        assert isinstance(self, Points)
         category = cast(Literal["fault", "horizon"], category)
         _roxapi_export_xyz_well_picks(self, rox, name, category, attributes, pfilter)
     else:
@@ -365,7 +368,7 @@ def export_xyz_roxapi(
 
 
 def _roxapi_export_xyz_viafile(
-    self: points.Points | polygons.Polygons,
+    self: Points | Polygons,
     rox: RoxUtils,
     name: str,
     category: str | list[str] | None,
@@ -385,7 +388,7 @@ def _roxapi_export_xyz_viafile(
             "roxar not available, this functionality is not available"
         ) from err
 
-    is_polygons = isinstance(self, polygons.Polygons)
+    is_polygons = isinstance(self, Polygons)
     roxxyz = _get_roxitem(
         rox, name, category, stype, mode="set", is_polygons=is_polygons
     )
@@ -407,7 +410,7 @@ def _roxapi_export_xyz_viafile(
 
 
 def _roxapi_export_xyz(
-    self: points.Points | polygons.Polygons,
+    self: Points | Polygons,
     rox: RoxUtils,
     name: str,
     category: str | list[str] | None,
@@ -423,7 +426,7 @@ def _roxapi_export_xyz(
         logger.warning("Empty dataframe! Skipping object update...")
         return
 
-    is_polygons = isinstance(self, polygons.Polygons)
+    is_polygons = isinstance(self, Polygons)
 
     roxxyz = _get_roxitem(
         rox, name, category, stype, mode="set", is_polygons=is_polygons
@@ -441,7 +444,7 @@ def _roxapi_export_xyz(
 
     roxxyz.set_values(arrxyz)
 
-    if attributes and isinstance(self, points.Points):
+    if attributes and isinstance(self, Points):
         for attr in _get_attribute_names_from_dataframe(df):
             values = _replace_undefined_values(
                 values=df[attr].values, dtype=self._attrs.get(attr), asmasked=True
@@ -647,7 +650,7 @@ def _create_dataframe_from_wellpicks(
 
 
 def _roxapi_export_xyz_well_picks(
-    self: points.Points,
+    self: Points,
     rox: RoxUtils,
     well_pick_set: str,
     wp_category: Literal["horizon", "fault"],

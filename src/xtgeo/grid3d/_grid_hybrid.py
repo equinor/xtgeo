@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_INT
+from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
-    from xtgeo.grid3d import Grid, GridProperty
+    from .grid import Grid
+    from .grid_property import GridProperty
 
 
 def make_hybridgrid(

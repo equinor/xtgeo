@@ -1,4 +1,5 @@
 """Some grid utilities, file scanning etc."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -6,15 +7,17 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_LIMIT
-from xtgeo.grid3d import _gridprop_lowlevel as gl
+from xtgeo.common.log import null_logger
 from xtgeo.surface import _regsurf_lowlevel as rl
 from xtgeo.surface.regular_surface import surface_from_grid3d
-from xtgeo.xyz import Polygons
+from xtgeo.xyz.polygons import Polygons
+
+from . import _gridprop_lowlevel as gl
 
 if TYPE_CHECKING:
-    from xtgeo.grid3d import Grid, GridProperty
+    from .grid import Grid
+    from .grid_property import GridProperty
 
 
 logger = null_logger(__name__)

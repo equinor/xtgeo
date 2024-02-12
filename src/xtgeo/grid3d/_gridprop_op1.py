@@ -1,21 +1,22 @@
 """Various grid property operations"""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union
+from typing import List, Literal, Optional, Tuple, Union
 
 import numpy as np
 
-import xtgeo
 from xtgeo import _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.grid3d import _gridprop_lowlevel as gl
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.xyz.polygons import Polygons
+
+from . import _gridprop_lowlevel as gl
+from .grid import Grid
+from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
-
-if TYPE_CHECKING:
-    from xtgeo.grid3d import Grid, GridProperty
-    from xtgeo.xyz import Polygons
 
 _CoordOrValue = Union[float, int]
 _XYCoordinate = Tuple[_CoordOrValue, _CoordOrValue]
@@ -43,10 +44,10 @@ def get_xy_value_lists(
     if grid is None:
         raise RuntimeError("Missing grid object")
 
-    if not isinstance(grid, xtgeo.grid3d.Grid):
+    if not isinstance(grid, Grid):
         raise RuntimeError("The input grid is not a XTGeo Grid instance")
 
-    if not isinstance(self, xtgeo.grid3d.GridProperty):
+    if not isinstance(self, GridProperty):
         raise RuntimeError("The property is not a XTGeo GridProperty instance")
 
     clist = grid.get_xyz_corners()
@@ -97,7 +98,7 @@ def operation_polygons(
     grid = self.geometry
     grid._xtgformat1()
 
-    if not isinstance(poly, xtgeo.xyz.Polygons):
+    if not isinstance(poly, Polygons):
         raise ValueError("The poly input is not a Polygons instance")
 
     # make a copy of the array which is used a "filter" or "proxy"

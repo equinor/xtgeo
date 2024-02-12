@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING, Any, Generator
 import numpy as np
 
 import xtgeo.common.sys as xsys
-from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT
+from xtgeo.common.log import null_logger
 from xtgeo.metadata.metadata import MetaDataCPProperty
 
 logger = null_logger(__name__)

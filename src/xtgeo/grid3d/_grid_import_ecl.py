@@ -1,13 +1,15 @@
 """Grid import functions for Eclipse, new approach (i.e. version 2)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from xtgeo.common import null_logger
-from xtgeo.grid3d._egrid import EGrid, RockModel
-from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
-from xtgeo.grid3d.grid_properties import GridProperties, gridproperties_from_file
+from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
+
+from ._egrid import EGrid, RockModel
+from ._grdecl_grid import GrdeclGrid, GridRelative
+from .grid_properties import GridProperties, gridproperties_from_file
 
 logger = null_logger(__name__)
 

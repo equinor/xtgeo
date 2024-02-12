@@ -12,15 +12,19 @@ import deprecation
 import numpy as np
 import pandas as pd
 
-import xtgeo
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
 from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
-from xtgeo.xyz import XYZ, _xyz_io, _xyz_oper, _xyz_roxapi
+from xtgeo.surface.regular_surface import RegularSurface
+
+from . import _xyz_io, _xyz_oper, _xyz_roxapi
+from ._xyz import XYZ
 
 if TYPE_CHECKING:
     import io
+
+    from xtgeo.well.well1 import Well
 
 logger = null_logger(__name__)
 
@@ -85,7 +89,7 @@ def _roxar_importer(
 
 
 def _wells_importer(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     tops: bool = True,
     incl_limit: float | None = None,
     top_prefix: str = "Top",
@@ -122,7 +126,7 @@ def _wells_importer(
 
 
 def _wells_dfrac_importer(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     dlogname: str,
     dcodes: list[int],
     incl_limit: float = 90,
@@ -260,7 +264,7 @@ def points_from_surface(
 
 
 def points_from_wells(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     tops: bool = True,
     incl_limit: float | None = None,
     top_prefix: str = "Top",
@@ -307,7 +311,7 @@ def points_from_wells(
 
 
 def points_from_wells_dfrac(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     dlogname: str,
     dcodes: list[int],
     incl_limit: float = 90,
@@ -380,7 +384,7 @@ def _allow_deprecated_init(func):
                 fformat = kwargs.get("fformat", "guess")
                 return func(cls, **_file_importer(args[0], fformat))
 
-            if isinstance(args[0], xtgeo.RegularSurface):
+            if isinstance(args[0], RegularSurface):
                 warnings.warn(
                     "Initializing directly from RegularSurface is deprecated "
                     "and will be removed in xtgeo version 4.0. Use: "

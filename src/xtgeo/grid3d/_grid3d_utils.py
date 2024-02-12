@@ -9,8 +9,8 @@ import pandas as pd
 import resfo
 import roffio
 
-from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
+from xtgeo.common.log import null_logger
 
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper

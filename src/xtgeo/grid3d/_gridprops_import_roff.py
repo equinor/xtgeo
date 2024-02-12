@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING, Generator, Literal
 
 import roffio
 
-import xtgeo
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
+
+from .grid_property import gridproperty_from_file
 
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper
@@ -58,7 +59,7 @@ def import_roff_gridproperties(
     """
     if names == "all":
         return [
-            xtgeo.gridproperty_from_file(pfile.file, fformat="roff", name=name)
+            gridproperty_from_file(pfile.file, fformat="roff", name=name)
             for name in read_roff_properties(pfile)
         ]
 
@@ -66,9 +67,7 @@ def import_roff_gridproperties(
     props = []
     for name in names:
         if name in prop_names:
-            props.append(
-                xtgeo.gridproperty_from_file(pfile.file, fformat="roff", name=name)
-            )
+            props.append(gridproperty_from_file(pfile.file, fformat="roff", name=name))
         elif strict:
             raise ValueError(
                 f"Requested keyword {name} is not in ROFF file. Valid "

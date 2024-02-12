@@ -6,9 +6,9 @@ from typing import Generator, Literal
 
 import resfo
 
-import xtgeo
-from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXKEYWORDS
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.io._file import FileWrapper
 
 from . import _grid3d_utils as utils
@@ -20,7 +20,7 @@ from ._find_gridprop_in_eclrun import (
 from ._gridprop_import_eclrun import decorate_name
 from .grid_property import GridProperty
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 
 logger = null_logger(__name__)
 

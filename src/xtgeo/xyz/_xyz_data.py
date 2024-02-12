@@ -51,9 +51,7 @@ from xtgeo.common.sys import _convert_carr_double_np, _get_carray
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-
 logger = null_logger(__name__)
-
 
 CONT_DEFAULT_RECORD = ("", "")  # unit and scale, where emptry string indicates ~unknown
 

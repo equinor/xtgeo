@@ -8,15 +8,15 @@ from typing import TYPE_CHECKING, Any, Literal
 import numpy as np
 from numpy import ma
 
-from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.log import null_logger
 from xtgeo.roxutils import RoxUtils
 
 with contextlib.suppress(ImportError):
     import roxar
 
 if TYPE_CHECKING:
-    from xtgeo.grid3d.grid_property import GridProperty
+    from .grid_property import GridProperty
 
 logger = null_logger(__name__)
 

@@ -4,7 +4,7 @@ import warnings
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from xtgeo.common import null_logger
+from xtgeo.common.log import null_logger
 
 if TYPE_CHECKING:
     from collections.abc import Generator

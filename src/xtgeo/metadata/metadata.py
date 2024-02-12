@@ -10,9 +10,13 @@ The metadata works through the various datatypes in XTGeo. For example::
 
 """
 
-import xtgeo
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.log import null_logger
+from xtgeo.cube.cube1 import Cube
+from xtgeo.grid3d.grid import Grid
+from xtgeo.grid3d.grid_property import GridProperty
+from xtgeo.surface.regular_surface import RegularSurface
+from xtgeo.well.well1 import Well
 
 logger = null_logger(__name__)
 
@@ -251,7 +255,7 @@ class MetaDataRegularSurface(MetaData):
 
     @required.setter
     def required(self, obj):
-        if not isinstance(obj, xtgeo.RegularSurface):
+        if not isinstance(obj, RegularSurface):
             raise ValueError("Input object is not a RegularSurface()")
 
         self._required["ncol"] = obj.ncol
@@ -298,7 +302,7 @@ class MetaDataRegularCube(MetaData):
 
     @required.setter
     def required(self, obj):
-        if not isinstance(obj, xtgeo.Cube):
+        if not isinstance(obj, Cube):
             raise ValueError("Input object is not a regular Cube()")
 
         self._required["ncol"] = obj.ncol
@@ -344,7 +348,7 @@ class MetaDataCPGeometry(MetaData):
 
     @required.setter
     def required(self, obj):
-        if not isinstance(obj, xtgeo.Grid):
+        if not isinstance(obj, Grid):
             raise ValueError("Input object is not a Grid()")
 
         self._required["ncol"] = obj.ncol
@@ -383,7 +387,7 @@ class MetaDataCPProperty(MetaData):
 
     @required.setter
     def required(self, obj):
-        if not isinstance(obj, xtgeo.GridProperty):
+        if not isinstance(obj, GridProperty):
             raise ValueError("Input object is not a GridProperty()")
 
         self._required["ncol"] = obj.ncol
@@ -419,7 +423,7 @@ class MetaDataWell(MetaData):
 
     @required.setter
     def required(self, obj):
-        if not isinstance(obj, xtgeo.Well):
+        if not isinstance(obj, Well):
             raise ValueError("Input object is not a Well() instance!")
 
         self._required["rkb"] = obj.rkb

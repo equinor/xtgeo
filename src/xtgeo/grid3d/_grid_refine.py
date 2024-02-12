@@ -1,4 +1,5 @@
 """Private module for refinement of a grid."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -6,13 +7,15 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from xtgeo import _cxtgeo
-from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common.log import null_logger
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 if TYPE_CHECKING:
-    from xtgeo.grid3d import Grid, GridProperty
+    from .grid import Grid
+    from .grid_property import GridProperty
 
 
 def refine_vertically(
