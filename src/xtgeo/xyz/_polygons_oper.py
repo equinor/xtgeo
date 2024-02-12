@@ -9,10 +9,13 @@ First order functions here are:
 Functions starting with '_' are local helper functions
 """
 
+from __future__ import annotations
+
 from math import ceil
 
 import numpy as np
 import pandas as pd
+import shapely
 import shapely.geometry as sg
 from scipy.spatial import Delaunay, cKDTree
 from shapely.ops import polygonize
@@ -121,12 +124,13 @@ def _create_boundary_polygon(
     yvec: np.ndarray,
     zvec: np.ndarray,
     alpha: float,
-):
+) -> list[list[float | int]] | None:
     xy = np.column_stack((xvec, yvec))
     coords = np.column_stack((xy, zvec))
 
     # return None if too few points
     if len(xy) < MINIMUM_NUMBER_POINTS:
+        logger.info("Too few points to derive boundary, need at least 4")
         return None
 
     edges = _alpha_shape(xy, alpha=alpha)
@@ -135,35 +139,33 @@ def _create_boundary_polygon(
             "Your alpha or alpha_factor value is too low, try increasing it!"
         )
 
-    polygons = _get_shapely_polygons_from_edges(coords, edges)
+    pol_coords = _get_polygon_coords_from_edges_shapely(coords, edges)
+    if not pol_coords:
+        raise BoundaryError("Could not create a valid Polygons instance for boundary.")
 
     # sort polygons by their size to get the largest polygons first
-    sorted(polygons, key=lambda pol: len(pol.exterior.coords), reverse=True)
+    pol_coords = sorted(pol_coords, key=len, reverse=True)
 
     data = []
-    for polid, pol in enumerate(polygons):
-        for coord in pol.exterior.coords:
+    for polid, polcoord in enumerate(pol_coords):
+        for coord in polcoord:
             data.append(list(coord) + [polid])
 
     return data
 
 
-def _alpha_shape(points, alpha):
+def _alpha_shape(points: np.ndarray, alpha: float) -> set[tuple[int, int]]:
     """Compute the alpha shape (concave hull) of a set of points.
 
     Args:
         points: np.array of shape (n,2) points.
         alpha: alpha value.
-        only_outer TODO?: boolean value to specify if we keep only the outer border
-            or also inner edges.
     Returns:
         Set of (i,j) pairs representing edges of the alpha-shape. (i,j) are
             the indices in the points array.
     """
 
-    assert points.shape[0] >= MINIMUM_NUMBER_POINTS, "Need >= 4 pts to derive boundary"
-
-    def add_edge(edges, icv, jcv):
+    def add_edge(edges: set[tuple[int, int]], icv: int, jcv: int) -> None:
         """Add an edge between the i-th and j-th points, if not in the list already."""
         if (icv, jcv) in edges or (jcv, icv) in edges:
             # if both neighboring triangles are in shape, it is not a boundary edge
@@ -191,22 +193,30 @@ def _alpha_shape(points, alpha):
         partial = partial[partial > 0.0]  # to avoid sqrt of negative number
         area = np.sqrt(partial)
 
-        # radius of circumcircle
-        circum_r = avv * bvv * cvv / (4.0 * area) if area.size > 0 else 0
+        if area.size > 0:
+            # radius of circumcircle
+            circum_r = avv * bvv * cvv / (4.0 * area)
 
-        # if radius less then alpha then add outer edge
-        if circum_r < alpha or alpha == 0:
-            add_edge(edges, ia, ib)
-            add_edge(edges, ib, ic)
-            add_edge(edges, ic, ia)
+            # if radius less then alpha then add outer edge
+            if circum_r < alpha or alpha == 0:
+                add_edge(edges, ia, ib)
+                add_edge(edges, ib, ic)
+                add_edge(edges, ic, ia)
 
     return edges
 
 
-def _get_shapely_polygons_from_edges(coords, edges):
+def _get_polygon_coords_from_edges_shapely(
+    coords: np.ndarray, edges: set[tuple[int, int]]
+) -> list[shapely.coords.CoordinateSequence]:
     """Split and connect edges into shapely polygons"""
+    logger.info("Getting polygon coordinates using shapely")
     lines = sg.MultiLineString([(coords[e[0]], coords[e[1]]) for e in edges])
-    return polygonize(lines)
+    # Need to use node workaround here to handle crossing lines
+    # see https://github.com/shapely/shapely/issues/1736
+    noded = shapely.node(shapely.GeometryCollection(lines))
+    polygons = polygonize(noded.geoms)
+    return [pol.exterior.coords for pol in polygons]
 
 
 def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
