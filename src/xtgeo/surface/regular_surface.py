@@ -1097,6 +1097,7 @@ class RegularSurface:
         fformat: Optional[str] = "irap_binary",
         pmd_dataunits: Optional[Tuple[int, int]] = (15, 10),
         engine: Optional[str] = "cxtgeo",
+        error_if_near_empty: bool = False,
     ):
         """Export a surface (map) to file.
 
@@ -1117,6 +1118,9 @@ class RegularSurface:
                 but may be safer when reading memory streams and/or threading. Engine
                 is relevant for Irap binary, Irap ascii and zmap. This is mainly a
                 developer setting.
+            error_if_near_empty: Default is False. If True, raise a RuntimeError if
+                number of map nodes is less than 4. Otherwise, if False and number of
+                nodes are less than 4, a UserWarning will be given.
 
         Returns:
             ofile (pathlib.Path): The actual file instance, or None if io.Bytestream
@@ -1145,8 +1149,20 @@ class RegularSurface:
         .. versionchanged:: 2.5 Added support for BytesIO
         .. versionchanged:: 2.13 Improved support for BytesIO
         .. versionchanged:: 2.14 Support for alias file name and return value
+        .. versionchanged:: 3.8 Add key ``error_if_near_empty``
         """
         logger.info("Export RegularSurface to file or memstream...")
+        if self.nactive is None or self.nactive < 4:
+            msg = (
+                f"Number of maps nodes are {self.nactive}. Exporting regular "
+                "surfaces with fewer than 4 nodes will not provide any "
+                "usable result. The map may also be not loaded if nodes are None."
+            )
+
+            if error_if_near_empty:
+                raise RuntimeError(msg)
+            warnings.warn(msg, UserWarning)
+
         mfile = FileWrapper(mfile, mode="wb", obj=self)
 
         if not mfile.memstream:
