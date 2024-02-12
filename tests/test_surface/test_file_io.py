@@ -174,3 +174,21 @@ def test_read_cube(data):
     # Make sure it is properly constructed:
     result = {key: getattr(surf_from_cube, key) for key in cube_input}
     assert result == cube_input
+
+
+def test_surf_io_few_nodes(tmp_path, larger_surface):
+    """Test to_file() with to few active nodes shall warn or raise error."""
+
+    surf = RegularSurface(**larger_surface)
+
+    assert surf.nactive == 38
+
+    surf.values = np.ma.masked_where(surf.values > 0, surf.values)
+
+    assert surf.nactive == 3
+
+    with pytest.warns(UserWarning, match="surfaces with fewer than 4 nodes will not"):
+        surf.to_file(tmp_path / "anyfile1.gri")
+
+    with pytest.raises(RuntimeError, match="surfaces with fewer than 4 nodes will not"):
+        surf.to_file(tmp_path / "anyfile2.gri", error_if_near_empty=True)
