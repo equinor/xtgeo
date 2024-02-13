@@ -1321,10 +1321,10 @@ def test_get_boundary_polygons_complex(show_plot):
     # for some reasons, macos tests gives slightly different result; that is why a large
     # tolerance is given
     assert boundary.get_dataframe()[boundary.xname].mean() == pytest.approx(
-        462392.0, abs=3.0
+        462230.0, abs=3.0
     )
     assert boundary.get_dataframe()[boundary.yname].mean() == pytest.approx(
-        5933152.0, abs=4.0
+        5933457.0, abs=4.0
     )
 
     # get the first (largest) polygon
@@ -1342,6 +1342,26 @@ def test_get_boundary_polygons_complex(show_plot):
                 "linewidth": 2,
             },
         )
+
+
+def test_boundary_polygons_are_sorted():
+    """Test that boundary polygons are sorted from largest to smallest."""
+    xs = xtgeo.surface_from_file(TESTSET1)
+    xs.values = np.ma.masked_less(xs.values, 1700)
+    xs.values = np.ma.masked_greater(xs.values, 1800)
+
+    boundary = xs.get_boundary_polygons(simplify=False)
+
+    df = boundary.get_dataframe(copy=False)
+
+    # check that we have 7 unique boundaries for this surface
+    assert df["POLY_ID"].nunique() == 7
+
+    # check that the boundary are sorted from largest to smallest polygon
+    pol_lengths = [len(poldf) for _, poldf in df.groupby("POLY_ID")]
+    assert all(
+        pol_lengths[i] >= pol_lengths[i + 1] for i in range(len(pol_lengths) - 1)
+    )
 
 
 def test_regsurface_get_dataframe(default_surface):
