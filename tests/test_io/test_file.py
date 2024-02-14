@@ -5,6 +5,7 @@ from collections import ChainMap
 
 import pytest
 import xtgeo
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.io._file import FileFormat, FileWrapper
 
 xtg = xtgeo.XTGeoDialog()
@@ -35,15 +36,15 @@ def fixture_reek_grid_path(testpath):
 
 
 def test_fileformat_unknown_empty_memstream():
-    with pytest.raises(ValueError, match="Unknown or unsupported"):
+    with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
         FileWrapper(io.StringIO()).fileformat()
-    with pytest.raises(ValueError, match="Unknown or unsupported"):
+    with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
         FileWrapper(io.BytesIO()).fileformat()
 
 
 @pytest.mark.parametrize("length", [0, 4, 8, 24, 9])
 def test_fileformat_unknown_zeroed_memstream_with_varied_length(length):
-    with pytest.raises(ValueError, match="Unknown or unsupported"):
+    with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
         FileWrapper(io.BytesIO(b"\00" * length)).fileformat()
 
 

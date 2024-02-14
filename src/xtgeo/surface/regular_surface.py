@@ -55,6 +55,7 @@ from xtgeo.common.constants import (
     VERYLARGENEGATIVE,
     VERYLARGEPOSITIVE,
 )
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.version import __version__
@@ -250,7 +251,22 @@ def _data_reader_factory(file_format: FileFormat):
         return _regsurf_import.import_xtg
     if file_format == FileFormat.HDF:
         return _regsurf_import.import_hdf5_regsurf
-    raise ValueError(f"Unknown file format {file_format}")
+
+    extensions = FileFormat.extensions_string(
+        [
+            FileFormat.IRAP_BINARY,
+            FileFormat.IRAP_ASCII,
+            FileFormat.IJXYZ,
+            FileFormat.PETROMOD,
+            FileFormat.ZMAP_ASCII,
+            FileFormat.XTG,
+            FileFormat.HDF,
+        ]
+    )
+    raise InvalidFileFormatError(
+        f"File format {file_format} is invalid for type RegularSurface. "
+        f"Supported formats are {extensions}."
+    )
 
 
 def _allow_deprecated_init(func):

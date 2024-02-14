@@ -12,6 +12,7 @@ import pandas as pd
 
 from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
 
@@ -79,7 +80,21 @@ def list_gridproperties(
         FileFormat.UNRST,
     ):
         return list(read_eclrun_properties(pfile))
-    raise ValueError(f"Cannot read properties from file format {fformat}")
+
+    extensions = FileFormat.extensions_string(
+        [
+            FileFormat.ROFF_BINARY,
+            FileFormat.ROFF_ASCII,
+            FileFormat.INIT,
+            FileFormat.FINIT,
+            FileFormat.UNRST,
+            FileFormat.FUNRST,
+        ]
+    )
+    raise InvalidFileFormatError(
+        f"File format {fformat} is invalid for type GridProperties. "
+        f"Supported formats are {extensions}."
+    )
 
 
 def gridproperties_from_file(
@@ -151,7 +166,21 @@ def gridproperties_from_file(
                 maxkeys=MAXKEYWORDS,
             )
         )
-    raise ValueError("Invalid file format {fformat}")
+
+    extensions = FileFormat.extensions_string(
+        [
+            FileFormat.ROFF_BINARY,
+            FileFormat.ROFF_ASCII,
+            FileFormat.INIT,
+            FileFormat.FINIT,
+            FileFormat.UNRST,
+            FileFormat.FUNRST,
+        ]
+    )
+    raise InvalidFileFormatError(
+        f"File format {fformat} is invalid for type GridProperties. "
+        f"Supported formats are {extensions}."
+    )
 
 
 # --------------------------------------------------------------------------------------

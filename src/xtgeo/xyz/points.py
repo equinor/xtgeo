@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
 from xtgeo.common.version import __version__
@@ -32,7 +33,14 @@ def _data_reader_factory(file_format: FileFormat):
         return _xyz_io.import_zmap
     if file_format == FileFormat.RMS_ATTR:
         return _xyz_io.import_rms_attr
-    raise ValueError(f"Unknown file format {file_format}")
+
+    extensions = FileFormat.extensions_string(
+        [FileFormat.XYZ, FileFormat.ZMAP_ASCII, FileFormat.RMS_ATTR]
+    )
+    raise InvalidFileFormatError(
+        f"File format {file_format} is invalid for type Points. "
+        f"Supported formats are {extensions}."
+    )
 
 
 def _file_importer(

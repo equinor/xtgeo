@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from xtgeo.common._xyz_enum import _AttrName
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
 
@@ -26,13 +27,17 @@ logger = null_logger(__name__)
 
 
 def _data_reader_factory(file_format: FileFormat):
-    if file_format in (FileFormat.RMSWELL, FileFormat.IRAP_ASCII, FileFormat.UNKNOWN):
+    if file_format in (FileFormat.RMSWELL, FileFormat.IRAP_ASCII):
         return _well_io.import_rms_ascii
     if file_format == FileFormat.HDF:
         return _well_io.import_hdf5_well
-    raise ValueError(
-        f"Unknown file format {file_format}, supported formats are "
-        "'rmswell', 'irap_ascii' and 'hdf'"
+
+    extensions = FileFormat.extensions_string(
+        [FileFormat.RMSWELL, FileFormat.IRAP_ASCII, FileFormat.HDF]
+    )
+    raise InvalidFileFormatError(
+        f"File format {file_format} is invalid for Well types. "
+        f"Supported formats are {extensions}."
     )
 
 
