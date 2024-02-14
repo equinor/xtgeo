@@ -271,8 +271,8 @@ class Cube:
         self._zflip = zflip  # currently not in use
         self._rotation = rotation
 
-        self._values = None
-        self.values = values  # "values" is intentional over "_values"; cf. values()
+        # input values can be "list-like" or scalar
+        self._values = self._ensure_correct_values(values)
 
         if ilines is None:
             self._ilines = ilines or np.array(range(1, self._ncol + 1), dtype=np.int32)
@@ -491,7 +491,7 @@ class Cube:
 
     @values.setter
     def values(self, values):
-        self._ensure_correct_values(values)
+        self._values = self._ensure_correct_values(values)
 
     # =========================================================================
     # Describe
@@ -1101,33 +1101,68 @@ class Cube:
                     print(line.rstrip("\r\n"))
             os.remove(outfile)
 
-    def _ensure_correct_values(self, values):
+    def _ensure_correct_values(
+        self,
+        values: None | bool | float | list | tuple | np.ndarray | np.ma.MaskedArray,
+    ) -> np.ndarray:
         """Ensures that values is a 3D numpy (ncol, nrow, nlay), C order.
 
         Args:
-            values (array-like or scalar): Values to process.
-
-        Return:
-            Nothing, self._values will be updated inplace
+            values: Values to process.
 
         """
-        if values is None or values is False:
-            self._ensure_correct_values(0.0)
-            return
+        return_array = None
+        if values is None or isinstance(values, bool):
+            return_array = self._ensure_correct_values(0.0)
 
-        if isinstance(values, numbers.Number):
-            self._values = np.zeros(self.dimensions, dtype=np.float32) + values
-            self._values = self._values.astype(np.float32)  # ensure 32 bit floats
+        elif isinstance(values, numbers.Number):
+            array = np.zeros(self.dimensions, dtype=np.float32) + values
+            return_array = array.astype(np.float32)  # ensure 32 bit floats
 
         elif isinstance(values, np.ndarray):
+            # if the input is a maskedarray; need to convert and fill with zero
+            if isinstance(values, np.ma.MaskedArray):
+                warnings.warn(
+                    "Input values is a masked numpy array, and masked nodes "
+                    "will be set to zero in the cube instance.",
+                    UserWarning,
+                )
+                values = np.ma.filled(values, fill_value=0)
+
+            exp_len = np.prod(self.dimensions)
+            if (
+                values.size != exp_len
+                or values.ndim not in (1, 3)
+                or values.shape != self.dimensions
+            ):
+                raise ValueError(
+                    "Input is of wrong shape or dimensions: "
+                    f"{values.shape}, expected {self.dimensions}"
+                    "or ({exp_len},)"
+                )
+
             values = values.reshape(self.dimensions).astype(np.float32)
 
-            if not values.data.c_contiguous:
+            if not values.flags.c_contiguous:
                 values = np.ascontiguousarray(values)
-            self._values = values
+            return_array = values
 
         elif isinstance(values, (list, tuple)):
-            self._values = np.array(values, dtype=np.float32).reshape(self.dimensions)
+            exp_len = int(np.prod(self.dimensions))
+            if len(values) != exp_len:
+                raise ValueError(
+                    "The length of the input list or tuple is incorrect"
+                    f"Input length is {len(values)} while expected length is {exp_len}"
+                )
+
+            return_array = np.array(values, dtype=np.float32).reshape(self.dimensions)
 
         else:
-            raise RuntimeError("Cannot process _ensure_correct_values")
+            raise ValueError(
+                f"Cannot process _ensure_correct_values with input values: {values}"
+            )
+
+        if return_array is not None:
+            return return_array
+
+        raise RuntimeError("Unexpected error, return values are None")

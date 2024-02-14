@@ -51,6 +51,48 @@ def test_create():
     assert xdim == 5, "NX from numpy shape "
 
 
+@pytest.mark.parametrize(
+    "input, behaviour",
+    [
+        (np.ones((2, 3, 1)), None),
+        (np.ma.ones((2, 3, 1)), UserWarning),
+        (np.ones((2, 3, 99)), ValueError),
+        (np.ones((3, 2, 1)), ValueError),
+        (np.ones((3, 2)), ValueError),
+        (np.ones((1, 6)), ValueError),
+        ([1, 2, 3, 4, 5, 6], None),
+        ([1, 2, 3, 4, 5, 6, 7], ValueError),
+        (99, None),
+        ("a", ValueError),
+    ],
+    ids=[
+        "np array",
+        "masked np array (warn)",
+        "np array right dims but wrong size (err)",
+        "np array right dims but flipped row col (err)",
+        "np array wrong dims as 2D ex 1 (err)",
+        "np array wrong dims as 2D ex 2 (err)",
+        "list",
+        "list_wrong_length (err)",
+        "scalar",
+        "letter (err)",
+    ],
+)
+def test_create_cube_with_values(input, behaviour):
+    """Create cube with various input values, both correct and incorrect formats."""
+
+    if behaviour is None:
+        Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)
+
+    elif behaviour is UserWarning:
+        with pytest.warns(behaviour):
+            Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)
+
+    elif behaviour is ValueError:
+        with pytest.raises(behaviour):
+            Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)
+
+
 def test_import_wrong_format(tmp_path):
     (tmp_path / "test.EGRID").write_text("hello")
     with pytest.raises(ValueError, match="File format"):
