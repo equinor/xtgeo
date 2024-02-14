@@ -923,14 +923,18 @@ class Cube:
 
         fobj.check_folder(raiseerror=OSError)
 
-        if fformat == "segy":
+        if fformat in FileFormat.SEGY.value:
             _cube_export.export_segy(self, fobj.name, pristine=pristine, engine=engine)
         elif fformat == "rms_regular":
             _cube_export.export_rmsreg(self, fobj.name)
         elif fformat == "xtgregcube":
             _cube_export.export_xtgregcube(self, fobj.name)
         else:
-            raise ValueError(f"File format fformat={fformat} is not supported")
+            extensions = FileFormat.extensions_string([FileFormat.SEGY])
+            raise InvalidFileFormatError(
+                f"File format {fformat} is invalid for type Cube. "
+                f"Supported formats are {extensions}."
+            )
 
     @deprecation.deprecated(
         deprecated_in="3.6",

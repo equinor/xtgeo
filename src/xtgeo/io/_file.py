@@ -58,11 +58,27 @@ class FileFormat(Enum):
     FUNRST = ["funrst"]
     GRDECL = ["grdecl"]
     BGRDECL = ["bgrdecl"]
-    IRAP_BINARY = ["irap_binary", "irap_bin", "rms_binary", "irapbin", "gri"]
-    IRAP_ASCII = ["irap_ascii", "irap_asc", "rms_ascii", "irapasc", "fgr"]
+    IRAP_BINARY = [
+        "irap_binary",
+        "irap_bin",
+        "irapbinary",
+        "irap",
+        "rms_binary",
+        "irapbin",
+        "gri",
+    ]
+    IRAP_ASCII = [
+        "irapascii",
+        "irap_txt",
+        "irap_ascii",
+        "irap_asc",
+        "rms_ascii",
+        "irapasc",
+        "fgr",
+    ]
     HDF = ["hdf", "hdf5", "h5"]
     SEGY = ["segy", "sgy", "segy.*"]
-    STORM = ["storm"]
+    STORM = ["storm", "storm_binary"]
     ZMAP_ASCII = ["zmap", "zmap+", "zmap_ascii", "zmap-ascii", "zmap-asc", "zmap.*"]
     IJXYZ = ["ijxyz"]
     PETROMOD = ["pmd", "petromod"]

@@ -13,10 +13,11 @@ import pandas as pd
 from xtgeo import _cxtgeo
 from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_LIMIT
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription
-from xtgeo.io._file import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataWell
 from xtgeo.xyz import _xyz_data
 from xtgeo.xyz.polygons import Polygons
@@ -580,11 +581,25 @@ class Well:
 
         self._ensure_consistency()
 
-        if fformat in (None, "rms_ascii", "rms_asc", "rmsasc", "rmswell"):
+        if not fformat or fformat in (
+            None,
+            "rms_ascii",
+            "rms_asc",
+            "rmsasc",
+            "rmswell",
+        ):
             _well_io.export_rms_ascii(self, wfile.name)
 
-        elif fformat in ("hdf", "hdf5", "h5"):
+        elif fformat in FileFormat.HD5.value:
             self.to_hdf(wfile)
+
+        else:
+            extensions = FileFormat.extensions_string([FileFormat.HDF])
+            raise InvalidFileFormatError(
+                f"File format {fformat} is invalid for a well type. "
+                f"Supported formats are {extensions}, 'rms_ascii', 'rms_asc', "
+                "'rmsasc', 'rmswell'."
+            )
 
         return wfile.file
 

@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 
 from xtgeo.common.constants import UNDEF, UNDEF_INT
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
-from xtgeo.io._file import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 logger = null_logger(__name__)
 
@@ -219,14 +220,14 @@ def to_file(
         logger.warning("Nothing to export!")
         return ncount
 
-    if fformat is None or fformat in ["xyz", "poi", "pol"]:
+    if fformat is None or fformat in FileFormat.XYZ.value:
         # NB! reuse export_rms_attr function, but no attributes
         # are possible
         ncount = export_rms_attr(
             xyz, pfile.name, attributes=False, pfilter=pfilter, ispolygons=ispolygons
         )
 
-    elif fformat == "rms_attr":
+    elif fformat in FileFormat.RMS_ATTR.value:
         ncount = export_rms_attr(
             xyz,
             pfile.name,
@@ -236,6 +237,12 @@ def to_file(
         )
     elif fformat == "rms_wellpicks":
         ncount = export_rms_wpicks(xyz, pfile.name, hcolumn, wcolumn, mdcolumn=mdcolumn)
+    else:
+        extensions = FileFormat.extensions_string([FileFormat.XYZ, FileFormat.RMS_ATTR])
+        raise InvalidFileFormatError(
+            f"File format {fformat} is invalid for type Points or Polygons. "
+            f"Supported formats are {extensions}, 'rms_wellpicks'."
+        )
 
     if ncount is None:
         ncount = 0

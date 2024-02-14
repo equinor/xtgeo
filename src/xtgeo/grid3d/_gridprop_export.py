@@ -1,4 +1,5 @@
 """GridProperty export functions."""
+
 from __future__ import annotations
 
 import io
@@ -12,8 +13,9 @@ import numpy as np
 import resfo
 import roffio
 
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
-from xtgeo.io._file import FileWrapper
+from xtgeo.io._file import FileFormat, FileWrapper
 
 from ._roff_parameter import RoffParameter
 
@@ -37,7 +39,9 @@ def to_file(
     """Export the grid property to file."""
     logger.debug("Export property to file %s as %s", pfile, fformat)
 
-    binary = fformat in ("roff", "bgrdecl", "xtgcpprop")
+    binary = fformat in (
+        FileFormat.ROFF_BINARY.value + FileFormat.BGRDECL.value + ["xtgcpprop"]
+    )
 
     if not name:
         name = gridprop.name or ""
@@ -46,9 +50,9 @@ def to_file(
     if not xtg_file.memstream:
         xtg_file.check_folder(raiseerror=OSError)
 
-    if fformat in ("roff", "roffasc"):
+    if fformat in FileFormat.ROFF_BINARY.value + FileFormat.ROFF_ASCII.value:
         _export_roff(gridprop, xtg_file.name, name, binary, append=append)
-    elif fformat in ("grdecl", "bgrdecl"):
+    elif fformat in FileFormat.GRDECL.value + FileFormat.BGRDECL.value:
         _export_grdecl(
             gridprop,
             xtg_file.name,
@@ -61,7 +65,18 @@ def to_file(
     elif fformat == "xtgcpprop":
         _export_xtgcpprop(gridprop, xtg_file.name)
     else:
-        raise ValueError(f"Cannot export, invalid fformat: {fformat}")
+        extensions = FileFormat.extensions_string(
+            [
+                FileFormat.ROFF_BINARY,
+                FileFormat.ROFF_ASCII,
+                FileFormat.GRDECL,
+                FileFormat.BGRDECL,
+            ]
+        )
+        raise InvalidFileFormatError(
+            f"File format {fformat} is invalid for type GridProperty. "
+            f"Supported formats are {extensions}."
+        )
 
 
 def _export_roff(
