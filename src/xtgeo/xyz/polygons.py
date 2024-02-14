@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
 from xtgeo.common.version import __version__
@@ -39,7 +40,12 @@ def _data_reader_factory(file_format: FileFormat):
         return _xyz_io.import_xyz
     if file_format == FileFormat.ZMAP_ASCII:
         return _xyz_io.import_zmap
-    raise ValueError(f"Unknown file format {file_format}")
+
+    extensions = FileFormat.extensions_string([FileFormat.XYZ, FileFormat.ZMAP_ASCII])
+    raise InvalidFileFormatError(
+        f"File format {file_format} is invalid for type Polygons. "
+        f"Supported formats are {extensions}."
+    )
 
 
 def _file_importer(

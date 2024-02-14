@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import list_gridproperties
 from xtgeo.grid3d._gridprops_import_roff import read_roff_properties
 from xtgeo.io._file import FileWrapper
@@ -29,11 +30,11 @@ ROFFASC_PROPS = TPATH / "3dgrids/reek/reek_grd_w_props.roffasc"
 ROFF_THREE_PROPS = TPATH / "3dgrids/reek/reek_geo2_grid_3props.roff"
 
 
-@pytest.mark.parametrize("test_file", ["A.EGRID", "b.grdecl", "t.segy", "c.RSSPEC"])
+@pytest.mark.parametrize("test_file", ["A.EGRID", "b.grdecl", "t.segy", "c.rms_attr"])
 def test_raise_on_invalid_filetype(tmp_path, test_file):
     filepath = tmp_path / test_file
     Path(filepath).touch()
-    with pytest.raises(ValueError, match="file format"):
+    with pytest.raises(InvalidFileFormatError, match="invalid for type GridProperties"):
         list_gridproperties(filepath)
 
 

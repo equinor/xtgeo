@@ -1,14 +1,15 @@
 """Grid import functions for various formats."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from xtgeo.common import null_logger
-from xtgeo.grid3d import _grid_import_ecl, _grid_import_roff
+from xtgeo.common.exceptions import InvalidFileFormatError
+from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
 
-from . import _grid_import_xtgcpgeom
+from . import _grid_import_ecl, _grid_import_roff, _grid_import_xtgcpgeom
 
 logger = null_logger(__name__)
 
@@ -49,6 +50,23 @@ def from_file(
         result.update(_grid_import_xtgcpgeom.import_xtgcpgeom(gfile, **kwargs))
     elif fformat == FileFormat.HDF:
         result.update(_grid_import_xtgcpgeom.import_hdf5_cpgeom(gfile, **kwargs))
+    else:
+        extensions = FileFormat.extensions_string(
+            [
+                FileFormat.ROFF_BINARY,
+                FileFormat.ROFF_ASCII,
+                FileFormat.EGRID,
+                FileFormat.FEGRID,
+                FileFormat.GRDECL,
+                FileFormat.BGRDECL,
+                FileFormat.XTG,
+                FileFormat.HDF,
+            ]
+        )
+        raise InvalidFileFormatError(
+            f"File format {fformat} is invalid for type Grid. "
+            f"Supported formats are {extensions}."
+        )
 
     if gfile.memstream:
         result["name"] = "unknown"

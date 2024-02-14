@@ -14,6 +14,7 @@ import deprecation
 import numpy as np
 
 from xtgeo.common.constants import UNDEF
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
@@ -39,7 +40,14 @@ def _data_reader_factory(fmt: FileFormat):
         return _cube_import.import_stormcube
     if fmt == FileFormat.XTG:
         return _cube_import.import_xtgregcube
-    raise ValueError("File format is not supported")
+
+    extensions = FileFormat.extensions_string(
+        [FileFormat.SEGY, FileFormat.STORM, FileFormat.XTG]
+    )
+    raise InvalidFileFormatError(
+        f"File format {fmt} is invalid for type Cube. "
+        f"Supported formats are {extensions}."
+    )
 
 
 def cube_from_file(mfile, fformat="guess"):

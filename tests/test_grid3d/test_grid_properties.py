@@ -1,6 +1,5 @@
 """Testing: test_grid_operations"""
 
-
 import io
 import sys
 
@@ -9,6 +8,7 @@ import pytest
 import xtgeo
 from hypothesis import assume, given
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import GridProperties, GridProperty
 
 from .grid_generator import xtgeo_grids
@@ -121,7 +121,7 @@ def test_gridproperties_from_roff(grid_property):
 def test_gridproperties_invalid_format(grid_property):
     buff = io.BytesIO()
     grid_property.to_file(buff, fformat="roff")
-    with pytest.raises(ValueError, match="Invalid file format"):
+    with pytest.raises(InvalidFileFormatError, match="invalid for type GridProperties"):
         xtgeo.gridproperties_from_file(buff, fformat="segy")
 
 

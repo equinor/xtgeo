@@ -36,3 +36,7 @@ class GridNotFoundError(ValueError):
 
 class BlockedWellsNotFoundError(ValueError):
     """Blocked Wells icon is not found in the request (ValueError)"""
+
+
+class InvalidFileFormatError(ValueError):
+    """File format given for importing or exporting files is invalid or unknown."""

@@ -14,6 +14,7 @@ import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
@@ -95,7 +96,24 @@ def _data_reader_factory(fformat: FileFormat) -> Callable:
         return import_bgrdecl_prop
     if fformat == FileFormat.XTG:
         return import_xtgcpprop
-    raise ValueError(f"Invalid grid property file format {fformat}")
+
+    extensions = FileFormat.extensions_string(
+        [
+            FileFormat.ROFF_BINARY,
+            FileFormat.ROFF_ASCII,
+            FileFormat.INIT,
+            FileFormat.FINIT,
+            FileFormat.UNRST,
+            FileFormat.FUNRST,
+            FileFormat.GRDECL,
+            FileFormat.BGRDECL,
+            FileFormat.XTG,
+        ]
+    )
+    raise InvalidFileFormatError(
+        f"File format {fformat} is invalid for type GridProperty. "
+        f"Supported formats are {extensions}."
+    )
 
 
 def gridproperty_from_file(

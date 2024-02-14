@@ -15,6 +15,7 @@ from tempfile import mkstemp
 from typing import TYPE_CHECKING, Literal, Union
 
 import xtgeo._cxtgeo
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 
 if TYPE_CHECKING:
@@ -69,6 +70,10 @@ class FileFormat(Enum):
     XYZ = ["xyz", "poi", "pol"]
     RMS_ATTR = ["rms_attr", "rms_attrs", "rmsattr.*"]
     UNKNOWN = ["unknown"]
+
+    @staticmethod
+    def extensions_string(formats: list[FileFormat]) -> str:
+        return ", ".join([f"'{item}'" for fmt in formats for item in fmt.value])
 
 
 class FileWrapper:
@@ -434,8 +439,8 @@ class FileWrapper:
         if fmt == FileFormat.UNKNOWN:
             fmt = self._format_from_contents()
         if fmt == FileFormat.UNKNOWN:
-            raise ValueError(
-                f"Unknown or unsupported file format for file {self._file}"
+            raise InvalidFileFormatError(
+                f"File format {fileformat} is unknown or unsupported"
             )
         return fmt
 
@@ -453,7 +458,9 @@ class FileWrapper:
             for regex in fmt.value:
                 if "*" in regex and re.compile(regex).match(fileformat):
                     return
-        raise ValueError("Unknown or unsupported file format: {fileformat}")
+        raise InvalidFileFormatError(
+            f"File format {fileformat} is unknown or unsupported"
+        )
 
     def _format_from_suffix(self, fileformat: str | None = None) -> FileFormat:
         """Detect format by the file suffix."""
@@ -491,7 +498,7 @@ class FileWrapper:
             self.file.seek(mark)
         else:
             if not self.exists():
-                raise ValueError(f"File {self.name} does not exist")
+                raise FileNotFoundError(f"File {self.name} does not exist")
             with open(self.file, "rb") as fhandle:
                 fhandle.readinto(buffer)
 
