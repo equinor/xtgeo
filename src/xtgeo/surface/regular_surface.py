@@ -1186,30 +1186,43 @@ class RegularSurface:
         else:
             engine = "python"
 
-        if fformat in ("irap_ascii", "irapascii", "irap_txt", "irapasc"):
+        if fformat in FileFormat.IRAP_ASCII.value:
             _regsurf_export.export_irap_ascii(self, mfile, engine=engine)
 
-        elif fformat in ("irap_binary", "irapbinary", "irapbin", "irap", "gri"):
+        elif fformat in FileFormat.IRAP_BINARY.value:
             _regsurf_export.export_irap_binary(self, mfile, engine=engine)
 
-        elif "zmap" in fformat:
+        elif fformat in FileFormat.ZMAP_ASCII.value:
             _regsurf_export.export_zmap_ascii(self, mfile, engine=engine)
 
-        elif fformat == "storm_binary":
+        elif fformat in FileFormat.STORM.value:
             _regsurf_export.export_storm_binary(self, mfile)
 
-        elif fformat == "petromod":
+        elif fformat in FileFormat.PETROMOD.value:
             _regsurf_export.export_petromod_binary(self, mfile, pmd_dataunits)
 
-        elif fformat == "ijxyz":
+        elif fformat in FileFormat.IJXYZ.value:
             _regsurf_export.export_ijxyz_ascii(self, mfile)
 
-        # developing, in prep and experimental!
         elif fformat == "xtgregsurf":
             _regsurf_export.export_xtgregsurf(self, mfile)
 
         else:
-            raise ValueError(f"Invalid file format: {fformat}")
+            extensions = FileFormat.extensions_string(
+                [
+                    FileFormat.IRAP_BINARY,
+                    FileFormat.IRAP_ASCII,
+                    FileFormat.IJXYZ,
+                    FileFormat.PETROMOD,
+                    FileFormat.ZMAP_ASCII,
+                    FileFormat.XTG,
+                    FileFormat.HDF,
+                ]
+            )
+            raise InvalidFileFormatError(
+                f"File format {fformat} is invalid for type RegularSurface. "
+                f"Supported formats are {extensions}."
+            )
 
         logger.info("Export RegularSurface to file or memstream... done")
 

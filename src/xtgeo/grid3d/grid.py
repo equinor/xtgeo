@@ -14,6 +14,7 @@ import numpy.ma as ma
 
 import xtgeo
 from xtgeo.common import XTGDescription, null_logger
+from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
 from xtgeo.common.version import __version__
@@ -848,31 +849,38 @@ class Grid(_Grid3D):
         if not _gfile.memstream:
             _gfile.check_folder(raiseerror=OSError)
 
-        valid_formats = {
-            "roff": ["roff", "roff_binary", "roff_bin", "roffbin"],
-            "roff_ascii": ["roff_ascii", "roff_asc", "roffasc"],
-            "grdecl": ["grdecl"],
-            "bgrdecl": ["bgrdecl"],
-            "egrid": ["egrid"],
-            "fegrid": ["fegrid"],
-        }
-
-        if fformat in valid_formats["roff"]:
+        if fformat in FileFormat.ROFF_BINARY.value:
             _grid_export.export_roff(self, _gfile.name, "binary")
-        elif fformat in valid_formats["roff_ascii"]:
+        elif fformat in FileFormat.ROFF_ASCII.value:
             _grid_export.export_roff(self, _gfile.name, "ascii")
-        elif fformat in valid_formats["grdecl"]:
+        elif fformat in FileFormat.GRDECL.value:
             _grid_export.export_grdecl(self, _gfile.name, 1)
-        elif fformat in valid_formats["bgrdecl"]:
+        elif fformat in FileFormat.BGRDECL.value:
             _grid_export.export_grdecl(self, _gfile.name, 0)
-        elif fformat in valid_formats["egrid"]:
+        elif fformat in FileFormat.EGRID.value:
             _grid_export.export_egrid(self, _gfile.name)
-        elif fformat in valid_formats["fegrid"]:
+        elif fformat in FileFormat.FEGRID.value:
             _grid_export.export_fegrid(self, _gfile.name)
+        elif fformat in FileFormat.HDF.value:
+            self.to_hdf(gfile)
+        elif fformat in FileFormat.XTG.value:
+            self.to_xtgf(gfile)
         else:
-            raise ValueError(
-                f"Invalid file format: {fformat}, valid options are: "
-                f"{', '.join(v for vv in valid_formats.values() for v in vv)}"
+            extensions = FileFormat.extensions_string(
+                [
+                    FileFormat.ROFF_BINARY,
+                    FileFormat.ROFF_ASCII,
+                    FileFormat.EGRID,
+                    FileFormat.FEGRID,
+                    FileFormat.GRDECL,
+                    FileFormat.BGRDECL,
+                    FileFormat.XTG,
+                    FileFormat.HDF,
+                ]
+            )
+            raise InvalidFileFormatError(
+                f"File format {fformat} is invalid for type Grid. "
+                f"Supported formats are {extensions}."
             )
 
     def to_hdf(
