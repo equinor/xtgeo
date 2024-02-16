@@ -77,7 +77,7 @@ def _export_roff(
         )
     roff = RoffParameter.from_xtgeo_grid_property(gridprop)
     roff.name = name
-    roff.to_file(pfile, roffio.Format.BINARY if binary else roffio.format.ASCII)
+    roff.to_file(pfile, roffio.Format.BINARY if binary else roffio.Format.ASCII)
 
 
 def _export_grdecl(
