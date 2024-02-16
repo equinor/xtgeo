@@ -277,6 +277,54 @@ Edit a 3D grid porosity inside polygons
    # Save in RMS as a new icon
    myprop.to_roxar(project, "Reek_sim", "NEWPORO_setinside")
 
+   
+Create region polygons from the grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   import numpy as np
+   import xtgeo
+
+   GNAME = "Simgrid"
+   REGNAME = "Regions"
+   ZONENAME = "Zone"
+
+   CB_FOLDER = "Region_polygons"
+   
+   ZONE_FILTER = [2, 3]
+
+   # factor that controls the precision of the polygons
+   # higher value gives smoother more convex polygons.
+   ALPHA_FACTOR = 1 
+
+   def create_region_polygons():
+       """Create region polygons and store them on the clipboard"""
+       grid = xtgeo.grid_from_roxar(project, GNAME)
+       reg = xtgeo.gridproperty_from_roxar(project, GNAME, REGNAME)
+       zone = xtgeo.gridproperty_from_roxar(project, GNAME, ZONENAME)
+
+       for regnum, regname in reg.codes.items():
+           print(f"Creating boundary polygon for region {regname}")
+
+           # create a filter array to extract boundaries for the region
+           # zone was used as filter to minimice overlap of the final polygons
+           # Note: a layer filter could have been applied instead
+           filter_array = (reg.values==regnum) & (np.isin(zone.values, [ZONE_FILTER]))
+
+           pol = grid.get_boundary_polygons(ALPHA_FACTOR, filter_array=filter_array)
+
+           # in case of several polygons, keep only the largest (first)
+           pol.filter_byid([0])
+
+           # store polygon to the clipboard
+           pol.to_roxar(project, regname, CB_FOLDER, stype="clipboard")
+
+        print(f"Complete, region polygons are stored under clipboard folder {CB_FOLDER}")
+
+    if __name__ == "__main__":
+        create_region_polygons()
+
 .. _hybrid:
 
 Make a hybrid grid

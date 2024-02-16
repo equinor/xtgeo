@@ -278,3 +278,36 @@ def test_reduce_to_one_layer(grd):
     grd.reduce_to_one_layer()
 
     assert grd.nlay == 1
+
+
+def test_get_boundary_polygons_grid_outline():
+    """Test getting a boundary for a grid."""
+
+    grid = xtgeo.grid_from_file(EMEGFILE)
+
+    boundary = grid.get_boundary_polygons(simplify=False)
+    df = boundary.get_dataframe(copy=False)
+
+    assert df["POLY_ID"].nunique() == 1
+    assert df[boundary.yname].min() == pytest.approx(5930003, abs=2)
+    assert df[boundary.yname].max() == pytest.approx(5937505, abs=2)
+    assert df[boundary.xname].min() == pytest.approx(459078, abs=2)
+    assert df[boundary.xname].max() == pytest.approx(466984, abs=2)
+
+
+def test_get_boundary_polygons_grid_region():
+    """Test getting a boundary for a region in a grid."""
+
+    grid = xtgeo.grid_from_file(EMEGFILE)
+    reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
+
+    boundary = grid.get_boundary_polygons(
+        simplify=False, filter_array=(reg.values == 1)
+    )
+    df = boundary.get_dataframe(copy=False)
+
+    assert df["POLY_ID"].nunique() == 1
+    assert df[boundary.yname].min() == pytest.approx(5932092, abs=2)
+    assert df[boundary.yname].max() == pytest.approx(5936223, abs=2)
+    assert df[boundary.xname].min() == pytest.approx(460344, abs=2)
+    assert df[boundary.xname].max() == pytest.approx(463765, abs=2)
