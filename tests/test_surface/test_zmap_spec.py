@@ -1,5 +1,5 @@
+import pathlib
 from io import StringIO
-from pathlib import Path
 
 import pytest
 import xtgeo
@@ -40,12 +40,12 @@ from xtgeo.surface._zmap_parser import ZMAPFormatException, ZMAPSurface, parse_z
         40.1785        51.0874        54.6339        55.6271        55.9614
     -99999.0000    -99999.0000    -99999.0000        68.1617        63.9811"""
         ),
-        Path(
-            xtgeo.XTGeoDialog().testpathobj / "surfaces" / "etc" / "zmap_example.zmap"
-        ),
+        pathlib.Path("surfaces/etc/zmap_example.zmap"),
     ],
 )
-def test_zmap_input_format(zmap_input):
+def test_zmap_input_format(zmap_input, testdata_path):
+    if isinstance(zmap_input, pathlib.Path):
+        zmap_input = testdata_path / zmap_input
     header = parse_zmap(zmap_input)
     expected_header = {
         "nan_value": -99999.0,
@@ -64,9 +64,9 @@ def test_zmap_input_format(zmap_input):
     assert header == ZMAPSurface(**expected_header)
 
 
-def test_integration():
+def test_integration(testdata_path):
     result = xtgeo.surface_from_file(
-        Path(xtgeo.XTGeoDialog().testpathobj / "surfaces" / "etc" / "zmap_example.zmap")
+        testdata_path / pathlib.Path("surfaces/etc/zmap_example.zmap")
     )
     assert result.xmax == 460718.9063
     assert result.ymax == 5925787.0

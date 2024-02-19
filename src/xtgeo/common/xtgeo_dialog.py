@@ -38,7 +38,6 @@ import getpass
 import inspect
 import logging
 import os
-import pathlib
 import platform
 import re
 import sys
@@ -217,7 +216,6 @@ class XTGeoDialog:
     """System for handling dialogs and messages in XTGeo.
 
     This module cooperates with Python logging module.
-
     """
 
     def __init__(self) -> None:
@@ -230,8 +228,6 @@ class XTGeoDialog:
         self._logginglevel = "CRITICAL"
         self._logginglevel_fromenv = None
         self._loggingname = ""
-        self._test_env = True
-        self._testpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
         self._showrtwarnings = True
 
         # a string, for Python logging:
@@ -247,23 +243,6 @@ class XTGeoDialog:
 
         if loggingformat is not None:
             self._lformatlevel = int(loggingformat)
-
-    @property
-    def testpathobj(self) -> pathlib.Path:
-        """Return testpath as pathlib.Path object."""
-        return pathlib.Path(self._testpath)
-
-    @property
-    def testpath(self) -> str:
-        """Return or setting up testpath."""
-        return self._testpath
-
-    @testpath.setter
-    def testpath(self, newtestpath: str) -> None:
-        if not os.path.isdir(newtestpath):
-            raise RuntimeError(f"Proposed test path is not valid: {newtestpath}")
-
-        self._testpath = newtestpath
 
     @property
     def logginglevel(self) -> str:
@@ -445,18 +424,6 @@ class XTGeoDialog:
             DeprecationWarning,
         )
         return null_logger(name)
-
-    def testsetup(self) -> bool:
-        """Basic setup for XTGeo testing (private; only relevant for tests)"""
-
-        tstpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
-        if not os.path.isdir(tstpath):
-            raise RuntimeError(f"Test path is not valid: {tstpath}")
-
-        self._test_env = True
-        self._testpath = tstpath
-
-        return True
 
     @staticmethod
     def timer(*args: float) -> float:

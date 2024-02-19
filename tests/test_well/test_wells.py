@@ -8,12 +8,9 @@ from xtgeo.well import Wells
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
 
 @pytest.fixture(name="testwells")
-def fixture_testwells(testpath):
+def fixture_testwells(testdata_path):
     w_names = [
         "WELL29",
         "WELL14",
@@ -26,7 +23,7 @@ def fixture_testwells(testpath):
         "WELLX",
     ]
     well_files = [
-        join(testpath, "wells", "battle", "1", wn + ".rmswell") for wn in w_names
+        join(testdata_path, "wells", "battle", "1", wn + ".rmswell") for wn in w_names
     ]
     return xtgeo.wells_from_files(well_files, fformat="rms_ascii")
 
@@ -64,11 +61,11 @@ def test_get_dataframe_allwells(testwells, snapshot, helpers):
     )
 
 
-def test_quickplot_wells(tmpdir, testwells, generate_plot):
+def test_quickplot_wells(tmp_path, testwells, generate_plot):
     """Import wells from file to Wells and quick plot."""
     if not generate_plot:
         pytest.skip()
-    testwells.quickplot(filename=join(tmpdir, "quickwells.png"))
+    testwells.quickplot(filename=tmp_path / "quickwells.png")
 
 
 def test_wellintersections(testwells, snapshot, helpers):

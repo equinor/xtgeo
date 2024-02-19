@@ -13,16 +13,11 @@ from xtgeo.common import XTGeoDialog
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
 
 BIGBOX_DIMENSIONS = (100, 100, 20)
 
 
-def create_box(testpath):
+def create_box(testdata_path):
     # grid = xtgeo.Grid()
     return xtgeo.create_box_grid(
         BIGBOX_DIMENSIONS,
@@ -42,13 +37,13 @@ def create_box(testpath):
     ],
     ids=["reek_grid", "big_box"],
 )
-def benchmark_grid_fixture(request, testpath):
-    return request.param(testpath)
+def benchmark_grid_fixture(request, testdata_path):
+    return request.param(testdata_path)
 
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_xtgf_export(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.xtgf")
+    fname = tmp_path / "reek_geo_grid.xtgf"
 
     def write():
         benchmark_grid.to_xtgf(fname)
@@ -58,7 +53,7 @@ def test_benchmark_grid_xtgf_export(benchmark, tmp_path, benchmark_grid):
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.xtgf")
+    fname = tmp_path / "reek_geo_grid.xtgf"
 
     benchmark_grid.to_xtgf(fname)
 
@@ -78,7 +73,7 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 @pytest.mark.bigtest
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.grdecl")
+    fname = tmp_path / "reek_geo_grid.grdecl"
 
     def write():
         benchmark_grid.to_file(fname, fformat="grdecl")
@@ -89,7 +84,7 @@ def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
 @pytest.mark.bigtest
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.grdecl")
+    fname = tmp_path / "reek_geo_grid.grdecl"
 
     benchmark_grid.to_file(fname, fformat="grdecl")
 
@@ -108,7 +103,7 @@ def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_bgrdecl_export(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.bgrdecl")
+    fname = tmp_path / "reek_geo_grid.bgrdecl"
 
     def write():
         benchmark_grid.to_file(fname, fformat="bgrdecl")
@@ -118,7 +113,7 @@ def test_benchmark_grid_bgrdecl_export(benchmark, tmp_path, benchmark_grid):
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.bgrdecl")
+    fname = tmp_path / "reek_geo_grid.bgrdecl"
 
     benchmark_grid.to_file(fname, fformat="bgrdecl")
 
@@ -137,7 +132,7 @@ def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_export(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.hdf")
+    fname = tmp_path / "reek_geo_grid.hdf"
 
     def write():
         benchmark_grid._zcornsv += 1.0
@@ -148,7 +143,7 @@ def test_benchmark_grid_hdf5_export(benchmark, tmp_path, benchmark_grid):
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.hdf")
+    fname = tmp_path / "reek_geo_grid.hdf"
 
     benchmark_grid._zcornsv += 1.0
     fna = benchmark_grid.to_hdf(fname, compression=None)
@@ -167,7 +162,7 @@ def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid)
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.hdf")
+    fname = tmp_path / "reek_geo_grid.hdf"
 
     benchmark_grid._zcornsv += 1.0
     fna = benchmark_grid.to_hdf(fname, compression=None)
@@ -189,7 +184,7 @@ def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
 def test_benchmark_grid_hdf5_export_blosc_compression(
     benchmark, tmp_path, benchmark_grid
 ):
-    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+    fname = tmp_path / "reek_geo_grid.compressed_h5"
 
     benchmark_grid._zcornsv += 1.0
 
@@ -203,7 +198,7 @@ def test_benchmark_grid_hdf5_export_blosc_compression(
 def test_benchmark_grid_hdf5_import_partial_blosc_compression(
     benchmark, tmp_path, benchmark_grid
 ):
-    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+    fname = tmp_path / "reek_geo_grid.compressed_h5"
 
     benchmark_grid._zcornsv += 1.0
 
@@ -227,7 +222,7 @@ def test_benchmark_grid_hdf5_import_partial_blosc_compression(
 def test_benchmark_grid_hdf5_import_blosc_compression(
     benchmark, tmp_path, benchmark_grid
 ):
-    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+    fname = tmp_path / "reek_geo_grid.compressed_h5"
 
     benchmark_grid._zcornsv += 1.0
 
@@ -248,7 +243,7 @@ def test_benchmark_grid_hdf5_import_blosc_compression(
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_egrid_export(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.egrid")
+    fname = tmp_path / "reek_geo_grid.egrid"
 
     @benchmark
     def write():
@@ -258,7 +253,7 @@ def test_benchmark_grid_egrid_export(benchmark, tmp_path, benchmark_grid):
 
 @pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_egrid_import(benchmark, tmp_path, benchmark_grid):
-    fname = join(tmp_path, "reek_geo_grid.egrid")
+    fname = tmp_path / "reek_geo_grid.egrid"
 
     benchmark_grid._zcornsv += 1.0
     benchmark_grid.to_file(fname, fformat="egrid")
@@ -279,7 +274,7 @@ def test_benchmark_grid_egrid_import(benchmark, tmp_path, benchmark_grid):
 # Grid properties:
 
 
-def create_big_prop(testpath):
+def create_big_prop(testdata_path):
     vals = np.zeros(BIGBOX_DIMENSIONS, dtype=np.float32)
     ncol, nrow, nlay = BIGBOX_DIMENSIONS
     prp = xtgeo.GridProperty(ncol=ncol, nrow=nrow, nlay=nlay, values=vals)
@@ -289,7 +284,7 @@ def create_big_prop(testpath):
     return prp
 
 
-def create_small_prop(testpath):
+def create_small_prop(testdata_path):
     vals = np.zeros((5, 7, 3), dtype=np.float32)
     prp = xtgeo.GridProperty(ncol=5, nrow=7, nlay=3, values=vals)
     prp.values[0, 0, 0:3] = 33
@@ -309,8 +304,8 @@ def create_small_prop(testpath):
     ],
     ids=["reek poro", "small prop", "big prop"],
 )
-def benchmark_gridprop_fixture(request, testpath):
-    return request.param(testpath)
+def benchmark_gridprop_fixture(request, testdata_path):
+    return request.param(testdata_path)
 
 
 @pytest.mark.benchmark(group="import/export grid property")
@@ -405,7 +400,7 @@ def ijk_ranges(
 )
 @given(ijk_ranges())
 def test_hdf5_partial_import(benchmark_grid, tmp_path, ijkrange):
-    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+    fname = tmp_path / "reek_geo_grid.compressed_h5"
 
     fna = benchmark_grid.to_hdf(fname, compression="blosc")
 
@@ -447,7 +442,7 @@ def test_hdf5_partial_import(benchmark_grid, tmp_path, ijkrange):
 
 
 def test_hdf5_import(benchmark_grid, tmp_path):
-    fname = join(tmp_path, "reek_geo_grid2.compressed_h5")
+    fname = tmp_path / "reek_geo_grid2.compressed_h5"
 
     benchmark_grid._zcornsv += 1.0
 

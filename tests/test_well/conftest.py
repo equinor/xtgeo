@@ -3,7 +3,9 @@ import xtgeo
 
 
 @pytest.fixture()
-def string_to_well(setup_tmpdir):
+def string_to_well(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
     def wrapper(wellstring, **kwargs):
         """It is currently not possible to initiate from spec.
         We work around by dumping to csv before reloading

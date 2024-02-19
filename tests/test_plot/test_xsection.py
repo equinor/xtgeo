@@ -1,5 +1,5 @@
 import glob
-from os.path import join
+import pathlib
 
 import xtgeo
 from xtgeo.plot import XSection
@@ -7,19 +7,14 @@ from xtgeo.plot import XSection
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
+USEFILE1 = pathlib.Path("wells/reek/1/OP_1.w")
+USEFILE2 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
+USEFILE3 = pathlib.Path("polygons/reek/1/mypoly.pol")
+USEFILE4 = pathlib.Path("wells/reek/1/OP_5.w")
+USEFILE5 = pathlib.Path("surfaces/reek/2/*.gri")
+USEFILE6 = pathlib.Path("cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
 
-TPATH = xtg.testpathobj
-
-USEFILE1 = TPATH / "wells/reek/1/OP_1.w"
-USEFILE2 = TPATH / "surfaces/reek/1/topreek_rota.gri"
-USEFILE3 = TPATH / "polygons/reek/1/mypoly.pol"
-USEFILE4 = TPATH / "wells/reek/1/OP_5.w"
-USEFILE5 = TPATH / "surfaces/reek/2/*.gri"
-USEFILE6 = TPATH / "cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
-
-USEFILE7 = TPATH / "wells/reek/1/OP_2.w"
+USEFILE7 = pathlib.Path("wells/reek/1/OP_2.w")
 
 
 def test_xsection_init():
@@ -28,13 +23,13 @@ def test_xsection_init():
     assert xsect.pagesize == "A4"
 
 
-def test_simple_plot(tmpdir, show_plot, generate_plot):
+def test_simple_plot(tmp_path, show_plot, generate_plot, testdata_path):
     """Test as simple XSECT plot."""
 
-    mywell = xtgeo.well_from_file(USEFILE4)
+    mywell = xtgeo.well_from_file(testdata_path / USEFILE4)
 
     mysurfaces = []
-    mysurf = xtgeo.surface_from_file(USEFILE2)
+    mysurf = xtgeo.surface_from_file(testdata_path / USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
@@ -47,7 +42,7 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
     # set the color table, from file
     clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
     cfil1 = "xtgeo"
-    cfil2 = TPATH / "etc/colortables/colfacies.txt"
+    cfil2 = testdata_path / pathlib.Path("etc/colortables/colfacies.txt")
 
     assert 222 in clist
     assert "xtgeo" in cfil1
@@ -65,19 +60,19 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
         myplot.show()
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "xsect_gbf1.png"), last=True)
+        myplot.savefig(tmp_path / "xsect_gbf1.png", last=True)
     else:
         myplot.close()
 
 
-def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
+def test_simple_plot_with_seismics(tmp_path, show_plot, generate_plot, testdata_path):
     """Test as simple XSECT plot with seismic backdrop."""
 
-    mywell = xtgeo.well_from_file(USEFILE7)
-    mycube = xtgeo.cube_from_file(USEFILE6)
+    mywell = xtgeo.well_from_file(testdata_path / USEFILE7)
+    mycube = xtgeo.cube_from_file(testdata_path / USEFILE6)
 
     mysurfaces = []
-    mysurf = xtgeo.surface_from_file(USEFILE2)
+    mysurf = xtgeo.surface_from_file(testdata_path / USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
@@ -98,7 +93,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     # set the color table, from file
     clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
     cfil1 = "xtgeo"
-    cfil2 = TPATH / "etc/colortables/colfacies.txt"
+    cfil2 = testdata_path / pathlib.Path("etc/colortables/colfacies.txt")
 
     assert 222 in clist
     assert "xtgeo" in cfil1
@@ -116,7 +111,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     myplot.plot_map()
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "xsect_wcube.png"), last=False)
+        myplot.savefig(tmp_path / "xsect_wcube.png", last=False)
 
     if show_plot:
         myplot.show()
@@ -124,11 +119,11 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     myplot.close()
 
 
-def test_multiple_subplots(tmpdir, show_plot, generate_plot):
+def test_multiple_subplots(tmp_path, show_plot, generate_plot, testdata_path):
     """Test as simple XSECT plot."""
 
-    mywell = xtgeo.well_from_file(USEFILE4)
-    mysurf = xtgeo.surface_from_file(USEFILE2)
+    mywell = xtgeo.well_from_file(testdata_path / USEFILE4)
+    mysurf = xtgeo.surface_from_file(testdata_path / USEFILE2)
 
     myplot = XSection(zmin=1500, zmax=1800, well=mywell, surfaces=[mysurf])
 
@@ -138,13 +133,13 @@ def test_multiple_subplots(tmpdir, show_plot, generate_plot):
     myplot.close()
 
 
-def test_reek1(tmpdir, generate_plot):
+def test_reek1(tmp_path, generate_plot, testdata_path):
     """Test XSect for a Reek well."""
 
-    myfield = xtgeo.polygons_from_file(USEFILE3, fformat="xyz")
+    myfield = xtgeo.polygons_from_file(testdata_path / USEFILE3, fformat="xyz")
 
     mywells = []
-    wnames = glob.glob(str(USEFILE4))
+    wnames = glob.glob(str(testdata_path / USEFILE4))
     wnames.sort()
     for wname in wnames:
         mywell = xtgeo.well_from_file(wname)
@@ -153,7 +148,7 @@ def test_reek1(tmpdir, generate_plot):
     logger.info("Wells are read...")
 
     mysurfaces = []
-    surfnames = glob.glob(str(USEFILE5))
+    surfnames = glob.glob(str(testdata_path / USEFILE5))
     surfnames.sort()
     for fname in surfnames:
         mysurf = xtgeo.surface_from_file(fname)
@@ -161,7 +156,7 @@ def test_reek1(tmpdir, generate_plot):
 
     # Troll lobes
     mylobes = []
-    surfnames = glob.glob(str(USEFILE5))
+    surfnames = glob.glob(str(testdata_path / USEFILE5))
     surfnames.sort()
     for fname in surfnames:
         mysurf = xtgeo.surface_from_file(fname)
@@ -203,7 +198,7 @@ def test_reek1(tmpdir, generate_plot):
         myplot.plot_map()
 
         if generate_plot:
-            myplot.savefig(join(tmpdir, "xsect2a.svg"), fformat="svg", last=False)
-            myplot.savefig(join(tmpdir, "xsect2a.png"), fformat="png")
+            myplot.savefig(tmp_path / "xsect2a.svg", fformat="svg", last=False)
+            myplot.savefig(tmp_path / "xsect2a.png", fformat="png")
         else:
             myplot.close()

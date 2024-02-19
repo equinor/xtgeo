@@ -1,4 +1,5 @@
 """Collect deprecated stuff for Points() and Polygons()."""
+
 import glob
 import pathlib
 
@@ -19,19 +20,19 @@ POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
 CSV1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
 
 
-def test_load_points_polygons_file_deprecated(testpath):
+def test_load_points_polygons_file_deprecated(testdata_path):
     """Load from file."""
     with pytest.warns(
         DeprecationWarning, match="Initializing directly from file name is deprecated"
     ):
-        poi = xtgeo.Points(testpath / POINTSET2)
+        poi = xtgeo.Points(testdata_path / POINTSET2)
 
     assert poi.nrow == 30
 
     with pytest.warns(
         DeprecationWarning, match="Initializing directly from file name is deprecated"
     ):
-        pol = xtgeo.Polygons(testpath / POLSET2)
+        pol = xtgeo.Polygons(testdata_path / POLSET2)
 
     assert pol.nrow == 25
 
@@ -47,10 +48,10 @@ def test_points_from_list_deprecated():
         assert mypoints.get_dataframe().equals(old_points.get_dataframe())
 
 
-def test_import_from_dataframe_deprecated(testpath):
+def test_import_from_dataframe_deprecated(testdata_path):
     """Import Points via Pandas dataframe, deprecated behaviour."""
 
-    dfr = pd.read_csv(testpath / CSV1, skiprows=3)
+    dfr = pd.read_csv(testdata_path / CSV1, skiprows=3)
 
     mypoints = xtgeo.Points()
     attr = {"IX": "I", "JY": "J", "KZ": "K"}
@@ -68,20 +69,22 @@ def test_import_from_dataframe_deprecated(testpath):
         (PFILE1C, "pol"),
     ],
 )
-def test_polygons_from_file_alternatives_with_deprecated(testpath, filename, fformat):
+def test_polygons_from_file_alternatives_with_deprecated(
+    testdata_path, filename, fformat
+):
     if version.parse(xtgeo_version) < version.parse("2.21"):
         # to avoid test failure before tag is actually set
         pytest.skip()
     else:
         with pytest.warns(DeprecationWarning):
-            polygons1 = xtgeo.Polygons(testpath / filename)
+            polygons1 = xtgeo.Polygons(testdata_path / filename)
 
         polygons2 = xtgeo.Polygons()
         with pytest.warns(DeprecationWarning):
-            polygons2.from_file(testpath / filename, fformat=fformat)
+            polygons2.from_file(testdata_path / filename, fformat=fformat)
 
-        polygons3 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
-        polygons4 = xtgeo.polygons_from_file(testpath / filename)
+        polygons3 = xtgeo.polygons_from_file(testdata_path / filename, fformat=fformat)
+        polygons4 = xtgeo.polygons_from_file(testdata_path / filename)
 
         pd.testing.assert_frame_equal(
             polygons1.get_dataframe(), polygons2.get_dataframe()
@@ -94,9 +97,9 @@ def test_polygons_from_file_alternatives_with_deprecated(testpath, filename, ffo
         )
 
 
-def test_get_polygons_one_well_deprecated(testpath, tmp_path):
+def test_get_polygons_one_well_deprecated(testdata_path, tmp_path):
     """Import a well and get the polygon segments."""
-    wlist = [xtgeo.well_from_file((testpath / WFILES1), zonelogname="Zonelog")]
+    wlist = [xtgeo.well_from_file((testdata_path / WFILES1), zonelogname="Zonelog")]
 
     mypoly = xtgeo.Polygons()
     with pytest.warns(DeprecationWarning):
@@ -106,11 +109,11 @@ def test_get_polygons_one_well_deprecated(testpath, tmp_path):
     mypoly.to_file(tmp_path / "poly_w1.irapasc")
 
 
-def test_get_polygons_many_wells_deprecated(testpath, tmp_path):
+def test_get_polygons_many_wells_deprecated(testdata_path, tmp_path):
     """Import some wells and get the polygon segments."""
     wlist = [
         xtgeo.well_from_file(wpath, zonelogname="Zonelog")
-        for wpath in glob.glob(str(testpath / WFILES2))
+        for wpath in glob.glob(str(testdata_path / WFILES2))
     ]
 
     mypoly = xtgeo.Polygons()
@@ -128,9 +131,9 @@ def test_get_polygons_many_wells_deprecated(testpath, tmp_path):
     )
 
 
-def test_init_with_surface_deprecated(testpath):
+def test_init_with_surface_deprecated(testdata_path):
     """Initialise points object with surface instance, to be deprecated."""
-    surf = xtgeo.surface_from_file(testpath / SURFACE)
+    surf = xtgeo.surface_from_file(testdata_path / SURFACE)
     with pytest.warns(
         DeprecationWarning,
         match="Initializing directly from RegularSurface is deprecated",
@@ -141,10 +144,10 @@ def test_init_with_surface_deprecated(testpath):
     pd.testing.assert_frame_equal(poi.get_dataframe(), surf.get_dataframe())
 
 
-def test_get_zone_tops_one_well_deprecated(testpath):
+def test_get_zone_tops_one_well_deprecated(testdata_path):
     """Import a well and get the zone tops, old method to be depr."""
 
-    wlist = [xtgeo.well_from_file(testpath / WFILES1, zonelogname="Zonelog")]
+    wlist = [xtgeo.well_from_file(testdata_path / WFILES1, zonelogname="Zonelog")]
 
     mypoints = xtgeo.Points()
     with pytest.warns(DeprecationWarning, match="from_wells is deprecated"):
@@ -157,12 +160,12 @@ def test_get_zone_tops_one_well_deprecated(testpath):
     )
 
 
-def test_get_zone_tops_some_wells_deprecated(testpath):
+def test_get_zone_tops_some_wells_deprecated(testdata_path):
     """Import some well and get the zone tops"""
 
     wlist = [
         xtgeo.well_from_file(wpath, zonelogname="Zonelog")
-        for wpath in glob.glob(str(testpath / WFILES2))
+        for wpath in glob.glob(str(testdata_path / WFILES2))
     ]
 
     # legacy
@@ -176,11 +179,11 @@ def test_get_zone_tops_some_wells_deprecated(testpath):
     assert p1.get_dataframe().equals(p2.get_dataframe())
 
 
-def test_get_faciesfraction_some_wells_deprecated(testpath):
+def test_get_faciesfraction_some_wells_deprecated(testdata_path):
     """Import some wells and get the facies fractions per zone."""
     wlist = [
         xtgeo.well_from_file(wpath, zonelogname="Zonelog")
-        for wpath in glob.glob(str(testpath / WFILES2))
+        for wpath in glob.glob(str(testdata_path / WFILES2))
     ]
 
     mypoints = xtgeo.Points()

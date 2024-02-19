@@ -52,6 +52,7 @@ True
 >> print(rsg_grid.simbox_indexer.dimensions)
 (3,1,2)
 """
+
 from unittest.mock import MagicMock, patch
 
 import numpy as np

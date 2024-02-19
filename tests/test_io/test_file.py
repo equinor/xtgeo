@@ -31,8 +31,8 @@ FILE_FORMATS = ChainMap(
 
 
 @pytest.fixture(name="reek_grid_path")
-def fixture_reek_grid_path(testpath):
-    return pathlib.Path(testpath) / "3dgrids/reek"
+def fixture_reek_grid_path(testdata_path):
+    return pathlib.Path(testdata_path) / "3dgrids/reek"
 
 
 def test_fileformat_unknown_empty_memstream():
@@ -49,13 +49,13 @@ def test_fileformat_unknown_zeroed_memstream_with_varied_length(length):
 
 
 @pytest.mark.parametrize("filename", FILE_FORMATS.keys())
-def test_properties_file(testpath, filename):
-    gfile = FileWrapper(testpath / filename)
+def test_properties_file(testdata_path, filename):
+    gfile = FileWrapper(testdata_path / filename)
     assert isinstance(gfile._file, pathlib.Path)
 
     assert gfile.memstream is False
     assert gfile._mode == "rb"
-    assert pathlib.Path(gfile.name) == (testpath / filename).absolute().resolve()
+    assert pathlib.Path(gfile.name) == (testdata_path / filename).absolute().resolve()
 
     assert "Swig" in str(gfile.get_cfhandle())
     assert gfile.cfclose() is True
@@ -78,9 +78,9 @@ def test_properties_stream(stream, instance, mode):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Path delimiter issue")
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_resolve_alias(testpath, filename):
+def test_resolve_alias(testdata_path, filename):
     """Testing resolving file alias function."""
-    surf = xtgeo.surface_from_file(testpath / filename)
+    surf = xtgeo.surface_from_file(testdata_path / filename)
     md5hash = surf.generate_hash("md5")
 
     mname = FileWrapper("whatever/$md5sum.gri", obj=surf)
@@ -164,8 +164,8 @@ def test_memstream_check_file():
 
 
 @pytest.mark.parametrize("filename", FILE_FORMATS.keys())
-def test_file_c_handle(testpath, filename):
-    any_xtgeo_file = FileWrapper(testpath / filename)
+def test_file_c_handle(testdata_path, filename):
+    any_xtgeo_file = FileWrapper(testdata_path / filename)
 
     handle_count = any_xtgeo_file._cfhandlecount
 
@@ -187,9 +187,9 @@ def test_file_c_handle(testpath, filename):
 
 @pytest.mark.bigtest
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_surface_file_roundtrip_stream(testpath, filename):
+def test_surface_file_roundtrip_stream(testdata_path, filename):
     stream = io.BytesIO()
-    surf = xtgeo.surface_from_file(testpath / filename)
+    surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_file(stream)
     stream.seek(0)
     stream_file = FileWrapper(stream)
@@ -199,41 +199,43 @@ def test_surface_file_roundtrip_stream(testpath, filename):
 
 
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
-def test_fileformat_infers_from_suffix(testpath, filename, expected_format):
-    xtgeo_file = FileWrapper(testpath / filename)
+def test_fileformat_infers_from_suffix(testdata_path, filename, expected_format):
+    xtgeo_file = FileWrapper(testdata_path / filename)
     assert xtgeo_file.fileformat() == expected_format
 
 
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
-def test_fileformat_infers_from_stream_contents(testpath, filename, expected_format):
+def test_fileformat_infers_from_stream_contents(
+    testdata_path, filename, expected_format
+):
     if expected_format in (FileFormat.RMSWELL, FileFormat.ROFF_ASCII):
-        with open(testpath / filename) as f:
+        with open(testdata_path / filename) as f:
             stream = io.StringIO(f.read())
     else:
-        with open(testpath / filename, "rb") as f:
+        with open(testdata_path / filename, "rb") as f:
             stream = io.BytesIO(f.read())
     xtgeo_file = FileWrapper(stream)
     assert xtgeo_file.fileformat() == expected_format
 
 
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
-def test_fileformat_provided(testpath, filename, expected_format):
-    xtgeo_file = FileWrapper(testpath / filename)
+def test_fileformat_provided(testdata_path, filename, expected_format):
+    xtgeo_file = FileWrapper(testdata_path / filename)
     name = expected_format.name
     assert xtgeo_file.fileformat(fileformat=name) == expected_format
     assert xtgeo_file.fileformat(fileformat=name.lower()) == expected_format
 
 
 @pytest.mark.parametrize("filename, expected_format", SURFACE_FILE_FORMATS.items())
-def test_fileformat_provided_prefer_given(testpath, filename, expected_format):
-    xtgeo_file = FileWrapper(testpath / filename)
+def test_fileformat_provided_prefer_given(testdata_path, filename, expected_format):
+    xtgeo_file = FileWrapper(testdata_path / filename)
     assert xtgeo_file.fileformat(fileformat="segy") == FileFormat.SEGY
 
 
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_fileformat_hdf_stream(testpath, filename):
+def test_fileformat_hdf_stream(testdata_path, filename):
     stream = io.BytesIO()
-    surf = xtgeo.surface_from_file(testpath / filename)
+    surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_hdf(stream)
     stream.seek(0)
     sfile = FileWrapper(stream)
@@ -242,9 +244,9 @@ def test_fileformat_hdf_stream(testpath, filename):
 
 
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_fileformat_hdf_to_file(tmp_path, testpath, filename):
+def test_fileformat_hdf_to_file(tmp_path, testdata_path, filename):
     newfile = tmp_path / "hdf_surf.hdf"
-    surf = xtgeo.surface_from_file(testpath / filename)
+    surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_hdf(newfile)
     sfile = FileWrapper(newfile)
     assert sfile.fileformat() == FileFormat.HDF

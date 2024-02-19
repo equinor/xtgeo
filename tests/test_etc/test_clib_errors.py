@@ -1,27 +1,10 @@
 import io
-import os
-import stat
 
 import numpy as np
 import pytest
 import xtgeo
 from xtgeo import _cxtgeo
 from xtgeo.io._file import FileWrapper
-
-
-@pytest.fixture()
-def unreadable_file(setup_tmpdir):
-    fname = "random_file_name"
-    with open(fname, "w"):
-        pass
-    os.chmod(fname, stat.S_IREAD)
-    # On some systems the chmod fails, meaning we are able to write to the
-    # file. In those cases we skip the test:
-    if os.access(fname, os.W_OK):
-        pytest.skip("Have write access to file")
-    yield fname
-    os.chmod(fname, stat.S_IWRITE)
-    os.remove(fname)
 
 
 def test_grdcp3d_get_xyz():

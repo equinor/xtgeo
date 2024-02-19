@@ -7,13 +7,6 @@ import xtgeo
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-TESTFILE = TPATH / "surfaces/reek/1/basereek_rota_v2.gri"
-
 
 def test_surface_forks():
     """Testing when surfaces are read by multiple forks"""

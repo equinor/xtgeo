@@ -68,8 +68,8 @@ class EclRun:
 
 
 @pytest.fixture(name="grids_etc_path")
-def fixture_grids_etc_path(testpath):
-    return join(testpath, "3dgrids", "etc")
+def fixture_grids_etc_path(testdata_path):
+    return join(testdata_path, "3dgrids", "etc")
 
 
 @pytest.fixture(name="single_poro_path")
@@ -95,9 +95,9 @@ def fixture_dual_poro_dual_perm_wg_path(grids_etc_path):
 
 
 @pytest.fixture(name="reek_run")
-def fixture_reek_run(testpath):
+def fixture_reek_run(testdata_path):
     return EclRun(
-        join(testpath, "3dgrids", "reek", "REEK"),
+        join(testdata_path, "3dgrids", "reek", "REEK"),
         (40, 64, 14),
         False,
         [
@@ -422,9 +422,9 @@ def fixture_dual_poro_dual_perm_wg_run(dual_poro_dual_perm_wg_path):
 
 
 @pytest.fixture(name="dual_props_run")
-def fixture_dual_props_run(testpath):
+def fixture_dual_props_run(testdata_path):
     return EclRun(
-        join(testpath, "3dgrids/etc/DUAL"),
+        join(testdata_path, "3dgrids/etc/DUAL"),
         (5, 3, 1),
         True,
         [

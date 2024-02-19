@@ -3,12 +3,6 @@ import pytest
 
 
 @pytest.fixture
-def setup_tmpdir(tmpdir):
-    with tmpdir.as_cwd():
-        yield
-
-
-@pytest.fixture
 def default_surface():
     yield {
         "ncol": 5,

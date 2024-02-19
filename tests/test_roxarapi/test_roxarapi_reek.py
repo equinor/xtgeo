@@ -7,10 +7,11 @@ Then run tests in Roxar API which focus on IO.
 
 This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if Equinor.
 """
+
 from __future__ import annotations
 
 import contextlib
-from os.path import join
+import pathlib
 from typing import Any
 
 import numpy as np
@@ -22,44 +23,38 @@ with contextlib.suppress(ImportError):
     import roxar
 
 xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
 logger = null_logger(__name__)
-
-TPATH = xtg.testpathobj
 
 PROJNAME = "tmp_project.rmsxxx"
 
-CUBEDATA1 = TPATH / "cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
+CUBEDATA1 = pathlib.Path("cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
 CUBENAME1 = "synth1"
 CUBENAME2 = "synth2"
 
 SURFTOPS1 = [
-    TPATH / "surfaces/reek/1/topreek_rota.gri",
-    TPATH / "surfaces/reek/1/midreek_rota.gri",
-    TPATH / "surfaces/reek/1/lowreek_rota.gri",
+    pathlib.Path("surfaces/reek/1/topreek_rota.gri"),
+    pathlib.Path("surfaces/reek/1/midreek_rota.gri"),
+    pathlib.Path("surfaces/reek/1/lowreek_rota.gri"),
 ]
 
 
 SURFCAT1 = "DS_whatever"
 SURFNAMES1 = ["TopReek", "MidReek", "BaseReek"]
 
-GRIDDATA1 = TPATH / "3dgrids/reek/reek_sim_grid.roff"
-PORODATA1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
-ZONEDATA1 = TPATH / "3dgrids/reek/reek_sim_zone.roff"
+GRIDDATA1 = pathlib.Path("3dgrids/reek/reek_sim_grid.roff")
+PORODATA1 = pathlib.Path("3dgrids/reek/reek_sim_poro.roff")
+ZONEDATA1 = pathlib.Path("3dgrids/reek/reek_sim_zone.roff")
 
 GRIDNAME1 = "Simgrid"
 PORONAME1 = "PORO"
 ZONENAME1 = "Zone"
 
-WELLSFOLDER1 = TPATH / "wells/reek/1"
+WELLSFOLDER1 = pathlib.Path("wells/reek/1")
 WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
 
-POLYDATA1 = TPATH / "polygons/reek/1/polset2.pol"
-POINTSDATA1 = TPATH / "points/reek/1/pointset3.poi"
-POINTSDATA2 = TPATH / "points/reek/1/poi_attr.rmsattr"
+POLYDATA1 = pathlib.Path("polygons/reek/1/polset2.pol")
+POINTSDATA1 = pathlib.Path("points/reek/1/pointset3.poi")
+POINTSDATA2 = pathlib.Path("points/reek/1/poi_attr.rmsattr")
 POINTSCAT1 = "DP_whatever"
 POLYNAME1 = "Polys"
 POINTSNAME1 = "Points"
@@ -73,10 +68,10 @@ WELL_PICK_DATA = [
 ]
 
 
-@pytest.fixture(name="tmpdir", scope="module")
-def fixture_tmpdir(tmpdir_factory):
+@pytest.fixture(scope="module")
+def tmp_data_dir(tmp_path_factory):
     """In order to make tmpdir in a module scope."""
-    return tmpdir_factory.mktemp("data")
+    return tmp_path_factory.mktemp("data")
 
 
 @pytest.fixture(name="roxinstance", scope="module")
@@ -181,13 +176,12 @@ def _add_well_pick_to_project(project: Any, well_pick_data: dict, trajectory: st
 
 @pytest.mark.requires_roxar
 @pytest.fixture(name="roxar_project", scope="module")
-def fixture_create_project(tmpdir, roxinstance) -> str:
+def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
     """Create a tmp RMS project for testing, populate with basic data.
 
     Returns a path (as str) to project for subsequent jobs.
     """
-    print("MANANA2")
-    tmp_project_path = join(tmpdir, PROJNAME)
+    tmp_project_path = str(tmp_data_dir / PROJNAME)
     project = roxinstance.project
 
     logger.info("Roxar version is %s", roxinstance.roxversion)
@@ -195,14 +189,14 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
     assert "1." in roxinstance.roxversion
 
     for wfile in WELLS1:
-        wobj = xtgeo.well_from_file(WELLSFOLDER1 / wfile)
+        wobj = xtgeo.well_from_file(testdata_path / WELLSFOLDER1 / wfile)
         if "XP_with" in wfile:
             wobj.name = "OP2_w_repeat"
 
         wobj.to_roxar(project, wobj.name, logrun="log", trajectory="My trajectory")
 
     # populate with cube data
-    cube = xtgeo.cube_from_file(CUBEDATA1)
+    cube = xtgeo.cube_from_file(testdata_path / CUBEDATA1)
     cube.to_roxar(project, CUBENAME1, domain="depth")
 
     # make a small synthetic cube with jumps in inline/crossline
@@ -223,23 +217,23 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
     # populate with surface data
     roxinstance.create_horizons_category(SURFCAT1)
     for num, name in enumerate(SURFNAMES1):
-        srf = xtgeo.surface_from_file(SURFTOPS1[num])
+        srf = xtgeo.surface_from_file(testdata_path / SURFTOPS1[num])
         project.horizons.create(name, roxar.HorizonType.interpreted)
         srf.to_roxar(project, name, SURFCAT1)
 
     # populate with grid and props
-    grd = xtgeo.grid_from_file(GRIDDATA1)
+    grd = xtgeo.grid_from_file(testdata_path / GRIDDATA1)
     grd.to_roxar(project, GRIDNAME1)
-    por = xtgeo.gridproperty_from_file(PORODATA1, name=PORONAME1)
+    por = xtgeo.gridproperty_from_file(testdata_path / PORODATA1, name=PORONAME1)
     por.to_roxar(project, GRIDNAME1, PORONAME1)
-    zon = xtgeo.gridproperty_from_file(ZONEDATA1, name=ZONENAME1)
+    zon = xtgeo.gridproperty_from_file(testdata_path / ZONEDATA1, name=ZONENAME1)
     zon.to_roxar(project, GRIDNAME1, ZONENAME1)
 
     # populate with points and polygons (XYZ data)
-    poly = xtgeo.polygons_from_file(POLYDATA1)
+    poly = xtgeo.polygons_from_file(testdata_path / POLYDATA1)
     poly.to_roxar(project, POLYNAME1, "", stype="clipboard")
 
-    poi = xtgeo.points_from_file(POINTSDATA1)
+    poi = xtgeo.points_from_file(testdata_path / POINTSDATA1)
     poi.to_roxar(project, POINTSNAME1, "", stype="clipboard")
     logger.info("Initialised RMS project, done!")
     # add some points into the horizon folder as well
@@ -248,7 +242,7 @@ def fixture_create_project(tmpdir, roxinstance) -> str:
     roxinstance.create_horizons_category(POINTSCAT1, htype="points")
     poi.to_roxar(project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
-    poi = xtgeo.points_from_file(POINTSDATA2, fformat="rms_attr")
+    poi = xtgeo.points_from_file(testdata_path / POINTSDATA2, fformat="rms_attr")
     poi.to_roxar(project, POINTSNAME2, "", stype="clipboard", attributes=True)
     logger.info("Initialised RMS project, done!")
 

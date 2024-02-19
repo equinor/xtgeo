@@ -1,21 +1,20 @@
+import pathlib
+
 import pytest
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-
-TPATH = xtg.testpathobj
-
 logger = xtg.basiclogger(__name__)
 
-WFILE = TPATH / "wells/etc/otest.rmswell"
+WFILE = pathlib.Path("wells/etc/otest.rmswell")
 
 
-def test_wellzone_to_points():
+def test_wellzone_to_points(testdata_path):
     """Import well from file and put zone boundaries to a Pandas object."""
 
     mywell = xtgeo.well_from_file(
-        WFILE, zonelogname="Zone_model2", mdlogname="M_MDEPTH"
+        testdata_path / WFILE, zonelogname="Zone_model2", mdlogname="M_MDEPTH"
     )
 
     # get the zpoints which is a Pandas
@@ -36,11 +35,11 @@ def test_wellzone_to_points():
     assert zpoints.iat[6, 6] == 4
 
 
-def test_wellzone_to_isopoints():
+def test_wellzone_to_isopoints(testdata_path):
     """Import well from file and find thicknesses"""
 
     mywell = xtgeo.well_from_file(
-        WFILE, zonelogname="Zone_model2", mdlogname="M_MDEPTH"
+        testdata_path / WFILE, zonelogname="Zone_model2", mdlogname="M_MDEPTH"
     )
     # get the zpoints which is a Pandas
     zpoints = mywell.get_zonation_points(use_undef=False, tops=True)

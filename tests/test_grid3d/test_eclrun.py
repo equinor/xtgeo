@@ -1,5 +1,5 @@
 import itertools
-from os.path import basename, join
+from os.path import basename
 
 import numpy as np
 import pytest
@@ -85,14 +85,14 @@ def test_first_and_last_dates(ecl_runs):
     assert int(px.date) == max(ecl_runs.expected_dates)
 
 
-def test_dual_runs_general_grid(tmpdir, dual_runs):
+def test_dual_runs_general_grid(tmp_path, dual_runs):
     assert dual_runs.grid.dimensions == dual_runs.expected_dimensions
     assert dual_runs.grid.dualporo is True
     assert dual_runs.grid.dualperm is dual_runs.expected_perm
 
-    dual_runs.grid.to_file(join(tmpdir, basename(dual_runs.path)) + ".roff")
+    dual_runs.grid.to_file(tmp_path / f"{basename(dual_runs.path)}.roff")
     dual_runs.grid._dualactnum.to_file(
-        join(tmpdir, basename(dual_runs.path) + "dualact.roff")
+        tmp_path / f"{basename(dual_runs.path)}dualact.roff"
     )
 
 

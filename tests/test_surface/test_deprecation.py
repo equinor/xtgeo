@@ -49,8 +49,8 @@ def test_default_values_deprecation():
 
 
 @deprecation.fail_if_not_removed
-@pytest.mark.usefixtures("setup_tmpdir")
-def test_from_file_deprecation(default_surface):
+def test_from_file_deprecation(tmp_path, monkeypatch, default_surface):
+    monkeypatch.chdir(tmp_path)
     surface = xtgeo.RegularSurface(**default_surface)
     surface.to_file("my_file")
     surface.from_file("my_file")
@@ -67,8 +67,8 @@ def test_from_grid3d_deprecation(default_surface):
     version_limit="4",
     msg="Creating directly from file has passed deprecation period and must be removed",
 )
-@pytest.mark.usefixtures("setup_tmpdir")
-def test_init_from_file_deprecation(default_surface):
+def test_init_from_file_deprecation(tmp_path, monkeypatch, default_surface):
+    monkeypatch.chdir(tmp_path)
     surface = xtgeo.RegularSurface(**default_surface)
     surface.to_file("my_file")
     with pytest.warns(

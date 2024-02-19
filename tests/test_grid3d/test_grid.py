@@ -1,7 +1,8 @@
 """Tests for 3D grid."""
+
 import math
+import pathlib
 import warnings
-from os.path import join
 
 import numpy as np
 import pytest
@@ -15,38 +16,29 @@ from .grid_generator import dimensions, increments, xtgeo_grids
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__, info=True)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-REEKFILE = TPATH / "3dgrids/reek/REEK.EGRID"
-REEKFIL2 = TPATH / "3dgrids/reek3/reek_sim.grdecl"  # ASCII GRDECL
-REEKFIL3 = TPATH / "3dgrids/reek3/reek_sim.bgrdecl"  # binary GRDECL
-REEKFIL4 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
-REEKFIL5 = TPATH / "3dgrids/reek/reek_geo2_grid_3props.roff"
+REEKFILE = pathlib.Path("3dgrids/reek/REEK.EGRID")
+REEKFIL2 = pathlib.Path("3dgrids/reek3/reek_sim.grdecl")  # ASCII GRDECL
+REEKFIL3 = pathlib.Path("3dgrids/reek3/reek_sim.bgrdecl")  # binary GRDECL
+REEKFIL4 = pathlib.Path("3dgrids/reek/reek_geo_grid.roff")
+REEKFIL5 = pathlib.Path("3dgrids/reek/reek_geo2_grid_3props.roff")
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
-BRILGRDECL = TPATH / "3dgrids/bri/b.grdecl"
-BANAL6 = TPATH / "3dgrids/etc/banal6.roff"
-GRIDQC1 = TPATH / "3dgrids/etc/gridqc1.roff"
-GRIDQC1_CELLVOL = TPATH / "3dgrids/etc/gridqc1_totbulk.roff"
-GRIDQC2 = TPATH / "3dgrids/etc/gridqc_negthick_twisted.roff"
+BRILGRDECL = pathlib.Path("3dgrids/bri/b.grdecl")
+BANAL6 = pathlib.Path("3dgrids/etc/banal6.roff")
+GRIDQC1 = pathlib.Path("3dgrids/etc/gridqc1.roff")
+GRIDQC1_CELLVOL = pathlib.Path("3dgrids/etc/gridqc1_totbulk.roff")
+GRIDQC2 = pathlib.Path("3dgrids/etc/gridqc_negthick_twisted.roff")
 
-DUALFIL1 = TPATH / "3dgrids/etc/dual_grid.roff"
-DUALFIL3 = TPATH / "3dgrids/etc/TEST_DPDK.EGRID"
+DUALFIL1 = pathlib.Path("3dgrids/etc/dual_grid.roff")
+DUALFIL3 = pathlib.Path("3dgrids/etc/TEST_DPDK.EGRID")
 
-EME1 = TPATH / "3dgrids/eme/2/eme_small_w_hole_grid_params.roff"
-EME1PROP = TPATH / "3dgrids/eme/2/eme_small_w_hole_grid_params.roff"
-
-# =============================================================================
-# Do tests
-# =============================================================================
+EME1 = pathlib.Path("3dgrids/eme/2/eme_small_w_hole_grid_params.roff")
+EME1PROP = pathlib.Path("3dgrids/eme/2/eme_small_w_hole_grid_params.roff")
 
 
 @pytest.fixture()
-def emerald_grid(testpath):
+def emerald_grid(testdata_path):
     return xtgeo.grid_from_file(
-        join(testpath, "3dgrids/eme/1/emerald_hetero_grid.roff")
+        testdata_path / pathlib.Path("3dgrids/eme/1/emerald_hetero_grid.roff")
     )
 
 
@@ -198,17 +190,17 @@ def test_subgrids():
     assert grd._subgrids is None
 
 
-def test_roffbin_import_v2stress():
+def test_roffbin_import_v2stress(testdata_path):
     """Test roff binary import ROFF using new API, comapre timing etc."""
     t0 = xtg.timer()
     for _ino in range(100):
-        xtgeo.grid_from_file(REEKFIL4)
+        xtgeo.grid_from_file(testdata_path / REEKFIL4)
     t1 = xtg.timer(t0)
     print("100 loops with ROXAPIV 2 took: ", t1)
 
 
-def test_convert_vs_xyz_cell_corners():
-    grd1 = xtgeo.grid_from_file(BANAL6)
+def test_convert_vs_xyz_cell_corners(testdata_path):
+    grd1 = xtgeo.grid_from_file(testdata_path / BANAL6)
     grd2 = grd1.copy()
 
     assert grd1.get_xyz_cell_corners() == grd2.get_xyz_cell_corners()
@@ -256,18 +248,18 @@ def test_benchmark_get_xyz_cell_cornerns(benchmark, xtgformat):
     )
 
 
-def test_roffbin_import_wsubgrids():
-    assert xtgeo.grid_from_file(REEKFIL5).subgrids == {
+def test_roffbin_import_wsubgrids(testdata_path):
+    assert xtgeo.grid_from_file(testdata_path / REEKFIL5).subgrids == {
         "subgrid_0": range(1, 21),
         "subgrid_1": range(21, 41),
         "subgrid_2": range(41, 57),
     }
 
 
-def test_import_grdecl_and_bgrdecl():
+def test_import_grdecl_and_bgrdecl(testdata_path):
     """Eclipse import of GRDECL and binary GRDECL."""
-    grd1 = xtgeo.grid_from_file(REEKFIL2, fformat="grdecl")
-    grd2 = xtgeo.grid_from_file(REEKFIL3, fformat="bgrdecl")
+    grd1 = xtgeo.grid_from_file(testdata_path / REEKFIL2, fformat="grdecl")
+    grd2 = xtgeo.grid_from_file(testdata_path / REEKFIL3, fformat="bgrdecl")
 
     assert grd1.dimensions == (40, 64, 14)
     assert grd1.nactive == 35812
@@ -278,9 +270,9 @@ def test_import_grdecl_and_bgrdecl():
     np.testing.assert_allclose(grd1.get_dz().values, grd2.get_dz().values, atol=0.001)
 
 
-def test_eclgrid_import2(tmp_path):
+def test_eclgrid_import2(tmp_path, testdata_path):
     """Eclipse EGRID import, also change ACTNUM."""
-    grd = xtgeo.grid_from_file(REEKFILE, fformat="egrid")
+    grd = xtgeo.grid_from_file(testdata_path / REEKFILE, fformat="egrid")
 
     assert grd.ncol == 40, "EGrid NX from Eclipse"
     assert grd.nrow == 64, "EGrid NY from Eclipse"
@@ -299,9 +291,9 @@ def test_eclgrid_import2(tmp_path):
     grd.to_file(tmp_path / "reek_new_actnum.roff")
 
 
-def test_eclgrid_import3(tmp_path):
+def test_eclgrid_import3(tmp_path, testdata_path):
     """Eclipse GRDECL import and translate."""
-    grd = xtgeo.grid_from_file(BRILGRDECL, fformat="grdecl")
+    grd = xtgeo.grid_from_file(testdata_path / BRILGRDECL, fformat="grdecl")
 
     mylist = grd.get_geometrics()
 
@@ -322,9 +314,9 @@ def test_eclgrid_import3(tmp_path):
     grd.to_file(tmp_path / "g1_translate.bgrdecl", fformat="bgrdecl")
 
 
-def test_geometrics_reek():
+def test_geometrics_reek(testdata_path):
     """Import Reek and test geometrics."""
-    grd = xtgeo.grid_from_file(REEKFILE, fformat="egrid")
+    grd = xtgeo.grid_from_file(testdata_path / REEKFILE, fformat="egrid")
 
     geom = grd.get_geometrics(return_dict=True, cellcenter=False)
 
@@ -355,9 +347,9 @@ def test_get_adjacent_cells(tmp_path, emerald_grid):
     result.to_file(tmp_path / "emerald_adj_cells.roff")
 
 
-def test_npvalues1d():
+def test_npvalues1d(testdata_path):
     """Different ways of getting np arrays."""
-    grd = xtgeo.grid_from_file(DUALFIL3)
+    grd = xtgeo.grid_from_file(testdata_path / DUALFIL3)
     dz = grd.get_dz()
 
     dz1 = dz.get_npvalues1d(activeonly=False)  # [  1.   1.   1.   1.   1.  nan  ...]
@@ -368,7 +360,7 @@ def test_npvalues1d():
     assert dz1[0] == 1.0
     assert not np.isnan(dz2[5])
 
-    grd = xtgeo.grid_from_file(DUALFIL1)  # all cells active
+    grd = xtgeo.grid_from_file(testdata_path / DUALFIL1)  # all cells active
     dz = grd.get_dz()
 
     dz1 = dz.get_npvalues1d(activeonly=False)
@@ -421,9 +413,9 @@ def test_flip(grid, flip):
     assert grid.estimate_flip() == flip
 
 
-def test_xyz_cell_corners():
+def test_xyz_cell_corners(testdata_path):
     """Test xyz variations."""
-    grd = xtgeo.grid_from_file(DUALFIL1)
+    grd = xtgeo.grid_from_file(testdata_path / DUALFIL1)
 
     allcorners = grd.get_xyz_corners()
     assert len(allcorners) == 24
@@ -431,9 +423,9 @@ def test_xyz_cell_corners():
     assert allcorners[23].get_npvalues1d()[-1] == 1001.0
 
 
-def test_grid_layer_slice():
+def test_grid_layer_slice(testdata_path):
     """Test grid slice coordinates."""
-    grd = xtgeo.grid_from_file(REEKFILE)
+    grd = xtgeo.grid_from_file(testdata_path / REEKFILE)
 
     sarr1, _ibarr = grd.get_layer_slice(1)
     sarrn, _ibarr = grd.get_layer_slice(grd.nlay, top=False)
@@ -459,9 +451,9 @@ def test_generate_hash(grd1):
     assert grd1.generate_hash() == grd2.generate_hash()
 
 
-def test_gridquality_properties(show_plot):
+def test_gridquality_properties(show_plot, testdata_path):
     """Get grid quality props."""
-    grd1 = xtgeo.grid_from_file(GRIDQC1)
+    grd1 = xtgeo.grid_from_file(testdata_path / GRIDQC1)
 
     props1 = grd1.get_gridquality_properties()
     minang = props1.get_prop_by_name("minangle_topbase")
@@ -481,7 +473,7 @@ def test_gridquality_properties(show_plot):
 
         layslice.show()
 
-    grd2 = xtgeo.grid_from_file(GRIDQC2)
+    grd2 = xtgeo.grid_from_file(testdata_path / GRIDQC2)
     props2 = grd2.get_gridquality_properties()
 
     neg = props2.get_prop_by_name("negative_thickness")
@@ -509,10 +501,10 @@ def test_gridquality_properties_emerald(show_plot, emerald_grid):
         layslice.show()
 
 
-def test_bulkvol():
+def test_bulkvol(testdata_path):
     """Test cell bulk volume calculation."""
-    grd = xtgeo.grid_from_file(GRIDQC1)
-    cellvol_rms = xtgeo.gridproperty_from_file(GRIDQC1_CELLVOL)
+    grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
+    cellvol_rms = xtgeo.gridproperty_from_file(testdata_path / GRIDQC1_CELLVOL)
     bulkvol = grd.get_bulk_volume()
 
     rms_sum = np.sum(cellvol_rms.values)
@@ -777,13 +769,13 @@ def test_get_vtk_geometries_box(show_plot):
         grid.plot(show_edges=True)
 
 
-def test_get_vtk_geometries_emerald(show_plot):
-    grd = xtgeo.grid_from_file(EME1)
+def test_get_vtk_geometries_emerald(show_plot, testdata_path):
+    grd = xtgeo.grid_from_file(testdata_path / EME1)
 
     dims, corners, indi = grd.get_vtk_geometries()
     assert corners.mean() == pytest.approx(2132426.94, abs=0.01)
 
-    poro = xtgeo.gridproperty_from_file(EME1PROP, name="PORO")
+    poro = xtgeo.gridproperty_from_file(testdata_path / EME1PROP, name="PORO")
     porov = poro.get_npvalues1d(order="F")
 
     if show_plot:

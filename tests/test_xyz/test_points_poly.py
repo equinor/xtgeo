@@ -50,10 +50,10 @@ LARGE_POLY_SHIFTED = [
 
 
 @pytest.fixture(name="reekset")
-def fixture_reekset(testpath):
+def fixture_reekset(testdata_path):
     """Read a test set from disk."""
-    poi = xtgeo.points_from_file(testpath / POINTSET2)
-    pol = xtgeo.polygons_from_file(testpath / POLSET2)
+    poi = xtgeo.points_from_file(testdata_path / POINTSET2)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET2)
     return poi, pol
 
 
@@ -493,10 +493,10 @@ def test_boundary_from_points_too_few():
         xtgeo.Polygons.boundary_from_points(points, alpha_factor=1, alpha=None)
 
 
-def test_boundary_from_points_more_data(testpath):
+def test_boundary_from_points_more_data(testdata_path):
     """Test deriving a boundary around points (classmethod)."""
 
-    points = xtgeo.points_from_file(testpath / POINTSET2)
+    points = xtgeo.points_from_file(testdata_path / POINTSET2)
     boundary = xtgeo.Polygons.boundary_from_points(points, alpha=2000)
     assert boundary.get_dataframe()[boundary.xname].values[
         0:5
@@ -507,18 +507,18 @@ def test_boundary_from_points_more_data(testpath):
     assert len(boundary.get_dataframe()) == 15
 
 
-def test_boundary_from_points_more_data_guess_alpha(testpath):
+def test_boundary_from_points_more_data_guess_alpha(testdata_path):
     """Test deriving a boundary around points (classmethod)."""
 
-    points = xtgeo.points_from_file(testpath / POINTSET2)
+    points = xtgeo.points_from_file(testdata_path / POINTSET2)
     boundary = xtgeo.Polygons.boundary_from_points(points, alpha=None)
 
     assert len(boundary.get_dataframe()) == 15
 
 
-def test_boundary_from_points_more_data_convex_alpha0(testpath):
+def test_boundary_from_points_more_data_convex_alpha0(testdata_path):
     """Test deriving a boundary around points, convex."""
 
-    points = xtgeo.points_from_file(testpath / POINTSET2)
+    points = xtgeo.points_from_file(testdata_path / POINTSET2)
     with pytest.raises(ValueError, match="The alpha value must be greater than 0.0"):
         xtgeo.Polygons.boundary_from_points(points, alpha=0)

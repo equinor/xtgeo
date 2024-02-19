@@ -76,7 +76,7 @@ def read_write_egrid(dimensions, egrid):
 
 
 @pytest.mark.requires_opm
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("tmp_path_cwd")
 @settings(max_examples=5)
 @given(xtgeo_grids)
 def test_grdecl_roundtrip(xtgeo_grid):
@@ -93,8 +93,8 @@ def test_grdecl_roundtrip(xtgeo_grid):
     assert_allclose(opm_grid._zcornsv, xtgeo_grid._zcornsv, atol=0.02)
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.requires_opm
+@pytest.mark.usefixtures("tmp_path_cwd")
 @settings(max_examples=5)
 @given(xtgeo_grids)
 def test_egrid_roundtrip(xtgeo_grid):

@@ -1,6 +1,7 @@
 """Test surfaces."""
+
 import math
-from os.path import join
+import pathlib
 
 import numpy as np
 import pytest
@@ -9,27 +10,17 @@ import xtgeo
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-
-# =============================================================================
-# Do tests
-# =============================================================================
-
-TESTSET1A = TPATH / "surfaces/reek/1/topreek_rota.gri"
-TESTSET1B = TPATH / "surfaces/reek/1/basereek_rota.gri"
-TESTSETG1 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
+TESTSET1A = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
+TESTSET1B = pathlib.Path("surfaces/reek/1/basereek_rota.gri")
+TESTSETG1 = pathlib.Path("3dgrids/reek/reek_geo_grid.roff")
 
 
-def test_create():
+def test_create(testdata_path):
     """Create simple Surfaces instance."""
     logger.info("Simple case...")
 
-    top = xtgeo.surface_from_file(TESTSET1A)
-    base = xtgeo.surface_from_file(TESTSET1B)
+    top = xtgeo.surface_from_file(testdata_path / TESTSET1A)
+    base = xtgeo.surface_from_file(testdata_path / TESTSET1B)
     surfs = xtgeo.Surfaces()
     surfs.surfaces = [top, base]
     surfs.describe()
@@ -38,42 +29,42 @@ def test_create():
     assert isinstance(surfs, xtgeo.Surfaces)
 
 
-def test_create_init_objectlist():
+def test_create_init_objectlist(testdata_path):
     """Create simple Surfaces instance, initiate with a list of objects."""
-    top = xtgeo.surface_from_file(TESTSET1A)
-    base = xtgeo.surface_from_file(TESTSET1B)
+    top = xtgeo.surface_from_file(testdata_path / TESTSET1A)
+    base = xtgeo.surface_from_file(testdata_path / TESTSET1B)
     surfs = xtgeo.Surfaces([top, base])
 
     assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
     assert isinstance(surfs, xtgeo.Surfaces)
 
 
-def test_create_init_filelist():
+def test_create_init_filelist(testdata_path):
     """Create simple Surfaces instance, initiate with a list of files."""
-    flist = [TESTSET1A, TESTSET1B]
+    flist = [testdata_path / TESTSET1A, testdata_path / TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
 
     assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
     assert isinstance(surfs, xtgeo.Surfaces)
 
 
-def test_create_init_mixlist():
+def test_create_init_mixlist(testdata_path):
     """Create simple Surfaces instance, initiate with a list of files."""
-    top = xtgeo.surface_from_file(TESTSET1A)
-    flist = [top, TESTSET1B]
+    top = xtgeo.surface_from_file(testdata_path / TESTSET1A)
+    flist = [top, testdata_path / TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
 
     assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
     assert isinstance(surfs, xtgeo.Surfaces)
 
 
-def test_statistics(tmpdir):
+def test_statistics(tmp_path, testdata_path):
     """Find the mean etc measures of the surfaces."""
-    flist = [TESTSET1A, TESTSET1B]
+    flist = [testdata_path / TESTSET1A, testdata_path / TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
     res = surfs.statistics()
-    res["mean"].to_file(join(tmpdir, "surf_mean.gri"))
-    res["std"].to_file(join(tmpdir, "surf_std.gri"))
+    res["mean"].to_file(tmp_path / "surf_mean.gri")
+    res["std"].to_file(tmp_path / "surf_std.gri")
 
     assert res["mean"].values.mean() == pytest.approx(1720.5029, abs=0.0001)
     assert res["std"].values.min() == pytest.approx(3.7039, abs=0.0001)
@@ -124,9 +115,9 @@ def test_surfaces_apply(constant_map_surfaces):
     )
 
 
-def test_get_surfaces_from_3dgrid(tmpdir):
+def test_get_surfaces_from_3dgrid(tmp_path, testdata_path):
     """Create surfaces from a 3D grid."""
-    mygrid = xtgeo.grid_from_file(TESTSETG1)
+    mygrid = xtgeo.grid_from_file(testdata_path / TESTSETG1)
     surfs = xtgeo.surface.surfaces.surfaces_from_grid(mygrid, rfactor=2)
     surfs.describe()
 
@@ -136,4 +127,4 @@ def test_get_surfaces_from_3dgrid(tmpdir):
     assert surfs.surfaces[0].values.mean() == pytest.approx(1697.02, abs=0.04)
 
     for srf in surfs.surfaces:
-        srf.to_file(join(tmpdir, srf.name + ".gri"))
+        srf.to_file(testdata_path / pathlib.Path("{srf.name}.gri"))

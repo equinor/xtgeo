@@ -12,10 +12,10 @@ WFILES1 = pathlib.Path("wells/reek/1/OP_1.w")
 WFILES2 = pathlib.Path("wells/reek/1/OP_[1-5]*.w")
 
 
-def test_get_zone_tops_one_well_classmethod(testpath, tmp_path):
+def test_get_zone_tops_one_well_classmethod(testdata_path, tmp_path):
     """Import a well and get the zone tops"""
 
-    wlist = [xtgeo.well_from_file(testpath / WFILES1, zonelogname="Zonelog")]
+    wlist = [xtgeo.well_from_file(testdata_path / WFILES1, zonelogname="Zonelog")]
 
     mypoints = xtgeo.points_from_wells(wlist)
 
@@ -36,10 +36,10 @@ def test_get_zone_tops_one_well_classmethod(testpath, tmp_path):
     )
 
 
-def test_get_zone_tops_one_well_w_undef(testpath):
+def test_get_zone_tops_one_well_w_undef(testdata_path):
     """Import a well and get the zone tops, include undef transition"""
 
-    single = xtgeo.well_from_file((testpath / WFILES1), zonelogname="Zonelog")
+    single = xtgeo.well_from_file((testdata_path / WFILES1), zonelogname="Zonelog")
     wlist = [single]
 
     p1 = xtgeo.points_from_wells(wlist, use_undef=True)
@@ -52,10 +52,10 @@ def test_get_zone_tops_one_well_w_undef(testpath):
     assert p3.get_dataframe()["Zone"][0] == 1
 
 
-def test_get_zone_thickness_one_well(testpath):
+def test_get_zone_thickness_one_well(testdata_path):
     """Import a well and get the zone thicknesses"""
 
-    wlist = [xtgeo.well_from_file(testpath / WFILES1, zonelogname="Zonelog")]
+    wlist = [xtgeo.well_from_file(testdata_path / WFILES1, zonelogname="Zonelog")]
 
     mypoints = Points()
     mypoints = xtgeo.points_from_wells(wlist, tops=False, zonelist=[1, 2, 3])
@@ -63,12 +63,12 @@ def test_get_zone_thickness_one_well(testpath):
     assert mypoints.get_dataframe()["THICKNESS"][0] == pytest.approx(16.8397)
 
 
-def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot, helpers):
+def test_get_zone_thickness_some_wells(testdata_path, tmp_path, snapshot, helpers):
     """Import some wells and get the zone thicknesses"""
 
     wlist = [
         xtgeo.well_from_file(wpath, zonelogname="Zonelog")
-        for wpath in glob.glob(str(testpath / WFILES2))
+        for wpath in glob.glob(str(testdata_path / WFILES2))
     ]
     mypoints = xtgeo.points_from_wells(wlist, tops=False, zonelist=(1, 22))
 
@@ -95,11 +95,11 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path, snapshot, helpers):
     )
 
 
-def test_get_faciesfraction_some_wells_classmethod(testpath, tmp_path):
+def test_get_faciesfraction_some_wells_classmethod(testdata_path, tmp_path):
     """Import some wells and get the facies fractions per zone."""
     wlist = [
         xtgeo.well_from_file(wpath, zonelogname="Zonelog")
-        for wpath in glob.glob(str(testpath / WFILES2))
+        for wpath in glob.glob(str(testdata_path / WFILES2))
     ]
 
     facname = "Facies"

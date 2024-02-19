@@ -1,4 +1,4 @@
-from os.path import join
+import pathlib
 
 import pytest
 import xtgeo
@@ -6,16 +6,11 @@ import xtgeo
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit("Cannot find test setup")
+SFILE1 = pathlib.Path("cubes/etc/ib_synth_iainb.segy")
+SFILE2 = pathlib.Path("cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
 
-TPATH = xtg.testpathobj
-
-SFILE1 = join(TPATH, "cubes/etc/ib_synth_iainb.segy")
-SFILE2 = join(TPATH, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
-
-TOP2A = join(TPATH, "surfaces/reek/2/01_topreek_rota.gri")
-TOP2B = join(TPATH, "surfaces/reek/2/04_basereek_rota.gri")
+TOP2A = pathlib.Path("surfaces/reek/2/01_topreek_rota.gri")
+TOP2B = pathlib.Path("surfaces/reek/2/04_basereek_rota.gri")
 
 # ======================================================================================
 # This is a a set of tests towards a synthetic small cube made by I Bush in order to
@@ -24,17 +19,17 @@ TOP2B = join(TPATH, "surfaces/reek/2/04_basereek_rota.gri")
 
 
 @pytest.fixture(name="loadsfile1")
-def fixture_loadsfile1():
+def fixture_loadsfile1(testdata_path):
     """Fixture for loading a SFILE1"""
     logger.info("Load seismic file 1")
-    return xtgeo.cube_from_file(SFILE1)
+    return xtgeo.cube_from_file(testdata_path / SFILE1)
 
 
 @pytest.fixture(name="loadsfile2")
-def fixture_loadsfile2():
+def fixture_loadsfile2(testdata_path):
     """Fixture for loading a SFILE2"""
     logger.info("Load seismic file 2")
-    return xtgeo.cube_from_file(SFILE2)
+    return xtgeo.cube_from_file(testdata_path / SFILE2)
 
 
 def test_single_slice_yflip_snapxy_both(loadsfile1):
@@ -312,12 +307,12 @@ def test_avg_surface_large_cube_algorithmx(benchmark, algorithm):
 
 
 @pytest.mark.bigtest
-def test_attrs_reek(tmpdir, loadsfile2):
+def test_attrs_reek(tmp_path, loadsfile2, testdata_path):
     logger.info("Make cube...")
     cube2 = loadsfile2
 
-    t2a = xtgeo.surface_from_file(TOP2A)
-    t2b = xtgeo.surface_from_file(TOP2B)
+    t2a = xtgeo.surface_from_file(testdata_path / TOP2A)
+    t2b = xtgeo.surface_from_file(testdata_path / TOP2B)
 
     attlist = ["maxpos", "maxneg", "mean", "rms"]
 
@@ -336,9 +331,9 @@ def test_attrs_reek(tmpdir, loadsfile2):
         srf2 = attrs2[att]
         srf3 = attrs3[att]
 
-        srf1.to_file(join(tmpdir, "attr1_" + att + ".gri"))
-        srf2.to_file(join(tmpdir, "attr2_" + att + ".gri"))
-        srf3.to_file(join(tmpdir, "attr3_" + att + ".gri"))
+        srf1.to_file(tmp_path / f"attr1_{att}.gri")
+        srf1.to_file(tmp_path / f"attr2_{att}.gri")
+        srf1.to_file(tmp_path / f"attr3_{att}.gri")
 
         assert srf1.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)
         assert srf3.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)

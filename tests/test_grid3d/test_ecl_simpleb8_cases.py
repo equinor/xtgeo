@@ -16,6 +16,9 @@ Based on 'simpleb8' and ran through various simulators in 2022 by V. Kippe (Equi
 
     IX_COMP_GRIDREPORT: IX compositional, with EGRID from IX
 """
+
+import pathlib
+
 import numpy as np
 import pytest
 import resfo
@@ -25,12 +28,7 @@ xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-SIMPLEB8_PATH = TPATH / "3dgrids/simpleb8"
+SIMPLEB8_PATH = pathlib.Path("3dgrids/simpleb8")
 
 
 @pytest.mark.parametrize(
@@ -83,11 +81,13 @@ SIMPLEB8_PATH = TPATH / "3dgrids/simpleb8"
         ),
     ],
 )
-def test_refo_read_grids(ecl_like_file, some_valid_kwords, some_notpresent_kwords):
+def test_refo_read_grids(
+    ecl_like_file, some_valid_kwords, some_notpresent_kwords, testdata_path
+):
     """Read grid data, different simulators."""
     kwords = []
     ktypes = []
-    for item in resfo.lazy_read(SIMPLEB8_PATH / ecl_like_file):
+    for item in resfo.lazy_read(testdata_path / SIMPLEB8_PATH / ecl_like_file):
         kwords.append(item.read_keyword().strip())
         ktypes.append(item.read_type().strip())
 
@@ -118,11 +118,13 @@ def test_refo_read_grids(ecl_like_file, some_valid_kwords, some_notpresent_kword
         ),
     ],
 )
-def test_refo_read_init(ecl_like_file, some_valid_kwords, some_notpresent_kwords):
+def test_refo_read_init(
+    ecl_like_file, some_valid_kwords, some_notpresent_kwords, testdata_path
+):
     """Read INIT data, different simulators."""
     kwords = []
     ktypes = []
-    for item in resfo.lazy_read(SIMPLEB8_PATH / ecl_like_file):
+    for item in resfo.lazy_read(testdata_path / SIMPLEB8_PATH / ecl_like_file):
         kwords.append(item.read_keyword().strip())
         ktypes.append(item.read_type().strip())
 
@@ -158,11 +160,13 @@ def test_refo_read_init(ecl_like_file, some_valid_kwords, some_notpresent_kwords
         ),
     ],
 )
-def test_refo_read_restart(ecl_like_file, some_valid_kwords, some_notpresent_kwords):
+def test_refo_read_restart(
+    ecl_like_file, some_valid_kwords, some_notpresent_kwords, testdata_path
+):
     """Read UNRST data, different simulators."""
     kwords = []
     ktypes = []
-    for item in resfo.lazy_read(SIMPLEB8_PATH / ecl_like_file):
+    for item in resfo.lazy_read(testdata_path / SIMPLEB8_PATH / ecl_like_file):
         kwords.append(item.read_keyword().strip())
         ktypes.append(item.read_type().strip())
 
@@ -228,18 +232,19 @@ def test_egrid_init_read_xtgeo(
     ecl_like_init,
     keywords,
     expected_averages,
+    testdata_path,
 ):
     """Test reading properties from various simulators, egrid and init.
 
     Internally, xtgeo uses refo for Eclipse like data
     """
-    grid = xtgeo.grid_from_file(SIMPLEB8_PATH / ecl_like_grid)
+    grid = xtgeo.grid_from_file(testdata_path / SIMPLEB8_PATH / ecl_like_grid)
     actnum = grid.get_actnum_indices()
     new_actnum = grid.get_actnum_indices()
     assert np.array_equal(actnum, new_actnum)
     for num, keyw in enumerate(keywords):
         prop = xtgeo.gridproperty_from_file(
-            SIMPLEB8_PATH / ecl_like_init, name=keyw, grid=grid
+            testdata_path / SIMPLEB8_PATH / ecl_like_init, name=keyw, grid=grid
         )
         assert prop.values.mean() == pytest.approx(expected_averages[num], rel=0.001)
 
@@ -305,16 +310,20 @@ def test_egrid_unrst_read_xtgeo(
     keywords,
     date,
     expected_averages,
+    testdata_path,
 ):
     """Test reading properties from various simulators, egrid and unrst
 
     Internally, xtgeo uses refo for Eclipse like data
     """
-    grid = xtgeo.grid_from_file(SIMPLEB8_PATH / ecl_like_grid)
+    grid = xtgeo.grid_from_file(testdata_path / SIMPLEB8_PATH / ecl_like_grid)
 
     for num, keyw in enumerate(keywords):
         prop = xtgeo.gridproperty_from_file(
-            SIMPLEB8_PATH / ecl_like_unrst, name=keyw, date=date, grid=grid
+            testdata_path / SIMPLEB8_PATH / ecl_like_unrst,
+            name=keyw,
+            date=date,
+            grid=grid,
         )
 
         assert prop.values.mean() == pytest.approx(expected_averages[num], rel=0.001)

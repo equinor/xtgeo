@@ -26,13 +26,13 @@ CSV1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
         (POINTSET4, "rmsattr"),
     ],
 )
-def test_points_from_file_alternatives(testpath, filename, fformat):
+def test_points_from_file_alternatives(testdata_path, filename, fformat):
     # deprecated
-    points1 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
-    points2 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
+    points1 = xtgeo.points_from_file(testdata_path / filename, fformat=fformat)
+    points2 = xtgeo.points_from_file(testdata_path / filename, fformat=fformat)
 
-    points3 = xtgeo.points_from_file(testpath / filename, fformat=fformat)
-    points4 = xtgeo.points_from_file(testpath / filename)
+    points3 = xtgeo.points_from_file(testdata_path / filename, fformat=fformat)
+    points4 = xtgeo.points_from_file(testdata_path / filename)
 
     pd.testing.assert_frame_equal(points1.get_dataframe(), points2.get_dataframe())
     pd.testing.assert_frame_equal(points2.get_dataframe(), points3.get_dataframe())
@@ -80,21 +80,21 @@ def test_create_pointset(points):
     )
 
 
-def test_import(testpath):
+def test_import(testdata_path):
     """Import XYZ points from file."""
 
     mypoints = xtgeo.points_from_file(
-        testpath / PFILE
+        testdata_path / PFILE
     )  # should guess based on extesion
 
     x0 = mypoints.get_dataframe()["X_UTME"].values[0]
     assert x0 == pytest.approx(460842.434326, 0.001)
 
 
-def test_import_from_dataframe(testpath):
+def test_import_from_dataframe(testdata_path):
     """Import Points via Pandas dataframe."""
 
-    dfr = pd.read_csv(testpath / CSV1, skiprows=3)
+    dfr = pd.read_csv(testdata_path / CSV1, skiprows=3)
 
     attr = {"I": "int", "J": "int", "K": "int"}
     mypoints = xtgeo.Points(
@@ -125,10 +125,10 @@ def test_export_and_load_points(tmp_path):
     )
 
 
-def test_export_load_rmsformatted_points(testpath, tmp_path):
+def test_export_load_rmsformatted_points(testdata_path, tmp_path):
     """Export XYZ points to file, various formats."""
 
-    test_points_path = testpath / POINTSET4
+    test_points_path = testdata_path / POINTSET4
     orig_points = xtgeo.points_from_file(
         test_points_path
     )  # should guess based on extesion
@@ -144,12 +144,12 @@ def test_export_load_rmsformatted_points(testpath, tmp_path):
 
 
 @pytest.mark.bigtest
-def test_import_rmsattr_format(testpath, tmp_path):
+def test_import_rmsattr_format(testdata_path, tmp_path):
     """Import points with attributes from RMS attr format."""
 
     orig_points = Points()
 
-    test_points_path = testpath / POINTSET3
+    test_points_path = testdata_path / POINTSET3
     orig_points.from_file(test_points_path, fformat="rms_attr")
 
     export_path = tmp_path / "attrs.rmsattr"
@@ -162,11 +162,11 @@ def test_import_rmsattr_format(testpath, tmp_path):
     )
 
 
-def test_export_points_rmsattr(testpath, tmp_path):
+def test_export_points_rmsattr(testdata_path, tmp_path):
     """Export XYZ points to file, as rmsattr."""
 
     mypoints = xtgeo.points_from_file(
-        testpath / POINTSET4
+        testdata_path / POINTSET4
     )  # should guess based on extesion
     output_path = tmp_path / "poi_export.rmsattr"
 

@@ -1,5 +1,6 @@
 """Testing regular surface vs resampling."""
-from os.path import join
+
+import pathlib
 
 import numpy as np
 import pytest
@@ -11,22 +12,14 @@ from xtgeo.xyz import Points
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-# =============================================================================
-# Do tests
-# =============================================================================
-FTOP1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+FTOP1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
 
 
 @pytest.fixture(name="reek_map")
-def fixture_reek_map():
+def fixture_reek_map(testdata_path):
     """Fixture for map input."""
     logger.info("Loading surface")
-    return xtgeo.surface_from_file(FTOP1)
+    return xtgeo.surface_from_file(testdata_path / FTOP1)
 
 
 def test_resample_small():
@@ -165,7 +158,7 @@ def test_resample_small_nearest_sampling():
     ]
 
 
-def test_resample(tmpdir, reek_map):
+def test_resample(tmp_path, reek_map):
     """Do resampling from one surface to another."""
     xs = reek_map
     assert xs.ncol == 554
@@ -188,7 +181,7 @@ def test_resample(tmpdir, reek_map):
 
     snew.resample(xs)
 
-    fout = join(tmpdir, "reek_resampled.gri")
+    fout = tmp_path / "reek_resampled.gri"
     snew.to_file(fout, fformat="irap_binary")
 
     assert snew.values.mean() == pytest.approx(1698.458, abs=2)
@@ -271,7 +264,7 @@ def test_resample_partial_sample(tmp_path, reek_map, generate_plot):
     assert snew2.values.mean() == pytest.approx(1747.20, abs=0.2)
 
 
-def test_refine(tmpdir, reek_map, generate_plot):
+def test_refine(tmp_path, reek_map, generate_plot):
     """Do refining of a surface."""
     xs = reek_map
     assert xs.ncol == 554
@@ -279,18 +272,18 @@ def test_refine(tmpdir, reek_map, generate_plot):
     xs_orig = xs.copy()
     xs.refine(4)
 
-    fout = join(tmpdir, "reek_refined.gri")
+    fout = tmp_path / "reek_refined.gri"
     xs.to_file(fout, fformat="irap_binary")
 
     assert xs_orig.values.mean() == pytest.approx(xs.values.mean(), abs=0.8)
 
     if generate_plot:
         logger.info("Output plots to file (may be time consuming)")
-        xs_orig.quickplot(filename=join(tmpdir, "reek_orig.png"))
-        xs.quickplot(filename=join(tmpdir, "reek_refined4.png"))
+        xs_orig.quickplot(filename=tmp_path / "reek_orig.png")
+        xs.quickplot(filename=tmp_path / "reek_refined4.png")
 
 
-def test_coarsen(tmpdir, reek_map, generate_plot):
+def test_coarsen(tmp_path, reek_map, generate_plot):
     """Do a coarsening of a surface."""
     xs = reek_map
     assert xs.ncol == 554
@@ -298,19 +291,19 @@ def test_coarsen(tmpdir, reek_map, generate_plot):
     xs_orig = xs.copy()
     xs.coarsen(3)
 
-    fout = join(tmpdir, "reek_coarsened.gri")
+    fout = tmp_path / "reek_coarsened.gri"
     xs.to_file(fout, fformat="irap_binary")
 
     assert xs_orig.values.mean() == pytest.approx(xs.values.mean(), abs=0.8)
 
     if generate_plot:
         logger.info("Output plots to file (may be time consuming)")
-        xs_orig.quickplot(filename=join(tmpdir, "reek_orig.png"))
-        xs.quickplot(filename=join(tmpdir, "reek_coarsen3.png"))
+        xs_orig.quickplot(filename=tmp_path / "reek_orig.png")
+        xs.quickplot(filename=tmp_path / "reek_coarsen3.png")
 
 
 @pytest.mark.bigtest
-def test_points_gridding(tmpdir, reek_map, generate_plot):
+def test_points_gridding(tmp_path, reek_map, generate_plot):
     """Make points of surface; then grid back to surface."""
     xs = reek_map
     assert xs.ncol == 554
@@ -333,9 +326,9 @@ def test_points_gridding(tmpdir, reek_map, generate_plot):
 
     if generate_plot:
         logger.info("Output plots to file (may be time consuming)")
-        xs.quickplot(filename=join(tmpdir, "s1.png"))
-        xscopy.quickplot(filename=join(tmpdir, "s2.png"))
+        xs.quickplot(filename=tmp_path / "s1.png")
+        xscopy.quickplot(filename=tmp_path / "s2.png")
 
     np.testing.assert_allclose(xscopy.values, xs.values + 300, atol=2)
 
-    xscopy.to_file(join(tmpdir, "reek_points_to_map.gri"), fformat="irap_binary")
+    xscopy.to_file(tmp_path / "reek_points_to_map.gri", fformat="irap_binary")

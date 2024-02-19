@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pathlib
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -14,16 +15,10 @@ if TYPE_CHECKING:
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
 
-# =============================================================================
-# Do tests
-# =============================================================================
+IJXYZFILE1 = pathlib.Path("surfaces/etc/ijxyz1.dat")  # OW IJXYZ format with comments
+OTHERFILE1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")  # for template test
 
-TPATH = xtg.testpathobj
-
-SURF1 = TPATH / "surfaces/etc/h0.dat"
 
 SIMPLE_VALUES1 = [[2, 3, 4, 5], [6, 5, 4, 99], [44.0, 33.0, 22.0, 11.0]]
 SIMPLE_MASK1 = [
@@ -36,8 +31,6 @@ SIMPLE_VALUES2 = range(300)
 SIMPLE_MASK2 = [0, 1, 4, 5, 19, 95, 96, 97, 121]
 
 # real file(s)
-IJXYZFILE1 = TPATH / "surfaces/etc/ijxyz1.dat"  # OW IJXYZ format with comments
-OTHERFILE1 = TPATH / "surfaces/reek/1/topreek_rota.gri"  # for template test
 
 
 @pytest.fixture(name="simple1")
@@ -139,9 +132,9 @@ def test_simple2_ijxyz_read(simple2: tuple):
     np.testing.assert_array_almost_equal(ijxyz.xlines, surf.xlines)
 
 
-def test_ijxyzfile1_read():
+def test_ijxyzfile1_read(testdata_path):
     """Test a real file exported from OW"""
-    data = np.loadtxt(IJXYZFILE1, comments=["@", "#", "EOB"])
+    data = np.loadtxt(testdata_path / IJXYZFILE1, comments=["@", "#", "EOB"])
     inline = data[:, 0].astype("int32")
     xline = data[:, 1].astype("int32")
     x_arr = data[:, 2].astype("float64")
@@ -155,10 +148,10 @@ def test_ijxyzfile1_read():
     assert ijxyz.yflip == -1
 
 
-def test_ijxyz_io_file_with_template(tmp_path):
+def test_ijxyz_io_file_with_template(tmp_path, testdata_path):
     """Test i/o with and without template"""
 
-    surf0 = xtgeo.surface_from_file(OTHERFILE1)
+    surf0 = xtgeo.surface_from_file(testdata_path / OTHERFILE1)
 
     surf0.ilines += 22
     surf0.ilines *= 2

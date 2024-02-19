@@ -1,4 +1,4 @@
-from os.path import join
+import pathlib
 
 import hypothesis.strategies as st
 import numpy as np
@@ -17,16 +17,11 @@ from xtgeo.io._file import FileWrapper
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit("Cannot find test setup")
-
-TPATH = xtg.testpathobj
-
-SFILE1 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
-SFILE3 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.storm")
-SFILE4 = join(TPATH, "cubes/etc/ib_test_cube2.segy")
-SFILE5 = join(TPATH, "cubes/etc/ex2_complete_3d_75x71x26.segy")
-SFILE6 = join(TPATH, "cubes/etc/ex1_missing_traces_75x71x26.segy")
+SFILE1 = pathlib.Path("cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
+SFILE3 = pathlib.Path("cubes/reek/syntseis_20000101_seismic_depth_stack.storm")
+SFILE4 = pathlib.Path("cubes/etc/ib_test_cube2.segy")
+SFILE5 = pathlib.Path("cubes/etc/ex2_complete_3d_75x71x26.segy")
+SFILE6 = pathlib.Path("cubes/etc/ex1_missing_traces_75x71x26.segy")
 
 
 @pytest.fixture(name="smallcube")
@@ -36,9 +31,9 @@ def fixture_smallcube():
 
 
 @pytest.fixture(name="loadsfile1")
-def fixture_loadsfile1():
+def fixture_loadsfile1(testdata_path):
     """Fixture for loading a SFILE1"""
-    return xtgeo.cube_from_file(SFILE1)
+    return xtgeo.cube_from_file(testdata_path / SFILE1)
 
 
 def test_create():
@@ -120,14 +115,18 @@ def test_import_guess_segy(tmp_path, cube):
     assert cube.nlay == cube2.nlay
 
 
-def test_segy_scanheader(tmpdir, smallcube):
+def test_segy_scanheader(tmp_path, smallcube, testdata_path):
     """Scan SEGY and report header, using XTGeo internal reader."""
-    smallcube.scan_segy_header(SFILE1, outfile=join(tmpdir, "cube_scanheader"))
+    smallcube.scan_segy_header(
+        str(testdata_path / SFILE1), outfile=str(tmp_path / "cube_scanheader")
+    )
 
 
-def test_segy_scantraces(tmpdir, smallcube):
+def test_segy_scantraces(tmp_path, smallcube, testdata_path):
     """Scan and report SEGY first and last trace (internal reader)."""
-    smallcube.scan_segy_traces(SFILE1, outfile=join(tmpdir, "cube_scantraces"))
+    smallcube.scan_segy_traces(
+        str(testdata_path / SFILE1), outfile=str(tmp_path / "cube_scantraces")
+    )
 
 
 def test_segy_no_file_exception(smallcube):
@@ -135,13 +134,13 @@ def test_segy_no_file_exception(smallcube):
         smallcube.scan_segy_traces("not_a_file", outfile="not_relevant")
 
 
-def test_segy_export_import(tmpdir):
-    cube = xtgeo.cube_from_file(SFILE4)
+def test_segy_export_import(tmp_path, testdata_path):
+    cube = xtgeo.cube_from_file(testdata_path / SFILE4)
     assert cube.zinc == 4
 
     # change to study rounding effect
     cube.zinc = 3.99
-    fname = join(tmpdir, "small1.segy")
+    fname = tmp_path / "small1.segy"
     cube.to_file(fname, fformat="segy")
     cube2 = xtgeo.cube_from_file(fname)
 
@@ -158,11 +157,11 @@ def test_segy_export_import(tmpdir):
     assert cube.ilines.all() == cube2.ilines.all()
 
 
-def test_storm_import():
+def test_storm_import(testdata_path):
     """Import Cube using Storm format (case Reek)."""
 
     st1 = xtg.timer()
-    acube = xtgeo.cube_from_file(SFILE3, fformat="storm")
+    acube = xtgeo.cube_from_file(testdata_path / SFILE3, fformat="storm")
     elapsed = xtg.timer(st1)
     logger.info("Reading Storm format took %s", elapsed)
 
@@ -208,18 +207,18 @@ def test_segyio_import(loadsfile1):
     assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
-def test_internal_segy_import_full_vs_partial():
+def test_internal_segy_import_full_vs_partial(testdata_path):
     """Test variants of private internal import of segy for compatibility.
 
     Most prominent, a full SEGY cube should be possible to parse using the same routine
     as used for cubes with missing traces.
     """
-    segyfile = FileWrapper(SFILE5)
+    segyfile = FileWrapper(testdata_path / SFILE5)
 
-    with segyio.open(SFILE5, "r") as segyfile:
+    with segyio.open(testdata_path / SFILE5, "r") as segyfile:
         attrs1 = _import_segy_all_traces(segyfile)
 
-    with segyio.open(SFILE5, "r") as segyfile:
+    with segyio.open(testdata_path / SFILE5, "r") as segyfile:
         attrs2 = _import_segy_incomplete_traces(segyfile)
 
     for key, val in attrs1.items():
@@ -229,10 +228,10 @@ def test_internal_segy_import_full_vs_partial():
             assert val == attrs2[key]
 
 
-def test_segyio_import_ex2():
+def test_segyio_import_ex2(testdata_path):
     """Import small SEGY (ex2 case) via segyio library."""
 
-    cube = xtgeo.cube_from_file(SFILE5)
+    cube = xtgeo.cube_from_file(testdata_path / SFILE5)
     assert cube.ncol == 75
     assert list(cube.ilines)[0:4] == [10750, 10752, 10754, 10756]
     assert cube.rotation == pytest.approx(90.0)
@@ -240,11 +239,11 @@ def test_segyio_import_ex2():
     assert cube.yinc == pytest.approx(12.5, abs=0.01)
 
 
-def test_segyio_import_ex1():
+def test_segyio_import_ex1(testdata_path):
     """Import small SEGY (ex1 case with missing traces!) via segyio library."""
 
     with pytest.warns(UserWarning, match=r"Missing or inconsistent"):
-        cube = xtgeo.cube_from_file(SFILE6)
+        cube = xtgeo.cube_from_file(testdata_path / SFILE6)
         assert cube.ncol == 75
         assert list(cube.ilines)[0:4] == [11352, 11354, 11356, 11358]
         assert cube.rotation == pytest.approx(90.0)
@@ -253,30 +252,30 @@ def test_segyio_import_ex1():
 
 
 @pytest.mark.parametrize("pristine", [True, False])
-def test_segyio_import_export(tmpdir, pristine, smallcube):
+def test_segyio_import_export(tmp_path, pristine, smallcube):
     """Import and export SEGY (case 1 Reek) via SegIO library."""
     input_cube = smallcube
     input_cube.values = list(range(30))
-    input_cube.to_file(join(tmpdir, "reek_cube.segy"), pristine=pristine)
+    input_cube.to_file(tmp_path / "reek_cube.segy", pristine=pristine)
 
     # reread that file
-    read_cube = xtgeo.cube_from_file(join(tmpdir, "reek_cube.segy"))
+    read_cube = xtgeo.cube_from_file(tmp_path / "reek_cube.segy")
     assert input_cube.dimensions == read_cube.dimensions
     assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
 
 
-def test_segy_cube_scan(tmpdir, capsys, snapshot):
+def test_segy_cube_scan(tmp_path, capsys, snapshot):
     xcu = Cube(ncol=5, nrow=3, nlay=2, xinc=25.0, yinc=25.0, zinc=2.0)
 
     xcu.values += 200
 
-    xcu.to_file(join(tmpdir, "reek_cube.segy"), engine="xtgeo")
+    xcu.to_file(tmp_path / "reek_cube.segy", engine="xtgeo")
 
-    Cube.scan_segy_header(join(tmpdir, "reek_cube.segy"))
+    Cube.scan_segy_header(str(tmp_path / "reek_cube.segy"))
     out, _ = capsys.readouterr()
     snapshot.assert_match(out, "reek_cube_scan_header.txt")
 
-    Cube.scan_segy_traces(join(tmpdir, "reek_cube.segy"))
+    Cube.scan_segy_traces(str(tmp_path / "reek_cube.segy"))
     out, _ = capsys.readouterr()
     snapshot.assert_match(out, "reek_cube_scan_traces.txt")
 
@@ -308,7 +307,7 @@ def test_cube_resampling(loadsfile1):
     assert newcube.values[20, 20, 20] == pytest.approx(10.0, 0.0001)
 
 
-def test_cube_thinning(tmpdir, loadsfile1):
+def test_cube_thinning(tmp_path, loadsfile1):
     """Import a cube, then make a smaller by thinning every N line"""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -320,13 +319,13 @@ def test_cube_thinning(tmpdir, loadsfile1):
     incube.do_thinning(2, 2, 1)
     logger.info(incube)
 
-    incube.to_file(join(tmpdir, "cube_thinned.segy"))
+    incube.to_file(tmp_path / "cube_thinned.segy")
 
-    incube2 = xtgeo.cube_from_file(join(tmpdir, "cube_thinned.segy"))
+    incube2 = xtgeo.cube_from_file(tmp_path / "cube_thinned.segy")
     logger.info(incube2)
 
 
-def test_cube_cropping(tmpdir, loadsfile1):
+def test_cube_cropping(loadsfile1):
     """Import a cube, then make a smaller by cropping"""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -365,12 +364,12 @@ def test_cube_get_xy_from_ij(loadsfile1):
     assert ypos == pytest.approx(5933633.598034564, 0.01)
 
 
-def test_cube_swapaxes():
+def test_cube_swapaxes(testdata_path):
     """Import a cube, do axes swapping back and forth"""
 
     logger.info("Import SEGY format via SEGYIO")
 
-    incube = xtgeo.cube_from_file(SFILE4)
+    incube = xtgeo.cube_from_file(testdata_path / SFILE4)
     logger.info(incube)
     val1 = incube.values.copy()
 
@@ -384,10 +383,10 @@ def test_cube_swapaxes():
     np.testing.assert_array_equal(val1, val2)
 
 
-def test_cube_randomline(show_plot):
+def test_cube_randomline(show_plot, testdata_path):
     """Import a cube, and compute a randomline given a simple Polygon"""
 
-    incube = xtgeo.cube_from_file(SFILE4)
+    incube = xtgeo.cube_from_file(testdata_path / SFILE4)
 
     poly = xtgeo.Polygons([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]])
 
