@@ -122,7 +122,7 @@ def test_gridprops_mask_warns(any_gridproperties):
         any_gridproperties.get_actnum(mask=True)
 
 
-def test_gridproperty_deprecated_init(testpath):
+def test_gridproperty_deprecated_init(testdata_path):
     with pytest.warns(DeprecationWarning, match="Default initialization"):
         gp = GridProperty()
         assert gp.ncol == 4
@@ -130,4 +130,6 @@ def test_gridproperty_deprecated_init(testpath):
         assert gp.nlay == 5
 
     with pytest.warns(DeprecationWarning, match="from file name"):
-        GridProperty(pathlib.Path(testpath) / "3dgrids/bri/b_poro.roff", fformat="roff")
+        GridProperty(
+            pathlib.Path(testdata_path) / "3dgrids/bri/b_poro.roff", fformat="roff"
+        )

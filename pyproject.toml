@@ -79,6 +79,7 @@ dev = [
     "coverage>=4.1",
     "hypothesis",
     "mypy",
+    "pandas-stubs",
     "pydocstyle",
     "pytest",
     "pytest-benchmark",

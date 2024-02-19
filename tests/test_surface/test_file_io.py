@@ -54,7 +54,6 @@ def surfaces(draw):
     )
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.parametrize("engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize(
     "fformat",
@@ -79,7 +78,8 @@ def surfaces(draw):
         (np.ma.ones((2, 2)), [[1.0, 1.0], [1.0, 1.0]]),
     ],
 )
-def test_simple_io(input_val, expected_result, fformat, engine):
+def test_simple_io(tmp_path, monkeypatch, input_val, expected_result, fformat, engine):
+    monkeypatch.chdir(tmp_path)
     if engine == "python" and fformat not in [
         "irap_ascii",
         "irap_binary",
@@ -96,7 +96,7 @@ def test_simple_io(input_val, expected_result, fformat, engine):
     assert surf_from_file.values.data.tolist() == expected_result
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("tmp_path_cwd")
 @pytest.mark.parametrize("input_engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize("output_engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize(
@@ -128,7 +128,7 @@ def test_complex_io(surf, fformat, output_engine, input_engine):
 
 
 @deprecation.fail_if_not_removed
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("tmp_path_cwd")
 @given(surfaces())
 def test_complex_io_hdf(surf):
     surf.to_hdf("my_file")
@@ -137,7 +137,7 @@ def test_complex_io_hdf(surf):
     assert_similar_surfaces(surf, surf_from_file)
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("tmp_path_cwd")
 @given(surfaces())
 def test_complex_io_hdf_classmethod(surf):
     surf.to_hdf("my_file")

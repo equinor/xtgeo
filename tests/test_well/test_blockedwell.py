@@ -7,18 +7,12 @@ from xtgeo.common import XTGeoDialog
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-testpath = xtg.testpathobj
-
-wfile = join(testpath, "wells/reek/1/OP_1.bw")
-
 
 @pytest.fixture(name="loadwell1")
-def fixture_loadwell1():
+def fixture_loadwell1(testdata_path):
     """Fixture for loading a well (pytest setup)"""
     logger.info("Load well 1")
+    wfile = join(testdata_path, "wells/reek/1/OP_1.bw")
     return xtgeo.blockedwell_from_file(wfile)
 
 

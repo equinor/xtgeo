@@ -1,4 +1,4 @@
-import sys
+import pathlib
 from pathlib import Path
 
 import pytest
@@ -9,25 +9,19 @@ from xtgeo.grid3d._gridprops_import_roff import read_roff_properties
 from xtgeo.io._file import FileWrapper
 
 xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    sys.exit(-9)
-
-TPATH = xtg.testpathobj
-
 logger = xtg.basiclogger(__name__)
 
-E100_BO_FINIT = TPATH / "3dgrids/simpleb8/E100_BO.FINIT"
-E100_BO_FUNRST = TPATH / "3dgrids/simpleb8/E100_BO.FUNRST"
-SPE_UNRST = TPATH / "3dgrids/bench_spe9/BENCH_SPE9.UNRST"
-SPE_INIT = TPATH / "3dgrids/bench_spe9/BENCH_SPE9.INIT"
-REEK_INIT = TPATH / "3dgrids/reek/REEK.INIT"
-REEK_UNRST = TPATH / "3dgrids/reek/REEK.UNRST"
+E100_BO_FINIT = pathlib.Path("3dgrids/simpleb8/E100_BO.FINIT")
+E100_BO_FUNRST = pathlib.Path("3dgrids/simpleb8/E100_BO.FUNRST")
+SPE_UNRST = pathlib.Path("3dgrids/bench_spe9/BENCH_SPE9.UNRST")
+SPE_INIT = pathlib.Path("3dgrids/bench_spe9/BENCH_SPE9.INIT")
+REEK_INIT = pathlib.Path("3dgrids/reek/REEK.INIT")
+REEK_UNRST = pathlib.Path("3dgrids/reek/REEK.UNRST")
 
-REEK_SIM_PORO = TPATH / "3dgrids/reek/reek_sim_poro.roff"
-ROFF_PROPS = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
-ROFFASC_PROPS = TPATH / "3dgrids/reek/reek_grd_w_props.roffasc"
-ROFF_THREE_PROPS = TPATH / "3dgrids/reek/reek_geo2_grid_3props.roff"
+REEK_SIM_PORO = pathlib.Path("3dgrids/reek/reek_sim_poro.roff")
+ROFF_PROPS = pathlib.Path("3dgrids/reek/reek_grd_w_props.roff")
+ROFFASC_PROPS = pathlib.Path("3dgrids/reek/reek_grd_w_props.roffasc")
+ROFF_THREE_PROPS = pathlib.Path("3dgrids/reek/reek_geo2_grid_3props.roff")
 
 
 @pytest.mark.parametrize("test_file", ["A.EGRID", "b.grdecl", "t.segy", "c.rms_attr"])
@@ -46,8 +40,8 @@ def test_raise_on_invalid_filetype(tmp_path, test_file):
         (ROFF_THREE_PROPS, ["Poro", "EQLNUM", "Facies"]),
     ],
 )
-def test_read_roff_properties(test_file, expected):
-    xtg_file = FileWrapper(test_file)
+def test_read_roff_properties(testdata_path, test_file, expected):
+    xtg_file = FileWrapper(testdata_path / test_file)
     assert list(read_roff_properties(xtg_file)) == expected
 
 
@@ -61,13 +55,13 @@ def test_read_roff_properties(test_file, expected):
         (ROFF_THREE_PROPS, ["Poro", "EQLNUM", "Facies"]),
     ],
 )
-def test_list_properties_from_roff(test_file, expected):
-    assert list_gridproperties(test_file) == expected
+def test_list_properties_from_roff(testdata_path, test_file, expected):
+    assert list_gridproperties(testdata_path / test_file) == expected
 
 
 @pytest.mark.parametrize("test_file", [SPE_INIT, REEK_INIT, E100_BO_FINIT])
-def test_list_properties_from_init(test_file):
-    props = list_gridproperties(test_file)
+def test_list_properties_from_init(testdata_path, test_file):
+    props = list_gridproperties(testdata_path / test_file)
     # Just some common static properties
     for prop in (
         "PORV",
@@ -84,8 +78,8 @@ def test_list_properties_from_init(test_file):
 
 
 @pytest.mark.parametrize("test_file", [SPE_UNRST, REEK_UNRST, E100_BO_FUNRST])
-def test_list_properties_from_unrst(test_file):
-    props = list_gridproperties(test_file)
+def test_list_properties_from_unrst(testdata_path, test_file):
+    props = list_gridproperties(testdata_path / test_file)
     # Just some common dynamic properties
     for prop in ("PRESSURE", "SWAT", "SGAS", "RS"):
         assert prop in props

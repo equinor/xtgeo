@@ -1,4 +1,4 @@
-from os.path import join
+import pathlib
 
 import pytest
 import xtgeo
@@ -9,21 +9,13 @@ from xtgeo.xyz import Points
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-# =============================================================================
-# Do tests
-# =============================================================================
-ftop1 = TPATH / "surfaces/reek/1/reek_stooip_map.gri"
+FTOP1 = pathlib.Path("surfaces/reek/1/reek_stooip_map.gri")
 
 
 @pytest.fixture(name="reek_map")
-def fixture_reek_map():
+def fixture_reek_map(testdata_path):
     logger.info("Loading surface")
-    return xtgeo.surface_from_file(ftop1)
+    return xtgeo.surface_from_file(testdata_path / FTOP1)
 
 
 def test_list_xy_points_as_numpies(reek_map):
@@ -40,12 +32,12 @@ def test_list_xy_points_as_numpies(reek_map):
     assert xc[55, 55] == 462219.75
 
 
-def test_map_to_points(tmpdir, reek_map):
+def test_map_to_points(tmp_path, reek_map, testdata_path):
     """Get the list of the coordinates"""
 
     px = Points()
 
-    surf = xtgeo.surface_from_file(ftop1)
+    surf = xtgeo.surface_from_file(testdata_path / FTOP1)
 
     assert isinstance(surf, RegularSurface)
 
@@ -56,7 +48,7 @@ def test_map_to_points(tmpdir, reek_map):
     # convert to a Points instance
     px = xtgeo.points_from_surface(reek_map)
 
-    outf = join(tmpdir, "points_from_surf_reek.poi")
+    outf = tmp_path / "points_from_surf_reek.poi"
     px.to_file(outf)
 
     assert px.get_dataframe()["X_UTME"].min() == 456719.75

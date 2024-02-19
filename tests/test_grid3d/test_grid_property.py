@@ -1,6 +1,4 @@
-# coding: utf-8
 """Testing: test_grid_property"""
-
 
 import io
 import os
@@ -23,32 +21,27 @@ from .gridprop_generator import grid_properties
 xtg = XTGeoDialog()
 
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-TESTFILE1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
-TESTFILE2 = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
-TESTFILE5 = TPATH / "3dgrids/reek/REEK.EGRID"
-TESTFILE6 = TPATH / "3dgrids/reek/REEK.INIT"
-TESTFILE7 = TPATH / "3dgrids/reek/REEK.UNRST"
-TESTFILE8 = TPATH / "3dgrids/reek/reek_sim_zone.roff"
-TESTFILE8A = TPATH / "3dgrids/reek/reek_sim_grid.roff"
+TESTFILE1 = pathlib.Path("3dgrids/reek/reek_sim_poro.roff")
+TESTFILE2 = pathlib.Path("3dgrids/eme/1/emerald_hetero.roff")
+TESTFILE5 = pathlib.Path("3dgrids/reek/REEK.EGRID")
+TESTFILE6 = pathlib.Path("3dgrids/reek/REEK.INIT")
+TESTFILE7 = pathlib.Path("3dgrids/reek/REEK.UNRST")
+TESTFILE8 = pathlib.Path("3dgrids/reek/reek_sim_zone.roff")
+TESTFILE8A = pathlib.Path("3dgrids/reek/reek_sim_grid.roff")
 TESTFILE9 = TESTFILE1
-TESTFILE10 = TPATH / "3dgrids/bri/b_grid.roff"
-TESTFILE11 = TPATH / "3dgrids/bri/b_poro.roff"
-POLYFILE = TPATH / "polygons/reek/1/polset2.pol"
+TESTFILE10 = pathlib.Path("3dgrids/bri/b_grid.roff")
+TESTFILE11 = pathlib.Path("3dgrids/bri/b_poro.roff")
+POLYFILE = pathlib.Path("polygons/reek/1/polset2.pol")
 
-TESTFILE12A = TPATH / "3dgrids/reek/reek_sim_grid.grdecl"
-TESTFILE12B = TPATH / "3dgrids/reek/reek_sim_poro.grdecl"
+TESTFILE12A = pathlib.Path("3dgrids/reek/reek_sim_grid.grdecl")
+TESTFILE12B = pathlib.Path("3dgrids/reek/reek_sim_poro.grdecl")
 
-TESTFILE13A = TPATH / "3dgrids/etc/TEST_SP.EGRID"
-TESTFILE13B = TPATH / "3dgrids/etc/TEST_SP.INIT"
+TESTFILE13A = pathlib.Path("3dgrids/etc/TEST_SP.EGRID")
+TESTFILE13B = pathlib.Path("3dgrids/etc/TEST_SP.INIT")
 
-DUALROFF = TPATH / "3dgrids/etc/dual_grid_w_props.roff"
+DUALROFF = pathlib.Path("3dgrids/etc/dual_grid_w_props.roff")
 
-BANAL7 = TPATH / "3dgrids/etc/banal7_grid_params.roff"
+BANAL7 = pathlib.Path("3dgrids/etc/banal7_grid_params.roff")
 
 
 def test_create():
@@ -79,12 +72,12 @@ def test_gridproperty_without_name(gridprop):
     np.testing.assert_allclose(gridprop3.values, gridprop.values)
 
 
-def test_banal7(show_plot):
+def test_banal7(show_plot, testdata_path):
     """Create a simple property in a small grid box"""
 
-    grd = xtgeo.grid_from_file(BANAL7)
+    grd = xtgeo.grid_from_file(testdata_path / BANAL7)
     assert grd.dimensions == (4, 2, 3)
-    disc = xtgeo.gridproperty_from_file(BANAL7, name="DISC")
+    disc = xtgeo.gridproperty_from_file(testdata_path / BANAL7, name="DISC")
     assert disc.dimensions == (4, 2, 3)
     assert disc.values.mean() == pytest.approx(0.59091, abs=0.001)
 
@@ -212,10 +205,10 @@ def test_dtype():
         act.dtype = np.float64
 
 
-def test_create_from_grid():
+def test_create_from_grid(testdata_path):
     """Create a simple property from grid"""
 
-    gg = xtgeo.grid_from_file(TESTFILE5, fformat="egrid")
+    gg = xtgeo.grid_from_file(testdata_path / TESTFILE5, fformat="egrid")
     poro = GridProperty(gg, name="poro", values=0.33)
     assert poro.ncol == gg.ncol
 
@@ -236,10 +229,10 @@ def test_create_from_grid():
     assert some.isdiscrete is False
 
 
-def test_create_from_gridproperty():
+def test_create_from_gridproperty(testdata_path):
     """Create a simple property from grid"""
 
-    gg = xtgeo.grid_from_file(TESTFILE5, fformat="egrid")
+    gg = xtgeo.grid_from_file(testdata_path / TESTFILE5, fformat="egrid")
     poro = xtgeo.GridProperty(gg, name="poro", values=0.33)
     assert poro.ncol == gg.ncol
 
@@ -257,10 +250,10 @@ def test_create_from_gridproperty():
     assert some.isdiscrete is False
 
 
-def test_pathlib(tmp_path):
+def test_pathlib(tmp_path, testdata_path):
     """Import and export via pathlib"""
 
-    pfile = pathlib.Path(DUALROFF)
+    pfile = pathlib.Path(testdata_path / DUALROFF)
     grdp = xtgeo.gridproperty_from_file(pfile, name="POROM")
 
     assert grdp.dimensions == (5, 3, 1)
@@ -273,27 +266,35 @@ def test_pathlib(tmp_path):
         grdp.to_file(out, fformat="roff")
 
 
-def test_roffbin_import1():
+def test_roffbin_import1(testdata_path):
     """Test of import of ROFF binary"""
 
-    x = xtgeo.gridproperty_from_file(TESTFILE1, fformat="roff", name="PORO")
+    x = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE1, fformat="roff", name="PORO"
+    )
 
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
-def test_roffbin_import1_new():
-    """Test ROFF import, new code May 2018"""
+def test_roffbin_import1_new(testdata_path):
+    """Test ROFF import"""
 
-    x = xtgeo.gridproperty_from_file(TESTFILE1, fformat="roff", name="PORO")
+    x = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE1, fformat="roff", name="PORO"
+    )
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
-def test_roffbin_import2():
+def test_roffbin_import2(testdata_path):
     """Import roffbin, with several props in one file."""
 
-    dz = xtgeo.gridproperty_from_file(TESTFILE2, fformat="roff", name="Z_increment")
+    dz = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE2, fformat="roff", name="Z_increment"
+    )
 
-    hc = xtgeo.gridproperty_from_file(TESTFILE2, fformat="roff", name="Oil_HCPV")
+    hc = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE2, fformat="roff", name="Oil_HCPV"
+    )
 
     _ncol, nrow, _nlay = hc.values3d.shape
 
@@ -303,39 +304,37 @@ def test_roffbin_import2():
     assert dz.values.mean() == pytest.approx(2.6352321, abs=0.0001)
 
 
-def test_eclinit_simple_importexport(tmpdir):
+def test_eclinit_simple_importexport(tmp_path, testdata_path):
     """Property import and export with anoother name"""
 
     # let me guess the format (shall be egrid)
-    gg = xtgeo.grid_from_file(TESTFILE13A, fformat="egrid")
-    po = xtgeo.gridproperty_from_file(TESTFILE13B, name="PORO", grid=gg)
+    gg = xtgeo.grid_from_file(testdata_path / TESTFILE13A, fformat="egrid")
+    po = xtgeo.gridproperty_from_file(testdata_path / TESTFILE13B, name="PORO", grid=gg)
 
     po.to_file(
-        os.path.join(tmpdir, "simple.grdecl"),
+        tmp_path / "simple.grdecl",
         fformat="grdecl",
         name="PORO2",
         fmt="%12.5f",
     )
 
-    p2 = xtgeo.gridproperty_from_file(
-        os.path.join(tmpdir, "simple.grdecl"), grid=gg, name="PORO2"
-    )
+    p2 = xtgeo.gridproperty_from_file(tmp_path / "simple.grdecl", grid=gg, name="PORO2")
     assert p2.name == "PORO2"
 
 
-def test_grdecl_import_reek(tmpdir):
+def test_grdecl_import_reek(tmp_path, testdata_path):
     """Property GRDECL import from Eclipse. Reek"""
 
-    rgrid = xtgeo.grid_from_file(TESTFILE12A, fformat="grdecl")
+    rgrid = xtgeo.grid_from_file(testdata_path / TESTFILE12A, fformat="grdecl")
 
     assert rgrid.dimensions == (40, 64, 14)
 
     poro = xtgeo.gridproperty_from_file(
-        TESTFILE12B, name="PORO", fformat="grdecl", grid=rgrid
+        testdata_path / TESTFILE12B, name="PORO", fformat="grdecl", grid=rgrid
     )
 
     poro2 = xtgeo.gridproperty_from_file(
-        TESTFILE1, name="PORO", fformat="roff", grid=rgrid
+        testdata_path / TESTFILE1, name="PORO", fformat="roff", grid=rgrid
     )
 
     assert poro.values.mean() == pytest.approx(poro2.values.mean(), abs=0.001)
@@ -343,11 +342,11 @@ def test_grdecl_import_reek(tmpdir):
 
     with pytest.raises(KeywordNotFoundError):
         _ = xtgeo.gridproperty_from_file(
-            TESTFILE12B, name="XPORO", fformat="grdecl", grid=rgrid
+            testdata_path / TESTFILE12B, name="XPORO", fformat="grdecl", grid=rgrid
         )
 
     # Export to ascii grdecl and import that again...
-    exportfile = os.path.join(tmpdir, "reekporo.grdecl")
+    exportfile = tmp_path / "reekporo.grdecl"
     poro.to_file(exportfile, fformat="grdecl")
     porox = xtgeo.gridproperty_from_file(
         exportfile, name="PORO", fformat="grdecl", grid=rgrid
@@ -355,7 +354,7 @@ def test_grdecl_import_reek(tmpdir):
     assert poro.values.mean() == pytest.approx(porox.values.mean(), abs=0.001)
 
     # Export to binary grdecl and import that again...
-    exportfile = os.path.join(tmpdir, "reekporo.bgrdecl")
+    exportfile = tmp_path / "reekporo.bgrdecl"
     poro.to_file(exportfile, fformat="bgrdecl")
     porox = xtgeo.gridproperty_from_file(
         exportfile, name="PORO", fformat="bgrdecl", grid=rgrid
@@ -363,19 +362,19 @@ def test_grdecl_import_reek(tmpdir):
     assert poro.values.mean() == pytest.approx(porox.values.mean(), abs=0.001)
 
 
-def test_io_roff_discrete(tmpdir):
+def test_io_roff_discrete(tmp_path, testdata_path):
     """Import ROFF discrete property; then export to ROFF int."""
 
-    po = xtgeo.gridproperty_from_file(TESTFILE8, fformat="roff", name="Zone")
+    po = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE8, fformat="roff", name="Zone"
+    )
 
     # tests:
     assert po.ncodes == 3
     assert po.codes[3] == "Below_Low_reek"
 
     # export discrete to ROFF ...TODO
-    po.to_file(
-        os.path.join(tmpdir, "reek_zone_export.roff"), name="Zone", fformat="roff"
-    )
+    po.to_file(tmp_path / "reek_zone_export.roff", name="Zone", fformat="roff")
 
     # fix some zero values (will not be fixed properly as grid ACTNUM differs?)
     val = po.values
@@ -384,9 +383,7 @@ def test_io_roff_discrete(tmpdir):
     po.values = val
     print(po.values.min(), po.values.max())
     po.values[:, :, 13] = 1  # just for fun test
-    po.to_file(
-        os.path.join(tmpdir, "reek_zonefix_export.roff"), name="ZoneFix", fformat="roff"
-    )
+    po.to_file(tmp_path / "reek_zonefix_export.roff", name="ZoneFix", fformat="roff")
 
 
 @given(grid_properties())
@@ -395,10 +392,10 @@ def test_io_to_nonexisting_folder(grid_property):
         grid_property.to_file(os.path.join("TMP_NOT", "dummy.grdecl"), fformat="grdecl")
 
 
-def test_get_all_corners():
+def test_get_all_corners(testdata_path):
     """Get X Y Z for all corners as XTGeo GridProperty objects"""
 
-    grid = xtgeo.grid_from_file(TESTFILE8A)
+    grid = xtgeo.grid_from_file(testdata_path / TESTFILE8A)
     allc = grid.get_xyz_corners()
 
     x0 = allc[0]
@@ -418,25 +415,29 @@ def test_get_all_corners():
     assert z1.values3d[4, 4, 1] == pytest.approx(1728.57898, abs=0.1)
 
 
-def test_get_cell_corners():
+def test_get_cell_corners(testdata_path):
     """Get X Y Z for one cell as tuple"""
 
-    grid = xtgeo.grid_from_file(TESTFILE8A)
+    grid = xtgeo.grid_from_file(testdata_path / TESTFILE8A)
     clist = grid.get_xyz_cell_corners(ijk=(4, 4, 1))
 
     assert clist[0] == pytest.approx(457168.358886, abs=0.1)
 
 
-def test_get_xy_values_for_webportal():
+def test_get_xy_values_for_webportal(testdata_path):
     """Get lists on webportal format"""
 
-    grid = xtgeo.grid_from_file(TESTFILE8A)
-    prop = xtgeo.gridproperty_from_file(TESTFILE9, grid=grid, name="PORO")
+    grid = xtgeo.grid_from_file(testdata_path / TESTFILE8A)
+    prop = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE9, grid=grid, name="PORO"
+    )
 
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
 
-    grid = xtgeo.grid_from_file(TESTFILE10)
-    prop = xtgeo.gridproperty_from_file(TESTFILE11, grid=grid, name="PORO")
+    grid = xtgeo.grid_from_file(testdata_path / TESTFILE10)
+    prop = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE11, grid=grid, name="PORO"
+    )
 
     coord, valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
 
@@ -444,10 +445,12 @@ def test_get_xy_values_for_webportal():
     assert valuelist[0][0] == -999.0
 
 
-def test_get_values_by_ijk():
+def test_get_values_by_ijk(testdata_path):
     """Test getting values for given input arrays for I J K"""
 
-    x = xtgeo.gridproperty_from_file(TESTFILE1, fformat="roff", name="PORO")
+    x = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE1, fformat="roff", name="PORO"
+    )
 
     iset1 = np.array([np.nan, 23, 22])
     jset1 = np.array([np.nan, 23, 19])
@@ -459,14 +462,14 @@ def test_get_values_by_ijk():
     assert np.isnan(res1[0])
 
 
-def test_values_in_polygon():
+def test_values_in_polygon(testdata_path):
     """Test replace values in polygons"""
 
-    grid = xtgeo.grid_from_file(TESTFILE5)
+    grid = xtgeo.grid_from_file(testdata_path / TESTFILE5)
     xprop = xtgeo.gridproperty_from_file(
-        TESTFILE1, fformat="roff", name="PORO", grid=grid
+        testdata_path / TESTFILE1, fformat="roff", name="PORO", grid=grid
     )
-    poly = xtgeo.polygons_from_file(POLYFILE)
+    poly = xtgeo.polygons_from_file(testdata_path / POLYFILE)
     xprop.geometry = grid
     xorig = xprop.copy()
 
@@ -725,18 +728,18 @@ def test_gridprop_export_bgrdecl_double(tmp_path, grid):
         ),
     ],
 )
-def test_simpleb8_case(simcase, props, snapshot):
+def test_simpleb8_case(simcase, props, snapshot, testdata_path):
     """Test a very small case that is actually ran through E100, E300, IX."""
 
-    folder = TPATH / "3dgrids" / "simpleb8"
+    folder = testdata_path / pathlib.Path("3dgrids/simpleb8")
 
-    grd = xtgeo.grid_from_file(folder / str(simcase + ".EGRID"), fformat="egrid")
+    grd = xtgeo.grid_from_file(folder / f"{simcase}.EGRID", fformat="egrid")
 
     assert grd.dimensions == (4, 2, 3)
 
     for prop in props:
         gprop = xtgeo.gridproperty_from_file(
-            folder / str(simcase + ".UNRST"),
+            folder / f"{simcase}.UNRST",
             name=prop,
             fformat="unrst",
             date="20220101",

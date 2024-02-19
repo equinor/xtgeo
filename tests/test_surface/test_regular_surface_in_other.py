@@ -1,6 +1,4 @@
-# coding: utf-8
-
-from os.path import join
+import pathlib
 
 import numpy as np
 import numpy.ma as ma
@@ -11,17 +9,8 @@ from xtgeo.common import XTGeoDialog
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-# =============================================================================
-# Do tests
-# =============================================================================
-
-TPATH = xtg.testpathobj
-
-SURF1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
-POLY1 = TPATH / "polygons/reek/1/closedpoly1.pol"
+SURF1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
+POLY1 = pathlib.Path("polygons/reek/1/closedpoly1.pol")
 
 # a surface with nodes in X position 0.0 3.0 6.0 and Y 0.0 3.0 6.0
 # and 12 values
@@ -63,10 +52,10 @@ SMALL_POLY_OVERLAP = [
 
 
 @pytest.fixture(name="reekset")
-def fixture_reekset():
+def fixture_reekset(testdata_path):
     """Read a test set from disk."""
-    srf = xtgeo.surface_from_file(SURF1)
-    pol = xtgeo.polygons_from_file(POLY1)
+    srf = xtgeo.surface_from_file(testdata_path / SURF1)
+    pol = xtgeo.polygons_from_file(testdata_path / POLY1)
     return srf, pol
 
 
@@ -148,13 +137,13 @@ def test_operations_inside_outside_polygon_generic(reekset, oper, inside, expect
         assert surf.values.mean() == pytest.approx(expected, abs=0.001)
 
 
-def test_operations_inside_outside_polygon_shortforms(tmpdir):
+def test_operations_inside_outside_polygon_shortforms(tmp_path, testdata_path):
     """Various shortforms for operations in polygons"""
 
     # assert values are checked in RMS
 
-    zurf = xtgeo.surface_from_file(SURF1)
-    poly = xtgeo.polygons_from_file(POLY1)
+    zurf = xtgeo.surface_from_file(testdata_path / SURF1)
+    poly = xtgeo.polygons_from_file(testdata_path / POLY1)
 
     surf = zurf.copy()
     surf.add_inside(poly, 200)
@@ -173,8 +162,8 @@ def test_operations_inside_outside_polygon_shortforms(tmpdir):
     # divide on zero
     surf = zurf.copy()
     surf.div_inside(poly, 0.0)
-    surf.to_file(join(tmpdir, "div2.gri"))
-    surf.to_file(join(tmpdir, "div2.fgr"), fformat="irap_ascii")
+    surf.to_file(tmp_path / "div2.gri")
+    surf.to_file(tmp_path / "div2.fgr", fformat="irap_ascii")
 
     # set inside
     surf = zurf.copy()

@@ -1,3 +1,5 @@
+import pathlib
+
 import pandas as pd
 import pytest
 import xtgeo
@@ -5,25 +7,23 @@ import xtgeo
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-TPATH = xtg.testpathobj
+REEKGRID = pathlib.Path("3dgrids/reek/REEK.EGRID")
+SMALL1 = pathlib.Path("3dgrids/etc/TEST_SP.EGRID")
+SMALL2 = pathlib.Path("3dgrids/etc/TEST_DP.EGRID")
+SMALL3 = pathlib.Path("3dgrids/etc/small.roff")
+DROGON = pathlib.Path("3dgrids/drogon/1/geogrid.roff")
+BANALCASE1 = pathlib.Path("3dgrids/etc/banal1.grdecl")
+BANALCASE2 = pathlib.Path("3dgrids/etc/banal2.grdecl")
+BANALCASE3 = pathlib.Path("3dgrids/etc/banal3.grdecl")
+QCGRID = pathlib.Path("3dgrids/etc/gridqc1.roff")
 
-REEKGRID = TPATH / "3dgrids/reek/REEK.EGRID"
-SMALL1 = TPATH / "3dgrids/etc/TEST_SP.EGRID"
-SMALL2 = TPATH / "3dgrids/etc/TEST_DP.EGRID"
-SMALL3 = TPATH / "3dgrids/etc/small.roff"
-DROGON = TPATH / "3dgrids/drogon/1/geogrid.roff"
-BANALCASE1 = TPATH / "3dgrids/etc/banal1.grdecl"
-BANALCASE2 = TPATH / "3dgrids/etc/banal2.grdecl"
-BANALCASE3 = TPATH / "3dgrids/etc/banal3.grdecl"
-QCGRID = TPATH / "3dgrids/etc/gridqc1.roff"
-
-QCFIL1 = TPATH / "3dgrids/etc/gridqc1_rms_cellcenter.csv"
-QCFIL2 = TPATH / "3dgrids/etc/gridqc1_rms_anypoint.csv"
+QCFIL1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
+QCFIL2 = pathlib.Path("3dgrids/etc/gridqc1_rms_anypoint.csv")
 
 
-def test_get_ijk_from_points_banalcase2():
+def test_get_ijk_from_points_banalcase2(testdata_path):
     """Testing getting IJK coordinates from points on a perfect case case"""
-    g1 = xtgeo.grid_from_file(BANALCASE2)
+    g1 = xtgeo.grid_from_file(testdata_path / BANALCASE2)
 
     pointset = [
         (50, 50, -0.01),  # -1, -1, -1
@@ -77,9 +77,9 @@ def test_get_ijk_from_points_banalcase2():
     assert ijk["KZ"][7] == 3
 
 
-def test_get_ijk_from_points_banalcase3():
+def test_get_ijk_from_points_banalcase3(testdata_path):
     """Testing getting IJK coordinates from points on a perfect case case"""
-    g1 = xtgeo.grid_from_file(BANALCASE3)
+    g1 = xtgeo.grid_from_file(testdata_path / BANALCASE3)
 
     pointset = [
         (50, 50, -0.01),  # outside
@@ -101,9 +101,9 @@ def test_get_ijk_from_points_banalcase3():
 
 
 @pytest.mark.bigtest
-def test_get_ijk_from_points_tricky():
+def test_get_ijk_from_points_tricky(testdata_path):
     """Testing getting IJK coordinates from points on a tricky case"""
-    g1 = xtgeo.grid_from_file(DROGON)
+    g1 = xtgeo.grid_from_file(testdata_path / DROGON)
 
     pointset = [
         (465100.100000, 5931340.000000, 1681.28772),  # 1, 2, 1
@@ -116,9 +116,9 @@ def test_get_ijk_from_points_tricky():
     assert ijk["JY"][0] == 171  # 110 171/172
 
 
-def test_get_ijk_from_points():
+def test_get_ijk_from_points(testdata_path):
     """Testing getting IJK coordinates from points"""
-    g1 = xtgeo.grid_from_file(REEKGRID)
+    g1 = xtgeo.grid_from_file(testdata_path / REEKGRID)
 
     pointset = [
         (456620.790918, 5.935660e06, 1727.649124),  # 1, 1, 1
@@ -160,10 +160,10 @@ def test_get_ijk_from_points():
     assert ijk["JY"][0] == 64
 
 
-def test_get_ijk_from_points_smallcase():
+def test_get_ijk_from_points_smallcase(testdata_path):
     """Testing getting IJK coordinates from points, for all cells in small case"""
 
-    g1 = xtgeo.grid_from_file(SMALL3)
+    g1 = xtgeo.grid_from_file(testdata_path / SMALL3)
 
     # g1.crop((1, 1), (1, 1), (1, 2))
     df1 = g1.get_dataframe(ijk=True, xyz=False)
@@ -203,10 +203,10 @@ def test_get_ijk_from_points_smallcase():
 
 
 @pytest.mark.bigtest
-def test_get_ijk_from_points_full():
+def test_get_ijk_from_points_full(testdata_path):
     """Testing getting IJK coordinates from points, for all cells"""
 
-    g1 = xtgeo.grid_from_file(REEKGRID)
+    g1 = xtgeo.grid_from_file(testdata_path / REEKGRID)
     df1 = g1.get_dataframe(ijk=True, xyz=False)
     df2 = g1.get_dataframe(ijk=False, xyz=True)
 
@@ -243,10 +243,10 @@ def test_get_ijk_from_points_full():
     assert fails < 0.5  # < 0.5% deviation; x_chk_in_cell ~4 % error!
 
 
-def test_get_ijk_from_points_small():
+def test_get_ijk_from_points_small(testdata_path):
     """Test IJK getting in small grid, test for active or not cells"""
 
-    g1 = xtgeo.grid_from_file(SMALL1)
+    g1 = xtgeo.grid_from_file(testdata_path / SMALL1)
 
     pointset = [
         (1.5, 1.5, 1000.5),  # 2, 2, 1  is active
@@ -265,23 +265,23 @@ def test_get_ijk_from_points_small():
     assert ijk["JY"][1] == 3
 
     # dualporo grid
-    g1 = xtgeo.grid_from_file(SMALL2)
+    g1 = xtgeo.grid_from_file(testdata_path / SMALL2)
     ijk = g1.get_ijk_from_points(po, activeonly=False)
     assert ijk["JY"][1] == 3
 
 
-def test_point_in_cell_compare_rms():
+def test_point_in_cell_compare_rms(testdata_path):
     """Test IJK in cells, compare with a list made in RMS IPL"""
 
     # from RMS
-    pointset = pd.read_csv(QCFIL1, skiprows=3)
+    pointset = pd.read_csv(testdata_path / QCFIL1, skiprows=3)
 
     attrs = {"I": "int", "J": "int", "K": "int"}
     p1 = xtgeo.Points(
         values=pointset, xname="X", yname="Y", zname="Z", attributes=attrs
     )
 
-    grd = xtgeo.grid_from_file(QCGRID)
+    grd = xtgeo.grid_from_file(testdata_path / QCGRID)
     dfr = grd.get_ijk_from_points(p1)
 
     for cname, cxname in {"I": "IX", "J": "JY", "K": "KZ"}.items():

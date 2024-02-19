@@ -10,13 +10,12 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-if not xtg.testsetup():
-    raise SystemExit
-
 
 @pytest.fixture(name="benchmark_surface")
-def benchmark_surface_fixture(testpath):
-    return xtgeo.surface_from_file(join(testpath, "surfaces/reek/1/topreek_rota.gri"))
+def benchmark_surface_fixture(testdata_path):
+    return xtgeo.surface_from_file(
+        join(testdata_path, "surfaces/reek/1/topreek_rota.gri")
+    )
 
 
 @pytest.mark.benchmark(group="import/export")

@@ -3,25 +3,17 @@
 Currently tested format(s):
   * roff binary
 """
+
 import io
 
 import numpy as np
 import xtgeo
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-BANAL6 = TPATH / "3dgrids/etc/banal6.roff"
 
 
-def test_roff_binary_grid_bytesio_read():
+def test_roff_binary_grid_bytesio_read(testdata_path):
     """Test reading ROFF binary from memory streams"""
 
+    BANAL6 = f"{testdata_path}/3dgrids/etc/banal6.roff"
     grd1 = xtgeo.grid_from_file(BANAL6)
 
     with open(BANAL6, "rb") as fhandle:

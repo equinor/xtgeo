@@ -1,37 +1,24 @@
 """Testing: test_grid_operations"""
-from os.path import join
+
+import pathlib
 
 import pytest
 import xtgeo
 from hypothesis import given
-from xtgeo.common import XTGeoDialog
 
 from .grid_generator import xtgeo_grids
 
-xtg = XTGeoDialog()
+EMEGFILE = pathlib.Path("3dgrids/eme/1/emerald_hetero_grid.roff")
+EMERFILE = pathlib.Path("3dgrids/eme/1/emerald_hetero_region.roff")
 
-if not xtg.testsetup():
-    raise SystemExit
+EMEGFILE2 = pathlib.Path("3dgrids/eme/2/emerald_hetero_grid.roff")
+EMEZFILE2 = pathlib.Path("3dgrids/eme/2/emerald_hetero.roff")
 
-TPATH = xtg.testpathobj
-
-
-# =============================================================================
-# Do tests
-# =============================================================================
+DUAL = pathlib.Path("3dgrids/etc/dual_distorted2.grdecl")
+DUALPROPS = pathlib.Path("3dgrids/etc/DUAL")
 
 
-EMEGFILE = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
-EMERFILE = TPATH / "3dgrids/eme/1/emerald_hetero_region.roff"
-
-EMEGFILE2 = TPATH / "3dgrids/eme/2/emerald_hetero_grid.roff"
-EMEZFILE2 = TPATH / "3dgrids/eme/2/emerald_hetero.roff"
-
-DUAL = TPATH / "3dgrids/etc/dual_distorted2.grdecl"
-DUALPROPS = TPATH / "3dgrids/etc/DUAL"
-
-
-def test_hybridgrid1(tmpdir, snapshot, helpers):
+def test_hybridgrid1(tmp_path, snapshot, helpers):
     grd = xtgeo.create_box_grid(
         (4, 3, 5),
         flip=1,
@@ -47,7 +34,7 @@ def test_hybridgrid1(tmpdir, snapshot, helpers):
     }
     assert grd.subgrids is not None  # initially, prior to subgrids
 
-    grd.to_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"), fformat="bgrdecl")
+    grd.to_file(tmp_path / "test_hybridgrid1_asis.bgrdecl", fformat="bgrdecl")
     nhdiv = 40
     newnlay = grd.nlay * 2 + nhdiv
     snapshot.assert_match(
@@ -67,19 +54,19 @@ def test_hybridgrid1(tmpdir, snapshot, helpers):
 
     assert dzv.values3d.mean() == 5.0
 
-    grd2 = xtgeo.grid_from_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"))
+    grd2 = xtgeo.grid_from_file(tmp_path / "test_hybridgrid1_asis.bgrdecl")
     snapshot.assert_match(
         helpers.df2csv(grd2.get_dataframe(activeonly=False).tail(50).round()),
         "grid_pre_hybrid.csv",
     )
 
 
-def test_hybridgrid2(tmpdir):
+def test_hybridgrid2(tmp_path, testdata_path):
     """Making a hybridgrid for Emerald case in region"""
 
     grd = xtgeo.create_box_grid((4, 3, 5))
 
-    reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
+    reg = xtgeo.gridproperty_from_file(testdata_path / EMERFILE, name="REGION")
 
     nhdiv = 40
 
@@ -87,15 +74,15 @@ def test_hybridgrid2(tmpdir):
         nhdiv=nhdiv, toplevel=1650, bottomlevel=1690, region=reg, region_number=1
     )
 
-    grd.to_file(join(tmpdir, "test_hybridgrid2.roff"))
+    grd.to_file(tmp_path / "test_hybridgrid2.roff")
 
 
-def test_inactivate_thin_cells(tmpdir):
+def test_inactivate_thin_cells(tmp_path, testdata_path):
     """Make hybridgrid for Emerald case in region, and inactive thin cells"""
 
-    grd = xtgeo.grid_from_file(EMEGFILE)
+    grd = xtgeo.grid_from_file(testdata_path / EMEGFILE)
 
-    reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
+    reg = xtgeo.gridproperty_from_file(testdata_path / EMERFILE, name="REGION")
 
     nhdiv = 40
 
@@ -105,13 +92,13 @@ def test_inactivate_thin_cells(tmpdir):
 
     grd.inactivate_by_dz(0.001)
 
-    grd.to_file(join(tmpdir, "test_hybridgrid2_inact_thin.roff"))
+    grd.to_file(tmp_path / "test_hybridgrid2_inact_thin.roff")
 
 
-def test_refine_vertically():
+def test_refine_vertically(testdata_path):
     """Do a grid refinement vertically."""
 
-    emerald_grid = xtgeo.grid_from_file(EMEGFILE)
+    emerald_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
     assert emerald_grid.get_subgrids() == {"subgrid_0": 16, "subgrid_1": 30}
 
     avg_dz1 = emerald_grid.get_dz().values3d.mean()
@@ -127,12 +114,14 @@ def test_refine_vertically():
     emerald_grid.inactivate_by_dz(0.001)
 
 
-def test_refine_vertically_per_zone(tmpdir):
+def test_refine_vertically_per_zone(testdata_path):
     """Do a grid refinement vertically, via a dict per zone."""
 
-    emerald2_grid = xtgeo.grid_from_file(EMEGFILE2)
+    emerald2_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE2)
     grd = emerald2_grid.copy()
-    emerald2_zone = xtgeo.gridproperty_from_file(EMEZFILE2, grid=grd, name="Zone")
+    emerald2_zone = xtgeo.gridproperty_from_file(
+        testdata_path / EMEZFILE2, grid=grd, name="Zone"
+    )
 
     assert emerald2_zone.values.min() == 1
     assert emerald2_zone.values.max() == 2
@@ -150,7 +139,7 @@ def test_refine_vertically_per_zone(tmpdir):
     assert grd.get_subgrids() == {"subgrid_0": 64, "subgrid_1": 60}
 
 
-def test_reverse_row_axis_box(tmpdir):
+def test_reverse_row_axis_box(tmp_path):
     """Crop a grid."""
 
     grd = xtgeo.create_box_grid(
@@ -161,33 +150,33 @@ def test_reverse_row_axis_box(tmpdir):
     )
 
     assert grd.ijk_handedness == "left"
-    grd.to_file(join(tmpdir, "reverse_left.grdecl"), fformat="grdecl")
+    grd.to_file(tmp_path / "reverse_left.grdecl", fformat="grdecl")
     grd.reverse_row_axis()
     assert grd.ijk_handedness == "right"
-    grd.to_file(join(tmpdir, "reverse_right.grdecl"), fformat="grdecl")
+    grd.to_file(tmp_path / "reverse_right.grdecl", fformat="grdecl")
 
 
-def test_reverse_row_axis_dual(tmpdir):
+def test_reverse_row_axis_dual(tmp_path, testdata_path):
     """Reverse axis for distorted but small grid"""
 
-    grd = xtgeo.grid_from_file(DUAL)
+    grd = xtgeo.grid_from_file(testdata_path / DUAL)
 
     assert grd.ijk_handedness == "left"
-    grd.to_file(join(tmpdir, "dual_left.grdecl"), fformat="grdecl")
+    grd.to_file(tmp_path / "dual_left.grdecl", fformat="grdecl")
     cellcorners1 = grd.get_xyz_cell_corners((5, 1, 1))
     grd.reverse_row_axis()
     assert grd.ijk_handedness == "right"
-    grd.to_file(join(tmpdir, "dual_right.grdecl"), fformat="grdecl")
+    grd.to_file(tmp_path / "dual_right.grdecl", fformat="grdecl")
     cellcorners2 = grd.get_xyz_cell_corners((5, 3, 1))
 
     assert cellcorners1[7] == cellcorners2[1]
 
 
-def test_reverse_row_axis_dualprops():
+def test_reverse_row_axis_dualprops(testdata_path):
     """Reverse axis for distorted but small grid with props"""
 
     grd = xtgeo.grid_from_file(
-        DUALPROPS, fformat="eclipserun", initprops=["PORO", "PORV"]
+        testdata_path / DUALPROPS, fformat="eclipserun", initprops=["PORO", "PORV"]
     )
 
     poro = grd.gridprops.props[0]
@@ -208,58 +197,60 @@ def test_reverse_row_axis_dualprops():
     assert grd.ijk_handedness == "left"
 
 
-def test_reverse_row_axis_eme(tmpdir):
+def test_reverse_row_axis_eme(tmp_path, testdata_path):
     """Reverse axis for emerald grid"""
 
-    grd1 = xtgeo.grid_from_file(EMEGFILE)
+    grd1 = xtgeo.grid_from_file(testdata_path / EMEGFILE)
 
     assert grd1.ijk_handedness == "left"
-    grd1.to_file(join(tmpdir, "eme_left.roff"), fformat="roff")
+    grd1.to_file(tmp_path / "eme_left.roff", fformat="roff")
     grd2 = grd1.copy()
     geom1 = grd1.get_geometrics(return_dict=True)
     grd2.reverse_row_axis()
     assert grd2.ijk_handedness == "right"
-    grd2.to_file(join(tmpdir, "eme_right.roff"), fformat="roff")
+    grd2.to_file(tmp_path / "eme_right.roff", fformat="roff")
     geom2 = grd2.get_geometrics(return_dict=True)
 
     assert geom1["avg_rotation"] == pytest.approx(geom2["avg_rotation"], abs=0.01)
 
 
-def test_copy_grid(tmpdir):
+def test_copy_grid(tmp_path, testdata_path):
     """Copy a grid."""
 
-    grd = xtgeo.grid_from_file(EMEGFILE2)
+    grd = xtgeo.grid_from_file(testdata_path / EMEGFILE2)
     grd2 = grd.copy()
 
-    grd.to_file(join(tmpdir, "gcp1.roff"))
-    grd2.to_file(join(tmpdir, "gcp2.roff"))
+    grd.to_file(tmp_path / "gcp1.roff")
+    grd2.to_file(tmp_path / "gcp2.roff")
 
-    xx1 = xtgeo.grid_from_file(join(tmpdir, "gcp1.roff"))
-    xx2 = xtgeo.grid_from_file(join(tmpdir, "gcp2.roff"))
+    xx1 = xtgeo.grid_from_file(tmp_path / "gcp1.roff")
+    xx2 = xtgeo.grid_from_file(tmp_path / "gcp2.roff")
 
     assert xx1._zcornsv.mean() == xx2._zcornsv.mean()
     assert xx1._actnumsv.mean() == xx2._actnumsv.mean()
 
 
-def test_crop_grid(tmpdir):
+def test_crop_grid(tmp_path, testdata_path):
     """Crop a grid."""
 
-    grd = xtgeo.grid_from_file(EMEGFILE2)
-    zprop = xtgeo.gridproperty_from_file(EMEZFILE2, name="Zone", grid=grd)
+    grd = xtgeo.grid_from_file(testdata_path / EMEGFILE2)
+    zprop = xtgeo.gridproperty_from_file(
+        testdata_path / EMEZFILE2, name="Zone", grid=grd
+    )
 
     grd.crop((30, 60), (20, 40), (1, 46), props=[zprop])
 
-    grd.to_file(join(tmpdir, "grid_cropped.roff"))
+    grd.to_file(tmp_path / "grid_cropped.roff")
 
-    grd2 = xtgeo.grid_from_file(join(tmpdir, "grid_cropped.roff"))
+    grd2 = xtgeo.grid_from_file(tmp_path / "grid_cropped.roff")
 
     assert grd2.ncol == 31
 
 
-def test_crop_grid_after_copy():
+def test_crop_grid_after_copy(testdata_path):
     """Copy a grid, then crop and check number of active cells."""
 
-    grd = xtgeo.grid_from_file(EMEGFILE2)
+    grd = xtgeo.grid_from_file(testdata_path / EMEGFILE2)
     grd.describe()
     grd.describe(details=True)
 
@@ -280,10 +271,10 @@ def test_reduce_to_one_layer(grd):
     assert grd.nlay == 1
 
 
-def test_get_boundary_polygons_grid_outline():
+def test_get_boundary_polygons_grid_outline(testdata_path):
     """Test getting a boundary for a grid."""
 
-    grid = xtgeo.grid_from_file(EMEGFILE)
+    grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
 
     boundary = grid.get_boundary_polygons(simplify=False)
     df = boundary.get_dataframe(copy=False)
@@ -295,11 +286,11 @@ def test_get_boundary_polygons_grid_outline():
     assert df[boundary.xname].max() == pytest.approx(466984, abs=2)
 
 
-def test_get_boundary_polygons_grid_region():
+def test_get_boundary_polygons_grid_region(testdata_path):
     """Test getting a boundary for a region in a grid."""
 
-    grid = xtgeo.grid_from_file(EMEGFILE)
-    reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
+    grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
+    reg = xtgeo.gridproperty_from_file(testdata_path / EMERFILE, name="REGION")
 
     boundary = grid.get_boundary_polygons(
         simplify=False, filter_array=(reg.values == 1)

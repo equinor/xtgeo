@@ -1,34 +1,9 @@
 import os
 import time
 
-import pytest
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-testpath = xtg.testpathobj
-
-
-@pytest.fixture()
-def mylogger():
-    # need to do it like this...
-    return xtg.basiclogger(__name__, logginglevel="DEBUG")
-
-
-def test_info_logger(mylogger, caplog):
-    """Test basic logger behaviour, will capture output to stdin"""
-
-    mylogger.info("This is a test")
-    #    assert 'This is a test' in caplog.text[0]
-
-    logger.warning("This is a warning")
-
-
-#    assert 'This is a warning' in caplog.text[0]
 
 
 def test_difftimelogger():

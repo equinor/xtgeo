@@ -8,13 +8,10 @@ from xtgeo.well import BlockedWells
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
 
 @pytest.fixture(name="testblockedwells")
-def fixture_testblockedwells(testpath):
-    well_files = [join(testpath, "wells", "reek", "1", "OP_1.bw")]
+def fixture_testblockedwells(testdata_path):
+    well_files = [join(testdata_path, "wells", "reek", "1", "OP_1.bw")]
     return xtgeo.blockedwells_from_files(well_files)
 
 
@@ -51,11 +48,11 @@ def test_get_dataframe_allblockedwells(testblockedwells, snapshot, helpers):
     )
 
 
-def test_quickplot_blockedwells(tmpdir, testblockedwells, generate_plot):
+def test_quickplot_blockedwells(tmp_path, testblockedwells, generate_plot):
     """Import blockedwells from file to BlockedWells and quick plot."""
     if not generate_plot:
         pytest.skip()
-    testblockedwells.quickplot(filename=join(tmpdir, "quickblockedwells.png"))
+    testblockedwells.quickplot(filename=tmp_path / "quickblockedwells.png")
 
 
 def test_wellintersections(snapshot, testblockedwells, helpers):

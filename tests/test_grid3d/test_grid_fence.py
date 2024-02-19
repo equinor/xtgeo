@@ -1,31 +1,21 @@
-# coding: utf-8
-
+import pathlib
 
 import pytest
 import xtgeo
 
-xtg = xtgeo.common.XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-REEKROOT = TPATH / "3dgrids/reek/REEK"
-WELL1 = TPATH / "wells/reek/1/OP_1.w"
-FENCE1 = TPATH / "polygons/reek/1/fence.pol"
-FENCE2 = TPATH / "polygons/reek/1/minifence.pol"
-
-# =============================================================================
-# Do tests
-# =============================================================================
+REEKROOT = pathlib.Path("3dgrids/reek/REEK")
+WELL1 = pathlib.Path("wells/reek/1/OP_1.w")
+FENCE1 = pathlib.Path("polygons/reek/1/fence.pol")
+FENCE2 = pathlib.Path("polygons/reek/1/minifence.pol")
 
 
-def test_randomline_fence_from_well(show_plot):
+def test_randomline_fence_from_well(show_plot, testdata_path):
     """Import ROFF grid with props and make fences"""
 
-    grd = xtgeo.grid_from_file(REEKROOT, fformat="eclipserun", initprops=["PORO"])
-    wll = xtgeo.well_from_file(WELL1, zonelogname="Zonelog")
+    grd = xtgeo.grid_from_file(
+        testdata_path / REEKROOT, fformat="eclipserun", initprops=["PORO"]
+    )
+    wll = xtgeo.well_from_file(testdata_path / WELL1, zonelogname="Zonelog")
 
     print(grd.describe(details=True))
 
@@ -51,13 +41,13 @@ def test_randomline_fence_from_well(show_plot):
         plt.show()
 
 
-def test_randomline_fence_from_polygon(show_plot):
+def test_randomline_fence_from_polygon(show_plot, testdata_path):
     """Import ROFF grid with props and make fence from polygons"""
 
     grd = xtgeo.grid_from_file(
-        REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"]
+        testdata_path / REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"]
     )
-    fence = xtgeo.polygons_from_file(FENCE1)
+    fence = xtgeo.polygons_from_file(testdata_path / FENCE1)
 
     # get the polygons
     fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
@@ -88,13 +78,13 @@ def test_randomline_fence_from_polygon(show_plot):
         plt.show()
 
 
-def test_randomline_fence_calczminzmax():
+def test_randomline_fence_calczminzmax(testdata_path):
     """Import ROFF grid with props and make fence from polygons, zmin/zmax auto"""
 
     grd = xtgeo.grid_from_file(
-        REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"]
+        testdata_path / REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"]
     )
-    fence = xtgeo.polygons_from_file(FENCE1)
+    fence = xtgeo.polygons_from_file(testdata_path / FENCE1)
 
     fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
 

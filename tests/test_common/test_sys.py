@@ -1,10 +1,7 @@
 import hashlib
 
 import pytest
-import xtgeo
 from xtgeo.common.sys import generic_hash
-
-xtg = xtgeo.XTGeoDialog()
 
 
 def test_generic_hash():

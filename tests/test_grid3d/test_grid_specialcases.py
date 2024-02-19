@@ -5,34 +5,29 @@
 
 The tests where made on resolving issues #873, #874
 """
+
+import pathlib
+
 import pytest
 import xtgeo
 
-xtg = xtgeo.XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-SPE9 = TPATH / "3dgrids/bench_spe9"
+SPE9 = pathlib.Path("3dgrids/bench_spe9")
 SPE9_ROOT = SPE9 / "BENCH_SPE9"
 SPE9_INITS = ["PORO", "PERMX"]
 SPE9_RESTARTS = ["PRESSURE", "SWAT", "SOIL"]
 SPE9_DATES = [19901028, 19901117]
 
-
-IXH = TPATH / "3dgrids/ix_hist"
+IXH = pathlib.Path("3dgrids/ix_hist")
 IXH_ROOT = IXH / "IX_HIST"
 IXH_INITS = ["PORO", "PERMX"]
 IXH_RESTARTS = ["PRESSURE", "SWAT", "SOIL"]
 IXH_DATES = [19980201, 19980301]
 
 
-def test_grid_gridprops_spe9():
+def test_grid_gridprops_spe9(testdata_path):
     """Test BENCH_SPE9, which has restart that does not start with SEQNUM."""
     grd = xtgeo.grid_from_file(
-        SPE9_ROOT,
+        testdata_path / SPE9_ROOT,
         fformat="eclipserun",
         initprops=SPE9_INITS,
         restartprops=SPE9_RESTARTS,
@@ -44,10 +39,10 @@ def test_grid_gridprops_spe9():
     assert dataframe.loc[8999, "PERMX"] == pytest.approx(47.053421)
 
 
-def test_grid_gridprops_ixh():
+def test_grid_gridprops_ixh(testdata_path):
     """Test IX_HIST, which may have issues (as most IX cases...)."""
     grd = xtgeo.grid_from_file(
-        IXH_ROOT,
+        testdata_path / IXH_ROOT,
         fformat="eclipserun",
         initprops=IXH_INITS,
         restartprops=IXH_RESTARTS,

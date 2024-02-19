@@ -22,9 +22,9 @@ def test_from_simple_surface():
     pd.testing.assert_frame_equal(poi2.get_dataframe(), surf.get_dataframe())
 
 
-def test_init_with_surface_classmethod(testpath):
+def test_init_with_surface_classmethod(testdata_path):
     """Initialise points object with surface instance."""
-    surf = xtgeo.surface_from_file(testpath / SURFACE)
+    surf = xtgeo.surface_from_file(testdata_path / SURFACE)
     poi = xtgeo.points_from_surface(surf)
 
     poi.zname = "VALUES"

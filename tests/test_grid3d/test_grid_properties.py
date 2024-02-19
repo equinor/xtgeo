@@ -1,7 +1,7 @@
 """Testing: test_grid_operations"""
 
 import io
-import sys
+import pathlib
 
 import hypothesis.strategies as st
 import pytest
@@ -15,21 +15,17 @@ from .grid_generator import xtgeo_grids
 from .gridprop_generator import grid_properties as gridproperties_elements, keywords
 
 xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    sys.exit(-9)
-
-TPATH = xtg.testpathobj
-
 logger = xtg.basiclogger(__name__)
 
-GFILE1 = TPATH / "3dgrids/reek/REEK.EGRID"
-IFILE1 = TPATH / "3dgrids/reek/REEK.INIT"
-RFILE1 = TPATH / "3dgrids/reek/REEK.UNRST"
-RFILE2 = TPATH / "3dgrids/simpleb8/E100_3LETTER_TRACER.UNRST"  # has kword with spaces
-SPEFILE1 = TPATH / "3dgrids/bench_spe9/BENCH_SPE9.UNRST"
+GFILE1 = pathlib.Path("3dgrids/reek/REEK.EGRID")
+IFILE1 = pathlib.Path("3dgrids/reek/REEK.INIT")
+RFILE1 = pathlib.Path("3dgrids/reek/REEK.UNRST")
+RFILE2 = pathlib.Path(
+    "3dgrids/simpleb8/E100_3LETTER_TRACER.UNRST"
+)  # has kword with spaces
+SPEFILE1 = pathlib.Path("3dgrids/bench_spe9/BENCH_SPE9.UNRST")
 
-XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
+XFILE2 = pathlib.Path("3dgrids/reek/reek_grd_w_props.roff")
 
 
 @st.composite
@@ -70,11 +66,11 @@ def test_gridproperties_import_date_does_not_exist(tmp_path):
         )
 
 
-def test_gridproperties_iter():
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
+def test_gridproperties_iter(testdata_path):
+    g = xtgeo.grid_from_file(testdata_path / GFILE1, fformat="egrid")
 
     gps = xtgeo.gridproperties_from_file(
-        IFILE1, fformat="init", names=["PORO", "PORV"], grid=g
+        testdata_path / IFILE1, fformat="init", names=["PORO", "PORV"], grid=g
     )
 
     count = 0
@@ -125,15 +121,15 @@ def test_gridproperties_invalid_format(grid_property):
         xtgeo.gridproperties_from_file(buff, fformat="segy")
 
 
-def test_scan_dates():
+def test_scan_dates(testdata_path):
     """A static method to scan dates in a RESTART file"""
     t1 = xtg.timer()
-    assert GridProperties.scan_dates(RFILE2) == [(0, 20220101)]
+    assert GridProperties.scan_dates(testdata_path / RFILE2) == [(0, 20220101)]
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
 
     t1 = xtg.timer()
-    assert GridProperties.scan_dates(RFILE1) == [
+    assert GridProperties.scan_dates(testdata_path / RFILE1) == [
         (0, 19991201),
         (1, 20000101),
         (2, 20000201),
@@ -153,7 +149,7 @@ def test_scan_dates():
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
     t1 = xtg.timer()
-    assert GridProperties.scan_dates(SPEFILE1) == [
+    assert GridProperties.scan_dates(testdata_path / SPEFILE1) == [
         (0, 19900101),
         (1, 19900102),
         (2, 19900103),
@@ -195,20 +191,22 @@ def test_scan_dates():
     logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
 
 
-def test_scan_dates_invalid_file():
+def test_scan_dates_invalid_file(testdata_path):
     """Raise an error before trying to scan a non-existent file."""
     with pytest.raises(ValueError, match="does not exist"):
-        GridProperties.scan_dates(TPATH / "notafile.UNRST")
+        GridProperties.scan_dates(testdata_path / pathlib.Path("notafile.UNRST"))
 
 
-def test_dates_from_restart():
+def test_dates_from_restart(testdata_path):
     """A simpler static method to scan dates in a RESTART file"""
     t1 = xtg.timer()
-    assert GridProperties.scan_dates(RFILE2, datesonly=True) == [20220101]
+    assert GridProperties.scan_dates(testdata_path / RFILE2, datesonly=True) == [
+        20220101
+    ]
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
     t1 = xtg.timer()
-    assert GridProperties.scan_dates(RFILE1, datesonly=True) == [
+    assert GridProperties.scan_dates(testdata_path / RFILE1, datesonly=True) == [
         19991201,
         20000101,
         20000201,
@@ -228,7 +226,7 @@ def test_dates_from_restart():
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
     t1 = xtg.timer()
-    assert GridProperties.scan_dates(SPEFILE1, datesonly=True) == [
+    assert GridProperties.scan_dates(testdata_path / SPEFILE1, datesonly=True) == [
         19900101,
         19900102,
         19900103,
@@ -270,10 +268,10 @@ def test_dates_from_restart():
     logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
 
 
-def test_scan_keywords():
+def test_scan_keywords(testdata_path):
     """A static method to scan quickly keywords in a RESTART/INIT/*GRID file"""
     t1 = xtg.timer()
-    df = GridProperties.scan_keywords(RFILE2, dataframe=True)
+    df = GridProperties.scan_keywords(testdata_path / RFILE2, dataframe=True)
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
     assert df.shape == (36, 4)
@@ -282,7 +280,7 @@ def test_scan_keywords():
     assert df.loc[35, "KEYWORD"] == "ENDSOL"
 
     t1 = xtg.timer()
-    df = GridProperties.scan_keywords(RFILE1, dataframe=True)
+    df = GridProperties.scan_keywords(testdata_path / RFILE1, dataframe=True)
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
     assert df.shape == (627, 4)
@@ -292,7 +290,7 @@ def test_scan_keywords():
     assert df.loc[626, "KEYWORD"] == "ENDSOL"
 
     t1 = xtg.timer()
-    df = GridProperties.scan_keywords(SPEFILE1, dataframe=True)
+    df = GridProperties.scan_keywords(testdata_path / SPEFILE1, dataframe=True)
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
     assert df.shape == (3061, 4)
@@ -302,23 +300,23 @@ def test_scan_keywords():
     assert df.loc[3060, "KEYWORD"] == "ENDSOL"
 
 
-def test_scan_ecl_keywords_with_spaces():
+def test_scan_ecl_keywords_with_spaces(testdata_path):
     """Allow and preserve spacing in keywords from Eclipse RESTART file"""
-    df = GridProperties.scan_keywords(RFILE2, dataframe=True)
+    df = GridProperties.scan_keywords(testdata_path / RFILE2, dataframe=True)
 
     assert df.loc[12, "KEYWORD"] == "W2 F"
 
 
-def test_scan_keywords_invalid_file():
+def test_scan_keywords_invalid_file(testdata_path):
     """Raise an error before trying to scan a non-existent file."""
     with pytest.raises(ValueError, match="does not exist"):
-        GridProperties.scan_keywords(TPATH / "notafile.UNRST")
+        GridProperties.scan_keywords(testdata_path / pathlib.Path("notafile.UNRST"))
 
 
-def test_scan_keywords_roff_as_tuple_list():
+def test_scan_keywords_roff_as_tuple_list(testdata_path):
     """A static method to scan quickly keywords in a ROFF file"""
     t1 = xtg.timer()
-    keywords = GridProperties.scan_keywords(XFILE2, fformat="roff")
+    keywords = GridProperties.scan_keywords(testdata_path / XFILE2, fformat="roff")
     t2 = xtg.timer(t1)
     logger.info("Keywords scanned in %s seconds", t2)
     assert keywords[0] == ("filedata!byteswaptest", "int", 1, 111)
@@ -326,10 +324,12 @@ def test_scan_keywords_roff_as_tuple_list():
     logger.info(keywords)
 
 
-def test_scan_keywords_roff():
+def test_scan_keywords_roff(testdata_path):
     """A static method to scan quickly keywords in a ROFF file"""
     t1 = xtg.timer()
-    df = GridProperties.scan_keywords(XFILE2, dataframe=True, fformat="roff")
+    df = GridProperties.scan_keywords(
+        testdata_path / XFILE2, dataframe=True, fformat="roff"
+    )
     t2 = xtg.timer(t1)
     logger.info("Keywords scanned in %s seconds", t2)
     assert tuple(df.iloc[0]) == ("filedata!byteswaptest", "int", 1, 111)
@@ -337,15 +337,15 @@ def test_scan_keywords_roff():
     logger.info(df)
 
 
-def test_get_dataframe():
+def test_get_dataframe(testdata_path):
     """Get a Pandas dataframe from the gridproperties"""
 
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(testdata_path / GFILE1, fformat="egrid")
 
     names = ["SOIL", "SWAT", "PRESSURE"]
     dates = [19991201]
     x = xtgeo.gridproperties_from_file(
-        RFILE1, fformat="unrst", names=names, dates=dates, grid=g
+        testdata_path / RFILE1, fformat="unrst", names=names, dates=dates, grid=g
     )
     df = x.get_dataframe(activeonly=True, ijk=True, xyz=False)
 
@@ -355,12 +355,12 @@ def test_get_dataframe():
     assert df["PRESSURE_19991201"].mean() == pytest.approx(334.523, abs=0.005)
 
 
-def test_get_dataframe_active_only():
+def test_get_dataframe_active_only(testdata_path):
     """Get a Pandas dataframe from the gridproperties"""
 
-    grid = xtgeo.grid_from_file(GFILE1, fformat="egrid")
+    grid = xtgeo.grid_from_file(testdata_path / GFILE1, fformat="egrid")
     gps = xtgeo.gridproperties_from_file(
-        RFILE1,
+        testdata_path / RFILE1,
         fformat="unrst",
         names=["SOIL", "SWAT", "PRESSURE"],
         dates=[19991201],
@@ -374,11 +374,11 @@ def test_get_dataframe_active_only():
     assert (df == df2).all().all()
 
 
-def test_gridproperties_all_roff():
+def test_gridproperties_all_roff(testdata_path):
     """Read all gridproperties from ROFF binary format."""
 
     gps = xtgeo.gridproperties_from_file(
-        XFILE2,
+        testdata_path / XFILE2,
         fformat="roff",
         names="all",
     )
@@ -387,19 +387,19 @@ def test_gridproperties_all_roff():
         assert name in gps.names
 
 
-def test_gridproperties_read_roff_missing_name():
+def test_gridproperties_read_roff_missing_name(testdata_path):
     """Read gridproperties from ROFF binary format, with one key not present."""
 
     with pytest.raises(ValueError):
         gps = xtgeo.gridproperties_from_file(
-            XFILE2,
+            testdata_path / XFILE2,
             fformat="roff",
             names=["PORO", "EQLNUM", "NOTPRESENT"],
             strict=True,
         )
 
     gps = xtgeo.gridproperties_from_file(
-        XFILE2,
+        testdata_path / XFILE2,
         fformat="roff",
         names=["PORO", "EQLNUM", "NOTPRESENT"],
         strict=False,

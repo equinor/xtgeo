@@ -1,4 +1,4 @@
-from os.path import join
+import pathlib
 
 import numpy as np
 import numpy.ma as ma
@@ -12,23 +12,22 @@ xtg = XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
 
-TPATH = xtg.testpathobj
-ROFF1_GRID = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
-ROFF1_PROPS = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
+ROFF1_GRID = pathlib.Path("3dgrids/eme/1/emerald_hetero_grid.roff")
+ROFF1_PROPS = pathlib.Path("3dgrids/eme/1/emerald_hetero.roff")
 
 
 @pytest.mark.bigtest
-def test_hcpvfz1(tmpdir, generate_plot):
+def test_hcpvfz1(tmp_path, generate_plot, testdata_path):
     """HCPV thickness map."""
 
     # It is important that input are pure numpies, not masked
 
     logger.info("Name is %s", __name__)
     logger.info("Import roff...")
-    grd = xtgeo.grid_from_file(ROFF1_GRID, fformat="roff")
+    grd = xtgeo.grid_from_file(testdata_path / ROFF1_GRID, fformat="roff")
 
-    st = xtgeo.gridproperty_from_file(ROFF1_PROPS, name="Oil_HCPV")
-    to = xtgeo.gridproperty_from_file(ROFF1_PROPS, name="Oil_bulk")
+    st = xtgeo.gridproperty_from_file(testdata_path / ROFF1_PROPS, name="Oil_HCPV")
+    to = xtgeo.gridproperty_from_file(testdata_path / ROFF1_PROPS, name="Oil_bulk")
 
     # get the dz and the coordinates, with no mask (ie get value for outside)
     dz = grd.get_dz(asmasked=False)
@@ -117,5 +116,5 @@ def test_hcpvfz1(tmpdir, generate_plot):
     logger.info("Speed zoneavg coarsen 2 is %s", t2)
 
     if generate_plot:
-        hcmap.quickplot(filename=join(tmpdir, "quickplot_hcpv.png"))
-        hcmap2.quickplot(filename=join(tmpdir, "quickplot_hcpv_zavg_coarsen.png"))
+        hcmap.quickplot(filename=tmp_path / "quickplot_hcpv.png")
+        hcmap2.quickplot(filename=tmp_path / "quickplot_hcpv_zavg_coarsen.png")

@@ -7,6 +7,7 @@ Cf. RegularSurface().get_val1d() method.
 
 See numpy bug reported here: https://github.com/numpy/numpy/issues/22912
 """
+
 import numpy as np
 from packaging.version import parse as versionparse
 

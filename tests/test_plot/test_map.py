@@ -1,5 +1,4 @@
-import sys
-from os.path import join
+import pathlib
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -8,25 +7,15 @@ from xtgeo.plot import Map
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    sys.exit(-9)
-
-TPATH = xtg.testpathobj
-
-# =========================================================================
-# Do tests
-# =========================================================================
+SFILE1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
+PFILE1 = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.pol")
+SFILE2 = pathlib.Path("surfaces/reek/1/reek_perm_lay1.gri")
 
 
-SFILE1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
-PFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.pol"
-SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
-
-
-def test_simple_plot(tmpdir, generate_plot):
+def test_simple_plot(tmp_path, generate_plot, testdata_path):
     """Test as simple map plot only making an instance++ and plot."""
 
-    mysurf = xtgeo.surface_from_file(SFILE1)
+    mysurf = xtgeo.surface_from_file(testdata_path / SFILE1)
 
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
@@ -35,15 +24,15 @@ def test_simple_plot(tmpdir, generate_plot):
     myplot.plot_surface(mysurf)
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "map_simple.png"), last=True)
+        myplot.savefig(tmp_path / "map_simple.png", last=True)
     else:
         myplot.close()
 
 
-def test_map_plot_with_points(tmpdir, generate_plot):
+def test_map_plot_with_points(tmp_path, generate_plot, testdata_path):
     """Test as simple map plot with underlying points."""
 
-    mysurf = xtgeo.surface_from_file(SFILE1)
+    mysurf = xtgeo.surface_from_file(testdata_path / SFILE1)
 
     mypoints = xtgeo.points_from_surface(mysurf)
 
@@ -59,17 +48,17 @@ def test_map_plot_with_points(tmpdir, generate_plot):
     myplot.plot_points(mypoints)
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "map_with_points.png"), last=True)
+        myplot.savefig(tmp_path / "map_with_points.png", last=True)
     else:
         myplot.close()
 
 
-def test_more_features_plot(tmpdir, generate_plot):
+def test_more_features_plot(tmp_path, generate_plot, testdata_path):
     """Map with some more features added, such as label rotation."""
 
-    mysurf = xtgeo.surface_from_file(SFILE1)
+    mysurf = xtgeo.surface_from_file(testdata_path / SFILE1)
 
-    myfaults = xtgeo.polygons_from_file(PFILE1)
+    myfaults = xtgeo.polygons_from_file(testdata_path / PFILE1)
 
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
@@ -80,15 +69,15 @@ def test_more_features_plot(tmpdir, generate_plot):
     myplot.plot_faults(myfaults)
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "map_more1.png"), last=True)
+        myplot.savefig(tmp_path / "map_more1.png", last=True)
     else:
         myplot.close()
 
 
-def test_perm_logarithmic_map(tmpdir, generate_plot):
+def test_perm_logarithmic_map(tmp_path, generate_plot, testdata_path):
     """Map with PERM, log scale."""
 
-    mysurf = xtgeo.surface_from_file(SFILE2)
+    mysurf = xtgeo.surface_from_file(testdata_path / SFILE2)
 
     myplot = Map()
     myplot.canvas(title="PERMX normal scale")
@@ -98,6 +87,6 @@ def test_perm_logarithmic_map(tmpdir, generate_plot):
     )
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "permx_normal.png"), last=True)
+        myplot.savefig(tmp_path / "permx_normal.png", last=True)
     else:
         myplot.close()

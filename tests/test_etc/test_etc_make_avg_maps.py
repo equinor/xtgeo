@@ -1,4 +1,4 @@
-from os.path import join
+import pathlib
 
 import numpy as np
 import pytest
@@ -10,27 +10,22 @@ from xtgeo.surface import RegularSurface
 xtg = XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
-TPATH = xtg.testpathobj
 
-# ======================================================================================
-# This tests a combination of methods, in order to produce maps of HC thickness
-# ======================================================================================
-# gfile1 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
-# ifile1 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
+GFILE2 = pathlib.Path("3dgrids/reek/REEK.EGRID")
+IFILE2 = pathlib.Path("3dgrids/reek/REEK.INIT")
+RFILE2 = pathlib.Path("3dgrids/reek/REEK.UNRST")
 
-GFILE2 = TPATH / "3dgrids/reek/REEK.EGRID"
-IFILE2 = TPATH / "3dgrids/reek/REEK.INIT"
-RFILE2 = TPATH / "3dgrids/reek/REEK.UNRST"
-
-FFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.zmap"
+FFILE1 = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 
 
-def test_avg02(tmpdir, generate_plot):
+def test_avg02(tmp_path, generate_plot, testdata_path):
     """Make average map from Reek Eclipse."""
-    grd = xtgeo.grid_from_file(GFILE2, fformat="egrid")
+    grd = xtgeo.grid_from_file(testdata_path / GFILE2, fformat="egrid")
 
     # get the poro
-    po = xtgeo.gridproperty_from_file(IFILE2, fformat="init", name="PORO", grid=grd)
+    po = xtgeo.gridproperty_from_file(
+        testdata_path / IFILE2, fformat="init", name="PORO", grid=grd
+    )
 
     # get the dz and the coordinates
     dz = grd.get_dz(asmasked=False)
@@ -73,25 +68,27 @@ def test_avg02(tmpdir, generate_plot):
     )
 
     # add the faults in plot
-    fau = xtgeo.polygons_from_file(FFILE1, fformat="zmap")
+    fau = xtgeo.polygons_from_file(testdata_path / FFILE1, fformat="zmap")
     fspec = {"faults": fau}
 
     if generate_plot:
         avgmap.quickplot(
-            filename=join(tmpdir, "tmp_poro2.png"), xlabelrotation=30, faults=fspec
+            filename=tmp_path / "tmp_poro2.png", xlabelrotation=30, faults=fspec
         )
-        avgmap.to_file(join(tmpdir, "tmp.poro.gri"), fformat="irap_ascii")
+        avgmap.to_file(tmp_path / "tmp.poro.gri", fformat="irap_ascii")
 
     logger.info(avgmap.values.mean())
     assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)
 
 
-def test_avg03(tmpdir, generate_plot):
+def test_avg03(tmp_path, generate_plot, testdata_path):
     """Make average map from Reek Eclipse, speed up by zone_avgrd."""
-    grd = xtgeo.grid_from_file(GFILE2, fformat="egrid")
+    grd = xtgeo.grid_from_file(testdata_path / GFILE2, fformat="egrid")
 
     # get the poro
-    po = xtgeo.gridproperty_from_file(IFILE2, fformat="init", name="PORO", grid=grd)
+    po = xtgeo.gridproperty_from_file(
+        testdata_path / IFILE2, fformat="init", name="PORO", grid=grd
+    )
 
     # get the dz and the coordinates
     dz = grd.get_dz(asmasked=False)
@@ -136,14 +133,14 @@ def test_avg03(tmpdir, generate_plot):
     )
 
     # add the faults in plot
-    fau = xtgeo.polygons_from_file(FFILE1, fformat="zmap")
+    fau = xtgeo.polygons_from_file(testdata_path / FFILE1, fformat="zmap")
     fspec = {"faults": fau}
 
     if generate_plot:
         avgmap.quickplot(
-            filename=join(tmpdir, "tmp_poro3.png"), xlabelrotation=30, faults=fspec
+            filename=tmp_path / "tmp_poro3.png", xlabelrotation=30, faults=fspec
         )
-    avgmap.to_file(join(tmpdir, "tmp.poro3.gri"), fformat="irap_ascii")
+    avgmap.to_file(tmp_path / "tmp.poro3.gri", fformat="irap_ascii")
 
     logger.info(avgmap.values.mean())
     assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)

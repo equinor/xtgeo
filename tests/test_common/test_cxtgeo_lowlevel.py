@@ -1,11 +1,9 @@
 """Test some basic cxtgeo functions."""
+
 import numpy as np
 import pytest
 import xtgeo
 from xtgeo import _cxtgeo
-
-xtg = xtgeo.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
 
 
 @pytest.mark.parametrize(

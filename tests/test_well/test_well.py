@@ -1,4 +1,4 @@
-from os.path import join
+import pathlib
 
 import numpy as np
 import pandas as pd
@@ -11,37 +11,31 @@ from xtgeo.xyz import Polygons
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
+WFILE = pathlib.Path("wells/reek/1/OP_1.w")
+WFILE2 = pathlib.Path("wells/reek/2/OP_6a.w")
+WFILE_HOLES = pathlib.Path("wells/reek/1/OP_1_zholes.w")
+WFILES = pathlib.Path("wells/reek/1/*")
 
-TPATH = xtg.testpathobj
+WELL1 = pathlib.Path("wells/battle/1/WELL09.rmswell")
+WELL2 = pathlib.Path("wells/battle/1/WELL36.rmswell")
+WELL3 = pathlib.Path("wells/battle/1/WELL10.rmswell")
 
-WFILE = join(TPATH, "wells/reek/1/OP_1.w")
-WFILE2 = join(TPATH, "wells/reek/2/OP_6a.w")
-WFILE_HOLES = join(TPATH, "wells/reek/1/OP_1_zholes.w")
-WFILES = str(TPATH / "wells/reek/1/*")
+WELL4 = pathlib.Path("wells/drogon/1/55_33-1.rmswell")
 
-
-WELL1 = join(TPATH, "wells/battle/1/WELL09.rmswell")
-WELL2 = join(TPATH, "wells/battle/1/WELL36.rmswell")
-WELL3 = join(TPATH, "wells/battle/1/WELL10.rmswell")
-
-WELL4 = join(TPATH, "wells/drogon/1/55_33-1.rmswell")
-
-SURF1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
-SURF2 = TPATH / "surfaces/reek/1/basereek_rota.gri"
+SURF1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
+SURF2 = pathlib.Path("surfaces/reek/1/basereek_rota.gri")
 
 
 @pytest.fixture(name="loadwell1")
-def fixture_loadwell1():
+def fixture_loadwell1(testdata_path):
     """Fixture for loading a well (pytest setup)."""
-    return xtgeo.well_from_file(WFILE)
+    return xtgeo.well_from_file(testdata_path / WFILE)
 
 
 @pytest.fixture(name="loadwell3")
-def fixture_loadwell3():
+def fixture_loadwell3(testdata_path):
     """Fixture for loading a well (pytest setup)."""
-    return xtgeo.well_from_file(WELL3)
+    return xtgeo.well_from_file(testdata_path / WELL3)
 
 
 @pytest.fixture(name="simple_well")
@@ -134,34 +128,40 @@ def test_import_long_well(loadwell3):
     assert dfr["Q_AZI"][27] == pytest.approx(91.856158, abs=0.0001)
 
 
-def test_import_well_selected_logs():
+def test_import_well_selected_logs(testdata_path):
     """Import a well but restrict on lognames"""
 
-    mywell = xtgeo.well_from_file(WELL1, lognames="all")
+    mywell = xtgeo.well_from_file(testdata_path / WELL1, lognames="all")
     assert "ZONELOG" in mywell.get_dataframe()
 
-    mywell = xtgeo.well_from_file(WELL1, lognames="GR")
+    mywell = xtgeo.well_from_file(testdata_path / WELL1, lognames="GR")
     assert "ZONELOG" not in mywell.get_dataframe()
 
-    mywell = xtgeo.well_from_file(WELL1, lognames=["GR"])
+    mywell = xtgeo.well_from_file(testdata_path / WELL1, lognames=["GR"])
     assert "ZONELOG" not in mywell.get_dataframe()
 
-    mywell = xtgeo.well_from_file(WELL1, lognames=["DUMMY"])
+    mywell = xtgeo.well_from_file(testdata_path / WELL1, lognames=["DUMMY"])
     assert "ZONELOG" not in mywell.get_dataframe()
     assert "GR" not in mywell.get_dataframe()
 
     with pytest.raises(ValueError) as msg:
         logger.info(msg)
-        mywell = xtgeo.well_from_file(WELL1, lognames=["DUMMY"], lognames_strict=True)
+        mywell = xtgeo.well_from_file(
+            testdata_path / WELL1, lognames=["DUMMY"], lognames_strict=True
+        )
 
-    mywell = xtgeo.well_from_file(WELL1, mdlogname="GR")
+    mywell = xtgeo.well_from_file(testdata_path / WELL1, mdlogname="GR")
     assert mywell.mdlogname == "GR"
 
     with pytest.raises(ValueError) as msg:
-        mywell = xtgeo.well_from_file(WELL1, mdlogname="DUMMY", strict=True)
+        mywell = xtgeo.well_from_file(
+            testdata_path / WELL1, mdlogname="DUMMY", strict=True
+        )
         logger.info(msg)
 
-    mywell = xtgeo.well_from_file(WELL1, mdlogname="DUMMY", strict=False)
+    mywell = xtgeo.well_from_file(
+        testdata_path / WELL1, mdlogname="DUMMY", strict=False
+    )
     assert mywell.mdlogname is None
 
 
@@ -648,55 +648,55 @@ def test_rescale_well(loadwell1):
     assert df1["Poro"].mean() == pytest.approx(df2["Poro"].mean(), abs=0.001)
 
 
-def test_rescale_well_tvdrange(tmpdir):
+def test_rescale_well_tvdrange(tmp_path, testdata_path):
     """Rescale (resample) a well to a finer increment within a TVD range"""
 
-    mywell = xtgeo.well_from_file(WELL1)
-    mywell.to_file(join(tmpdir, "wll1_pre_rescale.w"))
+    mywell = xtgeo.well_from_file(testdata_path / WELL1)
+    mywell.to_file(tmp_path / "wll1_pre_rescale.w")
     gr_avg1 = mywell.get_dataframe()["GR"].mean()
     mywell.rescale(delta=2, tvdrange=(1286, 1333))
-    mywell.to_file(join(tmpdir, "wll1_post_rescale.w"))
+    mywell.to_file(tmp_path / "wll1_post_rescale.w")
     gr_avg2 = mywell.get_dataframe()["GR"].mean()
     assert gr_avg1 == pytest.approx(gr_avg2, abs=0.9)
 
-    mywell1 = xtgeo.well_from_file(WELL1)
+    mywell1 = xtgeo.well_from_file(testdata_path / WELL1)
     mywell1.rescale(delta=2)
 
-    mywell2 = xtgeo.well_from_file(WELL1)
+    mywell2 = xtgeo.well_from_file(testdata_path / WELL1)
     mywell2.rescale(delta=2, tvdrange=(0, 9999))
     assert mywell1.get_dataframe()["GR"].mean() == mywell2.get_dataframe()["GR"].mean()
     assert mywell1.get_dataframe()["GR"].all() == mywell2.get_dataframe()["GR"].all()
 
 
-def test_rescale_well_tvdrange_coarsen_upper(tmpdir):
+def test_rescale_well_tvdrange_coarsen_upper(tmp_path, testdata_path):
     """Rescale (resample) a well to a coarser increment in top part"""
 
-    mywell = xtgeo.well_from_file(WELL1)
+    mywell = xtgeo.well_from_file(testdata_path / WELL1)
     mywell.rescale(delta=20, tvdrange=(0, 1200))
-    mywell.to_file(join(tmpdir, "wll1_rescale_coarsen.w"))
+    mywell.to_file(tmp_path / "wll1_rescale_coarsen.w")
     assert mywell.get_dataframe().iat[10, 3] == pytest.approx(365.8254, abs=0.1)
 
 
-def test_fence():
+def test_fence(testdata_path):
     """Return a resampled fence."""
 
-    mywell = xtgeo.well_from_file(WFILE)
+    mywell = xtgeo.well_from_file(testdata_path / WFILE)
     pline = mywell.get_fence_polyline(nextend=10, tvdmin=1000)
     assert pline.shape == (31, 5)
 
 
-def test_fence2():
+def test_fence2(testdata_path):
     """Return a resampled fence, another dataset that troubled in scipy interpd."""
-    mywell = xtgeo.well_from_file(WFILE2)
+    mywell = xtgeo.well_from_file(testdata_path / WFILE2)
     pline = mywell.get_fence_polyline(tvdmin=0, asnumpy=False)
     assert pline.get_dataframe().shape == (137, 6)
     assert pline.get_dataframe().at[136, "H_CUMLEN"] == pytest.approx(2713.7405)
 
 
-def test_fence_as_polygons():
+def test_fence_as_polygons(testdata_path):
     """Return a resampled fence as Polygons."""
 
-    mywell = xtgeo.well_from_file(WFILE)
+    mywell = xtgeo.well_from_file(testdata_path / WFILE)
     pline = mywell.get_fence_polyline(nextend=3, tvdmin=1000, asnumpy=False)
 
     assert isinstance(pline, Polygons)
@@ -704,10 +704,10 @@ def test_fence_as_polygons():
     assert dfr["X_UTME"][5] == pytest.approx(462569.00, abs=2.0)
 
 
-def test_fence_as_polygons_drogon():
+def test_fence_as_polygons_drogon(testdata_path):
     """Return a resampled fence as Polygons for a 100% vertical."""
 
-    mywell = xtgeo.well_from_file(WELL4)
+    mywell = xtgeo.well_from_file(testdata_path / WELL4)
     pline = mywell.get_fence_polyline(
         nextend=3, tvdmin=1000, sampling=20, asnumpy=False
     )
@@ -717,49 +717,49 @@ def test_fence_as_polygons_drogon():
     assert dfr.H_CUMLEN.max() == pytest.approx(62.858, abs=0.01)
 
 
-def test_get_zonation_points():
+def test_get_zonation_points(testdata_path):
     """Get zonations points (zone tops)"""
 
-    mywell = xtgeo.well_from_file(WFILE, zonelogname="Zonelog")
+    mywell = xtgeo.well_from_file(testdata_path / WFILE, zonelogname="Zonelog")
     ppx = mywell.get_zonation_points()
     assert ppx.loc[2, "TopName"] == "TopBelow_TopLowerReek"
 
 
-def test_get_zone_interval():
+def test_get_zone_interval(testdata_path):
     """Get zonations points (zone tops)"""
 
-    mywell = xtgeo.well_from_file(WFILE, zonelogname="Zonelog")
+    mywell = xtgeo.well_from_file(testdata_path / WFILE, zonelogname="Zonelog")
     line = mywell.get_zone_interval(3)
 
     assert line.iat[0, 0] == pytest.approx(462698.33299, abs=0.001)
     assert line.iat[-1, 2] == pytest.approx(1643.1618, abs=0.001)
 
 
-def test_remove_parallel_parts():
+def test_remove_parallel_parts(testdata_path):
     """Remove the part of the well thst is parallel with some other"""
 
-    well1 = xtgeo.well_from_file(WELL1)
-    well2 = xtgeo.well_from_file(WELL2)
+    well1 = xtgeo.well_from_file(testdata_path / WELL1)
+    well2 = xtgeo.well_from_file(testdata_path / WELL2)
 
     well1.truncate_parallel_path(well2)
 
     assert well1.nrow == 3290
 
 
-def test_get_zonation_holes():
+def test_get_zonation_holes(testdata_path):
     """get a report of holes in the zonation, some samples with -999"""
 
-    mywell = xtgeo.well_from_file(WFILE_HOLES, zonelogname="Zonelog")
+    mywell = xtgeo.well_from_file(testdata_path / WFILE_HOLES, zonelogname="Zonelog")
     report = mywell.report_zonation_holes()
 
     assert report.iat[0, 0] == 4193  # first value for INDEX
     assert report.iat[1, 3] == 1609.5800  # second value for Z
 
 
-def test_get_filled_dataframe():
+def test_get_filled_dataframe(testdata_path):
     """Get a filled DataFrame"""
 
-    mywell = xtgeo.well_from_file(WFILE)
+    mywell = xtgeo.well_from_file(testdata_path / WFILE)
 
     df1 = mywell.get_dataframe()
 
@@ -772,13 +772,13 @@ def test_get_filled_dataframe():
     assert df2.iat[4860, 6] == -888
 
 
-def test_create_surf_distance_log(loadwell1):
+def test_create_surf_distance_log(loadwell1, testdata_path):
     """Test making a log which is distance to a surface."""
 
     well = loadwell1
 
-    surf1 = xtgeo.surface_from_file(SURF1)
-    surf2 = xtgeo.surface_from_file(SURF2)
+    surf1 = xtgeo.surface_from_file(testdata_path / SURF1)
+    surf2 = xtgeo.surface_from_file(testdata_path / SURF2)
 
     well.create_surf_distance_log(surf1, name="DIST_TOP")
     well.create_surf_distance_log(surf2, name="DIST_BASE")
@@ -792,7 +792,7 @@ def test_create_surf_distance_log(loadwell1):
     assert np.isnan(well.get_dataframe().loc[0, "DIST_BASE_NEW"])
 
 
-def test_create_surf_distance_log_more(tmp_path, loadwell1):
+def test_create_surf_distance_log_more(tmp_path, loadwell1, testdata_path):
     """Test making a log which is distance to a surface and do some operations.
 
     This is a prototype  exploring the possibility to run a check if zonelog is
@@ -805,8 +805,8 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
 
     well = loadwell1
 
-    surf1 = xtgeo.surface_from_file(SURF1)
-    surf2 = xtgeo.surface_from_file(SURF2)
+    surf1 = xtgeo.surface_from_file(testdata_path / SURF1)
+    surf2 = xtgeo.surface_from_file(testdata_path / SURF2)
 
     well.create_surf_distance_log(surf1, name="DIST_TOP")
     well.create_surf_distance_log(surf2, name="DIST_BASE")

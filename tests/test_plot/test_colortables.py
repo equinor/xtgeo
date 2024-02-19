@@ -1,4 +1,4 @@
-import sys
+import pathlib
 
 import xtgeo.plot._colortables as ct
 from xtgeo.common import XTGeoDialog
@@ -6,20 +6,11 @@ from xtgeo.common import XTGeoDialog
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    sys.exit(-9)
 
-TPATH = xtg.testpathobj
-
-# =========================================================================
-# Do tests
-# =========================================================================
-
-
-def test_readfromfile():
+def test_readfromfile(testdata_path):
     """Read color table from RMS file."""
 
-    cfile = TPATH / "etc/colortables/colfacies.txt"
+    cfile = testdata_path / pathlib.Path("etc/colortables/colfacies.txt")
 
     ctable = ct.colorsfromfile(cfile)
 

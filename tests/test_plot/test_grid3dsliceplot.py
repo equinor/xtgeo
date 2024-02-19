@@ -1,4 +1,4 @@
-import os
+import pathlib
 
 import pytest
 import xtgeo
@@ -8,27 +8,20 @@ from xtgeo.plot import Grid3DSlice
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg.testsetup():
-    raise SystemExit
-
-TPATH = xtg.testpathobj
-
-# =========================================================================
-# Do tests
-# =========================================================================
-
-USEFILE1 = TPATH / "3dgrids/reek/reek_sim_grid.roff"
-USEFILE2 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
-USEFILE3 = TPATH / "etc/colortables/rainbow_reverse.rmscolor"
+USEFILE1 = pathlib.Path("3dgrids/reek/reek_sim_grid.roff")
+USEFILE2 = pathlib.Path("3dgrids/reek/reek_sim_poro.roff")
+USEFILE3 = pathlib.Path("etc/colortables/rainbow_reverse.rmscolor")
 
 
 @pytest.mark.bigtest
-def test_slice_simple_layer(tmpdir, show_plot, generate_plot):
+def test_slice_simple_layer(tmp_path, show_plot, generate_plot, testdata_path):
     """Trigger XSection class, and do some simple things basically."""
     layslice = Grid3DSlice()
 
-    mygrid = xtgeo.grid_from_file(USEFILE1)
-    myprop = xtgeo.gridproperty_from_file(USEFILE2, grid=mygrid, name="PORO")
+    mygrid = xtgeo.grid_from_file(testdata_path / USEFILE1)
+    myprop = xtgeo.gridproperty_from_file(
+        testdata_path / USEFILE2, grid=mygrid, name="PORO"
+    )
 
     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 
@@ -47,5 +40,5 @@ def test_slice_simple_layer(tmpdir, show_plot, generate_plot):
         if show_plot:
             layslice.show()
         if generate_plot:
-            layslice.savefig(os.path.join(tmpdir, "layerslice_" + str(lay) + ".png"))
+            layslice.savefig(tmp_path / f"layerslice_{lay}.png")
         layslice.close()

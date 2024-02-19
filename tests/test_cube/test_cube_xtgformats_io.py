@@ -4,18 +4,12 @@ from os.path import join
 import pytest
 import xtgeo
 from numpy.testing import assert_allclose
-from xtgeo.common import XTGeoDialog
-
-xtg = XTGeoDialog()
-
-if not xtg.testsetup():
-    raise SystemExit
 
 
 @pytest.mark.benchmark(group="import/export")
-def test_benchmark_cube_export(benchmark, tmp_path, testpath):
+def test_benchmark_cube_export(benchmark, tmp_path, testdata_path):
     cube1 = xtgeo.cube_from_file(
-        join(testpath, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
+        join(testdata_path, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
     )
 
     fname = join(tmp_path, "syntseis_20030101_seismic_depth_stack.xtgrecube")
@@ -27,9 +21,9 @@ def test_benchmark_cube_export(benchmark, tmp_path, testpath):
 
 
 @pytest.mark.benchmark(group="import/export")
-def test_benchmark_cube_import(benchmark, testpath, tmp_path):
+def test_benchmark_cube_import(benchmark, testdata_path, tmp_path):
     cube1 = xtgeo.cube_from_file(
-        join(testpath, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
+        join(testdata_path, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
     )
 
     fname = join(tmp_path, "syntseis_20030101_seismic_depth_stack.xtgrecube")

@@ -24,9 +24,9 @@ POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
         (PFILE1C, "pol"),
     ],
 )
-def test_polygons_from_file_alternatives(testpath, filename, fformat):
-    polygons1 = xtgeo.polygons_from_file(testpath / filename, fformat=fformat)
-    polygons2 = xtgeo.polygons_from_file(testpath / filename)
+def test_polygons_from_file_alternatives(testdata_path, filename, fformat):
+    polygons1 = xtgeo.polygons_from_file(testdata_path / filename, fformat=fformat)
+    polygons2 = xtgeo.polygons_from_file(testdata_path / filename)
 
     pd.testing.assert_frame_equal(polygons1.get_dataframe(), polygons2.get_dataframe())
 
@@ -91,12 +91,12 @@ def test_polygons_from_attrs_not_ordereddict():
     assert mypol.get_dataframe()["POLY_ID"].values[2] == 1
 
 
-def test_import_zmap_and_xyz(testpath):
+def test_import_zmap_and_xyz(testdata_path):
     """Import XYZ polygons on ZMAP and XYZ format from file"""
 
-    mypol2a = xtgeo.polygons_from_file(testpath / PFILE1A, fformat="zmap")
-    mypol2b = xtgeo.polygons_from_file(testpath / PFILE1B)
-    mypol2c = xtgeo.polygons_from_file(testpath / PFILE1C)
+    mypol2a = xtgeo.polygons_from_file(testdata_path / PFILE1A, fformat="zmap")
+    mypol2b = xtgeo.polygons_from_file(testdata_path / PFILE1B)
+    mypol2c = xtgeo.polygons_from_file(testdata_path / PFILE1C)
 
     assert mypol2a.nrow == mypol2b.nrow
     assert mypol2b.nrow == mypol2c.nrow
@@ -107,10 +107,10 @@ def test_import_zmap_and_xyz(testpath):
         )
 
 
-def test_import_export_polygons(testpath, tmp_path):
+def test_import_export_polygons(testdata_path, tmp_path):
     """Import XYZ polygons from file. Modify, and export."""
 
-    mypoly = xtgeo.polygons_from_file(testpath / PFILE, fformat="xyz")
+    mypoly = xtgeo.polygons_from_file(testdata_path / PFILE, fformat="xyz")
 
     z0 = mypoly.get_dataframe()["Z_TVDSS"].values[0]
 
@@ -130,10 +130,10 @@ def test_import_export_polygons(testpath, tmp_path):
     )
 
 
-def test_polygon_boundary(testpath):
+def test_polygon_boundary(testdata_path):
     """Import XYZ polygons from file and test boundary function."""
 
-    mypoly = xtgeo.polygons_from_file(testpath / PFILE, fformat="xyz")
+    mypoly = xtgeo.polygons_from_file(testdata_path / PFILE, fformat="xyz")
 
     boundary = mypoly.get_boundary()
 
@@ -142,10 +142,10 @@ def test_polygon_boundary(testpath):
     assert boundary[5] == pytest.approx(2266.996338, abs=0.0001)
 
 
-def test_polygon_filter_byid(testpath):
+def test_polygon_filter_byid(testdata_path):
     """Filter a Polygon by a list of ID's"""
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET3)
 
     assert pol.get_dataframe()["POLY_ID"].iloc[0] == 0
     assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 3
@@ -153,27 +153,27 @@ def test_polygon_filter_byid(testpath):
     pol.filter_byid()
     assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 0
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET3)
     pol.filter_byid([1, 3])
 
     assert pol.get_dataframe()["POLY_ID"].iloc[0] == 1
     assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 3
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET3)
     pol.filter_byid(2)
 
     assert pol.get_dataframe()["POLY_ID"].iloc[0] == 2
     assert pol.get_dataframe()["POLY_ID"].iloc[-1] == 2
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET3)
     pol.filter_byid(99)  # not present; should remove all rows
     assert pol.nrow == 0
 
 
-def test_polygon_tlen_hlen(testpath):
+def test_polygon_tlen_hlen(testdata_path):
     """Test the tlen and hlen operations"""
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET3)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET3)
     pol.tlen()
     pol.hlen()
 
@@ -195,10 +195,10 @@ def test_polygon_tlen_hlen(testpath):
         (True, "cubic", 5335, 53),
     ],
 )
-def test_rescale_polygon(testpath, dorescale, kind, expectmax, expectlen):
+def test_rescale_polygon(testdata_path, dorescale, kind, expectmax, expectlen):
     """Take a polygons set and rescale/resample."""
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET4)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET4)
 
     if not dorescale:
         pol.name = "ORIG"
@@ -212,10 +212,10 @@ def test_rescale_polygon(testpath, dorescale, kind, expectmax, expectlen):
     assert pol.get_dataframe().shape == (expectlen, 6)
 
 
-def test_fence_from_polygon(testpath):
+def test_fence_from_polygon(testdata_path):
     """Test polygons get_fence method"""
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET2)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET2)
 
     df = pol.get_dataframe()[0:3]
 
@@ -332,10 +332,10 @@ def test_fence_from_more_slanted_polygon():
     assert fence.get_dataframe().H_DELTALEN.std() <= 0.001
 
 
-def test_rename_columns(testpath):
+def test_rename_columns(testdata_path):
     """Renaming xname, yname, zname"""
 
-    pol = xtgeo.polygons_from_file(testpath / POLSET2)
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET2)
     assert pol.xname == "X_UTME"
 
     pol.xname = "NEWX"
