@@ -520,6 +520,50 @@ def test_rox_get_modify_set_points_from_horizons(roxar_project):
 
 
 @pytest.mark.requires_roxar
+def test_rox_set_points_with_inconsistent_xyz_names(roxar_project):
+    """
+    Export points to a RMS project where the dataframe has another zname
+    than the zname attribute. This should fail.
+    """
+    poi = xtgeo.points_from_roxar(
+        roxar_project, SURFNAMES1[0], POINTSCAT1, stype="horizons"
+    )
+
+    df = poi.get_dataframe()
+    df.rename(columns={poi.zname: "Z"}, inplace=True)
+    poi.set_dataframe(df)
+
+    # inconsistency between z column name and zname attribute should fail
+    with pytest.raises(ValueError, match="One or all"):
+        poi.to_roxar(roxar_project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+
+
+@pytest.mark.requires_roxar
+def test_rox_set_points_with_nonstandard_xyz_names(roxar_project):
+    """Export points with nonstandard xyz names to RMS."""
+    poi = xtgeo.points_from_roxar(
+        roxar_project, SURFNAMES1[0], POINTSCAT1, stype="horizons"
+    )
+
+    # first check that "Z" is not part of the dataframe
+    assert "X" not in poi.get_dataframe(copy=False)
+
+    # then update the zname attribute this should also set the column name
+    poi.zname = "X"
+    assert "X" in poi.get_dataframe(copy=False)
+
+    # check that storing to roxar works fine
+    poi.to_roxar(roxar_project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+
+    # another indirect check using points from surface.
+    # here Z name is set on initialisation
+    srf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
+    poi = xtgeo.points_from_surface(srf, zname="MyZ")
+    assert "MyZ" in poi.get_dataframe(copy=False)
+    poi.to_roxar(roxar_project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+
+
+@pytest.mark.requires_roxar
 def test_check_presence_in_project_errors(roxar_project):
     # test category not existing in project
 

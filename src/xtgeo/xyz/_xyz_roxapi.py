@@ -424,6 +424,14 @@ def _roxapi_export_xyz(
         return
 
     is_polygons = isinstance(self, polygons.Polygons)
+    xyz_columns = [self.xname, self.yname, self.zname]
+    if not set(xyz_columns).issubset(df.columns):
+        raise ValueError(
+            f"One or all {xyz_columns=} are missing in the dataframe, "
+            f"available columns are {list(df.columns)}! "
+            "Rename your columns or update the corresponding 'xname', "
+            "'yname' and 'zname' attributes to columns in your dataframe."
+        )
 
     roxxyz = _get_roxitem(
         rox, name, category, stype, mode="set", is_polygons=is_polygons
@@ -434,15 +442,15 @@ def _roxapi_export_xyz(
         raise ValueError("Empty dataframe, no data left after filtering")
 
     arrxyz = (
-        [polydf[XYZ_COLUMNS].to_numpy() for _, polydf in df.groupby(self.pname)]
+        [polydf[xyz_columns].to_numpy() for _, polydf in df.groupby(self.pname)]
         if is_polygons
-        else df[XYZ_COLUMNS].to_numpy()
+        else df[xyz_columns].to_numpy()
     )
 
     roxxyz.set_values(arrxyz)
 
     if attributes and isinstance(self, points.Points):
-        for attr in _get_attribute_names_from_dataframe(df):
+        for attr in _get_attribute_names_from_dataframe(df, xyz_columns):
             values = _replace_undefined_values(
                 values=df[attr].values, dtype=self._attrs.get(attr), asmasked=True
             )
@@ -451,8 +459,11 @@ def _roxapi_export_xyz(
             roxxyz.set_attribute_values(attr, values)
 
 
-def _get_attribute_names_from_dataframe(df: pd.DataFrame) -> list[str]:
-    return [col for col in df.columns if col not in XYZ_COLUMNS]
+def _get_attribute_names_from_dataframe(
+    df: pd.DataFrame, xyz_columns: list[str] | None = None
+) -> list[str]:
+    xyz_columns = xyz_columns or XYZ_COLUMNS
+    return [col for col in df.columns if col not in xyz_columns]
 
 
 def _get_attribute_type_from_values(values: np.ndarray) -> str:
