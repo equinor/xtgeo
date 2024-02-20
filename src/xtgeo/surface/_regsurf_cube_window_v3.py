@@ -6,7 +6,6 @@ import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from xtgeo.common.log import null_logger
 
@@ -141,8 +140,8 @@ def _create_depth_cube(cube: Cube) -> np.ndarray:
     return dcube
 
 
-def _refine_cubes_vertically(cvalues, dvalues, ndiv):
-    """Refine the cubes vertically for better resolution"""
+def _refine_cubes_vertically(cvalues, dvalues, ndiv=2):
+    """Refine the cubes vertically for better resolution."""
     if not ndiv:
         ndiv = 2  # default
     logger.info("Resampling vertically, according to ndiv = %s", ndiv)
@@ -151,28 +150,24 @@ def _refine_cubes_vertically(cvalues, dvalues, ndiv):
         return cvalues, dvalues
 
     logger.info("Original shape is %s", cvalues.shape)
-    cref = np.random.rand(cvalues.shape[0], cvalues.shape[1], ndiv * cvalues.shape[2])
-    dref = cref.copy()
 
-    num_points = cref.shape[-1]
-    # Create interpolation function for cube values
-    interp_func1 = interp1d(
-        np.arange(cvalues.shape[-1]),
-        cvalues,
-        axis=-1,
-        kind="linear",
-        fill_value="extrapolate",
-    )
-    interp_func2 = interp1d(
-        np.arange(dvalues.shape[-1]),
-        dvalues,
-        axis=-1,
-        kind="linear",
-        fill_value="extrapolate",
-    )
-    # Resample array2 to match the number of points in array1
-    cref = interp_func1(np.linspace(0, cvalues.shape[-1] - 1, num_points))
-    dref = interp_func2(np.linspace(0, dvalues.shape[-1] - 1, num_points))
+    # Determine the new shape
+    new_shape = (cvalues.shape[0], cvalues.shape[1], ndiv * cvalues.shape[2])
+    cref = np.zeros(new_shape)
+    dref = np.zeros(new_shape)
+
+    # Compute new indices for interpolation
+    new_x = np.linspace(0, cvalues.shape[2] - 1, new_shape[2])
+
+    # Interpolate for each layer and column
+    for i in range(cvalues.shape[0]):
+        for j in range(cvalues.shape[1]):
+            cref[i, j, :] = np.interp(
+                new_x, np.arange(cvalues.shape[2]), cvalues[i, j, :]
+            )
+            dref[i, j, :] = np.interp(
+                new_x, np.arange(dvalues.shape[2]), dvalues[i, j, :]
+            )
 
     logger.info("Resampling done, new shape is %s", cref.shape)
     return cref, dref
