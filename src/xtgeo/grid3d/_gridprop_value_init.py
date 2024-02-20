@@ -1,4 +1,5 @@
 """GridProperty (not GridProperies) some etc functions"""
+
 from __future__ import annotations
 
 import numbers
@@ -40,6 +41,11 @@ def gridproperty_non_dummy_values(
         _values = initial_gridprop_values_from_scalar(dimensions, values, isdiscrete)
     elif isinstance(values, np.ndarray):
         _values = initial_gridprop_values_from_array(dimensions, values, isdiscrete)
+    else:
+        raise ValueError(
+            f"Cannot create GridProperty with values type '{type(values).__name__}.' "
+            "Expected an nd.array, float, int, or None"
+        )
 
     if gridlike:
         if isinstance(gridlike, xtgeo.grid3d.Grid):
