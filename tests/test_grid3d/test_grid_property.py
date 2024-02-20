@@ -271,27 +271,20 @@ def test_pathlib(tmp_path, testdata_path):
         grdp.to_file(out, fformat="roff")
 
 
-def test_roffbin_import1(testdata_path):
-    """Test of import of ROFF binary"""
+@pytest.mark.parametrize("fformat", ["roff", "roffasc"])
+def test_roffbin_import1(testdata_path, fformat):
+    """Test of import of ROFF"""
 
     x = xtgeo.gridproperty_from_file(
-        testdata_path / TESTFILE1, fformat="roff", name="PORO"
+        testdata_path / TESTFILE1, fformat=fformat, name="PORO"
     )
 
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
-def test_roffbin_import1_new(testdata_path):
-    """Test ROFF import"""
-
-    x = xtgeo.gridproperty_from_file(
-        testdata_path / TESTFILE1, fformat="roff", name="PORO"
-    )
-    assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
-
-
-def test_roffbin_import2(testdata_path):
-    """Import roffbin, with several props in one file."""
+@pytest.mark.parametrize("fformat", ["roff", "roffasc"])
+def test_roffbin_import2(testdata_path, fformat):
+    """Import roff, with several props in one file."""
 
     dz = xtgeo.gridproperty_from_file(
         testdata_path / TESTFILE2, fformat="roff", name="Z_increment"
@@ -307,6 +300,13 @@ def test_roffbin_import2(testdata_path):
 
     assert hc.values.mean() == pytest.approx(1446.4611912446985, abs=0.0001)
     assert dz.values.mean() == pytest.approx(2.6352321, abs=0.0001)
+
+
+@pytest.mark.parametrize("fformat", ["roff", "roff_binary", "roff_asc", "roff_ascii"])
+def test_roff_export(fformat, tmp_path):
+    """Regression test for exporting roff ascii files."""
+    gp = GridProperty(ncol=3, nrow=2, nlay=1, values=np.array([1, 2, 3, 4, 5, 6]))
+    gp.to_file(tmp_path / f"gprop.{fformat}", fformat=fformat)
 
 
 def test_eclinit_simple_importexport(tmp_path, testdata_path):
