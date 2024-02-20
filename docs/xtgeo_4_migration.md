@@ -218,7 +218,14 @@ import xtgeo.plot  # ⛔️ no longer allowed! use:
 import xtgeoviz.plot  # same functionality, new package
 ```
 
-In the near term we no longer automatically expose the `plot` module directly
+For more information about xtgeoviz feel free to check out its repository at
+[https://github.com/equinor/xtgeoviz](https://github.com/equinor/xtgeoviz)
+and its documentation at
+[https://equinor.github.io/xtgeoviz/](https://equinor.github.io/xtgeoviz/).
+
+### Note: xtgeo 3.7 to xtgeo 3.x
+
+From xtgeo 3.7 we no longer automatically expose the `plot` module directly
 from the `xtgeo` namespace. This means that you cannot use a pattern like
 this:
 
@@ -236,10 +243,9 @@ import xtgeo.plot
 someplot = xtgeo.plot.Map()  # ✅
 ```
 
-For more information about xtgeoviz feel free to check out its repository at
-[https://github.com/equinor/xtgeoviz](https://github.com/equinor/xtgeoviz)
-and its documentation at
-[https://equinor.github.io/xtgeoviz/](https://equinor.github.io/xtgeoviz/).
+This pertains to the remaining versions of xtgeo 3 and will still be removed
+in xtgeo 4.0.
+
 
 ## API Deprecations
 
