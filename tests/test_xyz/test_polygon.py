@@ -186,12 +186,53 @@ def test_polygon_tlen_hlen(testdata_path):
     assert (abs(pol.get_dataframe()[pol.dhname].iloc[0] - 1761.148)) < 0.01
 
 
+def test_rescale_polygon_basic():
+    """Take simple polygons and rescale/resample."""
+
+    ptest = np.array([[0, 30, 60, 90], [0, 0.33, 0.66, 1], [9, 6, 2, 8]]).T
+    pol = xtgeo.Polygons(ptest)
+    np.testing.assert_array_equal(pol.get_dataframe()[pol.zname], [9, 6, 2, 8])
+
+    pol.rescale(10.0, kind="slinear", mode2d=True, addlen=True)
+    np.testing.assert_array_almost_equal(
+        pol.get_dataframe()[pol.xname],
+        [
+            0.0,
+            12.844,
+            25.689,
+            38.533,
+            51.377,
+            64.221,
+            77.066,
+            89.910,
+        ],
+        decimal=3,
+    )
+
+    pol = xtgeo.Polygons(ptest)
+    pol.rescale(10.0, kind="cubic", mode2d=True, addlen=True)
+    np.testing.assert_array_almost_equal(
+        pol.get_dataframe()[pol.xname],
+        [
+            0.0,
+            12.844,
+            25.689,
+            38.533,
+            51.377,
+            64.222,
+            77.066,
+            89.910,
+        ],
+        decimal=3,
+    )
+
+
 @pytest.mark.parametrize(
     "dorescale, kind, expectmax, expectlen",
     [
         (False, None, 5335, 5429),
         (True, None, 5335, 54),
-        (True, "slineaer", 5335, 54),
+        (True, "slinear", 5335, 53),
         (True, "cubic", 5335, 53),
     ],
 )

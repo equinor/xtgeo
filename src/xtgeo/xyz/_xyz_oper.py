@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
-from scipy.interpolate import UnivariateSpline, interp1d
+from scipy.interpolate import UnivariateSpline
 
 import xtgeo
 from xtgeo import _cxtgeo
@@ -180,6 +180,14 @@ def rescale_polygons(self, distance=10, addlen=False, kind="simple", mode2d=Fals
     * mode2d
     """
 
+    kind = "simple" if kind is None else kind
+
+    kinds_allowed = ("simple", "slinear", "cubic")
+    if kind not in kinds_allowed:
+        raise ValueError(
+            f"The input 'kind' {kind} is not valid. Allowed: {kinds_allowed}"
+        )
+
     if kind in ("slinear", "cubic"):
         _rescale_v2(self, distance, addlen, kind=kind, mode2d=mode2d)
 
@@ -303,24 +311,15 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
         nstep = int(leng / distance)
         alpha = np.linspace(0, leng, num=nstep, endpoint=True)
 
-        if kind in ("slinear"):
-            points = np.array(points).T
-            interpolator = interp1d(
-                grp[gname],
-                points,
-                kind="slinear",
-                axis=0,
-                assume_sorted=True,
-                bounds_error=False,
-                fill_value="extrapolate",
-            )
-            ip = interpolator(alpha)
+        if kind == "slinear":
+            splines = [UnivariateSpline(grp[gname], crd, k=1, s=0) for crd in points]
         elif kind == "cubic":
             splines = [UnivariateSpline(grp[gname], crd) for crd in points]
 
-            ip = np.vstack([spl(alpha) for spl in splines]).T
         else:
             raise ValueError(f"Invalid kind chosen: {kind}")
+
+        ip = np.vstack([spl(alpha) for spl in splines]).T
 
         dfr = pd.DataFrame(np.array(ip), columns=[self.xname, self.yname, self.zname])
 
