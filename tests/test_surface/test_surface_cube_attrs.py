@@ -197,6 +197,64 @@ def test_various_attrs_algorithm3(loadsfile1):
     assert surfx.values.mean() == pytest.approx(529.328, abs=0.01)
 
 
+@pytest.mark.parametrize(
+    "ndiv, expected_mean",
+    (
+        [2, 177.35],
+        [4, 176.12],
+        [12, 176.43],
+    ),
+)
+def test_various_attrs_algorithm3_ndiv(loadsfile1, ndiv, expected_mean):
+    cube1 = loadsfile1
+    surf1 = xtgeo.surface_from_cube(cube1, 2540)
+    surf2 = xtgeo.surface_from_cube(cube1, 2548)
+
+    surfx = surf1.copy()
+    surfx.slice_cube_window(
+        cube1,
+        other=surf2,
+        other_position="below",
+        attribute="mean",
+        sampling="trilinear",
+        snapxy=True,
+        ndiv=ndiv,
+        algorithm=3,
+    )
+
+    assert surfx.values.mean() == pytest.approx(expected_mean, abs=0.1)
+
+
+@pytest.mark.bigtest
+@pytest.mark.parametrize(
+    "ndiv, expected_mean",
+    (
+        [2, 0.0013886],
+        [4, 0.0013843],
+        [12, 0.0013829],
+    ),
+)
+def test_various_attrs_algorithm3_ndiv_large(loadsfile2, ndiv, expected_mean):
+    cube1 = loadsfile2
+    surf1 = xtgeo.surface_from_cube(cube1, 1560)
+    surf2 = xtgeo.surface_from_cube(cube1, 1760)
+
+    surfx = surf1.copy()
+    surfx.slice_cube_window(
+        cube1,
+        other=surf2,
+        other_position="below",
+        attribute="mean",
+        sampling="trilinear",
+        snapxy=True,
+        ndiv=ndiv,
+        algorithm=3,
+    )
+
+    print(surfx.values.mean())
+    assert surfx.values.mean() == pytest.approx(expected_mean, abs=0.00001)
+
+
 def test_avg_surface(loadsfile1):
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 1100.0)
