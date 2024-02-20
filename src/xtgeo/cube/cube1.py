@@ -1055,7 +1055,7 @@ class Cube:
             logger.info("TMP file name is %s", outfile)
             oflag = True
 
-        _cube_import._scan_segy_trace(sfile, outfile=outfile)
+        _cube_import._scan_segy_trace(str(sfile), outfile=str(outfile))
 
         if oflag:
             # pass
@@ -1092,7 +1092,7 @@ class Cube:
             logger.info("TMP file name is %s", outfile)
             flag = True
 
-        _cube_import._scan_segy_header(sfile, outfile=outfile)
+        _cube_import._scan_segy_header(str(sfile), outfile=str(outfile))
 
         if flag:
             logger.info("OUTPUT to screen...")
