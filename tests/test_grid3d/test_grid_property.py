@@ -133,6 +133,11 @@ def test_create_actnum():
     assert x.nactive < x.ntotal
 
 
+def test_gridprop_init_unknown_values():
+    with pytest.raises(ValueError, match="Cannot create GridProperty with values type"):
+        GridProperty(ncol=3, nrow=2, nlay=1, values={1, 2, 3})
+
+
 def test_undef():
     """Test getting UNDEF value"""
     xx = GridProperty(ncol=3, nrow=2, nlay=1, values=np.array([1, 2, 3, 4, 5, 6]))
