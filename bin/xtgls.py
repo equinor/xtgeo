@@ -1,4 +1,5 @@
 """xtgls: a small script for listing xtg formatted files."""
+
 import argparse
 import json
 import pathlib

@@ -1,5 +1,6 @@
 # coding: utf-8
 """Roxar API functions for XTGeo Grid Property."""
+
 from __future__ import annotations
 
 import contextlib

@@ -1,5 +1,6 @@
 # coding: utf-8
 """Testing new xtgf and hdf5/h5 formats."""
+
 from os.path import join
 
 import hypothesis.strategies as st

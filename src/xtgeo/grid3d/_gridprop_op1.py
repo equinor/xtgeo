@@ -1,4 +1,5 @@
 """Various grid property operations"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union

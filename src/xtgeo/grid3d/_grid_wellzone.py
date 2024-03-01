@@ -1,4 +1,5 @@
 """Private module for grid vs well zonelog checks."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
