@@ -152,7 +152,7 @@ def test_xtgeo_codes(param, expected_codes):
 
 
 def test_to_file(tmp_path):
-    roff_param = RoffParameter(1, 1, 2, "", b"\x01\xFF")
+    roff_param = RoffParameter(1, 1, 2, "", b"\x01\xff")
     roff_param.to_file(tmp_path / "param.roff")
     vals = roffio.read(tmp_path / "param.roff")
     assert vals["parameter"] == {"name": "", "data": b"\x01\xff"}
@@ -166,7 +166,7 @@ def test_to_file_codes():
         1,
         2,
         "a",
-        b"\x01\xFF",
+        b"\x01\xff",
         code_names=["a", "b"],
         code_values=np.array([1, 2], dtype=np.int32),
     )

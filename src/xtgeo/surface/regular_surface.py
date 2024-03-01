@@ -32,7 +32,6 @@ or::
 # For functions with mask=... ,the should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
 
-
 from __future__ import annotations
 
 import functools

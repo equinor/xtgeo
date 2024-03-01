@@ -1,7 +1,6 @@
 # coding: utf-8
 """Various operations on XYZ data"""
 
-
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg

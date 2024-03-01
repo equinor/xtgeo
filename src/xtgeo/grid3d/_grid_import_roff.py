@@ -1,4 +1,5 @@
 """Private module, Grid Import private functions for ROFF format."""
+
 from __future__ import annotations
 
 import pathlib

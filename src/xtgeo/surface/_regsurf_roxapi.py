@@ -1,5 +1,6 @@
 # coding: utf-8
 """Roxar API functions for XTGeo RegularSurface."""
+
 import os
 import tempfile
 

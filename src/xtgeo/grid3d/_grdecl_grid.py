@@ -20,6 +20,7 @@ And ignore ECHO and NOECHO keywords. see _grid_format for the details
 of how these keywords are layed out in a text file, and see GrdeclGrid
 for how the grid geometry is interpreted from these keywords.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

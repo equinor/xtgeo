@@ -1,4 +1,5 @@
 """Private module, Grid Import private functions for xtgeo based formats."""
+
 from __future__ import annotations
 
 import json
@@ -52,13 +53,11 @@ class _META(TypedDict):
 
 
 @overload
-def convert_subgrids(sdict: dict[str, int]) -> dict[str, range]:
-    ...
+def convert_subgrids(sdict: dict[str, int]) -> dict[str, range]: ...
 
 
 @overload
-def convert_subgrids(sdict: None) -> None:
-    ...
+def convert_subgrids(sdict: None) -> None: ...
 
 
 def convert_subgrids(sdict: dict[str, int] | None) -> dict[str, range] | None:

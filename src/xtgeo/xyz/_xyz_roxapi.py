@@ -1,5 +1,6 @@
 # coding: utf-8
 """Roxar API functions for XTGeo Points/Polygons"""
+
 from __future__ import annotations
 
 import os
