@@ -33,6 +33,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
 
+      - name: Install HDF5 for MacOS
+        if: ${{ matrix.os_arch[1] == 'macosx_arm64' }}
+        run: brew install hdf5
+
       - name: Install cibuildwheel
         run: pip install wheel cibuildwheel twine
 
