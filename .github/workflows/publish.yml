@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: CIBW Python ${{ matrix.cibw_python }} on ${{ matrix.os_arch[0] }}
+    name: CIBW Python ${{ matrix.cibw_python }} on ${{ matrix.os_arch[0] }}-${{ matrix.os_arch[1] }}
     runs-on: ${{ matrix.os_arch[0] }}
     strategy:
       fail-fast: false
@@ -18,9 +18,9 @@ jobs:
           - [ubuntu-latest, manylinux_x86_64]
           - [windows-latest, win_amd64]
           - [macos-latest, macosx_x86_64]
-          - [macos-latest-xlarge, macosx_arm64]
+          - [macos-14, macosx_arm64]
         exclude:
-          - os_arch: [macos-latest-xlarge, macosx_arm64]
+          - os_arch: [macos-14, macosx_arm64]
             cibw_python: cp39
     env:
       CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os_arch[1] }}
