@@ -22,14 +22,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # node-version: 16
+      ### Test start
+      # https://github.com/actions/setup-node/tree/v4/
+      - uses: actions/setup-node@v4
+        with:
+          # node-version: '16'
           node-version: 16
-      # ### Test start
-      # # https://github.com/actions/setup-node/tree/v4/
-      # - uses: actions/setup-node@v4
-      #   with:
-      #     # node-version: '16'
-      #     node-version: 16
-      # ### Test end
+      ### Test end
 
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
