@@ -528,6 +528,26 @@ def test_benchmark_bulkvol(benchmark):
     benchmark(run)
 
 
+def test_cell_height_above_ffl(testdata_path):
+    """Test cell heights above ffl."""
+    grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
+
+    ffl = xtgeo.GridProperty(grd, values=1700)
+
+    htop, hbot, hmid = grd.get_heights_above_ffl(ffl, option="cell_center_above_ffl")
+
+    assert htop.values[6, 4, 0] == pytest.approx(65.8007)
+    assert hbot.values[6, 4, 0] == pytest.approx(54.1729)
+    assert hmid.values[6, 4, 0] == pytest.approx(59.9868)
+    assert hbot.values[4, 0, 0] == pytest.approx(0.0)
+
+    htop, hbot, hmid = grd.get_heights_above_ffl(ffl, option="cell_corners_above_ffl")
+
+    assert htop.values[4, 5, 0] == pytest.approx(44.8110)
+    assert hbot.values[4, 5, 0] == pytest.approx(0.0)
+    assert hmid.values[4, 5, 0] == pytest.approx(22.4055)
+
+
 def test_bad_egrid_ends_before_kw(tmp_path):
     egrid_file = tmp_path / "test.egrid"
     with open(egrid_file, "wb") as fh:

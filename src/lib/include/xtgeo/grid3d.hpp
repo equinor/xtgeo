@@ -19,7 +19,15 @@ grid_cell_volumes(const size_t ncol,
                   const py::array_t<int> &actnumsv,
                   const int precision,
                   const bool asmasked);
-
+std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
+grid_height_above_ffl(const size_t ncol,
+                      const size_t nrow,
+                      const size_t nlay,
+                      const py::array_t<double> &coordsv,
+                      const py::array_t<float> &zcornsv,
+                      const py::array_t<int> &actnumsv,
+                      const py::array_t<float> &ffl,
+                      const size_t option);
 std::vector<double>
 cell_corners(const size_t i,
              const size_t j,
@@ -38,6 +46,8 @@ init(py::module &m)
 
     m_grid3d.def("grid_cell_volumes", &grid_cell_volumes,
                  "Compute the bulk volume of cell.");
+    m_grid3d.def("grid_height_above_ffl", &grid_height_above_ffl,
+                 "Compute the height above a FFL (free fluid level).");
     m_grid3d.def("cell_corners", &cell_corners,
                  "Get a vector containing the corners of a cell.");
 }
