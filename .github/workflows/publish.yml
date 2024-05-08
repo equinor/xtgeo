@@ -17,11 +17,6 @@ jobs:
         os_arch: 
           - [ubuntu-latest, manylinux_x86_64]
           - [windows-latest, win_amd64]
-          - [macos-latest, macosx_x86_64]
-          - [macos-14, macosx_arm64]
-        exclude:
-          - os_arch: [macos-14, macosx_arm64]
-            cibw_python: cp39
     env:
       CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os_arch[1] }}
 
