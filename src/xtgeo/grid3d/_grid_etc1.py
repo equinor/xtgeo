@@ -235,6 +235,61 @@ def get_bulk_volume(
     )
 
 
+def get_heights_above_ffl(
+    grid: Grid,
+    ffl: GridProperty,
+    option: Literal[
+        "cell_center_above_ffl", "cell_corners_above_ffl"
+    ] = "cell_center_above_ffl",
+) -> tuple[GridProperty, GridProperty, GridProperty]:
+    """Compute delta heights for cell top, bottom and midpoints above a given level."""
+
+    valid_options = ("cell_center_above_ffl", "cell_corners_above_ffl")
+    if option not in valid_options:
+        raise ValueError(
+            f"The option key <{option}> is invalid, must be one of {valid_options}"
+        )
+
+    grid._xtgformat2()
+
+    htop_arr, hbot_arr, hmid_arr = _internal.grid3d.grid_height_above_ffl(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv.ravel(),
+        grid._zcornsv.ravel(),
+        grid._actnumsv.ravel(),
+        ffl.values.ravel(),
+        1 if option == "cell_center_above_ffl" else 2,
+    )
+
+    htop = GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name="htop",
+        values=htop_arr,
+        discrete=False,
+    )
+    hbot = GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name="hbot",
+        values=hbot_arr,
+        discrete=False,
+    )
+    hmid = GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name="hmid",
+        values=hmid_arr,
+        discrete=False,
+    )
+    return htop, hbot, hmid
+
+
 def get_ijk(
     self: Grid,
     names: tuple[str, str, str] = ("IX", "JY", "KZ"),
