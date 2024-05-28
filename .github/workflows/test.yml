@@ -112,7 +112,7 @@ jobs:
         uses: "./.github/actions/setup_testdata"
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.config.python }}
 
@@ -171,7 +171,7 @@ jobs:
         run: pytest -n 4 tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
         with:
           files: xtgeocoverage.xml
 

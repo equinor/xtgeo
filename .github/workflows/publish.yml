@@ -25,8 +25,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Set up Python 
+        uses: actions/setup-python@v5
 
       - name: Install HDF5 for MacOS
         if: ${{ matrix.os_arch[1] == 'macosx_arm64' }}
