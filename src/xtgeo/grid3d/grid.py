@@ -189,7 +189,7 @@ def create_box_grid(
     dimension: Dimensions,
     origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
     oricenter: bool = False,
-    increment: tuple[int, int, int] = (1, 1, 1),
+    increment: tuple[float, float, float] = (1.0, 1.0, 1.0),
     rotation: float = 0.0,
     flip: Literal[1, -1] = 1,
 ) -> Grid:
