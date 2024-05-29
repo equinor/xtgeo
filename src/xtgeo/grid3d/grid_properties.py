@@ -740,7 +740,7 @@ class GridProperties(_Grid3D):
         self.append_props(
             list(
                 gridproperties_from_file(
-                    pfile=pfile,
+                    property_file=pfile,
                     fformat=fformat,
                     names=names,
                     dates=dates,
