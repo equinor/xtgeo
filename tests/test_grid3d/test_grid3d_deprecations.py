@@ -27,6 +27,10 @@ def fixture_any_gridproperties(any_gridprop):
     return GridProperties(props=[any_gridprop])
 
 
+IFILE1 = pathlib.Path("3dgrids/reek/REEK.INIT")
+GFILE1 = pathlib.Path("3dgrids/reek/REEK.EGRID")
+
+
 def test_gridproperties_init_deprecations(any_gridprop):
     with pytest.warns(DeprecationWarning):
         GridProperties(ncol=10)
@@ -106,6 +110,21 @@ def test_unknown_name_deprecate(gridprop):
         gridprop3 = xtgeo.gridproperty_from_file(buf, name="unknown", fformat="roff")
 
     assert gridprop3.name == gridprop.name
+
+
+def test_gridprops_from_file(testdata_path):
+    g = xtgeo.grid_from_file(testdata_path / GFILE1, fformat="egrid")
+    v1 = xtgeo.gridproperties_from_file(
+        testdata_path / IFILE1, fformat="init", names=["PORO", "PORV"], grid=g
+    )
+
+    v2 = xtgeo.GridProperties()
+    with pytest.warns(DeprecationWarning, match="from_file is deprecated"):
+        v2.from_file(
+            testdata_path / IFILE1, fformat="init", names=["PORO", "PORV"], grid=g
+        )
+
+    assert v1.generate_hash() == v2.generate_hash()
 
 
 def test_gridprop_mask_warns(any_gridprop):
