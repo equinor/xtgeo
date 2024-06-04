@@ -1,6 +1,7 @@
 """Well input and ouput, private module"""
 
 import json
+from collections.abc import Iterable
 from copy import deepcopy
 
 import numpy as np
@@ -292,7 +293,7 @@ def import_wlogs(wlogs: dict):
         else:
             raise ValueError(f"Invalid log type found in input: {typ}")
 
-        if rec is None or isinstance(rec, dict):
+        if rec is None or isinstance(rec, Iterable):
             wlogrecords[key] = deepcopy(rec)
         else:
             raise ValueError(f"Invalid log record found in input: {rec}")
