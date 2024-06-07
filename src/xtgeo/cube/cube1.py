@@ -430,11 +430,7 @@ class Cube:
     @property
     def zslices(self):
         """Return the time/depth slices as an int array (read only)."""
-        # This is a derived property
-        zslices = range(
-            int(self.zori), int(self.zori + self.nlay * self.zinc), int(self.zinc)
-        )
-        return np.array(zslices)
+        return np.array(range(self.nlay))  # This is a derived property
 
     @property
     def traceidcodes(self):
