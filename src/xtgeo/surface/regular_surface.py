@@ -1676,6 +1676,7 @@ class RegularSurface:
         )
 
         xsurf._values = self._values.copy()
+        xsurf._isloaded = self._isloaded
 
         xsurf.ilines = self._ilines.copy()
         xsurf.xlines = self._xlines.copy()
