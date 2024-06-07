@@ -79,6 +79,23 @@ def test_values(default_surface):
         srf.values = "text"
 
 
+def test_regularsurface_copy():
+    """Test copying a surface instance."""
+    values = np.random.normal(2000, 50, size=12)
+    srf = xtgeo.RegularSurface(ncol=3, nrow=4, xinc=20, yinc=20, values=values)
+    assert srf.nactive == 12
+    new = srf.copy()
+    assert srf.nactive == new.nactive
+
+    np.testing.assert_array_equal(srf.values, new.values)
+    assert new.xori == srf.xori
+    assert new.xinc == srf.xinc
+    assert new.yori == srf.yori
+    assert new.xinc == srf.xinc
+    assert new.rotation == srf.rotation
+    assert new.yflip == srf.yflip
+
+
 @pytest.mark.filterwarnings("ignore:Default values*")
 def test_set_values1d(default_surface):
     """Test behaviour of set_values1d method."""
