@@ -44,6 +44,7 @@ def test_create():
     vec = xcu.values
     xdim, _ydim, _zdim = vec.shape
     assert xdim == 5, "NX from numpy shape "
+    assert xcu.zslices.tolist() == [0, 1, 2, 3]
 
 
 @pytest.mark.parametrize(
