@@ -845,12 +845,10 @@ class Well:
 
         .. versionadded:: 2.2.0
         """
-        if (
+        return (
             logname in self.get_lognames()
             and self.get_logtype(logname) == _AttrType.DISC.value
-        ):
-            return True
-        return False
+        )
 
     def copy(self):
         """Copy a Well instance to a new unique Well instance."""
@@ -1132,10 +1130,7 @@ class Well:
 
         if xmin1 > xmax2 or ymin1 > ymax2:
             return False
-        if xmin2 > xmax1 or ymin2 > ymax1:
-            return False
-
-        return True
+        return not (xmin2 > xmax1 or ymin2 > ymax1)
 
     def limit_tvd(self, tvdmin, tvdmax):
         """Truncate the part of the well that is outside tvdmin, tvdmax.

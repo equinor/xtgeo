@@ -89,9 +89,7 @@ def fixture_xtgshow():
     """For eventual plotting, to be uses in an if sence inside a test."""
     if "ROXENV" in os.environ:
         pytest.skip("Skip plotting tests in roxar environment")
-    if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
-        return True
-    return False
+    return any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"])
 
 
 @pytest.fixture(name="generate_plot")

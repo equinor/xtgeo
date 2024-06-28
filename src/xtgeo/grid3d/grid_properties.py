@@ -395,11 +395,7 @@ class GridProperties(_Grid3D):
 
     def __contains__(self, name: str) -> bool:
         """bool: Emulate 'if "PORO" in props'."""
-        prop = self.get_prop_by_name(name, raiseserror=False)
-        if prop:
-            return True
-
-        return False
+        return bool(self.get_prop_by_name(name, raiseserror=False))
 
     def __getitem__(self, name: str) -> GridProperty:  # noqa: D105
         prop = self.get_prop_by_name(name, raiseserror=False)

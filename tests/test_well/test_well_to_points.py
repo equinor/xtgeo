@@ -158,10 +158,10 @@ def test_simple_points(well_spec, expected_result, string_to_well, zonelist, use
     kwargs = {"zonelogname": "Zonelog"}
     well = string_to_well(well_spec, **kwargs)
     points = well.get_zonation_points(use_undef=use_undef, tops=True, zonelist=zonelist)
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 def test_simple_points_two(string_to_well):
@@ -181,16 +181,16 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
     well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=True, zonelist=[1, 2, 3])
     expected_result = {"X_UTME": [7.0, 13.0], "Y_UTMN": [8.0, 14.0]}
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
     assert len(points) == 2
     points = well.get_zonation_points(use_undef=False, tops=True, zonelist=[2, 3])
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
     assert len(points) == 2
 
 
@@ -214,10 +214,10 @@ def test_break_zonation(string_to_well):
         "X_UTME": [4.0, 4.0, 10.0, 13.0],
         "Y_UTMN": [5.0, 5.0, 11.0, 14.0],
     }
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 @pytest.mark.parametrize(
@@ -273,10 +273,10 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
     kwargs = {"zonelogname": "Zonelog"}
     well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=tops_flag, zonelist=[2, 3])
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 @pytest.mark.parametrize(
@@ -308,10 +308,10 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
     points = well.get_zonation_points(
         use_undef=False, tops=False, zonelist=(1, 5), incl_limit=include_limit
     )
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 @pytest.mark.parametrize(
@@ -371,7 +371,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3 4 zone4
         tops=True,
         zonelist=zone_list,
     )
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
