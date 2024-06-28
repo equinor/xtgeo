@@ -101,7 +101,7 @@ def test_import(loadwell1, snapshot, helpers):
         "loadwell1.csv",
     )
 
-    assert {
+    assert expected_result == {
         "well_name": mywell.wellname,
         "xpos": mywell.xpos,
         "wpos": mywell.ypos,
@@ -112,7 +112,7 @@ def test_import(loadwell1, snapshot, helpers):
         "nlogs": mywell.nlogs,
         "lognames": mywell.lognames,
         "lognames_all": mywell.lognames_all,
-    } == expected_result
+    }
 
 
 def test_import_long_well(loadwell3):
