@@ -19,20 +19,20 @@ def test_wellzone_to_points(testdata_path):
 
     # get the zpoints which is a Pandas
     zpoints = mywell.get_zonation_points(use_undef=False)
-    assert zpoints.iat[9, 6] == 6
+    assert zpoints.iat[9, 4] == 6
 
     # get the zpoints which is a Pandas
     zpoints = mywell.get_zonation_points(use_undef=True)
-    assert zpoints.iat[9, 6] == 7
+    assert zpoints.iat[9, 4] == 7
 
     with pytest.raises(ValueError):
         zpoints = mywell.get_zonation_points(zonelist=[1, 3, 4, 5])
 
     zpoints = mywell.get_zonation_points(zonelist=[3, 4, 5])
-    assert zpoints.iat[6, 6] == 4
+    assert zpoints.iat[6, 4] == 4
 
     zpoints = mywell.get_zonation_points(zonelist=(3, 5))
-    assert zpoints.iat[6, 6] == 4
+    assert zpoints.iat[6, 4] == 4
 
 
 def test_wellzone_to_isopoints(testdata_path):
@@ -47,7 +47,8 @@ def test_wellzone_to_isopoints(testdata_path):
     assert zpoints["Zone"].max() == 9
 
     zisos = mywell.get_zonation_points(use_undef=False, tops=False)
-    assert zisos.iat[10, 8] == 4
+    print(zisos)
+    assert zisos.iat[10, 4] == 4
 
 
 def test_zonepoints_non_existing(string_to_well):

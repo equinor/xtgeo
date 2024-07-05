@@ -1,5 +1,7 @@
 """Well marker data; private module"""
 
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 
@@ -17,7 +19,9 @@ from xtgeo.xyz.points import Points
 logger = null_logger(__name__)
 
 
-def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef):
+def get_zonation_points(
+    self: Points, tops, incl_limit, top_prefix, zonelist, use_undef
+):
     """
     Getting zonation tops (private routine)
 
@@ -70,12 +74,20 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
 
     zlist = ztops if tops else zisos
 
-    logger.debug(zlist)
+    # collect temporary columns, made by geometrics() and _extract_ztops() methods
+    tmp_columns = [
+        col
+        for col in (ztopnames or []) + (zisonames or [])
+        if col.startswith("Q_") and col not in self.get_lognames()
+    ]
 
-    if tops:
-        return pd.DataFrame(zlist, columns=ztopnames)
+    dataframe = (
+        pd.DataFrame(zlist, columns=ztopnames)
+        if tops
+        else pd.DataFrame(zlist, columns=zisonames)
+    )
 
-    return pd.DataFrame(zlist, columns=zisonames)
+    return dataframe.drop(columns=tmp_columns, errors="ignore")
 
 
 def _extract_ztops(

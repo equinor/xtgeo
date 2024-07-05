@@ -440,7 +440,8 @@ def _roxapi_export_xyz(
 
     df = _apply_pfilter_to_dataframe(df, pfilter)
     if df.empty:
-        raise ValueError("Empty dataframe, no data left after filtering")
+        logger.warning("Empty dataframe after filtering! Skipping object update...")
+        return
 
     arrxyz = (
         [polydf[xyz_columns].to_numpy() for _, polydf in df.groupby(self.pname)]
@@ -680,7 +681,8 @@ def _roxapi_export_xyz_well_picks(
 
     df = _apply_pfilter_to_dataframe(df, pfilter)
     if df.empty:
-        raise ValueError("Empty dataframe, no data left after filtering")
+        logger.warning("Empty dataframe after filtering! Skipping object update...")
+        return
 
     required_columns = REQUIRED_WELL_PICK_ATTRIBUTES + [wp_category.upper()]
     for column in required_columns:

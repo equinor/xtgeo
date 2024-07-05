@@ -1341,6 +1341,9 @@ class Well:
 
         dff = self.get_filled_dataframe()
 
+        if self.zonelogname not in dff.columns:
+            return None
+
         # the technical solution here is to make a tmp column which
         # will add one number for each time the actual segment is repeated,
         # not straightforward... (thanks to H. Berland for tip)
