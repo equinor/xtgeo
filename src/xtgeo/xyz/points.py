@@ -119,12 +119,17 @@ def _wells_importer(
     attrs = {}
     for col in dfr.columns:
         col_lower = col.lower()
-        if col_lower == "Zone":
-            attrs[col] = "int"
-        elif col_lower == "ZoneName" or col_lower == "WellName":
-            attrs[col] = "str"
-        else:
+        if "float" in dfr[col].dtype.name:
             attrs[col] = "float"
+        elif "int" in dfr[col].dtype.name:
+            attrs[col] = "int"
+        else:  # usually 'object'
+            if col_lower == "zone":
+                attrs[col] = "int"
+            elif "name" in col_lower:
+                attrs[col] = "str"
+            else:
+                attrs[col] = "float"  # fall-back
 
     return {"values": dfr, "attributes": attrs}
 
