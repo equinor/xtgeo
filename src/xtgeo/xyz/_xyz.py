@@ -273,6 +273,19 @@ class XYZ(ABC):
                 dataframe.drop(cname, axis=1, inplace=True)
                 self.set_dataframe(dataframe)
 
+    def get_nwells(self, well_name_column: str = "WellName"):
+        """Get number of unique wells in the instance.
+
+        Args:
+            well_name_column: Name of column with well names
+
+        Returns:
+            Number of unique wells, 0 if no well or column not present.
+        """
+        if well_name_column not in self.get_dataframe(copy=False).columns:
+            return 0
+        return len(self.get_dataframe(copy=False)[well_name_column].unique())
+
     def get_boundary(self):
         """Get the square XYZ window (boundaries) of the instance.
 
