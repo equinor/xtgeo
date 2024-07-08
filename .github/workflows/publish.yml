@@ -2,23 +2,35 @@ name: Build & Publish
 
 on:
   pull_request:
-    branches: [main, "*postfix"]
+    branches: [main, "version-*"]
   release:
     types: [published]
 
 jobs:
   build:
-    name: CIBW Python ${{ matrix.cibw_python }} on ${{ matrix.os_arch[0] }}-${{ matrix.os_arch[1] }}
+    name: Python ${{ matrix.python[0] }} on ${{ matrix.os_arch[0] }}-${{ matrix.os_arch[1] }}
     runs-on: ${{ matrix.os_arch[0] }}
     strategy:
       fail-fast: false
       matrix:
-        cibw_python: [cp38, cp39, cp310, cp311, cp312]
+        python: 
+          - ['3.8', cp38] 
+          - ['3.9', cp39]
+          - ['3.10', cp310]
+          - ['3.11', cp311]
+          - ['3.12', cp312]
         os_arch: 
           - [ubuntu-latest, manylinux_x86_64]
           - [windows-latest, win_amd64]
+          - [macos-13, macosx_x86_64]  # macos-13 is the last x86-64 runner
+          - [macos-latest, macosx_arm64]  # macos-latest is always arm64 going forward
+        exclude:
+          - os_arch: [macos-latest, macosx_arm64]
+            python: ['3.8', cp38]
+          - os_arch: [macos-latest, macosx_arm64]
+            python: ['3.9', cp39]
     env:
-      CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os_arch[1] }}
+      CIBW_BUILD: ${{ matrix.python[1] }}-${{ matrix.os_arch[1] }}
 
     steps:
       - uses: actions/checkout@v4
@@ -27,13 +39,15 @@ jobs:
 
       - name: Set up Python 
         uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python[0] }}
 
-      - name: Install HDF5 for MacOS
+      - name: Install HDF5 for macOS arm64
         if: ${{ matrix.os_arch[1] == 'macosx_arm64' }}
         run: brew install hdf5
 
       - name: Install cibuildwheel
-        run: pip install wheel cibuildwheel twine
+        run: python -m pip install -U pip wheel cibuildwheel twine
 
       - name: Run cibuildwheel
         run: cibuildwheel --output-dir wheelhouse
