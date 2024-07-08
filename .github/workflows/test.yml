@@ -14,6 +14,8 @@ on:
 
 jobs:
   test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
@@ -27,7 +29,7 @@ jobs:
             python-version: 3.8
           - os: windows-latest
             python-version: 3.12
-    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,6 +57,7 @@ jobs:
 
   hypothesis:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,6 +75,9 @@ jobs:
         run: pytest -n 4 tests --disable-warnings -m hypothesis --generate-plots
           
   rms:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -100,8 +106,6 @@ jobs:
               pandas: 2.0.2,
               scipy: 1.10.1,
             }
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -136,6 +140,7 @@ jobs:
 
   big:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -154,6 +159,7 @@ jobs:
 
   codecov:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -177,6 +183,7 @@ jobs:
 
   opm-integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: "./.github/actions/setup_xtgeo"
