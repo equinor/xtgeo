@@ -174,7 +174,6 @@ def _add_well_pick_to_project(project: Any, well_pick_data: dict, trajectory: st
     rox_wps.append(mypicks)
 
 
-@pytest.mark.requires_roxar
 @pytest.fixture(name="rms_project_path", scope="module")
 def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
     """Create a temporary RMS project for testing, populate with basic data.
@@ -256,7 +255,6 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
     return tmp_project_path
 
 
-@pytest.mark.requires_roxar
 @pytest.fixture(scope="module")
 def wells_from_rms(rms_project_path) -> list[xtgeo.Well]:
     """Read wells from roxar project and return a list."""
@@ -279,7 +277,6 @@ def wells_from_rms(rms_project_path) -> list[xtgeo.Well]:
     return wlist
 
 
-@pytest.mark.requires_roxar
 @pytest.fixture(scope="function")
 def rms_project(rms_project_path) -> Any:
     """Get the 'magic' project object from RMS (similar when being inside RMS).
