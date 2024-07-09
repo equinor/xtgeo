@@ -19,6 +19,4 @@ def test_surface_forks():
     )
     stdout, stderr = process.communicate()
     ret_code = process.wait()
-    if ret_code:
-        raise Exception(stderr)
-    return stdout
+    assert ret_code == 0, stderr
