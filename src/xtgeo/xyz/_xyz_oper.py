@@ -147,18 +147,18 @@ def operation_polygons_v2(self, poly, value, opname="add", inside=True, where=Tr
     dataframe = self.get_dataframe()
 
     if opname == "add":
-        dataframe[self.zname][tmpdf._TMP == 1] += value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] += value
     elif opname == "sub":
-        dataframe[self.zname][tmpdf._TMP == 1] -= value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] -= value
     elif opname == "mul":
-        dataframe[self.zname][tmpdf._TMP == 1] *= value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] *= value
     elif opname == "div":
         if value != 0.0:
-            dataframe[self.zname][tmpdf._TMP == 1] /= value
+            dataframe.loc[tmpdf._TMP == 1, self.zname] /= value
         else:
-            dataframe[self.zname][tmpdf._TMP == 1] = 0.0
+            dataframe.loc[tmpdf._TMP == 1, self.zname] = 0.0
     elif opname == "set":
-        dataframe[self.zname][tmpdf._TMP == 1] = value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] = value
     elif opname == "eli":
         dataframe = dataframe[tmpdf._TMP == 0]
         dataframe.reset_index(inplace=True, drop=True)
@@ -561,7 +561,14 @@ def extend(self, distance, nsamples, addhlen=True):
 
         # setting row0[2] as row1[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _ = _cxtgeo.x_vector_linint2(
-            row1[0], row1[1], row1[2], row0[0], row0[1], row1[2], distance, 12
+            row1.iloc[0],
+            row1.iloc[1],
+            row1.iloc[2],
+            row0.iloc[0],
+            row0.iloc[1],
+            row1.iloc[2],
+            distance,
+            12,
         )
 
         if ier != 0:
@@ -582,7 +589,14 @@ def extend(self, distance, nsamples, addhlen=True):
 
         # setting row1[2] as row0[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _ = _cxtgeo.x_vector_linint2(
-            row0[0], row0[1], row0[2], row1[0], row1[1], row0[2], distance, 11
+            row0.iloc[0],
+            row0.iloc[1],
+            row0.iloc[2],
+            row1.iloc[0],
+            row1.iloc[1],
+            row0.iloc[2],
+            distance,
+            11,
         )
 
         rown[self.xname] = newx

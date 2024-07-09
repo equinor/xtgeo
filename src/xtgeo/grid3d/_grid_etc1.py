@@ -424,7 +424,7 @@ def get_ijk_from_points(
     proplist[columnnames[2]] = karr
 
     mydataframe = pd.DataFrame.from_dict(proplist)
-    mydataframe.replace(UNDEF_INT, -1, inplace=True)
+    mydataframe = mydataframe.replace(UNDEF_INT, -1)
 
     if fmt == "float":
         mydataframe[columnnames[0]] = mydataframe[columnnames[0]].astype("float")
@@ -432,9 +432,9 @@ def get_ijk_from_points(
         mydataframe[columnnames[2]] = mydataframe[columnnames[2]].astype("float")
 
     if undef != -1:
-        mydataframe[columnnames[0]].replace(-1, undef, inplace=True)
-        mydataframe[columnnames[1]].replace(-1, undef, inplace=True)
-        mydataframe[columnnames[2]].replace(-1, undef, inplace=True)
+        mydataframe[columnnames[0]] = mydataframe[columnnames[0]].replace(-1, undef)
+        mydataframe[columnnames[1]] = mydataframe[columnnames[1]].replace(-1, undef)
+        mydataframe[columnnames[2]] = mydataframe[columnnames[2]].replace(-1, undef)
 
     if dataframe:
         return mydataframe
