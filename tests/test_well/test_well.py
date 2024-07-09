@@ -872,8 +872,8 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1, testdata_path):
 
     for zname in (zonelogname, zmodel):
         if skiprange:  # needed check; du to a bug in pandas version 0.21 .. 0.23
-            dfr[zname].replace(skiprange, -888, inplace=True)
-        dfr[zname].fillna(-999, inplace=True)
+            dfr[zname] = dfr[zname].replace(skiprange, -888)
+        dfr[zname] = dfr[zname].fillna(-999)
     # now there are various variotions on how to count mismatch:
     # dfuse 1: count matches when zonelogname is valid (exclude -888)
     # dfuse 2: count matches when zonelogname OR zmodel are valid (exclude < -888

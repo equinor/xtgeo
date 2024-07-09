@@ -1,5 +1,7 @@
 """Private import and export routines for XYZ stuff."""
 
+import contextlib
+
 import numpy as np
 import pandas as pd
 
@@ -19,7 +21,7 @@ def import_xyz(pfile, zname="Z_TVDSS"):
         "yname": "Y_UTMN",
         "values": pd.read_csv(
             pfile.file,
-            delim_whitespace=True,
+            sep=r"\s+",
             skiprows=0,
             header=None,
             names=["X_UTME", "Y_UTMN", zname],
@@ -70,7 +72,7 @@ def import_zmap(pfile, zname="Z_TVDSS"):
 
     df = pd.read_csv(
         pfile.file,
-        delim_whitespace=True,
+        sep=r"\s+",
         skiprows=16,
         header=None,
         names=[xname, yname, zname, pname],
@@ -150,7 +152,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
 
     dfr = pd.read_csv(
         pfile.file,
-        delim_whitespace=True,
+        sep=r"\s+",
         skiprows=skiprows,
         header=None,
         names=names,
@@ -158,12 +160,16 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
     )
     for col in dfr.columns[3:]:
         if col in _attrs:
+            # pandas gives a FutureWarning here due to casting what was
+            # previously a string to a float/int.
             if _attrs[col] == "float":
-                dfr[col].replace("UNDEF", UNDEF, inplace=True)
+                dfr[col] = dfr[col].replace("UNDEF", UNDEF).astype(float)
             elif _attrs[col] == "int":
-                dfr[col].replace("UNDEF", UNDEF_INT, inplace=True)
-            # cast to numerical if possible
-        dfr[col] = pd.to_numeric(dfr[col], errors="ignore")
+                dfr[col] = dfr[col].replace("UNDEF", UNDEF_INT).astype(int)
+
+        # cast to numerical if possible
+        with contextlib.suppress(ValueError, TypeError):
+            dfr[col] = pd.to_numeric(dfr[col])
 
     kwargs["values"] = dfr
     kwargs["attributes"] = _attrs
@@ -314,9 +320,9 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
                 if col in df.columns:
                     fout.write(transl[self._attrs[col]] + " " + col + "\n")
                     if self._attrs[col] == "int":
-                        df[col].replace(UNDEF_INT, "UNDEF", inplace=True)
+                        df[col] = df[col].replace(UNDEF_INT, "UNDEF")
                     elif self._attrs[col] == "float":
-                        df[col].replace(UNDEF, "UNDEF", inplace=True)
+                        df[col] = df[col].replace(UNDEF, "UNDEF")
 
     with open(pfile, mode) as fc:
         df.to_csv(fc, sep=" ", header=None, columns=columns, index=False)

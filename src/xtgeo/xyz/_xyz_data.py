@@ -300,15 +300,14 @@ class _XYZData:
         for name, attr_type in self._attr_types.items():
             if attr_type == _AttrType.CONT.value:
                 logger.debug("Replacing CONT undef...")
-                self._df[name].replace(
+                self._df.loc[:, name] = self._df[name].replace(
                     self._undef_cont,
                     np.float64(UNDEF_CONT).astype(self._floatbits),
-                    inplace=True,
                 )
             else:
                 logger.debug("Replacing INT undef...")
-                self._df[name].replace(
-                    self._undef_disc, np.int32(UNDEF_DISC), inplace=True
+                self._df.loc[:, name] = self._df[name].replace(
+                    self._undef_disc, np.int32(UNDEF_DISC)
                 )
         logger.info("Processed dataframe: %s", list(self._df.dtypes))
 
@@ -579,7 +578,7 @@ class _XYZData:
             distance.append(math.hypot((previous_x - x), (y - previous_y)))
             previous_x, previous_y = x, y
 
-        self._df[_AttrName.R_HLEN_NAME.value] = pd.Series(
+        self._df.loc[:, _AttrName.R_HLEN_NAME.value] = pd.Series(
             np.cumsum(distance), index=self._df.index
         )
         self.ensure_consistency()
