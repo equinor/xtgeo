@@ -167,26 +167,6 @@ extern "C"
 
     extern void *SwapEndian(void *Addr, const int Nb);
 
-    /*
-     *--------------------------------------------------------------------------------------
-     * No-public grd3d routines for other issues
-     *--------------------------------------------------------------------------------------
-     */
-
-    int u_read_segy_bitem(int nc,
-                          int ic,
-                          void *ptr,
-                          size_t size,
-                          size_t nmemb,
-                          FILE *fc,
-                          FILE *fout,
-                          int swap,
-                          char *txt,
-                          int *nb,
-                          int option);
-
-    void u_ibm_to_float(int *from, int *to, int n, int endian, int swap);
-
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

@@ -745,15 +745,6 @@ extern "C"
                         double rot_azi_deg,
                         int flag);
 
-    void cube_scan_segy_hdr(char *file,
-                            int *gn_bitsheader,
-                            int *gn_formatcode,
-                            float *gf_segyformat,
-                            int *gn_samplespertrace,
-                            int *gn_measuresystem,
-                            int option,
-                            char *outfile);
-
     int cube_import_storm(int nx,
                           int ny,
                           int nz,
@@ -762,30 +753,6 @@ extern "C"
                           float *swig_np_flt_aout_v1,  // *p_cube_v
                           long n_swig_np_flt_aout_v1,  // nxyz
                           int option);
-
-    void cube_import_segy(char *file,
-                          int hbitoffset,
-                          int formatcode,
-                          float segyformat,
-                          int samplespertrace,
-                          int *nx,
-                          int *ny,
-                          int *nz,
-                          float *p_val_v,
-                          double *xori,
-                          double *xinc,
-                          double *yori,
-                          double *yinc,
-                          double *zori,
-                          double *zinc,
-                          double *rotation,
-                          int *yflip,
-                          int *zflip,
-                          double *minval,
-                          double *maxval,
-                          int optscan,
-                          int option,
-                          char *outfile);
 
     void cube_import_rmsregular(int iline,
                                 int *ndef,
