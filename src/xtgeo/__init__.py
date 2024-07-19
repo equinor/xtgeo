@@ -41,24 +41,6 @@ try:
 except ImportError:
     ROXAR = False
 
-if platform.system() == "Linux" and not ROXAR:
-    _display = os.environ.get("DISPLAY", "")
-    _hostname = os.environ.get("HOSTNAME", "")
-    _host = os.environ.get("HOST", "")
-
-    _dhost = _hostname + _host + _display
-    _lsf_job = "LSB_JOBID" in os.environ
-
-    if _display == "" or "grid" in _dhost or "lgc" in _dhost or _lsf_job:
-        _xprint("")
-        _xprint("=" * 79)
-        _xprint(
-            "XTGeo info: No display found or a batch (e.g. ERT) server. "
-            "Using non-interactive Agg backend for matplotlib"
-        )
-        _xprint("=" * 79)
-        os.environ["MPLBACKEND"] = "Agg"
-
 try:
     from xtgeo.common.version import __version__, version
 except ImportError:
