@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-import functools
 import numbers
-import os.path
-import pathlib
-import tempfile
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-import deprecation
 import numpy as np
 
 from xtgeo.common.constants import UNDEF
@@ -18,7 +13,6 @@ from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import generic_hash
 from xtgeo.common.types import Dimensions
-from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription
 from xtgeo.grid3d.grid import grid_from_cube
 from xtgeo.io._file import FileFormat, FileWrapper
@@ -28,9 +22,6 @@ from xtgeo.xyz.polygons import Polygons
 from . import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
 logger = null_logger(__name__)
-
-if TYPE_CHECKING:
-    from xtgeo.common.types import FileLike
 
 
 def _data_reader_factory(fmt: FileFormat):
@@ -77,73 +68,10 @@ def cube_from_roxar(project, name, folder=None):
 
     """
     # this is certainly hackish, and shall be rewritten to a proper class method
-    # -> replaces currently the from_roxar() method which is deprecated
     obj = Cube(ncol=9, nrow=9, nlay=9, xinc=9.99, yinc=9.99, zinc=9.99)  # dummy
     _cube_roxapi.import_cube_roxapi(obj, project, name, folder=folder)
     obj._metadata.required = obj
     return obj
-
-
-def _allow_deprecated_init(func):
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of Cube and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    @functools.wraps(func)
-    def wrapper(cls, *args, **kwargs):
-        # Checking if we are doing an initialization
-        # from file and raise a deprecation warning if
-        # we are.
-        if args and isinstance(args[0], (str, pathlib.Path)):
-            warnings.warn(
-                "Initializing directly from file name is deprecated and will be "
-                "removed in xtgeo version 4.0. Use: "
-                "mcube = xtgeo.cube_from_file('some_name.segy') instead",
-                DeprecationWarning,
-            )
-            cfile = args[0]
-            fformat = args[1] if len(args) > 1 else kwargs.get("fformat", None)
-
-            mfile = FileWrapper(cfile)
-            fmt = mfile.fileformat(fformat)
-            kwargs = _data_reader_factory(fmt)(mfile)
-            kwargs["filesrc"] = mfile.file
-            return func(cls, **kwargs)
-        return func(cls, *args, **kwargs)
-
-    return wrapper
-
-
-def _allow_deprecated_default_init(func):
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of Cube and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    @functools.wraps(func)
-    def wrapper(cls, *args, **kwargs):
-        _deprecation_msg = (
-            "{} is a required argument and will no "
-            "longer be defaulted in xtgeo version 4.0"
-        )
-        if "ncol" not in kwargs and len(args) < 1:
-            warnings.warn(_deprecation_msg.format("ncol"), DeprecationWarning)
-            kwargs["ncol"] = 5
-        if "nrow" not in kwargs and len(args) < 2:
-            warnings.warn(_deprecation_msg.format("nrow"), DeprecationWarning)
-            kwargs["nrow"] = 3
-        if "nlay" not in kwargs and len(args) < 3:
-            warnings.warn(_deprecation_msg.format("nlay"), DeprecationWarning)
-            kwargs["nlay"] = 2
-        if "xinc" not in kwargs and len(args) < 4:
-            warnings.warn(_deprecation_msg.format("xinc"), DeprecationWarning)
-            kwargs["xinc"] = 25.0
-        if "yinc" not in kwargs and len(args) < 5:
-            warnings.warn(_deprecation_msg.format("yinc"), DeprecationWarning)
-            kwargs["yinc"] = 25.0
-        if "zinc" not in kwargs and len(args) < 6:
-            warnings.warn(_deprecation_msg.format("zinc"), DeprecationWarning)
-            kwargs["zinc"] = 2.0
-        return func(cls, *args, **kwargs)
-
-    return wrapper
 
 
 class Cube:
@@ -190,8 +118,6 @@ class Cube:
 
     """
 
-    @_allow_deprecated_init
-    @_allow_deprecated_default_init
     def __init__(
         self,
         ncol,
@@ -215,48 +141,6 @@ class Cube:
     ):
         """Initiate a Cube instance."""
 
-        self._reset(
-            xori=xori,
-            yori=yori,
-            zori=zori,
-            ncol=ncol,
-            nrow=nrow,
-            nlay=nlay,
-            xinc=xinc,
-            yinc=yinc,
-            zinc=zinc,
-            yflip=yflip,
-            values=values,
-            rotation=rotation,
-            zflip=zflip,
-            ilines=ilines,
-            xlines=xlines,
-            traceidcodes=traceidcodes,
-            segyfile=segyfile,
-            filesrc=filesrc,
-        )
-
-    def _reset(
-        self,
-        ncol=5,
-        nrow=3,
-        nlay=2,
-        xinc=25.0,
-        yinc=25.0,
-        zinc=2.0,
-        xori=0.0,
-        yori=0.0,
-        zori=0.0,
-        yflip=1,
-        values=0.0,
-        rotation=0.0,
-        zflip=1,
-        ilines=None,
-        xlines=None,
-        traceidcodes=None,
-        segyfile=None,
-        filesrc=None,
-    ):
         self._filesrc = filesrc
         self._xori = xori
         self._yori = yori
@@ -848,27 +732,6 @@ class Cube:
     # Import and export
     # =========================================================================
 
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.cube_from_file() instead",
-    )
-    def from_file(self, sfile, fformat="guess", engine=None):
-        """Deprecated, see :func:`cube_from_file`."""
-        mfile = FileWrapper(sfile)
-        fmt = mfile.fileformat(fformat)
-
-        if engine is not None:
-            warnings.warn(
-                "The engine parameter is deprecated, and has no effect.",
-                DeprecationWarning,
-            )
-
-        kwargs = _data_reader_factory(fmt)(mfile)
-        kwargs["filesrc"] = mfile.file
-        self._reset(**kwargs)
-
     @classmethod
     def _read_file(cls, sfile, fformat="guess"):
         """Import cube data from file.
@@ -900,7 +763,7 @@ class Cube:
         kwargs["filesrc"] = mfile.file
         return cls(**kwargs)
 
-    def to_file(self, sfile, fformat="segy", pristine=False, engine="xtgeo"):
+    def to_file(self, sfile, fformat="segy", pristine=False, engine=None):
         """Export cube data to file.
 
         Args:
@@ -919,8 +782,16 @@ class Cube:
 
         fobj.check_folder(raiseerror=OSError)
 
+        if engine is not None:
+            warnings.warn(
+                "Providing an 'engine' value is no longer supported and will have no "
+                "effect in the future. segyio will eventually be used by default. "
+                "Current default engine is 'xtgeo'.",
+                UserWarning,
+            )
+
         if fformat in FileFormat.SEGY.value:
-            _cube_export.export_segy(self, fobj.name, pristine=pristine, engine=engine)
+            _cube_export.export_segy(self, fobj.name, pristine=pristine)
         elif fformat == "rms_regular":
             _cube_export.export_rmsreg(self, fobj.name)
         elif fformat == "xtgregcube":
@@ -931,35 +802,6 @@ class Cube:
                 f"File format {fformat} is invalid for type Cube. "
                 f"Supported formats are {extensions}."
             )
-
-    @deprecation.deprecated(
-        deprecated_in="3.6",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.cube_from_roxar() instead",
-    )
-    def from_roxar(self, project, name, folder=None):  # pragma: no cover
-        """Import (transfer) a cube from a Roxar seismic object to XTGeo.
-
-        Args:
-            project (str): Inside RMS use the magic 'project', else use
-                path to RMS project
-            name (str): Name of cube within RMS project.
-            folder (str): Folder name in in RMS if present; use '/' to seperate
-                subfolders
-
-        Raises:
-            To be described...
-
-        Example::
-
-            zz = Cube()
-            zz.from_roxar(project, 'truth_reek_seismic_depth_2000', folder="alt/depth")
-
-        """
-        _cube_roxapi.import_cube_roxapi(self, project, name, folder=folder)
-
-        self._metadata.required = self
 
     def to_roxar(
         self,
@@ -1023,79 +865,6 @@ class Cube:
                 domain=domain,
                 compression=compression,
             )
-
-    @staticmethod
-    @deprecation.deprecated(
-        deprecated_in="3.6",
-        removed_in="4.0",
-        current_version=__version__,
-        details=(
-            "This functionality is no longer supported in xtgeo. "
-            "Use the segyio library instead."
-        ),
-    )
-    def scan_segy_traces(sfile: str, outfile: FileLike = None):
-        """Scan a SEGY file traces and print limits info to STDOUT or file.
-
-        Args:
-            sfile (str): Name of SEGY file
-            outfile: File where store scanned trace info, if empty or None
-                output goes to STDOUT.
-        """
-        oflag = False
-        # if outfile is none, it means that you want to plot on STDOUT
-        if outfile is None:
-            fx = tempfile.NamedTemporaryFile(delete=False, prefix="tmpxgeo")
-            fx.close()
-            outfile = fx.name
-            logger.info("TMP file name is %s", outfile)
-            oflag = True
-
-        _cube_import._scan_segy_trace(str(sfile), outfile=str(outfile))
-
-        if oflag:
-            # pass
-            logger.info("OUTPUT to screen...")
-            with open(outfile) as out:
-                for line in out:
-                    print(line.rstrip("\r\n"))
-            os.remove(outfile)
-
-    @staticmethod
-    @deprecation.deprecated(
-        deprecated_in="3.6",
-        removed_in="4.0",
-        current_version=__version__,
-        details=(
-            "This functionality is no longer supported in xtgeo. "
-            "Use the segyio library instead."
-        ),
-    )
-    def scan_segy_header(sfile: str, outfile: FileLike = None):
-        """Scan a SEGY file header and print info to screen or file.
-
-        Args:
-            sfile (str): Name of SEGY file
-            outfile (str): File where store header info, if empty or None
-                output goes to screen (STDOUT).
-        """
-        flag = False
-        # if outfile is none, it means that you want to print on STDOUT
-        if outfile is None:
-            fc = tempfile.NamedTemporaryFile(delete=False, prefix="tmpxtgeo")
-            fc.close()
-            outfile = fc.name
-            logger.info("TMP file name is %s", outfile)
-            flag = True
-
-        _cube_import._scan_segy_header(str(sfile), outfile=str(outfile))
-
-        if flag:
-            logger.info("OUTPUT to screen...")
-            with open(outfile) as out:
-                for line in out:
-                    print(line.rstrip("\r\n"))
-            os.remove(outfile)
 
     def _ensure_correct_values(
         self,
