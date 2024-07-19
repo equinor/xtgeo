@@ -1,11 +1,9 @@
 """XTGeo blockedwell module"""
 
-import deprecation
 import pandas as pd
 
 from xtgeo.common._xyz_enum import _AttrName
 from xtgeo.common.log import null_logger
-from xtgeo.common.version import __version__
 
 from . import _blockedwell_roxapi
 from .well1 import Well
@@ -169,50 +167,6 @@ class BlockedWell(Well):
         newbw._gridname = self._gridname
 
         return newbw
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.blockedwell_from_roxar() instead",
-    )
-    def from_roxar(self, *args, **kwargs):
-        """Import (retrieve) a single blocked well from roxar project.
-
-        Note this method works only when inside RMS, or when RMS license is
-        activated.
-
-        Args:
-            project (str): Magic string `project` or file path to project
-            gname (str): Name of GridModel icon in RMS
-            bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
-            wname (str): Name of well, as shown in RMS.
-            lognames (list): List of lognames to include, or use 'all' for
-                all current blocked logs for this well. Default is 'all'.
-            realisation (int): Realisation index (0 is default)
-            ijk (bool): If True, then make additional logs with grid IJK as I_INDEX,
-                etc, default is False
-        """
-        project = args[0]
-        gname = args[1]
-        bwname = args[2]
-        wname = args[3]
-        lognames = kwargs.get("lognames", "all")
-        ijk = kwargs.get("ijk", False)
-        realisation = kwargs.get("realisation", 0)
-
-        _blockedwell_roxapi.import_bwell_roxapi(
-            self,
-            project,
-            gname,
-            bwname,
-            wname,
-            lognames=lognames,
-            ijk=ijk,
-            realisation=realisation,
-        )
-
-        self._ensure_consistency()
 
     def to_roxar(self, *args, **kwargs):
         """Set (export) a single blocked well item inside roxar project.
