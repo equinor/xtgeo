@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -24,15 +23,6 @@ def import_roff(
     grid: Grid | None = None,
 ) -> dict[str, Any]:
     """Import ROFF format"""
-
-    if name == "unknown":
-        warnings.warn(
-            "Using name='unknown' to select first property in roff file"
-            " is deprecated, use name=None instead",
-            DeprecationWarning,
-        )
-        name = None
-
     result: dict[str, Any] = {}
     roff_param = RoffParameter.from_file(pfile._file, name)
     result["codes"] = roff_param.xtgeo_codes()
