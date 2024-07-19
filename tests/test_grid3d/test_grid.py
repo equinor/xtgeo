@@ -60,11 +60,6 @@ def test_create_shoebox(tmp_path):
     grd = xtgeo.create_box_grid((4, 3, 5))
     grd.to_file(tmp_path / "shoebox_default.roff")
 
-    with pytest.warns(DeprecationWarning, match="create_box is deprecated"):
-        grd = Grid()
-        grd.create_box((4, 3, 5))
-        grd.to_file(tmp_path / "shoebox_default2.roff")
-
     grd = xtgeo.create_box_grid((2, 3, 4), flip=-1)
     grd.to_file(tmp_path / "shoebox_default_flipped.roff")
 
@@ -130,8 +125,8 @@ def test_emerald_grid_values(emerald_grid):
     assert mydz == pytest.approx(2.761, abs=0.001), "Grid DZ Emerald"
     dxv, dyv = (emerald_grid.get_dx(), emerald_grid.get_dy())
 
-    mydx = float(dxv.values3d[31:32, 72:73, 0:1])
-    mydy = float(dyv.values3d[31:32, 72:73, 0:1])
+    mydx = float(dxv.values[31:32, 72:73, 0:1])
+    mydy = float(dyv.values[31:32, 72:73, 0:1])
 
     assert mydx == pytest.approx(118.51, abs=0.01), "Grid DX Emerald"
     assert mydy == pytest.approx(141.26, abs=0.01), "Grid DY Emerald"
@@ -624,26 +619,11 @@ def test_grid_get_dz(dimension, dx, dy, dz):
     assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, atol=0.01)
 
 
-@given(xtgeo_grids)
-def test_get_dxdy_is_get_dx_and_dy(grid):
-    assert np.all(grid.get_dxdy(asmasked=True)[0].values == grid.get_dx().values)
-    assert np.all(grid.get_dxdy(asmasked=True)[1].values == grid.get_dy().values)
-
-
 def test_benchmark_grid_get_dz(benchmark):
     grd = xtgeo.create_box_grid(dimension=(100, 100, 100))
 
     def run():
         grd.get_dz()
-
-    benchmark(run)
-
-
-def test_benchmark_grid_get_dxdy(benchmark):
-    grd = xtgeo.create_box_grid(dimension=(100, 100, 100))
-
-    def run():
-        grd.get_dxdy()
 
     benchmark(run)
 

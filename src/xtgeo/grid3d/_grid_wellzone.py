@@ -23,7 +23,6 @@ def report_zone_mismatch(
     well: Well | None = None,
     zonelogname: str = "ZONELOG",
     zoneprop: GridProperty | None = None,
-    onelayergrid: Grid | None = None,  # redundant; will be computed internally
     zonelogrange: tuple[int, int] = (0, 9999),
     zonelogshift: int = 0,
     depthrange: tuple[int | float, int | float] | None = None,
@@ -47,9 +46,6 @@ def report_zone_mismatch(
     This method was completely redesigned in version 2.8
     """
     self._xtgformat1()
-
-    if onelayergrid is not None:
-        xtg.warndeprecated("Using key 'onelayergrid' is redundant and can be skipped")
 
     if not isinstance(well, Well):
         raise ValueError("Input well is not a Well() instance")
