@@ -6,7 +6,6 @@ import warnings
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-import deprecation
 import numpy as np
 import pandas as pd
 
@@ -15,7 +14,6 @@ from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_LIMIT
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
-from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataWell
@@ -177,7 +175,6 @@ class Well:
             defaults to None.
     """
 
-    @_well_aux.allow_deprecated_init
     def __init__(
         self,
         rkb: float = 0.0,
@@ -207,8 +204,6 @@ class Well:
         # additional state variables
         self._metadata = MetaDataWell()
         self._metadata.required = self
-
-    _reset = __init__  # workaround until deprecation .from_file(), etc are removed
 
     def __repr__(self):  # noqa: D105
         # should (in theory...) be able to newobject = eval(repr(thisobject))
@@ -492,26 +487,6 @@ class Well:
 
         return dsc.astext()
 
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.well_from_file() instead",
-    )
-    def from_file(
-        self,
-        wfile,
-        fformat="rms_ascii",
-        **kwargs,
-    ):
-        """Deprecated, see :meth:`xtgeo.well_from_file`"""
-
-        wfile = FileWrapper(wfile)
-        fmt = wfile.fileformat(fformat)
-        kwargs = _well_aux._data_reader_factory(fmt)(wfile, **kwargs)
-        self._reset(**kwargs)
-        return self
-
     @classmethod
     def _read_file(
         cls,
@@ -603,19 +578,6 @@ class Well:
 
         return wfile.file
 
-    @deprecation.deprecated(
-        deprecated_in="3.6",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.well_from_file() instead",
-    )
-    def from_hdf(
-        self,
-        wfile: str | Path,
-    ):
-        """Deprecated, use :meth:`xtgeo.well_from_file()`"""
-        return self.from_file(wfile, fformat="hdf")
-
     def to_hdf(
         self,
         wfile: str | Path,
@@ -642,37 +604,6 @@ class Well:
         _well_io.export_hdf5_well(self, wfile, compression=compression)
 
         return wfile.file
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.well_from_roxar() instead",
-    )
-    def from_roxar(
-        self,
-        project: str | object,
-        name: str,
-        trajectory: str | None = "Drilled trajectory",
-        logrun: str | None = "log",
-        lognames: str | list[str] | None = "all",
-        lognames_strict: bool | None = False,
-        inclmd: bool | None = False,
-        inclsurvey: bool | None = False,
-    ):
-        """Deprecated, use :meth:`xtgeo.well_from_roxar()`"""
-        kwargs = _well_roxapi.import_well_roxapi(
-            project,
-            name,
-            trajectory=trajectory,
-            logrun=logrun,
-            lognames=lognames,
-            lognames_strict=lognames_strict,
-            inclmd=inclmd,
-            inclsurvey=inclsurvey,
-        )
-        self._reset(**kwargs)
-        return self
 
     @classmethod
     def _read_roxar(
