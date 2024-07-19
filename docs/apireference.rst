@@ -265,27 +265,3 @@ MetaDataWell
 .. autoclass:: xtgeo.MetaDataWell
 
     .. autoclasstoc::
-
-Plot (to be deprecated)
-^^^^^^^^^^^^^^^^^^^^^^^
-
-XSection
-""""""""
-
-.. autoclass:: xtgeo.plot.XSection
-
-    .. autoclasstoc::
-
-Map
-"""
-
-.. autoclass:: xtgeo.plot.Map
-
-    .. autoclasstoc::
-
-Grid3DSlice
-"""""""""""
-
-.. autoclass:: xtgeo.plot.Grid3DSlice
-
-    .. autoclasstoc::

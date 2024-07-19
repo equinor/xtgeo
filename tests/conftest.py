@@ -27,13 +27,6 @@ def pytest_configure(config):
             " is ../xtgeo-testdata."
         )
 
-    # Set the Agg backend for all test runs. This should be removed once
-    # xtgeo.plot is removed. This is to ensure that CI runs do not fail
-    # on Windows and macOS.
-    import matplotlib as mpl
-
-    mpl.use("Agg")
-
 
 def pytest_addoption(parser):
     parser.addoption(
