@@ -42,7 +42,6 @@ from copy import deepcopy
 from types import FunctionType
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Type, Union
 
-import deprecation
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
@@ -57,7 +56,6 @@ from xtgeo.common.constants import (
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import generic_hash
-from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataRegularSurface
@@ -268,101 +266,6 @@ def _data_reader_factory(file_format: FileFormat):
     )
 
 
-def _allow_deprecated_init(func):
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of RegularSurface and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    @functools.wraps(func)
-    def wrapper(cls, *args, **kwargs):
-        # Checking if we are doing an initialization
-        # from file and raise a deprecation warning if
-        # we are.
-        if "sfile" in kwargs or len(args) == 1:
-            warnings.warn(
-                "Initializing directly from file name is deprecated and will be "
-                "removed in xtgeo version 4.0. Use: "
-                "mysurf = xtgeo.surface_from_file('some_name.gri') instead",
-                DeprecationWarning,
-            )
-            sfile = kwargs.get("sfile", args[0])
-            fformat = kwargs.get("fformat", None)
-            values = kwargs.get("values", None)
-            if isinstance(values, bool) and values is False:
-                load_values = False
-            else:
-                load_values = True
-            mfile = FileWrapper(sfile)
-            fmt = mfile.fileformat(fformat)
-            kwargs = _data_reader_factory(fmt)(mfile, values=load_values)
-            kwargs["filesrc"] = mfile.file
-            kwargs["fformat"] = fmt
-            return func(cls, **kwargs)
-
-        return func(cls, *args, **kwargs)
-
-    return wrapper
-
-
-def _allow_deprecated_default_init(func):
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of RegularSurface and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    @functools.wraps(func)
-    def wrapper(cls, *args, **kwargs):
-        # This is (mostly) for cases where we are doing an empty
-        # initialization, so we need to inject default values
-        # for the required args. The excessive checking is in
-        # corner cases where we provide some positional arguments
-        # as keyword arguments.
-        _deprecation_msg = (
-            "X is a required argument, will no "
-            "longer be defaulted in xtgeo version 4.0"
-        )
-        if len(args) != 4:
-            if "ncol" not in kwargs and len(args) != 1:
-                warnings.warn(_deprecation_msg.replace("X", "ncol"), DeprecationWarning)
-                kwargs["ncol"] = 5
-            if "nrow" not in kwargs and len(args) != 2:
-                warnings.warn(_deprecation_msg.replace("X", "nrow"), DeprecationWarning)
-                kwargs["nrow"] = 3
-            if "xinc" not in kwargs and len(args) != 3:
-                warnings.warn(_deprecation_msg.replace("X", "xinc"), DeprecationWarning)
-                kwargs["xinc"] = 25.0
-            if "yinc" not in kwargs:
-                warnings.warn(_deprecation_msg.replace("X", "yinc"), DeprecationWarning)
-                kwargs["yinc"] = 25.0
-            default = (
-                kwargs.get("ncol", 5) == 5
-                and kwargs.get("nrow", 3) == 3
-                and kwargs.get("xori", 0.0) == kwargs.get("yori", 0.0) == 0.0
-                and kwargs.get("xinc", 25.0) == kwargs.get("yinc", 25.0) == 25.0
-            )
-            values = kwargs.get("values", None)
-            if values is None and default:
-                default_values = [
-                    [1, 6, 11],
-                    [2, 7, 12],
-                    [3, 8, 1e33],
-                    [4, 9, 14],
-                    [5, 10, 15],
-                ]
-                warnings.warn(
-                    f"Default values {default_values} for RegularSurface is "
-                    f"deprecated and will be set to an array of zero if not explicitly "
-                    f"given in version 3",
-                    DeprecationWarning,
-                )
-                # make default surface (mostly for unit testing)
-                kwargs["values"] = np.array(
-                    default_values,
-                    dtype=np.float64,
-                    order="C",
-                )
-        return func(cls, *args, **kwargs)
-
-    return wrapper
-
-
 class RegularSurface:
     """Class for a regular surface in the XTGeo framework.
 
@@ -372,8 +275,6 @@ class RegularSurface:
 
     """
 
-    @_allow_deprecated_init
-    @_allow_deprecated_default_init
     def __init__(
         self,
         ncol: int,
@@ -926,92 +827,6 @@ class RegularSurface:
 
         return dsc.astext()
 
-    @deprecation.deprecated(
-        deprecated_in="2.15",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.surface_from_file() instead",
-    )
-    def from_file(
-        self,
-        mfile: Union[str, pathlib.Path, io.BytesIO],
-        fformat: Optional[str] = None,
-        values: Optional[bool] = True,
-        **kwargs,
-    ):
-        """Import surface (regular map) from file.
-
-        Note that the ``fformat=None`` or ``guess`` option will guess format by
-        looking at the file or stream signature or file extension.
-        For the signature, the first bytes are scanned for 'patterns'. If that
-        does not work (and input is not a memory stream), it will try to use
-        file extension where e.g. "gri" will assume irap_binary and "fgr"
-        assume Irap Ascii. If file extension is missing, Irap binary is assumed.
-
-        The ``ijxyz`` format is the typical seismic format, on the form
-        (ILINE, XLINE, X, Y, VALUE) as a table of points. Map values are
-        estimated from the given values, or by using an existing map or
-        cube as template, and match by ILINE/XLINE numbering.
-
-        BytesIO input is supported for Irap binary, Irap Ascii, ZMAP ascii.
-
-        Args:
-            mfile: File-like or memory stream instance.
-            fformat: File format, None/guess/irap_binary/irap_ascii/ijxyz
-                is currently supported. If None or guess, the file 'signature' is
-                used to guess format first, then file extension.
-            values: If True (default), then full array is read, if False
-                only metadata will be read. Valid for Irap binary only. This allows
-                lazy loading in e.g. ensembles.
-            kwargs: some readers allow additonal options:
-            template: Only valid if ``ijxyz`` format, where an
-                existing Cube or RegularSurface instance is applied to
-                get correct topology.
-            engine: Default is "cxtgeo" which use a C backend. Optionally a pure
-                python "python" reader will be used, which in general is slower
-                but may be safer when reading memory streams and/or threading.
-                Keyword engine is only relevant for Irap binary, Irap ascii and zmap.
-
-        Returns:
-            Object instance.
-
-        Example:
-            Here the from_file method is used to initiate the object
-            directly::
-
-            >>> surf = RegularSurface().from_file(surface_dir + "/topreek_rota.gri")
-
-        .. versionchanged:: 2.1
-          Key "values" for Irap binary maps added
-
-        .. versionchanged:: 2.2
-          Input io.BytesIO instance instead of file is now possible
-
-        .. versionchanged:: 2.13
-            ZMAP + import is added, and io.BytesIO input is extended to more formats
-        """
-        logger.info("Import RegularSurface from file or memstream...")
-        mfile = FileWrapper(mfile)
-
-        fmt = mfile.fileformat(fformat)
-        kwargs = _data_reader_factory(fmt)(mfile, values=values, **kwargs)
-        if values:
-            self._isloaded = True
-        self._reset(**kwargs)
-
-    def _reset(self, **kwargs):
-        self._ncol = kwargs["ncol"]
-        self._nrow = kwargs["nrow"]
-        self._xinc = kwargs["xinc"]
-        self._yinc = kwargs["yinc"]
-        self._xori = kwargs.get("xori", self._xori)
-        self._yori = kwargs.get("yori", self._yori)
-        self._yflip = kwargs.get("yflip", self._yflip)
-        self._rotation = kwargs.get("rotation", self._rotation)
-        self._ilines = kwargs.get("ilines", self._ilines)
-        self._xlines = kwargs.get("xlines", self._xlines)
-        self.values = kwargs.get("values", self._values)
-
     @classmethod
     def _read_file(
         cls,
@@ -1229,50 +1044,6 @@ class RegularSurface:
             return None
         return mfile.file
 
-    @deprecation.deprecated(
-        deprecated_in="2.15",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.surface_from_file() instead",
-    )
-    def from_hdf(
-        self,
-        mfile: Union[str, pathlib.Path, io.BytesIO],
-        values: Optional[bool] = True,
-    ):
-        """Import/load a surface (map) with metadata from a HDF5 file.
-
-        Warning:
-            This implementation is currently experimental and only recommended
-            for testing.
-
-        The file extension shall be '.hdf'.
-
-        Args:
-            mfile: File name or Path object or memory stream
-            values: If False, only metadatadata are read
-
-        Returns:
-            RegularSurface() instance
-
-        Example:
-            >>> import xtgeo
-            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
-            >>> filepath = surf.to_hdf(outdir + "/topreek_rota.hdf")
-            >>> mysurf = xtgeo.RegularSurface().from_hdf(filepath)
-
-        .. versionadded:: 2.14
-        """
-        # developing, in prep and experimental!
-        mfile = FileWrapper(mfile, mode="rb", obj=self)
-
-        kwargs = _regsurf_import.import_hdf5_regsurf(mfile, values=values)
-
-        self._reset(**kwargs)
-
-        _self: self.__class__ = self
-        return _self  # to make obj = xtgeo.RegularSurface().from_hdf(stream) work
-
     def to_hdf(
         self,
         mfile: Union[str, pathlib.Path, io.BytesIO],
@@ -1353,66 +1124,6 @@ class RegularSurface:
 
         return cls(**kwargs)
 
-    @deprecation.deprecated(
-        deprecated_in="2.15",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.surface_from_roxar() instead",
-    )
-    def from_roxar(
-        self, project, name, category, stype="horizons", realisation=0
-    ):  # pragma: no cover
-        """Load a surface from a Roxar RMS project.
-
-        The import from the RMS project can be done either within the project
-        or outside the project.
-
-        Note that a shortform to::
-
-          import xtgeo
-          mysurf = xtgeo.surface.RegularSurface()
-          mysurf.from_roxar(project, 'TopAare', 'DepthSurface')
-
-        is::
-
-          import xtgeo
-          mysurf = xtgeo.surface_from_roxar(project, 'TopAare', 'DepthSurface')
-
-        Note also that horizon/zone name and category must exists in advance,
-        otherwise an Exception will be raised.
-
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of surface/map
-            category (str): For horizons/zones or clipboard/general2d_data: for
-                example 'DS_extracted'
-            stype (str): RMS folder type, 'horizons' (default), 'zones', 'clipboard'
-                or 'general2d_data'
-            realisation (int): Realisation number, default is 0
-
-        Returns:
-            Object instance updated
-
-        Raises:
-            ValueError: Various types of invalid inputs.
-
-        Example:
-            Here the from_roxar method is used to initiate the object
-            directly::
-
-              mymap = RegularSurface()
-              mymap.from_roxar(project, 'TopAare', 'DepthSurface')
-
-
-        """
-        kwargs = _regsurf_roxapi.import_horizon_roxapi(
-            project, name, category, stype, realisation
-        )
-
-        self.metadata.required = self
-        self._reset(**kwargs)
-
     def to_roxar(
         self, project, name, category, stype="horizons", realisation=0
     ):  # pragma: no cover
@@ -1477,55 +1188,6 @@ class RegularSurface:
         _regsurf_roxapi.export_horizon_roxapi(
             self, project, name, category, stype, realisation
         )
-
-    @deprecation.deprecated(
-        deprecated_in="2.15",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.surface.surface_from_cube() instead",
-    )
-    def from_cube(self, cube, zlevel):
-        """Make a constant surface from a Cube, at a given time/depth level.
-
-        The surface instance will have exactly the same origins and increments
-        as the cube.
-
-        Args:
-            cube (Cube): XTGeo Cube instance
-            zlevel (float): Depth or Time (or whatever) value of the surface
-
-        Returns:
-            Object instance updated
-
-        Example:
-            Here the from_roxar method is used to initiate the object
-            directly::
-
-            >>> import xtgeo
-            >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
-            >>> mymap = xtgeo.RegularSurface()
-            >>> mymap.from_cube(mycube, 2700)
-
-        """
-        props = [
-            "ncol",
-            "nrow",
-            "xori",
-            "yori",
-            "xinc",
-            "yinc",
-            "rotation",
-            "ilines",
-            "xlines",
-            "yflip",
-        ]
-
-        input_dict = {key: deepcopy(getattr(cube, key)) for key in props}
-
-        input_dict["values"] = ma.array(
-            np.full((input_dict["ncol"], input_dict["nrow"]), zlevel, dtype=np.float64)
-        )
-        self._reset(**input_dict)
 
     @classmethod
     def _read_cube(cls, cube, zlevel):
@@ -1602,57 +1264,6 @@ class RegularSurface:
             grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
         return cls(**args)
-
-    @deprecation.deprecated(
-        deprecated_in="2.15",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.surface_from_grid3d() instead",
-    )
-    def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
-        # It would perhaps to be natural to have this as a Grid() method also?
-        """Extract a surface from a 3D grid.
-
-        Args:
-            grid (Grid): XTGeo Grid instance
-            template(RegularSurface): Optional to use an existing surface as
-                template for geometry
-            where (str): "top", "base" or use the syntax "2_top" where 2
-                is layer no. 2 and _top indicates top of cell, while "_base"
-                indicates base of cell
-            mode (str): "depth", "i" or "j"
-            rfactor (float): Determines how fine the extracted map is; higher values
-                for finer map (but computing time will increase). Will only apply if
-                template is None.
-
-        Returns:
-            Object instance is updated in-place
-            When mode="depth", two RegularSurface: icols and jrows are also returned.
-
-        Example::
-
-            >>> import xtgeo
-            >>> mymap = RegularSurface()
-            >>> mygrid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> # return two additonal maps
-            >>> ic, jr = mymap.from_grid3d(mygrid)
-
-        .. versionadded:: 2.1
-
-        """
-        args, ivalues, jvalues = _regsurf_grid3d.from_grid3d(
-            grid, template=template, where=where, mode=mode, rfactor=rfactor
-        )
-        self._reset(**args)
-        if ivalues is not None and jvalues is not None:
-            ivals = self.copy()
-            args["values"] = ivalues
-            ivals._reset(**args)
-            jvals = self.copy()
-            args["values"] = jvalues
-            jvals._reset(**args)
-            return ivals, jvals
-        return None
 
     def copy(self):
         """Deep copy of a RegularSurface object to another instance.
@@ -3083,7 +2694,6 @@ class RegularSurface:
         minmax=(None, None),
         xlabelrotation=None,
         colormap="rainbow",
-        colortable=None,
         faults=None,
         logarithmic=False,
     ):
@@ -3099,8 +2709,6 @@ class RegularSurface:
             xlabelrotation (float): Rotation in degrees of X labels.
             colormap (str): Name of matplotlib or RMS file or XTGeo
                 colormap. Default is matplotlib's 'rainbow'
-            colortable (str): Deprecated, for backward compatibility! used
-                colormap instead.
             faults (dict): If fault plot is wanted, a dictionary on the
                 form => {'faults': XTGeo Polygons object, 'color': 'k'}
             logarithmic (bool): If True, a logarithmic contouring color scale
@@ -3124,13 +2732,6 @@ class RegularSurface:
 
         minvalue = minmax[0]
         maxvalue = minmax[1]
-
-        if colortable is not None:
-            xtg.warndeprecated(
-                "The colortable parameter is deprecated,"
-                "and will be removed in version 4.0. Use colormap instead."
-            )
-            colormap = colortable
 
         mymap.colormap = colormap
 

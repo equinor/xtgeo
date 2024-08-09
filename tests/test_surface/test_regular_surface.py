@@ -7,10 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xtgeo
-from packaging import version
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
-from xtgeo.common.version import __version__ as xtgeo_version
+from xtgeo.common.exceptions import InvalidFileFormatError
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -1186,50 +1185,15 @@ def test_smoothing(testdata_path):
     assert min3 == pytest.approx(1566.91, abs=0.1)
 
 
-def test_loadvalues_before_remove_deprecated(default_surface, testdata_path):
-    """Test that load_values() has the claimed effect before deprecating __init__"""
-    if version.parse(xtgeo_version) >= version.parse("4.0"):
-        pytest.skip("Not relevant after deprecated __init__ is removed")
-
-    correct = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
-
-    srf = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
-    srf.load_values()
-    assert (correct == srf).all(), "Surface should not have been modified"
-
-    # Remove any "values"-parameter and let deprecated __init__ add one
-    values = default_surface.pop("values", None)
-
-    with pytest.warns(DeprecationWarning, match=r"Default values"):
-        srf = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
-        srf.load_values()
-        assert (correct == srf).all(), "Surface should not have been modified"
-
-    # Also specify the format - see test for after-remove where it behaves differently
-    default_surface["values"] = values
-    srf = xtgeo.RegularSurface(
-        filesrc=testdata_path / TESTSET1, fformat="irap_binary", **default_surface
-    )
-    srf.load_values()
-    assert (correct == srf).all(), "Surface should not have been modified"
-
-    # Finally remove any "filesrc"-parameter
-    default_surface.pop("filesrc", None)
-    srf = xtgeo.RegularSurface(**default_surface)
-    srf.load_values()
-    assert (correct == srf).all(), "Surface should not have been modified"
-
-
 def test_loadvalues_after_remove(default_surface, testdata_path):
-    if version.parse(xtgeo_version) < version.parse("4.0"):
-        pytest.skip("Not relevant before deprecated __init__ is removed")
-
     default_surface.pop("values", None)
-    with pytest.raises(ValueError, match=r"Unknown file format None"):
+    with pytest.raises(InvalidFileFormatError, match="File format None is invalid"):
         srf = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
         srf.load_values()
 
-    with pytest.raises(ValueError, match=r"cannot reshape .*"):
+    with pytest.raises(
+        InvalidFileFormatError, match="File format irap_binary is invalid"
+    ):
         srf = xtgeo.RegularSurface(
             filesrc=testdata_path / TESTSET1, fformat="irap_binary", **default_surface
         )
