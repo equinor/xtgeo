@@ -5,13 +5,10 @@
 # which identifies each polygon piece.
 from __future__ import annotations
 
-import functools
-import pathlib
 import warnings
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
-import deprecation
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
@@ -19,7 +16,6 @@ import shapely.geometry as sg
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
-from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
@@ -29,6 +25,7 @@ from ._xyz_io import _convert_idbased_xyz
 
 if TYPE_CHECKING:
     import io
+    import pathlib
 
     from xtgeo.well.well1 import Well
 
@@ -52,7 +49,7 @@ def _file_importer(
     pfile: str | pathlib.Path | io.BytesIO,
     fformat: str | None = None,
 ):
-    """General function for polygons_from_file and (deprecated) method from_file."""
+    """General function for polygons_from_file"""
     pfile = FileWrapper(pfile)
     fmt = pfile.fileformat(fformat)
     kwargs = _data_reader_factory(fmt)(pfile)
@@ -202,45 +199,8 @@ def polygons_from_wells(
 
         wells = ["w1.w", "w2.w"]
         points = xtgeo.polygons_from_wells(wells, zone=2)
-
-    Note:
-        This method replaces the deprecated method :py:meth:`~Polygons.from_wells`.
-        The latter returns the number of wells that contribute with polygon segments.
-        This is now implemented through the function `get_nwells()`. Hence the
-        following code::
-
-            nwells_applied = poly.from_wells(...)  # deprecated method
-            # vs
-            poly = xtgeo.polygons_from_wells(...)
-            nwells_applied = poly.get_nwells()
-
-    .. versionadded: 2.16
     """
     return Polygons(**_wells_importer(wells, zone, resample))
-
-
-def _allow_deprecated_init(func):
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of Polygons and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    # Introduced post xtgeo version 2.15
-    @functools.wraps(func)
-    def wrapper(cls, *args, **kwargs):
-        # Checking if we are doing an initialization from file or surface and raise a
-        # deprecation warning if we are.
-        if len(args) == 1 and isinstance(args[0], (str, pathlib.Path)):
-            warnings.warn(
-                "Initializing directly from file name is deprecated and will be "
-                "removed in xtgeo version 4.0. Use: "
-                "pol = xtgeo.polygons_from_file('some_file.xx') instead!",
-                DeprecationWarning,
-            )
-            fformat = kwargs.get("fformat", "guess")
-            return func(cls, **_file_importer(args[0], fformat))
-
-        return func(cls, *args, **kwargs)
-
-    return wrapper
 
 
 class Polygons(XYZ):
@@ -284,7 +244,6 @@ class Polygons(XYZ):
             and is to name and type the extra attribute columns in a point set.
     """
 
-    @_allow_deprecated_init
     def __init__(
         self,
         values: list | np.ndarray | pd.DataFrame = None,
@@ -306,39 +265,6 @@ class Polygons(XYZ):
         if values is None:
             values = []
 
-        logger.info("Legacy fformat key with value %s shall be removed in 4.0", fformat)
-
-        self._reset(
-            values=values,
-            xname=xname,
-            yname=yname,
-            zname=zname,
-            pname=pname,
-            hname=hname,
-            dhname=dhname,
-            tname=tname,
-            dtname=dtname,
-            name=name,
-            attributes=attributes,
-        )
-
-    def _reset(  # pylint: disable=arguments-renamed
-        self,
-        values: list | np.ndarray | pd.DataFrame,
-        xname: str = "X_UTME",
-        yname: str = "Y_UTMN",
-        zname: str = "Z_TVDSS",
-        pname: str = "POLY_ID",
-        hname: str = "H_CUMLEN",
-        dhname: str = "H_DELTALEN",
-        tname: str = "T_CUMLEN",
-        dtname: str = "T_DELTALEN",
-        name: str = "poly",
-        attributes: dict | None = None,
-    ):  # pylint: disable=arguments-differ
-        """Used in deprecated methods."""
-
-        super()._reset(xname, yname, zname)
         # additonal state properties for Polygons
         self._pname = pname
 
@@ -522,16 +448,6 @@ class Polygons(XYZ):
     def protected_columns(self):
         return super().protected_columns() + [self.pname]
 
-    @inherit_docstring(inherit_from=XYZ.from_file)
-    @deprecation.deprecated(
-        deprecated_in="2.21",  # should have been 2.16, but was forgotten until 2.21
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.polygons_from_file() instead",
-    )
-    def from_file(self, pfile, fformat="xyz"):
-        self._reset(**_file_importer(pfile, fformat))
-
     def to_file(
         self,
         pfile,
@@ -548,41 +464,6 @@ class Polygons(XYZ):
         """
 
         return _xyz_io.to_file(self, pfile, fformat=fformat, ispolygons=True)
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.polygons_from_wells(...) instead",
-    )
-    def from_wells(self, wells, zone, resample=1):
-        """Get line segments from a list of wells and a single zone number.
-
-        Args:
-            wells (list): List of XTGeo well objects
-            zone (int): Which zone to apply
-            resample (int): If given, resample every N'th sample to make
-                polylines smaller in terms of bits and bytes.
-                1 = No resampling which means well sampling (which can be rather
-                dense; typically 15 cm).
-
-        Returns:
-            None if well list is empty; otherwise the number of wells that
-            have one or more line segments to return
-
-        """
-        if not wells:
-            return None
-
-        self._reset(**_wells_importer(wells, zone, resample))
-
-        dataframe = self.get_dataframe()
-        nwells = dataframe["WellName"].nunique()
-        # as the previous versions did not have the WellName column, this is dropped
-        # here for backward compatibility:
-        self.set_dataframe(dataframe.drop("WellName", axis=1))
-
-        return None if nwells == 0 else nwells
 
     def to_roxar(
         self,
@@ -651,18 +532,6 @@ class Polygons(XYZ):
         mycopy._dtname = self._dtname
 
         return mycopy
-
-    @inherit_docstring(inherit_from=XYZ.from_list)
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use direct Polygons() initialisation instead",
-    )
-    def from_list(self, plist):
-        kwargs = {}
-        kwargs["values"] = _xyz_io._from_list_like(plist, "Z_TVDSS", None, True)
-        self._reset(**kwargs)
 
     def get_xyz_dataframe(self):
         """Get a dataframe copy from the Polygons points with no ID column.

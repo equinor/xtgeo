@@ -147,16 +147,13 @@ def test_export_load_rmsformatted_points(testdata_path, tmp_path):
 def test_import_rmsattr_format(testdata_path, tmp_path):
     """Import points with attributes from RMS attr format."""
 
-    orig_points = Points()
-
     test_points_path = testdata_path / POINTSET3
-    orig_points.from_file(test_points_path, fformat="rms_attr")
+    orig_points = xtgeo.points_from_file(test_points_path, fformat="rms_attr")
 
     export_path = tmp_path / "attrs.rmsattr"
     orig_points.to_file(export_path, fformat="rms_attr")
 
-    reloaded_points = Points()
-    reloaded_points.from_file(export_path, fformat="rms_attr")
+    reloaded_points = xtgeo.points_from_file(export_path, fformat="rms_attr")
     pd.testing.assert_frame_equal(
         orig_points.get_dataframe(), reloaded_points.get_dataframe()
     )
