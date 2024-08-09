@@ -15,7 +15,7 @@ def test_grid_inactivate_inside(tmp_path, testdata_path):
 
     p1 = xtgeo.polygons_from_file(testdata_path / REEKPOLY)
 
-    act1 = g1.get_actnum().values3d
+    act1 = g1.get_actnum().values
     n1 = act1[7, 55, 1]
     assert n1 == 1
 
@@ -26,7 +26,7 @@ def test_grid_inactivate_inside(tmp_path, testdata_path):
 
     g1.to_file(tmp_path / "reek_inact_ins_pol.roff")
 
-    act2 = g1.get_actnum().values3d
+    act2 = g1.get_actnum().values
     n2 = act2[7, 55, 1]
     assert n2 == 0
 
@@ -37,7 +37,7 @@ def test_grid_inactivate_outside(tmp_path, testdata_path):
 
     p1 = xtgeo.polygons_from_file(testdata_path / REEKPOLY)
 
-    act1 = g1.get_actnum().values3d
+    act1 = g1.get_actnum().values
     n1 = act1[3, 56, 1]
     assert n1 == 1
 
@@ -48,7 +48,7 @@ def test_grid_inactivate_outside(tmp_path, testdata_path):
 
     g1.to_file(tmp_path / "reek_inact_out_pol.roff")
 
-    act2 = g1.get_actnum().values3d
+    act2 = g1.get_actnum().values
     n2 = act2[3, 56, 1]
     assert n2 == 0
 

@@ -33,12 +33,12 @@ def test_hcpvfz1(tmp_path, generate_plot, testdata_path):
     dz = grd.get_dz(asmasked=False)
     xc, yc, _zc = grd.get_xyz(asmasked=False)
 
-    xcv = ma.filled(xc.values3d)
-    ycv = ma.filled(yc.values3d)
-    dzv = ma.filled(dz.values3d)
+    xcv = ma.filled(xc.values)
+    ycv = ma.filled(yc.values)
+    dzv = ma.filled(dz.values)
 
-    hcpfz = ma.filled(st.values3d, fill_value=0.0)
-    tov = ma.filled(to.values3d, fill_value=10)
+    hcpfz = ma.filled(st.values, fill_value=0.0)
+    tov = ma.filled(to.values, fill_value=10)
     tov[tov < 1.0e-32] = 1.0e-32
     hcpfz = hcpfz * dzv / tov
 
