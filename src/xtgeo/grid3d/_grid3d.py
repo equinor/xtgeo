@@ -27,14 +27,3 @@ class _Grid3D:
     def nlay(self) -> int:
         """Returns the NLAY (NZ or Nlayers) number of cells."""
         return self._nlay
-
-    def _evaluate_mask(self, mask: bool) -> bool:
-        xtg.warn(
-            f"Use of keyword 'mask' in argument list is deprecated, use alternative "
-            f"specified in API instead! In: {self}"
-        )
-
-        if not isinstance(mask, bool):
-            raise ValueError('Wrong value or use of keyword "mask"')
-
-        return mask

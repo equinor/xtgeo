@@ -3,12 +3,9 @@ from __future__ import annotations
 import copy
 import functools
 import hashlib
-import pathlib
-import warnings
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Literal
 
-import deprecation
 import numpy as np
 
 import xtgeo
@@ -16,7 +13,6 @@ from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.types import Dimensions
-from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataCPProperty
 
@@ -207,66 +203,6 @@ def gridproperty_from_roxar(
     )
 
 
-def _allow_deprecated_init(func: Callable) -> Callable:
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of GridProperty and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    @functools.wraps(func)
-    def wrapper(self: GridProperty, *args: Any, **kwargs: Any) -> Callable:
-        # Check if dummy values are to be used
-        if (
-            all(param not in kwargs for param in ["values", "ncol", "nrow", "nlay"])
-            and len(args) == 0
-        ):
-            warnings.warn(
-                "Default initialization of GridProperty without values and dimension "
-                "is deprecated and will be removed in xtgeo version 4.0",
-                DeprecationWarning,
-            )
-            return func(
-                self,
-                *args,
-                ncol=4,
-                nrow=3,
-                nlay=5,
-                values=_gridprop_value_init.gridproperty_dummy_values(
-                    kwargs.get("discrete", False)
-                ),
-                **kwargs,
-            )
-
-        # Checking if we are doing an initialization
-        # from file and raise a deprecation warning if
-        # we are.
-        if "pfile" in kwargs or (
-            len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, FileWrapper))
-        ):
-            pfile = kwargs.get("pfile", args[0])
-            warnings.warn(
-                "Initializing directly from file name is deprecated and will be "
-                "removed in xtgeo version 4.0. Use: "
-                "myprop = xtgeo.gridproperty_from_file('some_name.roff') instead",
-                DeprecationWarning,
-            )
-            fformat = kwargs.get("fformat", None)
-            mfile = FileWrapper(pfile)
-            fmt = mfile.fileformat(fformat)
-
-            if "pfile" in kwargs:
-                del kwargs["pfile"]
-            if "fformat" in kwargs:
-                del kwargs["fformat"]
-            if len(args) >= 1 and isinstance(args[0], (str, pathlib.Path, FileWrapper)):
-                args = args[min(len(args), 2) :]
-
-            kwargs = _data_reader_factory(fmt)(mfile, *args, **kwargs)
-            kwargs["filesrc"] = mfile.file
-            return func(self, **kwargs)
-        return func(self, *args, **kwargs)
-
-    return wrapper
-
-
 class GridProperty(_Grid3D):
     """
     Class for a single 3D grid property, e.g porosity or facies.
@@ -294,7 +230,6 @@ class GridProperty(_Grid3D):
 
     """
 
-    @_allow_deprecated_init
     def __init__(
         self,
         gridlike: Grid | GridProperty | None = None,
@@ -360,103 +295,6 @@ class GridProperty(_Grid3D):
             mygrid = xtgeo.grid_from_file("grid.roff")
             myprop1 = xtgeo.GridProperty(mygrid, name="PORO")
             myprop2 = xtgeo.GridProperty(mygrid, name="FACIES", discrete=True, values=1,
-                                   linkgeometry=True)  # alternative 1
-            myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
-
-            # from Grid instance:
-            grd = xtgeo.grid_from_file("somefile_grid_file")
-            myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
-
-            # or from existing GridProperty instance:
-            myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
-
-        """
-        super().__init__(ncol or 4, nrow or 3, nlay or 5)
-        self._reset(
-            gridlike,
-            ncol,
-            nrow,
-            nlay,
-            name,
-            discrete,
-            date,
-            grid,
-            linkgeometry,
-            fracture,
-            codes,
-            dualporo,
-            dualperm,
-            roxar_dtype,
-            values,
-            roxorigin,
-            filesrc,
-        )
-
-    def _reset(
-        self,
-        gridlike: Grid | GridProperty | None = None,
-        ncol: int | None = None,
-        nrow: int | None = None,
-        nlay: int | None = None,
-        name: str = "unknown",
-        discrete: bool = False,
-        date: str | None = None,
-        grid: Grid | None = None,
-        linkgeometry: bool = True,
-        fracture: bool = False,
-        codes: dict[int, str] | None = None,
-        dualporo: bool = False,
-        dualperm: bool = False,
-        roxar_dtype: Roxar_DType | None = None,
-        values: np.ndarray | float | int | None = None,
-        roxorigin: bool = False,
-        filesrc: str | None = None,
-    ) -> None:
-        """
-        Instantiating.
-
-        Args:
-            gridlike: Grid or GridProperty instance, or leave blank.
-            ncol: Number of columns (nx). Defaults to 4.
-            nrow: Number of rows (ny). Defaults to 3.
-            nlay: Number of layers (nz). Defaults to 5.
-            name: Name of property. Defaults to "unknown".
-            discrete: True or False. Defaults to False.
-            date: Date on YYYYMMDD form.
-            grid: Attached Grid object.
-            linkgeometry: If True, establish a link between GridProperty
-                and Grid. Defaults to True.
-            fracture: True if fracture option (relevant for flow simulator data).
-                Defaults to False.
-            codes: Codes in case a discrete property e.g. {1: "Sand", 4: "Shale"}.
-            dualporo: True if dual porosity system. Defaults to False.
-            dualperm: True if dual porosity and dual permeability system.
-                Defaults to False.
-            roxar_dtype: Specify Roxar datatype e.g. np.uint8.
-            values: Values to apply.
-            roxorigin: True if the object comes from Roxar API. Defaults to False.
-            filesrc: Where the file came from.
-
-        Raises:
-            RuntimeError: If something goes wrong (e.g. file not found).
-
-        Examples::
-
-            import xtgeo
-            myprop = xtgeo.gridproperty_from_file("emerald.roff", name="PORO")
-
-            # or
-
-            values = np.ma.ones((12, 17, 10), dtype=np.float64),
-            myprop = GridProperty(ncol=12, nrow=17, nlay=10,
-                                  values=values, discrete=False,
-                                  name="MyValue")
-
-            # or create properties from a Grid() instance
-
-            mygrid = xtgeo.grid_from_file("grid.roff")
-            myprop1 = GridProperty(mygrid, name="PORO")
-            myprop2 = GridProperty(mygrid, name="FACIES", discrete=True, values=1,
                                    linkgeometry=True)  # alternative 1
             myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
 
@@ -778,27 +616,6 @@ class GridProperty(_Grid3D):
         self._roxorigin = val
 
     @property
-    @deprecation.deprecated(
-        deprecated_in="3.6",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use gridprop.values instead",
-    )
-    def values3d(self) -> np.ma.MaskedArray:
-        """DEPRECATED: use values instead (kept for backwards compatibility)."""
-        return self._values
-
-    @values3d.setter
-    @deprecation.deprecated(
-        deprecated_in="3.6",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use gridprop.values instead",
-    )
-    def values3d(self, values: np.ma.MaskedArray) -> None:
-        self.values = values
-
-    @property
     def values1d(self) -> np.ma.MaskedArray:
         """Get a masked 1D array view of values."""
         return self._values.reshape(-1)
@@ -944,71 +761,6 @@ class GridProperty(_Grid3D):
     # Import and export
     # ==================================================================================
 
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.gridproperty_from_file() instead",
-    )
-    def from_file(
-        self,
-        filelike: FileLike,
-        fformat: str | None = None,
-        **kwargs: Any,
-    ) -> GridProperty:
-        """
-        Import grid property from file, and makes an instance of this class.
-
-        Note that the the property may be linked to its geometrical grid,
-        through the ``grid=`` option. Sometimes this is required, for instance
-        for most Eclipse input.
-
-        Args:
-            filelike: Name of file to be imported
-            fformat: File format to be used (roff/init/unrst/grdecl).
-                Defaults to None and tries to infer from file extension.
-            name: Name of property to import
-            date: For restart files, date in YYYYMMDD format. Also
-                the YYYY-MM-DD form is allowed (string), and for Eclipse,
-                mnemonics like 'first', 'last' is also allowed.
-            grid: Grid object for checks. Optional for ROFF, required for Eclipse).
-            gridlink: If True, and grid is not None, a link from the grid
-                instance to the property is made. If False, no such link is made.
-                Avoiding gridlink is recommended when running statistics of multiple
-                realisations of a property.
-            fracture: Only applicable for DUAL POROSITY systems. If True
-                then the fracture property is read. If False then the matrix
-                property is read. Names will be appended with "M" or "F"
-            ijrange: A list of 4 number: (i1, i2, j1, j2) for subrange
-                of cells to read. Only applicable for xtgcpprop format.
-            zerobased: Input if cells counts are zero- or one-based in
-                ijrange. Only applicable for xtgcpprop format.
-
-        Returns:
-           A GridProperty instance.
-
-        Examples::
-
-           import xtgeo
-           gprop = xtgeo.gridproperty_from_file("somefile.roff", fformat="roff")
-
-           # or
-
-           mygrid = xtgeo.grid_from_file("ECL.EGRID")
-           pressure_1 = xtgeo.gridproperty_from_file(
-               "ECL.UNRST", name="PRESSURE", date="first", grid=mygrid
-           )
-
-        .. versionchanged:: 2.8 Added gridlink option, default is True
-
-        """
-        pfile = FileWrapper(filelike)
-        fmt = pfile.fileformat(fformat)
-        kwargs = _data_reader_factory(fmt)(pfile, **kwargs)
-        kwargs["filesrc"] = pfile.file
-        self._reset(**kwargs)
-        return self
-
     @classmethod
     def _read_file(
         cls,
@@ -1072,43 +824,6 @@ class GridProperty(_Grid3D):
             append=append,
             dtype=dtype,
             fmt=fmt,
-        )
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.gridproperty_from_roxar() instead",
-    )
-    def from_roxar(
-        self,
-        projectname: str,
-        gridname: str,
-        propertyname: str,
-        realisation: int = 0,
-        faciescodes: bool = False,
-    ) -> None:
-        """
-        Import grid model property from RMS project, and makes an instance.
-
-        Args:
-            projectname: Name of RMS project. Use 'project' if inside RMS.
-            gridname: Name of grid model.
-            propertyname: Name of grid property.
-            realisation: Realisation number. Default is 0 (the first).
-            faciescodes: If a Roxar property is of the special ``body_facies``
-                type (e.g. result from a channel facies object modelling), the
-                default is to get the body code values. If faciescodes is True,
-                the facies code values will be read instead. For other roxar properties
-                this key is not relevant.
-
-        .. versionadded:: 2.12  Key `faciescodes` was added
-
-        """
-        self._reset(
-            **_gridprop_roxapi.import_prop_roxapi(
-                projectname, gridname, propertyname, realisation, faciescodes
-            )
         )
 
     @classmethod
@@ -1263,7 +978,6 @@ class GridProperty(_Grid3D):
         self,
         name: str = "ACTNUM",
         asmasked: bool = False,
-        mask: bool | None = None,
     ) -> GridProperty:
         """
         Return an ACTNUM GridProperty object.
@@ -1277,7 +991,6 @@ class GridProperty(_Grid3D):
                 Default is "ACTNUM".
             asmasked: Default is False, so that actnum is returned with all cells
                 shown. Use asmasked=True to make 0 entries masked.
-            mask: Deprecated, use asmasked instead!
 
         Returns:
             The ACTNUM GridProperty object.
@@ -1288,13 +1001,6 @@ class GridProperty(_Grid3D):
             print('{}% cells are active'.format(act.values.mean() * 100))
 
         """
-        if mask is not None:
-            xtg.warndeprecated(
-                "The mask option is deprecated,"
-                "and will be removed in version 4.0. Use asmasked instead."
-            )
-            asmasked = super()._evaluate_mask(mask)
-
         act = GridProperty(
             ncol=self._ncol, nrow=self._nrow, nlay=self._nlay, name=name, discrete=True
         )
@@ -1379,6 +1085,7 @@ class GridProperty(_Grid3D):
         """
         if newname is None:
             newname = self.name
+        assert newname is not None
 
         xprop = GridProperty(
             ncol=self._ncol,
