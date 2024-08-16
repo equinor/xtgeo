@@ -2,6 +2,7 @@ import glob
 import pathlib
 
 import pytest
+
 import xtgeo
 from xtgeo.xyz import Points
 

@@ -1,6 +1,7 @@
 import pathlib
 
 import pytest
+
 import xtgeo
 
 REEKROOT = pathlib.Path("3dgrids/reek/REEK")

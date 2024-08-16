@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-import xtgeo
 from hypothesis import given, strategies as st
+
+import xtgeo
 from xtgeo import Cube, RegularSurface
 
 

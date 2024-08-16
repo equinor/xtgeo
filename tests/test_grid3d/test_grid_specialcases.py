@@ -9,6 +9,7 @@ The tests where made on resolving issues #873, #874
 import pathlib
 
 import pytest
+
 import xtgeo
 
 SPE9 = pathlib.Path("3dgrids/bench_spe9")

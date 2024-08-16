@@ -5,8 +5,9 @@ import pathlib
 
 import hypothesis.strategies as st
 import pytest
-import xtgeo
 from hypothesis import assume, given
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import GridProperties, GridProperty

@@ -2,6 +2,7 @@ import pathlib
 
 import numpy as np
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface

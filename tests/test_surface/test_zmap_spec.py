@@ -2,6 +2,7 @@ import pathlib
 from io import StringIO
 
 import pytest
+
 import xtgeo
 from xtgeo.surface._zmap_parser import ZMAPFormatException, ZMAPSurface, parse_zmap
 

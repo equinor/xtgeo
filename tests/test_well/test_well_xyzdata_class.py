@@ -2,6 +2,7 @@
 
 import pandas as pd
 import pytest
+
 from xtgeo.common import _AttrType
 from xtgeo.xyz._xyz_data import _XYZData
 
