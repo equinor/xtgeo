@@ -4,9 +4,10 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import roffio
-import xtgeo
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
+
+import xtgeo
 from xtgeo.grid3d import GridProperty
 from xtgeo.grid3d._roff_parameter import RoffParameter
 

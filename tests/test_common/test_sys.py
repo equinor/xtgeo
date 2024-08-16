@@ -1,6 +1,7 @@
 import hashlib
 
 import pytest
+
 from xtgeo.common.sys import generic_hash
 
 

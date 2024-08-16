@@ -8,8 +8,9 @@ import hypothesis.strategies as st
 import numpy as np
 import numpy.ma as npma
 import pytest
-import xtgeo
 from hypothesis import HealthCheck, example, given, settings
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
 from xtgeo.grid3d import GridProperty

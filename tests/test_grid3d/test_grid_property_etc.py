@@ -2,6 +2,7 @@
 """Testing: test_grid_property more special functions"""
 
 import pytest
+
 from xtgeo.grid3d import _gridprop_roxapi
 
 

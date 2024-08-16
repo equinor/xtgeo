@@ -4,8 +4,9 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import segyio
-import xtgeo
 from hypothesis import HealthCheck, given, settings
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
 from xtgeo.cube._cube_import import (

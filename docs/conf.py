@@ -1,7 +1,8 @@
 from datetime import date
 
-import xtgeo
 from autoclasstoc import PublicMethods
+
+import xtgeo
 
 version = xtgeo.__version__
 release = xtgeo.__version__

@@ -22,6 +22,7 @@ import pathlib
 import numpy as np
 import pytest
 import resfo
+
 import xtgeo
 
 xtg = xtgeo.XTGeoDialog()
