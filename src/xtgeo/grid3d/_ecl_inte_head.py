@@ -4,6 +4,7 @@ import warnings
 from typing import Any, Literal, cast
 
 import numpy as np
+import numpy.typing as npt
 
 from ._ecl_output_file import Phases, Simulator, TypeOfGrid, UnitSystem
 
@@ -29,7 +30,7 @@ class InteHead:
     True
     """
 
-    def __init__(self, values: np.ndarray[np.int_, Any]) -> None:
+    def __init__(self, values: npt.NDArray[np.int_]) -> None:
         """Create an InteHead from the corresponding array.
 
         Args:
