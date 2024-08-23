@@ -116,7 +116,12 @@ def test_assign():
     # this shall now broadcast the value 33 to all activecells
     x.isdiscrete = True
     x.values = 33
-    assert x.dtype == np.int32
+
+    numpy_version = tuple(map(int, np.__version__.split(".")))
+    if numpy_version >= (2, 0, 0):
+        assert x.dtype == np.int64
+    else:
+        assert x.dtype == np.int32
 
     x.isdiscrete = False
     x.values = 44.0221
