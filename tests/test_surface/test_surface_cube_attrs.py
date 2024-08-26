@@ -1,4 +1,5 @@
 import pathlib
+import warnings
 
 import pytest
 
@@ -198,6 +199,45 @@ def test_various_attrs_algorithm3(loadsfile1):
     assert surfx.values.mean() == pytest.approx(529.328, abs=0.01)
 
 
+def test_various_attrs_rewrite(loadsfile1):
+    """Using 'attributes_from_cube_window() instead of 'slice_cube_window()'"""
+    cube1 = loadsfile1
+    surf1 = xtgeo.surface_from_cube(cube1, 2540)
+    surf2 = xtgeo.surface_from_cube(cube1, 2548)
+
+    res = surf1.attributes_from_cube_window(
+        surf2,
+        cube1,
+        interpolation="linear",
+    )
+
+    assert res["mean"].values.mean() == pytest.approx(176.43, abs=0.1)
+
+
+@pytest.mark.parametrize(
+    "ndiv, expected_mean",
+    (
+        [2, 176.417],
+        [4, 176.426],
+        [12, 176.422],
+        [32, 176.421],
+    ),
+)
+def test_various_attrs_new_ndiv(loadsfile1, ndiv, expected_mean):
+    """Seem much more stable"""
+    cube1 = loadsfile1
+    surf1 = xtgeo.surface_from_cube(cube1, 2540)
+    surf2 = xtgeo.surface_from_cube(cube1, 2548)
+
+    result = surf1.attributes_from_cube_window(
+        surf2,
+        cube1,
+        ndiv=ndiv,
+    )
+
+    assert result["mean"].values.mean() == pytest.approx(expected_mean, abs=0.001)
+
+
 @pytest.mark.parametrize(
     "ndiv, expected_mean",
     (
@@ -309,6 +349,40 @@ def test_avg_surface(loadsfile1):
         assert attributes[name] == pytest.approx(attrs[name].values.mean(), rel=0.01)
 
 
+def test_attribute_surfaces(loadsfile1):
+    """Using 'attributes_from_cube_window() instead of 'slice_cube_window()'"""
+    cube1 = loadsfile1
+    surf1 = xtgeo.surface_from_cube(cube1, 1100.0)
+    surf2 = xtgeo.surface_from_cube(cube1, 2900.0)
+
+    # values taken from IB spreadsheet except variance. Note this does only work for
+    # ndiv=1, otherwise the values are somewhat different
+    attributes = {
+        "min": -85.2640,
+        "max": 250.0,
+        "rms": 196.571,
+        "mean": 157.9982,
+        "var": 13676.7175,
+        "sumneg": -2160.80,
+        "sumpos": 73418,
+        "meanabs": 167.5805,
+        "meanpos": 194.7427,
+        "meanneg": -29.2,
+        "maxneg": -85.264,
+        "maxpos": 250.0,
+    }
+
+    attrs = surf1.attributes_from_cube_window(
+        surf2,
+        cube1,
+        ndiv=1,
+        interpolation="linear",
+    )
+
+    for name in attributes:
+        assert attributes[name] == pytest.approx(attrs[name].values.mean(), rel=0.00001)
+
+
 def test_avg_surface2(loadsfile1):
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 2540.0)
@@ -349,7 +423,7 @@ def test_avg_surface_large_cube_algorithmx(benchmark, algorithm):
     surf1 = xtgeo.surface_from_cube(cube1, 2040.0)
     surf2 = xtgeo.surface_from_cube(cube1, 2880.0)
 
-    def run():
+    def run1():
         _ = surf1.slice_cube_window(
             cube1,
             other=surf2,
@@ -362,38 +436,106 @@ def test_avg_surface_large_cube_algorithmx(benchmark, algorithm):
             showprogress=False,
         )
 
-    benchmark(run)
+    benchmark(run1)
+
+
+@pytest.mark.bigtest
+@pytest.mark.benchmark(group="cube slicing_again")
+@pytest.mark.parametrize("algorithm", [2, 99])
+def test_avg_surface_large_cube_algorithmx_yet(benchmark, algorithm):
+    cube1 = xtgeo.Cube(
+        ncol=120, nrow=120, nlay=1000, zori=200, xinc=12, yinc=12, zinc=4
+    )
+
+    surf1 = xtgeo.surface_from_cube(cube1, 2040.0)
+    surf2 = xtgeo.surface_from_cube(cube1, 2880.0)
+
+    def run1():
+        if algorithm == 2:
+            print("Algorithm 2")
+            _ = surf1.slice_cube_window(
+                cube1,
+                other=surf2,
+                other_position="below",
+                attribute="all",
+                snapxy=True,
+                ndiv=10,
+                algorithm=3,
+                showprogress=False,
+            )
+        else:
+            print("Algorithm 99")
+            _ = surf1.attributes_from_cube_window(
+                surf2,
+                cube1,
+                ndiv=10,
+            )
+
+    benchmark(run1)
 
 
 @pytest.mark.bigtest
 def test_attrs_reek(tmp_path, loadsfile2, testdata_path):
-    logger.info("Make cube...")
-    cube2 = loadsfile2
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        warnings.simplefilter("ignore", UserWarning)
+        warnings.simplefilter("ignore", FutureWarning)
+        warnings.simplefilter("ignore", DeprecationWarning)
 
-    t2a = xtgeo.surface_from_file(testdata_path / TOP2A)
-    t2b = xtgeo.surface_from_file(testdata_path / TOP2B)
+        logger.info("Make cube...")
+        cube2 = loadsfile2
 
-    attlist = ["maxpos", "maxneg", "mean", "rms"]
+        t2a = xtgeo.surface_from_file(testdata_path / TOP2A)
+        t2b = xtgeo.surface_from_file(testdata_path / TOP2B)
 
-    attrs1 = t2a.slice_cube_window(
-        cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=1
-    )
-    attrs2 = t2a.slice_cube_window(
-        cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=2
-    )
-    attrs3 = t2a.slice_cube_window(
-        cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=3
-    )
+        attlist = ["maxpos", "maxneg", "mean", "rms"]
 
-    for att, _ in attrs1.items():
-        srf1 = attrs1[att]
-        srf2 = attrs2[att]
-        srf3 = attrs3[att]
+        attrs1 = t2a.slice_cube_window(
+            cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=1
+        )
+        attrs2 = t2a.slice_cube_window(
+            cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=2
+        )
+        attrs3 = t2a.slice_cube_window(
+            cube2,
+            other=t2b,
+            sampling="trilinear",
+            attribute=attlist,
+            algorithm=3,
+            ndiv=4,
+        )
+        attrs4 = t2a.attributes_from_cube_window(
+            t2b, cube2, ndiv=4, interpolation="linear"
+        )
 
-        srf1.to_file(tmp_path / f"attr1_{att}.gri")
-        srf1.to_file(tmp_path / f"attr2_{att}.gri")
-        srf1.to_file(tmp_path / f"attr3_{att}.gri")
+        for att, _ in attrs1.items():
+            srf1 = attrs1[att]
+            srf2 = attrs2[att]
+            srf3 = attrs3[att]
+            srf4 = attrs4[att]
 
-        assert srf1.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)
-        assert srf3.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)
-        print("\nok")
+            assert srf1.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)
+            assert srf3.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)
+            assert srf4.values.mean() == pytest.approx(srf3.values.mean(), abs=0.005)
+
+
+def test_handle_warnings_errors_attributes_from_method(loadsfile1):
+    """Handle some edge cases for the new function, attributes_from_cube_window()."""
+    cube1 = loadsfile1
+    surf1 = xtgeo.surface_from_cube(cube1, 1100.0)
+    surf2 = xtgeo.surface_from_cube(cube1, 2300.0)
+
+    with pytest.warns(UserWarning, match="Lower surface is fully below"):
+        _ = surf1.attributes_from_cube_window(surf2 + 5000, cube1, ndiv=4)
+
+    with pytest.warns(UserWarning, match="Upper surface is fully above"):
+        _ = (surf1 - 3000).attributes_from_cube_window(surf2, cube1, ndiv=4)
+
+    with pytest.raises(ValueError, match="Upper surface is fully below the cube"):
+        _ = (surf1 + 5000).attributes_from_cube_window(surf2 + 5000, cube1, ndiv=4)
+
+    with pytest.raises(ValueError, match="Lower surface is fully above the cube"):
+        _ = (surf1 - 5000).attributes_from_cube_window(surf2 - 5000, cube1, ndiv=4)
+
+    with pytest.raises(ValueError, match="no valid data in the interval"):
+        _ = surf1.attributes_from_cube_window(surf1, cube1, ndiv=4)  # same surface

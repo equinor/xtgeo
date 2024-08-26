@@ -65,6 +65,7 @@ from . import (
     _regsurf_boundary,
     _regsurf_cube,
     _regsurf_cube_window,
+    _regsurf_cube_window_attributes,
     _regsurf_export,
     _regsurf_grid3d,
     _regsurf_gridding,
@@ -2356,7 +2357,7 @@ class RegularSurface:
         Example::
 
             >>> import xtgeo
-            >>> cube = xtgeo.Cube(cube_dir + "/ib_test_cube2.segy")
+            >>> cube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
             >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
             >>> # update surf to sample cube values in a total range of 30 m:
             >>> surf.slice_cube_window(cube, attribute='min', zrange=15.0)
@@ -2379,20 +2380,37 @@ class RegularSurface:
             None is returned. If `attribute` is a list, then a dictionary
             of surface objects is returned.
 
+        Note:
+            This method is now deprecated and will be removed in xtgeo version 5.
+            Please replace with :meth:`attributes_from_cube_window()` as soon
+            as possible.
+
+
         .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is now 2,
                             while 1 is the legacy version
 
         .. versionchanged:: 3.4 Added ``algorithm`` 3 which is more robust and
                             hence recommended!
 
+        .. versionchanged:: 4.1 Flagged as deprecated.
+
         """
+
+        warnings.warn(
+            "This method is deprecated and will be removed in xtgeo version 5. "
+            "It is strongly recommended to use `attributes_from_cube_window()` "
+            "instead!",
+            FutureWarning,
+        )
+
         if other is None and zrange is None:
             zrange = 10
 
         if algorithm != 3:
             warnings.warn(
-                "Other algorithms than no. 3 may be deprecated from xtgeo version 4",
-                PendingDeprecationWarning,
+                "Other algorithms than no. 3 is not recommended, and will be "
+                "removed in near future.",
+                DeprecationWarning,
             )
 
         scube = surface_from_cube(cube, 0)
@@ -2414,6 +2432,87 @@ class RegularSurface:
             deadtraces=deadtraces,
             algorithm=algorithm,
         )
+
+    def attributes_from_cube_window(
+        self,
+        other: RegularSurface,
+        cube: Cube,
+        ndiv: int = 10,
+        interpolation: Literal["linear", "cubic"] = "cubic",
+        minimum_thickness: float = 0.0,
+    ) -> Dict[RegularSurface]:
+        """Return a cube's statistical attributes a surfaces, given two input surfaces.
+
+        The statistical attributes in the window between the input surfaces can be
+        min, max, mean, variance etc. A complete list if current attributes are:
+
+        * 'max' for maximum
+
+        * 'min' for minimum
+
+        * 'rms' for root mean square
+
+        * 'mean' for expected value
+
+        * 'var' for variance (population var; https://en.wikipedia.org/wiki/Variance)
+
+        * 'maxpos' for maximum of positive values
+
+        * 'maxneg' for negative maximum of negative values
+
+        * 'maxabs' for maximum of absolute values
+
+        * 'sumpos' for sum of positive values using cube sampling resolution
+
+        * 'sumneg' for sum of negative values using cube sampling resolution
+
+        * 'meanabs' for mean of absolute values
+
+        * 'meanpos' for mean of positive values
+
+        * 'meanneg' for mean of negative values
+
+        * 'upper' will return a copy of the upper surface applied
+
+        * 'lower' will return a copy of the lower surface applied
+
+
+        Args:
+            other: Instance of other surface to compute within. The algorithm will
+                detect automatically which surface being the upper and which
+                is the lower.
+            cube: Instance of a Cube(), typically seismics.
+            ndiv: Number of intervals for sampling within zrange. Default is 10.
+                using 0.1 of cube Z increment as basis. A higher ndiv will increase
+                CPU time and memory usage, but also increase the precision of the
+                result.
+            interpolation: 'linear', 'cubic' or other interpolators given in
+                :meth:`scipy.interpolate.interp1d()` ``kind`` for interpolation of the
+                seismic signal, default here is 'cubic'.
+            minimum_thickness: Minimum thickness (isochore or isochron) between the
+                two surfaces. If the thickness is less or equal than this value,
+                the result will be masked. Default is 0.0.
+
+        Example::
+
+            >>> import xtgeo
+            >>> cube = xtgeo.cube_from_file("mycube.segy")
+            >>> surf = xtgeo.surface_from_file("topreek.gri")
+            >>> # sample in a total range of 30 m, 15 units above and 15 units below:
+            >>> attrs = (surf - 15).attributes_from_cube_window((surf + 15), cube)
+            >>> attrs["max"].to_file("max.gri")  # save the max attribute to file
+
+        Note:
+            This method is a significantly improved version of the
+            :meth:`slice_cube_window` method, and it is strongly recommended to
+            replace the former with this as soon as possible.
+
+        .. versionadded:: 4.1
+
+        """
+        return _regsurf_cube_window_attributes.CubeAttrs(
+            self, other, cube, ndiv, interpolation, minimum_thickness
+        ).result()
 
     # ==================================================================================
     # Special methods
