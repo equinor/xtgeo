@@ -1,4 +1,7 @@
+import cProfile
+import io
 import pathlib
+import pstats
 import warnings
 
 import pytest
@@ -200,14 +203,14 @@ def test_various_attrs_algorithm3(loadsfile1):
 
 
 def test_various_attrs_rewrite(loadsfile1):
-    """Using 'attributes_from_cube_window() instead of 'slice_cube_window()'"""
+    """Using 'compute_attributes_in_window() instead of 'slice_cube_window()'"""
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 2540)
     surf2 = xtgeo.surface_from_cube(cube1, 2548)
 
-    res = surf1.attributes_from_cube_window(
+    res = cube1.compute_attributes_in_window(
+        surf1,
         surf2,
-        cube1,
         interpolation="linear",
     )
 
@@ -224,14 +227,14 @@ def test_various_attrs_rewrite(loadsfile1):
     ),
 )
 def test_various_attrs_new_ndiv(loadsfile1, ndiv, expected_mean):
-    """Seem much more stable"""
+    """New algorithm, belongs actually to cube class but tested here for comparison"""
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 2540)
     surf2 = xtgeo.surface_from_cube(cube1, 2548)
 
-    result = surf1.attributes_from_cube_window(
+    result = cube1.compute_attributes_in_window(
+        surf1,
         surf2,
-        cube1,
         ndiv=ndiv,
     )
 
@@ -350,7 +353,7 @@ def test_avg_surface(loadsfile1):
 
 
 def test_attribute_surfaces(loadsfile1):
-    """Using 'attributes_from_cube_window() instead of 'slice_cube_window()'"""
+    """Using 'compute_attributes_in_window() instead of 'slice_cube_window()'"""
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 1100.0)
     surf2 = xtgeo.surface_from_cube(cube1, 2900.0)
@@ -372,9 +375,9 @@ def test_attribute_surfaces(loadsfile1):
         "maxpos": 250.0,
     }
 
-    attrs = surf1.attributes_from_cube_window(
+    attrs = cube1.compute_attributes_in_window(
+        surf1,
         surf2,
-        cube1,
         ndiv=1,
         interpolation="linear",
     )
@@ -413,46 +416,18 @@ def test_avg_surface2(loadsfile1):
 
 @pytest.mark.benchmark(group="cube slicing")
 @pytest.mark.parametrize(
-    "algorithm", [pytest.param(1, marks=pytest.mark.bigtest), 2, 3]
+    "algorithm", [pytest.param(1, marks=pytest.mark.bigtest), 2, 3, 99]
 )
 def test_avg_surface_large_cube_algorithmx(benchmark, algorithm):
-    cube1 = xtgeo.Cube(ncol=120, nrow=120, nlay=100, zori=200, xinc=12, yinc=12, zinc=4)
-
-    cube1.values[400:80, 400:80, :] = 12
-
-    surf1 = xtgeo.surface_from_cube(cube1, 2040.0)
-    surf2 = xtgeo.surface_from_cube(cube1, 2880.0)
-
-    def run1():
-        _ = surf1.slice_cube_window(
-            cube1,
-            other=surf2,
-            other_position="below",
-            attribute="all",
-            sampling="cube",
-            snapxy=True,
-            ndiv=None,
-            algorithm=algorithm,
-            showprogress=False,
-        )
-
-    benchmark(run1)
-
-
-@pytest.mark.bigtest
-@pytest.mark.benchmark(group="cube slicing_again")
-@pytest.mark.parametrize("algorithm", [2, 99])
-def test_avg_surface_large_cube_algorithmx_yet(benchmark, algorithm):
     cube1 = xtgeo.Cube(
-        ncol=120, nrow=120, nlay=1000, zori=200, xinc=12, yinc=12, zinc=4
+        ncol=120, nrow=150, nlay=500, zori=2000, xinc=12, yinc=12, zinc=4
     )
 
     surf1 = xtgeo.surface_from_cube(cube1, 2040.0)
-    surf2 = xtgeo.surface_from_cube(cube1, 2880.0)
+    surf2 = xtgeo.surface_from_cube(cube1, 2090.0)
 
-    def run1():
-        if algorithm == 2:
-            print("Algorithm 2")
+    def run():
+        if algorithm < 99:
             _ = surf1.slice_cube_window(
                 cube1,
                 other=surf2,
@@ -460,18 +435,19 @@ def test_avg_surface_large_cube_algorithmx_yet(benchmark, algorithm):
                 attribute="all",
                 snapxy=True,
                 ndiv=10,
-                algorithm=3,
+                algorithm=algorithm,
                 showprogress=False,
             )
         else:
-            print("Algorithm 99")
-            _ = surf1.attributes_from_cube_window(
+            logger.info("New algorithm in Cube class")
+            _ = cube1.compute_attributes_in_window(
+                surf1,
                 surf2,
-                cube1,
+                interpolation="linear",
                 ndiv=10,
             )
 
-    benchmark(run1)
+    benchmark(run)
 
 
 @pytest.mark.bigtest
@@ -504,8 +480,9 @@ def test_attrs_reek(tmp_path, loadsfile2, testdata_path):
             algorithm=3,
             ndiv=4,
         )
-        attrs4 = t2a.attributes_from_cube_window(
-            t2b, cube2, ndiv=4, interpolation="linear"
+        # this belongs to cube class, but tested here for comparison with legacy code
+        attrs4 = cube2.compute_attributes_in_window(
+            t2a, t2b, ndiv=4, interpolation="linear"
         )
 
         for att, _ in attrs1.items():
@@ -519,23 +496,58 @@ def test_attrs_reek(tmp_path, loadsfile2, testdata_path):
             assert srf4.values.mean() == pytest.approx(srf3.values.mean(), abs=0.005)
 
 
-def test_handle_warnings_errors_attributes_from_method(loadsfile1):
-    """Handle some edge cases for the new function, attributes_from_cube_window()."""
-    cube1 = loadsfile1
-    surf1 = xtgeo.surface_from_cube(cube1, 1100.0)
-    surf2 = xtgeo.surface_from_cube(cube1, 2300.0)
+@pytest.mark.benchmark(group="Reek performance new algorithm")
+@pytest.mark.bigtest
+def test_reek_timing_newest_algorithm(benchmark, loadsfile2, testdata_path):
+    cube2 = loadsfile2
 
-    with pytest.warns(UserWarning, match="Lower surface is fully below"):
-        _ = surf1.attributes_from_cube_window(surf2 + 5000, cube1, ndiv=4)
+    s1 = xtgeo.surface_from_cube(cube2, 1710)
+    s2 = xtgeo.surface_from_cube(cube2, 1780)
+
+    def run():
+        cube2.compute_attributes_in_window(
+            s1, s2, ndiv=3, interpolation="linear", no_processes=4
+        )
+
+    benchmark.pedantic(run, rounds=1, iterations=1)
+
+
+@pytest.mark.benchmark(group="Reek performance alg 3")
+@pytest.mark.bigtest
+def test_reek_timing_algorithm3(benchmark, loadsfile2, testdata_path):
+    cube2 = loadsfile2
+
+    s1 = xtgeo.surface_from_cube(cube2, 1710)
+    s2 = xtgeo.surface_from_cube(cube2, 1780)
+
+    def run():
+        s1.slice_cube_window(cube2, other=s2, algorithm=3, attribute="all", ndiv=10)
+
+    benchmark.pedantic(run, rounds=1, iterations=1)
+
+
+def test_warn_errs_new_module_reek(loadsfile1, loadsfile2, testdata_path):
+    """Handle some edge cases for the new function, compute_attributes_in_window()."""
+    cube1 = loadsfile1
+    cube2 = loadsfile2
+    cube1.to_file("/tmp/c1.segy")
+    cube2.to_file("/tmp/c2.segy")
+    surf1 = xtgeo.surface_from_file(testdata_path / TOP2A)
+    surf2 = xtgeo.surface_from_file(testdata_path / TOP2B)
+    surf1.to_file("/tmp/surf1.gri")
+    surf2.to_file("/tmp/surf2.gri")
+
+    with pytest.raises(RuntimeError, match="Perhaps the surfaces are outside the cube"):
+        _ = cube1.compute_attributes_in_window(surf1 - 5000, surf2 - 5000, ndiv=4)
 
     with pytest.warns(UserWarning, match="Upper surface is fully above"):
-        _ = (surf1 - 3000).attributes_from_cube_window(surf2, cube1, ndiv=4)
+        _ = cube2.compute_attributes_in_window(surf1 - 3000, surf2, ndiv=4)
 
     with pytest.raises(ValueError, match="Upper surface is fully below the cube"):
-        _ = (surf1 + 5000).attributes_from_cube_window(surf2 + 5000, cube1, ndiv=4)
+        _ = cube2.compute_attributes_in_window(surf1 + 5000, surf2 + 5000, ndiv=4)
 
     with pytest.raises(ValueError, match="Lower surface is fully above the cube"):
-        _ = (surf1 - 5000).attributes_from_cube_window(surf2 - 5000, cube1, ndiv=4)
+        _ = cube2.compute_attributes_in_window(surf1 - 5000, surf2 - 5000, ndiv=4)
 
     with pytest.raises(ValueError, match="no valid data in the interval"):
-        _ = surf1.attributes_from_cube_window(surf1, cube1, ndiv=4)  # same surface
+        _ = cube2.compute_attributes_in_window(surf1, surf1, ndiv=4)  # same surface

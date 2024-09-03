@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numbers
 import warnings
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -19,7 +19,16 @@ from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataRegularCube
 from xtgeo.xyz.polygons import Polygons
 
-from . import _cube_export, _cube_import, _cube_roxapi, _cube_utils
+from . import (
+    _cube_export,
+    _cube_import,
+    _cube_roxapi,
+    _cube_utils,
+    _cube_window_attributes as _cube_window_attributes,
+)
+
+if TYPE_CHECKING:
+    from xtgeo.surface.regular_surface import RegularSurface
 
 logger = null_logger(__name__)
 
@@ -647,6 +656,91 @@ class Cube:
             self, iloc, jloc, ixline=ixline, zerobased=zerobased
         )
         return xval, yval
+
+    def compute_attributes_in_window(
+        self,
+        upper: RegularSurface | float,
+        lower: RegularSurface | float,
+        ndiv: int = 10,
+        interpolation: str = "cubic",
+        minimum_thickness: float = 0.0,
+        no_processes: int = 1,
+    ) -> dict[RegularSurface]:
+        """Return a cube's attributes as a set of surfaces, given two input surfaces.
+
+        The attributes are computed vertically (per column) within a window defined by
+        the two input surfaces and/or levels.
+
+        The statistical can be min, max, mean, variance etc. A complete list of
+        supported attributes is given below.
+
+        * 'max' for maximum
+
+        * 'min' for minimum
+
+        * 'rms' for root mean square
+
+        * 'mean' for expected value
+
+        * 'var' for variance (population var; https://en.wikipedia.org/wiki/Variance)
+
+        * 'maxpos' for maximum of positive values
+
+        * 'maxneg' for negative maximum of negative values
+
+        * 'maxabs' for maximum of absolute values
+
+        * 'sumpos' for sum of positive values using cube sampling resolution
+
+        * 'sumneg' for sum of negative values using cube sampling resolution
+
+        * 'meanabs' for mean of absolute values
+
+        * 'meanpos' for mean of positive values
+
+        * 'meanneg' for mean of negative values
+
+        * 'upper' will return a copy of the upper surface applied
+
+        * 'lower' will return a copy of the lower surface applied
+
+
+        Args:
+            upper: The uppermost surface or constant level to compute within.
+            lower: The lower surface or level to compute within.
+            ndiv: Number of intervals for sampling within zrange. Default is 10.
+                using 0.1 of cube Z increment as basis. A higher ndiv will increase
+                CPU time and memory usage, but also increase the precision of the
+                result.
+            interpolation: 'linear', 'cubic' or other interpolators given in
+                :meth:`scipy.interpolate.interp1d()` ``kind`` for interpolation of the
+                seismic signal, default here is 'cubic'.
+            minimum_thickness: Minimum thickness (isochore or isochron) between the
+                two surfaces. If the thickness is less or equal than this value,
+                the result will be masked. Default is 0.0.
+            no_processes: Number of processes to use for parallel processing.
+                Default is 1. Somewhat experimental.
+
+        Example::
+
+            >>> import xtgeo
+            >>> cube = xtgeo.cube_from_file("mycube.segy")
+            >>> surf = xtgeo.surface_from_file("topreek.gri")
+            >>> # sample in a total range of 30 m, 15 units above and 15 units below:
+            >>> attrs = cube.attributes_between surfaces((surf-15), (surf + 15))
+            >>> attrs["max"].to_file("max.gri")  # save the 'max' attribute to file
+
+        Note:
+            This method is a significantly improved version of the
+            :meth:`slice_cube_window` method within `RegularSurface()`, and it is
+            strongly recommended to replace the former with this as soon as possible.
+
+        .. versionadded:: 4.1
+
+        """
+        return _cube_window_attributes.CubeAttrs(
+            self, upper, lower, ndiv, interpolation, minimum_thickness, no_processes
+        ).result()
 
     # =========================================================================
     # Cube extractions, e.g. XSection
