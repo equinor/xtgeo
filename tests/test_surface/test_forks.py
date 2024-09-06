@@ -1,11 +1,8 @@
-# coding: utf-8
-
+import logging
 import subprocess
 
-import xtgeo
-
-xtg = xtgeo.common.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def test_surface_forks():
@@ -17,6 +14,18 @@ def test_surface_forks():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    stdout, stderr = process.communicate()
-    ret_code = process.wait()
-    assert ret_code == 0, stderr
+    try:
+        stdout, stderr = process.communicate(timeout=60)  # timeout to prevent hanging
+        ret_code = process.returncode
+    except subprocess.TimeoutExpired:
+        process.kill()
+        stdout, stderr = process.communicate()
+        ret_code = -1  # Use a custom return code for timeouts
+
+        # Log more information for debugging
+        logger.info("Return code: %d", ret_code)
+        logger.info("STDOUT: %s", stdout.decode())
+        logger.info("STDERR: %s", stderr.decode())
+
+    assert ret_code == 0, f"Subprocess failed with exit code {ret_code}\n"
+    f"STDOUT: {stdout.decode()}\nSTDERR: {stderr.decode()}"
