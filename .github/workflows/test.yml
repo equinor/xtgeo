@@ -52,6 +52,9 @@ jobs:
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
 
+      - name: Set matplotlib backend to avoid potential issues with TCL/TK installation
+        run: echo "MPLBACKEND=Agg" >> $GITHUB_ENV
+
       - name: Run tests
         run: pytest -n 4 tests --disable-warnings --generate-plots
 
@@ -73,7 +76,7 @@ jobs:
 
       - name: Run just hypothesis tests with more examples
         run: pytest -n 4 tests --disable-warnings -m hypothesis --generate-plots
-          
+
   rms:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
