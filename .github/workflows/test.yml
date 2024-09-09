@@ -52,11 +52,13 @@ jobs:
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
 
-      - name: Set matplotlib backend to avoid potential issues with TCL/TK installation
-        run: echo "MPLBACKEND=Agg" >> $GITHUB_ENV
-
-      - name: Run tests
+      - name: Run tests (Linux/macOS)
+        if: ${{ matrix.os != 'windows-latest' }}
         run: pytest -n 4 tests --disable-warnings --generate-plots
+
+      - name: Run tests (Windows, skip plotting due to random TCL/TK issues)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: pytest -n 4 tests --disable-warnings
 
   hypothesis:
     runs-on: ubuntu-latest
