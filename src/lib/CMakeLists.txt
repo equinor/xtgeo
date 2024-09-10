@@ -30,11 +30,17 @@ else()
 endif()
 
 pybind11_add_module(
-  _internal "${SRC}/init.cpp" "${SRC}/common/geometry.cpp"
-  "${SRC}/grid3d/cell.cpp" "${SRC}/grid3d/grid.cpp" ${SOURCES})
+  _internal
+  "${SRC}/init.cpp"
+  "${SRC}/common/geometry.cpp"
+  "${SRC}/grid3d/cell.cpp"
+  "${SRC}/grid3d/grid.cpp"
+  "${SRC}/cube/cube.cpp"
+  ${SOURCES})
 target_include_directories(_internal PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 
 message(STATUS "Compiling swig bindings")
+
 # This will end up set as the `_cxtgeo` module, located in `wheel.install-dir`
 # from pyproject.toml
 set(SWIG_TARGET cxtgeo)

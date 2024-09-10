@@ -2356,7 +2356,7 @@ class RegularSurface:
         Example::
 
             >>> import xtgeo
-            >>> cube = xtgeo.Cube(cube_dir + "/ib_test_cube2.segy")
+            >>> cube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
             >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
             >>> # update surf to sample cube values in a total range of 30 m:
             >>> surf.slice_cube_window(cube, attribute='min', zrange=15.0)
@@ -2379,20 +2379,37 @@ class RegularSurface:
             None is returned. If `attribute` is a list, then a dictionary
             of surface objects is returned.
 
+        Note:
+            This method is now deprecated and will be removed in xtgeo version 5.
+            Please replace with :meth:`Cube().compute_attributes_in_window()` as soon
+            as possible.
+
+
         .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is now 2,
                             while 1 is the legacy version
 
         .. versionchanged:: 3.4 Added ``algorithm`` 3 which is more robust and
                             hence recommended!
 
+        .. versionchanged:: 4.1 Flagged as deprecated.
+
         """
+
+        warnings.warn(
+            "This method is deprecated and will be removed in xtgeo version 5. "
+            "It is strongly recommended to use `Cube().compute_attributes_in_window()` "
+            "instead!",
+            FutureWarning,
+        )
+
         if other is None and zrange is None:
             zrange = 10
 
         if algorithm != 3:
             warnings.warn(
-                "Other algorithms than no. 3 may be deprecated from xtgeo version 4",
-                PendingDeprecationWarning,
+                "Other algorithms than no. 3 is not recommended, and will be "
+                "removed in near future.",
+                DeprecationWarning,
             )
 
         scube = surface_from_cube(cube, 0)
