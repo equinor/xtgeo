@@ -670,7 +670,7 @@ class Cube:
         The attributes are computed vertically (per column) within a window defined by
         the two input surfaces and/or levels.
 
-        The statistical can be min, max, mean, variance etc. A complete list of
+        The statistical measures can be min, max, mean, variance etc. A complete list of
         supported attributes is given below.
 
         * 'max' for maximum
@@ -711,8 +711,7 @@ class Cube:
                 using 0.1 of cube Z increment as basis. A higher ndiv will increase
                 CPU time and memory usage, but also increase the precision of the
                 result.
-            interpolation: 'linear', 'cubic' or other interpolators given in
-                :meth:`scipy.interpolate.interp1d()` ``kind`` for interpolation of the
+            interpolation: 'cubic' or 'linear' for interpolation of the
                 seismic signal, default here is 'cubic'.
             minimum_thickness: Minimum thickness (isochore or isochron) between the
                 two surfaces. If the thickness is less or equal than this value,
@@ -724,7 +723,7 @@ class Cube:
             >>> cube = xtgeo.cube_from_file("mycube.segy")
             >>> surf = xtgeo.surface_from_file("topreek.gri")
             >>> # sample in a total range of 30 m, 15 units above and 15 units below:
-            >>> attrs = cube.attributes_between surfaces((surf-15), (surf + 15))
+            >>> attrs = cube.compute_attributes_in_window((surf-15), (surf + 15))
             >>> attrs["max"].to_file("max.gri")  # save the 'max' attribute to file
 
         Note:
