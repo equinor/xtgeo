@@ -220,7 +220,6 @@ def test_sample_grid3d_layer(testdata_path):
         surf.xinc,
         surf.yinc,
         surf.rotation,
-        surf.yflip,
         grid.ncol,
         grid.nrow,
         grid.nlay,
@@ -229,6 +228,7 @@ def test_sample_grid3d_layer(testdata_path):
         grid._actnumsv,
         8,
         1,
+        0,
     )
     logger.info("Sample the grid... DONE")
 

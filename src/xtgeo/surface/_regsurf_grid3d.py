@@ -1,17 +1,25 @@
 """Regular surface vs Grid3D"""
 
-import numpy as np
-import numpy.ma as ma
+from __future__ import annotations
 
-from xtgeo import _cxtgeo
-from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+import numpy as np
+
+from xtgeo import _cxtgeo, _internal
 from xtgeo.common.log import null_logger
 from xtgeo.grid3d import _gridprop_lowlevel
+from xtgeo.grid3d.grid_property import GridProperty
 
-logger = null_logger(__name__)
+if TYPE_CHECKING:
+    from xtgeo.grid3d.grid import Grid
+    from xtgeo.surface.regular_surface import RegularSurface
 
 
 # self = RegularSurface instance!
+
+logger = null_logger(__name__)
 
 
 def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
@@ -61,120 +69,185 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
     return istat
 
 
-def from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
-    """Private function for deriving a surface from a 3D grid.
+@dataclass
+class DeriveSurfaceFromGrid3D:
+    """Private class; derive a surface from a 3D grid / gridproperty."""
 
-    Note that rotated maps are currently not supported!
+    grid: Grid
+    template: RegularSurface | str | None = None
+    where: str | int = "top"
+    property: str | GridProperty = "depth"
+    rfactor: float = 1.0
 
-    .. versionadded:: 2.1
-    """
-    if where == "top":
-        klayer = 1
-        option = 0
-    elif where == "base":
-        klayer = grid.nlay
-        option = 1
-    else:
-        klayer, what = where.split("_")
-        klayer = int(klayer)
-        if grid.nlay < klayer < 0:
-            raise ValueError(f"Klayer out of range in where={where}")
-        option = 0
-        if what == "base":
-            option = 1
+    # private state variables
+    _args: dict | None = None
+    _tempsurf: RegularSurface | None = None
+    _klayer: int | None = None
+    _option: int | None = None
 
-    if rfactor < 0.5:
-        raise KeyError("Refinefactor rfactor is too small, should be >= 0.5")
+    def __post_init__(self) -> None:
+        logger.debug("DeriveSurfaceFromGrid3D: __post_init__")
 
-    args = _update_regsurf(template, grid, rfactor=float(rfactor))
-    args["rotation"] = 0.0
-    # call C function to make a map
-    val = args["values"]
-    val = val.ravel()
-    val = ma.filled(val, fill_value=UNDEF)
+        self._parametrize_regsurf()
+        self._generate_working_surface()
+        self._eval_where()
 
-    svalues = val * 0.0 + UNDEF
-    ivalues = svalues.copy()
-    jvalues = svalues.copy()
+        xtgformat_convert = self.grid._xtgformat == 1
+        if xtgformat_convert:
+            self.grid._xtgformat2()
 
-    grid._xtgformat1()
-    _cxtgeo.surf_sample_grd3d_lay(
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv,
-        grid._zcornsv,
-        grid._actnumsv,
-        klayer,
-        args["ncol"],
-        args["nrow"],
-        args["xori"],
-        args["xinc"],
-        args["yori"],
-        args["yinc"],
-        args["rotation"],
-        svalues,
-        ivalues,
-        jvalues,
-        option,
-    )
+        self._sample_regsurf_from_grid3d()
 
-    logger.info("Extracted surfaces from 3D grid...")
-    svalues = np.ma.masked_greater(svalues, UNDEF_LIMIT)
-    ivalues = np.ma.masked_greater(ivalues, UNDEF_LIMIT)
-    jvalues = np.ma.masked_greater(jvalues, UNDEF_LIMIT)
+        # convert back to original xtgformat due to unforseen consequences
+        if xtgformat_convert:
+            self.grid._xtgformat1()
 
-    if mode == "i":
-        ivalues = ivalues.reshape((args["ncol"], args["nrow"]))
-        ivalues = ma.masked_invalid(ivalues)
-        args["values"] = ivalues
-        return args, None, None
+    def result(self) -> dict:
+        args = {}
+        args["xori"] = self._tempsurf.xori
+        args["yori"] = self._tempsurf.yori
+        args["xinc"] = self._tempsurf.xinc
+        args["yinc"] = self._tempsurf.yinc
+        args["ncol"] = self._tempsurf.ncol
+        args["nrow"] = self._tempsurf.nrow
+        args["rotation"] = self._tempsurf.rotation
+        args["yflip"] = self._tempsurf.yflip
+        args["values"] = self._tempsurf.values.copy()
 
-    if mode == "j":
-        jvalues = jvalues.reshape((args["ncol"], args["nrow"]))
-        jvalues = ma.masked_invalid(jvalues)
-        args["values"] = jvalues
-        return args, None, None
+        return args
 
-    svalues = svalues.reshape((args["ncol"], args["nrow"]))
-    svalues = ma.masked_invalid(svalues)
-    args["values"] = svalues
+    def _parametrize_regsurf(self) -> None:
+        """Parametrize setting for the regular surface based on template and grid."""
+        args = {}
+        if self.template is None:
+            # need to estimate map settings from the existing 3D grid
+            geom = self.grid.get_geometrics(
+                allcells=True, cellcenter=True, return_dict=True, _ver=2
+            )
 
-    return args, ivalues, jvalues
+            xlen = 1.1 * (geom["xmax"] - geom["xmin"])
+            ylen = 1.1 * (geom["ymax"] - geom["ymin"])
+            xori = geom["xmin"] - 0.05 * xlen
+            yori = geom["ymin"] - 0.05 * ylen
+            # take same xinc and yinc
 
+            xinc = yinc = (1.0 / self.rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
+            ncol = int(xlen / xinc)
+            nrow = int(ylen / yinc)
 
-def _update_regsurf(template, grid, rfactor=1.0):
-    args = {}
-    if template is None:
-        # need to estimate map settings from the existing grid. this
-        # may a bit time consuming for large grids.
-        geom = grid.get_geometrics(
-            allcells=True, cellcenter=True, return_dict=True, _ver=2
+            args["xori"] = xori
+            args["yori"] = yori
+            args["xinc"] = xinc
+            args["yinc"] = yinc
+            args["ncol"] = ncol
+            args["nrow"] = nrow
+            args["values"] = np.ma.zeros((ncol, nrow), dtype=np.float64)
+        elif isinstance(self.template, str) and self.template == "native":
+            geom = self.grid.get_geometrics(
+                allcells=True, cellcenter=True, return_dict=True
+            )
+
+            args["ncol"] = self.grid.ncol
+            args["nrow"] = self.grid.nrow
+            args["xori"] = geom["xori"]
+            args["yori"] = geom["yori"]
+            args["xinc"] = geom["avg_dx"]
+            args["yinc"] = geom["avg_dy"]
+            args["rotation"] = geom["avg_rotation"]
+            args["values"] = np.ma.zeros(
+                (self.grid.ncol, self.grid.nrow), dtype=np.float64
+            )
+            args["yflip"] = -1 if self.grid.ijk_handedness == "right" else 1
+
+        else:
+            args["xori"] = self.template.xori
+            args["yori"] = self.template.yori
+            args["xinc"] = self.template.xinc
+            args["yinc"] = self.template.yinc
+            args["ncol"] = self.template.ncol
+            args["nrow"] = self.template.nrow
+            args["rotation"] = self.template.rotation
+            args["yflip"] = self.template.yflip
+            args["values"] = self.template.values.copy()
+
+        self._args = args
+
+    def _generate_working_surface(self) -> None:
+        from xtgeo.surface.regular_surface import RegularSurface
+
+        self._tempsurf = RegularSurface(**self._args)
+        # ensure that this is a subsurface left-handed system
+        self._tempsurf.make_lefthanded()
+
+    def _eval_where(self):
+        """Set klayer and option based on ``where`` parameter.
+
+        Note that klayer is zero-based, while where is one-based.
+        """
+        if isinstance(self.where, str):
+            where = self.where.lower()
+            if where == "top":
+                self._klayer = 0
+                self._option = 0
+            elif where == "base":
+                self._klayer = self.grid.nlay - 1
+                self._option = 1
+            else:
+                klayer, what = where.split("_")
+                self._klayer = int(klayer) - 1
+                if self._klayer < 0 or self._klayer >= self.grid.nlay:
+                    raise ValueError(f"Klayer out of range in where={where}")
+                self._option = 0
+                if what == "base":
+                    self._option = 1
+        else:
+            self._klayer = self.where - 1
+            self._option = 0
+
+    def _sample_regsurf_from_grid3d(self) -> None:
+        """Sample the grid3d to get the values for the regular surface."""
+
+        iindex, jindex, depth = _internal.regsurf.sample_grid3d_layer(
+            self._tempsurf.ncol,
+            self._tempsurf.nrow,
+            self._tempsurf.xori,
+            self._tempsurf.yori,
+            self._tempsurf.xinc,
+            self._tempsurf.yinc,
+            self._tempsurf.rotation,
+            self.grid.ncol,
+            self.grid.nrow,
+            self.grid.nlay,
+            self.grid._coordsv,
+            self.grid._zcornsv,
+            self.grid._actnumsv,
+            self._klayer,
+            self._option,
+            0 if isinstance(self.property, str) else 1,  # activeonly flag
         )
 
-        xlen = 1.1 * (geom["xmax"] - geom["xmin"])
-        ylen = 1.1 * (geom["ymax"] - geom["ymin"])
-        xori = geom["xmin"] - 0.05 * xlen
-        yori = geom["ymin"] - 0.05 * ylen
-        # take same xinc and yinc
+        mask = iindex == -1
+        iindex = np.where(iindex == -1, 0, iindex)
+        jindex = np.where(jindex == -1, 0, jindex)
 
-        xinc = yinc = (1.0 / rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
-        ncol = int(xlen / xinc)
-        nrow = int(ylen / yinc)
+        if isinstance(self.property, str):
+            if self.property == "depth":
+                self._tempsurf.values = depth
+            elif self.property == "i":
+                self._tempsurf.values = iindex
+            elif self.property == "j":
+                self._tempsurf.values = jindex
+                self._tempsurf.values.mask = mask
+            else:
+                raise ValueError(f"Unknown property: {self.property}")
 
-        args["xori"] = xori
-        args["yori"] = yori
-        args["xinc"] = xinc
-        args["yinc"] = yinc
-        args["ncol"] = ncol
-        args["nrow"] = nrow
-        args["values"] = np.ma.zeros((ncol, nrow), dtype=np.float64)
-    else:
-        args["xori"] = template.xori
-        args["yori"] = template.yori
-        args["xinc"] = template.xinc
-        args["yinc"] = template.yinc
-        args["ncol"] = template.ncol
-        args["nrow"] = template.nrow
-        args["values"] = template.values.copy()
-    return args
+        elif isinstance(self.property, GridProperty):
+            self._tempsurf.values = self.property.values[iindex, jindex, self._klayer]
+
+        self._tempsurf.values.mask = mask
+
+
+def from_grid3d(grid, template=None, where="top", property="depth", rfactor=1) -> dict:
+    """Private function for deriving a surface from a 3D grid / gridproperty."""
+
+    return DeriveSurfaceFromGrid3D(grid, template, where, property, rfactor).result()
