@@ -1,14 +1,13 @@
-#include <algorithm>  // Include for std::max and std::min
-#include <cmath>      // Include for std::isnan
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
-#include <limits>   // Include for std::numeric_limits
-#include <numeric>  // Include for std::accumulate
+#include <limits>
+#include <numeric>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 

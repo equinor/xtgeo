@@ -1,11 +1,15 @@
 #ifndef XTGEO_GEOMETRY_HPP_
 #define XTGEO_GEOMETRY_HPP_
 
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <array>
 #include <cmath>
 #include <vector>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846  // seems like Windows does not define M_PI i cmath
+#endif
 
 namespace py = pybind11;
 
@@ -72,15 +76,66 @@ hexahedron_dz(const std::vector<double> &corners)
     return dzsum / 4.0;
 }
 
+inline double
+triangle_area(const std::array<double, 2> &p1,
+              const std::array<double, 2> &p2,
+              const std::array<double, 2> &p3)
+{
+    return 0.5 * std::abs(p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) +
+                          p3[0] * (p1[1] - p2[1]));
+}
+
 double
 hexahedron_volume(const std::vector<double> &corners, const int precision);
 
+bool
+is_xy_point_in_polygon(const double x,
+                       const double y,
+                       const std::vector<std::array<double, 2>> &polygon);
+
+bool
+is_xy_point_in_quadrilateral(const double x,
+                             const double y,
+                             const std::array<double, 3> &p1,
+                             const std::array<double, 3> &p2,
+                             const std::array<double, 3> &p3,
+                             const std::array<double, 3> &p4);
+
+double
+interpolate_z_4p_regular(const double x,
+                         const double y,
+                         const std::array<double, 3> &p1,
+                         const std::array<double, 3> &p2,
+                         const std::array<double, 3> &p3,
+                         const std::array<double, 3> &p4);
+
+double
+interpolate_z_4p(const double x,
+                 const double y,
+                 const std::array<double, 3> &p1,
+                 const std::array<double, 3> &p2,
+                 const std::array<double, 3> &p3,
+                 const std::array<double, 3> &p4);
+
+// functions exposed to Python:
 inline void
 init(py::module &m)
 {
     auto m_geometry = m.def_submodule("geometry", "Internal geometric functions");
     m_geometry.def("hexahedron_volume", &hexahedron_volume,
                    "Estimate the volume of a hexahedron i.e. a cornerpoint cell.");
+    m_geometry.def("is_xy_point_in_polygon", &is_xy_point_in_polygon,
+                   "Return True if a XY point is inside a polygon seen from above, "
+                   "False otherwise.");
+    m_geometry.def("is_xy_point_in_quadrilateral", &is_xy_point_in_quadrilateral,
+                   "Return True if a XY point is inside a quadrilateral seen from , "
+                   "above. False otherwise.");
+    m_geometry.def("interpolate_z_4p_regular", &interpolate_z_4p_regular,
+                   "Interpolate Z when having 4 corners in a regular XY space, "
+                   "typically a regular surface.");
+    m_geometry.def("interpolate_z_4p", &interpolate_z_4p,
+                   "Interpolate Z when having 4 corners in a non regular XY space, "
+                   "like the top of a 3D grid cell.");
 }
 }  // namespace xtgeo::geometry
 

@@ -32,10 +32,15 @@ endif()
 pybind11_add_module(
   _internal
   "${SRC}/init.cpp"
-  "${SRC}/common/geometry.cpp"
+  "${SRC}/common/geometry/interpolate.cpp"
+  "${SRC}/common/geometry/polygons.cpp"
+  "${SRC}/common/geometry/quadrilateral.cpp"
+  "${SRC}/common/geometry/volumes.cpp"
   "${SRC}/grid3d/cell.cpp"
   "${SRC}/grid3d/grid.cpp"
   "${SRC}/cube/cube.cpp"
+  "${SRC}/regsurf/sample_grid3d.cpp"
+  "${SRC}/regsurf/utilities.cpp"
   ${SOURCES})
 target_include_directories(_internal PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 
