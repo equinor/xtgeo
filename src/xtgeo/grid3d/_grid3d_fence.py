@@ -69,6 +69,7 @@ def get_randomline(
 
     logger.info("Running C routine to get randomline...")
     self._xtgformat1()
+    self._tmp["onegrid"]._xtgformat1()
     _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,
         ycoords,
