@@ -22,7 +22,13 @@ if TYPE_CHECKING:
 logger = null_logger(__name__)
 
 
-def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
+def slice_grid3d(
+    self: RegularSurface,
+    grid: Grid,
+    prop: GridProperty,
+    zsurf: RegularSurface | None = None,
+    sbuffer: int = 1,
+):
     """Private function for the Grid3D slicing."""
 
     grid._xtgformat1()
