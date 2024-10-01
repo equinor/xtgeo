@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     import pathlib
 
     from xtgeo.cube.cube1 import Cube
+    from xtgeo.grid3d.grid import Grid, GridProperty
 
 
 xtg = XTGeoDialog()
@@ -211,26 +212,63 @@ def surface_from_cube(cube, value):
     return RegularSurface._read_cube(cube, value)
 
 
-def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
-    """This makes 3 instances of a RegularSurface directly from a Grid() instance.
+def surface_from_grid3d(
+    grid: Grid,
+    template: RegularSurface | str | None = None,
+    where: str | int = "top",
+    property: str | GridProperty = "depth",
+    rfactor: float = 1.0,
+    **kwargs,
+):
+    """This makes an instance of a RegularSurface directly from a Grid() instance.
 
     Args:
-        grid (Grid): XTGeo Grid instance
-        template(RegularSurface): Optional to use an existing surface as
-            template for geometry
-        where (str): "top", "base" or use the syntax "2_top" where 2
+        grid: XTGeo 3D Grid instance, describing the corner point grid geometry
+        template: Optional, to use an existing surface as
+            template for map geometry, or by using "native" which returns a surface that
+            approximate the 3D grid layout (same number of rows and columns, and same
+            rotation). If None (default) an non-rotated surface will be made
+            based on a refined estimation from the current grid
+            resolution (see ``rfactor``).
+        where: Cell layer number, or "top", "base", or use the syntax "2_top" where 2
             is layer no. 2 and _top indicates top of cell, while "_base"
-            indicates base of cell
-        mode (str): "depth", "i" or "j"
-        rfactor (float): Determines how fine the extracted map is; higher values
-            for finer map (but computing time will increase). Will only apply if
-            template is None.
+            indicates base of cell. Cell layer numbering starts from 1. Default position
+            in a cell layer is "top" if layer is given as pure number.
+        property: Which property to return as a RegularSurface. Choices are "depth", "i"
+            (columns) or "j" (rows) or, more generic, a GridProperty instance
+            which belongs to the given grid geometry.
+        rfactor: Note this setting will only apply if ``template`` is None.
+            Determines how fine the extracted map is; higher values
+            for finer map (but computing time will increase slightly).
+            The default is 1.0, which in effect will make a surface approximentaly
+            twice as fine as the average resolution estimated from the 3D grid.
+
+
+
+    Note::
+        The keyword ``mode`` is deprecated and will be removed in XTGeo version 5,
+        use keyword ``property`` instead. If both are given, ``property`` will be used.
+
+    Note::
+        For ``property`` "depth", "i" and "j", all cells in a layer will be used
+        (including inactive 3D cells), while for a GridProperty, only active cells
+        will be used. Hence the extent of the resulting surfaces may differ.
 
     .. versionadded:: 2.1
+    .. versionchanged:: 4.2 Changed ``mode`` to ``property`` to add support for
+                            a GridProperty. The ``where`` arg. can now be an integer.
+                            Added option ``activeonly``.
     """
-    return RegularSurface._read_grid3d(
-        grid, template=template, where=where, mode=mode, rfactor=rfactor
-    )
+    mode = kwargs.get("mode")
+    if mode is not None:
+        warnings.warn(
+            "The 'mode' argument is deprecated, use 'property' instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        property = mode
+
+    return RegularSurface._read_grid3d(grid, template, where, property, rfactor)
 
 
 def _data_reader_factory(file_format: FileFormat):
@@ -1230,37 +1268,16 @@ class RegularSurface:
         return cls(**input_dict)
 
     @classmethod
-    def _read_grid3d(cls, grid, template=None, where="top", mode="depth", rfactor=1):
-        """Extract a surface from a 3D grid.
-
-        Args:
-            grid (Grid): XTGeo Grid instance
-            template (RegularSurface): Using an existing surface as template
-            where (str): "top", "base" or use the syntax "2_top" where 2
-                is layer no. 2 and _top indicates top of cell, while "_base"
-                indicates base of cell
-            mode (str): "depth", "i" or "j"
-            rfactor (float): Determines how fine the extracted map is; higher values
-                for finer map (but computing time will increase). Will only apply if
-                template is None.
-
-        Returns:
-            Object instance
-
-        Example::
-
-
-            >>> import xtgeo
-            >>> mygrid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> # make surface from top (default)
-            >>> mymap = RegularSurface._read_grid3d(mygrid)
-
-        .. versionadded:: 2.14
-
-        """
-        args, _, _ = _regsurf_grid3d.from_grid3d(
-            grid, template=template, where=where, mode=mode, rfactor=rfactor
-        )
+    def _read_grid3d(
+        cls,
+        grid: Grid,
+        template: RegularSurface | str | None = None,
+        where: str | int = "top",
+        property: str | GridProperty = "depth",
+        rfactor: int = 1,
+    ):
+        """Private class method to extract a surface from a 3D grid."""
+        args = _regsurf_grid3d.from_grid3d(grid, template, where, property, rfactor)
         return cls(**args)
 
     def copy(self):

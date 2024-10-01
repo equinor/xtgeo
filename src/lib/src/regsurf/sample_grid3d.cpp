@@ -19,7 +19,6 @@ namespace xtgeo::regsurf {
  * @param xinc X increment of the regular surface
  * @param yinc Y increment of the regular surface
  * @param rotation Rotation of the regular surface
- * @param yflip Flip the Y axis
  * @param ncolgrid3d Number of columns in the 3D grid
  * @param nrowgrid3d Number of rows in the 3D grid
  * @param nlaygrid3d Number of layers in the 3D grid
@@ -40,7 +39,6 @@ sample_grid3d_layer(const size_t ncol,
                     const double xinc,
                     const double yinc,
                     const double rotation,
-                    const int yflip,
                     const size_t ncolgrid3d,
                     const size_t nrowgrid3d,
                     const size_t nlaygrid3d,
@@ -51,9 +49,14 @@ sample_grid3d_layer(const size_t ncol,
                     const int option,
                     const int activeonly)
 {
-
     Logger logger(__func__);
-    logger.debug("Sampling 3D grid layer...");
+    logger.debug("Sampling 3D grid layer to a regular surface...");
+
+    // Check if yinc is negative which may occur if the RegilarSurface is flipped
+    if (yinc < 0) {
+        throw py::value_error("yinc must be positive, but got " + std::to_string(yinc));
+    }
+
     // Initialize 2D numpy arrays to store the sampled values
     py::array_t<int> iindex({ ncol, nrow });
     py::array_t<int> jindex({ ncol, nrow });
@@ -64,7 +67,7 @@ sample_grid3d_layer(const size_t ncol,
     auto jindex_ = jindex.mutable_unchecked<2>();
     auto depth_ = depth.mutable_unchecked<2>();
 
-    // Set all elements to -1 initially
+    // Set all elements to -1 or nan initially
     std::fill(iindex_.mutable_data(0, 0), iindex_.mutable_data(0, 0) + (ncol * nrow),
               -1);
     std::fill(jindex_.mutable_data(0, 0), jindex_.mutable_data(0, 0) + (ncol * nrow),
@@ -76,11 +79,14 @@ sample_grid3d_layer(const size_t ncol,
     logger.debug("Looping 3D GRID cell NCOLROW and NROW is", ncolgrid3d, nrowgrid3d);
     for (size_t icell = 0; icell < ncolgrid3d; icell++) {
         for (size_t jcell = 0; jcell < nrowgrid3d; jcell++) {
+<<<<<<< HEAD
 
             // Check if the cell is active
             if (activeonly == 1 & actnumsv.at(icell, jcell, klayer) == 0) {
                 continue;
             }
+=======
+>>>>>>> 05a56c32 (ENH: rewrite/improve surface_from_grid3d function)
             // Get cell corners
             auto corners =
               grid3d::cell_corners(icell, jcell, klayer, ncolgrid3d, nrowgrid3d,
@@ -95,10 +101,6 @@ sample_grid3d_layer(const size_t ncol,
             // Find the range of the cells (expanded 1 cell) in the local map
             auto [mxmin, mxmax, mymin, mymax] = regsurf::find_cell_range(
               xmin, xmax, ymin, ymax, xori, yori, xinc, yinc, rotation, ncol, nrow, 1);
-
-            if (debug_flag) {
-                logger.debug("Cell range: ", mxmin, mxmax, mymin, mymax);
-            }
 
             if (mxmin == -1) {
                 // Cell is outside the local map
@@ -134,7 +136,7 @@ sample_grid3d_layer(const size_t ncol,
         }
     }
 
-    logger.debug("Sampling 3D grid layer... done");
+    logger.debug("Sampling 3D grid layer to a regular surface... done");
     return std::make_tuple(iindex, jindex, depth);
 }  // regsurf_sample_grid3d_layer
 
