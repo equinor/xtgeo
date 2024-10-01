@@ -1,10 +1,8 @@
-#include <algorithm>  // Include for std::max
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <algorithm>
 #include <cstddef>
 #include <tuple>
-
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/grid3d.hpp>
 #include <xtgeo/xtgeo.h>

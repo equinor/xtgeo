@@ -1,10 +1,9 @@
 #ifndef XTGEO_CUBE_HPP_
 #define XTGEO_CUBE_HPP_
 
-#include <cstddef>
-
-#include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <cstddef>
 
 namespace py = pybind11;
 

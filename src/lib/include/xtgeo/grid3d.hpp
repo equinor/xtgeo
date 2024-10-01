@@ -1,10 +1,10 @@
 #ifndef XTGEO_GRID3D_HPP_
 #define XTGEO_GRID3D_HPP_
-
-#include <cstddef>
-
+#include <pybind11/pybind11.h>  // should be included first according to pybind11 docs
 #include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
+#include <cstddef>
+#include <optional>
+#include <tuple>
 
 namespace py = pybind11;
 
@@ -38,6 +38,35 @@ cell_corners(const size_t i,
              const py::array_t<double> &coordsv,
              const py::array_t<float> &zcornsv);
 
+std::vector<double>
+get_corners_minmax(std::vector<double> &corners);
+
+bool
+is_xy_point_in_cell(const double x,
+                    const double y,
+                    const size_t i,
+                    const size_t j,
+                    const size_t k,
+                    const size_t ncol,
+                    const size_t nrow,
+                    const size_t nlay,
+                    const py::array_t<double> &coordsv,
+                    const py::array_t<float> &zcornsv,
+                    const int option);
+
+double
+get_depth_in_cell(const double x,
+                  const double y,
+                  const size_t i,
+                  const size_t j,
+                  const size_t k,
+                  const size_t ncol,
+                  const size_t nrow,
+                  const size_t nlay,
+                  const py::array_t<double> &coordsv,
+                  const py::array_t<float> &zcornsv,
+                  const int option);
+
 inline void
 init(py::module &m)
 {
@@ -50,6 +79,12 @@ init(py::module &m)
                  "Compute the height above a FFL (free fluid level).");
     m_grid3d.def("cell_corners", &cell_corners,
                  "Get a vector containing the corners of a cell.");
+    m_grid3d.def("get_corners_minmax", &get_corners_minmax,
+                 "Get a vector containing the minmax of a single corner set");
+    m_grid3d.def("is_xy_point_in_cell", &is_xy_point_in_cell,
+                 "Determine if a XY point is inside a cell, top or base.");
+    m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
+                 "Determine the interpolated cell face Z from XY, top or base.");
 }
 
 }  // namespace xtgeo::grid3d

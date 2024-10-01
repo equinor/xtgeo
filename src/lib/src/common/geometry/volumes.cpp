@@ -1,7 +1,5 @@
-#include <vector>
-
 #include <pybind11/stl.h>
-
+#include <vector>
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/xtgeo.h>
 
