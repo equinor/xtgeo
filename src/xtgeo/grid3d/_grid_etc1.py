@@ -1415,7 +1415,7 @@ def _convert_xtgformat1to2(self: Grid) -> None:
     self._actnumsv = newactnumsv
     self._xtgformat = 2
 
-    logger.info("Convert grid from new xtgformat to legacy format... done")
+    logger.info("Convert grid from legacy xtgformat to new format... done")
 
 
 def get_gridquality_properties(self: Grid) -> GridProperties:
