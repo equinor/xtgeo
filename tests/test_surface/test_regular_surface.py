@@ -397,6 +397,45 @@ def test_swapaxes(tmp_path, testdata_path):
     assert valdiff.std() == pytest.approx(0.0, abs=0.00001)
 
 
+def test_make_lefthanded_simple(tmp_path):
+    s1 = xtgeo.RegularSurface(
+        ncol=7,
+        nrow=3,
+        xinc=1,
+        yinc=2,
+        values=np.arange(21),
+        yflip=-1,
+        rotation=30,
+    )
+
+    s1.to_file(tmp_path / "righthanded.gri")
+
+    s2 = s1.copy()
+    s2.make_lefthanded()
+    s2.to_file(tmp_path / "lefthanded.gri")
+
+    assert s1.values[6, 0] == s2.values[6, 2]
+
+
+def test_make_lefthanded_reek(tmp_path, testdata_path):
+    """Import Reek Irap binary and make it lefthanded (pos axis down)."""
+    s1 = xtgeo.surface_from_file(testdata_path / TESTSET5)
+
+    # make the surface righthanded (pos axis down) for test
+    s1._yflip = -1
+
+    s1.to_file(tmp_path / "righthanded.gri")
+    s2 = s1.copy()
+    s2.make_lefthanded()
+    assert s1.values.mean() == pytest.approx(s2.values.mean(), abs=0.001)
+    assert s1.xmin == pytest.approx(s2.xmin, abs=0.001)
+    assert s1.xmax == pytest.approx(s2.xmax, abs=0.001)
+    assert s1.ymin == pytest.approx(s2.ymin, abs=0.001)
+    assert s1.ymax == pytest.approx(s2.ymax, abs=0.001)
+    assert s1.ncol == s2.ncol
+    assert s1.nrow == s2.nrow
+
+
 def test_autocrop(testdata_path):
     """Import Reek Irap binary and autocrop surface"""
     xsurf = xtgeo.surface_from_file(testdata_path / TESTSET5)
