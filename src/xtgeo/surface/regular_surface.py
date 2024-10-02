@@ -1470,6 +1470,18 @@ class RegularSurface:
         """Swap (flip) the axes columns vs rows, keep origin but reverse yflip."""
         _regsurf_utils.swapaxes(self)
 
+    def make_lefthanded(self) -> None:
+        """Makes the surface lefthanded in case yflip is -1. This will change origin.
+
+        Lefhanded regular maps are common in subsurface data, where I is to east, J is
+        to north and Z axis is positive down for depth and time data.
+
+        The instance is changed in-place.
+
+        .. versionadded:: 4.2
+        """
+        _regsurf_utils.make_lefthanded(self)
+
     def get_map_xycorners(self):
         """Get the X and Y coordinates of the map corners.
 
