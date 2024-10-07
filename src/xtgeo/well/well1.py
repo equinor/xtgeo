@@ -703,7 +703,7 @@ class Well:
         trajectory = kwargs.get("trajectory", "Drilled trajectory")
         logrun = kwargs.get("logrun", "log")
         realisation = kwargs.get("realisation", 0)
-        update_option = kwargs.get("update_option", None)
+        update_option = kwargs.get("update_option")
 
         logger.debug("Not in use: realisation %s", realisation)
 
