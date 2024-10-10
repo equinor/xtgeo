@@ -1,8 +1,12 @@
+#include <array>
+#include <cmath>
+#include <optional>
 #include <vector>
 
 #include <pybind11/stl.h>
 
 #include <xtgeo/geometry.hpp>
+#include <xtgeo/logging.hpp>
 #include <xtgeo/xtgeo.h>
 
 namespace xtgeo::geometry {

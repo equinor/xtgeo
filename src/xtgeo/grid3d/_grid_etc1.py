@@ -362,11 +362,11 @@ def get_ijk_from_points(
     It is here tried to get fast execution. This requires a preprosessing
     of the grid to store a onlayer version, and maps with IJ positions
     """
-    self._xtgformat1()
     logger.info("Getting IJK indices from Points...")
 
     actnumoption = 1 if activeonly else 0
 
+    self._xtgformat1()
     _update_tmpvars(self, force=True)
 
     points_df = points.get_dataframe(copy=False)
@@ -375,8 +375,10 @@ def get_ijk_from_points(
     useflip = -1 if self.ijk_handedness == "left" else 1
 
     logger.info("Grid FLIP for C code is %s", useflip)
+    self._tmp["onegrid"]._xtgformat1()  # to be sure...
 
     logger.info("Running C routine...")
+
     _, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
         points_df[points.xname].values,
         points_df[points.yname].values,
@@ -1413,7 +1415,7 @@ def _convert_xtgformat1to2(self: Grid) -> None:
     self._actnumsv = newactnumsv
     self._xtgformat = 2
 
-    logger.info("Convert grid from new xtgformat to legacy format... done")
+    logger.info("Convert grid from legacy xtgformat to new format... done")
 
 
 def get_gridquality_properties(self: Grid) -> GridProperties:
