@@ -130,11 +130,28 @@ def export_horizon_roxapi(
     _check_stypes_names_category(roxutils, stype, name, category)
 
     logger.info("Surface from xtgeo to roxapi...")
-    use_srf = self
+    use_srf = self.copy()  # avoid modifying the original instance
     if self.yflip == -1:
         # roxar API cannot handle negative increments
-        use_srf = self.copy()
         use_srf.swapaxes()
+
+    use_srf.values = use_srf.values.astype(np.float64)
+
+    # Note that the RMS api does NOT accepts NaNs or Infs, even if behind the mask(!),
+    # so we need to replace them with some other value
+    if np.isnan(use_srf.values.data).any() or np.isinf(use_srf.values.data).any():
+        logger.warning(
+            "NaNs or Infs detected in the surface, replacing fill_value "
+            "prior to RMS API usage."
+        )
+        applied_fill_value = np.finfo(np.float64).max  # aka 1.7976931348623157e+308
+        all_values = np.ma.filled(use_srf.values, fill_value=applied_fill_value)
+        # replace nan in all_values with applied_fill_value
+        all_values = np.where(
+            np.isnan(all_values) | np.isinf(all_values), applied_fill_value, all_values
+        )
+        # now remask the array; NB! use _values to avoid the mask being reset
+        use_srf._values = np.ma.masked_equal(all_values, applied_fill_value)
 
     _roxapi_export_surface(
         use_srf, roxutils.project, name, category, stype, realisation
@@ -158,7 +175,7 @@ def _roxapi_export_surface(
         try:
             roxroot = proj.horizons[name][category]
             roxg = _xtgeo_to_roxapi_grid(self)
-            roxg.set_values(self.values.astype(np.float64))
+            roxg.set_values(self.values)
             roxroot.set_grid(roxg, realisation=realisation)
         except KeyError as kwe:
             logger.error(kwe)
@@ -171,7 +188,7 @@ def _roxapi_export_surface(
         try:
             roxroot = proj.zones[name][category]
             roxg = _xtgeo_to_roxapi_grid(self)
-            roxg.set_values(self.values.astype(np.float64))
+            roxg.set_values(self.values)
             roxroot.set_grid(roxg)
         except KeyError as kwe:
             logger.error(kwe)
@@ -186,7 +203,7 @@ def _roxapi_export_surface(
 
         roxroot = styperef.create_surface(name, folders)
         roxg = _xtgeo_to_roxapi_grid(self)
-        roxg.set_values(self.values.astype(np.float64))
+        roxg.set_values(self.values)
         roxroot.set_grid(roxg)
 
     elif stype == "trends":

@@ -232,24 +232,32 @@ def surface_from_grid3d(
             resolution (see ``rfactor``).
         where: Cell layer number, or "top", "base", or use the syntax "2_top" where 2
             is layer no. 2 and _top indicates top of cell, while "_base"
-            indicates base of cell. Cell layer numbering starts from 1.
+            indicates base of cell. Cell layer numbering starts from 1. Default position
+            in a cell layer is "top" if layer is given as pure number.
         property: Which property to return as a RegularSurface. Choices are "depth", "i"
             (columns) or "j" (rows) or, more generic, a GridProperty instance
             which belongs to the given grid geometry.
         rfactor: Note this setting will only apply if ``template`` is None.
             Determines how fine the extracted map is; higher values
-            for finer map (but computing time will increase). The default is 1.0, which
-            in effect will make a surface approximentaly twice as fine as the average
-            resolution estimated from the 3D grid.
+            for finer map (but computing time will increase slightly).
+            The default is 1.0, which in effect will make a surface approximentaly
+            twice as fine as the average resolution estimated from the 3D grid.
+
 
 
     Note::
         The keyword ``mode`` is deprecated and will be removed in XTGeo version 5,
         use keyword ``property`` instead. If both are given, ``property`` will be used.
 
+    Note::
+        For ``property`` "depth", "i" and "j", all cells in a layer will be used
+        (including inactive 3D cells), while for a GridProperty, only active cells
+        will be used. Hence the extent of the resulting surfaces may differ.
+
     .. versionadded:: 2.1
     .. versionchanged:: 4.2 Changed ``mode`` to ``property`` to add support for
                             a GridProperty. The ``where`` arg. can now be an integer.
+                            Added option ``activeonly``.
     """
     mode = kwargs.get("mode")
     if mode is not None:
@@ -260,9 +268,7 @@ def surface_from_grid3d(
         )
         property = mode
 
-    return RegularSurface._read_grid3d(
-        grid, template=template, where=where, property=property, rfactor=rfactor
-    )
+    return RegularSurface._read_grid3d(grid, template, where, property, rfactor)
 
 
 def _data_reader_factory(file_format: FileFormat):
@@ -1273,9 +1279,7 @@ class RegularSurface:
         rfactor: int = 1,
     ):
         """Private class method to extract a surface from a 3D grid."""
-        args = _regsurf_grid3d.from_grid3d(
-            grid, template=template, where=where, property=property, rfactor=rfactor
-        )
+        args = _regsurf_grid3d.from_grid3d(grid, template, where, property, rfactor)
         return cls(**args)
 
     def copy(self):

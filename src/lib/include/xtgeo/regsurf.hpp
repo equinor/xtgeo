@@ -60,7 +60,8 @@ sample_grid3d_layer(const size_t ncol,
                     const py::array_t<float> &zcornsv,
                     const py::array_t<int> &actnumsv,
                     const size_t klayer,
-                    const int option);
+                    const int option,
+                    const int activeonly);
 inline void
 init(py::module &m)
 {

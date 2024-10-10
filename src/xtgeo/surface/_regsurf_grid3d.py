@@ -229,12 +229,12 @@ class DeriveSurfaceFromGrid3D:
             self.grid._actnumsv,
             self._klayer,
             self._option,
+            0 if isinstance(self.property, str) else 1,  # activeonly flag
         )
 
         mask = iindex == -1
         iindex = np.where(iindex == -1, 0, iindex)
         jindex = np.where(jindex == -1, 0, jindex)
-        depth = np.ma.masked_array(depth, mask=mask)
 
         if isinstance(self.property, str):
             if self.property == "depth":
@@ -248,7 +248,7 @@ class DeriveSurfaceFromGrid3D:
                 raise ValueError(f"Unknown property: {self.property}")
 
         elif isinstance(self.property, GridProperty):
-            self._tempsurf.values = self.property.values[iindex, jindex, 0]
+            self._tempsurf.values = self.property.values[iindex, jindex, self._klayer]
 
         self._tempsurf.values.mask = mask
 

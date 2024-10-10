@@ -30,6 +30,7 @@ namespace xtgeo::regsurf {
  * @param actnumsv Active cells of the 3D grid
  * @param klayer The layer to sample, base 0
  * @param option Option to sample the top (0) or bottom (1) of the cell
+ * @param activeonly If 1, only sample active cells
  * @return Tuple of 3 numpy arrays: I index, J index, Depth
  */
 
@@ -48,7 +49,8 @@ sample_grid3d_layer(const size_t ncol,
                     const py::array_t<float> &zcornsv,
                     const py::array_t<int> &actnumsv,
                     const size_t klayer,
-                    const int option)
+                    const int option,
+                    const int activeonly)
 {
     Logger logger(__func__);
     logger.debug("Sampling 3D grid layer to a regular surface...");
@@ -74,12 +76,17 @@ sample_grid3d_layer(const size_t ncol,
     std::fill(jindex_.mutable_data(0, 0), jindex_.mutable_data(0, 0) + (ncol * nrow),
               -1);
     std::fill(depth_.mutable_data(0, 0), depth_.mutable_data(0, 0) + (ncol * nrow),
-              std::numeric_limits<double>::quiet_NaN());
+              std::numeric_limits<double>::max());
 
     // Loop over the grid
     logger.debug("Looping 3D GRID cell NCOLROW and NROW is", ncolgrid3d, nrowgrid3d);
     for (size_t icell = 0; icell < ncolgrid3d; icell++) {
         for (size_t jcell = 0; jcell < nrowgrid3d; jcell++) {
+
+            // Check if the cell is active
+            if (activeonly == 1 & actnumsv.at(icell, jcell, klayer) == 0) {
+                continue;
+            }
             // Get cell corners
             auto corners =
               grid3d::cell_corners(icell, jcell, klayer, ncolgrid3d, nrowgrid3d,
