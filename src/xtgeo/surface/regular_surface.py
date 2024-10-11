@@ -994,10 +994,9 @@ class RegularSurface:
             warnings.warn(msg, UserWarning)
 
         mfile = FileWrapper(mfile, mode="wb", obj=self)
+        mfile.check_folder(raiseerror=OSError)
 
-        if not mfile.memstream:
-            mfile.check_folder(raiseerror=OSError)
-        else:
+        if mfile.memstream:
             engine = "python"
 
         if fformat in FileFormat.IRAP_ASCII.value:
@@ -1076,8 +1075,7 @@ class RegularSurface:
         # developing, in prep and experimental!
         mfile = FileWrapper(mfile, mode="wb", obj=self)
 
-        if not mfile.memstream:
-            mfile.check_folder(raiseerror=OSError)
+        mfile.check_folder(raiseerror=OSError)
 
         _regsurf_export.export_hdf5_regsurf(self, mfile, compression=compression)
         return mfile.file
