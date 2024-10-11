@@ -301,11 +301,13 @@ class FileWrapper:
             ValueError: If the file is a memstream
 
         """
-        # Redundant but mypy can't follow when memstream is True
-        if self.memstream or isinstance(self.file, (io.BytesIO, io.StringIO)):
-            raise ValueError("Cannot check folder status of an in-memory file")
-
         logger.debug("Checking folder...")
+
+        if self.memstream or isinstance(self.file, (io.BytesIO, io.StringIO)):
+            logger.info(
+                "Cannot check folder status of an in-memory file, just return True"
+            )
+            return True
 
         folder = self.file.parent
         if raisetext is None:

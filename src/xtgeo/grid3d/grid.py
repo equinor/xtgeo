@@ -711,8 +711,7 @@ class Grid(_Grid3D):
         """
         _gfile = FileWrapper(gfile, mode="wb")
 
-        if not _gfile.memstream:
-            _gfile.check_folder(raiseerror=OSError)
+        _gfile.check_folder(raiseerror=OSError)
 
         if fformat in FileFormat.ROFF_BINARY.value:
             _grid_export.export_roff(self, _gfile.name, "binary")
