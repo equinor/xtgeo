@@ -79,14 +79,11 @@ sample_grid3d_layer(const size_t ncol,
     logger.debug("Looping 3D GRID cell NCOLROW and NROW is", ncolgrid3d, nrowgrid3d);
     for (size_t icell = 0; icell < ncolgrid3d; icell++) {
         for (size_t jcell = 0; jcell < nrowgrid3d; jcell++) {
-<<<<<<< HEAD
 
             // Check if the cell is active
             if (activeonly == 1 & actnumsv.at(icell, jcell, klayer) == 0) {
                 continue;
             }
-=======
->>>>>>> 05a56c32 (ENH: rewrite/improve surface_from_grid3d function)
             // Get cell corners
             auto corners =
               grid3d::cell_corners(icell, jcell, klayer, ncolgrid3d, nrowgrid3d,
