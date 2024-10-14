@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdlib.h>
-
 #include "common.h"
 
 /* allocate double 2D pointers to be contiguous in memory */

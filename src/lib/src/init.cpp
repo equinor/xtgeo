@@ -1,5 +1,4 @@
 #include <pybind11/pybind11.h>
-
 #include <xtgeo/cube.hpp>
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/grid3d.hpp>

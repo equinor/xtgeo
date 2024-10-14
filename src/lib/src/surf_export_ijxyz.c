@@ -43,9 +43,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <xtgeo/xtgeo.h>
-
 #include "logger.h"
 
 int
