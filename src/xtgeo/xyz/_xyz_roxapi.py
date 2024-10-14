@@ -70,7 +70,7 @@ def _check_input_and_version_requirement(
         STYPE.WELL_PICKS,
     ) and not roxutils.version_required("1.6"):
         raise NotImplementedError(
-            f"API Support for {stype} is missing in this RMS version "
+            f"API Support for {stype.value} is missing in this RMS version "
             f"(current API version is {roxutils.roxversion} - required is 1.6)"
         )
 
@@ -80,7 +80,7 @@ def _check_input_and_version_requirement(
                 f"Invalid {category=}. Valid entries are {VALID_WELL_PICK_TYPES}"
             )
         if is_polygons:
-            raise ValueError(f"Polygons does not support {stype=}.")
+            raise ValueError(f"Polygons does not support stype={stype.value}.")
 
 
 def _check_presence_in_project(
@@ -99,13 +99,13 @@ def _check_presence_in_project(
 
     if stype in [STYPE.HORIZONS, STYPE.ZONES, STYPE.FAULTS]:
         if name not in project_attr:
-            raise ValueError(f"Cannot access {name=} in {stype}")
+            raise ValueError(f"Cannot access {name=} in {stype.value}")
         if category is None:
             raise ValueError("Need to specify category for horizons, zones and faults")
         if isinstance(category, list) or category not in project_attr.representations:
-            raise ValueError(f"Cannot access {category=} in {stype}")
+            raise ValueError(f"Cannot access {category=} in {stype.value}")
         if mode == "get" and project_attr[name][category].is_empty():
-            raise RuntimeError(f"'{name}' is empty for {stype} {category=}")
+            raise RuntimeError(f"'{name}' is empty for {stype.value} {category=}")
 
     # only need to check presence in clipboard/general2d_data/well_picks if mode = get.
     if mode == "get":
