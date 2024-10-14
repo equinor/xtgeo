@@ -37,9 +37,7 @@
  ***************************************************************************************
  */
 #include <stdlib.h>
-
 #include <xtgeo/xtgeo.h>
-
 #include "logger.h"
 
 #define DEBUG 0

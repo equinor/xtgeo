@@ -38,7 +38,6 @@
  **************************************************************************************
  */
 #include <xtgeo/xtgeo.h>
-
 #include "logger.h"
 
 /* skip subgrids; use K ranges, multiple polygons allowed */

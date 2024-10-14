@@ -32,7 +32,6 @@
  */
 #include <stdlib.h>
 #include <string.h>
-
 #include <xtgeo/xtgeo.h>
 
 int

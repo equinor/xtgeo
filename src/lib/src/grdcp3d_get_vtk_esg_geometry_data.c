@@ -38,7 +38,6 @@
 */
 #include <stdlib.h>
 #include <string.h>
-
 #include <xtgeo/xtgeo.h>
 
 // Forward declarations of static helpers

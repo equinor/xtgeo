@@ -30,9 +30,7 @@
  ******************************************************************************
  */
 #include <stdlib.h>
-
 #include <xtgeo/xtgeo.h>
-
 #include "logger.h"
 
 /* the Python version; simple as possible, (more operations in numpy)*/

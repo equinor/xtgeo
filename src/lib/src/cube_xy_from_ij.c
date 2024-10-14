@@ -1,5 +1,4 @@
 #include <stdlib.h>
-
 #include <xtgeo/xtgeo.h>
 
 int
