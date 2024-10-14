@@ -454,14 +454,17 @@ def test_rox_get_gridproperty(rms_project_path):
 def test_rox_get_modify_set_gridproperty(rms_project_path):
     """Get and set a grid property from a RMS project."""
     poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
+    cell_value = poro.values[1, 0, 0]
 
     adder = 0.9
     poro.values = poro.values + adder
 
     poro.to_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_NEW")
 
-    poro.from_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_NEW")
-    assert poro.values[1, 0, 0] == pytest.approx(0.14942 + adder, abs=0.0001)
+    poronew = xtgeo.gridproperty_from_roxar(
+        rms_project_path, GRIDNAME1, PORONAME1 + "_NEW"
+    )
+    assert poronew.values[1, 0, 0] == pytest.approx(cell_value + adder, abs=0.0001)
 
 
 @pytest.mark.requires_roxar
