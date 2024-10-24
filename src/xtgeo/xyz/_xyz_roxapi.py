@@ -11,17 +11,16 @@ from typing import Any, Literal, Type, cast
 import numpy as np
 import pandas as pd
 
-from xtgeo import ROXAR  # type: ignore
 from xtgeo.common._xyz_enum import _AttrName
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileWrapper
 from xtgeo.roxutils import RoxUtils
+from xtgeo.roxutils._roxar_loader import RoxarType, roxar, roxar_well_picks
 from xtgeo.xyz import _xyz_io, points, polygons
 
-if ROXAR:
-    import roxar
-    import roxar.well_picks as roxwp
+if roxar:
+    roxwp = roxar_well_picks
 
 logger = null_logger(__name__)
 
@@ -127,7 +126,7 @@ def _check_presence_in_project(
 
 
 def import_xyz_roxapi(
-    project: roxar.project,
+    project: RoxarType.project,
     name: str,
     category: str | list[str],
     stype: str = "horizons",
@@ -190,13 +189,6 @@ def _roxapi_import_xyz_viafile(
     However, attributes will be present in Roxar API from RMS version 12, and this
     routine should be replaced!
     """
-
-    try:
-        import roxar
-    except ImportError as err:
-        raise ImportError(
-            "roxar not available, this functionality is not available"
-        ) from err
 
     rox_xyz = _get_roxitem(
         rox,
@@ -328,7 +320,7 @@ def _add_attributes_to_dataframe(
 
 def export_xyz_roxapi(
     self: points.Points | polygons.Polygons,
-    project: roxar.Project,
+    project: RoxarType.Project,
     name: str,
     category: str | list[str] | None,
     stype: str,
@@ -378,13 +370,6 @@ def _roxapi_export_xyz_viafile(
     """Set points/polys within RMS with attributes, using file workaround"""
 
     logger.warning("Realisation %s not in use", realisation)
-
-    try:
-        import roxar
-    except ImportError as err:
-        raise ImportError(
-            "roxar not available, this functionality is not available"
-        ) from err
 
     is_polygons = isinstance(self, polygons.Polygons)
     roxxyz = _get_roxitem(
@@ -622,7 +607,7 @@ def _roxapi_import_wellpicks(
 
 
 def _create_dataframe_from_wellpicks(
-    well_picks: list[roxar.well_picks.WellPick],
+    well_picks: list[RoxarType.well_picks.WellPick],
     wp_category: Literal["fault", "horizon"],
     attribute_types: dict[str, str],
 ) -> pd.DataFrame:
@@ -748,8 +733,8 @@ def _roxapi_export_xyz_well_picks(
 
 
 def _get_well_pick_set(
-    rox: RoxUtils, well_pick_set: str, rox_wp_type: roxar.WellPickType
-) -> roxar.well_picks.WellPickSet:
+    rox: RoxUtils, well_pick_set: str, rox_wp_type: RoxarType.WellPickType
+) -> RoxarType.well_picks.WellPickSet:
     """
     Function to retrieve a well pick set object. If the given well pick set
     name is not present, it will be created. Otherwise the current well pick
@@ -768,8 +753,8 @@ def _get_well_pick_set(
 def _get_writeable_well_pick_attributes(
     rox: RoxUtils,
     attribute_types: dict[str, str],
-    rox_wp_type: roxar.WellPickType,
-) -> dict[str, roxar.well_picks.WellPickAttribute]:
+    rox_wp_type: RoxarType.WellPickType,
+) -> dict[str, RoxarType.well_picks.WellPickAttribute]:
     """
     Function to retrive a dictionary of regular and user-defined
     roxar WellPickAttribute's. Only writable attributes are

@@ -18,6 +18,7 @@ import numpy as np
 
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.roxutils import RoxUtils
+from xtgeo.roxutils._roxar_loader import roxar
 
 xtg = XTGeoDialog()
 
@@ -132,11 +133,6 @@ def export_cube_roxapi(
 def _roxapi_export_cube(
     self, proj, rox, name, folder=None, domain="time", compression=("wavelet", 5)
 ):  # type: ignore # pragma: no cover
-    try:
-        import roxar  # type: ignore
-    except ImportError:
-        roxar = None
-
     logger.info(
         "There are issues with compression %s, hence it is ignored", compression
     )

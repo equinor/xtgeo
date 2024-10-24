@@ -8,6 +8,7 @@ import numpy as np
 
 from xtgeo.common.log import null_logger
 from xtgeo.roxutils import RoxUtils
+from xtgeo.roxutils._roxar_loader import roxar
 
 logger = null_logger(__name__)
 
@@ -214,12 +215,6 @@ def _roxapi_export_surface(
             )
         # here a workound; trends.surfaces are read-only in Roxar API, but is seems
         # that load() in RMS is an (undocumented?) workaround...
-        try:
-            import roxar
-        except ImportError as err:
-            raise ImportError(
-                "roxar not available, this functionality is not available"
-            ) from err
 
         roxsurf = proj.trends.surfaces[name]
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -234,12 +229,6 @@ def _roxapi_export_surface(
 
 def _xtgeo_to_roxapi_grid(self):  # pragma: no cover
     # Create a 2D grid
-    try:
-        import roxar
-    except ImportError as err:
-        raise ImportError(
-            "roxar not available, this functionality is not available"
-        ) from err
 
     return roxar.RegularGrid2D.create(
         x_origin=self.xori,

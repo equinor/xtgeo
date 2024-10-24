@@ -11,7 +11,6 @@ ran in e.g. public Github actions.
 
 from __future__ import annotations
 
-import contextlib
 import pathlib
 from typing import Any
 
@@ -20,9 +19,7 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
-
-with contextlib.suppress(ImportError):
-    import roxar
+from xtgeo.roxutils._roxar_loader import roxar, roxar_jobs, roxar_well_picks
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -94,10 +91,9 @@ def _run_blocked_wells_job(
 
     The log names (Poro, Perm, etc) are here hardcoded in params dictionary.
     """
-    import roxar.jobs
 
     # create the block well job and add it to the grid
-    bw_job = roxar.jobs.Job.create(
+    bw_job = roxar_jobs.Job.create(
         ["Grid models", gmname, "Grid"], "Block Wells", "API_BW_Job"
     )
 
@@ -161,7 +157,7 @@ def _run_blocked_wells_job(
 
 def _add_well_pick_to_project(project: Any, well_pick_data: dict, trajectory: str):
     """Add well picks to the project."""
-    import roxar.well_picks as wp
+    wp = roxar_well_picks
 
     mypicks = [
         wp.WellPick.create(
