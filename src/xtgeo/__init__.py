@@ -35,11 +35,6 @@ def _xprint(msg):
 
 _xprint("XTGEO __init__ ...")
 
-ROXAR = True
-try:
-    import roxar
-except ImportError:
-    ROXAR = False
 
 try:
     from xtgeo.common.version import __version__, version
@@ -159,7 +154,7 @@ warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 _xprint("XTGEO __init__ done")
 
 # Remove symbols imported for internal use
-del os, platform, sys, timeit, warnings, TIME0, DEBUG, ROXAR, _timer, _xprint
+del os, platform, sys, timeit, warnings, TIME0, DEBUG, _timer, _xprint
 
 # Let type-checkers know what is exported
 __all__ = [

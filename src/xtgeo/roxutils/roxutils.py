@@ -1,16 +1,12 @@
 """Module for simplifying various operation in the Roxar python interface."""
 
-import contextlib
-
 from packaging.version import parse as versionparse
-
-with contextlib.suppress(ImportError):
-    import roxar
 
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from . import _roxutils_etc
+from ._roxar_loader import roxar
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)

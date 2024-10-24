@@ -9,11 +9,7 @@ from xtgeo.common.constants import INT_MIN
 from xtgeo.common.exceptions import WellNotFoundError
 from xtgeo.common.log import null_logger
 from xtgeo.roxutils import RoxUtils
-
-try:
-    import roxar  # type: ignore
-except ImportError:
-    roxar = None
+from xtgeo.roxutils._roxar_loader import roxar
 
 logger = null_logger(__name__)
 
