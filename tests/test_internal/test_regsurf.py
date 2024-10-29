@@ -198,7 +198,8 @@ def test_get_xy_from_ij():
     assert point.y == pytest.approx(4.4641016151)
 
 
-def test_sample_grid3d_layer(testdata_path):
+@pytest.fixture(scope="module", name="get_drogondata")
+def fixture_get_drogondata(testdata_path):
     grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/drogon/2/geogrid.roff")
     poro = xtgeo.gridproperty_from_file(
         f"{testdata_path}/3dgrids/drogon/2/geogrid--phit.roff"
@@ -210,36 +211,41 @@ def test_sample_grid3d_layer(testdata_path):
     surf = xtgeo.surface_from_file(
         f"{testdata_path}/surfaces/drogon/1/01_topvolantis.gri"
     )
+    return grid, poro, facies, surf
+
+
+def test_sample_grid3d_layer(get_drogondata):
+    grid, poro, facies, surf = get_drogondata
 
     logger.info("Sample the grid...")
-    iindex, jindex, depth = _internal.regsurf.sample_grid3d_layer(
-        surf.ncol,
-        surf.nrow,
-        surf.xori,
-        surf.yori,
-        surf.xinc,
-        surf.yinc,
-        surf.rotation,
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv,
-        grid._zcornsv,
-        grid._actnumsv,
-        8,
-        1,
-        0,
+    iindex, jindex, depth_top, depth_bot, inactive = (
+        _internal.regsurf.sample_grid3d_layer(
+            surf.ncol,
+            surf.nrow,
+            surf.xori,
+            surf.yori,
+            surf.xinc,
+            surf.yinc,
+            surf.rotation,
+            grid.ncol,
+            grid.nrow,
+            grid.nlay,
+            grid._coordsv,
+            grid._zcornsv,
+            grid._actnumsv,
+            8,  # 8 is the depth index
+            2,
+            -1,  # number of threads for OpenMP; -1 means let the system decide
+        )
     )
     logger.info("Sample the grid... DONE")
-
-    print(type(iindex), type(jindex), type(depth))
 
     mask = iindex == -1
     iindex = np.where(iindex == -1, 0, iindex)
     jindex = np.where(jindex == -1, 0, jindex)
 
     depthmap = surf.copy()
-    depthmap.values = depth
+    depthmap.values = depth_top
 
     poromap = surf.copy()
     # for each map node, I want the poro value given ii and jj
@@ -252,3 +258,46 @@ def test_sample_grid3d_layer(testdata_path):
     facimap.values.mask = mask
 
     assert np.allclose(poromap.values.mean(), 0.1974, atol=0.01)
+
+
+@pytest.fixture(scope="module")
+def keep_top_store():
+    """To remember the top layer for the single-threaded case."""
+    return {"keep_top": None}
+
+
+@pytest.mark.parametrize("num_threads", [1, 2, 4, 8, 16])
+def test_sample_grid3d_layer_num_threads(
+    get_drogondata, benchmark, num_threads, keep_top_store
+):
+    """Benchmark the sampling of the grid for different number of threads."""
+    grid, _, _, surf = get_drogondata
+
+    def sample_grid():
+        return _internal.regsurf.sample_grid3d_layer(
+            surf.ncol,
+            surf.nrow,
+            surf.xori,
+            surf.yori,
+            surf.xinc,
+            surf.yinc,
+            surf.rotation,
+            grid.ncol,
+            grid.nrow,
+            grid.nlay,
+            grid._coordsv,
+            grid._zcornsv,
+            grid._actnumsv,
+            8,  # 8 is the depth index
+            2,
+            num_threads,
+        )
+
+    _, _, top, bot, inactive = benchmark(sample_grid)
+
+    top[np.isnan(top)] = 0
+    if num_threads == 1:
+        keep_top_store["keep_top"] = top
+
+    # check if the top layer is exactly the same for all threads
+    assert np.array_equal(top, keep_top_store["keep_top"])

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <limits>
 #include <optional>
+#include <stdexcept>
 #include <vector>
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/grid3d.hpp>
@@ -37,7 +38,8 @@ namespace xtgeo::grid3d {
  * @param zcornsv Grid Z corners vector
  * @return vector of 24 doubles with the corner coordinates.
  */
-std::vector<double>
+
+std::array<double, 24>
 cell_corners(const size_t i,
              const size_t j,
              const size_t k,
@@ -78,7 +80,7 @@ cell_corners(const size_t i,
     z_coords[6] = zcornsv_[((i + 0) * area + (j + 1) * num_layers + (k + 1)) * 4 + 1];
     z_coords[7] = zcornsv_[((i + 1) * area + (j + 1) * num_layers + (k + 1)) * 4 + 0];
 
-    std::vector<double> corners(24, 0);
+    std::array<double, 24> corners{};
     auto crn_idx = 0;
     auto cz_idx = 0;
     for (auto layer = 0; layer < 2; layer++) {
@@ -88,7 +90,7 @@ cell_corners(const size_t i,
             auto t = (z_coords[cz_idx] - z1) / (z2 - z1);
             auto point = numerics::lerp3d(x1, y1, z1, x2, y2, z2, t);
             // If coord lines are collapsed (preserves old behavior)
-            if (std::abs(z2 - z1) < std::numeric_limits<double>::epsilon()) {
+            if (std::abs(z2 - z1) < numerics::EPSILON) {
                 point.x = x1;
                 point.y = y1;
             }
@@ -102,7 +104,7 @@ cell_corners(const size_t i,
 }
 
 std::vector<double>
-get_corners_minmax(std::vector<double> &corners)
+get_corners_minmax(std::array<double, 24> &corners)
 {
     double xmin = std::numeric_limits<double>::max();
     double xmax = std::numeric_limits<double>::min();
@@ -139,75 +141,64 @@ get_corners_minmax(std::vector<double> &corners)
  * (option = 1), seen from above, and return True if it is inside, False otherwise.
  * @param x X coordinate of the point
  * @param y Y coordinate of the point
- * @param i The (i) coordinate
- * @param j The (j) coordinate
- * @param k The (k) coordinate
  * @param corners A vector of doubles, length 24
- * @param point A vector of doubles, length 2
+ * @param option 0: Use cell top, 1: Use cell bottom, 2 for center
  * @return Boolean
  */
 bool
 is_xy_point_in_cell(const double x,
                     const double y,
-                    const size_t i,
-                    const size_t j,
-                    const size_t k,
-                    const size_t ncol,
-                    const size_t nrow,
-                    const size_t nlay,
-                    const py::array_t<double> &coordsv,
-                    const py::array_t<float> &zcornsv,
-                    const int option = 0)
+                    const std::array<double, 24> &corners,
+                    int option)
 {
 
-    std::array<std::array<double, 3>, 8> crn{};
-    size_t idx = 0;
-
-    auto corners = cell_corners(i, j, k, ncol, nrow, nlay, coordsv, zcornsv);
-    for (auto i = 0; i < 8; i++) {
-        for (auto j = 0; j < 3; j++) {
-            crn[i][j] = corners[idx++];
-        }
+    if (option < 0 || option > 2) {
+        throw std::invalid_argument("BUG! Invalid option");
     }
-
-    // make a closed polygon with 4 corners
-    std::vector<std::array<double, 2>> quadrilateral(5);
-    for (auto i = 0; i <= 4; i++) {
-        auto j = i;
-        if (option == 1) {  // bottom
-            j = i + 4;
-        }
-        if (i == 2)
-            j = j + 1;
-        if (i == 3)
-            j = j - 1;
-        if (i == 4)
-            j = j - 4;
-        quadrilateral[i][0] = crn[j][0];
-        quadrilateral[i][1] = crn[j][1];
-    }
-
     // determine if point is inside the polygon
-    return geometry::is_xy_point_in_polygon(x, y, quadrilateral);
+    if (option == 0) {
+        std::array<double, 3> p1 = { corners[0], corners[1], corners[2] };
+        std::array<double, 3> p2 = { corners[3], corners[4], corners[5] };
+        std::array<double, 3> p3 = { corners[6], corners[7], corners[8] };
+        std::array<double, 3> p4 = { corners[9], corners[10], corners[11] };
+        return geometry::is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3);
+    } else if (option == 1) {
+        std::array<double, 3> p1 = { corners[12], corners[13], corners[14] };
+        std::array<double, 3> p2 = { corners[15], corners[16], corners[17] };
+        std::array<double, 3> p3 = { corners[18], corners[19], corners[20] };
+        std::array<double, 3> p4 = { corners[21], corners[22], corners[23] };
+        return geometry::is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3);
+    } else if (option == 2) {
+        // find the center Z point of the cell
+        auto mid_sw = numerics::lerp3d(corners[0], corners[1], corners[2], corners[12],
+                                       corners[13], corners[14], 0.5);
+        auto mid_se = numerics::lerp3d(corners[3], corners[4], corners[5], corners[15],
+                                       corners[16], corners[17], 0.5);
+        auto mid_nw = numerics::lerp3d(corners[6], corners[7], corners[8], corners[18],
+                                       corners[19], corners[20], 0.5);
+        auto mid_ne = numerics::lerp3d(corners[9], corners[10], corners[11],
+                                       corners[21], corners[22], corners[23], 0.5);
 
+        return geometry::is_xy_point_in_quadrilateral(
+          x, y, { mid_sw.x, mid_sw.y, mid_sw.z }, { mid_se.x, mid_se.y, mid_se.z },
+          { mid_ne.x, mid_ne.y, mid_ne.z }, { mid_nw.x, mid_nw.y, mid_nw.z });
+    }
+    return false;  // unreachable
 }  // is_xy_point_in_cell
 
 // Find the depth of a point in a cell
 double
 get_depth_in_cell(const double x,
                   const double y,
-                  const size_t i,
-                  const size_t j,
-                  const size_t k,
-                  const size_t ncol,
-                  const size_t nrow,
-                  const size_t nlay,
-                  const py::array_t<double> &coordsv,
-                  const py::array_t<float> &zcornsv,
-                  const int option = 0)
+                  const std::array<double, 24> &corners,
+                  int option = 0)
 {
-    double depth = std::numeric_limits<double>::quiet_NaN();
-    auto corners = cell_corners(i, j, k, ncol, nrow, nlay, coordsv, zcornsv);
+    if (option < 0 || option > 1) {
+        throw std::invalid_argument("BUG! Invalid option");
+    }
+
+    double depth = numerics::QUIET_NAN;
+
     if (option == 1) {
         depth =
           geometry::interpolate_z_4p(x, y, { corners[12], corners[13], corners[14] },

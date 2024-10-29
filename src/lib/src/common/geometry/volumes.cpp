@@ -1,6 +1,7 @@
 #include <pybind11/stl.h>
 #include <vector>
 #include <xtgeo/geometry.hpp>
+#include <xtgeo/numerics.hpp>
 #include <xtgeo/xtgeo.h>
 
 namespace xtgeo::geometry {
@@ -28,10 +29,10 @@ namespace xtgeo::geometry {
  * @return The volume of the hexahadron
  */
 double
-hexahedron_volume(const std::vector<double> &corners, const int precision)
+hexahedron_volume(const std::array<double, 24> &corners, const int precision)
 {
     // Avoid cells that collapsed in some way
-    if (hexahedron_dz(corners) < std::numeric_limits<double>::epsilon()) {
+    if (hexahedron_dz(corners) < numerics::EPSILON) {
         return 0.0;
     }
 

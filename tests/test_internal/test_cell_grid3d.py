@@ -88,17 +88,14 @@ def test_is_xy_point_in_cell(x, y, cell, position, expected):
     """Test the XY point is inside a hexahedron cell, seen from top or base."""
 
     grid = xtgeo.create_box_grid((3, 4, 5))
-
+    corners = _internal.grid3d.cell_corners(
+        *cell, grid.ncol, grid.nrow, grid.nlay, grid._coordsv, grid._zcornsv
+    )
     assert (
         _internal.grid3d.is_xy_point_in_cell(
             x,
             y,
-            *cell,
-            grid.ncol,
-            grid.nrow,
-            grid.nlay,
-            grid._coordsv,
-            grid._zcornsv,
+            corners,
             0 if position == "top" else 1,
         )
         is expected
@@ -119,16 +116,14 @@ def test_get_depth_in_cell(testdata_path, x, y, cell, position, expected):
     # Read the banal6 grid
     grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/etc/banal6.roff")
 
+    corners = _internal.grid3d.cell_corners(
+        *cell, grid.ncol, grid.nrow, grid.nlay, grid._coordsv, grid._zcornsv
+    )
     # Get the depth of the first cell
     depth = _internal.grid3d.get_depth_in_cell(
         x,
         y,
-        *cell,
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv,
-        grid._zcornsv,
+        corners,
         0 if position == "top" else 1,
     )
 

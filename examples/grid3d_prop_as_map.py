@@ -16,31 +16,13 @@ def make_map():
     # read grid
     grd = xtgeo.grid_from_file(GNAMEROOT + ".EGRID")
 
-    _ = xtgeo.gridproperty_from_file(GNAMEROOT + ".INIT", name="PORO", grid=grd)
+    poro = xtgeo.gridproperty_from_file(GNAMEROOT + ".INIT", name="PORO", grid=grd)
 
-    df = grd.get_dataframe()
-
-    # make a map from the grid geometry to be used as a template
-
-    surf = xtgeo.surface_from_grid3d(grd)
-
-    # get only bottom layer:
-    lastlayer = df["KZ"].max()
-    df = df[df["KZ"] == lastlayer].reset_index()
-
-    # prepare as input to a Points dataframe (3 columns X Y Z)
-    df = df[["X_UTME", "Y_UTMN", "PORO"]].copy()
-
-    points = xtgeo.Points()
-    points.zname = "PORO"
-    points.set_dataframe(df)
-
-    # do gridding:
-    surf.gridding(points)
+    poro_surface = xtgeo.surface_from_grid3d(grd, property=poro, where="base")
 
     # optional plot
     if "SKIP_PLOT" not in os.environ:
-        surf.quickplot()
+        poro_surface.quickplot()
 
 
 if __name__ == "__main__":
