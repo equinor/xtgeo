@@ -12,6 +12,10 @@ find_package(
 include(UseSWIG)
 find_package(pybind11 REQUIRED)
 
+if(UNIX AND NOT APPLE)
+  find_package(OpenMP REQUIRED)
+endif()
+
 message(STATUS "Python executable     : ${Python_EXECUTABLE}")
 message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
 message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
@@ -43,6 +47,13 @@ pybind11_add_module(
   "${SRC}/regsurf/utilities.cpp"
   ${SOURCES})
 target_include_directories(_internal PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+# Link OpenMP
+
+if(UNIX
+   AND NOT APPLE
+   AND OpenMP_CXX_FOUND)
+  target_link_libraries(_internal PRIVATE OpenMP::OpenMP_CXX)
+endif()
 
 message(STATUS "Compiling swig bindings")
 

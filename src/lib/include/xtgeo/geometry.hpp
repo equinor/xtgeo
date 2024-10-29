@@ -65,7 +65,7 @@ constexpr int TETRAHEDRON_VERTICES[4][6][4] = {
 };
 
 inline double
-hexahedron_dz(const std::vector<double> &corners)
+hexahedron_dz(const std::array<double, 24> &corners)
 {
     // TODO: This does not account for overall zflip ala Petrel or cells that
     // are malformed
@@ -86,7 +86,7 @@ triangle_area(const std::array<double, 2> &p1,
 }
 
 double
-hexahedron_volume(const std::vector<double> &corners, const int precision);
+hexahedron_volume(const std::array<double, 24> &corners, const int precision);
 
 bool
 is_xy_point_in_polygon(const double x,

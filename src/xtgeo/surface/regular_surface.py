@@ -218,8 +218,9 @@ def surface_from_grid3d(
     where: str | int = "top",
     property: str | GridProperty = "depth",
     rfactor: float = 1.0,
+    index_position: Literal["center", "top", "base"] = "center",
     **kwargs,
-):
+) -> RegularSurface | List[np.ndarray]:
     """This makes an instance of a RegularSurface directly from a Grid() instance.
 
     Args:
@@ -227,23 +228,31 @@ def surface_from_grid3d(
         template: Optional, to use an existing surface as
             template for map geometry, or by using "native" which returns a surface that
             approximate the 3D grid layout (same number of rows and columns, and same
-            rotation). If None (default) an non-rotated surface will be made
+            rotation). If None (default) a non-rotated surface will be made
             based on a refined estimation from the current grid
             resolution (see ``rfactor``).
-        where: Cell layer number, or "top", "base", or use the syntax "2_top" where 2
+        where: Cell layer number, or if property is "depth", use "top" or "base" to get
+            a surface sampled from the very top or very base of the grid (including
+            inactive cells!). Otherwise use the syntax "2_top" where 2
             is layer no. 2 and _top indicates top of cell, while "_base"
             indicates base of cell. Cell layer numbering starts from 1. Default position
-            in a cell layer is "top" if layer is given as pure number.
-        property: Which property to return as a RegularSurface. Choices are "depth", "i"
+            in a cell layer is "top" if layer is given as pure number and "depth" is
+            the property. If a grid property is given, the position is always found
+            the center depth within in a cell.
+        property: Which property to return. Choices are "depth", "i"
             (columns) or "j" (rows) or, more generic, a GridProperty instance
-            which belongs to the given grid geometry.
+            which belongs to the given grid geometry. Alle these returns a
+            RegularSurface. A special variant is "raw" which
+            returns a list of 2D numpy arrays. See details in the Note section.
         rfactor: Note this setting will only apply if ``template`` is None.
             Determines how fine the extracted map is; higher values
             for finer map (but computing time will increase slightly).
             The default is 1.0, which in effect will make a surface approximentaly
             twice as fine as the average resolution estimated from the 3D grid.
-
-
+        index_position: Default is "center" which means that the index is taken
+            from the Z center of the cell. If "top" is given, the index is taken from
+            the top of the cell, and if "base" is given, the index is taken from the
+            base of the cell. This is only valid for index properties "i" and "j".
 
     Note::
         The keyword ``mode`` is deprecated and will be removed in XTGeo version 5,
@@ -254,10 +263,24 @@ def surface_from_grid3d(
         (including inactive 3D cells), while for a GridProperty, only active cells
         will be used. Hence the extent of the resulting surfaces may differ.
 
+    Note::
+        For ``property`` "raw", the return is a list of 2D arrays, where the first
+        array is the i-index (int), the second is the j-index (int), the third is the
+        top depth (float64), the fourth is the bottom depth (float64), and the
+        fifth is a mask (boolean) for inactive cells. For the index arrays, -1
+        indicates that the cell is outside any grid cell (projected from above; i.e.
+        could also be within a fault). For the depth arrays, the value is NaN
+        for inactive cells. The inactive mask is True for inactive cells. The index
+        arrays and mask is derived from the Z midpoints of the 3D cells. The "raw"
+        option is useful for further processing in Python, e.g. when a combination
+        of properties is needed.
+
     .. versionadded:: 2.1
     .. versionchanged:: 4.2 Changed ``mode`` to ``property`` to add support for
                             a GridProperty. The ``where`` arg. can now be an integer.
                             Added option ``activeonly``.
+    .. versionchanged:: 4.3 Added option ``raw`` to get data for further processing.
+                            and add ``index_position`` for "i" and "j" properties.
     """
     mode = kwargs.get("mode")
     if mode is not None:
@@ -268,7 +291,15 @@ def surface_from_grid3d(
         )
         property = mode
 
-    return RegularSurface._read_grid3d(grid, template, where, property, rfactor)
+    if isinstance(property, str) and property == "raw":
+        args = _regsurf_grid3d.from_grid3d(
+            grid, template, where, property, rfactor, index_position="center"
+        )
+        return args["values"]
+
+    return RegularSurface._read_grid3d(
+        grid, template, where, property, rfactor, index_position
+    )
 
 
 def _data_reader_factory(file_format: FileFormat):
@@ -1275,9 +1306,12 @@ class RegularSurface:
         where: str | int = "top",
         property: str | GridProperty = "depth",
         rfactor: int = 1,
+        index_position: str = "center",
     ):
         """Private class method to extract a surface from a 3D grid."""
-        args = _regsurf_grid3d.from_grid3d(grid, template, where, property, rfactor)
+        args = _regsurf_grid3d.from_grid3d(
+            grid, template, where, property, rfactor, index_position
+        )
         return cls(**args)
 
     def copy(self):

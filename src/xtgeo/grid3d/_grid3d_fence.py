@@ -123,22 +123,22 @@ def _update_tmpvars(self: Grid, force: bool = False) -> None:
         logger.info("Make a tmp onegrid instance... DONE")
         logger.info("Make a set of tmp surfaces for I J locations + depth...")
         self._tmp["topd"] = surface_from_grid3d(
-            one, where="top", property="depth", rfactor=4
+            one, where="top", property="depth", rfactor=4, index_position="top"
         )
         self._tmp["topi"] = surface_from_grid3d(
-            one, where="top", property="i", rfactor=4
+            one, where="top", property="i", rfactor=4, index_position="top"
         )
         self._tmp["topj"] = surface_from_grid3d(
-            one, where="top", property="j", rfactor=4
+            one, where="top", property="j", rfactor=4, index_position="top"
         )
         self._tmp["basd"] = surface_from_grid3d(
-            one, where="base", property="depth", rfactor=4
+            one, where="base", property="depth", rfactor=4, index_position="base"
         )
         self._tmp["basi"] = surface_from_grid3d(
-            one, where="base", property="i", rfactor=4
+            one, where="base", property="i", rfactor=4, index_position="base"
         )
         self._tmp["basj"] = surface_from_grid3d(
-            one, where="base", property="j", rfactor=4
+            one, where="base", property="j", rfactor=4, index_position="base"
         )
 
         self._tmp["topi"].fill()

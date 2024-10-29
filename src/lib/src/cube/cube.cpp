@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <xtgeo/numerics.hpp>
 
 namespace py = pybind11;
 
@@ -131,14 +132,14 @@ cube_stats_along_z(const size_t ncol,
                 meanabsv_(i, j) = sum_abs / n_items;
                 sumabsv_(i, j) = sum_abs;
             } else {
-                minv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                maxv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                meanv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                varv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                rmsv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                maxabsv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                meanabsv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                sumabsv_(i, j) = std::numeric_limits<double>::quiet_NaN();
+                minv_(i, j) = numerics::QUIET_NAN;
+                maxv_(i, j) = numerics::QUIET_NAN;
+                meanv_(i, j) = numerics::QUIET_NAN;
+                varv_(i, j) = numerics::QUIET_NAN;
+                rmsv_(i, j) = numerics::QUIET_NAN;
+                maxabsv_(i, j) = numerics::QUIET_NAN;
+                meanabsv_(i, j) = numerics::QUIET_NAN;
+                sumabsv_(i, j) = numerics::QUIET_NAN;
             }
 
             // Compute statistics for positive values
@@ -147,9 +148,9 @@ cube_stats_along_z(const size_t ncol,
                 meanposv_(i, j) = sum_pos / n_items_pos;
                 sumposv_(i, j) = sum_pos;
             } else {
-                maxposv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                meanposv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                sumposv_(i, j) = std::numeric_limits<double>::quiet_NaN();
+                maxposv_(i, j) = numerics::QUIET_NAN;
+                meanposv_(i, j) = numerics::QUIET_NAN;
+                sumposv_(i, j) = numerics::QUIET_NAN;
             }
 
             // Compute statistics for negative values
@@ -158,9 +159,9 @@ cube_stats_along_z(const size_t ncol,
                 meannegv_(i, j) = sum_neg / n_items_neg;
                 sumnegv_(i, j) = sum_neg;
             } else {
-                maxnegv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                meannegv_(i, j) = std::numeric_limits<double>::quiet_NaN();
-                sumnegv_(i, j) = std::numeric_limits<double>::quiet_NaN();
+                maxnegv_(i, j) = numerics::QUIET_NAN;
+                meannegv_(i, j) = numerics::QUIET_NAN;
+                sumnegv_(i, j) = numerics::QUIET_NAN;
             }
         }
     }

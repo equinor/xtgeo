@@ -28,7 +28,7 @@ grid_height_above_ffl(const size_t ncol,
                       const py::array_t<int> &actnumsv,
                       const py::array_t<float> &ffl,
                       const size_t option);
-std::vector<double>
+std::array<double, 24>
 cell_corners(const size_t i,
              const size_t j,
              const size_t k,
@@ -39,33 +39,19 @@ cell_corners(const size_t i,
              const py::array_t<float> &zcornsv);
 
 std::vector<double>
-get_corners_minmax(std::vector<double> &corners);
+get_corners_minmax(std::array<double, 24> &corners);
 
 bool
 is_xy_point_in_cell(const double x,
                     const double y,
-                    const size_t i,
-                    const size_t j,
-                    const size_t k,
-                    const size_t ncol,
-                    const size_t nrow,
-                    const size_t nlay,
-                    const py::array_t<double> &coordsv,
-                    const py::array_t<float> &zcornsv,
-                    const int option);
+                    const std::array<double, 24> &corners,
+                    int option);
 
 double
 get_depth_in_cell(const double x,
                   const double y,
-                  const size_t i,
-                  const size_t j,
-                  const size_t k,
-                  const size_t ncol,
-                  const size_t nrow,
-                  const size_t nlay,
-                  const py::array_t<double> &coordsv,
-                  const py::array_t<float> &zcornsv,
-                  const int option);
+                  const std::array<double, 24> &corners,
+                  int option);
 
 inline void
 init(py::module &m)

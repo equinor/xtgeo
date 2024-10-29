@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
@@ -84,12 +84,14 @@ class DeriveSurfaceFromGrid3D:
     where: str | int = "top"
     property: str | GridProperty = "depth"
     rfactor: float = 1.0
+    index_position: Literal["center", "top", "base", "bot"] = "center"
 
     # private state variables
     _args: dict | None = None
     _tempsurf: RegularSurface | None = None
     _klayer: int | None = None
-    _option: int | None = None
+    _option: Literal["top", "bot"] = "top"
+    _result: np.ma.MaskedArray | list[np.ndarray] | None = None
 
     def __post_init__(self) -> None:
         logger.debug("DeriveSurfaceFromGrid3D: __post_init__")
@@ -118,7 +120,7 @@ class DeriveSurfaceFromGrid3D:
         args["nrow"] = self._tempsurf.nrow
         args["rotation"] = self._tempsurf.rotation
         args["yflip"] = self._tempsurf.yflip
-        args["values"] = self._tempsurf.values.copy()
+        args["values"] = self._result
 
         return args
 
@@ -194,26 +196,26 @@ class DeriveSurfaceFromGrid3D:
             where = self.where.lower()
             if where == "top":
                 self._klayer = 0
-                self._option = 0
+                self._option = "top"
             elif where == "base":
                 self._klayer = self.grid.nlay - 1
-                self._option = 1
+                self._option = "bot"
             else:
                 klayer, what = where.split("_")
                 self._klayer = int(klayer) - 1
                 if self._klayer < 0 or self._klayer >= self.grid.nlay:
                     raise ValueError(f"Klayer out of range in where={where}")
-                self._option = 0
+                self._option = "top"
                 if what == "base":
-                    self._option = 1
+                    self._option = "bot"
         else:
             self._klayer = self.where - 1
-            self._option = 0
+            self._option = "top"
 
     def _sample_regsurf_from_grid3d(self) -> None:
         """Sample the grid3d to get the values for the regular surface."""
 
-        iindex, jindex, depth = _internal.regsurf.sample_grid3d_layer(
+        iindex, jindex, d_top, d_bot, mask = _internal.regsurf.sample_grid3d_layer(
             self._tempsurf.ncol,
             self._tempsurf.nrow,
             self._tempsurf.xori,
@@ -228,32 +230,52 @@ class DeriveSurfaceFromGrid3D:
             self.grid._zcornsv,
             self.grid._actnumsv,
             self._klayer,
-            self._option,
-            0 if isinstance(self.property, str) else 1,  # activeonly flag
+            {"top": 0, "bot": 1, "base": 1}.get(self.index_position, 2),
+            -1,  # number of threads for OpenMP; -1 means let the system decide
         )
 
-        mask = iindex == -1
+        if self.property == "raw":
+            self._result = [iindex, jindex, d_top, d_bot, mask]
+            return
+
+        additional_mask = iindex == -1
         iindex = np.where(iindex == -1, 0, iindex)
         jindex = np.where(jindex == -1, 0, jindex)
 
         if isinstance(self.property, str):
             if self.property == "depth":
-                self._tempsurf.values = depth
+                if self._option == "top":
+                    d_top = np.ma.masked_invalid(d_top)
+                    # to avoid problems when nan is present behind the mask
+                    d_top.data[d_top.mask] = _internal.numerics.UNDEF_DOUBLE
+                else:
+                    d_bot = np.ma.masked_invalid(d_bot)
+                    d_bot.data[d_bot.mask] = _internal.numerics.UNDEF_DOUBLE
+
+                self._result = d_top if self._option == "top" else d_bot
+
             elif self.property == "i":
-                self._tempsurf.values = iindex
+                self._result = np.ma.masked_less(iindex, 0)
+                self._result.mask += additional_mask
+
             elif self.property == "j":
-                self._tempsurf.values = jindex
-                self._tempsurf.values.mask = mask
+                self._result = np.ma.masked_less(jindex, 0)
+                self._result.mask += additional_mask
             else:
-                raise ValueError(f"Unknown property: {self.property}")
+                raise ValueError(f"Unknown option: {self.property}")
 
         elif isinstance(self.property, GridProperty):
-            self._tempsurf.values = self.property.values[iindex, jindex, self._klayer]
+            propmask = iindex < 0
+            iindex[iindex < 0] = 0
+            jindex[jindex < 0] = 0
+            self._result = np.ma.masked_array(np.zeros_like(d_top), mask=propmask)
+            self._result = self.property.values[iindex, jindex, self._klayer]
+            self._result.mask += additional_mask
 
-        self._tempsurf.values.mask = mask
 
-
-def from_grid3d(grid, template=None, where="top", property="depth", rfactor=1) -> dict:
+def from_grid3d(grid, template, where, property, rfactor, index_position) -> dict:
     """Private function for deriving a surface from a 3D grid / gridproperty."""
 
-    return DeriveSurfaceFromGrid3D(grid, template, where, property, rfactor).result()
+    return DeriveSurfaceFromGrid3D(
+        grid, template, where, property, rfactor, index_position
+    ).result()

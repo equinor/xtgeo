@@ -44,7 +44,11 @@ find_cell_range(const double xmin,
                 const size_t nrow,
                 const int expand);
 
-std::tuple<py::array_t<int>, py::array_t<int>, py::array_t<double>>
+std::tuple<py::array_t<int>,
+           py::array_t<int>,
+           py::array_t<double>,
+           py::array_t<double>,
+           py::array_t<bool>>
 sample_grid3d_layer(const size_t ncol,
                     const size_t nrow,
                     const double xori,
@@ -59,8 +63,8 @@ sample_grid3d_layer(const size_t ncol,
                     const py::array_t<float> &zcornsv,
                     const py::array_t<int> &actnumsv,
                     const size_t klayer,
-                    const int option,
-                    const int activeonly);
+                    const int index_position,
+                    const int num_threads);
 inline void
 init(py::module &m)
 {

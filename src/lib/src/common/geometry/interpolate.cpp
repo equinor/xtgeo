@@ -1,5 +1,6 @@
 #include <xtgeo/constants.hpp>
 #include <xtgeo/geometry.hpp>
+#include <xtgeo/numerics.hpp>
 
 namespace xtgeo::geometry {
 
@@ -28,7 +29,7 @@ interpolate_z_triangles(const double x,
     double z_estimated = std::numeric_limits<double>::quiet_NaN();
 
     // Check if the point is in the triangle
-    if (std::abs(total_area - (area1 + area2 + area3)) < xtgeo::constants::EPSILON) {
+    if (std::abs(total_area - (area1 + area2 + area3)) < numerics::TOLERANCE) {
         double w1 = area1 / total_area;
         double w2 = area2 / total_area;
         double w3 = area3 / total_area;
@@ -45,7 +46,7 @@ interpolate_z_triangles(const double x,
     total_area = triangle_area(p1_2d, p3_2d, p4_2d);
 
     // Check if the point is in the triangle
-    if (std::abs(total_area - (area1 + area2 + area3)) < xtgeo::constants::EPSILON) {
+    if (std::abs(total_area - (area1 + area2 + area3)) < numerics::TOLERANCE) {
         double w1 = area1 / total_area;
         double w2 = area2 / total_area;
         double w3 = area3 / total_area;
@@ -86,7 +87,7 @@ interpolate_z_4p_regular(const double x,
 
     // Quick check if the point is inside the quadrilateral; note ordering of points
     if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3)) {
-        return std::numeric_limits<double>::quiet_NaN();
+        return numerics::QUIET_NAN;
     }
 
     // Extract coordinates
@@ -127,7 +128,7 @@ interpolate_z_4p(const double x,
 {
     // Quick check if the point is inside the quadrilateral
     if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3)) {
-        return std::numeric_limits<double>::quiet_NaN();
+        return numerics::QUIET_NAN;
     }
 
     double z1 = interpolate_z_triangles(x, y, p1, p2, p3, p4);
