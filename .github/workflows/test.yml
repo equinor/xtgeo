@@ -160,7 +160,7 @@ jobs:
         uses: "./.github/actions/setup_testdata"
 
       - name: Run just tests marked big
-        run: XTG_BIGTEST=1 pytest -n 4 tests --disable-warnings -m bigtest --generate-plots
+        run: OMP_NUM_THREADS=1 XTG_BIGTEST=1 pytest -n 4 tests --disable-warnings -m bigtest --generate-plots
 
   codecov:
     runs-on: ubuntu-latest
