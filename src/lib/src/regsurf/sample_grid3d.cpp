@@ -10,7 +10,6 @@
 #include <iostream>
 #include <vector>
 #include <xtgeo/grid3d.hpp>
-#include <xtgeo/logging.hpp>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/regsurf.hpp>
 
@@ -35,6 +34,7 @@ namespace xtgeo::regsurf {
  * @param zcornsv Z corners of the 3D grid
  * @param actnumsv Active cells of the 3D grid
  * @param klayer The layer to sample, base 0
+ * @param index_position 0: top, 1: base|bot, 2: center
  * @return Tuple of 5 numpy arrays: I index, J index, Depth_top, Depth_base, Inactive
  */
 
@@ -60,9 +60,6 @@ sample_grid3d_layer(const size_t ncol,
                     const int index_position,  // 0: top, 1: base|bot, 2: center
                     const int num_threads = -1)
 {
-    Logger logger(__func__);
-    logger.debug("Sampling 3D grid layer to a regular surface...");
-
     // clang-format off
     #ifdef __linux__
       if (num_threads > 0) omp_set_num_threads(num_threads);
@@ -100,9 +97,6 @@ sample_grid3d_layer(const size_t ncol,
               depth_top_.mutable_data(0, 0) + (ncol * nrow), numerics::QUIET_NAN);
     std::fill(depth_bot_.mutable_data(0, 0),
               depth_bot_.mutable_data(0, 0) + (ncol * nrow), numerics::QUIET_NAN);
-
-    // Loop over the grid
-    logger.debug("Looping 3D GRID cell NCOLROW and NROW is", ncolgrid3d, nrowgrid3d);
 
     // clang-format off
     #pragma omp parallel for collapse(2) schedule(static)
@@ -150,9 +144,7 @@ sample_grid3d_layer(const size_t ncol,
                       grid3d::is_xy_point_in_cell(p.x, p.y, corners, 2);
 
                     if (is_inside_top && is_inside_bot && !is_inside_mid) {
-                        logger.error(
-                          "BUG? The point is inside both top and bottom but not "
-                          "center of the cell, seen from above. Force set to be same.");
+                        // not sure if this is a bug... but set is_inside_mid too
                         is_inside_mid = is_inside_top;
                     }
 
@@ -200,7 +192,6 @@ sample_grid3d_layer(const size_t ncol,
         }
     }
 
-    logger.debug("Sampling 3D grid layer to a regular surface... done");
     return std::make_tuple(iindex, jindex, depth_top, depth_bot, inactive);
 }  // regsurf_sample_grid3d_layer
 
