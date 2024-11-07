@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <tuple>
 #include <xtgeo/geometry.hpp>
-#include <xtgeo/logging.hpp>
 #include <xtgeo/point.hpp>
 #include <xtgeo/regsurf.hpp>
 
