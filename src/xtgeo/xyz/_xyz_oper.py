@@ -398,6 +398,7 @@ def get_fence(
     # duplicates may still exist; skip those
     df.drop_duplicates(subset=[fence.xname, fence.yname], keep="first", inplace=True)
     df.reset_index(inplace=True, drop=True)
+    fence.set_dataframe(df)
 
     if name:
         fence.name = name
@@ -415,7 +416,6 @@ def get_fence(
         )
         return np.reshape(rval, (fence.nrow, 5), order="F")
 
-    fence.set_dataframe(df)
     return fence
 
 
@@ -578,6 +578,7 @@ def extend(self, distance, nsamples, addhlen=True):
         rown[self.yname] = newy
 
         df_to_add = rown.to_frame().T
+        df_to_add = df_to_add.astype(dataframe.dtypes.to_dict())  # ensure same dtypes
 
         dataframe = pd.concat([df_to_add, dataframe]).reset_index(drop=True)
 
@@ -603,7 +604,7 @@ def extend(self, distance, nsamples, addhlen=True):
         rown[self.yname] = newy
 
         df_to_add = rown.to_frame().T
-
+        df_to_add = df_to_add.astype(dataframe.dtypes.to_dict())  # ensure same dtypes
         dataframe = pd.concat([dataframe, df_to_add]).reset_index(drop=True)
 
     self.set_dataframe(dataframe)
