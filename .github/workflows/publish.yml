@@ -45,7 +45,14 @@ jobs:
 
       - name: Install HDF5 for macOS arm64
         if: ${{ matrix.os_arch[1] == 'macosx_arm64' }}
-        run: brew install hdf5
+        run: |
+          # pkg-config formula is deprecated but it's still installed
+          # in GitHub Actions runner now. We can remove this once
+          # pkg-config formula is removed from GitHub Actions runner.
+          brew unlink pkg-config@0.29.2
+          brew install pkgconf
+          echo "PKG_CONFIG=$(brew --prefix pkgconf)/bin/pkgconf" >> $GITHUB_ENV
+          brew install hdf5
 
       - name: Install cibuildwheel
         run: python -m pip install -U pip wheel cibuildwheel twine
