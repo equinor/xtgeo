@@ -38,7 +38,12 @@ jobs:
       - name: Fix macos HDF5 library for pytables install (works for python >= 3.10)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          brew update
+          # pkg-config formula is deprecated but it's still installed
+          # in GitHub Actions runner now. We can remove this once
+          # pkg-config formula is removed from GitHub Actions runner.
+          brew unlink pkg-config@0.29.2
+          brew install pkgconf
+          echo "PKG_CONFIG=$(brew --prefix pkgconf)/bin/pkgconf" >> $GITHUB_ENV
           brew install hdf5
 
       - name: Setup xtgeo
