@@ -318,6 +318,25 @@ def test_eclinit_simple_importexport(tmp_path, testdata_path):
 
     p2 = xtgeo.gridproperty_from_file(tmp_path / "simple.grdecl", grid=gg, name="PORO2")
     assert p2.name == "PORO2"
+    with open(tmp_path / "simple.grdecl") as f:
+        fields = f.read().split()
+        assert len(fields) == 17
+        assert fields[3] == "0.00000"  # undef cell
+
+    # mark as discrete
+    po.values = 33
+    po.isdiscrete = True
+    po.to_file(
+        tmp_path / "simple_disc.grdecl",
+        fformat="grdecl",
+        dtype=np.int32,
+        name="SOMEDISK",
+        fmt="%12d",
+    )
+    with open(tmp_path / "simple_disc.grdecl") as f:
+        fields = f.read().split()
+        assert len(fields) == 17
+        assert fields[3] == "1"  # undef cell for discrete
 
 
 def test_grdecl_import_reek(tmp_path, testdata_path):
