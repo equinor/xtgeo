@@ -106,7 +106,8 @@ def _export_grdecl(
     """Export ascii or binary GRDECL"""
     vals = gridprop.values.ravel(order="F")
     if np.ma.isMaskedArray(vals):
-        vals = np.ma.filled(vals, gridprop.undef)
+        undef_export = 1 if gridprop.isdiscrete or "int" in str(dtype) else 0.0
+        vals = np.ma.filled(vals, fill_value=undef_export)
 
     mode = "a" if append else "w"
     if binary:
