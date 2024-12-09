@@ -248,7 +248,7 @@ def _allow_deprecated_init(func: Callable) -> Callable:
                 "myprop = xtgeo.gridproperty_from_file('some_name.roff') instead",
                 DeprecationWarning,
             )
-            fformat = kwargs.get("fformat", None)
+            fformat = kwargs.get("fformat")
             mfile = FileWrapper(pfile)
             fmt = mfile.fileformat(fformat)
 

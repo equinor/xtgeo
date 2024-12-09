@@ -2,6 +2,7 @@ import pathlib
 
 import pandas as pd
 import pytest
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

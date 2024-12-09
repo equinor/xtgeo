@@ -1,11 +1,12 @@
 import hypothesis.strategies as st
 import numpy as np
 import pytest
+from hypothesis import HealthCheck, assume, given, settings
+from numpy.testing import assert_allclose
+
 import xtgeo
 import xtgeo.grid3d._egrid as xtg_egrid
 import xtgeo.grid3d._grdecl_grid as ggrid
-from hypothesis import HealthCheck, assume, given, settings
-from numpy.testing import assert_allclose
 from xtgeo.grid3d._ecl_grid import (
     inverse_transform_xtgeo_coord_by_mapaxes,
     transform_xtgeo_coord_by_mapaxes,

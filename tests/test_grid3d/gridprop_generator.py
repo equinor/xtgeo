@@ -1,6 +1,7 @@
 import hypothesis.strategies as st
 import numpy as np
 from hypothesis.extra.numpy import arrays
+
 from xtgeo.grid3d import GridProperty
 
 from .grdecl_grid_generator import finites

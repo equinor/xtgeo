@@ -2,6 +2,7 @@ import pathlib
 from pathlib import Path
 
 import pytest
+
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import list_gridproperties

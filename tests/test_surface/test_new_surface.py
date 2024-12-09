@@ -1,8 +1,9 @@
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-import xtgeo
 from hypothesis import assume, given
+
+import xtgeo
 from xtgeo import RegularSurface
 
 

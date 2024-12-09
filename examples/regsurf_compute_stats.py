@@ -8,6 +8,7 @@ import io
 from os.path import join as ojn
 
 import numpy.ma as npma
+
 import xtgeo
 
 # from memory_profiler import profile

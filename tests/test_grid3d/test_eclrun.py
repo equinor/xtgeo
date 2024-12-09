@@ -3,6 +3,7 @@ from os.path import basename
 
 import numpy as np
 import pytest
+
 import xtgeo
 
 from .eclrun_fixtures import *  # noqa: F401, F403

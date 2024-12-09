@@ -3,8 +3,9 @@
 import pathlib
 
 import pytest
-import xtgeo
 from hypothesis import given
+
+import xtgeo
 
 from .grid_generator import xtgeo_grids
 

@@ -6,8 +6,9 @@ import warnings
 
 import numpy as np
 import pytest
-import xtgeo
 from hypothesis import given
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid
 

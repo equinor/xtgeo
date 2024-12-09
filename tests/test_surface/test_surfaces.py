@@ -5,6 +5,7 @@ import pathlib
 
 import numpy as np
 import pytest
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

@@ -4,6 +4,7 @@ import sys
 from collections import ChainMap
 
 import pytest
+
 import xtgeo
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.io._file import FileFormat, FileWrapper

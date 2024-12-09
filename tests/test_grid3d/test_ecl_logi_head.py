@@ -1,4 +1,5 @@
 import numpy as np
+
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Simulator
 

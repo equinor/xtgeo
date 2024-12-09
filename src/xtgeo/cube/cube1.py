@@ -101,7 +101,7 @@ def _allow_deprecated_init(func):
                 DeprecationWarning,
             )
             cfile = args[0]
-            fformat = args[1] if len(args) > 1 else kwargs.get("fformat", None)
+            fformat = args[1] if len(args) > 1 else kwargs.get("fformat")
 
             mfile = FileWrapper(cfile)
             fmt = mfile.fileformat(fformat)
@@ -1045,9 +1045,8 @@ class Cube:
         oflag = False
         # if outfile is none, it means that you want to plot on STDOUT
         if outfile is None:
-            fx = tempfile.NamedTemporaryFile(delete=False, prefix="tmpxgeo")
-            fx.close()
-            outfile = fx.name
+            with tempfile.NamedTemporaryFile(delete=False, prefix="tmpxgeo") as fx:
+                outfile = fx.name
             logger.info("TMP file name is %s", outfile)
             oflag = True
 
@@ -1082,9 +1081,8 @@ class Cube:
         flag = False
         # if outfile is none, it means that you want to print on STDOUT
         if outfile is None:
-            fc = tempfile.NamedTemporaryFile(delete=False, prefix="tmpxtgeo")
-            fc.close()
-            outfile = fc.name
+            with tempfile.NamedTemporaryFile(delete=False, prefix="tmpxtgeo") as fc:
+                outfile = fc.name
             logger.info("TMP file name is %s", outfile)
             flag = True
 
