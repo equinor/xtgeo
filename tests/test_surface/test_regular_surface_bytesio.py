@@ -6,6 +6,7 @@ import pathlib
 import threading
 
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 

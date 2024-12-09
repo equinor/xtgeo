@@ -6,8 +6,9 @@ import sys
 import numpy as np
 import pandas as pd
 import pytest
-import xtgeo
 from packaging import version
+
+import xtgeo
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.version import __version__ as xtgeo_version

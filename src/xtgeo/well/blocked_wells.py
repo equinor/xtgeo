@@ -179,7 +179,7 @@ class BlockedWells(Wells):
         project = args[0]
         gname = args[1]
         bwname = args[2]
-        lognames = kwargs.get("lognames", None)
+        lognames = kwargs.get("lognames")
         ijk = kwargs.get("ijk", True)
 
         _blockedwells_roxapi.import_bwells_roxapi(
@@ -208,7 +208,7 @@ class BlockedWells(Wells):
         project = args[0]
         gname = args[1]
         bwname = args[2]
-        lognames = kwargs.get("lognames", None)
+        lognames = kwargs.get("lognames")
         ijk = kwargs.get("ijk", True)
 
         _blockedwells_roxapi.import_bwells_roxapi(

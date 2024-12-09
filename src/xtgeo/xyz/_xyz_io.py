@@ -214,7 +214,7 @@ def to_file(
         KeyError if pfilter is set and key(s) are invalid
 
     """
-    filter_deprecated = kwargs.get("filter", None)
+    filter_deprecated = kwargs.get("filter")
     if filter_deprecated is not None and pfilter is None:
         pfilter = filter_deprecated
 

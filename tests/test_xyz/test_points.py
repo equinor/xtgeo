@@ -4,8 +4,9 @@ import pathlib
 import numpy as np
 import pandas as pd
 import pytest
-import xtgeo
 from hypothesis import given, strategies as st
+
+import xtgeo
 from xtgeo.xyz import Points
 
 PFILE = pathlib.Path("points/eme/1/emerald_10_random.poi")

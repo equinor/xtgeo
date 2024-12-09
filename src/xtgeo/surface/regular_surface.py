@@ -285,8 +285,8 @@ def _allow_deprecated_init(func):
                 DeprecationWarning,
             )
             sfile = kwargs.get("sfile", args[0])
-            fformat = kwargs.get("fformat", None)
-            values = kwargs.get("values", None)
+            fformat = kwargs.get("fformat")
+            values = kwargs.get("values")
             if isinstance(values, bool) and values is False:
                 load_values = False
             else:
@@ -337,7 +337,7 @@ def _allow_deprecated_default_init(func):
                 and kwargs.get("xori", 0.0) == kwargs.get("yori", 0.0) == 0.0
                 and kwargs.get("xinc", 25.0) == kwargs.get("yinc", 25.0) == 25.0
             )
-            values = kwargs.get("values", None)
+            values = kwargs.get("values")
             if values is None and default:
                 default_values = [
                     [1, 6, 11],

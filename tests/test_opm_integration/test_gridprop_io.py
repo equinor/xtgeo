@@ -5,8 +5,9 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import resfo
-import xtgeo
 from hypothesis import given, settings
+
+import xtgeo
 from xtgeo.grid3d._ecl_inte_head import InteHead
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Simulator, TypeOfGrid, UnitSystem
