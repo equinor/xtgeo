@@ -3,7 +3,6 @@ requires = [
     "pybind11",
     "scikit-build-core[pyproject]>=0.10",
     "swig<4.3.0",
-    "numpy==1.19.2; python_version == '3.8'",
     "numpy==1.19.5; python_version == '3.9'",
     "numpy==1.21.6; python_version == '3.10'",
     "numpy==1.23.5; python_version == '3.11'",
@@ -22,7 +21,7 @@ wheel.install-dir = "xtgeo"
 name = "xtgeo"
 description = "XTGeo is a Python library for 3D grids, surfaces, wells, etc"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "LGPL-3.0" }
 authors = [{ name = "Equinor", email = "fg_fmu-atlas@equinor.com" }]
 keywords = ["grids", "surfaces", "wells", "cubes"]
@@ -36,7 +35,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -120,7 +118,6 @@ match = '(?!(test_|_)).*\.py'
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--verbose"
 log_cli = "False"
 log_cli_format = "%(levelname)8s (%(relativeCreated)6.0fms) %(filename)44s [%(funcName)40s()] %(lineno)4d >>   %(message)s"
 log_cli_level = "INFO"
@@ -143,18 +140,21 @@ ignore = [
     "C901",
 ]
 select = [
-    "C",
-    "E",
-    "F",
-    "I",
-    "PIE",
-    "Q",
-    "RET",
-    "RSE",
-    "SIM",
-    "TCH",
-    "TID",
-    "W",
+    # "B",  # flake-8-bugbear
+    "C",  # pylint-convention
+    "E",  # pycodestyle-error
+    "F",  # pyflakes
+    "I",  # isort
+    # "NPY",  # numpy
+    "PIE",  # flake8-pie
+    "Q",  # flake8-quotes
+    "RET",  # flake8-return
+    "RSE",  # flake8-raise
+    "SIM",  # flake8-simplify
+    "TC",  # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    # "UP",  # pyupgrade
+    "W",  # pylint-warnings
 ]
 
 [tool.ruff.lint.isort]

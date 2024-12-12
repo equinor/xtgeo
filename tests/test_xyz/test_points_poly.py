@@ -1,5 +1,4 @@
 import pathlib
-import sys
 
 import pytest
 
@@ -436,7 +435,6 @@ def test_add_inside_polygons_etc():
     assert list(poi.get_dataframe()[poi.zname].values) == [10.0, 10.0, 10.0]
 
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="Different order in python 3.7")
 def test_boundary_from_points_simple():
     """Test deriving a boundary around points (classmethod)."""
 
