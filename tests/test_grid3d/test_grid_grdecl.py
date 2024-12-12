@@ -40,13 +40,16 @@ def test_grid_relative():
     ],
 )
 def test_mapaxes(inp_str, values):
-    with patch(
-        "builtins.open",
-        mock_open(read_data=inp_str),
-    ) as mock_file, open_grdecl(
-        mock_file,
-        keywords=["MAPAXES"],
-    ) as kw:
+    with (
+        patch(
+            "builtins.open",
+            mock_open(read_data=inp_str),
+        ) as mock_file,
+        open_grdecl(
+            mock_file,
+            keywords=["MAPAXES"],
+        ) as kw,
+    ):
         keyword, values = next(kw)
         assert keyword == "MAPAXES"
         mapaxes = ggrid.MapAxes.from_grdecl(values)
@@ -59,13 +62,16 @@ def test_mapaxes(inp_str, values):
 
 def test_gdorient():
     inp_str = "GDORIENT\n INC INC INC DOWN LEFT /"
-    with patch(
-        "builtins.open",
-        mock_open(read_data=inp_str),
-    ) as mock_file, open_grdecl(
-        mock_file,
-        keywords=["GDORIENT"],
-    ) as kw:
+    with (
+        patch(
+            "builtins.open",
+            mock_open(read_data=inp_str),
+        ) as mock_file,
+        open_grdecl(
+            mock_file,
+            keywords=["GDORIENT"],
+        ) as kw,
+    ):
         keyword, values = next(kw)
         assert keyword == "GDORIENT"
         gdorient = ecl_grid.GdOrient.from_grdecl(values)
@@ -81,13 +87,16 @@ def test_gdorient():
 
 def test_specgrid():
     inp_str = "SPECGRID\n 64 118 263 1 F /"
-    with patch(
-        "builtins.open",
-        mock_open(read_data=inp_str),
-    ) as mock_file, open_grdecl(
-        mock_file,
-        keywords=["SPECGRID"],
-    ) as kw:
+    with (
+        patch(
+            "builtins.open",
+            mock_open(read_data=inp_str),
+        ) as mock_file,
+        open_grdecl(
+            mock_file,
+            keywords=["SPECGRID"],
+        ) as kw,
+    ):
         keyword, values = next(kw)
         assert keyword == "SPECGRID"
         specgrid = ggrid.SpecGrid.from_grdecl(values)
@@ -113,13 +122,16 @@ def test_specgrid():
     ],
 )
 def test_gridunit(inp_str, expected_unit, expected_relative):
-    with patch(
-        "builtins.open",
-        mock_open(read_data=inp_str),
-    ) as mock_file, open_grdecl(
-        mock_file,
-        keywords=["GRIDUNIT"],
-    ) as kw:
+    with (
+        patch(
+            "builtins.open",
+            mock_open(read_data=inp_str),
+        ) as mock_file,
+        open_grdecl(
+            mock_file,
+            keywords=["GRIDUNIT"],
+        ) as kw,
+    ):
         keyword, values = next(kw)
         assert keyword == "GRIDUNIT"
         gridunit = ggrid.GridUnit.from_grdecl(values)

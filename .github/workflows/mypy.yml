@@ -16,7 +16,7 @@ jobs:
   mypy:
     strategy:
       matrix:
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.9", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
