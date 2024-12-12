@@ -286,10 +286,7 @@ def point_in_tetrahedron(
     status = _cxtgeo.x_point_in_tetrahedron(x0, y0, z0, vertices)
     if status == 1:
         raise XTGeoCLibError("Error in x_point_in_tetrahedron")
-    if status == 100:
-        return True
-
-    return False
+    return status == 100
 
 
 def point_in_hexahedron(

@@ -2,8 +2,9 @@
 from os.path import join
 
 import pytest
-import xtgeo
 from numpy.testing import assert_allclose
+
+import xtgeo
 
 
 @pytest.mark.benchmark(group="import/export")

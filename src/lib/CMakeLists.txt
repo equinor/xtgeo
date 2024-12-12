@@ -12,6 +12,10 @@ find_package(
 include(UseSWIG)
 find_package(pybind11 REQUIRED)
 
+if(UNIX AND NOT APPLE)
+  find_package(OpenMP REQUIRED)
+endif()
+
 message(STATUS "Python executable     : ${Python_EXECUTABLE}")
 message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
 message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
@@ -30,11 +34,29 @@ else()
 endif()
 
 pybind11_add_module(
-  _internal "${SRC}/init.cpp" "${SRC}/common/geometry.cpp"
-  "${SRC}/grid3d/cell.cpp" "${SRC}/grid3d/grid.cpp" ${SOURCES})
+  _internal
+  "${SRC}/init.cpp"
+  "${SRC}/common/geometry/interpolate.cpp"
+  "${SRC}/common/geometry/polygons.cpp"
+  "${SRC}/common/geometry/quadrilateral.cpp"
+  "${SRC}/common/geometry/volumes.cpp"
+  "${SRC}/grid3d/cell.cpp"
+  "${SRC}/grid3d/grid.cpp"
+  "${SRC}/cube/cube.cpp"
+  "${SRC}/regsurf/sample_grid3d.cpp"
+  "${SRC}/regsurf/utilities.cpp"
+  ${SOURCES})
 target_include_directories(_internal PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+# Link OpenMP
+
+if(UNIX
+   AND NOT APPLE
+   AND OpenMP_CXX_FOUND)
+  target_link_libraries(_internal PRIVATE OpenMP::OpenMP_CXX)
+endif()
 
 message(STATUS "Compiling swig bindings")
+
 # This will end up set as the `_cxtgeo` module, located in `wheel.install-dir`
 # from pyproject.toml
 set(SWIG_TARGET cxtgeo)

@@ -110,7 +110,7 @@ def import_rms_ascii(
 
     dfr = pd.read_csv(
         wfile.file,
-        delim_whitespace=True,
+        sep=r"\s+",
         skiprows=lnum,
         header=None,
         names=xlognames_all,
@@ -221,8 +221,7 @@ def export_rms_ascii(self, wfile, precision=4):
             print(f"{lname} {self.get_logtype(lname)} {usewrec}", file=fwell)
 
     # now export all logs as pandas framework
-    tmpdf = self._wdata.data.copy()
-    tmpdf.fillna(value=-999, inplace=True)
+    tmpdf = self._wdata.data.copy().fillna(value=-999)
 
     # make the disc as is np.int
     for lname in self.wlogtypes:

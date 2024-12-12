@@ -1,9 +1,6 @@
 """BlockedWells module, (collection of BlockedWell objects)"""
 
-import deprecation
-
 from xtgeo.common.log import null_logger
-from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from . import _blockedwells_roxapi
@@ -97,97 +94,6 @@ class BlockedWells(Wells):
         logger.debug("Calling super...")
         return super().get_well(name)
 
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.blockedwells_from_files() instead",
-    )
-    def from_files(
-        self,
-        filelist,
-        fformat="rms_ascii",
-        mdlogname=None,
-        zonelogname=None,
-        strict=True,
-        append=True,
-    ):
-        """Import blocked wells from a list of files (filelist).
-
-        Args:
-            filelist (list of str): List with file names
-            fformat (str): File format, rms_ascii (rms well) is
-                currently supported and default format.
-            mdlogname (str): Name of measured depth log, if any
-            zonelogname (str): Name of zonation log, if any
-            strict (bool): If True, then import will fail if
-                zonelogname or mdlogname are asked for but not present
-                in wells.
-            append (bool): If True, new wells will be added to existing
-                wells.
-
-        Example:
-            Here the from_file method is used to initiate the object
-            directly::
-
-              mywells = BlockedWells(['31_2-6.w', '31_2-7.w', '31_2-8.w'])
-        """
-
-        if not append:
-            self._wells = []
-
-        # file checks are done within the Well() class
-        for wfile in filelist:
-            try:
-                wll = blockedwell_from_file(
-                    wfile,
-                    fformat=fformat,
-                    mdlogname=mdlogname,
-                    zonelogname=zonelogname,
-                    strict=strict,
-                )
-                self._wells.append(wll)
-            except ValueError as err:
-                xtg.warn(f"SKIP this well: {err}")
-                continue
-        if not self._wells:
-            xtg.warn("No wells imported!")
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.blockedwells_from_roxar() instead",
-    )
-    def from_roxar(self, *args, **kwargs):  # pragma: no cover
-        """Import (retrieve) blocked wells from roxar project.
-
-        Note this method works only when inside RMS, or when RMS license is
-        activated.
-
-        All the wells present in the bwname icon will be imported.
-
-        Args:
-            project (str): Magic string 'project' or file path to project
-            gname (str): Name of GridModel icon in RMS
-            bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
-            lognames (list): List of lognames to include, or use 'all' for
-                all current blocked logs for this well.
-            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
-            realisation (int): Realisation index (0 is default)
-        """
-        project = args[0]
-        gname = args[1]
-        bwname = args[2]
-        lognames = kwargs.get("lognames", None)
-        ijk = kwargs.get("ijk", True)
-
-        _blockedwells_roxapi.import_bwells_roxapi(
-            self, project, gname, bwname, lognames=lognames, ijk=ijk
-        )
-
-    # this is a temporary solution to avoid the deprecation warning; ideally a class
-    # method shall be applied
     def _from_roxar(self, *args, **kwargs):  # pragma: no cover
         """Import (retrieve) blocked wells from roxar project.
 
@@ -208,7 +114,7 @@ class BlockedWells(Wells):
         project = args[0]
         gname = args[1]
         bwname = args[2]
-        lognames = kwargs.get("lognames", None)
+        lognames = kwargs.get("lognames")
         ijk = kwargs.get("ijk", True)
 
         _blockedwells_roxapi.import_bwells_roxapi(

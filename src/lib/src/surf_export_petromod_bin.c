@@ -23,9 +23,7 @@
  ***************************************************************************************
  */
 #include <stdio.h>
-
 #include <xtgeo/xtgeo.h>
-
 #include "common.h"
 #include "logger.h"
 

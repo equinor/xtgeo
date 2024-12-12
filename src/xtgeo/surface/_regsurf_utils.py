@@ -21,6 +21,21 @@ def swapaxes(self):
     self.values = swapped_values["values"]
 
 
+def make_lefthanded(self):
+    """Will rearrange in case of right-handed system, ie. yflip = -1.
+
+    In contrasts to swapaxes(), this will change the origin.
+    """
+    if self.yflip == -1 or self.yinc < 0:
+        self._xori, self._yori, _ = self.get_xy_value_from_ij(1, self.nrow)
+        self._yflip = 1
+        self._yinc = abs(self.yinc)
+
+        # the values shall be reversed along the last axis
+        self._values = self._values[:, ::-1]
+        self._xlines = self._xlines[::-1]
+
+
 def autocrop(self):
     """Crop surface by looking at undefined areas, update instance"""
 

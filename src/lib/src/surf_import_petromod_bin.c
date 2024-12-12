@@ -30,9 +30,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <xtgeo/xtgeo.h>
-
 #include "common.h"
 #include "logger.h"
 

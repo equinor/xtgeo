@@ -23,7 +23,6 @@ def report_zone_mismatch(
     well: Well | None = None,
     zonelogname: str = "ZONELOG",
     zoneprop: GridProperty | None = None,
-    onelayergrid: Grid | None = None,  # redundant; will be computed internally
     zonelogrange: tuple[int, int] = (0, 9999),
     zonelogshift: int = 0,
     depthrange: tuple[int | float, int | float] | None = None,
@@ -47,9 +46,6 @@ def report_zone_mismatch(
     This method was completely redesigned in version 2.8
     """
     self._xtgformat1()
-
-    if onelayergrid is not None:
-        xtg.warndeprecated("Using key 'onelayergrid' is redundant and can be skipped")
 
     if not isinstance(well, Well):
         raise ValueError("Input well is not a Well() instance")
@@ -102,11 +98,11 @@ def report_zone_mismatch(
 
     for zname in (zonelogname, zmodel):
         if skiprange:  # needed check; du to a bug in pandas version 0.21 .. 0.23
-            df[zname].replace(skiprange, -888, inplace=True)
-        df[zname].fillna(-999, inplace=True)
+            df[zname] = df[zname].replace(skiprange, -888)
+        df[zname] = df[zname].fillna(-999)
         if perflogname:
             if perflogname in df.columns:
-                df[perflogname].replace(np.nan, -1, inplace=True)
+                df[perflogname] = df[perflogname].replace(np.nan, -1)
                 pfr1, pfr2 = perflogrange
                 df[zname] = np.where(df[perflogname] < pfr1, -899, df[zname])
                 df[zname] = np.where(df[perflogname] > pfr2, -899, df[zname])
@@ -114,7 +110,7 @@ def report_zone_mismatch(
                 return None
         if filterlogname:
             if filterlogname in df.columns:
-                df[filterlogname].replace(np.nan, -1, inplace=True)
+                df[filterlogname] = df[filterlogname].replace(np.nan, -1)
                 ffr1, ffr2 = filterlogrange
                 df[zname] = np.where(df[filterlogname] < ffr1, -919, df[zname])
                 df[zname] = np.where(df[filterlogname] > ffr2, -919, df[zname])

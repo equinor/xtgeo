@@ -5,8 +5,9 @@ import pathlib
 
 import hypothesis.strategies as st
 import pytest
-import xtgeo
 from hypothesis import assume, given
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import GridProperties, GridProperty
@@ -266,75 +267,6 @@ def test_dates_from_restart(testdata_path):
     ]
     t2 = xtg.timer(t1)
     logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
-
-
-def test_scan_keywords(testdata_path):
-    """A static method to scan quickly keywords in a RESTART/INIT/*GRID file"""
-    t1 = xtg.timer()
-    df = GridProperties.scan_keywords(testdata_path / RFILE2, dataframe=True)
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
-    assert df.shape == (36, 4)
-    assert df.loc[0, "KEYWORD"] == "SEQNUM"
-    assert df.loc[12, "KEYWORD"] == "W2 F"
-    assert df.loc[35, "KEYWORD"] == "ENDSOL"
-
-    t1 = xtg.timer()
-    df = GridProperties.scan_keywords(testdata_path / RFILE1, dataframe=True)
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
-    assert df.shape == (627, 4)
-    assert df.loc[0, "KEYWORD"] == "SEQNUM"
-    assert df.loc[12, "KEYWORD"] == "SWAT"
-    assert df.loc[300, "KEYWORD"] == "DLYTIM"
-    assert df.loc[626, "KEYWORD"] == "ENDSOL"
-
-    t1 = xtg.timer()
-    df = GridProperties.scan_keywords(testdata_path / SPEFILE1, dataframe=True)
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
-    assert df.shape == (3061, 4)
-    assert df.loc[0, "KEYWORD"] == "TNAVHEAD"
-    assert df.loc[12, "KEYWORD"] == "XCON"
-    assert df.loc[1500, "KEYWORD"] == "FLROILK+"
-    assert df.loc[3060, "KEYWORD"] == "ENDSOL"
-
-
-def test_scan_ecl_keywords_with_spaces(testdata_path):
-    """Allow and preserve spacing in keywords from Eclipse RESTART file"""
-    df = GridProperties.scan_keywords(testdata_path / RFILE2, dataframe=True)
-
-    assert df.loc[12, "KEYWORD"] == "W2 F"
-
-
-def test_scan_keywords_invalid_file(testdata_path):
-    """Raise an error before trying to scan a non-existent file."""
-    with pytest.raises(ValueError, match="does not exist"):
-        GridProperties.scan_keywords(testdata_path / pathlib.Path("notafile.UNRST"))
-
-
-def test_scan_keywords_roff_as_tuple_list(testdata_path):
-    """A static method to scan quickly keywords in a ROFF file"""
-    t1 = xtg.timer()
-    keywords = GridProperties.scan_keywords(testdata_path / XFILE2, fformat="roff")
-    t2 = xtg.timer(t1)
-    logger.info("Keywords scanned in %s seconds", t2)
-    assert keywords[0] == ("filedata!byteswaptest", "int", 1, 111)
-    assert keywords[-1] == ("parameter!data", "int", 35840, 806994)
-    logger.info(keywords)
-
-
-def test_scan_keywords_roff(testdata_path):
-    """A static method to scan quickly keywords in a ROFF file"""
-    t1 = xtg.timer()
-    df = GridProperties.scan_keywords(
-        testdata_path / XFILE2, dataframe=True, fformat="roff"
-    )
-    t2 = xtg.timer(t1)
-    logger.info("Keywords scanned in %s seconds", t2)
-    assert tuple(df.iloc[0]) == ("filedata!byteswaptest", "int", 1, 111)
-    assert tuple(df.iloc[-1]) == ("parameter!data", "int", 35840, 806994)
-    logger.info(df)
 
 
 def test_get_dataframe(testdata_path):

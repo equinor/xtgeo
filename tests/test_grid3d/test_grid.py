@@ -6,8 +6,9 @@ import warnings
 
 import numpy as np
 import pytest
-import xtgeo
 from hypothesis import given
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid
 
@@ -59,11 +60,6 @@ def test_create_shoebox(tmp_path):
     """Make a shoebox grid from scratch."""
     grd = xtgeo.create_box_grid((4, 3, 5))
     grd.to_file(tmp_path / "shoebox_default.roff")
-
-    with pytest.warns(DeprecationWarning, match="create_box is deprecated"):
-        grd = Grid()
-        grd.create_box((4, 3, 5))
-        grd.to_file(tmp_path / "shoebox_default2.roff")
 
     grd = xtgeo.create_box_grid((2, 3, 4), flip=-1)
     grd.to_file(tmp_path / "shoebox_default_flipped.roff")
@@ -130,8 +126,8 @@ def test_emerald_grid_values(emerald_grid):
     assert mydz == pytest.approx(2.761, abs=0.001), "Grid DZ Emerald"
     dxv, dyv = (emerald_grid.get_dx(), emerald_grid.get_dy())
 
-    mydx = float(dxv.values3d[31:32, 72:73, 0:1])
-    mydy = float(dyv.values3d[31:32, 72:73, 0:1])
+    mydx = float(dxv.values[31:32, 72:73, 0:1])
+    mydy = float(dyv.values[31:32, 72:73, 0:1])
 
     assert mydx == pytest.approx(118.51, abs=0.01), "Grid DX Emerald"
     assert mydy == pytest.approx(141.26, abs=0.01), "Grid DY Emerald"
@@ -528,6 +524,26 @@ def test_benchmark_bulkvol(benchmark):
     benchmark(run)
 
 
+def test_cell_height_above_ffl(testdata_path):
+    """Test cell heights above ffl."""
+    grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
+
+    ffl = xtgeo.GridProperty(grd, values=1700)
+
+    htop, hbot, hmid = grd.get_heights_above_ffl(ffl, option="cell_center_above_ffl")
+
+    assert htop.values[6, 4, 0] == pytest.approx(65.8007)
+    assert hbot.values[6, 4, 0] == pytest.approx(54.1729)
+    assert hmid.values[6, 4, 0] == pytest.approx(59.9868)
+    assert hbot.values[4, 0, 0] == pytest.approx(0.0)
+
+    htop, hbot, hmid = grd.get_heights_above_ffl(ffl, option="cell_corners_above_ffl")
+
+    assert htop.values[4, 5, 0] == pytest.approx(44.8110)
+    assert hbot.values[4, 5, 0] == pytest.approx(0.0)
+    assert hmid.values[4, 5, 0] == pytest.approx(22.4055)
+
+
 def test_bad_egrid_ends_before_kw(tmp_path):
     egrid_file = tmp_path / "test.egrid"
     with open(egrid_file, "wb") as fh:
@@ -604,26 +620,11 @@ def test_grid_get_dz(dimension, dx, dy, dz):
     assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, atol=0.01)
 
 
-@given(xtgeo_grids)
-def test_get_dxdy_is_get_dx_and_dy(grid):
-    assert np.all(grid.get_dxdy(asmasked=True)[0].values == grid.get_dx().values)
-    assert np.all(grid.get_dxdy(asmasked=True)[1].values == grid.get_dy().values)
-
-
 def test_benchmark_grid_get_dz(benchmark):
     grd = xtgeo.create_box_grid(dimension=(100, 100, 100))
 
     def run():
         grd.get_dz()
-
-    benchmark(run)
-
-
-def test_benchmark_grid_get_dxdy(benchmark):
-    grd = xtgeo.create_box_grid(dimension=(100, 100, 100))
-
-    def run():
-        grd.get_dxdy()
 
     benchmark(run)
 

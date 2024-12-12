@@ -2,9 +2,9 @@ name: Build Docs
 
 on:
   push:
-    branches: [main, "*postfix"]
+    branches: [main, "version-*"]
   pull_request:
-    branches: [main]
+    branches: [main, "version-*"]
 
 jobs:
   build_docs:
@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.11
 

@@ -2,11 +2,11 @@ import pathlib
 
 import numpy as np
 import pytest
-import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+import xtgeo
+from xtgeo.common.log import null_logger
+
+logger = null_logger(__name__)
 
 RPATH1 = pathlib.Path("surfaces/reek")
 RPATH2 = pathlib.Path("3dgrids/reek")
@@ -22,7 +22,6 @@ def test_get_surface_from_grd3d_porosity(tmp_path, generate_plot, testdata_path)
     """Sample a surface from a 3D grid"""
 
     surf = xtgeo.surface_from_file(testdata_path / RTOP1)
-    print(surf.values.min(), surf.values.max())
     grd = xtgeo.grid_from_file(testdata_path / RGRD1, fformat="egrid")
     surf.values = 1700
     zsurf = surf.copy()
@@ -94,19 +93,57 @@ def test_surface_from_grd3d_layer(
     if generate_plot:
         surf.quickplot(filename=tmp_path / "surf_from_grid3d_top.png")
 
-    surf = xtgeo.surface_from_grid3d(grd, template=tmp, mode="i")
+    surf = xtgeo.surface_from_grid3d(grd, template=tmp, property="i")
 
     surf.to_file(tmp_path / "surf_from_grid3d_top_icell.gri")
     if generate_plot:
         surf.quickplot(filename=tmp_path / "surf_from_grid3d_top_icell.png")
 
-    surf = xtgeo.surface_from_grid3d(grd, template=tmp, mode="j")
+    surf = xtgeo.surface_from_grid3d(grd, template=tmp, property="j")
     surf.fill()
     surf.to_file(tmp_path / "surf_from_grid3d_top_jcell.gri")
     if generate_plot:
         surf.quickplot(filename=tmp_path / "surf_from_grid3d_top_jcell.png")
 
-    surf = xtgeo.surface_from_grid3d(grd, template=tmp, mode="depth", where="3_base")
-    surf.to_file(tmp_path / "surf_from_grid3d_3base.gri")
+    surf = xtgeo.surface_from_grid3d(
+        grd, template=tmp, property="depth", where="3_base"
+    )
+    assert surf.values.mean() == pytest.approx(1714.444, abs=0.01)
     if generate_plot:
         surf.quickplot(filename=tmp_path / "surf_from_grid3d_3base.png")
+
+
+def test_surface_from_grd3d_layer_native(testdata_path):
+    """Create a surface from a 3D grid layer, using 'native' map resolution."""
+
+    grd = xtgeo.grid_from_file(testdata_path / RGRD2, fformat="roff")
+
+    template = "native"
+    depth = xtgeo.surface_from_grid3d(grd, template=template, property="depth")
+
+    assert depth.ncol == grd.ncol
+    assert depth.nrow == grd.nrow
+    assert depth.values.mean() == pytest.approx(1701.074, abs=0.01)
+
+
+def test_surface_from_grd3d_layer_raw(testdata_path):
+    """Get multiple returns from a 3D grid layer, for own processing"""
+
+    grd = xtgeo.grid_from_file(testdata_path / RGRD2, fformat="roff")
+
+    template = "native"
+    ii, _, top, _, _ = xtgeo.surface_from_grid3d(
+        grd, template=template, property="raw", where=3
+    )
+    assert ii.shape == (grd.ncol, grd.nrow)
+
+    assert np.nanmean(top) == pytest.approx(1709.754, abs=0.01)
+
+
+def test_surface_from_grd3d_layer_deprecate_mode(testdata_path):
+    """Create a surface from a 3D grid layer"""
+
+    grd = xtgeo.grid_from_file(testdata_path / RGRD2, fformat="roff")
+
+    with pytest.warns(DeprecationWarning):
+        _ = xtgeo.surface_from_grid3d(grd, where="3_base", mode="depth")

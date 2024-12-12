@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Well
@@ -101,7 +102,7 @@ def test_import(loadwell1, snapshot, helpers):
         "loadwell1.csv",
     )
 
-    assert {
+    assert expected_result == {
         "well_name": mywell.wellname,
         "xpos": mywell.xpos,
         "wpos": mywell.ypos,
@@ -112,7 +113,7 @@ def test_import(loadwell1, snapshot, helpers):
         "nlogs": mywell.nlogs,
         "lognames": mywell.lognames,
         "lognames_all": mywell.lognames_all,
-    } == expected_result
+    }
 
 
 def test_import_long_well(loadwell3):
@@ -870,8 +871,8 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1, testdata_path):
 
     for zname in (zonelogname, zmodel):
         if skiprange:  # needed check; du to a bug in pandas version 0.21 .. 0.23
-            dfr[zname].replace(skiprange, -888, inplace=True)
-        dfr[zname].fillna(-999, inplace=True)
+            dfr[zname] = dfr[zname].replace(skiprange, -888)
+        dfr[zname] = dfr[zname].fillna(-999)
     # now there are various variotions on how to count mismatch:
     # dfuse 1: count matches when zonelogname is valid (exclude -888)
     # dfuse 2: count matches when zonelogname OR zmodel are valid (exclude < -888

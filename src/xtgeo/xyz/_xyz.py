@@ -51,17 +51,6 @@ class XYZ(ABC):
         self._yname = yname
         self._zname = zname
 
-    def _reset(
-        self,
-        xname: str = "X_UTME",
-        yname: str = "Y_UTMN",
-        zname: str = "Z_TVDSS",
-    ):
-        """Used in deprecated methods."""
-        self._xname = xname
-        self._yname = yname
-        self._zname = zname
-
     @property
     def xname(self):
         """Returns or set the name of the X column."""
@@ -144,67 +133,6 @@ class XYZ(ABC):
         return dsc.astext()
 
     @abstractmethod
-    def from_file(self, pfile, fformat="xyz"):
-        """Import Points or Polygons from a file (deprecated).
-
-        Supported import formats (fformat):
-
-        * 'xyz' or 'poi' or 'pol': Simple XYZ format
-
-        * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
-
-        * 'rms_attr': RMS points formats with attributes (extra columns)
-
-        * 'guess': Try to choose file format based on extension
-
-        Args:
-            pfile (str): Name of file or pathlib.Path instance
-            fformat (str): File format, see list above
-
-        Returns:
-            Object instance (needed optionally)
-
-        Raises:
-            OSError: if file is not present or wrong permissions.
-
-        .. deprecated:: 2.16
-           Use e.g. xtgeo.points_from_file()
-        """
-        ...
-
-    @abstractmethod
-    def from_list(self, plist):
-        """Create Points or Polygons from a list-like input (deprecated).
-
-        This method is deprecated in favor of using e.g. xtgeo.Points(plist)
-        or xtgeo.Polygons(plist) instead.
-
-        The following inputs are possible:
-
-        * List of tuples [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...].
-        * List of lists  [[x1, y1, z1, <id1>], [x2, y2, z2, <id2>], ...].
-        * List of numpy arrays  [nparr1, nparr2, ...] where nparr1 is first row.
-        * A numpy array with shape [??1, ??2] ...
-        * An existing pandas dataframe
-
-        It is currently not much error checking that lists/tuples are consistent, e.g.
-        if there always is either 3 or 4 elements per tuple, or that 4 number is
-        an integer.
-
-        Args:
-            plist (str): List of tuples, each tuple is length 3 or 4.
-
-        Raises:
-            ValueError: If something is wrong with input
-
-        .. versionadded:: 2.6
-        .. versionchanged:: 2.16
-        .. deprecated:: 2.16
-           Use e.g. xtgeo.Points(list_like).
-        """
-        ...
-
-    @abstractmethod
     def get_dataframe(self, copy=True) -> pd.DataFrame:
         """Return the Pandas dataframe object."""
         ...
@@ -272,6 +200,19 @@ class XYZ(ABC):
             else:
                 dataframe.drop(cname, axis=1, inplace=True)
                 self.set_dataframe(dataframe)
+
+    def get_nwells(self, well_name_column: str = "WellName"):
+        """Get number of unique wells in the instance.
+
+        Args:
+            well_name_column: Name of column with well names
+
+        Returns:
+            Number of unique wells, 0 if no well or column not present.
+        """
+        if well_name_column not in self.get_dataframe(copy=False).columns:
+            return 0
+        return len(self.get_dataframe(copy=False)[well_name_column].unique())
 
     def get_boundary(self):
         """Get the square XYZ window (boundaries) of the instance.

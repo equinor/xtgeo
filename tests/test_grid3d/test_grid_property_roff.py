@@ -4,9 +4,10 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import roffio
-import xtgeo
 from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.numpy import arrays
+
+import xtgeo
 from xtgeo.grid3d import GridProperty
 from xtgeo.grid3d._roff_parameter import RoffParameter
 
@@ -84,7 +85,7 @@ def test_roff_prop_read_xtgeo(tmp_path, xtgeo_property):
     assert xtgeo_property.nrow == xtgeo_property2.nrow
     assert xtgeo_property.nlay == xtgeo_property2.nlay
     assert xtgeo_property.dtype == xtgeo_property2.dtype
-    assert np.all(xtgeo_property.values3d == xtgeo_property2.values3d)
+    assert np.all(xtgeo_property.values == xtgeo_property2.values)
     assert xtgeo_property.codes == xtgeo_property2.codes
 
 

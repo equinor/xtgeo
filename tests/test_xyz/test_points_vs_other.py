@@ -1,6 +1,7 @@
 import pathlib
 
 import pytest
+
 import xtgeo
 
 SFILE1A = pathlib.Path("surfaces/reek/1/topupperreek.gri")

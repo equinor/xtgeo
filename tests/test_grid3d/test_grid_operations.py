@@ -3,8 +3,9 @@
 import pathlib
 
 import pytest
-import xtgeo
 from hypothesis import given
+
+import xtgeo
 
 from .grid_generator import xtgeo_grids
 
@@ -52,7 +53,7 @@ def test_hybridgrid1(tmp_path, snapshot, helpers):
 
     dzv = grd.get_dz()
 
-    assert dzv.values3d.mean() == 5.0
+    assert dzv.values.mean() == 5.0
 
     grd2 = xtgeo.grid_from_file(tmp_path / "test_hybridgrid1_asis.bgrdecl")
     snapshot.assert_match(
@@ -101,12 +102,12 @@ def test_refine_vertically(testdata_path):
     emerald_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
     assert emerald_grid.get_subgrids() == {"subgrid_0": 16, "subgrid_1": 30}
 
-    avg_dz1 = emerald_grid.get_dz().values3d.mean()
+    avg_dz1 = emerald_grid.get_dz().values.mean()
 
     # idea; either a scalar (all cells), or a dictionary for zone wise
     emerald_grid.refine_vertically(3)
 
-    avg_dz2 = emerald_grid.get_dz().values3d.mean()
+    avg_dz2 = emerald_grid.get_dz().values.mean()
 
     assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
 

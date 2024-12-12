@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import warnings
-from typing import TYPE_CHECKING, Any, List, Literal, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, Tuple, Union
 
-import deprecation
 import numpy as np
 import pandas as pd
 
 from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
 from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
 from xtgeo.common.exceptions import InvalidFileFormatError
-from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
 
 from . import _grid3d_utils as utils, _grid_etc1
@@ -321,9 +319,6 @@ class GridProperties(_Grid3D):
          Empty DataFrame...
 
     Args:
-        ncol: Deprecated argument.
-        nrow: Deprecated argument.
-        nlay: Deprecated argument.
         props: The list of GridProperty objects.
 
     See Also:
@@ -332,55 +327,20 @@ class GridProperties(_Grid3D):
 
     def __init__(
         self,
-        ncol: int | None = None,
-        nrow: int | None = None,
-        nlay: int | None = None,
         props: list[GridProperty] | None = None,
     ):
-        dims_given = False
-        if ncol is not None:
-            warnings.warn(
-                "Initializing GridProperties with ncol is deprecated.",
-                DeprecationWarning,
-            )
-            dims_given = True
-        else:
-            ncol = 4
-        if nrow is not None:
-            warnings.warn(
-                "Initializing GridProperties with nrow is deprecated.",
-                DeprecationWarning,
-            )
-            dims_given = True
-        else:
-            nrow = 3
-        if nlay is not None:
-            warnings.warn(
-                "Initializing GridProperties with nlay is deprecated.",
-                DeprecationWarning,
-            )
-            dims_given = True
-        else:
-            nlay = 5
+        ncol = 4
+        nrow = 3
+        nlay = 5
 
         if props:
-            if dims_given:
-                raise ValueError(
-                    "Giving both ncol/nrow/nlay and props list is not supported. "
-                    "Please give just props as ncol/nrow/nlay is deprecated."
-                )
             ncol, nrow, nlay = props[0].dimensions
 
         super().__init__(ncol, nrow, nlay)
 
-        # The _names field is just kept for backwards
-        # compatability until the names setter has been
-        # deprecated
-        self._names: list[str] = []
-
         # This triggers the setter for 'props', ensuring proper
         # setup of related attributes like '_ncol', '_nrow',
-        # '_nlay', and '_names', and performs a consistency check.
+        # and '_nlay', and performs a consistency check.
         self.props = props or []
 
     def __repr__(self) -> str:  # noqa: D105
@@ -395,11 +355,7 @@ class GridProperties(_Grid3D):
 
     def __contains__(self, name: str) -> bool:
         """bool: Emulate 'if "PORO" in props'."""
-        prop = self.get_prop_by_name(name, raiseserror=False)
-        if prop:
-            return True
-
-        return False
+        return bool(self.get_prop_by_name(name, raiseserror=False))
 
     def __getitem__(self, name: str) -> GridProperty:  # noqa: D105
         prop = self.get_prop_by_name(name, raiseserror=False)
@@ -432,30 +388,7 @@ class GridProperties(_Grid3D):
             Property name is PERMX
 
         """
-        return self._names
-
-    @names.setter
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="The behavior of the setting names would before create an alias name "
-        "the behavior of which was not always consistent. "
-        "Note that setting names on the GridProperties has "
-        "_no effect_ on the behavior of its methods except the names getter."
-        "This name aliasing is now going away. "
-        "In order to change the name of properties, "
-        "use\nfor p in gridprops:\n    p.name = newname",
-    )
-    def names(self, nameslist: list[str]) -> None:
-        if len(nameslist) != len(self._props):
-            raise ValueError("Number of names does not match number of properties")
-
-        # look for duplicates
-        if len(nameslist) > len(set(nameslist)):
-            raise ValueError("List of names contains duplicates; names must be unique")
-
-        self._names = nameslist
+        return [prop.name for prop in self._props]
 
     @property
     def props(self) -> list[GridProperty] | None:
@@ -493,7 +426,6 @@ class GridProperties(_Grid3D):
             self._ncol = propslist[0].ncol
             self._nrow = propslist[0].nrow
             self._nlay = propslist[0].nlay
-        self._names = [p.name for p in self._props]
         self._consistency_check()
 
     @property
@@ -538,9 +470,9 @@ class GridProperties(_Grid3D):
         Note that the GridProperty instances will also be unique.
         """
 
-        gps = GridProperties(props=[p.copy() for p in self.props] if self.props else [])
-        gps._names = self._names.copy()
-        return gps
+        return GridProperties(
+            props=[p.copy() for p in self.props] if self.props else []
+        )
 
     def describe(self, flush: bool = True) -> str | None:
         """Describe an instance by printing to stdout."""
@@ -603,7 +535,6 @@ class GridProperties(_Grid3D):
             self._nrow = proplist[0].nrow
             self._nlay = proplist[0].nlay
         self._props += proplist
-        self._names = [p.name for p in self._props]
         self._consistency_check()
 
     def get_ijk(
@@ -611,23 +542,14 @@ class GridProperties(_Grid3D):
         names: tuple[str, str, str] = ("IX", "JY", "KZ"),
         zerobased: bool = False,
         asmasked: bool = False,
-        mask: bool | None = None,
     ) -> tuple[GridProperty, GridProperty, GridProperty]:
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter, J counter, K counter.
 
         Args:
             names: a 3 x tuple of names per property (default IX, JY, KZ).
             asmasked: If True, then active cells only.
-            mask: If True, then active cells only (deprecated).
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
-        if mask is not None:
-            xtg.warndeprecated(
-                "The mask option is deprecated,"
-                "and will be removed in version 4.0. Use asmasked instead."
-            )
-            asmasked = super()._evaluate_mask(mask)
-
         return _grid_etc1.get_ijk(
             self, names=names, zerobased=zerobased, asmasked=asmasked
         )
@@ -636,7 +558,6 @@ class GridProperties(_Grid3D):
         self,
         name: str = "ACTNUM",
         asmasked: bool = False,
-        mask: bool | None = None,
     ) -> GridProperty | None:
         """Return an ACTNUM GridProperty object.
 
@@ -644,7 +565,6 @@ class GridProperties(_Grid3D):
             name (str): name of property in the XTGeo GridProperty object.
             asmasked (bool): ACTNUM is returned with all cells
                 as default. Use asmasked=True to make 0 entries masked.
-            mask (bool): Deprecated, use asmasked instead.
 
         Example::
 
@@ -663,93 +583,12 @@ class GridProperties(_Grid3D):
         Returns:
             A GridProperty instance of ACTNUM, or None if no props present.
         """
-        if mask is not None:
-            xtg.warndeprecated(
-                "The mask option is deprecated,"
-                "and will be removed in version 4.0. Use asmasked instead."
-            )
-            asmasked = super()._evaluate_mask(mask)
-
         # borrow function from GridProperty class:
         if self._props:
             return self._props[0].get_actnum(name=name, asmasked=asmasked)
 
         warnings.warn("No gridproperty in list", UserWarning)
         return None
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.gridproperties_from_file() instead",
-    )
-    def from_file(
-        self,
-        pfile: FileLike,
-        fformat: Literal["roff", "init", "unrst"] = "roff",
-        names: list[str] | None = None,
-        dates: list[str] | None = None,
-        grid: Grid | None = None,
-        namestyle: int = 0,
-        strict: tuple[bool, bool] = (True, False),
-    ) -> None:
-        """Import grid properties from file in one go.
-
-        This class is particulary useful for Eclipse INIT and RESTART files.
-
-        In case of names='all' then all vectors which have a valid length
-        (number of total or active cells in the grid) will be read
-
-        Args:
-            pfile (str or Path): Name of file with properties
-            fformat (str): roff/init/unrst
-            names: list of property names, e.g. ['PORO', 'PERMX'] or 'all'
-            dates: list of dates on YYYYMMDD format, for restart files, or 'all'
-            grid (obj): The grid geometry object (optional if ROFF)
-            namestyle (int): 0 (default) for style SWAT_20110223,
-                1 for SWAT--2011_02_23 (applies to restart only)
-            strict (tuple of (bool, bool)): If (True, False) (default) then an
-                Error is raised if keyword name is not found, or a key-date combination
-                is not found. However, the dates will processed so that non-valid dates
-                are skipped (still, invalid key-date combinations may occur!).
-                If (True, True) all keywords and dates are tried, while (False, False)
-                means that that only valid entries are imported, more or less silently.
-                Saturations keywords SWAT/SOIL/SGAS are not evaluated as they may be
-                derived.
-
-        Example::
-            >>> import xtgeo
-            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
-            >>> props = xtgeo.gridproperties_from_file(
-            ...     reek_dir + "/REEK.INIT",
-            ...     fformat="init",
-            ...     names=["PERMX"],
-            ...     grid=grid,
-            ... )
-
-
-        Raises:
-            FileNotFoundError: if input file is not found
-            DateNotFoundError: The date is not found
-            KeywordNotFoundError: The keyword is not found
-            KeywordFoundDateNotFoundError: The keyword but not date found
-
-        .. versionadded:: 2.13 Added strict key
-        """
-
-        self.append_props(
-            list(
-                gridproperties_from_file(
-                    pfile=pfile,
-                    fformat=fformat,
-                    names=names,
-                    dates=dates,
-                    grid=grid,
-                    namestyle=namestyle,
-                    strict=strict,
-                )
-            )
-        )
 
     def get_dataframe(
         self,
@@ -807,97 +646,10 @@ class GridProperties(_Grid3D):
             grid=grid,
         )
 
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use GridProperties().get_dataframe() instead",
-    )
-    def dataframe(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        """
-        Deprecated method to obtain a pandas DataFrame representation of
-        the grid property.
-
-        This method is deprecated as of version 2.16 and will be
-        removed in version 4.0. Users are advised to use the
-        `GridProperties.get_dataframe()` method instead for similar
-        functionality.
-
-        Returns:
-            pd.DataFrame: DataFrame representation of the grid property.
-
-        Note:
-            This method is a wrapper around `get_dataframe(*args, **kwargs)`
-            and maintains compatibility with older versions of the API.
-            However, transitioning to `get_dataframe()` is recommended for
-            future-proofing your code.
-        """
-
-        return self.get_dataframe(*args, **kwargs)
-
     def _consistency_check(self) -> None:
         for p in self._props:
             if (p.ncol, p.nrow, p.nlay) != (self.ncol, self.nrow, self.nlay):
                 raise ValueError("Mismatching dimensions in GridProperties members.")
-
-    @staticmethod
-    @deprecation.deprecated(
-        deprecated_in="3.6",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.list_gridproperties() instead",
-    )
-    def scan_keywords(
-        pfile: FileLike,
-        fformat: Literal["roff", "xecl"] = "xecl",
-        maxkeys: int = MAXKEYWORDS,
-        dataframe: bool = False,
-        dates: bool = False,
-    ) -> GridPropertiesKeywords:
-        """Quick scan of keywords in Eclipse binary files, or ROFF binary files.
-
-        For Eclipse files:
-            Returns a list of tuples (or dataframe), e.g.
-               ``('PRESSURE', 'REAL', 355299, 3582700)``
-            where
-                ``(keyword, type, no_of_values, byteposition_in_file)``
-
-        For ROFF files:
-            Returns a list of tuples (or dataframe), e.g.
-                ``('translate!xoffset', 'float', 1, 3582700)``
-            where
-                ``(keyword, type, no_of_values, byteposition_in_file)``
-
-        For Eclipse, the byteposition is to the KEYWORD, while for ROFF
-        the byte position is to the beginning of the actual data.
-
-        Args:
-            pfile: Name or a filehandle to file with properties.
-            fformat: xecl (Eclipse INIT, RESTART, ...) or roff for ROFF binary.
-                Default is "xecl".
-            maxkeys: Maximum number of keys. Default is
-                ``xtgeo.commom.constants.MAXKEYWORDS``.
-            dataframe: If True, return a Pandas dataframe instead. Default is False.
-            dates: If True, the date is the last column (only
-                meaningful for restart files). Default is False.
-
-        Returns:
-            A list of tuples or dataframe with keyword info
-
-        Example::
-            >>> dlist = GridProperties.scan_keywords(reek_dir + "/REEK.UNRST")
-
-        """
-        xtg_file = FileWrapper(pfile)
-        xtg_file.check_file(raiseerror=ValueError)
-
-        return utils.scan_keywords(
-            xtg_file,
-            fformat=fformat,
-            maxkeys=maxkeys,
-            dataframe=dataframe,
-            dates=dates,
-        )
 
     @staticmethod
     def scan_dates(

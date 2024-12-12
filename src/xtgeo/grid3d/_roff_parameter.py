@@ -216,9 +216,7 @@ class RoffParameter:
 
         def should_skip_parameter(tag: str, key: str) -> bool:
             if tag == "parameter" and key[0] == "name":
-                if name is None or key[1] == name:
-                    return False
-                return True
+                return not (name is None or key[1] == name)
             return False
 
         translate_kws = {

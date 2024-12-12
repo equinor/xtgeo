@@ -2,6 +2,7 @@ import pathlib
 
 import numpy as np
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
@@ -35,14 +36,14 @@ def test_avg02(tmp_path, generate_plot, testdata_path):
     actnum = grd.get_actnum()
 
     # convert from masked numpy to ordinary
-    xcuse = np.copy(xc.values3d)
-    ycuse = np.copy(yc.values3d)
-    dzuse = np.copy(dz.values3d)
-    pouse = np.copy(po.values3d)
+    xcuse = np.copy(xc.values)
+    ycuse = np.copy(yc.values)
+    dzuse = np.copy(dz.values)
+    pouse = np.copy(po.values)
 
     # dz must be zero for undef cells
-    dzuse[actnum.values3d < 0.5] = 0.0
-    pouse[actnum.values3d < 0.5] = 0.0
+    dzuse[actnum.values < 0.5] = 0.0
+    pouse[actnum.values < 0.5] = 0.0
 
     # make a map... estimate from xc and yc
     zuse = np.ones((xcuse.shape))

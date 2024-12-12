@@ -6,9 +6,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "logger.h"
 #include <xtgeo/xtgeo.h>
+#include "logger.h"
 
 #define _GNU_SOURCE 1
 

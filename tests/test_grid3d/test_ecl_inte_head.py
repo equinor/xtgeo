@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from xtgeo.grid3d._ecl_inte_head import InteHead, Phases
 from xtgeo.grid3d._ecl_output_file import Simulator, TypeOfGrid, UnitSystem
 

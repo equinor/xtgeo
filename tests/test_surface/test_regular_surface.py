@@ -6,11 +6,11 @@ import sys
 import numpy as np
 import pandas as pd
 import pytest
+
 import xtgeo
-from packaging import version
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
-from xtgeo.common.version import __version__ as xtgeo_version
+from xtgeo.common.exceptions import InvalidFileFormatError
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -77,6 +77,23 @@ def test_values(default_surface):
     # plain wrong input
     with pytest.raises(ValueError):
         srf.values = "text"
+
+
+def test_regularsurface_copy():
+    """Test copying a surface instance."""
+    values = np.random.normal(2000, 50, size=12)
+    srf = xtgeo.RegularSurface(ncol=3, nrow=4, xinc=20, yinc=20, values=values)
+    assert srf.nactive == 12
+    new = srf.copy()
+    assert srf.nactive == new.nactive
+
+    np.testing.assert_array_equal(srf.values, new.values)
+    assert new.xori == srf.xori
+    assert new.xinc == srf.xinc
+    assert new.yori == srf.yori
+    assert new.xinc == srf.xinc
+    assert new.rotation == srf.rotation
+    assert new.yflip == srf.yflip
 
 
 @pytest.mark.filterwarnings("ignore:Default values*")
@@ -378,6 +395,45 @@ def test_swapaxes(tmp_path, testdata_path):
     valdiff = val2 - val1
     assert valdiff.mean() == pytest.approx(0.0, abs=0.00001)
     assert valdiff.std() == pytest.approx(0.0, abs=0.00001)
+
+
+def test_make_lefthanded_simple(tmp_path):
+    s1 = xtgeo.RegularSurface(
+        ncol=7,
+        nrow=3,
+        xinc=1,
+        yinc=2,
+        values=np.arange(21),
+        yflip=-1,
+        rotation=30,
+    )
+
+    s1.to_file(tmp_path / "righthanded.gri")
+
+    s2 = s1.copy()
+    s2.make_lefthanded()
+    s2.to_file(tmp_path / "lefthanded.gri")
+
+    assert s1.values[6, 0] == s2.values[6, 2]
+
+
+def test_make_lefthanded_reek(tmp_path, testdata_path):
+    """Import Reek Irap binary and make it lefthanded (pos axis down)."""
+    s1 = xtgeo.surface_from_file(testdata_path / TESTSET5)
+
+    # make the surface righthanded (pos axis down) for test
+    s1._yflip = -1
+
+    s1.to_file(tmp_path / "righthanded.gri")
+    s2 = s1.copy()
+    s2.make_lefthanded()
+    assert s1.values.mean() == pytest.approx(s2.values.mean(), abs=0.001)
+    assert s1.xmin == pytest.approx(s2.xmin, abs=0.001)
+    assert s1.xmax == pytest.approx(s2.xmax, abs=0.001)
+    assert s1.ymin == pytest.approx(s2.ymin, abs=0.001)
+    assert s1.ymax == pytest.approx(s2.ymax, abs=0.001)
+    assert s1.ncol == s2.ncol
+    assert s1.nrow == s2.nrow
 
 
 def test_autocrop(testdata_path):
@@ -1169,50 +1225,15 @@ def test_smoothing(testdata_path):
     assert min3 == pytest.approx(1566.91, abs=0.1)
 
 
-def test_loadvalues_before_remove_deprecated(default_surface, testdata_path):
-    """Test that load_values() has the claimed effect before deprecating __init__"""
-    if version.parse(xtgeo_version) >= version.parse("4.0"):
-        pytest.skip("Not relevant after deprecated __init__ is removed")
-
-    correct = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
-
-    srf = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
-    srf.load_values()
-    assert (correct == srf).all(), "Surface should not have been modified"
-
-    # Remove any "values"-parameter and let deprecated __init__ add one
-    values = default_surface.pop("values", None)
-
-    with pytest.warns(DeprecationWarning, match=r"Default values"):
-        srf = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
-        srf.load_values()
-        assert (correct == srf).all(), "Surface should not have been modified"
-
-    # Also specify the format - see test for after-remove where it behaves differently
-    default_surface["values"] = values
-    srf = xtgeo.RegularSurface(
-        filesrc=testdata_path / TESTSET1, fformat="irap_binary", **default_surface
-    )
-    srf.load_values()
-    assert (correct == srf).all(), "Surface should not have been modified"
-
-    # Finally remove any "filesrc"-parameter
-    default_surface.pop("filesrc", None)
-    srf = xtgeo.RegularSurface(**default_surface)
-    srf.load_values()
-    assert (correct == srf).all(), "Surface should not have been modified"
-
-
 def test_loadvalues_after_remove(default_surface, testdata_path):
-    if version.parse(xtgeo_version) < version.parse("4.0"):
-        pytest.skip("Not relevant before deprecated __init__ is removed")
-
     default_surface.pop("values", None)
-    with pytest.raises(ValueError, match=r"Unknown file format None"):
+    with pytest.raises(InvalidFileFormatError, match="File format None is invalid"):
         srf = xtgeo.RegularSurface(filesrc=testdata_path / TESTSET1, **default_surface)
         srf.load_values()
 
-    with pytest.raises(ValueError, match=r"cannot reshape .*"):
+    with pytest.raises(
+        InvalidFileFormatError, match="File format irap_binary is invalid"
+    ):
         srf = xtgeo.RegularSurface(
             filesrc=testdata_path / TESTSET1, fformat="irap_binary", **default_surface
         )

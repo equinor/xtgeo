@@ -1,8 +1,8 @@
-import deprecation
 import numpy as np
 import pytest
-import xtgeo
 from hypothesis import given, strategies as st
+
+import xtgeo
 from xtgeo import Cube, RegularSurface
 
 
@@ -124,16 +124,6 @@ def test_complex_io(surf, fformat, output_engine, input_engine):
     surf_from_file = RegularSurface._read_file(
         "my_file", fformat=fformat, engine=input_engine
     )
-    assert_similar_surfaces(surf, surf_from_file)
-
-
-@deprecation.fail_if_not_removed
-@pytest.mark.usefixtures("tmp_path_cwd")
-@given(surfaces())
-def test_complex_io_hdf(surf):
-    surf.to_hdf("my_file")
-    surf_from_file = RegularSurface(1, 1, 0.0, 0.0)  # <- unimportant as it gets reset
-    surf_from_file.from_hdf("my_file")
     assert_similar_surfaces(surf, surf_from_file)
 
 

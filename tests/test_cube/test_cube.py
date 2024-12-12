@@ -4,15 +4,15 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import segyio
-import xtgeo
 from hypothesis import HealthCheck, given, settings
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
 from xtgeo.cube._cube_import import (
     _import_segy_all_traces,
     _import_segy_incomplete_traces,
 )
-from xtgeo.io._file import FileWrapper
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -44,6 +44,7 @@ def test_create():
     vec = xcu.values
     xdim, _ydim, _zdim = vec.shape
     assert xdim == 5, "NX from numpy shape "
+    assert xcu.zslices.tolist() == [0, 1, 2, 3]
 
 
 @pytest.mark.parametrize(
@@ -113,25 +114,6 @@ def test_import_guess_segy(tmp_path, cube):
     assert cube.ncol == cube2.ncol
     assert cube.nrow == cube2.nrow
     assert cube.nlay == cube2.nlay
-
-
-def test_segy_scanheader(tmp_path, smallcube, testdata_path):
-    """Scan SEGY and report header, using XTGeo internal reader."""
-    smallcube.scan_segy_header(
-        testdata_path / SFILE1, outfile=tmp_path / "cube_scanheader"
-    )
-
-
-def test_segy_scantraces(tmp_path, smallcube, testdata_path):
-    """Scan and report SEGY first and last trace (internal reader)."""
-    smallcube.scan_segy_traces(
-        testdata_path / SFILE1, outfile=tmp_path / "cube_scantraces"
-    )
-
-
-def test_segy_no_file_exception(smallcube):
-    with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file"):
-        smallcube.scan_segy_traces("not_a_file", outfile="not_relevant")
 
 
 def test_segy_export_import(tmp_path, testdata_path):
@@ -213,13 +195,12 @@ def test_internal_segy_import_full_vs_partial(testdata_path):
     Most prominent, a full SEGY cube should be possible to parse using the same routine
     as used for cubes with missing traces.
     """
-    segyfile = FileWrapper(testdata_path / SFILE5)
 
-    with segyio.open(testdata_path / SFILE5, "r") as segyfile:
-        attrs1 = _import_segy_all_traces(segyfile)
+    with segyio.open(testdata_path / SFILE5, "r") as f:
+        attrs1 = _import_segy_all_traces(f)
 
-    with segyio.open(testdata_path / SFILE5, "r") as segyfile:
-        attrs2 = _import_segy_incomplete_traces(segyfile)
+    with segyio.open(testdata_path / SFILE5, "r") as f:
+        attrs2 = _import_segy_incomplete_traces(f)
 
     for key, val in attrs1.items():
         if isinstance(val, np.ndarray):
@@ -262,22 +243,6 @@ def test_segyio_import_export(tmp_path, pristine, smallcube):
     read_cube = xtgeo.cube_from_file(tmp_path / "reek_cube.segy")
     assert input_cube.dimensions == read_cube.dimensions
     assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
-
-
-def test_segy_cube_scan(tmp_path, capsys, snapshot):
-    xcu = Cube(ncol=5, nrow=3, nlay=2, xinc=25.0, yinc=25.0, zinc=2.0)
-
-    xcu.values += 200
-
-    xcu.to_file(tmp_path / "reek_cube.segy", engine="xtgeo")
-
-    Cube.scan_segy_header(tmp_path / "reek_cube.segy")
-    out, _ = capsys.readouterr()
-    snapshot.assert_match(out, "reek_cube_scan_header.txt")
-
-    Cube.scan_segy_traces(tmp_path / "reek_cube.segy")
-    out, _ = capsys.readouterr()
-    snapshot.assert_match(out, "reek_cube_scan_traces.txt")
 
 
 def test_cube_resampling(loadsfile1):

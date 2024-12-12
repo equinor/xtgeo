@@ -4,10 +4,10 @@ import pathlib
 
 import numpy as np
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
-from xtgeo.xyz import Points
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -308,7 +308,7 @@ def test_points_gridding(tmp_path, reek_map, generate_plot):
     xs = reek_map
     assert xs.ncol == 554
 
-    xyz = Points(xs)
+    xyz = xtgeo.points_from_surface(xs)
 
     dataframe = xyz.get_dataframe()
     dataframe["Z_TVDSS"] = dataframe["Z_TVDSS"] + 300

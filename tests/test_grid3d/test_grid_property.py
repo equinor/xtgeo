@@ -8,11 +8,12 @@ import hypothesis.strategies as st
 import numpy as np
 import numpy.ma as npma
 import pytest
-import xtgeo
 from hypothesis import HealthCheck, example, given, settings
+
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
-from xtgeo.grid3d import Grid, GridProperty
+from xtgeo.grid3d import GridProperty
 
 from .grid_generator import dimensions, xtgeo_grids
 from .gridprop_generator import grid_properties
@@ -63,10 +64,8 @@ def test_gridproperty_without_name(gridprop):
     assert gridprop2.name == gridprop.name
     np.testing.assert_allclose(gridprop2.values, gridprop.values)
 
-    # deprecated name="unknown"
     buf.seek(0)
-    with pytest.warns(DeprecationWarning, match="name='unknown'"):
-        gridprop3 = xtgeo.gridproperty_from_file(buf, name="unknown", fformat="roff")
+    gridprop3 = xtgeo.gridproperty_from_file(buf, name=None, fformat="roff")
 
     assert gridprop3.name == gridprop.name
     np.testing.assert_allclose(gridprop3.values, gridprop.values)
@@ -147,12 +146,6 @@ def test_undef():
     assert act.undef == xtgeo.UNDEF_INT
 
 
-def test_class_methods():
-    """Test getting class methods"""
-    result = GridProperty.methods()
-    assert "from_file" in result
-
-
 def test_describe():
     """Test getting the describe text"""
     xx = GridProperty(ncol=3, nrow=2, nlay=1, values=np.array([1, 2, 3, 4, 5, 6]))
@@ -170,7 +163,7 @@ def test_discrete_copy():
     assert gpcopy.codes == gprop.codes
 
 
-def test_npvalues3d():
+def test_npvalues():
     """Test getting numpy values as 3d"""
 
     xx = GridProperty(
@@ -294,7 +287,7 @@ def test_roffbin_import2(testdata_path, fformat):
         testdata_path / TESTFILE2, fformat="roff", name="Oil_HCPV"
     )
 
-    _ncol, nrow, _nlay = hc.values3d.shape
+    _ncol, nrow, _nlay = hc.values.shape
 
     assert nrow == 100, "NROW from shape (Emerald)"
 
@@ -325,6 +318,25 @@ def test_eclinit_simple_importexport(tmp_path, testdata_path):
 
     p2 = xtgeo.gridproperty_from_file(tmp_path / "simple.grdecl", grid=gg, name="PORO2")
     assert p2.name == "PORO2"
+    with open(tmp_path / "simple.grdecl") as f:
+        fields = f.read().split()
+        assert len(fields) == 17
+        assert fields[3] == "0.00000"  # undef cell
+
+    # mark as discrete
+    po.values = 33
+    po.isdiscrete = True
+    po.to_file(
+        tmp_path / "simple_disc.grdecl",
+        fformat="grdecl",
+        dtype=np.int32,
+        name="SOMEDISK",
+        fmt="%12d",
+    )
+    with open(tmp_path / "simple_disc.grdecl") as f:
+        fields = f.read().split()
+        assert len(fields) == 17
+        assert fields[3] == "1"  # undef cell for discrete
 
 
 def test_grdecl_import_reek(tmp_path, testdata_path):
@@ -411,13 +423,13 @@ def test_get_all_corners(testdata_path):
     z1 = allc[5]
 
     # top of cell layer 2 in cell 5 5 (if 1 index start as RMS)
-    assert x0.values3d[4, 4, 1] == pytest.approx(457387.718, abs=0.5)
-    assert y0.values3d[4, 4, 1] == pytest.approx(5935461.29790, abs=0.5)
-    assert z0.values3d[4, 4, 1] == pytest.approx(1728.9429, abs=0.1)
+    assert x0.values[4, 4, 1] == pytest.approx(457387.718, abs=0.5)
+    assert y0.values[4, 4, 1] == pytest.approx(5935461.29790, abs=0.5)
+    assert z0.values[4, 4, 1] == pytest.approx(1728.9429, abs=0.1)
 
-    assert x1.values3d[4, 4, 1] == pytest.approx(457526.55367, abs=0.5)
-    assert y1.values3d[4, 4, 1] == pytest.approx(5935542.02467, abs=0.5)
-    assert z1.values3d[4, 4, 1] == pytest.approx(1728.57898, abs=0.1)
+    assert x1.values[4, 4, 1] == pytest.approx(457526.55367, abs=0.5)
+    assert y1.values[4, 4, 1] == pytest.approx(5935542.02467, abs=0.5)
+    assert z1.values[4, 4, 1] == pytest.approx(1728.57898, abs=0.1)
 
 
 def test_get_cell_corners(testdata_path):
@@ -525,7 +537,7 @@ def test_gridprop_non_default_size_init(dim, discrete):
 
 
 @given(xtgeo_grids, st.booleans())
-@example(Grid(), True)
+@example(xtgeo.create_box_grid((4, 3, 5)), True)
 def test_gridprop_grid_init(grid, discrete):
     prop = GridProperty(
         grid,
@@ -541,7 +553,7 @@ def test_gridprop_grid_init(grid, discrete):
 
 
 @given(dimensions, xtgeo_grids, st.booleans())
-@example((4, 3, 5), Grid(), True)
+@example((4, 3, 5), xtgeo.create_box_grid((4, 3, 5)), True)
 def test_gridprop_grid_and_dim_init(dim, grid, discrete):
     ncol, nrow, nlay = dim
     if dim != grid.dimensions:

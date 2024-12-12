@@ -1,6 +1,7 @@
 import pathlib
 
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -19,20 +20,20 @@ def test_wellzone_to_points(testdata_path):
 
     # get the zpoints which is a Pandas
     zpoints = mywell.get_zonation_points(use_undef=False)
-    assert zpoints.iat[9, 6] == 6
+    assert zpoints.iat[9, 4] == 6
 
     # get the zpoints which is a Pandas
     zpoints = mywell.get_zonation_points(use_undef=True)
-    assert zpoints.iat[9, 6] == 7
+    assert zpoints.iat[9, 4] == 7
 
     with pytest.raises(ValueError):
         zpoints = mywell.get_zonation_points(zonelist=[1, 3, 4, 5])
 
     zpoints = mywell.get_zonation_points(zonelist=[3, 4, 5])
-    assert zpoints.iat[6, 6] == 4
+    assert zpoints.iat[6, 4] == 4
 
     zpoints = mywell.get_zonation_points(zonelist=(3, 5))
-    assert zpoints.iat[6, 6] == 4
+    assert zpoints.iat[6, 4] == 4
 
 
 def test_wellzone_to_isopoints(testdata_path):
@@ -47,7 +48,8 @@ def test_wellzone_to_isopoints(testdata_path):
     assert zpoints["Zone"].max() == 9
 
     zisos = mywell.get_zonation_points(use_undef=False, tops=False)
-    assert zisos.iat[10, 8] == 4
+    print(zisos)
+    assert zisos.iat[10, 4] == 4
 
 
 def test_zonepoints_non_existing(string_to_well):
@@ -158,10 +160,10 @@ def test_simple_points(well_spec, expected_result, string_to_well, zonelist, use
     kwargs = {"zonelogname": "Zonelog"}
     well = string_to_well(well_spec, **kwargs)
     points = well.get_zonation_points(use_undef=use_undef, tops=True, zonelist=zonelist)
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 def test_simple_points_two(string_to_well):
@@ -181,16 +183,16 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
     well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=True, zonelist=[1, 2, 3])
     expected_result = {"X_UTME": [7.0, 13.0], "Y_UTMN": [8.0, 14.0]}
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
     assert len(points) == 2
     points = well.get_zonation_points(use_undef=False, tops=True, zonelist=[2, 3])
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
     assert len(points) == 2
 
 
@@ -214,10 +216,10 @@ def test_break_zonation(string_to_well):
         "X_UTME": [4.0, 4.0, 10.0, 13.0],
         "Y_UTMN": [5.0, 5.0, 11.0, 14.0],
     }
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 @pytest.mark.parametrize(
@@ -273,10 +275,10 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
     kwargs = {"zonelogname": "Zonelog"}
     well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=tops_flag, zonelist=[2, 3])
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 @pytest.mark.parametrize(
@@ -308,10 +310,10 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
     points = well.get_zonation_points(
         use_undef=False, tops=False, zonelist=(1, 5), incl_limit=include_limit
     )
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }
 
 
 @pytest.mark.parametrize(
@@ -371,7 +373,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3 4 zone4
         tops=True,
         zonelist=zone_list,
     )
-    assert {
+    assert expected_result == {
         "X_UTME": points["X_UTME"].to_list(),
         "Y_UTMN": points["Y_UTMN"].to_list(),
-    } == expected_result
+    }

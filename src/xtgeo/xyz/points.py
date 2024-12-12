@@ -2,26 +2,24 @@
 
 from __future__ import annotations
 
-import functools
-import pathlib
 import warnings
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-import deprecation
 import numpy as np
 import pandas as pd
 
-import xtgeo
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
-from xtgeo.common.version import __version__
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.xyz import XYZ, _xyz_io, _xyz_oper, _xyz_roxapi
 
 if TYPE_CHECKING:
     import io
+    import pathlib
+
+    from xtgeo.well import Well
 
 logger = null_logger(__name__)
 
@@ -47,7 +45,7 @@ def _file_importer(
     points_file: str | pathlib.Path | io.BytesIO,
     fformat: str | None = None,
 ):
-    """General function for points_from_file and (deprecated) method from_file."""
+    """General function for points_from_file"""
     pfile = FileWrapper(points_file)
     fmt = pfile.fileformat(fformat)
     kwargs = _data_reader_factory(fmt)(pfile)
@@ -57,7 +55,7 @@ def _file_importer(
 
 
 def _surface_importer(surf, zname="Z_TVDSS"):
-    """General function for _read_surface() and (deprecated) method from_surface()."""
+    """General function for _read_surface()"""
     val = surf.values
     xc, yc = surf.get_xy_values()
 
@@ -93,7 +91,7 @@ def _roxar_importer(
 
 
 def _wells_importer(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     tops: bool = True,
     incl_limit: float | None = None,
     top_prefix: str = "Top",
@@ -119,18 +117,23 @@ def _wells_importer(
     attrs = {}
     for col in dfr.columns:
         col_lower = col.lower()
-        if col_lower == "Zone":
-            attrs[col] = "int"
-        elif col_lower == "ZoneName" or col_lower == "WellName":
-            attrs[col] = "str"
-        else:
+        if "float" in dfr[col].dtype.name:
             attrs[col] = "float"
+        elif "int" in dfr[col].dtype.name:
+            attrs[col] = "int"
+        else:  # usually 'object'
+            if col_lower == "zone":
+                attrs[col] = "int"
+            elif "name" in col_lower:
+                attrs[col] = "str"
+            else:
+                attrs[col] = "float"  # fall-back
 
     return {"values": dfr, "attributes": attrs}
 
 
 def _wells_dfrac_importer(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     dlogname: str,
     dcodes: list[int],
     incl_limit: float = 90,
@@ -268,7 +271,7 @@ def points_from_surface(
 
 
 def points_from_wells(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     tops: bool = True,
     incl_limit: float | None = None,
     top_prefix: str = "Top",
@@ -295,19 +298,6 @@ def points_from_wells(
 
             wells = [xtgeo.well_from_file("w1.w"), xtgeo.well_from_file("w2.w")]
             points = xtgeo.points_from_wells(wells)
-
-    Note:
-        The deprecated method :py:meth:`~Points.from_wells` returns the number of
-        wells that contribute with points. This is now implemented through the
-        function `get_nwells()`. Hence the following code::
-
-            nwells_applied = poi.from_wells(...)  # deprecated method
-            # vs
-            poi = xtgeo.points_from_wells(...)
-            nwells_applied = poi.get_nwells()
-
-    .. versionadded:: 2.16 Replaces :meth:`~Points.from_wells`
-
     """
     return Points(
         **_wells_importer(wells, tops, incl_limit, top_prefix, zonelist, use_undef)
@@ -315,7 +305,7 @@ def points_from_wells(
 
 
 def points_from_wells_dfrac(
-    wells: list[xtgeo.Well],
+    wells: list[Well],
     dlogname: str,
     dcodes: list[int],
     incl_limit: float = 90,
@@ -348,58 +338,12 @@ def points_from_wells_dfrac(
             points = xtgeo.points_from_wells_dfrac(
                     wells, dlogname="Facies", dcodes=[4], zonelogname="ZONELOG"
                 )
-
-    Note:
-        The deprecated method :py:meth:`~Points.dfrac_from_wells` returns the number of
-        wells that contribute with points. This is now implemented through the
-        method `get_nwells()`. Hence the following code::
-
-            nwells_applied = poi.dfrac_from_wells(...)  # deprecated method
-            # vs
-            poi = xtgeo.points_from_wells_dfrac(...)
-            nwells_applied = poi.get_nwells()
-
-    .. versionadded:: 2.16 Replaces :meth:`~Points.dfrac_from_wells`
     """
     return Points(
         **_wells_dfrac_importer(
             wells, dlogname, dcodes, incl_limit, count_limit, zonelist, zonelogname
         )
     )
-
-
-def _allow_deprecated_init(func):
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of Points and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    # Introduced post xtgeo version 2.15
-    @functools.wraps(func)
-    def wrapper(cls, *args, **kwargs):
-        # Checking if we are doing an initialization from file or surface and raise a
-        # deprecation warning if we are.
-        if len(args) == 1:
-            if isinstance(args[0], (str, pathlib.Path)):
-                warnings.warn(
-                    "Initializing directly from file name is deprecated and will be "
-                    "removed in xtgeo version 4.0. Use: "
-                    "poi = xtgeo.points_from_file('some_file.xx') instead!",
-                    DeprecationWarning,
-                )
-                fformat = kwargs.get("fformat", "guess")
-                return func(cls, **_file_importer(args[0], fformat))
-
-            if isinstance(args[0], xtgeo.RegularSurface):
-                warnings.warn(
-                    "Initializing directly from RegularSurface is deprecated "
-                    "and will be removed in xtgeo version 4.0. Use: "
-                    "poi = xtgeo.points_from_surface(regsurf) instead",
-                    DeprecationWarning,
-                )
-                zname = kwargs.get("zname", "Z_TVDSS")
-                return func(cls, **_surface_importer(args[0], zname=zname))
-        return func(cls, *args, **kwargs)
-
-    return wrapper
 
 
 class Points(XYZ):
@@ -476,7 +420,6 @@ class Points(XYZ):
             and is to name and type the extra attribute columns in a point set.
     """
 
-    @_allow_deprecated_init
     def __init__(
         self,
         values: list | np.ndarray | pd.DataFrame = None,
@@ -490,26 +433,6 @@ class Points(XYZ):
         super().__init__(xname, yname, zname)
         if values is None:
             values = []
-        self._reset(
-            values=values,
-            xname=xname,
-            yname=yname,
-            zname=zname,
-            attributes=attributes,
-            filesrc=filesrc,
-        )
-
-    def _reset(
-        self,
-        values: list | np.ndarray | pd.DataFrame = None,
-        xname: str = "X_UTME",
-        yname: str = "Y_UTMN",
-        zname: str = "Z_TVDSS",
-        attributes: dict | None = None,
-        filesrc: str = None,
-    ):
-        """Used in deprecated methods."""
-        super()._reset(xname, yname, zname)
 
         self._attrs = attributes if attributes is not None else {}
         self._filesrc = filesrc
@@ -621,127 +544,6 @@ class Points(XYZ):
             np.random.rand(nrandom, 3), columns=[self._xname, self._yname, self._zname]
         )
 
-    @inherit_docstring(inherit_from=XYZ.from_file)
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.points_from_file() instead",
-    )
-    def from_file(self, pfile, fformat="xyz"):
-        self._reset(**_file_importer(pfile, fformat))
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.points_from_roxar() instead.",
-    )
-    def from_roxar(
-        self,
-        project: str | Any,
-        name: str,
-        category: str,
-        stype: str = "horizons",
-        realisation: int = 0,
-        attributes: bool | list[str] = False,
-    ):  # pragma: no cover
-        """Load a points/polygons item from a Roxar RMS project (deprecated).
-
-        The import from the RMS project can be done either within the project
-        or outside the project.
-
-        Note that the preferred shortform for (use polygons as example)::
-
-          import xtgeo
-          mypoly = xtgeo.xyz.Polygons()
-          mypoly.from_roxar(project, 'TopAare', 'DepthPolys')
-
-        is now::
-
-          import xtgeo
-          mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
-
-        Note also that horizon/zone/faults name and category must exists
-        in advance, otherwise an Exception will be raised.
-
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of points item, or name of well pick set if
-                well picks.
-            category: For horizons/zones/faults: for example 'DL_depth'
-                or use a folder notation on clipboard/general2d_data.
-                For well picks it is the well pick type: 'horizon' or 'fault'.
-            stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
-                'general2d_data', 'faults' or 'well_picks'
-            realisation (int): Realisation number, default is 0
-            attributes (bool): Bool or list with attribute names to collect.
-                If True, all attributes are collected.
-
-        Returns:
-            Object instance updated
-
-        Raises:
-            ValueError: Various types of invalid inputs.
-
-        .. deprecated:: 2.16
-           Use xtgeo.points_from_roxar() or xtgeo.polygons_from_roxar()
-        """
-        self._reset(
-            **_roxar_importer(
-                project,
-                name,
-                category,
-                stype,
-                realisation,
-                attributes,
-            )
-        )
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use "
-        "xtgeo.Points("
-        "values=dfr[[east, nort, tvdsml]], xname=east, yname=north, zname=tvdmsl"
-        ") instead",
-    )
-    def from_dataframe(self, dfr, east="X", north="Y", tvdmsl="Z", attributes=None):
-        """Import points/polygons from existing Pandas dataframe.
-
-        Args:
-            dfr (dataframe): Pandas dataframe.
-            east (str): Name of easting column in input dataframe.
-            north (str): Name of northing column in input dataframe.
-            tvdmsl (str): Name of depth column in input dataframe.
-            attributes (dict): Additional metadata columns, on form {"IX": "I", ...};
-                "IX" here is the name of the target column, and "I" is the name in the
-                input dataframe.
-
-        .. versionadded:: 2.13
-        .. deprecated:: 2.16 Use points constructor directly instead
-        """
-        if not all(item in dfr.columns for item in (east, north, tvdmsl)):
-            raise ValueError("One or more column names are not correct")
-
-        if attributes and not all(item in dfr.columns for item in attributes.values()):
-            raise ValueError("One or more attribute column names are not correct")
-
-        input_ = {}
-        input_["X_UTME"] = dfr[east]
-        input_["Y_UTMN"] = dfr[north]
-        input_["Z_TVDSS"] = dfr[tvdmsl]
-
-        if attributes:
-            for target, source in attributes.items():
-                input_[target] = dfr[source]
-
-        df = pd.DataFrame(input_)
-        df.dropna(inplace=True)
-        self._reset(values=df, filesrc="DataFrame input")
-
     def to_file(
         self,
         pfile,
@@ -792,101 +594,6 @@ class Points(XYZ):
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
             **kwargs,
-        )
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.points_from_wells() instead.",
-    )
-    def from_wells(
-        self,
-        wells,
-        tops=True,
-        incl_limit=None,
-        top_prefix="Top",
-        zonelist=None,
-        use_undef=False,
-    ):
-        """Get tops or zone points data from a list of wells.
-
-        Args:
-            wells (list): List of XTGeo well objects
-            tops (bool): Get the tops if True (default), otherwise zone
-            incl_limit (float): Inclination limit for zones (thickness points)
-            top_prefix (str): Prefix used for Tops
-            zonelist (list-like): Which zone numbers to apply.
-            use_undef (bool): If True, then transition from UNDEF within zonelog
-                is also used.
-
-        Returns:
-            None if well list is empty; otherwise the number of wells.
-
-        Raises:
-            Todo
-
-        .. deprecated:: 2.16
-           Use classmethod :py:func:`points_from_wells()` instead
-        """
-        self._reset(
-            **_wells_importer(wells, tops, incl_limit, top_prefix, zonelist, use_undef)
-        )
-        return self.get_dataframe(copy=False)["WellName"].nunique()
-
-    @inherit_docstring(inherit_from=XYZ.from_list)
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use direct Points() initialisation instead",
-    )
-    def from_list(self, plist):
-        self._reset(_xyz_io._from_list_like(plist, "Z_TVDSS", None, False))
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.points_from_wells_dfrac() instead.",
-    )
-    def dfrac_from_wells(
-        self,
-        wells,
-        dlogname,
-        dcodes,
-        incl_limit=90,
-        count_limit=3,
-        zonelist=None,
-        zonelogname=None,
-    ):
-        """Get fraction of discrete code(s) (e.g. facies) per zone.
-
-        Args:
-            wells (list): List of XTGeo well objects
-            dlogname (str): Name of discrete log (e.g. Facies)
-            dcodes (list of int): Code(s) to get fraction for, e.g. [3]
-            incl_limit (float): Inclination limit for zones (thickness points)
-            count_limit (int): Min. no of counts per segment for valid result
-            zonelist (list of int): Whihc zones to compute for (default None
-                means that all zones will be evaluated)
-            zonelogname (str): Name of zonelog; if None than the
-                well.zonelogname property will be applied.
-
-        Returns:
-            None if well list is empty; otherwise the number of wells.
-
-        Raises:
-            Todo
-
-        .. deprecated:: 2.16
-           Use classmethod :py:func:`points_from_wells_dfrac()` instead.
-        """
-
-        self._reset(
-            **_wells_dfrac_importer(
-                wells, dlogname, dcodes, incl_limit, count_limit, zonelist, zonelogname
-            )
         )
 
     def to_roxar(
@@ -957,33 +664,6 @@ class Points(XYZ):
         mycopy._zname = self._zname
 
         return mycopy
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.points_from_surface() instead",
-    )
-    def from_surface(self, surf, zname="Z_TVDSS"):
-        """Get points as X Y Value from a surface object nodes (deprecated).
-
-        Note that undefined surface nodes will not be included.
-
-        Args:
-            surf (RegularSurface): A XTGeo RegularSurface object instance.
-            zname (str): Name of value column (3'rd column)
-
-        Example::
-
-            topx = xtgeo.surface_from_file("topx.gri")
-            topx_aspoints = xtgeo.points_from_surface(topx)
-
-            topx_aspoints.to_file("mypoints.poi")  # export as XYZ file
-
-        .. deprecated:: 2.16 Use xtgeo.points_from_surface() instead.
-        """
-
-        self._reset(**_surface_importer(surf, zname=zname))
 
     def snap_surface(self, surf, activeonly=True):
         """Snap (transfer) the points Z values to a RegularSurface

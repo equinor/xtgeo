@@ -2,9 +2,9 @@ name: Linting
 
 on:
   push:
-    branches: [main, "*postfix"]
+    branches: [main, "version-*"]
   pull_request:
-    branches: [main]
+    branches: [main, "version-*"]
   release:
     types:
       - published

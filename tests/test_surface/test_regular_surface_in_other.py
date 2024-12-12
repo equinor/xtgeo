@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 import numpy.ma as ma
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 

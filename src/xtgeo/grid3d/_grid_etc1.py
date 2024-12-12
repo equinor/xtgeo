@@ -235,6 +235,61 @@ def get_bulk_volume(
     )
 
 
+def get_heights_above_ffl(
+    grid: Grid,
+    ffl: GridProperty,
+    option: Literal[
+        "cell_center_above_ffl", "cell_corners_above_ffl"
+    ] = "cell_center_above_ffl",
+) -> tuple[GridProperty, GridProperty, GridProperty]:
+    """Compute delta heights for cell top, bottom and midpoints above a given level."""
+
+    valid_options = ("cell_center_above_ffl", "cell_corners_above_ffl")
+    if option not in valid_options:
+        raise ValueError(
+            f"The option key <{option}> is invalid, must be one of {valid_options}"
+        )
+
+    grid._xtgformat2()
+
+    htop_arr, hbot_arr, hmid_arr = _internal.grid3d.grid_height_above_ffl(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv.ravel(),
+        grid._zcornsv.ravel(),
+        grid._actnumsv.ravel(),
+        ffl.values.ravel(),
+        1 if option == "cell_center_above_ffl" else 2,
+    )
+
+    htop = GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name="htop",
+        values=htop_arr,
+        discrete=False,
+    )
+    hbot = GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name="hbot",
+        values=hbot_arr,
+        discrete=False,
+    )
+    hmid = GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name="hmid",
+        values=hmid_arr,
+        discrete=False,
+    )
+    return htop, hbot, hmid
+
+
 def get_ijk(
     self: Grid,
     names: tuple[str, str, str] = ("IX", "JY", "KZ"),
@@ -307,11 +362,11 @@ def get_ijk_from_points(
     It is here tried to get fast execution. This requires a preprosessing
     of the grid to store a onlayer version, and maps with IJ positions
     """
-    self._xtgformat1()
     logger.info("Getting IJK indices from Points...")
 
     actnumoption = 1 if activeonly else 0
 
+    self._xtgformat1()
     _update_tmpvars(self, force=True)
 
     points_df = points.get_dataframe(copy=False)
@@ -320,8 +375,10 @@ def get_ijk_from_points(
     useflip = -1 if self.ijk_handedness == "left" else 1
 
     logger.info("Grid FLIP for C code is %s", useflip)
+    self._tmp["onegrid"]._xtgformat1()  # to be sure...
 
     logger.info("Running C routine...")
+
     _, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
         points_df[points.xname].values,
         points_df[points.yname].values,
@@ -369,7 +426,7 @@ def get_ijk_from_points(
     proplist[columnnames[2]] = karr
 
     mydataframe = pd.DataFrame.from_dict(proplist)
-    mydataframe.replace(UNDEF_INT, -1, inplace=True)
+    mydataframe = mydataframe.replace(UNDEF_INT, -1)
 
     if fmt == "float":
         mydataframe[columnnames[0]] = mydataframe[columnnames[0]].astype("float")
@@ -377,9 +434,9 @@ def get_ijk_from_points(
         mydataframe[columnnames[2]] = mydataframe[columnnames[2]].astype("float")
 
     if undef != -1:
-        mydataframe[columnnames[0]].replace(-1, undef, inplace=True)
-        mydataframe[columnnames[1]].replace(-1, undef, inplace=True)
-        mydataframe[columnnames[2]].replace(-1, undef, inplace=True)
+        mydataframe[columnnames[0]] = mydataframe[columnnames[0]].replace(-1, undef)
+        mydataframe[columnnames[1]] = mydataframe[columnnames[1]].replace(-1, undef)
+        mydataframe[columnnames[2]] = mydataframe[columnnames[2]].replace(-1, undef)
 
     if dataframe:
         return mydataframe
@@ -1358,7 +1415,7 @@ def _convert_xtgformat1to2(self: Grid) -> None:
     self._actnumsv = newactnumsv
     self._xtgformat = 2
 
-    logger.info("Convert grid from new xtgformat to legacy format... done")
+    logger.info("Convert grid from legacy xtgformat to new format... done")
 
 
 def get_gridquality_properties(self: Grid) -> GridProperties:

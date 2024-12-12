@@ -1,9 +1,12 @@
-#include <cstddef>
-#include <vector>
-
-#include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
-
+#include <pybind11/numpy.h>
+#include <cstddef>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+#include <vector>
+#include <xtgeo/geometry.hpp>
+#include <xtgeo/grid3d.hpp>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/xtgeo.h>
 
@@ -35,7 +38,8 @@ namespace xtgeo::grid3d {
  * @param zcornsv Grid Z corners vector
  * @return vector of 24 doubles with the corner coordinates.
  */
-std::vector<double>
+
+std::array<double, 24>
 cell_corners(const size_t i,
              const size_t j,
              const size_t k,
@@ -76,7 +80,7 @@ cell_corners(const size_t i,
     z_coords[6] = zcornsv_[((i + 0) * area + (j + 1) * num_layers + (k + 1)) * 4 + 1];
     z_coords[7] = zcornsv_[((i + 1) * area + (j + 1) * num_layers + (k + 1)) * 4 + 0];
 
-    std::vector<double> corners(24, 0);
+    std::array<double, 24> corners{};
     auto crn_idx = 0;
     auto cz_idx = 0;
     for (auto layer = 0; layer < 2; layer++) {
@@ -86,7 +90,7 @@ cell_corners(const size_t i,
             auto t = (z_coords[cz_idx] - z1) / (z2 - z1);
             auto point = numerics::lerp3d(x1, y1, z1, x2, y2, z2, t);
             // If coord lines are collapsed (preserves old behavior)
-            if (std::abs(z2 - z1) < std::numeric_limits<double>::epsilon()) {
+            if (std::abs(z2 - z1) < numerics::EPSILON) {
                 point.x = x1;
                 point.y = y1;
             }
@@ -98,5 +102,116 @@ cell_corners(const size_t i,
     }
     return corners;
 }
+
+std::vector<double>
+get_corners_minmax(std::array<double, 24> &corners)
+{
+    double xmin = std::numeric_limits<double>::max();
+    double xmax = std::numeric_limits<double>::min();
+    double ymin = std::numeric_limits<double>::max();
+    double ymax = std::numeric_limits<double>::min();
+    double zmin = std::numeric_limits<double>::max();
+    double zmax = std::numeric_limits<double>::min();
+    for (auto i = 0; i < 24; i += 3) {
+        if (corners[i] < xmin) {
+            xmin = corners[i];
+        }
+        if (corners[i] > xmax) {
+            xmax = corners[i];
+        }
+        if (corners[i + 1] < ymin) {
+            ymin = corners[i + 1];
+        }
+        if (corners[i + 1] > ymax) {
+            ymax = corners[i + 1];
+        }
+        if (corners[i + 2] < zmin) {
+            zmin = corners[i + 2];
+        }
+        if (corners[i + 2] > zmax) {
+            zmax = corners[i + 2];
+        }
+    }
+    std::vector<double> minmax{ xmin, xmax, ymin, ymax, zmin, zmax };
+    return minmax;
+}  // get_corners_minmax
+
+/*
+ * Estimate if a point is inside a cell face top (option != 1) or cell face bottom
+ * (option = 1), seen from above, and return True if it is inside, False otherwise.
+ * @param x X coordinate of the point
+ * @param y Y coordinate of the point
+ * @param corners A vector of doubles, length 24
+ * @param option 0: Use cell top, 1: Use cell bottom, 2 for center
+ * @return Boolean
+ */
+bool
+is_xy_point_in_cell(const double x,
+                    const double y,
+                    const std::array<double, 24> &corners,
+                    int option)
+{
+
+    if (option < 0 || option > 2) {
+        throw std::invalid_argument("BUG! Invalid option");
+    }
+    // determine if point is inside the polygon
+    if (option == 0) {
+        std::array<double, 3> p1 = { corners[0], corners[1], corners[2] };
+        std::array<double, 3> p2 = { corners[3], corners[4], corners[5] };
+        std::array<double, 3> p3 = { corners[6], corners[7], corners[8] };
+        std::array<double, 3> p4 = { corners[9], corners[10], corners[11] };
+        return geometry::is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3);
+    } else if (option == 1) {
+        std::array<double, 3> p1 = { corners[12], corners[13], corners[14] };
+        std::array<double, 3> p2 = { corners[15], corners[16], corners[17] };
+        std::array<double, 3> p3 = { corners[18], corners[19], corners[20] };
+        std::array<double, 3> p4 = { corners[21], corners[22], corners[23] };
+        return geometry::is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3);
+    } else if (option == 2) {
+        // find the center Z point of the cell
+        auto mid_sw = numerics::lerp3d(corners[0], corners[1], corners[2], corners[12],
+                                       corners[13], corners[14], 0.5);
+        auto mid_se = numerics::lerp3d(corners[3], corners[4], corners[5], corners[15],
+                                       corners[16], corners[17], 0.5);
+        auto mid_nw = numerics::lerp3d(corners[6], corners[7], corners[8], corners[18],
+                                       corners[19], corners[20], 0.5);
+        auto mid_ne = numerics::lerp3d(corners[9], corners[10], corners[11],
+                                       corners[21], corners[22], corners[23], 0.5);
+
+        return geometry::is_xy_point_in_quadrilateral(
+          x, y, { mid_sw.x, mid_sw.y, mid_sw.z }, { mid_se.x, mid_se.y, mid_se.z },
+          { mid_ne.x, mid_ne.y, mid_ne.z }, { mid_nw.x, mid_nw.y, mid_nw.z });
+    }
+    return false;  // unreachable
+}  // is_xy_point_in_cell
+
+// Find the depth of a point in a cell
+double
+get_depth_in_cell(const double x,
+                  const double y,
+                  const std::array<double, 24> &corners,
+                  int option = 0)
+{
+    if (option < 0 || option > 1) {
+        throw std::invalid_argument("BUG! Invalid option");
+    }
+
+    double depth = numerics::QUIET_NAN;
+
+    if (option == 1) {
+        depth =
+          geometry::interpolate_z_4p(x, y, { corners[12], corners[13], corners[14] },
+                                     { corners[15], corners[16], corners[17] },
+                                     { corners[18], corners[19], corners[20] },
+                                     { corners[21], corners[22], corners[23] });
+    } else {
+        depth = geometry::interpolate_z_4p(x, y, { corners[0], corners[1], corners[2] },
+                                           { corners[3], corners[4], corners[5] },
+                                           { corners[6], corners[7], corners[8] },
+                                           { corners[9], corners[10], corners[11] });
+    }
+    return depth;
+}  // depth_in_cell
 
 }  // namespace xtgeo::grid3d

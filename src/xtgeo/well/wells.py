@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-import functools
-import warnings
-
-import deprecation
 import pandas as pd
 
 from xtgeo.common.log import null_logger
-from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 
 from . import _wells_utils
@@ -39,28 +34,6 @@ def wells_from_files(filelist, *args, **kwargs):
     return Wells([well_from_file(wfile, *args, **kwargs) for wfile in filelist])
 
 
-def _allow_deprecated_init(func):
-    # This decorator is here to maintain backwards compatibility in the construction
-    # of Wells and should be deleted once the deprecation period has expired,
-    # the construction will then follow the new pattern.
-    @functools.wraps(func)
-    def wrapper(cls, *args, **kwargs):
-        # Checking if we are doing an initialization
-        # from file and raise a deprecation warning if
-        # we are.
-        if args and args[0] and not isinstance(args[0][0], Well):
-            warnings.warn(
-                "Initializing directly from file name is deprecated and will be "
-                "removed in xtgeo version 4.0. Use: "
-                "mywells = xtgeo.wells_from_files(['some_name.w']) instead",
-                DeprecationWarning,
-            )
-            return func(wells_from_files(*args, **kwargs))
-        return func(cls, *args, **kwargs)
-
-    return wrapper
-
-
 class Wells:
     """Class for a collection of Well objects, for operations that involves
     a number of wells.
@@ -71,7 +44,6 @@ class Wells:
         wells: The list of Well objects.
     """
 
-    @_allow_deprecated_init
     def __init__(self, wells: list[Well] = None):
         if wells is None:
             self._wells = []
@@ -138,44 +110,6 @@ class Wells:
             if well.name == name:
                 return well
         return None
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.wells_from_files() instead",
-    )
-    def from_files(
-        self,
-        filelist,
-        fformat="rms_ascii",
-        mdlogname=None,
-        zonelogname=None,
-        strict=True,
-        append=True,
-    ):
-        """Deprecated see :func:`wells_from_files`"""
-
-        if not append:
-            self._wells = []
-
-        # file checks are done within the Well() class
-        for wfile in filelist:
-            try:
-                self._wells.append(
-                    well_from_file(
-                        wfile,
-                        fformat=fformat,
-                        mdlogname=mdlogname,
-                        zonelogname=zonelogname,
-                        strict=strict,
-                    )
-                )
-            except ValueError as err:
-                xtg.warn(f"SKIP this well: {err}")
-                continue
-        if not self._wells:
-            xtg.warn("No wells imported!")
 
     # not having this as property but a get_ .. is intended, for flexibility
     def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):

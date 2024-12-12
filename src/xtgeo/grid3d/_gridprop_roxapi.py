@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
@@ -12,12 +11,14 @@ from numpy import ma
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.roxutils import RoxUtils
-
-with contextlib.suppress(ImportError):
-    import roxar
+from xtgeo.roxutils._roxar_loader import roxar
 
 if TYPE_CHECKING:
     from xtgeo.grid3d.grid_property import GridProperty
+
+    if roxar is not None:
+        from roxar import Project as RoxarProjectType
+        from roxar.grids import Grid3D as RoxarGrid3DType
 
 logger = null_logger(__name__)
 
@@ -25,7 +26,11 @@ VALID_ROXAR_DTYPES = [np.uint8, np.uint16, np.float32]
 
 
 def import_prop_roxapi(
-    project: roxar.Project, gname: str, pname: str, realisation: int, faciescodes: bool
+    project: RoxarProjectType,
+    gname: str,
+    pname: str,
+    realisation: int,
+    faciescodes: bool,
 ) -> dict[str, Any]:
     """Import a Property via ROXAR API spec."""
     logger.info("Opening RMS project ...")
@@ -108,7 +113,7 @@ def _convert_to_xtgeo_prop(
 
 def export_prop_roxapi(
     self: GridProperty,
-    project: roxar.Project,
+    project: RoxarProjectType,
     gname: str,
     pname: str,
     realisation: int = 0,
@@ -133,7 +138,7 @@ def export_prop_roxapi(
 def _store_in_roxar(
     self: GridProperty,
     pname: str,
-    roxgrid: roxar.grid.Grid3D,
+    roxgrid: RoxarGrid3DType,
     realisation: int,
     casting: Literal["no", "equiv", "safe", "same_kind", "unsafe"] | None,
 ) -> None:
@@ -163,10 +168,11 @@ def _store_in_roxar(
 
     pvalues = roxgrid.get_grid(realisation=realisation).generate_values(data_type=dtype)
 
+    roxtype: Any = roxar  # needed for mypy
     roxar_property_type = (
-        roxar.GridPropertyType.discrete
+        roxtype.GridPropertyType.discrete
         if self.isdiscrete
-        else roxar.GridPropertyType.continuous
+        else roxtype.GridPropertyType.continuous
     )
 
     pvalues[cellno] = val3d[iind, jind, kind]

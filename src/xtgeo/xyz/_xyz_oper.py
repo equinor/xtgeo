@@ -147,18 +147,18 @@ def operation_polygons_v2(self, poly, value, opname="add", inside=True, where=Tr
     dataframe = self.get_dataframe()
 
     if opname == "add":
-        dataframe[self.zname][tmpdf._TMP == 1] += value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] += value
     elif opname == "sub":
-        dataframe[self.zname][tmpdf._TMP == 1] -= value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] -= value
     elif opname == "mul":
-        dataframe[self.zname][tmpdf._TMP == 1] *= value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] *= value
     elif opname == "div":
         if value != 0.0:
-            dataframe[self.zname][tmpdf._TMP == 1] /= value
+            dataframe.loc[tmpdf._TMP == 1, self.zname] /= value
         else:
-            dataframe[self.zname][tmpdf._TMP == 1] = 0.0
+            dataframe.loc[tmpdf._TMP == 1, self.zname] = 0.0
     elif opname == "set":
-        dataframe[self.zname][tmpdf._TMP == 1] = value
+        dataframe.loc[tmpdf._TMP == 1, self.zname] = value
     elif opname == "eli":
         dataframe = dataframe[tmpdf._TMP == 0]
         dataframe.reset_index(inplace=True, drop=True)
@@ -398,6 +398,7 @@ def get_fence(
     # duplicates may still exist; skip those
     df.drop_duplicates(subset=[fence.xname, fence.yname], keep="first", inplace=True)
     df.reset_index(inplace=True, drop=True)
+    fence.set_dataframe(df)
 
     if name:
         fence.name = name
@@ -415,7 +416,6 @@ def get_fence(
         )
         return np.reshape(rval, (fence.nrow, 5), order="F")
 
-    fence.set_dataframe(df)
     return fence
 
 
@@ -561,7 +561,14 @@ def extend(self, distance, nsamples, addhlen=True):
 
         # setting row0[2] as row1[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _ = _cxtgeo.x_vector_linint2(
-            row1[0], row1[1], row1[2], row0[0], row0[1], row1[2], distance, 12
+            row1.iloc[0],
+            row1.iloc[1],
+            row1.iloc[2],
+            row0.iloc[0],
+            row0.iloc[1],
+            row1.iloc[2],
+            distance,
+            12,
         )
 
         if ier != 0:
@@ -571,6 +578,7 @@ def extend(self, distance, nsamples, addhlen=True):
         rown[self.yname] = newy
 
         df_to_add = rown.to_frame().T
+        df_to_add = df_to_add.astype(dataframe.dtypes.to_dict())  # ensure same dtypes
 
         dataframe = pd.concat([df_to_add, dataframe]).reset_index(drop=True)
 
@@ -582,14 +590,21 @@ def extend(self, distance, nsamples, addhlen=True):
 
         # setting row1[2] as row0[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _ = _cxtgeo.x_vector_linint2(
-            row0[0], row0[1], row0[2], row1[0], row1[1], row0[2], distance, 11
+            row0.iloc[0],
+            row0.iloc[1],
+            row0.iloc[2],
+            row1.iloc[0],
+            row1.iloc[1],
+            row0.iloc[2],
+            distance,
+            11,
         )
 
         rown[self.xname] = newx
         rown[self.yname] = newy
 
         df_to_add = rown.to_frame().T
-
+        df_to_add = df_to_add.astype(dataframe.dtypes.to_dict())  # ensure same dtypes
         dataframe = pd.concat([dataframe, df_to_add]).reset_index(drop=True)
 
     self.set_dataframe(dataframe)

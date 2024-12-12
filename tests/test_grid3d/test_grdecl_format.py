@@ -1,6 +1,7 @@
 from unittest.mock import mock_open, patch
 
 import pytest
+
 from xtgeo.grid3d._grdecl_format import open_grdecl
 
 

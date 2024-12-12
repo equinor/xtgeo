@@ -27,13 +27,6 @@ def pytest_configure(config):
             " is ../xtgeo-testdata."
         )
 
-    # Set the Agg backend for all test runs. This should be removed once
-    # xtgeo.plot is removed. This is to ensure that CI runs do not fail
-    # on Windows and macOS.
-    import matplotlib as mpl
-
-    mpl.use("Agg")
-
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -89,9 +82,7 @@ def fixture_xtgshow():
     """For eventual plotting, to be uses in an if sence inside a test."""
     if "ROXENV" in os.environ:
         pytest.skip("Skip plotting tests in roxar environment")
-    if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
-        return True
-    return False
+    return any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"])
 
 
 @pytest.fixture(name="generate_plot")

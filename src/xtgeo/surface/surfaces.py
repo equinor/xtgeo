@@ -5,11 +5,9 @@ from __future__ import annotations
 import warnings
 from typing import Literal
 
-import deprecation
 import numpy as np
 
 from xtgeo.common.log import null_logger
-from xtgeo.common.version import __version__
 from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 
 from . import _surfs_import
@@ -124,18 +122,6 @@ class Surfaces:
             if surf.name == name:
                 return surf
         return None
-
-    @deprecation.deprecated(
-        deprecated_in="2.15",
-        removed_in="4.0",
-        current_version=__version__,
-        details="Use xtgeo.surface.surfaces_from_grid() instead",
-    )
-    def from_grid3d(self, grid, subgrids=True, rfactor=1):
-        """Derive surfaces from a 3D grid"""
-        self.surfaces, self._subtype, self._order = _surfs_import.from_grid3d(
-            grid, subgrids, rfactor
-        )
 
     def apply(self, func, *args, **kwargs):
         """Apply a function to the Surfaces array.

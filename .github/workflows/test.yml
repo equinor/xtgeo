@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main, "*postfix"]
+    branches: [main, "version-*"]
   pull_request:
-    branches: [main]
+    branches: [main, "version-*"]
   release:
     types:
       - published
@@ -14,26 +14,36 @@ on:
 
 jobs:
   test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest]
         include:
           - os: macos-latest
-            python-version: 3.8
+            python-version: "3.10"
           - os: macos-latest
             python-version: 3.12
           - os: windows-latest
             python-version: 3.8
           - os: windows-latest
             python-version: 3.12
-    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Fix macos HDF5 library for pytables install (works for python >= 3.10)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install hdf5
+
       - name: Setup xtgeo
+        env:
+          # relevant for macos builds only
+          HDF5_DIR: /opt/homebrew
         uses: "./.github/actions/setup_xtgeo"
         with:
           python-version: ${{ matrix.python-version }}
@@ -41,11 +51,17 @@ jobs:
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
 
-      - name: Run tests
+      - name: Run tests (Linux/macOS)
+        if: ${{ matrix.os != 'windows-latest' }}
         run: pytest -n 4 tests --disable-warnings --generate-plots
+
+      - name: Run tests (Windows, skip plotting due to random TCL/TK issues)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: pytest -n 4 tests --disable-warnings
 
   hypothesis:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,8 +77,11 @@ jobs:
 
       - name: Run just hypothesis tests with more examples
         run: pytest -n 4 tests --disable-warnings -m hypothesis --generate-plots
-          
+
   rms:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -91,8 +110,6 @@ jobs:
               pandas: 2.0.2,
               scipy: 1.10.1,
             }
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -103,7 +120,7 @@ jobs:
         uses: "./.github/actions/setup_testdata"
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.config.python }}
 
@@ -127,6 +144,7 @@ jobs:
 
   big:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -145,6 +163,7 @@ jobs:
 
   codecov:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -162,12 +181,13 @@ jobs:
         run: pytest -n 4 tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
         with:
           files: xtgeocoverage.xml
 
   opm-integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: "./.github/actions/setup_xtgeo"

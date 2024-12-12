@@ -69,6 +69,7 @@ def get_randomline(
 
     logger.info("Running C routine to get randomline...")
     self._xtgformat1()
+    self._tmp["onegrid"]._xtgformat1()
     _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,
         ycoords,
@@ -116,20 +117,29 @@ def _update_tmpvars(self: Grid, force: bool = False) -> None:
     if "onegrid" not in self._tmp or force:
         logger.info("Make a tmp onegrid instance...")
         self._tmp["onegrid"] = self.copy()
+        self._tmp["onegrid"]._xtgformat1()
         self._tmp["onegrid"].reduce_to_one_layer()
         one = self._tmp["onegrid"]
         logger.info("Make a tmp onegrid instance... DONE")
         logger.info("Make a set of tmp surfaces for I J locations + depth...")
         self._tmp["topd"] = surface_from_grid3d(
-            one, where="top", mode="depth", rfactor=4
+            one, where="top", property="depth", rfactor=4, index_position="top"
         )
-        self._tmp["topi"] = surface_from_grid3d(one, where="top", mode="i", rfactor=4)
-        self._tmp["topj"] = surface_from_grid3d(one, where="top", mode="j", rfactor=4)
+        self._tmp["topi"] = surface_from_grid3d(
+            one, where="top", property="i", rfactor=4, index_position="top"
+        )
+        self._tmp["topj"] = surface_from_grid3d(
+            one, where="top", property="j", rfactor=4, index_position="top"
+        )
         self._tmp["basd"] = surface_from_grid3d(
-            one, where="base", mode="depth", rfactor=4
+            one, where="base", property="depth", rfactor=4, index_position="base"
         )
-        self._tmp["basi"] = surface_from_grid3d(one, where="base", mode="i", rfactor=4)
-        self._tmp["basj"] = surface_from_grid3d(one, where="base", mode="j", rfactor=4)
+        self._tmp["basi"] = surface_from_grid3d(
+            one, where="base", property="i", rfactor=4, index_position="base"
+        )
+        self._tmp["basj"] = surface_from_grid3d(
+            one, where="base", property="j", rfactor=4, index_position="base"
+        )
 
         self._tmp["topi"].fill()
         self._tmp["topj"].fill()
@@ -141,6 +151,7 @@ def _update_tmpvars(self: Grid, force: bool = False) -> None:
         self._tmp["basi_carr"] = rl.get_carr_double(self._tmp["basi"])
         self._tmp["basj_carr"] = rl.get_carr_double(self._tmp["basj"])
 
+        self._tmp["onegrid"]._xtgformat1()
         logger.info("Make a set of tmp surfaces for I J locations + depth... DONE")
     else:
         logger.info("Re-use existing onegrid and tmp surfaces for I J")

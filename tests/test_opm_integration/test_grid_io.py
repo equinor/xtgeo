@@ -1,9 +1,10 @@
 import os
 
 import pytest
-import xtgeo
 from hypothesis import given, settings
 from numpy.testing import assert_allclose
+
+import xtgeo
 
 from ..test_grid3d.grid_generator import xtgeo_grids  # noqa
 
@@ -83,7 +84,7 @@ def test_grdecl_roundtrip(xtgeo_grid):
     grdecl_file = "xtg_grid.grdecl"
     xtgeo_grid.to_file(str(grdecl_file), fformat="grdecl")
     egrid_file = convert_to_egrid(xtgeo_grid.dimensions, grdecl_file)
-    opm_grid = xtgeo.Grid(str(egrid_file), fformat="egrid")
+    opm_grid = xtgeo.grid_from_file(str(egrid_file), fformat="egrid")
 
     opm_grid._xtgformat2()
     xtgeo_grid._xtgformat2()
@@ -105,7 +106,7 @@ def test_egrid_roundtrip(xtgeo_grid):
     xtgeo_grid._actnumsv[0] = 0
     xtgeo_grid.to_file(str(egrid_file), fformat="egrid")
     opm_egrid_file = read_write_egrid(xtgeo_grid.dimensions, egrid_file)
-    opm_grid = xtgeo.Grid(str(opm_egrid_file), fformat="egrid")
+    opm_grid = xtgeo.grid_from_file(str(opm_egrid_file), fformat="egrid")
 
     opm_grid._xtgformat2()
     xtgeo_grid._xtgformat2()

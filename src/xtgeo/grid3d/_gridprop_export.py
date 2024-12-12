@@ -47,8 +47,7 @@ def to_file(
         name = gridprop.name or ""
 
     xtg_file = FileWrapper(pfile, mode="rb")
-    if not xtg_file.memstream:
-        xtg_file.check_folder(raiseerror=OSError)
+    xtg_file.check_folder(raiseerror=OSError)
 
     if fformat in FileFormat.ROFF_BINARY.value + FileFormat.ROFF_ASCII.value:
         _export_roff(gridprop, xtg_file.name, name, binary, append=append)
@@ -107,7 +106,8 @@ def _export_grdecl(
     """Export ascii or binary GRDECL"""
     vals = gridprop.values.ravel(order="F")
     if np.ma.isMaskedArray(vals):
-        vals = np.ma.filled(vals, gridprop.undef)
+        undef_export = 1 if gridprop.isdiscrete or "int" in str(dtype) else 0.0
+        vals = np.ma.filled(vals, fill_value=undef_export)
 
     mode = "a" if append else "w"
     if binary:
