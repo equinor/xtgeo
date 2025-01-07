@@ -5,7 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from functools import lru_cache
 from math import atan2, degrees
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, no_type_check
 
 import numpy as np
 import pandas as pd
@@ -1007,6 +1007,7 @@ def copy(self: Grid) -> Grid:
     )
 
 
+@no_type_check  # due to some hard-to-solve issues with mypy
 def crop(
     self: Grid,
     spec: tuple[tuple[int, int], tuple[int, int], tuple[int, int]],
