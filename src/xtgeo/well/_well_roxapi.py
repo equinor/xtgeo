@@ -10,7 +10,7 @@ import pandas as pd
 
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
-from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.roxutils import RoxUtils
 
 if TYPE_CHECKING:
@@ -189,9 +189,11 @@ def _store_log_in_roxapi(self, lrun: Any, logname: str) -> None:
 
     isdiscrete = False
     xtglimit = UNDEF_LIMIT
+    apply_undef = UNDEF
     if self.wlogtypes[logname] == _AttrType.DISC.value:
         isdiscrete = True
         xtglimit = UNDEF_INT_LIMIT
+        apply_undef = UNDEF_INT
 
     store_logname = logname
 
@@ -215,7 +217,10 @@ def _store_log_in_roxapi(self, lrun: Any, logname: str) -> None:
 
     vals = np.ma.masked_invalid(self.get_dataframe(copy=False)[logname].values)
     vals = np.ma.masked_greater(vals, xtglimit)
-    vals = vals.astype(usedtype)
+
+    # to avoid that Nans behind the masks trigger RuntimeWarning, they are converted to
+    # the apply_undef value prior to astype() cast (see issue 1283)
+    vals = np.nan_to_num(vals, nan=apply_undef).astype(usedtype)
     thelog.set_values(vals)
 
     if isdiscrete:
