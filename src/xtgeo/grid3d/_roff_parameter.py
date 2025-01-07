@@ -104,8 +104,9 @@ class RoffParameter:
         Returns:
             True if the RoffParameter is a discrete type
         """
-        return isinstance(self.values, bytes) or np.issubdtype(
-            self.values.dtype, np.integer
+        return bool(
+            isinstance(self.values, bytes)
+            or np.issubdtype(self.values.dtype, np.integer)
         )
 
     def xtgeo_codes(self) -> dict[int, str]:
