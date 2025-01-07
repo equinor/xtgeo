@@ -4,11 +4,9 @@ requires = [
     "scikit-build-core[pyproject]>=0.10",
     "swig<4.3.0",
     "numpy==1.19.2; python_version == '3.8'",
-    "numpy==1.19.5; python_version == '3.9'",
-    "numpy==1.21.6; python_version == '3.10'",
-    "numpy==1.23.5; python_version == '3.11'",
-    "numpy==1.26.2; python_version == '3.12'",
+    "numpy>=2.0.0; python_version > '3.8'",
 ]
+
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
@@ -53,7 +51,7 @@ dependencies = [
     "hdf5plugin>=2.3",
     "joblib",
     "matplotlib>=3.3",
-    "numpy<2",
+    "numpy",
     "pandas>=1.1",
     "resfo>=4.0.0",
     "roffio>=0.0.2",
