@@ -20,3 +20,5 @@ def test_well_to_polygons(testdata_path):
     assert (
         mywell.get_dataframe()["X_UTME"].mean() == poly.get_dataframe()["X_UTME"].mean()
     )
+
+    print("JUST A LINE TO TRIGGER CI")
