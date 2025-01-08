@@ -3,8 +3,7 @@ requires = [
     "pybind11",
     "scikit-build-core[pyproject]>=0.10",
     "swig<4.3.0",
-    "numpy==1.19.2; python_version == '3.8'",
-    "numpy>=2.0.0; python_version > '3.8'",
+    "numpy>=2.0.0; python_version >= '3.9'",
 ]
 
 build-backend = "scikit_build_core.build"
@@ -20,7 +19,7 @@ wheel.install-dir = "xtgeo"
 name = "xtgeo"
 description = "XTGeo is a Python library for 3D grids, surfaces, wells, etc"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "LGPL-3.0" }
 authors = [{ name = "Equinor", email = "fg_fmu-atlas@equinor.com" }]
 keywords = ["grids", "surfaces", "wells", "cubes"]
@@ -34,7 +33,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
