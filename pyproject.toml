@@ -143,6 +143,7 @@ select = [
     "E",
     "F",
     "I",
+    "NPY201",  # numpy 2 migrations
     "PIE",
     "Q",
     "RET",

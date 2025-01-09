@@ -222,7 +222,7 @@ def _get_roff_type_and_size(
         return "float", value.size, value.size * (4 if is_binary else 5)
     if np.issubdtype(value.dtype, np.double):
         return "double", value.size, value.size * (8 if is_binary else 9)
-    if np.issubdtype(value.dtype, np.unicode_):
+    if np.issubdtype(value.dtype, np.str_):
         total_bytes = sum(len(val) + (1 if is_binary else 3) for val in value)
         return "char", value.size, total_bytes
     raise ValueError(f"Could not find suitable roff type for {type(value)}")
