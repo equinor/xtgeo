@@ -115,6 +115,7 @@ jobs:
       - name: Build and install xtgeo
         run: |
           pip install pip==${{ matrix.config.pip }}
+          pip install ".[dev]"
           pip install \
             wheel==${{ matrix.config.wheel }} \
             setuptools==${{ matrix.config.setuptools }} \
@@ -122,7 +123,6 @@ jobs:
             numpy==${{ matrix.config.numpy }} \
             pandas==${{ matrix.config.pandas }} \
             scipy==${{ matrix.config.scipy }}
-          pip install ".[dev]"
 
       - name: List dependencies
         run: pip freeze
