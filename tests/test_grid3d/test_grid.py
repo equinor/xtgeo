@@ -555,10 +555,6 @@ def test_get_property_between_surfaces(testdata_path):
     surf2.values = 1700
 
     prop = grd.get_property_between_surfaces(surf1, surf2)
-    grd.to_file("/tmp/g.roff")
-    prop.to_file("/tmp/prop.roff")
-    surf1.to_file("/tmp/surf1.gri")
-    surf2.to_file("/tmp/surf2.gri")
 
     assert prop.values.sum() == 137269  # verified with similar method in RMS
 
@@ -582,10 +578,6 @@ def test_get_property_between_surfaces_w_holes(testdata_path):
     surf2.values.mask[50:70, 60:71] = True
 
     prop = grd.get_property_between_surfaces(surf1, surf2)
-    grd.to_file("/tmp/g.roff")
-    prop.to_file("/tmp/prop.roff")
-    surf1.to_file("/tmp/surf1.gri")
-    surf2.to_file("/tmp/surf2.gri")
 
     assert prop.values.sum() == 131130  # verified manually in RMS
 

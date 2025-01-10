@@ -19,6 +19,16 @@ grid_cell_volumes(const size_t ncol,
                   const py::array_t<int> &actnumsv,
                   const int precision,
                   const bool asmasked);
+
+std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
+grid_cell_centers(const size_t ncol,
+                  const size_t nrow,
+                  const size_t nlay,
+                  const py::array_t<double> &coordsv,
+                  const py::array_t<float> &zcornsv,
+                  const py::array_t<int> &actnumsv,
+                  const bool asmasked);
+
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 grid_height_above_ffl(const size_t ncol,
                       const size_t nrow,
@@ -53,6 +63,30 @@ get_depth_in_cell(const double x,
                   const std::array<double, 24> &corners,
                   int option);
 
+py::array_t<int>
+grid_assign_value_between_surfaces(const size_t ncol,
+                                   const size_t nrow,
+                                   const size_t nlay,
+                                   const py::array_t<double> &xmid,
+                                   const py::array_t<double> &ymid,
+                                   const py::array_t<double> &zmid,
+                                   const size_t top_ncol,
+                                   const size_t top_nrow,
+                                   const double top_xori,
+                                   const double top_yori,
+                                   const double top_xinc,
+                                   const double top_yinc,
+                                   const double top_rotation,
+                                   const py::array_t<double> &top_values,
+                                   const size_t bot_ncol,
+                                   const size_t bot_nrow,
+                                   const double bot_xori,
+                                   const double bot_yori,
+                                   const double bot_xinc,
+                                   const double bot_yinc,
+                                   const double bot_rotation,
+                                   const py::array_t<double> &bot_values);
+
 inline void
 init(py::module &m)
 {
@@ -61,6 +95,8 @@ init(py::module &m)
 
     m_grid3d.def("grid_cell_volumes", &grid_cell_volumes,
                  "Compute the bulk volume of cell.");
+    m_grid3d.def("grid_cell_centers", &grid_cell_centers,
+                 "Compute the cells centers coordinates as 3 arrays");
     m_grid3d.def("grid_height_above_ffl", &grid_height_above_ffl,
                  "Compute the height above a FFL (free fluid level).");
     m_grid3d.def("cell_corners", &cell_corners,
@@ -71,6 +107,9 @@ init(py::module &m)
                  "Determine if a XY point is inside a cell, top or base.");
     m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
                  "Determine the interpolated cell face Z from XY, top or base.");
+    m_grid3d.def("grid_assign_value_between_surfaces",
+                 &grid_assign_value_between_surfaces,
+                 "Make a property that is one if cell center is between two surfaces.");
 }
 
 }  // namespace xtgeo::grid3d

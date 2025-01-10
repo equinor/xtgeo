@@ -30,6 +30,18 @@ get_xy_from_ij(const size_t i,
                const size_t nrow,
                const double angle_deg);
 
+double
+get_z_from_xy(const double x,
+              const double y,
+              const double xori,
+              const double yori,
+              const double xinc,
+              const double yinc,
+              const size_t ncol,
+              const size_t nrow,
+              const double angle_deg,
+              const py::array_t<double> &values);
+
 std::tuple<int, int, int, int>
 find_cell_range(const double xmin,
                 const double xmax,
@@ -80,6 +92,8 @@ init(py::module &m)
                   "Get the outer corners of a regular surface.");
     m_regsurf.def("get_xy_from_ij", &get_xy_from_ij,
                   "Get the XY coordinates from the grid indices.");
+    m_regsurf.def("get_z_from_xy", &get_z_from_xy,
+                  "Get the Z value in a regsurf from a x y point.");
     m_regsurf.def("find_cell_range", &find_cell_range,
                   "Find the range of regular surface 2D nodes within a box.");
     m_regsurf.def("sample_grid3d_layer", &sample_grid3d_layer,
