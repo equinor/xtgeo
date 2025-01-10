@@ -162,7 +162,7 @@ def check_shape_ok(self: GridProperty, values: np.ndarray) -> bool:
     if values.shape == (self._ncol, self._nrow, self._nlay):
         return True
     logger.error(
-        "Wrong shape: Dimens of values %s %s %s" "vs %s %s %s",
+        "Wrong shape: Dimens of values %s %s %svs %s %s %s",
         *values.shape,
         self._ncol,
         self._nrow,

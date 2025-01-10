@@ -103,7 +103,7 @@ def test_read_extra_keyword_characters():
 
 def test_read_long_keyword():
     very_long_keyword = "a" * 200
-    file_data = f"{very_long_keyword} Eclipse comment\n" "1 2 3 4 /"
+    file_data = f"{very_long_keyword} Eclipse comment\n1 2 3 4 /"
     with (
         patch(
             "builtins.open",
