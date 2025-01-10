@@ -634,9 +634,7 @@ class Grid(_Grid3D):
         if isinstance(self._props, GridProperties):
             return self._props.props
         if isinstance(self._props, list):
-            raise RuntimeError(
-                "self._props is a list, not a GridProperties " "instance"
-            )
+            raise RuntimeError("self._props is a list, not a GridProperties instance")
         return None
 
     @props.setter
