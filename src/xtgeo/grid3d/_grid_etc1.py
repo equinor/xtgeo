@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from packaging.version import parse as versionparse
 
-import xtgeo._internal as _internal
+import xtgeo._internal as _internal  # type: ignore
 from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from xtgeo.common.types import Dimensions
     from xtgeo.grid3d import Grid
     from xtgeo.grid3d.types import METRIC
+    from xtgeo.surface.regular_surface import RegularSurface
     from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
@@ -290,6 +291,91 @@ def get_heights_above_ffl(
     return htop, hbot, hmid
 
 
+def get_property_between_surfaces(
+    grid: Grid,
+    top: RegularSurface,
+    base: RegularSurface,
+    value: int | float = 1,
+    name: str = "between_surfaces",
+) -> GridProperty:
+    """For a grid, create a grid property with value <value> between two surfaces.
+
+    The value would be zero elsewhere, or if surfaces has inactive nodes.
+    """
+
+    grid._xtgformat2()
+    logger.debug("Creating property between surfaces...")
+
+    xmid, ymid, zmid = _internal.grid3d.grid_cell_centers(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv,
+        grid._zcornsv,
+        grid._actnumsv,
+        True,  # asmasked, will give Nan for inactive cells; intentional here
+    )
+
+    top_ = top
+    base_ = base
+    if top.yflip == -1:
+        top_ = top.copy()
+        top_.make_lefthanded()
+        logger.debug("Top surface is right-handed, flipping a copy prior to operation")
+    if base.yflip == -1:
+        base_ = base.copy()
+        base_.make_lefthanded()
+        logger.debug("Base surface is right-handed, flipping a copy prior to operation")
+
+    diff = base_ - top_
+    if diff.values.mean() <= 0:
+        raise ValueError("Top surface must be above base surface")
+
+    # array is always 0, 1 integer
+    array = _internal.grid3d.grid_assign_value_between_surfaces(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        xmid,
+        ymid,
+        zmid,
+        top_.ncol,
+        top_.nrow,
+        top_.xori,
+        top_.yori,
+        top_.xinc,
+        top_.yinc,
+        top_.rotation,
+        top_.values.filled(np.nan),
+        base_.ncol,
+        base_.nrow,
+        base_.xori,
+        base_.yori,
+        base_.xinc,
+        base_.yinc,
+        base_.rotation,
+        base_.values.filled(np.nan),
+    )
+
+    is_discrete = True
+
+    if isinstance(value, float):
+        array = array.astype(float) * value
+        is_discrete = False
+    else:
+        array = array * value
+    logger.debug("Creating property between surfaces... done")
+
+    return GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name=name,
+        values=array,
+        discrete=is_discrete,
+    )
+
+
 def get_ijk(
     self: Grid,
     names: tuple[str, str, str] = ("IX", "JY", "KZ"),
@@ -451,27 +537,23 @@ def get_xyz(
     asmasked: bool = True,
 ) -> tuple[GridProperty, GridProperty, GridProperty]:
     """Get X Y Z as properties."""
-    # TODO: May be issues with asmasked vs activeonly here?
+
     self._xtgformat2()
 
-    option = 1 if asmasked else 0
-
-    xv, yv, zv = _cxtgeo.grdcp3d_calc_xyz(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv.ravel(),
-        self._zcornsv.ravel(),
-        self._actnumsv.ravel(),
-        option,
-        self.ntotal,  # sizes of xv, yv, zv
-        self.ntotal,
-        self.ntotal,
+    # note: using _internal here is 2-3 times faster than using the former cxtgeo!
+    xv, yv, zv = _internal.grid3d.grid_cell_centers(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        asmasked,
     )
 
-    xv = np.ma.masked_greater(xv, UNDEF_LIMIT)
-    yv = np.ma.masked_greater(yv, UNDEF_LIMIT)
-    zv = np.ma.masked_greater(zv, UNDEF_LIMIT)
+    xv = np.ma.masked_invalid(xv)
+    yv = np.ma.masked_invalid(yv)
+    zv = np.ma.masked_invalid(zv)
 
     xo = GridProperty(
         ncol=self._ncol,
