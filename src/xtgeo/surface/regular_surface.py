@@ -1507,14 +1507,27 @@ class RegularSurface:
     def make_lefthanded(self) -> None:
         """Makes the surface lefthanded in case yflip is -1. This will change origin.
 
-        Lefhanded regular maps are common in subsurface data, where I is to east, J is
+        Lefthanded regular maps are common in subsurface data, where I is to east, J is
         to north and Z axis is positive down for depth and time data.
 
-        The instance is changed in-place.
+        The instance is changed in-place. The method is a no-op if yflip already is 1.
 
         .. versionadded:: 4.2
         """
         _regsurf_utils.make_lefthanded(self)
+
+    def make_righthanded(self) -> None:
+        """Makes the surface righthanded in case yflip is 1. This will change origin.
+
+        Righthanded regular maps are less common in subsurface data, where I is to
+        east, J is to north and Z axis is positive down for depth and time data. This
+        method is mainly for consistency since make_lefthanded() is present.
+
+        The instance is changed in-place. The method is a no-op if yflip already is -1.
+
+        .. versionadded:: 4.5
+        """
+        _regsurf_utils.make_righthanded(self)
 
     def get_map_xycorners(self):
         """Get the X and Y coordinates of the map corners.

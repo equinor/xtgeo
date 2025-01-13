@@ -417,6 +417,26 @@ def test_make_lefthanded_simple(tmp_path):
     assert s1.values[6, 0] == s2.values[6, 2]
 
 
+def test_make_righthanded_simple(tmp_path):
+    s1 = xtgeo.RegularSurface(
+        ncol=7,
+        nrow=3,
+        xinc=1,
+        yinc=2,
+        values=np.arange(21),
+        yflip=1,
+        rotation=30,
+    )
+
+    s1.to_file(tmp_path / "lefthanded.gri")
+
+    s2 = s1.copy()
+    s2.make_righthanded()
+    s2.to_file(tmp_path / "righthanded.gri")
+
+    assert s1.values[6, 0] == s2.values[6, 2]
+
+
 def test_make_lefthanded_reek(tmp_path, testdata_path):
     """Import Reek Irap binary and make it lefthanded (pos axis down)."""
     s1 = xtgeo.surface_from_file(testdata_path / TESTSET5)

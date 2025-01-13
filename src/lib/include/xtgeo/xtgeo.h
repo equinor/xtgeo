@@ -1059,26 +1059,6 @@ extern "C"
                         long n_swig_np_dbl_inplace_v1,   // ntot,
                         metric m);
 
-    void grdcp3d_calc_xyz(long ncol,
-                          long nrow,
-                          long nlay,
-
-                          double *swig_np_dbl_in_v1,  // *coordsv,
-                          long n_swig_np_dbl_in_v1,   // ncoord,
-                          float *swig_np_flt_in_v1,   // *zcornsv,
-                          long n_swig_np_flt_in_v1,   // nzcorn,
-                          int *swig_np_int_in_v1,     // *actnumsv,
-                          long n_swig_np_int_in_v1,   // nactnum,
-
-                          int option,
-
-                          double *swig_np_dbl_aout_v1,  // xarr
-                          long n_swig_np_dbl_aout_v1,
-                          double *swig_np_dbl_aout_v2,  // yarr
-                          long n_swig_np_dbl_aout_v2,
-                          double *swig_np_dbl_aout_v3,  // zarr
-                          long n_swig_np_dbl_aout_v3);
-
     void grd3d_conv_roxapi_grid(int nx,
                                 int ny,
                                 int nz,
@@ -1393,20 +1373,6 @@ extern "C"
                               int *swig_np_int_inplace_v1,     // *actnumsv
                               long n_swig_np_int_inplace_v1    // nactnum
     );
-
-    void grdcp3d_midpoint(long i,
-                          long j,
-                          long k,
-                          long ncol,
-                          long nrow,
-                          long nlay,
-                          double *coordsv,
-                          long ncoord,
-                          float *zcornsv,
-                          long nzcorn,
-                          double *x,
-                          double *y,
-                          double *z);
 
     void grd3d_midpoint(int i,
                         int j,
