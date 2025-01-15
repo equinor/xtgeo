@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from functools import wraps
+from typing import Callable, Literal, Optional
 
 
 def null_logger(name: str) -> logging.Logger:
@@ -34,19 +35,36 @@ def null_logger(name: str) -> logging.Logger:
     return logger
 
 
-def functimer(func):
+def functimer(
+    func: Optional[Callable] = None,
+    *,
+    output: Literal["debug", "info", "print"] = "debug",
+) -> Callable:
     """A decorator function to measure the execution time of a function.
 
-    Will emit a log message with the execution time in seconds, and is primarily
-    for developer use.
+    Will emit a print or log message with the execution time in seconds, and is
+    primarily for developer use.
 
     Usage is simple, just add the decorator to the function you want to measure:
+
+    @functimer(output="print")
+    def my_function():
+        pass
+
+    Or without arguments:
 
     @functimer
     def my_function():
         pass
 
     """
+    if func is None:
+
+        def decorator(func: Callable) -> Callable:
+            return functimer(func, output=output)
+
+        return decorator
+
     logger = null_logger(__name__)
 
     @wraps(func)
@@ -54,8 +72,17 @@ def functimer(func):
         start_time = time.perf_counter()  # Start the timer
         result = func(*args, **kwargs)  # Execute the function
         end_time = time.perf_counter()  # End the timer
-        elapsed_time = f"{end_time - start_time: .5f}"  # Calculate the elapsed time
-        logger.debug("Function %s executed in %s seconds", func.__name__, elapsed_time)
+        elapsed_time = f"{end_time - start_time: .5f}"
+        if output == "print":
+            print(f"Function {func.__name__} executed in {elapsed_time} seconds")
+        elif output == "info":
+            logger.info(
+                "Function %s executed in %s seconds", func.__name__, elapsed_time
+            )
+        else:
+            logger.debug(
+                "Function %s executed in %s seconds", func.__name__, elapsed_time
+            )
         return result
 
     return wrapper
