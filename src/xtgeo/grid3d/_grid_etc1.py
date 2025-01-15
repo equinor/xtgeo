@@ -451,27 +451,23 @@ def get_xyz(
     asmasked: bool = True,
 ) -> tuple[GridProperty, GridProperty, GridProperty]:
     """Get X Y Z as properties."""
-    # TODO: May be issues with asmasked vs activeonly here?
+
     self._xtgformat2()
 
-    option = 1 if asmasked else 0
-
-    xv, yv, zv = _cxtgeo.grdcp3d_calc_xyz(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv.ravel(),
-        self._zcornsv.ravel(),
-        self._actnumsv.ravel(),
-        option,
-        self.ntotal,  # sizes of xv, yv, zv
-        self.ntotal,
-        self.ntotal,
+    # note: using _internal here is 2-3 times faster than using the former cxtgeo!
+    xv, yv, zv = _internal.grid3d.grid_cell_centers(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        asmasked,
     )
 
-    xv = np.ma.masked_greater(xv, UNDEF_LIMIT)
-    yv = np.ma.masked_greater(yv, UNDEF_LIMIT)
-    zv = np.ma.masked_greater(zv, UNDEF_LIMIT)
+    xv = np.ma.masked_invalid(xv)
+    yv = np.ma.masked_invalid(yv)
+    zv = np.ma.masked_invalid(zv)
 
     xo = GridProperty(
         ncol=self._ncol,

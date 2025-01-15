@@ -8,25 +8,6 @@ from xtgeo import _cxtgeo
 from xtgeo.io._file import FileWrapper
 
 
-def test_grdcp3d_get_xyz():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Errors in array lengths checks in grdcp3d_calc_xyz",
-    ):
-        xv, yv, zv = _cxtgeo.grdcp3d_calc_xyz(
-            1,
-            1,
-            1,
-            np.array([0.0]),
-            np.array([1.0], dtype=np.float32),
-            np.array([1], dtype=np.int32),
-            0,  # option
-            1,  # len(xv) / yv / zv
-            1,
-            1,
-        )
-
-
 def test_grdcp3d_from_cube():
     with pytest.raises(
         xtgeo.XTGeoCLibError,
