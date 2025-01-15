@@ -56,6 +56,60 @@ grid_cell_volumes(const size_t ncol,
 }
 
 /*
+ * Get cell centers for a grid.
+ *
+ * @param ncol Grid dimensions ncol/nx
+ * @param nrow Grid dimensions nrow/ny
+ * @param nlay Grid dimensions nlay/nz
+ * @param coordsv Grid Z coordinates vector
+ * @param zcornsv Grid Z corners vector
+ * @param actumsv Active cells vector
+ * @param asmasked Process grid cells as masked (return NaN for inactive cells)
+ * @return Arrays with the X, Y, Z coordinates of the cell centers
+ */
+std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
+grid_cell_centers(const size_t ncol,
+                  const size_t nrow,
+                  const size_t nlay,
+                  const py::array_t<double> &coordsv,
+                  const py::array_t<float> &zcornsv,
+                  const py::array_t<int> &actnumsv,
+                  const bool asmasked = false)
+{
+    pybind11::array_t<double> xmid({ ncol, nrow, nlay });
+    pybind11::array_t<double> ymid({ ncol, nrow, nlay });
+    pybind11::array_t<double> zmid({ ncol, nrow, nlay });
+    auto xmid_ = xmid.mutable_unchecked<3>();
+    auto ymid_ = ymid.mutable_unchecked<3>();
+    auto zmid_ = zmid.mutable_unchecked<3>();
+    auto actnumsv_ = actnumsv.unchecked<3>();
+
+    for (size_t i = 0; i < ncol; i++) {
+        for (size_t j = 0; j < nrow; j++) {
+            for (size_t k = 0; k < nlay; k++) {
+                size_t idx = i * nrow * nlay + j * nlay + k;
+                if (asmasked && actnumsv_(i, j, k) == 0) {
+                    xmid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
+                    ymid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
+                    zmid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
+                    continue;
+                }
+                auto cr =
+                  grid3d::cell_corners(i, j, k, ncol, nrow, nlay, coordsv, zcornsv);
+
+                xmid_(i, j, k) = 0.125 * (cr[0] + cr[3] + cr[6] + cr[9] + cr[12] +
+                                          cr[15] + cr[18] + cr[21]);
+                ymid_(i, j, k) = 0.125 * (cr[1] + cr[4] + cr[7] + cr[10] + cr[13] +
+                                          cr[16] + cr[19] + cr[22]);
+                zmid_(i, j, k) = 0.125 * (cr[2] + cr[5] + cr[8] + cr[11] + cr[14] +
+                                          cr[17] + cr[20] + cr[23]);
+            }
+        }
+    }
+    return std::make_tuple(xmid, ymid, zmid);
+}
+
+/*
  * Compute cell height above ffl (free fluid level), as input to water saturation. Will
  * return hbot, htop, hmid (bottom of cell, top of cell, midpoint), but compute method
  * depends on option: 1: cell center above ffl, 2: cell corners above ffl

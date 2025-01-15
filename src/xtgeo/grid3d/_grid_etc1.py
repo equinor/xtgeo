@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from packaging.version import parse as versionparse
 
-import xtgeo._internal as _internal
+import xtgeo._internal as _internal  # type: ignore
 from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from xtgeo.common.types import Dimensions
     from xtgeo.grid3d import Grid
     from xtgeo.grid3d.types import METRIC
+    from xtgeo.surface.regular_surface import RegularSurface
     from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
@@ -288,6 +289,88 @@ def get_heights_above_ffl(
         discrete=False,
     )
     return htop, hbot, hmid
+
+
+def get_property_between_surfaces(
+    grid: Grid,
+    top: RegularSurface,
+    base: RegularSurface,
+    value: int = 1,
+    name: str = "between_surfaces",
+) -> GridProperty:
+    """For a grid, create a grid property with value <value> between two surfaces.
+
+    The value would be zero elsewhere, or if surfaces has inactive nodes.
+    """
+    if not isinstance(value, int) or value < 1:
+        raise ValueError(f"Value (integer) must be positive, >= 1, got: {value}")
+
+    grid._xtgformat2()
+    logger.debug("Creating property between surfaces...")
+
+    xmid, ymid, zmid = _internal.grid3d.grid_cell_centers(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv,
+        grid._zcornsv,
+        grid._actnumsv,
+        True,  # asmasked, will give Nan for inactive cells; intentional here
+    )
+
+    top_ = top
+    base_ = base
+    if top.yflip == -1:
+        top_ = top.copy()
+        top_.make_lefthanded()
+        logger.debug("Top surface is right-handed, flipping a copy prior to operation")
+    if base.yflip == -1:
+        base_ = base.copy()
+        base_.make_lefthanded()
+        logger.debug("Base surface is right-handed, flipping a copy prior to operation")
+
+    diff = base_ - top_
+    if (diff.values).all() <= 0:
+        raise ValueError(
+            "Top surface must be equal or above base surface for all nodes"
+        )
+
+    # array is always 0, 1 integer
+    array = _internal.grid3d.grid_assign_value_between_surfaces(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        xmid,
+        ymid,
+        zmid,
+        top_.ncol,
+        top_.nrow,
+        top_.xori,
+        top_.yori,
+        top_.xinc,
+        top_.yinc,
+        top_.rotation,
+        top_.values.filled(np.nan),
+        base_.ncol,
+        base_.nrow,
+        base_.xori,
+        base_.yori,
+        base_.xinc,
+        base_.yinc,
+        base_.rotation,
+        base_.values.filled(np.nan),
+    )
+
+    logger.debug("Creating property between surfaces... done")
+
+    return GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        name=name,
+        values=array * value,
+        discrete=True,
+    )
 
 
 def get_ijk(

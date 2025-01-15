@@ -3,6 +3,7 @@
 #include <pybind11/pybind11.h>  // should be included first according to pybind11 docs
 #include <pybind11/numpy.h>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <tuple>
 
@@ -63,6 +64,30 @@ get_depth_in_cell(const double x,
                   const std::array<double, 24> &corners,
                   int option);
 
+py::array_t<int8_t>
+grid_assign_value_between_surfaces(const size_t ncol,
+                                   const size_t nrow,
+                                   const size_t nlay,
+                                   const py::array_t<double> &xmid,
+                                   const py::array_t<double> &ymid,
+                                   const py::array_t<double> &zmid,
+                                   const size_t top_ncol,
+                                   const size_t top_nrow,
+                                   const double top_xori,
+                                   const double top_yori,
+                                   const double top_xinc,
+                                   const double top_yinc,
+                                   const double top_rotation,
+                                   const py::array_t<double> &top_values,
+                                   const size_t bot_ncol,
+                                   const size_t bot_nrow,
+                                   const double bot_xori,
+                                   const double bot_yori,
+                                   const double bot_xinc,
+                                   const double bot_yinc,
+                                   const double bot_rotation,
+                                   const py::array_t<double> &bot_values);
+
 inline void
 init(py::module &m)
 {
@@ -83,6 +108,9 @@ init(py::module &m)
                  "Determine if a XY point is inside a cell, top or base.");
     m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
                  "Determine the interpolated cell face Z from XY, top or base.");
+    m_grid3d.def("grid_assign_value_between_surfaces",
+                 &grid_assign_value_between_surfaces,
+                 "Make a property that is one if cell center is between two surfaces.");
 }
 
 }  // namespace xtgeo::grid3d
