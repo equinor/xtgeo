@@ -1648,6 +1648,31 @@ class Grid(_Grid3D):
         """
         return _grid_etc1.get_heights_above_ffl(self, ffl=ffl, option=option)
 
+    def get_property_between_surfaces(
+        self,
+        top: xtgeo.RegularSurface,
+        base: xtgeo.RegularSurface,
+        value: int = 1,
+        name: str = "between_surfaces",
+    ) -> GridProperty:
+        """Returns a 3D GridProperty object with <value> between two surfaces."
+
+        Args:
+            top: The bounding top surface (RegularSurface object)
+            base: The bounding base surface (RegularSurface object)
+            value: An integer > 0 to assign to cells between surfaces, 1 as default
+            name: Name of the property, default is "between_surfaces"
+
+        Returns:
+            xtgeo GridProperty object with <value> if cell center is between surfaces,
+            otherwise 0. Note that the property wil be discrete if input value is an
+            integer, otherwise it will be continuous.
+
+        .. versionadded:: 4.5
+
+        """
+        return _grid_etc1.get_property_between_surfaces(self, top, base, value, name)
+
     def get_ijk(
         self,
         names: tuple[str, str, str] = ("IX", "JY", "KZ"),

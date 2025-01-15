@@ -14,9 +14,22 @@ import pytest
 
 import xtgeo
 import xtgeo._internal as _internal  # type: ignore
-from xtgeo.common.log import null_logger
+from xtgeo.common.log import functimer, null_logger
 
 logger = null_logger(__name__)
+
+
+@pytest.fixture(scope="module", name="get_drogondata")
+def fixture_get_drogondata(testdata_path):
+    grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/drogon/2/geogrid.roff")
+    poro = xtgeo.gridproperty_from_file(
+        f"{testdata_path}/3dgrids/drogon/2/geogrid--phit.roff"
+    )
+    facies = xtgeo.gridproperty_from_file(
+        f"{testdata_path}/3dgrids/drogon/2/geogrid--facies.roff"
+    )
+
+    return grid, poro, facies
 
 
 @pytest.mark.parametrize(
@@ -131,3 +144,46 @@ def test_get_depth_in_cell(testdata_path, x, y, cell, position, expected):
         assert np.isnan(depth)
     else:
         assert depth == pytest.approx(expected)
+
+
+@functimer(output="info")
+def test_grid_cell_centers(get_drogondata):
+    """Test cell centers from a grid; assertions are manually verified in RMS."""
+
+    grid, _, _ = get_drogondata  # total cells 899944
+
+    xcor, ycor, zcor = _internal.grid3d.grid_cell_centers(
+        grid.ncol,
+        grid.nrow,
+        grid.nlay,
+        grid._coordsv,
+        grid._zcornsv,
+        grid._actnumsv,
+        True,
+    )
+
+    assert isinstance(xcor, np.ndarray)
+    assert isinstance(ycor, np.ndarray)
+    assert isinstance(zcor, np.ndarray)
+
+    assert xcor.shape == (grid.ncol, grid.nrow, grid.nlay)
+
+    assert np.nanmean(xcor) == pytest.approx(461461.6, abs=0.1)
+    assert np.nanmean(ycor) == pytest.approx(5933128.2, abs=0.1)
+    assert np.nanmean(zcor) == pytest.approx(1731.50, abs=0.1)
+
+    assert np.nanstd(xcor) == pytest.approx(2260.1489, abs=0.1)
+    assert np.nanstd(ycor) == pytest.approx(2945.992, abs=0.1)
+    assert np.nanstd(zcor) == pytest.approx(67.27, abs=0.1)
+
+    assert np.nansum(xcor) == pytest.approx(301686967304.8, abs=0.1)  # RMS 301686967112
+    assert np.nansum(ycor) == pytest.approx(3878865619174.5, abs=0.1)  # 3878865622519
+    assert np.nansum(zcor) == pytest.approx(1131994843.5, abs=0.1)  # 1131994843
+
+    assert xcor[75, 23, 37] == pytest.approx(461837.19, abs=0.1)
+    assert ycor[75, 23, 37] == pytest.approx(5937352, abs=0.1)
+    assert zcor[75, 23, 37] == pytest.approx(1930.57, abs=0.1)
+
+    assert np.isnan(xcor[62, 33, 37])
+    assert np.isnan(ycor[62, 33, 37])
+    assert np.isnan(zcor[62, 33, 37])

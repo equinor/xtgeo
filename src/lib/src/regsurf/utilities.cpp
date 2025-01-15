@@ -230,4 +230,76 @@ find_cell_range(const double xmin,
     return { i_min, i_max, j_min, j_max };
 }
 
+/*
+ * Function to get the Z value at a given X, Y position on a regular 2D grid
+ *
+ * @param x The x-coordinate of the point
+ * @param y The y-coordinate of the point
+ * @param xori The x-coordinate of the regsurf origin
+ * @param yori The y-coordinate of the regsurf origin
+ * @param xinc The x-increment
+ * @param yinc The y-increment
+ * @param ncol The number of columns
+ * @param nrow The number of rows
+ * @param angle_deg The angle of rotation in degrees, anticlockwise from X
+ * @param values The 2D array of values on the regsurf (where Nan values are masked)
+ * @return The interpolated Z value at the given X, Y position
+ */
+
+double
+get_z_from_xy(const double x,
+              const double y,
+              const double xori,
+              const double yori,
+              const double xinc,
+              const double yinc,
+              const size_t ncol,
+              const size_t nrow,
+              const double angle_deg,
+              const py::array_t<double> &values)
+{
+    // Convert the angle to radians
+    double angle_rad = angle_deg * M_PI / 180.0;
+
+    Point p = { x, y, 0 };
+    Point p_rel = inverse_rotate_and_translate(p, xori, yori, std::cos(angle_rad),
+                                               std::sin(angle_rad));
+
+    // Find the indices of the grid cell containing the point
+    int i_temp = static_cast<int>(p_rel.x / xinc);
+    int j_temp = static_cast<int>(p_rel.y / yinc);
+
+    // Check if the point is outside the grid, and return NaN if it is
+    if (i_temp < 0 || i_temp >= static_cast<int>(ncol - 1) || j_temp < 0 ||
+        j_temp >= static_cast<int>(nrow - 1)) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    // Convert to size_t after validation
+    size_t i = static_cast<size_t>(i_temp);
+    size_t j = static_cast<size_t>(j_temp);
+    // Get the values at the corners of the cell
+    auto values_unchecked =
+      values.unchecked<2>();  // Access the array without bounds checking (faster)
+    double z11 = values_unchecked(i, j);
+    double z12 = values_unchecked(i, j + 1);
+    double z21 = values_unchecked(i + 1, j);
+    double z22 = values_unchecked(i + 1, j + 1);
+
+    // Check if any of the corner values are NaN
+    if (std::isnan(z11) || std::isnan(z12) || std::isnan(z21) || std::isnan(z22)) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    // Perform bilinear interpolation
+    double x1 = i * xinc;
+    double x2 = (i + 1) * xinc;
+    double y1 = j * yinc;
+    double y2 = (j + 1) * yinc;
+
+    return geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
+                                              { x2, y1, z21 }, { x1, y2, z12 },
+                                              { x2, y2, z22 });
+}  // get_z_from_xy
+
 }  // namespace xtgeo::regsurf

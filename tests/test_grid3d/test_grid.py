@@ -544,6 +544,48 @@ def test_cell_height_above_ffl(testdata_path):
     assert hmid.values[4, 5, 0] == pytest.approx(22.4055)
 
 
+def test_get_property_between_surfaces(testdata_path):
+    """Generate a marker property between two surfaces."""
+    grd = xtgeo.grid_from_file(testdata_path / REEKFIL4)
+
+    surf1 = xtgeo.surface_from_grid3d(grd)
+    surf1.fill()
+    surf1.values = 1650
+    surf2 = surf1.copy()
+    surf2.values = 1700
+
+    prop = grd.get_property_between_surfaces(surf1, surf2)
+
+    assert prop.values.sum() == 137269  # verified with similar method in RMS
+
+    # multiply values with 2
+    prop2 = grd.get_property_between_surfaces(surf1, surf2, value=2)
+    assert prop2.values.sum() == 137269 * 2
+
+    # swap one if the surfaces so yflip becomes -1
+    surf1.make_righthanded()
+    prop2 = grd.get_property_between_surfaces(surf1, surf2)
+    assert prop2.values.sum() == 137269
+
+
+def test_get_property_between_surfaces_w_holes(testdata_path):
+    """Generate a marker property between two surfaces, where surfaces has holes."""
+    grd = xtgeo.grid_from_file(testdata_path / REEKFIL4)
+
+    surf1 = xtgeo.surface_from_grid3d(grd)
+    surf1.fill()
+    surf1.values = 1650
+    surf2 = surf1.copy()
+    surf2.values = 1700
+
+    surf1.values.mask[60:70, 70:75] = True
+    surf2.values.mask[50:70, 60:71] = True
+
+    prop = grd.get_property_between_surfaces(surf1, surf2)
+
+    assert prop.values.sum() == 131130  # verified manually in RMS
+
+
 def test_bad_egrid_ends_before_kw(tmp_path):
     egrid_file = tmp_path / "test.egrid"
     with open(egrid_file, "wb") as fh:
@@ -758,7 +800,7 @@ def test_get_vtk_geometries_box(show_plot):
 
     if show_plot:
         try:
-            import pyvista as pv
+            import pyvista as pv  # type: ignore
         except ImportError:
             warnings.warn("show_plot is active but no pyvista installed")
             return
@@ -781,7 +823,7 @@ def test_get_vtk_geometries_emerald(show_plot, testdata_path):
 
     if show_plot:
         try:
-            import pyvista as pv
+            import pyvista as pv  # type: ignore
         except ImportError:
             warnings.warn("show_plot is active but no pyvista installed")
             return

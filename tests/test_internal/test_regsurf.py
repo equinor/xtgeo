@@ -14,7 +14,7 @@ import pytest
 
 import xtgeo
 import xtgeo._internal as _internal  # type: ignore
-from xtgeo.common.log import null_logger
+from xtgeo.common.log import functimer, null_logger
 
 logger = null_logger(__name__)
 
@@ -301,3 +301,96 @@ def test_sample_grid3d_layer_num_threads(
 
     # check if the top layer is exactly the same for all threads
     assert np.array_equal(top, keep_top_store["keep_top"])
+
+
+@pytest.mark.parametrize(
+    "x, y, rotation, expected",
+    [
+        (2.746, 1.262, 0, 17.73800),
+        (2.096, 4.897, 0, 17.473),
+        (2.746, 2.262, 0, np.nan),
+        (1.9999999999, 1.999999999, 0, 14.0),
+        (1999, 1999, 0, np.nan),  # far outside
+        (2.746, 1.262, 10, 18.3065),
+        (2.096, 4.897, 10, 21.9457),
+        (2.746, 1.262, 20, 18.319),
+        (2.096, 4.897, 20, 25.751),
+        (-0.470, -3.354, 210, np.nan),
+        (-0.013, -5.148, 210, 19.963),  # rms gets 19.959
+        (-1.433, -5.359, 210, 27.448),  # rms gets 27.452
+    ],
+)
+def test_get_z_from_xy_simple(x, y, rotation, expected):
+    """Test values are manually verified by inspection in RMS"""
+    values = np.array(range(30)).reshape(5, 6).astype(float)
+
+    values[2, 3] = np.nan
+    values[4, 5] = np.nan
+
+    surf = xtgeo.RegularSurface(
+        xori=0, yori=0, xinc=1, yinc=1, ncol=5, nrow=6, rotation=rotation, values=values
+    )
+
+    z_value = _internal.regsurf.get_z_from_xy(
+        x,
+        y,
+        surf.xori,
+        surf.yori,
+        surf.xinc,
+        surf.yinc,
+        surf.ncol,
+        surf.nrow,
+        surf.rotation,
+        surf.values,
+    )
+
+    if np.isnan(expected):
+        assert np.isnan(z_value)
+    else:
+        assert z_value == pytest.approx(expected, abs=0.001)
+
+
+@functimer
+def test_get_z_from_xy(get_drogondata):
+    _, _, _, srf = get_drogondata
+
+    surf = srf.copy()
+
+    z_value = _internal.regsurf.get_z_from_xy(
+        460103.00,
+        5934855.00,
+        surf.xori,
+        surf.yori,
+        surf.xinc,
+        surf.yinc,
+        surf.ncol,
+        surf.nrow,
+        surf.rotation,
+        surf.values,
+    )
+
+    assert z_value == pytest.approx(1594.303, abs=0.001)
+
+    # make ntimes random points and check the time (cf. @functimer with debug logging)
+    ntimes = 100000
+    xmin = 458000
+    xmax = 468000
+    ymin = 5927000
+    ymax = 5938000
+    logger.debug("Start random points loop... %s", ntimes)
+    for _ in range(ntimes):
+        x = np.random.uniform(xmin, xmax)
+        y = np.random.uniform(ymin, ymax)
+        _internal.regsurf.get_z_from_xy(
+            x,
+            y,
+            surf.xori,
+            surf.yori,
+            surf.xinc,
+            surf.yinc,
+            surf.ncol,
+            surf.nrow,
+            surf.rotation,
+            surf.values,
+        )
+    logger.debug("End random points loop")
