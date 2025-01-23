@@ -136,7 +136,7 @@ SWOF
  0.5 2.0E-6 0.1 0.0
  1.0 1.0E-5 0.0 0.0 /
 PVTW
-{self.convert_pressure(270.0)} 1.0 {1.0 / self.convert_pressure(1.0 / 5.0E-5)} 0.3 0.0 /
+{self.convert_pressure(270.0)} 1.0 {1.0 / self.convert_pressure(1.0 / 5.0e-5)} 0.3 0.0 /
 DENSITY
  {self.convert_density(860.0)}
  {self.convert_density(1030.0)}

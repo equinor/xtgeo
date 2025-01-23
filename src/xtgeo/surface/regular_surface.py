@@ -315,8 +315,7 @@ def _allow_deprecated_default_init(func):
         # corner cases where we provide some positional arguments
         # as keyword arguments.
         _deprecation_msg = (
-            "X is a required argument, will no "
-            "longer be defaulted in xtgeo version 4.0"
+            "X is a required argument, will no longer be defaulted in xtgeo version 4.0"
         )
         if len(args) != 4:
             if "ncol" not in kwargs and len(args) != 1:

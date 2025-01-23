@@ -964,7 +964,7 @@ def inactivate_inside(
     )
 
     if ier == 1:
-        raise RuntimeError("Problems with one or more polygons. " "Not closed?")
+        raise RuntimeError("Problems with one or more polygons. Not closed?")
 
 
 def collapse_inactive_cells(self: Grid) -> None:

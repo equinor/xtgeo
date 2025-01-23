@@ -29,9 +29,9 @@ def test_intehead_iphs_when_e300():
     intehead_values = [0] * 100
     intehead_values[94] = 300  # simulator is Ecl 300
     intehead_values[14] = 8  # 14 is IPHS code in E100 but no. tracers in E300, here 8
-    assert (
-        InteHead(intehead_values).phases == Phases.OIL_WATER_GAS
-    ), "phases always OIL_WATER_GAS in Eclipse 300"
+    assert InteHead(intehead_values).phases == Phases.OIL_WATER_GAS, (
+        "phases always OIL_WATER_GAS in Eclipse 300"
+    )
 
 
 def test_intehead_iphs_fail_when_outsiderange_e100():
