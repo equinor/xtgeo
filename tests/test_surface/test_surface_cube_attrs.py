@@ -4,6 +4,7 @@ import warnings
 import pytest
 
 import xtgeo
+from xtgeo.common.log import functimer
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -199,6 +200,7 @@ def test_various_attrs_algorithm3(loadsfile1):
     assert surfx.values.mean() == pytest.approx(529.328, abs=0.01)
 
 
+@functimer(output="info")
 def test_various_attrs_rewrite(loadsfile1):
     """Using 'compute_attributes_in_window() instead of 'slice_cube_window()'"""
     cube1 = loadsfile1

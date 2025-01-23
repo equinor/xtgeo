@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <xtgeo/cube.hpp>
 #include <xtgeo/numerics.hpp>
 
 namespace py = pybind11;
@@ -20,20 +21,17 @@ namespace xtgeo::cube {
  * technically be done in numpy, but this approach is more efficient as it can do all
  * operations per column in one operation.
  *
- * @param ncol Cube dimensions ncol
- * @param nrow Cube dimensions nrow
- * @param nlay Cube dimensions nlay
- * @param cubev Cube values vector
+ * @param cube Cube instance
  * @return A map of arrays: min, max, mean, var, rms, maxpos, maxneg, maxabs,
  * meanpos, meanneg, meanabs, sumpos, sumneg, sumabs
  */
-
 std::unordered_map<std::string, py::array_t<double>>
-cube_stats_along_z(const size_t ncol,
-                   const size_t nrow,
-                   const size_t nlay,
-                   const py::array_t<float> &cubev)
+cube_stats_along_z(const Cube &cube)
 {
+    size_t ncol = cube.ncol;
+    size_t nrow = cube.nrow;
+    size_t nlay = cube.nlay;
+
     py::array_t<double> minv({ ncol, nrow });
     py::array_t<double> maxv({ ncol, nrow });
     py::array_t<double> meanv({ ncol, nrow });
@@ -49,7 +47,7 @@ cube_stats_along_z(const size_t ncol,
     py::array_t<double> sumnegv({ ncol, nrow });
     py::array_t<double> sumabsv({ ncol, nrow });
 
-    auto cubev_ = cubev.unchecked<3>();  // Use unchecked for efficiency
+    auto cubev_ = cube.values.unchecked<3>();  // Use unchecked for efficiency
     auto minv_ = minv.mutable_unchecked<2>();
     auto maxv_ = maxv.mutable_unchecked<2>();
     auto meanv_ = meanv.mutable_unchecked<2>();

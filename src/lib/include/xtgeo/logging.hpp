@@ -11,8 +11,7 @@ namespace py = pybind11;
 class Logger
 {
 public:
-    explicit Logger(const std::string &name)
-      : logger_name(name)
+    explicit Logger(const std::string &name) : logger_name(name)
     {
         py::gil_scoped_acquire acquire;  // Acquire GIL (Global Interpreter Lock)
         py::object logging = py::module::import("logging");

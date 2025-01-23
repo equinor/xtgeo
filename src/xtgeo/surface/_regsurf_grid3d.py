@@ -215,20 +215,10 @@ class DeriveSurfaceFromGrid3D:
     def _sample_regsurf_from_grid3d(self) -> None:
         """Sample the grid3d to get the values for the regular surface."""
 
-        iindex, jindex, d_top, d_bot, mask = _internal.regsurf.sample_grid3d_layer(
-            self._tempsurf.ncol,
-            self._tempsurf.nrow,
-            self._tempsurf.xori,
-            self._tempsurf.yori,
-            self._tempsurf.xinc,
-            self._tempsurf.yinc,
-            self._tempsurf.rotation,
-            self.grid.ncol,
-            self.grid.nrow,
-            self.grid.nlay,
-            self.grid._coordsv,
-            self.grid._zcornsv,
-            self.grid._actnumsv,
+        regsurf_cpp = _internal.regsurf.RegularSurface(self._tempsurf)
+
+        iindex, jindex, d_top, d_bot, mask = regsurf_cpp.sample_grid3d_layer(
+            _internal.grid3d.Grid(self.grid),
             self._klayer,
             {"top": 0, "bot": 1, "base": 1}.get(self.index_position, 2),
             -1,  # number of threads for OpenMP; -1 means let the system decide

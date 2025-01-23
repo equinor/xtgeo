@@ -4,6 +4,7 @@
 #include <xtgeo/grid3d.hpp>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/regsurf.hpp>
+#include <xtgeo/xyz.hpp>
 
 PYBIND11_MODULE(_internal, m)
 {
@@ -15,4 +16,5 @@ PYBIND11_MODULE(_internal, m)
     xtgeo::grid3d::init(m);
     xtgeo::regsurf::init(m);
     xtgeo::numerics::init(m);
+    xtgeo::xyz::init(m);
 }

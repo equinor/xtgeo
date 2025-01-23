@@ -20,42 +20,19 @@ namespace xtgeo::regsurf {
 /*
  * @brief Sample I J and depths from 3D grid to regularsurface
  *
- * @param ncol Number of columns in the regular surface
- * @param nrow Number of rows in the regular surface
- * @param xori X origin of the regular surface
- * @param yori Y origin of the regular surface
- * @param xinc X increment of the regular surface
- * @param yinc Y increment of the regular surface
- * @param rotation Rotation of the regular surface
- * @param ncolgrid3d Number of columns in the 3D grid
- * @param nrowgrid3d Number of rows in the 3D grid
- * @param nlaygrid3d Number of layers in the 3D grid
- * @param coordsv Coordinates of the 3D grid
- * @param zcornsv Z corners of the 3D grid
- * @param actnumsv Active cells of the 3D grid
+ * @param regsurf RegularSurface object representing the surface input
+ * @param grd Grid object representing the 3D grid
  * @param klayer The layer to sample, base 0
  * @param index_position 0: top, 1: base|bot, 2: center
  * @return Tuple of 5 numpy arrays: I index, J index, Depth_top, Depth_base, Inactive
  */
-
 std::tuple<py::array_t<int>,
            py::array_t<int>,
            py::array_t<double>,
            py::array_t<double>,
            py::array_t<bool>>
-sample_grid3d_layer(const size_t ncol,
-                    const size_t nrow,
-                    const double xori,
-                    const double yori,
-                    const double xinc,
-                    const double yinc,
-                    const double rotation,
-                    const size_t ncolgrid3d,
-                    const size_t nrowgrid3d,
-                    const size_t nlaygrid3d,
-                    const py::array_t<double> &coordsv,
-                    const py::array_t<float> &zcornsv,
-                    const py::array_t<int> &actnumsv,
+sample_grid3d_layer(const RegularSurface &regsurf,
+                    const grid3d::Grid &grd,
                     const size_t klayer,
                     const int index_position,  // 0: top, 1: base|bot, 2: center
                     const int num_threads = -1)
@@ -66,17 +43,20 @@ sample_grid3d_layer(const size_t ncol,
     #endif
     // clang-format on
 
-    // Check if yinc is negative which may occur if the RegilarSurface is flipped
-    if (yinc < 0) {
-        throw py::value_error("yinc must be positive, but got " + std::to_string(yinc));
+    // Check if yinc is negative which may occur if the RegularSurface is flipped
+    if (regsurf.yinc < 0) {
+        throw py::value_error("yinc must be positive, but got " +
+                              std::to_string(regsurf.yinc));
     }
 
+    auto actnumsv_ = grd.actnumsv.unchecked<3>();
+
     // Initialize 2D numpy arrays to store the sampled values
-    py::array_t<int> iindex({ ncol, nrow });
-    py::array_t<int> jindex({ ncol, nrow });
-    py::array_t<double> depth_top({ ncol, nrow });
-    py::array_t<double> depth_bot({ ncol, nrow });
-    py::array_t<bool> inactive({ ncol, nrow });
+    py::array_t<int> iindex({ regsurf.ncol, regsurf.nrow });
+    py::array_t<int> jindex({ regsurf.ncol, regsurf.nrow });
+    py::array_t<double> depth_top({ regsurf.ncol, regsurf.nrow });
+    py::array_t<double> depth_bot({ regsurf.ncol, regsurf.nrow });
+    py::array_t<bool> inactive({ regsurf.ncol, regsurf.nrow });
 
     // Get unchecked access to the arrays
     auto iindex_ = iindex.mutable_unchecked<2>();
@@ -86,29 +66,29 @@ sample_grid3d_layer(const size_t ncol,
     auto inactive_ = inactive.mutable_unchecked<2>();
 
     // Set all elements to -1 or undef initially
-    std::fill(iindex_.mutable_data(0, 0), iindex_.mutable_data(0, 0) + (ncol * nrow),
-              -1);
-    std::fill(jindex_.mutable_data(0, 0), jindex_.mutable_data(0, 0) + (ncol * nrow),
-              -1);
+    std::fill(iindex_.mutable_data(0, 0),
+              iindex_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow), -1);
+    std::fill(jindex_.mutable_data(0, 0),
+              jindex_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow), -1);
     std::fill(inactive_.mutable_data(0, 0),
-              inactive_.mutable_data(0, 0) + (ncol * nrow), false);
+              inactive_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow), false);
 
     std::fill(depth_top_.mutable_data(0, 0),
-              depth_top_.mutable_data(0, 0) + (ncol * nrow), numerics::QUIET_NAN);
+              depth_top_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow),
+              numerics::QUIET_NAN);
     std::fill(depth_bot_.mutable_data(0, 0),
-              depth_bot_.mutable_data(0, 0) + (ncol * nrow), numerics::QUIET_NAN);
+              depth_bot_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow),
+              numerics::QUIET_NAN);
 
     // clang-format off
     #pragma omp parallel for collapse(2) schedule(static)
     // clang-format on
 
-    for (size_t icell = 0; icell < ncolgrid3d; icell++) {
-        for (size_t jcell = 0; jcell < nrowgrid3d; jcell++) {
+    for (size_t icell = 0; icell < grd.ncol; icell++) {
+        for (size_t jcell = 0; jcell < grd.nrow; jcell++) {
 
             // Get cell corners
-            auto corners =
-              grid3d::cell_corners(icell, jcell, klayer, ncolgrid3d, nrowgrid3d,
-                                   nlaygrid3d, coordsv, zcornsv);
+            auto corners = grid3d::get_cell_corners_from_ijk(grd, icell, jcell, klayer);
 
             // Find the min/max of the cell corners. This is the bounding box of the
             // cell and will narrow the search for the points that are within the
@@ -119,8 +99,7 @@ sample_grid3d_layer(const size_t ncol,
             // Find the range of the cells (expanded <expand> cell) in the local map
             int expand = 0;
             auto [mxmin, mxmax, mymin, mymax] =
-              regsurf::find_cell_range(xmin, xmax, ymin, ymax, xori, yori, xinc, yinc,
-                                       rotation, ncol, nrow, expand);
+              regsurf::find_cell_range(regsurf, xmin, xmax, ymin, ymax, expand);
 
             if (mxmin == -1) {
                 // Cell is outside the local map
@@ -131,8 +110,7 @@ sample_grid3d_layer(const size_t ncol,
             for (size_t j = mymin; j <= mymax; j++) {
                 for (size_t i = mxmin; i <= mxmax; i++) {
 
-                    auto p = regsurf::get_xy_from_ij(i, j, xori, yori, xinc, yinc, ncol,
-                                                     nrow, rotation);
+                    auto p = regsurf::get_xy_from_ij(regsurf, i, j);
                     // Check if the point is within the cell
                     bool is_inside_top =
                       grid3d::is_xy_point_in_cell(p.x, p.y, corners, 0);
@@ -179,7 +157,7 @@ sample_grid3d_layer(const size_t ncol,
                     // the mid cell determines the active status and i, j index
                     if (is_inside_mid) {
                         // Check if the cell is active or not
-                        if (actnumsv.at(icell, jcell, klayer) == 0) {
+                        if (actnumsv_(icell, jcell, klayer) == 0) {
                             inactive_(i, j) = true;
                         }
                         if (index_position < 0 || index_position > 1) {
