@@ -13,9 +13,9 @@ from packaging.version import parse as versionparse
 
 import xtgeo._internal as _internal  # type: ignore
 from xtgeo import _cxtgeo
-from xtgeo.common import null_logger
 from xtgeo.common.calc import find_flip
 from xtgeo.common.constants import UNDEF_INT, UNDEF_LIMIT
+from xtgeo.common.log import null_logger
 from xtgeo.grid3d.grid_properties import GridProperties
 from xtgeo.xyz.polygons import Polygons
 
@@ -213,16 +213,9 @@ def get_bulk_volume(
         raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
     grid._xtgformat2()
 
-    bulk_values = _internal.grid3d.grid_cell_volumes(
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv.ravel(),
-        grid._zcornsv.ravel(),
-        grid._actnumsv.ravel(),
-        precision,
-        asmasked,
-    )
+    grid_cpp = _internal.grid3d.Grid(grid)
+
+    bulk_values = grid_cpp.get_cell_volumes(precision, asmasked)
     if asmasked:
         bulk_values = np.ma.masked_greater(bulk_values, UNDEF_LIMIT)
 
@@ -253,13 +246,8 @@ def get_heights_above_ffl(
 
     grid._xtgformat2()
 
-    htop_arr, hbot_arr, hmid_arr = _internal.grid3d.grid_height_above_ffl(
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv.ravel(),
-        grid._zcornsv.ravel(),
-        grid._actnumsv.ravel(),
+    grid_cpp = _internal.grid3d.Grid(grid)
+    htop_arr, hbot_arr, hmid_arr = grid_cpp.get_height_above_ffl(
         ffl.values.ravel(),
         1 if option == "cell_center_above_ffl" else 2,
     )
@@ -308,15 +296,7 @@ def get_property_between_surfaces(
     grid._xtgformat2()
     logger.debug("Creating property between surfaces...")
 
-    xmid, ymid, zmid = _internal.grid3d.grid_cell_centers(
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv,
-        grid._zcornsv,
-        grid._actnumsv,
-        True,  # asmasked, will give Nan for inactive cells; intentional here
-    )
+    grid_cpp = _internal.grid3d.Grid(grid)
 
     top_ = top
     base_ = base
@@ -336,29 +316,9 @@ def get_property_between_surfaces(
         )
 
     # array is always 0, 1 integer
-    array = _internal.grid3d.grid_assign_value_between_surfaces(
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        xmid,
-        ymid,
-        zmid,
-        top_.ncol,
-        top_.nrow,
-        top_.xori,
-        top_.yori,
-        top_.xinc,
-        top_.yinc,
-        top_.rotation,
-        top_.values.filled(np.nan),
-        base_.ncol,
-        base_.nrow,
-        base_.xori,
-        base_.yori,
-        base_.xinc,
-        base_.yinc,
-        base_.rotation,
-        base_.values.filled(np.nan),
+    array = grid_cpp.get_gridprop_value_between_surfaces(
+        _internal.regsurf.RegularSurface(top_),
+        _internal.regsurf.RegularSurface(base_),
     )
 
     logger.debug("Creating property between surfaces... done")
@@ -538,15 +498,8 @@ def get_xyz(
     self._xtgformat2()
 
     # note: using _internal here is 2-3 times faster than using the former cxtgeo!
-    xv, yv, zv = _internal.grid3d.grid_cell_centers(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        asmasked,
-    )
+    grid_cpp = _internal.grid3d.Grid(self)
+    xv, yv, zv = grid_cpp.get_cell_centers(asmasked)
 
     xv = np.ma.masked_invalid(xv)
     yv = np.ma.masked_invalid(yv)
@@ -600,20 +553,18 @@ def get_xyz_cell_corners(
         if np.all(iact == 0):
             return None
 
-    corners = _internal.grid3d.cell_corners(
+    corners = _internal.grid3d.Grid(grid).get_cell_corners_from_ijk(
         i + shift - 1,
         j + shift - 1,
         k + shift - 1,
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv.ravel(),
-        grid._zcornsv.ravel(),
     )
     # Existing functionality relies on the grid being in xtgformat1 after this
     # function returns. Most probably as a result of some invocation of
     # `estimate_flip` or `ijk_handedness` or `reverse_row_axis` somewhere.
     grid._xtgformat1()
+
+    corners = corners.to_numpy().flatten().tolist()
+
     return tuple(corners)
 
 
@@ -786,15 +737,10 @@ def get_cell_volume(
         if np.all(iact == 0):
             return None
 
-    corners = _internal.grid3d.cell_corners(
+    corners = _internal.grid3d.Grid(grid).get_cell_corners_from_ijk(
         i + shift - 1,
         j + shift - 1,
         k + shift - 1,
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv,
-        grid._zcornsv,
     )
     return _internal.geometry.hexahedron_volume(corners, precision)
 

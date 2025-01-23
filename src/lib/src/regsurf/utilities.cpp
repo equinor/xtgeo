@@ -5,12 +5,15 @@
 #include <cstddef>
 #include <tuple>
 #include <xtgeo/geometry.hpp>
-#include <xtgeo/point.hpp>
 #include <xtgeo/regsurf.hpp>
+#include <xtgeo/types.hpp>
+#include <xtgeo/xyz.hpp>
 
 namespace py = pybind11;
 
 namespace xtgeo::regsurf {
+
+using xyz::Point;
 
 // Function to rotate a point (x, y) around the origin (xori, yori) by a given angle (in
 // radians)
@@ -53,61 +56,48 @@ rotate_point(const Point p,
  * @return A tuple of 4 points representing the outer corners of the regsurf
  */
 std::tuple<Point, Point, Point, Point>
-get_outer_corners(const double xori,
-                  const double yori,
-                  const double xinc,
-                  const double yinc,
-                  const size_t ncol,
-                  const size_t nrow,
-                  const double angle_deg)
+get_outer_corners(const RegularSurface &regsurf)
 {
     // Convert the angle to radians
-    double angle_rad = angle_deg * M_PI / 180.0;
+    double angle_rad = regsurf.rotation * M_PI / 180.0;
 
     // Calculate the unrotated corners of the cell (i, j)
-    Point bottom_left = { xori + 0 * xinc, yori + 0 * yinc, 0 };
-    Point bottom_right = { xori + ncol * xinc, yori + 0 * yinc, 0 };
-    Point top_right = { xori + ncol * xinc, yori + nrow * yinc, 0 };
-    Point top_left = { xori + 0 * xinc, yori + nrow * yinc, 0 };
+    Point bottom_left = { regsurf.xori + 0 * regsurf.xinc,
+                          regsurf.yori + 0 * regsurf.yinc, 0 };
+    Point bottom_right = { regsurf.xori + regsurf.ncol * regsurf.xinc,
+                           regsurf.yori + 0 * regsurf.yinc, 0 };
+    Point top_right = { regsurf.xori + regsurf.ncol * regsurf.xinc,
+                        regsurf.yori + regsurf.nrow * regsurf.yinc, 0 };
+    Point top_left = { regsurf.xori + 0 * regsurf.xinc,
+                       regsurf.yori + regsurf.nrow * regsurf.yinc, 0 };
 
     // Get the outer corners if the 2D grid,
-    Point bl_rot = rotate_point(bottom_left, xori, yori, angle_rad);
-    Point br_rot = rotate_point(bottom_right, xori, yori, angle_rad);
-    Point tr_rot = rotate_point(top_right, xori, yori, angle_rad);
-    Point tl_rot = rotate_point(top_left, xori, yori, angle_rad);
+    Point bl_rot = rotate_point(bottom_left, regsurf.xori, regsurf.yori, angle_rad);
+    Point br_rot = rotate_point(bottom_right, regsurf.xori, regsurf.yori, angle_rad);
+    Point tr_rot = rotate_point(top_right, regsurf.xori, regsurf.yori, angle_rad);
+    Point tl_rot = rotate_point(top_left, regsurf.xori, regsurf.yori, angle_rad);
     return { bl_rot, br_rot, tl_rot, tr_rot };  // note order
 }
 
 /*
  * Function to get the X and Y given I and J. Z in the returned Point will be 0
- * @param xori The x-coordinate of the origin
- * @param yori The y-coordinate of the origin
- * @param xinc The x-increment
- * @param yinc The y-increment
- * @param ncol The number of columns
- * @param nrow The number of rows
- * @param angle_deg The angle of rotation in degrees
+ * @param regsurf The RegularSurface struct representing the surface
+ * @param i The i-coordinate of the origin
+ * @param j The j-coordinate of the origin
  * @return A tuple of 4 points representing the outer corners of the regsurf
  */
 Point
-get_xy_from_ij(const size_t i,
-               const size_t j,
-               const double xori,
-               const double yori,
-               const double xinc,
-               const double yinc,
-               const size_t ncol,
-               const size_t nrow,
-               const double angle_deg)
+get_xy_from_ij(const RegularSurface &regsurf, const size_t i, const size_t j)
 {
     // Convert the angle to radians
-    double angle_rad = angle_deg * M_PI / 180.0;
+    double angle_rad = regsurf.rotation * M_PI / 180.0;
 
     // Calculate the unrotated corners of the cell (i, j)
-    Point point = { xori + i * xinc, yori + j * yinc, 0 };
+    Point point = { regsurf.xori + i * regsurf.xinc, regsurf.yori + j * regsurf.yinc,
+                    0 };
 
     // Get the position of the point in the rotated grid
-    Point point_rot = rotate_point(point, xori, yori, angle_rad);
+    Point point_rot = rotate_point(point, regsurf.xori, regsurf.yori, angle_rad);
     return point_rot;
 }
 
@@ -144,39 +134,29 @@ get_index(const double coord, const double increment, const int max_index)
     return index;
 }
 
+using regsurf::RegularSurface;
+
 /*
  * Find the range of grid cells within the box defined xmin, xmax, ymin, ymax
+ * @param regsurf The RegularSurface object representing the surface
  * @param xmin The minimum x-coordinate of the box
  * @param xmax The maximum x-coordinate of the box
  * @param ymin The minimum y-coordinate of the box
  * @param ymax The maximum y-coordinate of the box
- * @param xori The x-coordinate of the origin
- * @param yori The y-coordinate of the origin
- * @param xinc The x-increment
- * @param yinc The y-increment
- * @param rotation_degrees The angle of rotation in degrees
- * @param ncol The number of columns
- * @param nrow The number of rows
  * @param expand The number of cells to expand the range by
  * @return A tuple of 4 integers representing the range of grid cells (i_min, i_max,
  * j_min, j_max)
  */
 std::tuple<int, int, int, int>
-find_cell_range(const double xmin,
+find_cell_range(const RegularSurface &regsurf,
+                const double xmin,
                 const double xmax,
                 const double ymin,
                 const double ymax,
-                const double xori,
-                const double yori,
-                const double xinc,
-                const double yinc,
-                const double rotation_degrees,
-                const size_t ncol,
-                const size_t nrow,
                 const int expand)
 {
     // Convert rotation to radians
-    double angle = rotation_degrees * M_PI / 180.0;
+    double angle = regsurf.rotation * M_PI / 180.0;
     double cos_a = std::cos(angle);
     double sin_a = std::sin(angle);
 
@@ -189,20 +169,20 @@ find_cell_range(const double xmin,
     };
 
     // Variables to hold min/max indices
-    int i_min = ncol;
+    int i_min = regsurf.ncol;
     int i_max = -1;
-    int j_min = nrow;
+    int j_min = regsurf.nrow;
     int j_max = -1;
 
     // Iterate over each corner, transform it, and find grid indices
     for (size_t i = 0; i < 4; ++i) {
         // Transform the corner from world to grid coordinates
-        Point grid_coord =
-          inverse_rotate_and_translate(corners[i], xori, yori, cos_a, sin_a);
+        Point grid2d_coord = inverse_rotate_and_translate(corners[i], regsurf.xori,
+                                                          regsurf.yori, cos_a, sin_a);
 
         // Find grid indices for columns (i for NCOL) and rows (j for NROW)
-        int i_grid = get_index(grid_coord.x, xinc, ncol);
-        int j_grid = get_index(grid_coord.y, yinc, nrow);
+        int i_grid = get_index(grid2d_coord.x, regsurf.xinc, regsurf.ncol);
+        int j_grid = get_index(grid2d_coord.y, regsurf.yinc, regsurf.nrow);
 
         // Update the range of indices, ensuring they are within the grid bounds
         i_min = std::min(i_min, i_grid);
@@ -218,9 +198,9 @@ find_cell_range(const double xmin,
 
     // Ensure the indices are within the grid bounds
     i_min = std::max(0, i_min);
-    i_max = std::min(static_cast<int>(ncol - 1), i_max);
+    i_max = std::min(static_cast<int>(regsurf.ncol - 1), i_max);
     j_min = std::max(0, j_min);
-    j_max = std::min(static_cast<int>(nrow - 1), j_max);
+    j_max = std::min(static_cast<int>(regsurf.nrow - 1), j_max);
 
     if (i_min > i_max || j_min > j_max) {
         // Return an invalid range if the indices are out of bounds
@@ -233,69 +213,56 @@ find_cell_range(const double xmin,
 /*
  * Function to get the Z value at a given X, Y position on a regular 2D grid
  *
+ * @param regsurf The RegularSurface object representing the surface
  * @param x The x-coordinate of the point
  * @param y The y-coordinate of the point
- * @param xori The x-coordinate of the regsurf origin
- * @param yori The y-coordinate of the regsurf origin
- * @param xinc The x-increment
- * @param yinc The y-increment
- * @param ncol The number of columns
- * @param nrow The number of rows
- * @param angle_deg The angle of rotation in degrees, anticlockwise from X
- * @param values The 2D array of values on the regsurf (where Nan values are masked)
  * @return The interpolated Z value at the given X, Y position
  */
 
 double
-get_z_from_xy(const double x,
-              const double y,
-              const double xori,
-              const double yori,
-              const double xinc,
-              const double yinc,
-              const size_t ncol,
-              const size_t nrow,
-              const double angle_deg,
-              const py::array_t<double> &values)
+get_z_from_xy(const RegularSurface &regsurf, const double x, const double y)
 {
     // Convert the angle to radians
-    double angle_rad = angle_deg * M_PI / 180.0;
+    double angle_rad = regsurf.rotation * M_PI / 180.0;
 
     Point p = { x, y, 0 };
-    Point p_rel = inverse_rotate_and_translate(p, xori, yori, std::cos(angle_rad),
-                                               std::sin(angle_rad));
+    Point p_rel = inverse_rotate_and_translate(
+      p, regsurf.xori, regsurf.yori, std::cos(angle_rad), std::sin(angle_rad));
 
     // Find the indices of the grid cell containing the point
-    int i_temp = static_cast<int>(p_rel.x / xinc);
-    int j_temp = static_cast<int>(p_rel.y / yinc);
+    int i_temp = static_cast<int>(p_rel.x / regsurf.xinc);
+    int j_temp = static_cast<int>(p_rel.y / regsurf.yinc);
 
     // Check if the point is outside the grid, and return NaN if it is
-    if (i_temp < 0 || i_temp >= static_cast<int>(ncol - 1) || j_temp < 0 ||
-        j_temp >= static_cast<int>(nrow - 1)) {
+    if (i_temp < 0 || i_temp >= static_cast<int>(regsurf.ncol - 1) || j_temp < 0 ||
+        j_temp >= static_cast<int>(regsurf.nrow - 1)) {
         return std::numeric_limits<double>::quiet_NaN();
     }
 
     // Convert to size_t after validation
     size_t i = static_cast<size_t>(i_temp);
     size_t j = static_cast<size_t>(j_temp);
+    // Access the array without bounds checking
+    auto values_unchecked = regsurf.values.unchecked<2>();
+    auto mask_unchecked = regsurf.mask.unchecked<2>();
+
     // Get the values at the corners of the cell
-    auto values_unchecked =
-      values.unchecked<2>();  // Access the array without bounds checking (faster)
     double z11 = values_unchecked(i, j);
     double z12 = values_unchecked(i, j + 1);
     double z21 = values_unchecked(i + 1, j);
     double z22 = values_unchecked(i + 1, j + 1);
 
-    // Check if any of the corner values are NaN
-    if (std::isnan(z11) || std::isnan(z12) || std::isnan(z21) || std::isnan(z22)) {
+    // Check if any of the corner values are masked
+    if (mask_unchecked(i, j) || mask_unchecked(i, j + 1) || mask_unchecked(i + 1, j) ||
+        mask_unchecked(i + 1, j + 1)) {
         return std::numeric_limits<double>::quiet_NaN();
     }
 
     // Perform bilinear interpolation
-    double x1 = i * xinc;
-    double x2 = (i + 1) * xinc;
-    double y1 = j * yinc;
-    double y2 = (j + 1) * yinc;
+    double x1 = i * regsurf.xinc;
+    double x2 = (i + 1) * regsurf.xinc;
+    double y1 = j * regsurf.yinc;
+    double y2 = (j + 1) * regsurf.yinc;
 
     return geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
                                               { x2, y1, z21 }, { x1, y2, z12 },

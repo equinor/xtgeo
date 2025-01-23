@@ -5,6 +5,8 @@
 #include <tuple>
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/grid3d.hpp>
+#include <xtgeo/numerics.hpp>
+#include <xtgeo/types.hpp>
 #include <xtgeo/xtgeo.h>
 
 namespace py = pybind11;
@@ -15,40 +17,28 @@ namespace xtgeo::grid3d {
  * Compute bulk volume of cells in a grid. Tests shows that this is very close
  * to what RMS will compute; almost identical
  *
- * @param ncol Grid dimensions ncol/nx
- * @param nrow Grid dimensions nrow/ny
- * @param nlay Grid dimensions nlay/nz
- * @param coordsv Grid Z coordinates vector
- * @param zcornsv Grid Z corners vector
- * @param actumsv Active cells vector
- * @param asmaked Process grid cells as masked
+ * @param grd Grid struct
+ * @param precision The precision to calculate the volume to
+ * @param asmasked Process grid cells as masked (bool)
  * @return An array containing the volume of every cell
  */
 py::array_t<double>
-grid_cell_volumes(const size_t ncol,
-                  const size_t nrow,
-                  const size_t nlay,
-                  const py::array_t<double> &coordsv,
-                  const py::array_t<float> &zcornsv,
-                  const py::array_t<int> &actnumsv,
-                  const int precision,
-                  const bool asmasked = false)
+get_cell_volumes(const Grid &grd, const int precision, const bool asmasked = false)
 {
-    pybind11::array_t<double> cellvols({ ncol, nrow, nlay });
+    pybind11::array_t<double> cellvols({ grd.ncol, grd.nrow, grd.nlay });
     auto cellvols_ = cellvols.mutable_data();
-    auto actnumsv_ = actnumsv.data();
+    auto actnumsv_ = grd.actnumsv.data();
 
-    for (auto i = 0; i < ncol; i++) {
-        for (auto j = 0; j < nrow; j++) {
-            for (auto k = 0; k < nlay; k++) {
-                auto idx = i * nrow * nlay + j * nlay + k;
+    for (auto i = 0; i < grd.ncol; i++) {
+        for (auto j = 0; j < grd.nrow; j++) {
+            for (auto k = 0; k < grd.nlay; k++) {
+                auto idx = i * grd.nrow * grd.nlay + j * grd.nlay + k;
                 if (asmasked && actnumsv_[idx] == 0) {
-                    cellvols_[idx] = UNDEF;
+                    cellvols_[idx] = numerics::UNDEF_XTGEO;
                     continue;
                 }
-                auto corners =
-                  grid3d::cell_corners(i, j, k, ncol, nrow, nlay, coordsv, zcornsv);
-                cellvols_[idx] = geometry::hexahedron_volume(corners, precision);
+                auto crn = grid3d::get_cell_corners_from_ijk(grd, i, j, k);
+                cellvols_[idx] = geometry::hexahedron_volume(crn, precision);
             }
         }
     }
@@ -58,51 +48,44 @@ grid_cell_volumes(const size_t ncol,
 /*
  * Get cell centers for a grid.
  *
- * @param ncol Grid dimensions ncol/nx
- * @param nrow Grid dimensions nrow/ny
- * @param nlay Grid dimensions nlay/nz
- * @param coordsv Grid Z coordinates vector
- * @param zcornsv Grid Z corners vector
- * @param actumsv Active cells vector
+ * @param grd Grid struct
  * @param asmasked Process grid cells as masked (return NaN for inactive cells)
  * @return Arrays with the X, Y, Z coordinates of the cell centers
  */
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-grid_cell_centers(const size_t ncol,
-                  const size_t nrow,
-                  const size_t nlay,
-                  const py::array_t<double> &coordsv,
-                  const py::array_t<float> &zcornsv,
-                  const py::array_t<int> &actnumsv,
-                  const bool asmasked = false)
+get_cell_centers(const Grid &grd, const bool asmasked = false)
 {
-    pybind11::array_t<double> xmid({ ncol, nrow, nlay });
-    pybind11::array_t<double> ymid({ ncol, nrow, nlay });
-    pybind11::array_t<double> zmid({ ncol, nrow, nlay });
+    pybind11::array_t<double> xmid({ grd.ncol, grd.nrow, grd.nlay });
+    pybind11::array_t<double> ymid({ grd.ncol, grd.nrow, grd.nlay });
+    pybind11::array_t<double> zmid({ grd.ncol, grd.nrow, grd.nlay });
     auto xmid_ = xmid.mutable_unchecked<3>();
     auto ymid_ = ymid.mutable_unchecked<3>();
     auto zmid_ = zmid.mutable_unchecked<3>();
-    auto actnumsv_ = actnumsv.unchecked<3>();
+    auto actnumsv_ = grd.actnumsv.unchecked<3>();
 
-    for (size_t i = 0; i < ncol; i++) {
-        for (size_t j = 0; j < nrow; j++) {
-            for (size_t k = 0; k < nlay; k++) {
-                size_t idx = i * nrow * nlay + j * nlay + k;
+    for (size_t i = 0; i < grd.ncol; i++) {
+        for (size_t j = 0; j < grd.nrow; j++) {
+            for (size_t k = 0; k < grd.nlay; k++) {
                 if (asmasked && actnumsv_(i, j, k) == 0) {
                     xmid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
                     ymid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
                     zmid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
                     continue;
                 }
-                auto cr =
-                  grid3d::cell_corners(i, j, k, ncol, nrow, nlay, coordsv, zcornsv);
+                auto crn = grid3d::get_cell_corners_from_ijk(grd, i, j, k);
 
-                xmid_(i, j, k) = 0.125 * (cr[0] + cr[3] + cr[6] + cr[9] + cr[12] +
-                                          cr[15] + cr[18] + cr[21]);
-                ymid_(i, j, k) = 0.125 * (cr[1] + cr[4] + cr[7] + cr[10] + cr[13] +
-                                          cr[16] + cr[19] + cr[22]);
-                zmid_(i, j, k) = 0.125 * (cr[2] + cr[5] + cr[8] + cr[11] + cr[14] +
-                                          cr[17] + cr[20] + cr[23]);
+                xmid_(i, j, k) =
+                  0.125 *
+                  (crn.upper_sw.x + crn.upper_se.x + crn.upper_nw.x + crn.upper_ne.x +
+                   crn.lower_sw.x + crn.lower_se.x + crn.lower_nw.x + crn.lower_ne.x);
+                ymid_(i, j, k) =
+                  0.125 *
+                  (crn.upper_sw.y + crn.upper_se.y + crn.upper_nw.y + crn.upper_ne.y +
+                   crn.lower_sw.y + crn.lower_se.y + crn.lower_nw.y + crn.lower_ne.y);
+                zmid_(i, j, k) =
+                  0.125 *
+                  (crn.upper_sw.z + crn.upper_se.z + crn.upper_nw.z + crn.upper_ne.z +
+                   crn.lower_sw.z + crn.lower_se.z + crn.lower_nw.z + crn.lower_ne.z);
             }
         }
     }
@@ -114,62 +97,55 @@ grid_cell_centers(const size_t ncol,
  * return hbot, htop, hmid (bottom of cell, top of cell, midpoint), but compute method
  * depends on option: 1: cell center above ffl, 2: cell corners above ffl
  *
- * @param ncol Grid dimensions ncol/nx
- * @param nrow Grid dimensions nrow/ny
- * @param nlay Grid dimensions nlay/nz
- * @param coordsv Grid Z coordinates vector
- * @param zcornsv Grid Z corners vector
- * @param actumsv Active cells vector
+ * @param grd Grid struct
  * @param ffl Free fluid level per cell
  * @param option 1: Use cell centers, 2 use cell corners
  * @return 3 arrays, top, bot, mid; all delta heights above ffl
  */
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-grid_height_above_ffl(const size_t ncol,
-                      const size_t nrow,
-                      const size_t nlay,
-                      const py::array_t<double> &coordsv,
-                      const py::array_t<float> &zcornsv,
-                      const py::array_t<int> &actnumsv,
-                      const py::array_t<float> &ffl,
-                      const size_t option)
+get_height_above_ffl(const Grid &grd,
+                     const py::array_t<float> &ffl,
+                     const size_t option)
 {
-    pybind11::array_t<double> htop({ ncol, nrow, nlay });
-    pybind11::array_t<double> hbot({ ncol, nrow, nlay });
-    pybind11::array_t<double> hmid({ ncol, nrow, nlay });
+    pybind11::array_t<double> htop({ grd.ncol, grd.nrow, grd.nlay });
+    pybind11::array_t<double> hbot({ grd.ncol, grd.nrow, grd.nlay });
+    pybind11::array_t<double> hmid({ grd.ncol, grd.nrow, grd.nlay });
     auto htop_ = htop.mutable_data();
     auto hbot_ = hbot.mutable_data();
     auto hmid_ = hmid.mutable_data();
-    auto actnumsv_ = actnumsv.data();
+    auto actnumsv_ = grd.actnumsv.data();
     auto ffl_ = ffl.data();
 
-    for (size_t i = 0; i < ncol; i++) {
-        for (size_t j = 0; j < nrow; j++) {
-            for (size_t k = 0; k < nlay; k++) {
-                size_t idx = i * nrow * nlay + j * nlay + k;
+    for (size_t i = 0; i < grd.ncol; i++) {
+        for (size_t j = 0; j < grd.nrow; j++) {
+            for (size_t k = 0; k < grd.nlay; k++) {
+                size_t idx = i * grd.nrow * grd.nlay + j * grd.nlay + k;
                 if (actnumsv_[idx] == 0) {
-                    htop_[idx] = UNDEF;
-                    hbot_[idx] = UNDEF;
-                    hmid_[idx] = UNDEF;
+                    htop_[idx] = numerics::UNDEF_XTGEO;
+                    hbot_[idx] = numerics::UNDEF_XTGEO;
+                    hmid_[idx] = numerics::UNDEF_XTGEO;
                     continue;
                 }
-                auto cr =
-                  grid3d::cell_corners(i, j, k, ncol, nrow, nlay, coordsv, zcornsv);
+                auto corners = grid3d::get_cell_corners_from_ijk(grd, i, j, k);
                 if (option == 1) {
-                    htop_[idx] = ffl_[idx] - 0.25 * (cr[2] + cr[5] + cr[8] + cr[11]);
-                    hbot_[idx] = ffl_[idx] - 0.25 * (cr[14] + cr[17] + cr[20] + cr[23]);
+                    htop_[idx] =
+                      ffl_[idx] - 0.25 * (corners.upper_sw.z + corners.upper_se.z +
+                                          corners.upper_nw.z + corners.upper_ne.z);
+                    hbot_[idx] =
+                      ffl_[idx] - 0.25 * (corners.lower_sw.z + corners.lower_se.z +
+                                          corners.lower_nw.z + corners.lower_ne.z);
                 } else if (option == 2) {
-                    double upper = cr[2];
-                    for (size_t indx = 5; indx <= 11; indx += 3) {
-                        upper = std::min(upper, cr[indx]);
-                    }
+                    double upper = corners.upper_sw.z;
+                    upper = std::min(upper, corners.upper_se.z);
+                    upper = std::min(upper, corners.upper_nw.z);
+                    upper = std::min(upper, corners.upper_ne.z);
                     htop_[idx] = ffl_[idx] - upper;
 
-                    double lower = cr[14];
-                    for (size_t indx = 17; indx <= 23; indx += 3) {
-                        lower = std::max(lower, cr[indx]);
-                    }
+                    double lower = corners.lower_sw.z;
+                    lower = std::max(lower, corners.lower_se.z);
+                    lower = std::max(lower, corners.lower_nw.z);
+                    lower = std::max(lower, corners.lower_ne.z);
                     hbot_[idx] = ffl_[idx] - lower;
                 }
                 htop_[idx] = std::max(htop_[idx], 0.0);

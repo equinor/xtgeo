@@ -10,7 +10,7 @@ import numpy as np
 from scipy.interpolate import make_interp_spline
 
 import xtgeo._internal as _internal  # type: ignore
-from xtgeo.common.log import functimer, null_logger
+from xtgeo.common.log import null_logger
 
 if TYPE_CHECKING:
     from xtgeo.surface.regular_surface import RegularSurface
@@ -78,7 +78,6 @@ class CubeAttrs:
         # return the resulting attribute maps
         return self._result_attr_maps
 
-    @functimer
     def _process_upper_lower_surface(self) -> None:
         """Extract upper and lower surface, sampled to cube resolution."""
 
@@ -132,7 +131,6 @@ class CubeAttrs:
                 "Perhaps surfaces are overlapping?"
             )
 
-    @functimer
     def _create_depth_array(self) -> None:
         """Create a 1D array where values are cube depths; to be used as filter.
 
@@ -176,7 +174,6 @@ class CubeAttrs:
             self._depth_array,
         )
 
-    @functimer
     def _create_reduced_cube(self) -> None:
         """Create a smaller cube based on the depth cube filter.
 
@@ -228,7 +225,6 @@ class CubeAttrs:
 
         logger.debug("Reduced cubes created %s", self._reduced_cube.values.shape)
 
-    @functimer
     def _refine_interpolate(self) -> None:
         """Apply reduced cubes and interpolate to a finer grid vertically.
 
@@ -283,7 +279,6 @@ class CubeAttrs:
             values=resampled_arr.astype(np.float32),
         )
 
-    @functimer
     def _depth_mask(self) -> None:
         """Set nan values outside the interval defined by the upper + lower surface.
 
@@ -326,28 +321,19 @@ class CubeAttrs:
 
         self._result_attr_maps[attr_name] = attr_map_resampled
 
-    @functimer
     def _compute_statistical_attribute_surfaces(self) -> None:
         """Compute stats very fast by using internal C++ bindings."""
 
         # compute statistics for vertically refined cube
-        all_attrs = _internal.cube.cube_stats_along_z(
-            self._refined_cube.ncol,
-            self._refined_cube.nrow,
-            self._refined_cube.nlay,
-            self._refined_cube.values,
-        )
+        cubecpp = _internal.cube.Cube(self._refined_cube)
+        all_attrs = cubecpp.cube_stats_along_z()
 
         for attr in STAT_ATTRS:
             self._add_to_attribute_map(attr, all_attrs[attr])
 
         # compute statistics for reduced cube (for sum attributes)
-        all_attrs = _internal.cube.cube_stats_along_z(
-            self._reduced_cube.ncol,
-            self._reduced_cube.nrow,
-            self._reduced_cube.nlay,
-            self._reduced_cube.values,
-        )
+        cubecpp = _internal.cube.Cube(self._reduced_cube)
+        all_attrs = cubecpp.cube_stats_along_z()
 
         # add sum attributes which are the last 3 in the list
         for attr in SUM_ATTRS:

@@ -58,10 +58,11 @@ def test_cell_corners(cell, expected_firstcorner, expected_lastcorner):
     grid = xtgeo.create_box_grid((3, 4, 5))
 
     # Get the corners of the first cell
-    corners = _internal.grid3d.cell_corners(
-        *cell, grid.ncol, grid.nrow, grid.nlay, grid._coordsv, grid._zcornsv
-    )
+    grid_cpp = _internal.grid3d.Grid(grid)
+    corners_struct = grid_cpp.get_cell_corners_from_ijk(*cell)
 
+    assert isinstance(corners_struct, _internal.grid3d.CellCorners)
+    corners = _internal.grid3d.arrange_corners(corners_struct)
     assert isinstance(corners, list)
     corners = np.array(corners).reshape((8, 3))
     assert np.allclose(corners[0], expected_firstcorner)
@@ -74,13 +75,11 @@ def test_cell_corners_minmax(testdata_path):
 
     cell = (0, 0, 0)
     grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/etc/banal6.roff")
-    corners = _internal.grid3d.cell_corners(
-        *cell, grid.ncol, grid.nrow, grid.nlay, grid._coordsv, grid._zcornsv
-    )
+    grid_cpp = _internal.grid3d.Grid(grid)
+    corners = grid_cpp.get_cell_corners_from_ijk(*cell)
     # Get the min and max of the first cell
     minmax = _internal.grid3d.get_corners_minmax(corners)
 
-    print(minmax)
     assert isinstance(minmax, list)
     assert len(minmax) == 6
     assert np.allclose(minmax, [0.0, 25.0, 0.0, 50.0, -0.5, 1.25])
@@ -101,9 +100,9 @@ def test_is_xy_point_in_cell(x, y, cell, position, expected):
     """Test the XY point is inside a hexahedron cell, seen from top or base."""
 
     grid = xtgeo.create_box_grid((3, 4, 5))
-    corners = _internal.grid3d.cell_corners(
-        *cell, grid.ncol, grid.nrow, grid.nlay, grid._coordsv, grid._zcornsv
-    )
+    grid_cpp = _internal.grid3d.Grid(grid)
+
+    corners = grid_cpp.get_cell_corners_from_ijk(*cell)
     assert (
         _internal.grid3d.is_xy_point_in_cell(
             x,
@@ -129,9 +128,9 @@ def test_get_depth_in_cell(testdata_path, x, y, cell, position, expected):
     # Read the banal6 grid
     grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/etc/banal6.roff")
 
-    corners = _internal.grid3d.cell_corners(
-        *cell, grid.ncol, grid.nrow, grid.nlay, grid._coordsv, grid._zcornsv
-    )
+    grid_cpp = _internal.grid3d.Grid(grid)
+
+    corners = grid_cpp.get_cell_corners_from_ijk(*cell)
     # Get the depth of the first cell
     depth = _internal.grid3d.get_depth_in_cell(
         x,
@@ -147,20 +146,13 @@ def test_get_depth_in_cell(testdata_path, x, y, cell, position, expected):
 
 
 @functimer(output="info")
-def test_grid_cell_centers(get_drogondata):
+def test_get_cell_centers(get_drogondata):
     """Test cell centers from a grid; assertions are manually verified in RMS."""
 
     grid, _, _ = get_drogondata  # total cells 899944
 
-    xcor, ycor, zcor = _internal.grid3d.grid_cell_centers(
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv,
-        grid._zcornsv,
-        grid._actnumsv,
-        True,
-    )
+    grid_cpp = _internal.grid3d.Grid(grid)
+    xcor, ycor, zcor = grid_cpp.get_cell_centers(True)
 
     assert isinstance(xcor, np.ndarray)
     assert isinstance(ycor, np.ndarray)

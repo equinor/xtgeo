@@ -10,6 +10,7 @@ from hypothesis import given
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.log import functimer
 from xtgeo.grid3d import Grid
 
 from .grid_generator import dimensions, increments, xtgeo_grids
@@ -497,17 +498,21 @@ def test_gridquality_properties_emerald(show_plot, emerald_grid):
         layslice.show()
 
 
+def test_bulkvol_banal6(testdata_path):
+    """Test cell bulk volume calculation."""
+    grd = xtgeo.grid_from_file(testdata_path / BANAL6)
+    bulkvol = grd.get_bulk_volume()
+
+    bulkvol_sum = np.sum(bulkvol.values)
+
+    assert bulkvol_sum == pytest.approx(29921.874972059588, abs=0.001)
+
+
 def test_bulkvol(testdata_path):
     """Test cell bulk volume calculation."""
     grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
     cellvol_rms = xtgeo.gridproperty_from_file(testdata_path / GRIDQC1_CELLVOL)
     bulkvol = grd.get_bulk_volume()
-
-    rms_sum = np.sum(cellvol_rms.values)
-    bulkvol_sum = np.sum(bulkvol.values)
-
-    print(f"RMS sum: {rms_sum}")
-    print(f"bulkvol sum: {bulkvol_sum}")
 
     assert grd.dimensions == bulkvol.dimensions
     assert np.allclose(cellvol_rms.values, bulkvol.values)
@@ -544,6 +549,7 @@ def test_cell_height_above_ffl(testdata_path):
     assert hmid.values[4, 5, 0] == pytest.approx(22.4055)
 
 
+@functimer(output="info")
 def test_get_property_between_surfaces(testdata_path):
     """Generate a marker property between two surfaces."""
     grd = xtgeo.grid_from_file(testdata_path / REEKFIL4)

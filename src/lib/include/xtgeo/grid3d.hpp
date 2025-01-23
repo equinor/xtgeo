@@ -5,88 +5,50 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <stdexcept>
 #include <tuple>
+#include <xtgeo/types.hpp>
 
 namespace py = pybind11;
 
 namespace xtgeo::grid3d {
 
 py::array_t<double>
-grid_cell_volumes(const size_t ncol,
-                  const size_t nrow,
-                  const size_t nlay,
-                  const py::array_t<double> &coordsv,
-                  const py::array_t<float> &zcornsv,
-                  const py::array_t<int> &actnumsv,
-                  const int precision,
-                  const bool asmasked);
+get_cell_volumes(const Grid &grid_cpp, const int precision, const bool asmasked);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-grid_cell_centers(const size_t ncol,
-                  const size_t nrow,
-                  const size_t nlay,
-                  const py::array_t<double> &coordsv,
-                  const py::array_t<float> &zcornsv,
-                  const py::array_t<int> &actnumsv,
-                  const bool asmasked);
+get_cell_centers(const Grid &grid_cpp, const bool asmasked);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-grid_height_above_ffl(const size_t ncol,
-                      const size_t nrow,
-                      const size_t nlay,
-                      const py::array_t<double> &coordsv,
-                      const py::array_t<float> &zcornsv,
-                      const py::array_t<int> &actnumsv,
-                      const py::array_t<float> &ffl,
-                      const size_t option);
-std::array<double, 24>
-cell_corners(const size_t i,
-             const size_t j,
-             const size_t k,
-             const size_t ncol,
-             const size_t nrow,
-             const size_t nlay,
-             const py::array_t<double> &coordsv,
-             const py::array_t<float> &zcornsv);
+get_height_above_ffl(const Grid &grid_cpp,
+                     const py::array_t<float> &ffl,
+                     const size_t option);
+
+CellCorners
+get_cell_corners_from_ijk(const Grid &grid_cpp,
+                          const size_t i,
+                          const size_t j,
+                          const size_t k);
 
 std::vector<double>
-get_corners_minmax(std::array<double, 24> &corners);
+get_corners_minmax(CellCorners &get_cell_corners_from_ijk);
 
 bool
 is_xy_point_in_cell(const double x,
                     const double y,
-                    const std::array<double, 24> &corners,
+                    const CellCorners &corners,
                     int option);
 
 double
 get_depth_in_cell(const double x,
                   const double y,
-                  const std::array<double, 24> &corners,
+                  const CellCorners &corners,
                   int option);
 
 py::array_t<int8_t>
-grid_assign_value_between_surfaces(const size_t ncol,
-                                   const size_t nrow,
-                                   const size_t nlay,
-                                   const py::array_t<double> &xmid,
-                                   const py::array_t<double> &ymid,
-                                   const py::array_t<double> &zmid,
-                                   const size_t top_ncol,
-                                   const size_t top_nrow,
-                                   const double top_xori,
-                                   const double top_yori,
-                                   const double top_xinc,
-                                   const double top_yinc,
-                                   const double top_rotation,
-                                   const py::array_t<double> &top_values,
-                                   const size_t bot_ncol,
-                                   const size_t bot_nrow,
-                                   const double bot_xori,
-                                   const double bot_yori,
-                                   const double bot_xinc,
-                                   const double bot_yinc,
-                                   const double bot_rotation,
-                                   const py::array_t<double> &bot_values);
+get_gridprop_value_between_surfaces(const Grid &grd,
+                                    const regsurf::RegularSurface &top,
+                                    const regsurf::RegularSurface &bot);
 
 inline void
 init(py::module &m)
@@ -94,23 +56,54 @@ init(py::module &m)
     auto m_grid3d =
       m.def_submodule("grid3d", "Internal functions for operations on 3d grids.");
 
-    m_grid3d.def("grid_cell_volumes", &grid_cell_volumes,
-                 "Compute the bulk volume of cell.");
-    m_grid3d.def("grid_cell_centers", &grid_cell_centers,
-                 "Compute the cells centers coordinates as 3 arrays");
-    m_grid3d.def("grid_height_above_ffl", &grid_height_above_ffl,
-                 "Compute the height above a FFL (free fluid level).");
-    m_grid3d.def("cell_corners", &cell_corners,
-                 "Get a vector containing the corners of a cell.");
+    py::class_<Grid>(m_grid3d, "Grid")
+      .def(py::init<const py::object &>(), py::arg("grid"))
+      .def_readonly("ncol", &Grid::ncol)
+      .def_readonly("nrow", &Grid::nrow)
+      .def_readonly("nlay", &Grid::nlay)
+      .def_readonly("coordsv", &Grid::coordsv)
+      .def_readonly("zcornsv", &Grid::zcornsv)
+      .def_readonly("actnumsv", &Grid::actnumsv)
+
+      .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.")
+
+      .def("get_cell_centers", &get_cell_centers,
+           "Compute the cells centers coordinates as 3 arrays")
+      .def("get_gridprop_value_between_surfaces", &get_gridprop_value_between_surfaces,
+           "Make a property that is one if cell center is between two surfaces.")
+      .def("get_height_above_ffl", &get_height_above_ffl,
+           "Compute the height above a FFL (free fluid level).")
+      .def("get_cell_corners_from_ijk", &get_cell_corners_from_ijk,
+           "Get a vector containing the corners of a specified IJK cell.")
+
+      ;
+
+    py::class_<CellCorners>(m_grid3d, "CellCorners")
+      // a constructor that takes 8 xyz::Point objects
+      .def(py::init<xyz::Point, xyz::Point, xyz::Point, xyz::Point, xyz::Point,
+                    xyz::Point, xyz::Point, xyz::Point>())
+      // a constructor that takes a one-dimensional array of 24 elements
+      .def(py::init<const py::array_t<double> &>())
+
+      .def_readonly("upper_sw", &CellCorners::upper_sw)
+      .def_readonly("upper_se", &CellCorners::upper_se)
+      .def_readonly("upper_nw", &CellCorners::upper_nw)
+      .def_readonly("upper_ne", &CellCorners::upper_ne)
+      .def_readonly("lower_sw", &CellCorners::lower_sw)
+      .def_readonly("lower_se", &CellCorners::lower_se)
+      .def_readonly("lower_nw", &CellCorners::lower_nw)
+      .def_readonly("lower_ne", &CellCorners::lower_ne)
+      .def("to_numpy", &CellCorners::to_numpy);
+
+    m_grid3d.def("arrange_corners", &CellCorners::arrange_corners,
+                 "Arrange the corners in a single array for easier access.");
+
     m_grid3d.def("get_corners_minmax", &get_corners_minmax,
                  "Get a vector containing the minmax of a single corner set");
     m_grid3d.def("is_xy_point_in_cell", &is_xy_point_in_cell,
                  "Determine if a XY point is inside a cell, top or base.");
     m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
                  "Determine the interpolated cell face Z from XY, top or base.");
-    m_grid3d.def("grid_assign_value_between_surfaces",
-                 &grid_assign_value_between_surfaces,
-                 "Make a property that is one if cell center is between two surfaces.");
 }
 
 }  // namespace xtgeo::grid3d

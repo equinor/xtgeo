@@ -6,10 +6,7 @@
 #include <array>
 #include <cmath>
 #include <vector>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846  // seems like Windows does not define M_PI i cmath
-#endif
+#include <xtgeo/types.hpp>
 
 namespace py = pybind11;
 
@@ -65,57 +62,53 @@ constexpr int TETRAHEDRON_VERTICES[4][6][4] = {
 };
 
 inline double
-hexahedron_dz(const std::array<double, 24> &corners)
+hexahedron_dz(const grid3d::CellCorners &corners)
 {
     // TODO: This does not account for overall zflip ala Petrel or cells that
     // are malformed
     double dzsum = 0.0;
-    for (auto i = 0; i < 4; i++) {
-        dzsum += std::abs(corners[3 * i + 2] - corners[3 * i + 2 + 12]);
-    }
+    dzsum += std::abs(corners.upper_sw.z - corners.lower_sw.z);
+    dzsum += std::abs(corners.upper_se.z - corners.lower_se.z);
+    dzsum += std::abs(corners.upper_nw.z - corners.lower_nw.z);
+    dzsum += std::abs(corners.upper_ne.z - corners.lower_ne.z);
     return dzsum / 4.0;
 }
 
 inline double
-triangle_area(const std::array<double, 2> &p1,
-              const std::array<double, 2> &p2,
-              const std::array<double, 2> &p3)
+triangle_area(const xyz::Point &p1, const xyz::Point &p2, const xyz::Point &p3)
 {
-    return 0.5 * std::abs(p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) +
-                          p3[0] * (p1[1] - p2[1]));
+    return 0.5 *
+           std::abs(p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y));
 }
 
 double
-hexahedron_volume(const std::array<double, 24> &corners, const int precision);
+hexahedron_volume(const grid3d::CellCorners &corners, const int precision);
 
 bool
-is_xy_point_in_polygon(const double x,
-                       const double y,
-                       const std::vector<std::array<double, 2>> &polygon);
+is_xy_point_in_polygon(const double x, const double y, const xyz::Polygon &polygon);
 
 bool
 is_xy_point_in_quadrilateral(const double x,
                              const double y,
-                             const std::array<double, 3> &p1,
-                             const std::array<double, 3> &p2,
-                             const std::array<double, 3> &p3,
-                             const std::array<double, 3> &p4);
-
+                             const xyz::Point &p1,
+                             const xyz::Point &p2,
+                             const xyz::Point &p3,
+                             const xyz::Point &p4);
 double
 interpolate_z_4p_regular(const double x,
                          const double y,
-                         const std::array<double, 3> &p1,
-                         const std::array<double, 3> &p2,
-                         const std::array<double, 3> &p3,
-                         const std::array<double, 3> &p4);
+                         const xyz::Point &p1,
+                         const xyz::Point &p2,
+                         const xyz::Point &p3,
+                         const xyz::Point &p4);
 
 double
 interpolate_z_4p(const double x,
                  const double y,
-                 const std::array<double, 3> &p1,
-                 const std::array<double, 3> &p2,
-                 const std::array<double, 3> &p3,
-                 const std::array<double, 3> &p4);
+                 const xyz::Point &p1,
+                 const xyz::Point &p2,
+                 const xyz::Point &p3,
+                 const xyz::Point &p4);
 
 // functions exposed to Python:
 inline void
