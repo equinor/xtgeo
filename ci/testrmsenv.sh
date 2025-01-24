@@ -37,7 +37,7 @@ copy_test_files () {
 
 install_test_dependencies () {
     echo "Installing test dependencies..."
-    pip install --upgrade --force-reinstall ".[dev]"
+    pip install ".[dev]"
 
     echo "Dependencies installed successfully. Listing installed dependencies..."
     pip list
@@ -46,6 +46,6 @@ install_test_dependencies () {
 run_pytest () {
     echo "Running xtgeo tests with pytest..."
     pushd $CI_TEST_ROOT
-    pytest -n 4 -vv -m "not requires_roxar"
+    pytest -n 4 -vv
     popd
 }
