@@ -471,8 +471,7 @@ def _from_list_like(plist, zname, attrs, is_polygons) -> pd.DataFrame:
             attr_first_col = 4
         else:
             raise ValueError(
-                f"Wrong length detected of row: {totnum}. "
-                "Are attributes set correct?"
+                f"Wrong length detected of row: {totnum}. Are attributes set correct?"
             )
         dfr.dropna()
         dfr = dfr.astype(np.float64)

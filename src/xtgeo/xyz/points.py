@@ -529,24 +529,20 @@ class Points(XYZ):
         dataframe = self.get_dataframe(copy=False)
         if self.xname not in dataframe:
             raise ValueError(
-                f"xname={self.xname} is not a column "
-                f"of dataframe {dataframe.columns}"
+                f"xname={self.xname} is not a column of dataframe {dataframe.columns}"
             )
         if self.yname not in dataframe:
             raise ValueError(
-                f"yname={self.yname} is not a column "
-                f"of dataframe {dataframe.columns}"
+                f"yname={self.yname} is not a column of dataframe {dataframe.columns}"
             )
         if self.zname not in dataframe:
             raise ValueError(
-                f"zname={self.zname} is not a column "
-                f"of dataframe {dataframe.columns}"
+                f"zname={self.zname} is not a column of dataframe {dataframe.columns}"
             )
         for attr in self._attrs:
             if attr not in dataframe:
                 raise ValueError(
-                    f"Attribute {attr} is not a column "
-                    f"of dataframe {dataframe.columns}"
+                    f"Attribute {attr} is not a column of dataframe {dataframe.columns}"
                 )
 
     def __repr__(self):
