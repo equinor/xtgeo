@@ -128,4 +128,4 @@ def test_get_surfaces_from_3dgrid(tmp_path, testdata_path):
     assert surfs.surfaces[0].values.mean() == pytest.approx(1697.02, abs=0.04)
 
     for srf in surfs.surfaces:
-        srf.to_file(testdata_path / pathlib.Path("{srf.name}.gri"))
+        srf.to_file(tmp_path / pathlib.Path(f"{srf.name}.gri"))
