@@ -80,20 +80,13 @@ surf_import_irap_ascii(FILE *fd,
                        long nmap,
                        int option)
 {
-
-    /* locals*/
-    int idum, ib, ic, iok;
-    long ncount;
-
-    double value, ddum;
-
-    ncount = 0;
+    // dummy variables used when reading headers
+    int idum;
+    double ddum;
 
     fseek(fd, 0, SEEK_SET);
-
-    /* read header */
-    iok = read_headers(fd, idum, *ny, *xinc, *yinc, *xori, ddum, *yori, ddum, *nx, *rot,
-                       ddum, ddum, idum, idum, idum, idum, idum, idum, idum);
+    int iok = read_headers(fd, idum, *ny, *xinc, *yinc, *xori, ddum, *yori, ddum, *nx,
+                           *rot, ddum, ddum, idum, idum, idum, idum, idum, idum, idum);
 
     if (iok < 19) {
         logger_error(LI, FI, FU,
@@ -105,14 +98,16 @@ surf_import_irap_ascii(FILE *fd,
     if (*rot < 0.0)
         *rot = *rot + 360.0;
 
-    if (mode == 0) {
+    if (mode == 0)
         return EXIT_SUCCESS;
-    }
 
     /* read values */
-    for (ib = 0; ib < nmap; ib++) {
+    long ncount = 0;
+    for (int i = 0; i < nmap; i++) {
         static thread_local char input[100];
         fscanf(fd, " %s", input);
+
+        double value;
         auto [ptr, ec] = std::from_chars(input, input + 100, value);
 
         if (value == UNDEF_MAP_IRAP) {
@@ -122,10 +117,10 @@ surf_import_irap_ascii(FILE *fd,
             ncount++;
         }
 
-        /* convert to C order (column major order to row major order) */
-        ic = ib / *nx + (ib % *nx) * *ny;
+        // convert to C order (column major to row major order)
+        int ic = i / *nx + (i % *nx) * *ny;
         if (ic < 0) {
-            throw_exception("Convert to c order resulted in index outside boundary in "
+            throw_exception("Convert to c order resulted in negative index in "
                             "surf_import_irap_ascii");
             return EXIT_FAILURE;
         }
