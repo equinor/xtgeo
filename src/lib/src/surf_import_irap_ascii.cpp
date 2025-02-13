@@ -2,7 +2,7 @@
 ****************************************************************************************
 *
 * NAME:
-*    surf_import_irap_ascii.c
+*    surf_import_irap_ascii.cpp
 *
 * AUTHOR(S):
 *
@@ -33,10 +33,37 @@
 *    cf. XTGeo LICENSE
 ***************************************************************************************
 */
+#include <charconv>
 #include <stdio.h>
 #include <stdlib.h>
 #include <xtgeo/xtgeo.h>
 #include "logger.h"
+
+template<typename T, typename... U>
+int
+_read_headers(FILE *fd, int args_read, T &&arg, U &&...args)
+{
+    static thread_local char input[100];
+    fscanf(fd, " %s", input);
+    
+    auto [ptr, ec] = std::from_chars(input, input + 100, arg);
+    if (ec != std::errc{})
+        return args_read;
+    ++args_read;
+
+    if constexpr (sizeof...(args) > 0)
+        args_read = _read_headers(fd, args_read, args...);
+
+    return args_read;
+}
+
+template<typename... T>
+int
+read_headers(FILE *fd, T &&...args)
+{
+    int args_read = 0;
+    return _read_headers(fd, args_read, args...);
+}
 
 int
 surf_import_irap_ascii(FILE *fd,
@@ -58,19 +85,15 @@ surf_import_irap_ascii(FILE *fd,
     int idum, ib, ic, i, j, k, iok;
     long ncount;
 
-    float rdum, value;
-    double dval;
+    double value, ddum;
 
     ncount = 0;
 
     fseek(fd, 0, SEEK_SET);
 
     /* read header */
-    iok = fscanf(fd,
-                 "%d %d %lf %lf %lf %f %lf %f %d %lf %f %f %d %d %d %d %d "
-                 "%d %d",
-                 &idum, ny, xinc, yinc, xori, &rdum, yori, &rdum, nx, rot, &rdum, &rdum,
-                 &idum, &idum, &idum, &idum, &idum, &idum, &idum);
+    iok = read_headers(fd, idum, *ny, *xinc, *yinc, *xori, ddum, *yori, ddum, *nx, *rot,
+                       ddum, ddum, idum, idum, idum, idum, idum, idum, idum);
 
     if (iok < 19) {
         logger_error(LI, FI, FU,
@@ -88,12 +111,14 @@ surf_import_irap_ascii(FILE *fd,
 
     /* read values */
     for (ib = 0; ib < nmap; ib++) {
-        iok = fscanf(fd, "%f", &value);
+        static thread_local char input[100];
+        fscanf(fd, " %s", input);
+        auto [ptr, ec] = std::from_chars(input, input + 100, value);
 
         if (value == UNDEF_MAP_IRAP) {
-            dval = UNDEF_MAP;
+            value = UNDEF_MAP;
         } else {
-            dval = value;
+            value = float(value);
             ncount++;
         }
 
@@ -106,7 +131,7 @@ surf_import_irap_ascii(FILE *fd,
             return EXIT_FAILURE;
         }
 
-        p_map_v[ic] = dval;
+        p_map_v[ic] = value;
     }
 
     *ndef = ncount;

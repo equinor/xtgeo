@@ -23,7 +23,10 @@ message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
 
 # TODO: replace globbing with unique list, as globbing is bad practice
 file(GLOB SOURCES ${SRC}/*.c)
-add_library(xtgeo STATIC ${SOURCES})
+add_library(
+  xtgeo STATIC
+  ${SOURCES}
+  ${SRC}/surf_import_irap_ascii.cpp)
 
 if(MSVC)
   set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
