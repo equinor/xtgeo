@@ -21,12 +21,20 @@ message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
 message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
 message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
 
+include(FetchContent)
+FetchContent_Declare(
+  scn
+  GIT_REPOSITORY https://github.com/eliaskosunen/scnlib
+  GIT_TAG v4.0.1
+  GIT_SHALLOW TRUE)
+FetchContent_MakeAvailable(scn)
+if(NOT MSVC)
+  target_compile_options(scn PRIVATE "-fPIC")
+endif()
+
 # TODO: replace globbing with unique list, as globbing is bad practice
 file(GLOB SOURCES ${SRC}/*.c)
-add_library(
-  xtgeo STATIC
-  ${SOURCES}
-  ${SRC}/surf_import_irap_ascii.cpp)
+add_library(xtgeo STATIC ${SOURCES} ${SRC}/surf_import_irap_ascii.cpp)
 
 if(MSVC)
   set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
@@ -61,6 +69,9 @@ endif()
 
 message(STATUS "Compiling swig bindings")
 
+target_compile_options(xtgeo PRIVATE ${XTGFLAGS})
+target_link_libraries(xtgeo PRIVATE scn::scn)
+
 # This will end up set as the `_cxtgeo` module, located in `wheel.install-dir`
 # from pyproject.toml
 set(SWIG_TARGET cxtgeo)
@@ -73,9 +84,7 @@ swig_add_library(
 target_include_directories(
   ${SWIG_TARGET} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
                          ${Python_INCLUDE_DIRS} ${Python_NumPy_INCLUDE_DIRS})
-target_compile_options(xtgeo PRIVATE ${XTGFLAGS})
 target_compile_options(${SWIG_TARGET} PUBLIC ${CXTGEOFLAGS})
-
 target_link_libraries(${SWIG_TARGET} PRIVATE xtgeo ${Python_LIBRARIES}
                                              Python::Module Python::NumPy)
 

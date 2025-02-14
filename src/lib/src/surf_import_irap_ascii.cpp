@@ -33,37 +33,9 @@
 *    cf. XTGeo LICENSE
 ***************************************************************************************
 */
-#include <charconv>
-#include <stdio.h>
-#include <stdlib.h>
+#include <scn/scan.h>
 #include <xtgeo/xtgeo.h>
 #include "logger.h"
-
-template<typename T, typename... U>
-int
-_read_headers(FILE *fd, int args_read, T &&arg, U &&...args)
-{
-    static thread_local char input[100];
-    fscanf(fd, " %s", input);
-
-    auto [ptr, ec] = std::from_chars(input, input + 100, arg);
-    if (ec != std::errc{})
-        return args_read;
-    ++args_read;
-
-    if constexpr (sizeof...(args) > 0)
-        args_read = _read_headers(fd, args_read, args...);
-
-    return args_read;
-}
-
-template<typename... T>
-int
-read_headers(FILE *fd, T &&...args)
-{
-    int args_read = 0;
-    return _read_headers(fd, args_read, args...);
-}
 
 int
 surf_import_irap_ascii(FILE *fd,
@@ -80,20 +52,20 @@ surf_import_irap_ascii(FILE *fd,
                        long nmap,
                        int option)
 {
-    // dummy variables used when reading headers
-    int idum;
-    double ddum;
-
     fseek(fd, 0, SEEK_SET);
-    int iok = read_headers(fd, idum, *ny, *xinc, *yinc, *xori, ddum, *yori, ddum, *nx,
-                           *rot, ddum, ddum, idum, idum, idum, idum, idum, idum, idum);
-
-    if (iok < 19) {
+    auto result =
+      scn::scan<int, int, double, double, double, double, double, double, int, double,
+                double, double, int, int, int, int, int, int, int>(
+        fd, "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}");
+    if (!result) {
         logger_error(LI, FI, FU,
                      "Something went wrong with Irap ASCII import. Report as BUG");
-        logger_error(LI, FI, FU, "IOK is %d", iok);
+        logger_error(LI, FI, FU, "Error: %s", result.error().msg());
         return -1;
     }
+    std::tie(std::ignore, *ny, *xinc, *yinc, *xori, std::ignore, *yori, std::ignore,
+             *nx, *rot, std::ignore, std::ignore, std::ignore, std::ignore, std::ignore,
+             std::ignore, std::ignore, std::ignore, std::ignore) = result->values();
 
     if (*rot < 0.0)
         *rot = *rot + 360.0;
@@ -101,30 +73,34 @@ surf_import_irap_ascii(FILE *fd,
     if (mode == 0)
         return EXIT_SUCCESS;
 
+    if (*nx < 0 || *ny < 0 || *nx * *ny > nmap) {
+        logger_error(LI, FI, FU,
+                     "Incorrect dimension encountered while importing Irap ASCII");
+        logger_error(LI, FI, FU, "nx: %d, ny: %d, nmap: %d");
+        return -1;
+    }
+
     /* read values */
     long ncount = 0;
     for (int i = 0; i < nmap; i++) {
-        static thread_local char input[100];
-        fscanf(fd, " %s", input);
+        auto parsed_value = scn::scan<double>(fd, "{}");
+        if (!result) {
+            logger_error(LI, FI, FU, "Failed to read values during Irap ASCII import.");
+            logger_error(LI, FI, FU, "Error: %s", result.error().msg());
+            return -1;
+        }
 
-        double value;
-        auto [ptr, ec] = std::from_chars(input, input + 100, value);
+        double value = parsed_value.value().value();
 
         if (value == UNDEF_MAP_IRAP) {
             value = UNDEF_MAP;
         } else {
             value = float(value);
-            ncount++;
+            ++ncount;
         }
 
         // convert to C order (column major to row major order)
         int ic = i / *nx + (i % *nx) * *ny;
-        if (ic < 0) {
-            throw_exception("Convert to c order resulted in negative index in "
-                            "surf_import_irap_ascii");
-            return EXIT_FAILURE;
-        }
-
         p_map_v[ic] = value;
     }
 
