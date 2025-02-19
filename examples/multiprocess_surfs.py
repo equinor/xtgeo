@@ -58,7 +58,7 @@ def _get_regsurff(i):
     sfile = TESTFILE
 
     logger.info("File is %s", sfile)
-    rf = xtgeo.surface_from_file(sfile, fformat="irap_binary", engine="python")
+    rf = xtgeo.surface_from_file(sfile, fformat="irap_binary")
     logger.info("End %s", i)
     return rf
 

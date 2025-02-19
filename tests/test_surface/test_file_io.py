@@ -54,7 +54,6 @@ def surfaces(draw):
     )
 
 
-@pytest.mark.parametrize("engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize(
     "fformat",
     [
@@ -78,27 +77,16 @@ def surfaces(draw):
         (np.ma.ones((2, 2)), [[1.0, 1.0], [1.0, 1.0]]),
     ],
 )
-def test_simple_io(tmp_path, monkeypatch, input_val, expected_result, fformat, engine):
+def test_simple_io(tmp_path, monkeypatch, input_val, expected_result, fformat):
     monkeypatch.chdir(tmp_path)
-    if engine == "python" and fformat not in [
-        "irap_ascii",
-        "irap_binary",
-        "zmap_ascii",
-        "ijxyz",
-    ]:
-        pytest.skip("Only one engine available")
     surf = RegularSurface(ncol=2, nrow=2, xinc=2.0, yinc=2.0, values=input_val)
     surf.to_file("my_file", fformat=fformat)
-    surf_from_file = RegularSurface._read_file(
-        "my_file", fformat=fformat, engine=engine
-    )
+    surf_from_file = RegularSurface._read_file("my_file", fformat=fformat)
     assert_similar_surfaces(surf, surf_from_file)
     assert surf_from_file.values.data.tolist() == expected_result
 
 
 @pytest.mark.usefixtures("tmp_path_cwd")
-@pytest.mark.parametrize("input_engine", ["cxtgeo", "python"])
-@pytest.mark.parametrize("output_engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize(
     "fformat",
     [
@@ -111,19 +99,11 @@ def test_simple_io(tmp_path, monkeypatch, input_val, expected_result, fformat, e
     ],
 )
 @given(surf=surfaces())
-def test_complex_io(surf, fformat, output_engine, input_engine):
-    if (input_engine == "python" or output_engine == "python") and fformat not in [
-        "irap_ascii",
-        "irap_binary",
-        "zmap_ascii",
-    ]:
-        pytest.skip("Only one engine available")
+def test_complex_io(surf, fformat):
     if fformat == "petromod":
         pytest.xfail("Several hypotesis failures (4)")
-    surf.to_file("my_file", fformat=fformat, engine=output_engine)
-    surf_from_file = RegularSurface._read_file(
-        "my_file", fformat=fformat, engine=input_engine
-    )
+    surf.to_file("my_file", fformat=fformat)
+    surf_from_file = RegularSurface._read_file("my_file", fformat=fformat)
     assert_similar_surfaces(surf, surf_from_file)
 
 

@@ -111,7 +111,7 @@ def surface_from_file(
     fformat=None,
     template=None,
     values=True,
-    engine: Optional[str] = "cxtgeo",
+    engine: Optional[str] = None,
     dtype: Union[Type[np.float64], Type[np.float32]] = np.float64,
 ):
     """Make an instance of a RegularSurface directly from file import.
@@ -124,8 +124,8 @@ def surface_from_file(
         template: Only valid if ``ijxyz`` format, where an existing Cube or
             RegularSurface instance is applied to get correct topology.
         values (bool): If True (default), surface values will be read (Irap binary only)
-        engine (str): Some import methods are implemnted in both C and Python.
-            The C method ``cxtgeo`` is default. Alternative use ``python``
+        engine (str): Key indended for developers initially, now deprecated and have no
+            effect. To be removed in future versions.
         dtype: Requsted numpy dtype of values; default is float64, alternatively float32
 
     Example::
@@ -143,7 +143,6 @@ def surface_from_file(
         mfile,
         fformat=fformat,
         load_values=values,
-        engine=engine,
         template=template,
         dtype=dtype,
     )
@@ -934,10 +933,7 @@ class RegularSurface:
             template: Only valid if ``ijxyz`` format, where an
                 existing Cube or RegularSurface instance is applied to
                 get correct topology.
-            engine: Default is "cxtgeo" which use a C backend. Optionally a pure
-                python "python" reader will be used, which in general is slower
-                but may be safer when reading memory streams and/or threading.
-                Engine is relevant for Irap binary, Irap ascii and zmap.
+            engine: Deprecated keyword with no function, will be removed in version 5.
 
         Returns:
             Object instance.
@@ -995,7 +991,7 @@ class RegularSurface:
         mfile: Union[str, pathlib.Path, io.BytesIO],
         fformat: Optional[str] = "irap_binary",
         pmd_dataunits: Optional[Tuple[int, int]] = (15, 10),
-        engine: Optional[str] = "cxtgeo",
+        engine: Optional[str] = None,
         error_if_near_empty: bool = False,
     ):
         """Export a surface (map) to file.
@@ -1012,11 +1008,7 @@ class RegularSurface:
                 storm_binary/ijxyz/petromod/xtg*. Default is irap_binary.
             pmd_dataunits: A tuple of length 2 for petromod format,
                 spesifying metadata for units (DataUnitDistance, DataUnitZ).
-            engine: Default is "cxtgeo" which use a C backend. Optionally a pure
-                python "python" reader will be used, which in general is slower
-                but may be safer when reading memory streams and/or threading. Engine
-                is relevant for Irap binary, Irap ascii and zmap. This is mainly a
-                developer setting.
+            engine: This was mainly a developer setting! The 'engine' is now deprecated.
             error_if_near_empty: Default is False. If True, raise a RuntimeError if
                 number of map nodes is less than 4. Otherwise, if False and number of
                 nodes are less than 4, a UserWarning will be given.
@@ -1049,7 +1041,18 @@ class RegularSurface:
         .. versionchanged:: 2.13 Improved support for BytesIO
         .. versionchanged:: 2.14 Support for alias file name and return value
         .. versionchanged:: 3.8 Add key ``error_if_near_empty``
+        .. versionchanged:: 4.6 The ``engine`` keyword (for developers) is deprecated
+                                and will be removed in version 5
         """
+        if engine:
+            warnings.warn(
+                "The 'engine' keyword is deprecated and will be removed in XTGeo 5"
+                "(Note that this key was intended as a developer setting.)"
+                "Please remove this key from your code.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
         logger.info("Export RegularSurface to file or memstream...")
         if self.nactive is None or self.nactive < 4:
             msg = (
@@ -1065,17 +1068,14 @@ class RegularSurface:
         mfile = FileWrapper(mfile, mode="wb", obj=self)
         mfile.check_folder(raiseerror=OSError)
 
-        if mfile.memstream:
-            engine = "python"
-
         if fformat in FileFormat.IRAP_ASCII.value:
-            _regsurf_export.export_irap_ascii(self, mfile, engine=engine)
+            _regsurf_export.export_irap_ascii(self, mfile)
 
         elif fformat in FileFormat.IRAP_BINARY.value:
-            _regsurf_export.export_irap_binary(self, mfile, engine=engine)
+            _regsurf_export.export_irap_binary(self, mfile)
 
         elif fformat in FileFormat.ZMAP_ASCII.value:
-            _regsurf_export.export_zmap_ascii(self, mfile, engine=engine)
+            _regsurf_export.export_zmap_ascii(self, mfile)
 
         elif fformat in FileFormat.STORM.value:
             _regsurf_export.export_storm_binary(self, mfile)

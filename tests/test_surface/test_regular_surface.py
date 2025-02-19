@@ -272,27 +272,6 @@ def test_irapbin_import_metadatafirst(testdata_path):
     assert sur[nsurf - 1].values[11, 0] == pytest.approx(1678.89733887, abs=0.00001)
 
 
-def test_irapbin_export_test(tmp_path, testdata_path):
-    """Import Reek Irap binary using different numpy details, test timing"""
-    logger.info("Import and export...")
-
-    nsurf = 10
-    surf = xtgeo.surface_from_file(testdata_path / TESTSET5)
-
-    t1 = xtg.timer()
-    for _ix in range(nsurf):
-        surf.to_file(tmp_path / "tull1", engine="cxtgeo")
-
-    t2a = xtg.timer(t1)
-    logger.info("Saving %s surfaces xtgeo %s secs.", nsurf, t2a)
-
-    t2b = xtg.timer(t1)
-    logger.info("TEST Saving %s surfaces xtgeo %s secs.", nsurf, t2b)
-
-    gain = (t2a - t2b) / t2a
-    logger.info("Speed gain %s percent", gain * 100)
-
-
 def test_petromodbin_import_export(tmp_path, testdata_path):
     """Import Petromod PDM binary example."""
     logger.info("Import and export...")
@@ -337,45 +316,42 @@ def test_zmap_import_export(tmp_path, default_surface):
     one2 = zmap2.values.ravel()
     assert one1.all() == one2.all()
 
-    zmap.to_file(tmp_path / "zmap2.zmap", fformat="zmap_ascii", engine="python")
+    zmap.to_file(tmp_path / "zmap2.zmap", fformat="zmap_ascii")
     zmap3 = xtgeo.surface_from_file(tmp_path / "zmap2.zmap", fformat="zmap_ascii")
     one3 = zmap3.values.ravel()
     assert one1.all() == one3.all()
 
 
 @pytest.mark.filterwarnings("ignore:Default values*")
-def test_zmap_larger_case_engine_integration(tmp_path, larger_surface):
-    """Export ZMAP with various engines and check integration and detailed specs."""
+def test_zmap_larger_case_integration(tmp_path, larger_surface):
+    """Export ZMAP and check integration and detailed specs."""
     surf = RegularSurface(**larger_surface)
 
-    surf.to_file(tmp_path / "cxtgeo.zmap", fformat="zmap")
-    surf.to_file(tmp_path / "py.zmap", fformat="zmap", engine="python")
+    surf.to_file(tmp_path / "py.zmap", fformat="zmap")
     surf.to_file(tmp_path / "irap.gri")
 
-    isurf1 = xtgeo.surface_from_file(tmp_path / "cxtgeo.zmap")
-    isurf2 = xtgeo.surface_from_file(tmp_path / "py.zmap")
-    isurf3 = xtgeo.surface_from_file(tmp_path / "irap.gri")
+    isurf1 = xtgeo.surface_from_file(tmp_path / "py.zmap")
+    isurf2 = xtgeo.surface_from_file(tmp_path / "irap.gri")
 
-    assert isurf1.values.tolist() == isurf2.values.tolist() == isurf3.values.tolist()
+    assert isurf1.values.tolist() == isurf2.values.tolist()
 
     # check values formatting in zmap files; the ZMAP format actually have a strict
     # setting spec where field width is hardcoded in header; here as fwidth * nfield
     # and less for incomplete lines. Also check number of decimals (fractional part)
-    for fname in ["cxtgeo.zmap", "py.zmap"]:
-        with open(tmp_path / fname, "r", encoding="ascii") as stream:
-            buf = stream.readlines()
-            _, _, nfield = [entry.strip() for entry in buf[1].split(",")]
-            fwidth, _, _, ndeci, _ = [entry.strip() for entry in buf[2].split(",")]
-            nrow, _, _, _, _, _ = [entry.strip() for entry in buf[3].split(",")]
+    with open(tmp_path / "py.zmap", "r", encoding="ascii") as stream:
+        buf = stream.readlines()
+        _, _, nfield = [entry.strip() for entry in buf[1].split(",")]
+        fwidth, _, _, ndeci, _ = [entry.strip() for entry in buf[2].split(",")]
+        nrow, _, _, _, _, _ = [entry.strip() for entry in buf[3].split(",")]
 
-            assert len(buf[12].rstrip()) == int(fwidth) * int(nfield)
-            # incomplete line (in this particular case):
-            assert len(buf[13].rstrip()) == (int(nrow) - int(nfield)) * int(fwidth)
+        assert len(buf[12].rstrip()) == int(fwidth) * int(nfield)
+        # incomplete line (in this particular case):
+        assert len(buf[13].rstrip()) == (int(nrow) - int(nfield)) * int(fwidth)
 
-            # check length of decimals (mantissa, fractional part) for first value
-            firstnumber = buf[6].split()[0]
-            _, fpart = firstnumber.split(".")
-            assert len(fpart) == int(ndeci)
+        # check length of decimals (mantissa, fractional part) for first value
+        firstnumber = buf[6].split()[0]
+        _, fpart = firstnumber.split(".")
+        assert len(fpart) == int(ndeci)
 
 
 def test_swapaxes(tmp_path, testdata_path):
@@ -479,68 +455,20 @@ def test_irapasc_import1(testdata_path):
     assert xsurf.values[1263, 2009] == pytest.approx(1893.75, abs=0.01)
 
 
-def test_irapasc_import1_engine_python(testdata_path):
-    """Import Reek Irap ascii using python read engine"""
-    logger.info("Import and export...")
-
-    xsurf = xtgeo.surface_from_file(
-        testdata_path / TESTSET3, fformat="irap_ascii", engine="python"
-    )
-    assert xsurf.ncol == 1264
-    assert xsurf.nrow == 2010
-    assert xsurf.values[11, 0] == pytest.approx(1678.89733887, abs=0.001)
-    assert xsurf.values[1263, 2009] == pytest.approx(1893.75, abs=0.01)
-
-
-def test_irapbin_import1_engine_python(testdata_path):
-    """Import Reek Irap binary using python read engine"""
-    logger.info("Import and export...")
-
-    xsurf = xtgeo.surface_from_file(
-        testdata_path / TESTSET2, fformat="irap_binary", engine="python"
-    )
-    assert xsurf.ncol == 1264
-    assert xsurf.nrow == 2010
-    assert xsurf.values[11, 0] == pytest.approx(1678.89733887, abs=0.001)
-    assert xsurf.values[1263, 2009] == pytest.approx(1893.75, abs=0.01)
-
-    xsurf2 = xtgeo.surface_from_file(
-        testdata_path / TESTSET2, fformat="irap_binary", engine="cxtgeo"
-    )
-    assert xsurf.values.mean() == xsurf2.values.mean()
-
-
 @pytest.mark.filterwarnings("ignore:Default values*")
-def test_irapasc_io_engine_python(tmp_path, default_surface):
+def test_irapasc_io(tmp_path, default_surface):
     """Test IO using pure python read/write"""
     xsurf1 = xtgeo.RegularSurface(**default_surface)
 
-    usefile1 = tmp_path / "surf3a.fgr"
-    usefile2 = tmp_path / "surf3b.fgr"
+    usefile = tmp_path / "surf3b.fgr"
 
     print(xsurf1[1, 1])
 
-    xsurf1.to_file(usefile1, fformat="irap_ascii", engine="cxtgeo")
-    xsurf1.to_file(usefile2, fformat="irap_ascii", engine="python")
+    xsurf1.to_file(usefile, fformat="irap_ascii")
 
-    xsurf2 = xtgeo.surface_from_file(usefile2, fformat="irap_ascii", engine="python")
-    xsurf3 = xtgeo.surface_from_file(usefile2, fformat="irap_ascii", engine="cxtgeo")
+    xsurf2 = xtgeo.surface_from_file(usefile, fformat="irap_ascii")
 
-    assert xsurf1.ncol == xsurf3.ncol == xsurf3.ncol
-
-    assert xsurf1.values[1, 1] == xsurf2.values[1, 1] == xsurf3.values[1, 1]
-
-
-@pytest.mark.bigtest
-@pytest.mark.benchmark(group="import/export surface")
-@pytest.mark.parametrize("engine", ["cxtgeo", "python"])
-def test_irapasc_import1_engine_compare(benchmark, engine, testdata_path):
-    def read():
-        xtgeo.surface_from_file(
-            testdata_path / TESTSET3, fformat="irap_ascii", engine=engine
-        )
-
-    benchmark(read)
+    assert xsurf1.values[1, 1] == xsurf2.values[1, 1]
 
 
 def test_minmax_rotated_map(testdata_path):
@@ -999,32 +927,6 @@ def test_irapbin_io_loop(tmp_path, testdata_path):
         x.to_file(tmp_path / "troll.gri", fformat="irap_binary")
 
         assert m1 == pytest.approx(m2 - 300)
-
-
-def test_irapbin_export_py(tmp_path, testdata_path):
-    """Export Irapbin with pure python"""
-
-    x = xtgeo.surface_from_file(testdata_path / TESTSET1, fformat="irap_binary")
-
-    t0 = xtg.timer()
-    for _ in range(10):
-        x.to_file(tmp_path / "purecx.gri", fformat="irap_binary", engine="cxtgeo")
-    t1 = xtg.timer(t0)
-    print(f"CXTGeo based write: {t1:3.4f}")
-
-    t0 = xtg.timer()
-    for _ in range(10):
-        x.to_file(tmp_path / "purepy.gri", fformat="irap_binary", engine="python")
-    t2 = xtg.timer(t0)
-    print(f"Python based write: {t2:3.4f}")
-    print(f"Ratio python based / cxtgeo based {t2 / t1:3.4f}")
-
-    s1 = xtgeo.surface_from_file(tmp_path / "purecx.gri")
-    s2 = xtgeo.surface_from_file(tmp_path / "purepy.gri")
-
-    assert s1.values.mean() == s2.values.mean()
-
-    assert s1.values[100, 100] == s2.values[100, 100]
 
 
 def test_distance_from_point(tmp_path, testdata_path):
