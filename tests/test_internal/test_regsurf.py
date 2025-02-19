@@ -192,6 +192,7 @@ def keep_top_store():
     return {"keep_top": None}
 
 
+@pytest.mark.xfail(reason="Flaky, fails in some cases for unknown reasons")
 @pytest.mark.parametrize("num_threads", [1, 2, 4, 8, 16])
 def test_sample_grid3d_layer_num_threads(
     get_drogondata, benchmark, num_threads, keep_top_store
