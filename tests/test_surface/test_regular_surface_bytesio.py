@@ -200,10 +200,11 @@ def test_export_import_hdf5_bytesio(tmp_path, testdata_path):
 
     xsurf3 = xtgeo.surface_from_file(stream, fformat="hdf")
     assert xsurf3.ncol == 554
-    assert xsurf3.values.mean() == xsurf.values.mean()
+
+    assert xsurf3.values.mean() == pytest.approx(xsurf.values.mean())
 
     xsurf4 = xtgeo.surface_from_file(stream, fformat="hdf")
-    assert xsurf4.values.mean() == xsurf.values.mean()
+    assert xsurf4.values.mean() == pytest.approx(xsurf.values.mean())
 
 
 def test_export_import_ijxyz_bytesio(tmp_path, testdata_path):

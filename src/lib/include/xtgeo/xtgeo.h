@@ -255,34 +255,6 @@ extern "C"
 
     /* the swig* names are for eventual typemaps signatures in the cxtgeo.i
      * file to SWIG */
-    int surf_import_irap_bin(FILE *fhandle,
-                             int mode,
-                             int *swig_int_out_p1,         // *p_mx
-                             int *swig_int_out_p2,         // *p_my
-                             long *swig_lon_out_p1,        // *p_ndef
-                             double *swig_dbl_out_p1,      // *p_xori
-                             double *swig_dbl_out_p2,      // *p_yori
-                             double *swig_dbl_out_p3,      // *p_xinc
-                             double *swig_dbl_out_p4,      // *p_yinc
-                             double *swig_dbl_out_p5,      // *p_rot
-                             double *swig_np_dbl_aout_v1,  // *p_map_v
-                             long n_swig_np_dbl_aout_v1,   // nmap
-                             int option);
-
-    int surf_import_irap_ascii(FILE *fc,
-                               int mode,
-                               int *swig_int_out_p1,         // *nx
-                               int *swig_int_out_p2,         // *ny
-                               long *swig_lon_out_p1,        // *ndef
-                               double *swig_dbl_out_p1,      // *xori
-                               double *swig_dbl_out_p2,      // *yori
-                               double *swig_dbl_out_p3,      // *xinc
-                               double *swig_dbl_out_p4,      // *yinc
-                               double *swig_dbl_out_p5,      // *rot
-                               double *swig_np_dbl_aout_v1,  // *p_map_v
-                               long n_swig_np_dbl_aout_v1,   // nmap
-                               int option);
-
     void surf_import_petromod_bin(FILE *fhandle,
                                   int mode,
                                   float undef,
@@ -291,43 +263,6 @@ extern "C"
                                   int my,
                                   double *swig_np_dbl_aout_v1,  // *p_map_v
                                   long n_swig_np_dbl_aout_v1);  // nmap
-
-    int surf_export_irap_bin(FILE *fc,
-                             int mx,
-                             int my,
-                             double xori,
-                             double yori,
-                             double xinc,
-                             double yinc,
-                             double rot,
-                             double *swig_np_dbl_in_v1,  // *p_map_v,
-                             long n_swig_np_dbl_in_v1,   // mxy
-                             int option);
-
-    int surf_export_irap_ascii(FILE *fc,
-                               int mx,
-                               int my,
-                               double xori,
-                               double yori,
-                               double xinc,
-                               double yinc,
-                               double rot,
-                               double *swig_np_dbl_in_v1,  // *p_map_v
-                               long n_swig_np_dbl_in_v1,   // mxy
-                               int option);
-
-    int surf_export_zmap_ascii(FILE *fc,
-                               int mx,
-                               int my,
-                               double xori,
-                               double yori,
-                               double xinc,
-                               double yinc,
-                               double *swig_np_dbl_in_v1,  // *p_map_v
-                               long n_swig_np_dbl_in_v1,   // mxy
-                               double zmin,
-                               double zmax,
-                               int option);
 
     int surf_export_storm_bin(FILE *fc,
                               int mx,
@@ -346,23 +281,6 @@ extern "C"
                                   char *dsc,
                                   double *swig_np_dbl_in_v1,  // *surfzv
                                   long n_swig_np_dbl_in_v1);  // nsurf
-
-    int surf_export_ijxyz(FILE *fc,
-                          int mx,
-                          int my,
-                          double xori,
-                          double yori,
-                          double xinc,
-                          double yinc,
-                          double rot,
-                          int yflip,
-                          int *swig_np_int_in_v1,     // ilines
-                          long n_swig_np_int_in_v1,   // ncol
-                          int *swig_np_int_in_v2,     // xlines
-                          long n_swig_np_int_in_v2,   // nrow
-                          double *swig_np_dbl_in_v1,  // *p_map_v
-                          long n_swig_np_dbl_in_v1,   // mxy
-                          int option);
 
     int surf_zminmax(int nx, int ny, double *p_map_v, double *zmin, double *zmax);
 

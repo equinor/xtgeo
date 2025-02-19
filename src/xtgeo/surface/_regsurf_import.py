@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import json
+import mmap
 from struct import unpack
 from typing import TYPE_CHECKING
 
 import h5py
 import numpy as np
-import numpy.ma as ma
 
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
@@ -30,27 +30,20 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-def import_irap_binary(mfile, values=True, engine="cxtgeo", **_):
-    """Import Irap binary format.
+def import_irap_binary(mfile: FileWrapper, values: bool = True, **_):
+    """Using pure python from version 4.X.
 
-    Args:
-        mfile (FileWrapper): Instance of xtgeo file class
-        values (bool, optional): Getting values or just scan. Defaults to True.
+    Reverse engineering says that the BINARY header is
+    <32> IDFLAG NY XORI XMAX YORI YMAX XINC YINC <32>
+    <16> NX ROT X0ORI Y0ORI<16>
+    <28> 0 0 0 0 0 0 0 <28>
+    ---data---
+    Note, XMAX and YMAX are based on unroted distances and are
+    not used directly? =>
+    XINC = (XMAX-XORI)/(NX-1) etc
+    X0ORI/Y0ORI seems to be rotation origin? Set them equal to XORI/YORI
 
-    Raises:
-        RuntimeError: Error in reading Irap binary file
-        RuntimeError: Problem....
     """
-    return (
-        _import_irap_binary_purepy(mfile)
-        if mfile.memstream is True or engine == "python"
-        else _import_irap_binary(mfile, values=values)
-    )
-
-
-def _import_irap_binary_purepy(mfile, values=True):
-    """Using pure python, better for memorymapping/threading."""
-    # Borrowed some code from https://github.com/equinor/grequi/../fmt_irapbin.py
 
     logger.info("Enter function %s", __name__)
 
@@ -59,19 +52,29 @@ def _import_irap_binary_purepy(mfile, values=True):
         buf = mfile.file.read()
     else:
         with open(mfile.file, "rb") as fhandle:
-            buf = fhandle.read()
+            buf = mmap.mmap(fhandle.fileno(), 0, access=mmap.ACCESS_READ)
 
-    # unpack header with big-endian format string
-    hed = unpack(">3i6f3i3f10i", buf[:100])
+    # Ensure buffer is large enough for header
+    header_size = 100
+    if len(buf) < header_size:
+        raise ValueError("Buffer size is too small for header")
+
+    # unpack header with big-endian format string (cf. docstring info)
+    hed = np.frombuffer(
+        buf[:header_size],
+        dtype=">i4,>i4,>i4,>f4,>f4,>f4,>f4,>f4,>f4,>i4,"  # <32> IDFLAG NY XORI ... <32>
+        + ">i4,>i4,>f4,>f4,>f4,>i4,"  # <16> NX ROT X0ORI Y0ORI<16>
+        + ">i4,>i4,>i4,>i4,>i4,>i4,>i4,>i4,>i4",  # <28> 0 0 0 0 0 0 0 <28>
+    )
 
     args = {}
-    args["nrow"] = hed[2]
-    args["xori"] = hed[3]
-    args["yori"] = hed[5]
-    args["xinc"] = hed[7]
-    args["yinc"] = hed[8]
-    args["ncol"] = hed[11]
-    args["rotation"] = hed[12]
+    args["nrow"] = int(hed[0][2])
+    args["xori"] = float(hed[0][3])
+    args["yori"] = float(hed[0][5])
+    args["xinc"] = float(hed[0][7])
+    args["yinc"] = float(hed[0][8])
+    args["ncol"] = int(hed[0][11])
+    args["rotation"] = float(hed[0][12])
 
     args["yflip"] = 1
     if args["yinc"] < 0.0:
@@ -82,23 +85,18 @@ def _import_irap_binary_purepy(mfile, values=True):
         return args
 
     # Values: traverse through data blocks
-    stv = 100  # Starting byte
+    stv = header_size  # Starting byte
     datav = []
 
-    while True:
+    while stv < len(buf):
         # start block integer - number of bytes of floats in following block
-        blockv = unpack(">i", buf[stv : stv + 4])[0]
+        blockv = np.frombuffer(buf[stv : stv + 4], dtype=">i4")[0]
         stv += 4
         # floats
-        datav.append(
-            np.array(unpack(">" + str(int(blockv / 4)) + "f", buf[stv : blockv + stv]))
-        )
+        datav.append(np.frombuffer(buf[stv : stv + blockv], dtype=">f4"))
         stv += blockv
         # end block integer not needed really
-        _ = unpack(">i", buf[stv : stv + 4])[0]
         stv += 4
-        if stv == len(buf):
-            break
 
     values = np.hstack(datav)
     values = np.reshape(values, (args["ncol"], args["nrow"]), order="F")
@@ -110,88 +108,27 @@ def _import_irap_binary_purepy(mfile, values=True):
     return args
 
 
-def _import_irap_binary(mfile, values=True):
-    logger.info("Enter function %s", __name__)
-
-    cfhandle = mfile.get_cfhandle()
-    args = {}
-    # read with mode 0, to get mx my and other metadata
-    (
-        ier,
-        args["ncol"],
-        args["nrow"],
-        _,
-        args["xori"],
-        args["yori"],
-        args["xinc"],
-        args["yinc"],
-        args["rotation"],
-        val,
-    ) = _cxtgeo.surf_import_irap_bin(cfhandle, 0, 1, 0)
-
-    if ier != 0:
-        mfile.cfclose()
-        raise RuntimeError("Error in reading Irap binary file")
-
-    args["yflip"] = 1
-    if args["yinc"] < 0.0:
-        args["yinc"] *= -1
-        args["yflip"] = -1
-
-    # lazy loading, not reading the arrays
-    if values:
-        nval = args["ncol"] * args["nrow"]
-        xlist = _cxtgeo.surf_import_irap_bin(cfhandle, 1, nval, 0)
-        if xlist[0] != 0:
-            mfile.cfclose()
-            raise RuntimeError(f"Problem in {__name__}, code {ier}")
-
-        val = xlist[-1]
-
-        val = np.reshape(val, (args["ncol"], args["nrow"]), order="C")
-
-        val = ma.masked_greater(val, UNDEF_LIMIT)
-
-        if np.isnan(val).any():
-            logger.info("NaN values are found, will mask...")
-            val = ma.masked_invalid(val)
-
-        args["values"] = val
-
-    mfile.cfclose()
-    return args
-
-
-def import_irap_ascii(mfile, engine="cxtgeo", **_):
-    """Import Irap ascii format, where mfile is a FileWrapper instance."""
-    #   -996  2010      5.000000      5.000000
-    #    461587.553724   467902.553724  5927061.430176  5937106.430176
-    #   1264       30.000011   461587.553724  5927061.430176
-    #      0     0     0     0     0     0     0
-    #     1677.3239    1677.3978    1677.4855    1677.5872    1677.7034    1677.8345
-    #     1677.9807    1678.1420    1678.3157    1678.5000    1678.6942    1678.8973
-    #     1679.1086    1679.3274    1679.5524    1679.7831    1680.0186    1680.2583
-    #     1680.5016    1680.7480    1680.9969    1681.2479    1681.5004    1681.7538
-    #
-
-    return (
-        _import_irap_ascii_purepy(mfile)
-        if mfile.memstream is True or engine == "python"
-        else _import_irap_ascii(mfile)
-    )
-
-
-def _import_irap_ascii_purepy(mfile):
-    """Import Irap in pure python code, suitable for memstreams, but less efficient."""
-    # timer tests suggest approx double load time compared with cxtgeo method
+def import_irap_ascii(mfile: FileWrapper, **_):
+    """Import Irap in pure python code, suitable for memstreams, and now efficient.
+    -996  2010      5.000000      5.000000
+    461587.553724   467902.553724  5927061.430176  5937106.430176
+    1264       30.000011   461587.553724  5927061.430176
+       0     0     0     0     0     0     0
+      1677.3239    1677.3978    1677.4855    1677.5872    1677.7034    1677.8345
+      1677.9807    1678.1420    1678.3157    1678.5000    1678.6942    1678.8973
+      1679.1086    1679.3274    1679.5524    1679.7831    1680.0186    1680.2583
+      1680.5016    1680.7480    1680.9969    1681.2479    1681.5004    1681.7538
+       ....
+    """
 
     if mfile.memstream:
         mfile.file.seek(0)
-        buf = mfile.file.read()
-        buf = buf.decode().split()
+        buf = mfile.file.read().decode()
     else:
         with open(mfile.file) as fhandle:
-            buf = fhandle.read().split()
+            buf = fhandle.read()
+
+    buf = buf.split(maxsplit=19)
     args = {}
     args["nrow"] = int(buf[1])
     args["xinc"] = float(buf[2])
@@ -201,7 +138,9 @@ def _import_irap_ascii_purepy(mfile):
     args["ncol"] = int(buf[8])
     args["rotation"] = float(buf[9])
 
-    values = np.array(buf[19:]).astype(np.float64)
+    nvalues = args["nrow"] * args["ncol"]
+    values = np.fromstring(buf[19], dtype=np.double, count=nvalues, sep=" ")
+
     values = np.reshape(values, (args["ncol"], args["nrow"]), order="F")
     values = np.array(values, order="C")
     args["values"] = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPA)
@@ -212,52 +151,6 @@ def _import_irap_ascii_purepy(mfile):
         args["yflip"] = -1
 
     del buf
-    return args
-
-
-def _import_irap_ascii(mfile):
-    """Import Irap ascii format via C routines (fast, but less suited for bytesio)."""
-    logger.debug("Enter function...")
-
-    cfhandle = mfile.get_cfhandle()
-
-    # read with mode 0, scan to get mx my
-    xlist = _cxtgeo.surf_import_irap_ascii(cfhandle, 0, 1, 0)
-
-    nvn = xlist[1] * xlist[2]  # mx * my
-    xlist = _cxtgeo.surf_import_irap_ascii(cfhandle, 1, nvn, 0)
-
-    ier, ncol, nrow, _, xori, yori, xinc, yinc, rot, val = xlist
-
-    if ier != 0:
-        mfile.cfclose()
-        raise RuntimeError(f"Problem in {__name__}, code {ier}")
-
-    val = np.reshape(val, (ncol, nrow), order="C")
-
-    val = ma.masked_greater(val, UNDEF_LIMIT)
-
-    if np.isnan(val).any():
-        logger.info("NaN values are found, will mask...")
-        val = ma.masked_invalid(val)
-
-    yflip = 1
-    if yinc < 0.0:
-        yinc = yinc * -1
-        yflip = -1
-    args = {}
-    args["ncol"] = ncol
-    args["nrow"] = nrow
-    args["xori"] = xori
-    args["yori"] = yori
-    args["xinc"] = xinc
-    args["yinc"] = yinc
-    args["yflip"] = yflip
-    args["rotation"] = rot
-
-    args["values"] = val
-
-    mfile.cfclose()
     return args
 
 
@@ -284,7 +177,7 @@ def import_ijxyz(
     }
 
 
-def import_petromod(mfile, **_):
+def import_petromod(mfile: FileWrapper, **_):
     """Import Petromod binary format."""
 
     cfhandle = mfile.get_cfhandle()
@@ -342,7 +235,7 @@ def import_petromod(mfile, **_):
     return args
 
 
-def import_zmap_ascii(mfile, values=True, **_):
+def import_zmap_ascii(mfile: FileWrapper, values: bool = True, **_):
     """Importing ZMAP + ascii files, in pure python only.
 
     Some sources
@@ -421,7 +314,7 @@ def import_xtg(mfile, values=True, **kwargs):
     return args
 
 
-def import_hdf5_regsurf(mfile, values=True, **_):
+def import_hdf5_regsurf(mfile: FileWrapper, values=True, **_):
     """Importing h5/hdf5 storage."""
     reqattrs = MetaDataRegularSurface.REQUIRED
 
