@@ -1488,25 +1488,6 @@ extern "C"
      *======================================================================================
      */
 
-    void grdcp3d_from_cube(int ncol,
-                           int nrow,
-                           int nlay,
-                           double *swig_np_dbl_inplaceflat_v1,  // *coordsv,
-                           long n_swig_np_dbl_inplaceflat_v1,   // ncoord,
-                           float *swig_np_flt_inplaceflat_v1,   // *zcornsv,
-                           long n_swig_np_flt_inplaceflat_v1,   // nzcorn,
-                           int *swig_np_int_inplaceflat_v1,     // *actnumsv,
-                           long n_swig_np_int_inplaceflat_v1,   // nactnum,
-                           double xori,
-                           double yori,
-                           double zori,
-                           double xinc,
-                           double yinc,
-                           double zinc,
-                           double rotation,
-                           int yflip,
-                           int option);
-
     int grd3cp3d_xtgformat1to2_geom(
       long ncol,
       long nrow,

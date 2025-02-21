@@ -35,7 +35,7 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                     const grid3d::Grid &grd,
                     const size_t klayer,
                     const int index_position,  // 0: top, 1: base|bot, 2: center
-                    const int num_threads = -1)
+                    const int num_threads)
 {
     // clang-format off
     #ifdef __linux__

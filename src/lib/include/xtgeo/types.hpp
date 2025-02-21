@@ -246,6 +246,19 @@ struct RegularSurface
     // Default constructor (deleted)
     RegularSurface() = delete;
 
+    // Constructor that takes a subset of the attributes
+    RegularSurface(size_t ncol,
+                   size_t nrow,
+                   double xori,
+                   double yori,
+                   double xinc,
+                   double yinc,
+                   double rotation) :
+      ncol(ncol), nrow(nrow), xori(xori), yori(yori), xinc(xinc), yinc(yinc),
+      rotation(rotation)
+    {
+    }
+
     // Constructor that takes a Python object and a skip_values flag
     RegularSurface(const py::object &rs)
     {

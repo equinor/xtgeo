@@ -23,7 +23,7 @@ namespace xtgeo::grid3d {
  * @return An array containing the volume of every cell
  */
 py::array_t<double>
-get_cell_volumes(const Grid &grd, const int precision, const bool asmasked = false)
+get_cell_volumes(const Grid &grd, const int precision, const bool asmasked)
 {
     pybind11::array_t<double> cellvols({ grd.ncol, grd.nrow, grd.nlay });
     auto cellvols_ = cellvols.mutable_data();
@@ -53,7 +53,7 @@ get_cell_volumes(const Grid &grd, const int precision, const bool asmasked = fal
  * @return Arrays with the X, Y, Z coordinates of the cell centers
  */
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-get_cell_centers(const Grid &grd, const bool asmasked = false)
+get_cell_centers(const Grid &grd, const bool asmasked)
 {
     pybind11::array_t<double> xmid({ grd.ncol, grd.nrow, grd.nlay });
     pybind11::array_t<double> ymid({ grd.ncol, grd.nrow, grd.nlay });
@@ -155,6 +155,86 @@ get_height_above_ffl(const Grid &grd,
         }
     }
     return std::make_tuple(htop, hbot, hmid);
+}
+
+/* Compute a 3D grid from a cube specification
+
+
+*/
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+create_grid_from_cube(const cube::Cube &cube,
+                      const bool use_cell_center,
+                      const int flip)
+{
+    // Define the shape of the arrays
+    std::vector<size_t> coordsv_shape = { cube.ncol + 1, cube.nrow + 1, 6 };
+    std::vector<size_t> zcornsv_shape = { cube.ncol + 1, cube.nrow + 1, cube.nlay + 1,
+                                          4 };
+    std::vector<size_t> actnumsv_shape = { cube.ncol, cube.nrow, cube.nlay };
+
+    // Create the arrays with the defined shapes
+    py::array_t<double> coordsv(coordsv_shape);
+    py::array_t<float> zcornsv(zcornsv_shape);
+    py::array_t<int8_t> actnumsv(actnumsv_shape);
+
+    auto coordsv_ = coordsv.mutable_data();
+    auto zcornsv_ = zcornsv.mutable_data();
+    auto actnumsv_ = actnumsv.mutable_data();
+
+    // fill actnum with 1
+    std::fill(actnumsv_, actnumsv_ + cube.ncol * cube.nrow * cube.nlay, 1);
+
+    double apply_xori = cube.xori;
+    double apply_yori = cube.yori;
+    double apply_zori = cube.zori;
+    // if we are using cell center, we need to adjust the origin
+    if (use_cell_center) {
+        auto res = geometry::find_rect_corners_from_center(
+          cube.xori, cube.yori, cube.xinc, cube.yinc, cube.rotation);
+        if (flip == 1) {
+            apply_xori = res[6];
+            apply_yori = res[7];
+        } else {
+            apply_xori = res[0];
+            apply_yori = res[1];
+        }
+        apply_zori = cube.zori - 0.5 * cube.zinc;
+    }
+
+    // initialize a temporary RegularSurface
+    xtgeo::regsurf::RegularSurface rsurf{ cube.ncol,    cube.nrow, apply_xori,
+                                          apply_yori,   cube.xinc, cube.yinc,
+                                          cube.rotation };
+
+    // coordinates
+    size_t ibc = 0;
+    for (size_t i = 0; i < cube.ncol + 1; i++) {
+        for (size_t j = 0; j < cube.nrow + 1; j++) {
+            xyz::Point p = xtgeo::regsurf::get_xy_from_ij(rsurf, i, j, flip);
+            coordsv_[ibc++] = p.x;
+            coordsv_[ibc++] = p.y;
+            coordsv_[ibc++] = apply_zori;
+            coordsv_[ibc++] = p.x;
+            coordsv_[ibc++] = p.y;
+            coordsv_[ibc++] = apply_zori + cube.zinc * (cube.nlay + 1);
+        }
+    }
+
+    // zcorners
+    size_t ibz = 0;
+    for (size_t i = 0; i < cube.ncol + 1; i++) {
+        for (size_t j = 0; j < cube.nrow + 1; j++) {
+            float zlevel = apply_zori;
+            for (size_t k = 0; k < cube.nlay + 1; k++) {
+                for (size_t nn = 0; nn < 4; nn++)
+                    zcornsv_[ibz++] = zlevel;
+
+                zlevel += cube.zinc;
+            }
+        }
+    }
+
+    return std::make_tuple(coordsv, zcornsv, actnumsv);
 }
 
 }  // namespace xtgeo::grid3d

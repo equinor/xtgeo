@@ -8,55 +8,6 @@ from xtgeo import _cxtgeo
 from xtgeo.io._file import FileWrapper
 
 
-def test_grdcp3d_from_cube():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Bug in: grdcp3d_from_cube",
-    ):
-        _cxtgeo.grdcp3d_from_cube(
-            1,
-            1,
-            1,
-            np.array(
-                [
-                    [
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                    ]
-                ]
-            ),
-            np.array(
-                [
-                    [
-                        [
-                            [0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0],
-                        ]
-                    ]
-                ],
-                dtype=np.float32,
-            ),
-            np.array(
-                [[[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]], dtype=np.int32
-            ),
-            1.0,
-            1.0,
-            1.0,
-            -1,
-            1,
-            1,
-            0.0,
-            0,
-            1,
-        )
-
-
 @pytest.mark.parametrize("func", [_cxtgeo.x_ic2ijk, _cxtgeo.x_ib2ijk])
 def test_calc_i_to_ijk(func):
     with pytest.raises(

@@ -110,6 +110,13 @@ interpolate_z_4p(const double x,
                  const xyz::Point &p3,
                  const xyz::Point &p4);
 
+std::array<double, 8>
+find_rect_corners_from_center(const double x,
+                              const double y,
+                              const double xinc,
+                              const double yinc,
+                              const double rot);
+
 // functions exposed to Python:
 inline void
 init(py::module &m)

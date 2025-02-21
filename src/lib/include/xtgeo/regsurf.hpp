@@ -15,7 +15,10 @@ std::tuple<xyz::Point, xyz::Point, xyz::Point, xyz::Point>
 get_outer_corners(const RegularSurface &regsurf);
 
 xyz::Point
-get_xy_from_ij(const RegularSurface &rs, const size_t i, const size_t j);
+get_xy_from_ij(const RegularSurface &rs,
+               const size_t i,
+               const size_t j,
+               const int yflip = 1);
 
 double
 get_z_from_xy(const RegularSurface &rs, const double x, const double y);
@@ -37,7 +40,7 @@ sample_grid3d_layer(const RegularSurface &rs_cpp,
                     const grid3d::Grid &grid_cpp,
                     const size_t klayer,
                     const int index_position,
-                    const int num_threads);
+                    const int num_threads = -1);
 inline void
 init(py::module &m)
 {

@@ -84,17 +84,21 @@ get_outer_corners(const RegularSurface &regsurf)
  * @param regsurf The RegularSurface struct representing the surface
  * @param i The i-coordinate of the origin
  * @param j The j-coordinate of the origin
+ * @param yflip The flip factor for the Y-coordinate
  * @return A tuple of 4 points representing the outer corners of the regsurf
  */
 Point
-get_xy_from_ij(const RegularSurface &regsurf, const size_t i, const size_t j)
+get_xy_from_ij(const RegularSurface &regsurf,
+               const size_t i,
+               const size_t j,
+               const int yflip)
 {
     // Convert the angle to radians
     double angle_rad = regsurf.rotation * M_PI / 180.0;
 
     // Calculate the unrotated corners of the cell (i, j)
-    Point point = { regsurf.xori + i * regsurf.xinc, regsurf.yori + j * regsurf.yinc,
-                    0 };
+    Point point = { regsurf.xori + i * regsurf.xinc,
+                    regsurf.yori + j * regsurf.yinc * yflip, 0 };
 
     // Get the position of the point in the rotated grid
     Point point_rot = rotate_point(point, regsurf.xori, regsurf.yori, angle_rad);
