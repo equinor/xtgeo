@@ -58,6 +58,10 @@ create_grid_from_cube(const cube::Cube &cube,
                       const bool use_cell_center = false,
                       const int flip = 1);
 
+py::array_t<float>
+adjust_boxgrid_layers_from_regsurfs(Grid &grd,
+                                    const std::vector<regsurf::RegularSurface> &rsurfs);
+
 inline void
 init(py::module &m)
 {
@@ -83,6 +87,8 @@ init(py::module &m)
            "Compute the height above a FFL (free fluid level).")
       .def("get_cell_corners_from_ijk", &get_cell_corners_from_ijk,
            "Get a vector containing the corners of a specified IJK cell.")
+      .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
+           "Adjust layers in a boxgrid given a list of regular surfaces.")
 
       ;
 

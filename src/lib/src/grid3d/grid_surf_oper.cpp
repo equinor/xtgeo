@@ -75,4 +75,53 @@ get_gridprop_value_between_surfaces(const Grid &grd,
     return result;
 }  // get_gridprop_value_between_surfaces
 
+/*
+ * Given a 3D grid and surfaces, construct layers in 3D grid (zcorns) from surface. Note
+ * that this grid shall be a "shoebox grid", which has vertical pillars in the input!
+ *
+ * @param grd Grid instance, which already has the correct number of layers
+ * @param rsurfs The RegularSurface objects (array/list input), sorted from top
+ * @return updated zcorn values in the grid
+ */
+
+py::array_t<float>
+adjust_boxgrid_layers_from_regsurfs(Grid &grd,
+                                    const std::vector<regsurf::RegularSurface> &rsurfs)
+{
+    std::vector<size_t> shape = { grd.ncol + 1, grd.nrow + 1, grd.nlay + 1, 4 };
+    // Create the array with the specified shape
+    py::array_t<float> zcorn_result(shape);
+    auto zcorn_result_ = zcorn_result.mutable_unchecked<4>();
+
+    auto coordsv_ = grd.coordsv.unchecked<3>();
+
+    if (rsurfs.size() != grd.nlay + 1) {
+        throw std::invalid_argument("Wrong number of input surfaces vs grid layers");
+    }
+
+    for (size_t i = 0; i < grd.ncol + 1; i++) {
+        for (size_t j = 0; j < grd.nrow + 1; j++) {
+            // get pillar coordinate, just using the the top pillar point as the
+            // pillars shall be vertical
+            double x = coordsv_(i, j, 0);
+            double y = coordsv_(i, j, 1);
+            size_t k = 0;
+            for (const auto &rsurf : rsurfs) {
+                double z = regsurf::get_z_from_xy(rsurf, x, y);
+                printf("k and z: %d  %f\n", k, z);
+                if (std::isnan(z)) {
+                    z = 1000;  // default value; TODO make this better
+                }
+
+                // update the z values of the cell corners
+                for (size_t l = 0; l < 4; l++) {
+                    zcorn_result_(i, j, k, l) = z;
+                }
+                k++;
+            }
+        }
+    }
+    return zcorn_result;
+}  // adjust_boxgrid_layer_to_regsurf
+
 }  // namespace xtgeo::grid3d
