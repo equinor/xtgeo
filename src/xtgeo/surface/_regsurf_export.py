@@ -49,11 +49,13 @@ def export_irap_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
 
     vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPA, order="F")
 
+    yinc = self.yinc * self.yflip
+
     xmax = self.xori + (self.ncol - 1) * self.xinc
-    ymax = self.yori + (self.nrow - 1) * self.yinc
+    ymax = self.yori + (self.nrow - 1) * yinc
 
     header = (
-        f"-996 {self.nrow} {self.xinc} {self.yinc}\n"
+        f"-996 {self.nrow} {self.xinc} {yinc}\n"
         f"{self.xori} {xmax} {self.yori} {ymax}\n"
         f"{self.ncol} {self.rotation} {self.xori} {self.yori}\n"
         "0  0  0  0  0  0  0\n"
@@ -94,6 +96,8 @@ def export_irap_binary(self: RegularSurface, mfile: FileWrapper) -> None:
 
     vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
 
+    yinc = self.yinc * self.yflip
+
     header = struct.pack(
         ">3i6f3i3f10i",  # > means big endian storage
         32,
@@ -102,9 +106,9 @@ def export_irap_binary(self: RegularSurface, mfile: FileWrapper) -> None:
         self.xori,
         self.xori + self.xinc * (self.ncol - 1),
         self.yori,
-        self.yori + self.yinc * (self.nrow - 1),
+        self.yori + yinc * (self.nrow - 1),
         self.xinc,
-        self.yinc,
+        yinc,
         32,
         16,
         self.ncol,
