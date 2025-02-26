@@ -250,6 +250,12 @@ def grid_from_cube(
     return grd
 
 
+def grid_from_surfaces(surfaces: xtgeo.Surfaces) -> Grid:
+    """Create a simple grid (non-faulted) from a stack of surfaces."""
+
+    return _grid_etc1.create_grid_from_surfaces(surfaces)
+
+
 # --------------------------------------------------------------------------------------
 # Comment on dual porosity grids:
 #

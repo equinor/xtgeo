@@ -17,6 +17,7 @@ from xtgeo.common.calc import find_flip
 from xtgeo.common.constants import UNDEF_INT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.grid3d.grid_properties import GridProperties
+from xtgeo.surface.surfaces import Surfaces
 from xtgeo.xyz.polygons import Polygons
 
 from . import _gridprop_lowlevel
@@ -76,6 +77,38 @@ def create_box(
         "zcornsv": zcornsv,
         "actnumsv": actnumsv.astype(np.int32),
     }
+
+
+def create_grid_from_surfaces(srfs: Surfaces):
+    """Use a stack of surfaces to create a nonfaulted grid."""
+
+    n_surfaces = len(srfs.surfaces)
+
+    # TODO: ensure that surfaces are consistent?
+    top = srfs.surfaces[0]
+    base = srfs.surfaces[-1]
+
+    zinc = (base.values.mean() - top.values.mean()) / n_surfaces
+
+    grd = create_box(
+        dimension=(top.ncol, top.nrow, n_surfaces),
+        origin=(top.xori, top.yori, top.values.mean()),
+        increment=(top.xinc, top.yinc, zinc),
+        rotation=top.rotation,
+    )
+
+    # now adjust the grid to surfaces
+    surf_list = []
+    for surf in srfs.surfaces:
+        cpp_surf = _internal.regsurf.RegularSurface(surf)
+        surf_list.append(cpp_surf)
+
+    grd_cpp = _internal.grid3d.Grid(grd)
+    new_zcorns = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surf_list)
+
+    grd._zcornsv = new_zcorns
+
+    return grd
 
 
 method_factory = {
