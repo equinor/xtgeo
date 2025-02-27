@@ -251,7 +251,13 @@ def grid_from_cube(
 
 
 def grid_from_surfaces(surfaces: xtgeo.Surfaces) -> Grid:
-    """Create a simple grid (non-faulted) from a stack of surfaces."""
+    """Create a simple grid (non-faulted) from a stack of surfaces.
+
+    The surfaces shall be sorted from top to base, and they should not cross in depth.
+    In addition, it is required(?) that they have the same settings (origin, rotation,
+    etc)
+
+    """
 
     return _grid_etc1.create_grid_from_surfaces(surfaces)
 

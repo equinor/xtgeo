@@ -81,21 +81,25 @@ def create_box(
 
 def create_grid_from_surfaces(srfs: Surfaces):
     """Use a stack of surfaces to create a nonfaulted grid."""
-
+    import xtgeo
     n_surfaces = len(srfs.surfaces)
 
     # TODO: ensure that surfaces are consistent?
     top = srfs.surfaces[0]
     base = srfs.surfaces[-1]
 
-    zinc = (base.values.mean() - top.values.mean()) / n_surfaces
+    zinc = (base.values.mean() - top.values.mean()) / (n_surfaces - 1)
 
-    grd = create_box(
-        dimension=(top.ncol, top.nrow, n_surfaces),
+    grd = xtgeo.create_box_grid(
+        dimension=(top.ncol, top.nrow, n_surfaces - 1),
         origin=(top.xori, top.yori, top.values.mean()),
         increment=(top.xinc, top.yinc, zinc),
         rotation=top.rotation,
+        oricenter = False,
+        flip=1,
     )
+
+
 
     # now adjust the grid to surfaces
     surf_list = []

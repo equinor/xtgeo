@@ -268,9 +268,15 @@ get_z_from_xy(const RegularSurface &regsurf, const double x, const double y)
     double y1 = j * regsurf.yinc;
     double y2 = (j + 1) * regsurf.yinc;
 
-    return geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
-                                              { x2, y1, z21 }, { x1, y2, z12 },
-                                              { x2, y2, z22 });
+    auto update = geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
+                                                     { x2, y1, z21 }, { x1, y2, z12 },
+                                                     { x2, y2, z22 });
+
+    // check that update is not nan and raise error if so
+    if (std::isnan(update)) {
+        throw std::runtime_error("Interpolated Z value is NaN");
+    }
+    return update;
 }  // get_z_from_xy
 
 }  // namespace xtgeo::regsurf
