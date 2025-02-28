@@ -179,3 +179,25 @@ def test_get_cell_centers(get_drogondata):
     assert np.isnan(xcor[62, 33, 37])
     assert np.isnan(ycor[62, 33, 37])
     assert np.isnan(zcor[62, 33, 37])
+
+
+def test_adjust_box_grid_to_regsurfs():
+    """Test the adjust_box_grid function, which updates zcorns in the grid."""
+    # Create a simple grid
+    grid = xtgeo.create_box_grid((8, 4, 5))
+    grid.describe()
+    print(grid._zcornsv)
+
+    assert grid._zcornsv[4, 2, :, 1].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+
+    surf = xtgeo.surface_from_grid3d(grid, where="top")
+    surfaces = []
+    for i in range(6):
+        surfn = surf.copy()
+        surfn.values += 2 * i
+        surf_cpp = _internal.regsurf.RegularSurface(surfn)
+        surfaces.append(surf_cpp)
+
+    grd_cpp = _internal.grid3d.Grid(grid)
+    new_zcorns = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surfaces)
+    assert new_zcorns[4, 2, :, 1].tolist() == [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]

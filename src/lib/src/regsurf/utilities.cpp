@@ -84,17 +84,21 @@ get_outer_corners(const RegularSurface &regsurf)
  * @param regsurf The RegularSurface struct representing the surface
  * @param i The i-coordinate of the origin
  * @param j The j-coordinate of the origin
+ * @param yflip The flip factor for the Y-coordinate
  * @return A tuple of 4 points representing the outer corners of the regsurf
  */
 Point
-get_xy_from_ij(const RegularSurface &regsurf, const size_t i, const size_t j)
+get_xy_from_ij(const RegularSurface &regsurf,
+               const size_t i,
+               const size_t j,
+               const int yflip)
 {
     // Convert the angle to radians
     double angle_rad = regsurf.rotation * M_PI / 180.0;
 
     // Calculate the unrotated corners of the cell (i, j)
-    Point point = { regsurf.xori + i * regsurf.xinc, regsurf.yori + j * regsurf.yinc,
-                    0 };
+    Point point = { regsurf.xori + i * regsurf.xinc,
+                    regsurf.yori + j * regsurf.yinc * yflip, 0 };
 
     // Get the position of the point in the rotated grid
     Point point_rot = rotate_point(point, regsurf.xori, regsurf.yori, angle_rad);
@@ -264,9 +268,20 @@ get_z_from_xy(const RegularSurface &regsurf, const double x, const double y)
     double y1 = j * regsurf.yinc;
     double y2 = (j + 1) * regsurf.yinc;
 
-    return geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
-                                              { x2, y1, z21 }, { x1, y2, z12 },
-                                              { x2, y2, z22 });
+    auto update = geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
+                                                     { x2, y1, z21 }, { x1, y2, z12 },
+                                                     { x2, y2, z22 });
+
+    // // check that update is not nan and raise error if so
+    // if (std::isnan(update)) {
+    //     std::ostringstream oss;
+    //     oss << "Interpolated Z value is NaN. The translated points are " << p_rel.x
+    //         << " " << p_rel.y << ", while corners are (" << x1 << " " << y1 << " "
+    //         << z11 << ") (" << x2 << " " << y1 << " " << z21 << ") (" << x1 << " " << y2
+    //         << " " << z12 << ") (" << x2 << " " << y2 << " " << z22 << ")";
+    //     throw std::runtime_error(oss.str());
+    // }
+    return update;
 }  // get_z_from_xy
 
 }  // namespace xtgeo::regsurf

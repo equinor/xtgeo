@@ -17,6 +17,7 @@ from xtgeo.common.calc import find_flip
 from xtgeo.common.constants import UNDEF_INT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.grid3d.grid_properties import GridProperties
+from xtgeo.surface.surfaces import Surfaces
 from xtgeo.xyz.polygons import Polygons
 
 from . import _gridprop_lowlevel
@@ -42,6 +43,9 @@ def create_box(
     flip: Literal[1, -1],
 ) -> dict[str, np.ndarray]:
     """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
+
+    from xtgeo.cube.cube1 import Cube
+
     ncol, nrow, nlay = dimension
     nncol = ncol + 1
     nnrow = nrow + 1
@@ -51,31 +55,79 @@ def create_box(
     zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
     actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
 
-    option = 0 if not oricenter else 1
-
-    _cxtgeo.grdcp3d_from_cube(
-        ncol,
-        nrow,
-        nlay,
-        coordsv,
-        zcornsv,
-        actnumsv,
-        origin[0],
-        origin[1],
-        origin[2],
-        increment[0],
-        increment[1],
-        increment[2],
-        rotation,
-        flip,
-        option,
+    cube = Cube(
+        ncol=ncol,
+        nrow=nrow,
+        nlay=nlay,
+        xinc=increment[0],
+        yinc=increment[1],
+        zinc=increment[2],
+        xori=origin[0],
+        yori=origin[1],
+        zori=origin[2],
+        rotation=rotation,
     )
 
+    cubecpp = _internal.cube.Cube(cube)
+    coordsv, zcornsv, actnumsv = _internal.grid3d.create_grid_from_cube(
+        cubecpp, oricenter, flip
+    )
     return {
         "coordsv": coordsv,
         "zcornsv": zcornsv,
-        "actnumsv": actnumsv,
+        "actnumsv": actnumsv.astype(np.int32),
     }
+
+
+def create_grid_from_surfaces(
+    srfs: Surfaces,
+    dimension: tuple[int, int, int] | None = None,
+    origin: tuple[float, float, float] | None = None,
+    increment: tuple[float, float, float] | None = None,
+    rotation: float | None = None,
+):
+    """Use a stack of surfaces to create a nonfaulted grid.
+
+    Technically, a shoebox grid is made first, then the layers are adjusted to follow
+    surfaces.
+    """
+    import xtgeo
+
+    n_surfaces = len(srfs.surfaces)
+
+    # TODO: ensure that surfaces are consistent?
+    top = srfs.surfaces[0]
+    base = srfs.surfaces[-1]
+
+    zinc = (base.values.mean() - top.values.mean()) / (n_surfaces - 1)
+
+    dimension = dimension if dimension else (top.ncol, top.nrow, n_surfaces - 1)
+    increment = increment if increment else (top.xinc, top.yinc, zinc)
+    origin = origin if origin else (top.xori, top.yori, top.values.mean())
+    rotation = rotation if rotation else top.rotation
+
+    grd = xtgeo.create_box_grid(
+        dimension=dimension,
+        origin=origin,
+        increment=increment,
+        rotation=rotation,
+        oricenter=False,
+        flip=1,
+    )
+
+    # now adjust the grid to surfaces
+    surf_list = []
+    for surf in srfs.surfaces:
+        cpp_surf = _internal.regsurf.RegularSurface(surf)
+        surf_list.append(cpp_surf)
+
+    grd_cpp = _internal.grid3d.Grid(grd)
+    new_zcorns, new_actnum = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surf_list)
+
+    grd._zcornsv = new_zcorns
+    grd._actnumsv = new_actnum
+
+    return grd
 
 
 method_factory = {

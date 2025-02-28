@@ -7,6 +7,7 @@
 #include <optional>
 #include <stdexcept>
 #include <tuple>
+#include <xtgeo/regsurf.hpp>
 #include <xtgeo/types.hpp>
 
 namespace py = pybind11;
@@ -14,10 +15,12 @@ namespace py = pybind11;
 namespace xtgeo::grid3d {
 
 py::array_t<double>
-get_cell_volumes(const Grid &grid_cpp, const int precision, const bool asmasked);
+get_cell_volumes(const Grid &grid_cpp,
+                 const int precision,
+                 const bool asmasked = false);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-get_cell_centers(const Grid &grid_cpp, const bool asmasked);
+get_cell_centers(const Grid &grid_cpp, const bool asmasked = false);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_height_above_ffl(const Grid &grid_cpp,
@@ -50,6 +53,15 @@ get_gridprop_value_between_surfaces(const Grid &grd,
                                     const regsurf::RegularSurface &top,
                                     const regsurf::RegularSurface &bot);
 
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+create_grid_from_cube(const cube::Cube &cube,
+                      const bool use_cell_center = false,
+                      const int flip = 1);
+
+std::tuple<pybind11::array_t<float>, pybind11::array_t<int>>
+adjust_boxgrid_layers_from_regsurfs(Grid &grd,
+                                    const std::vector<regsurf::RegularSurface> &rsurfs);
+
 inline void
 init(py::module &m)
 {
@@ -75,6 +87,8 @@ init(py::module &m)
            "Compute the height above a FFL (free fluid level).")
       .def("get_cell_corners_from_ijk", &get_cell_corners_from_ijk,
            "Get a vector containing the corners of a specified IJK cell.")
+      .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
+           "Adjust layers in a boxgrid given a list of regular surfaces.")
 
       ;
 
@@ -104,6 +118,8 @@ init(py::module &m)
                  "Determine if a XY point is inside a cell, top or base.");
     m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
                  "Determine the interpolated cell face Z from XY, top or base.");
+    m_grid3d.def("create_grid_from_cube", &create_grid_from_cube,
+                 "Create a 3D grid from a cube specification.");
 }
 
 }  // namespace xtgeo::grid3d

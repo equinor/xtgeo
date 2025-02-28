@@ -250,6 +250,26 @@ def grid_from_cube(
     return grd
 
 
+def grid_from_surfaces(
+    surfaces: xtgeo.Surfaces,
+    dimension: tuple[int, int, int] | None = None,
+    origin: tuple[float, float, float] | None = None,
+    increment: tuple[float, float, float] | None = None,
+    rotation: float | None = None,
+) -> Grid:
+    """Create a simple grid (non-faulted) from a stack of surfaces.
+
+    The surfaces shall be sorted from top to base, and they should not cross in depth.
+    In addition, it is required(?) that they have the same settings (origin, rotation,
+    etc)
+
+    """
+
+    return _grid_etc1.create_grid_from_surfaces(
+        surfaces, dimension, origin, increment, rotation
+    )
+
+
 # --------------------------------------------------------------------------------------
 # Comment on dual porosity grids:
 #

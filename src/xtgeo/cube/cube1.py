@@ -497,6 +497,30 @@ class Cube:
         """Swap the axes inline vs xline, keep origin."""
         _cube_utils.swapaxes(self)
 
+    def make_lefthanded(self) -> None:
+        """Makes the cube lefthanded in case yflip is -1. This will change origin.
+
+        Lefthanded cubes are common in subsurface data, where I is to east, J is
+        to north and Z axis is positive down for depth and time data.
+
+        The instance is changed in-place. The method is a no-op if yflip already is 1.
+
+        .. versionadded:: 4.6
+        """
+        _cube_utils.make_lefthanded(self)
+
+    def make_righthanded(self) -> None:
+        """Makes the surface righthanded in case yflip is 1. This will change origin.
+
+        Righthanded cubes are also common in subsurface data, where I is to
+        east, J is to north and Z axis is positive down for depth and time data.
+
+        The instance is changed in-place. The method is a no-op if yflip already is -1.
+
+        .. versionadded:: 4.6
+        """
+        _cube_utils.make_righthanded(self)
+
     def resample(self, incube, sampling="nearest", outside_value=None):
         """Resample a Cube object into this instance.
 
