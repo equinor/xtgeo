@@ -79,9 +79,20 @@ def create_box(
     }
 
 
-def create_grid_from_surfaces(srfs: Surfaces):
-    """Use a stack of surfaces to create a nonfaulted grid."""
+def create_grid_from_surfaces(
+    srfs: Surfaces,
+    dimension: tuple[int, int, int] | None = None,
+    origin: tuple[float, float, float] | None = None,
+    increment: tuple[float, float, float] | None = None,
+    rotation: float | None = None,
+):
+    """Use a stack of surfaces to create a nonfaulted grid.
+
+    Technically, a shoebox grid is made first, then the layers are adjusted to follow
+    surfaces.
+    """
     import xtgeo
+
     n_surfaces = len(srfs.surfaces)
 
     # TODO: ensure that surfaces are consistent?
@@ -90,16 +101,19 @@ def create_grid_from_surfaces(srfs: Surfaces):
 
     zinc = (base.values.mean() - top.values.mean()) / (n_surfaces - 1)
 
+    dimension = dimension if dimension else (top.ncol, top.nrow, n_surfaces - 1)
+    increment = increment if increment else (top.xinc, top.yinc, zinc)
+    origin = origin if origin else (top.xori, top.yori, top.values.mean())
+    rotation = rotation if rotation else top.rotation
+
     grd = xtgeo.create_box_grid(
-        dimension=(top.ncol, top.nrow, n_surfaces - 1),
-        origin=(top.xori, top.yori, top.values.mean()),
-        increment=(top.xinc, top.yinc, zinc),
-        rotation=top.rotation,
-        oricenter = False,
+        dimension=dimension,
+        origin=origin,
+        increment=increment,
+        rotation=rotation,
+        oricenter=False,
         flip=1,
     )
-
-
 
     # now adjust the grid to surfaces
     surf_list = []
@@ -108,9 +122,10 @@ def create_grid_from_surfaces(srfs: Surfaces):
         surf_list.append(cpp_surf)
 
     grd_cpp = _internal.grid3d.Grid(grd)
-    new_zcorns = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surf_list)
+    new_zcorns, new_actnum = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surf_list)
 
     grd._zcornsv = new_zcorns
+    grd._actnumsv = new_actnum
 
     return grd
 

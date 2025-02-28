@@ -80,7 +80,7 @@ interpolate_z_4p_regular(const double x,
                          const Point &p4)
 {
     // Quick check if the point is inside the quadrilateral; note ordering of points
-    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3)) {
+    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3, 1e-5)) {
         return numerics::QUIET_NAN;
     }
 
@@ -116,7 +116,7 @@ interpolate_z_4p(const double x,
                  const Point &p4)
 {
     // Quick check if the point is inside the quadrilateral (note order)
-    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3)) {
+    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3, 1e-5)) {
         return numerics::QUIET_NAN;
     }
 

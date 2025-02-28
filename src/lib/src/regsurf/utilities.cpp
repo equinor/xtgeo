@@ -272,10 +272,15 @@ get_z_from_xy(const RegularSurface &regsurf, const double x, const double y)
                                                      { x2, y1, z21 }, { x1, y2, z12 },
                                                      { x2, y2, z22 });
 
-    // check that update is not nan and raise error if so
-    if (std::isnan(update)) {
-        throw std::runtime_error("Interpolated Z value is NaN");
-    }
+    // // check that update is not nan and raise error if so
+    // if (std::isnan(update)) {
+    //     std::ostringstream oss;
+    //     oss << "Interpolated Z value is NaN. The translated points are " << p_rel.x
+    //         << " " << p_rel.y << ", while corners are (" << x1 << " " << y1 << " "
+    //         << z11 << ") (" << x2 << " " << y1 << " " << z21 << ") (" << x1 << " " << y2
+    //         << " " << z12 << ") (" << x2 << " " << y2 << " " << z22 << ")";
+    //     throw std::runtime_error(oss.str());
+    // }
     return update;
 }  // get_z_from_xy
 

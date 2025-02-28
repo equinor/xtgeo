@@ -58,7 +58,7 @@ create_grid_from_cube(const cube::Cube &cube,
                       const bool use_cell_center = false,
                       const int flip = 1);
 
-py::array_t<float>
+std::tuple<pybind11::array_t<float>, pybind11::array_t<int>>
 adjust_boxgrid_layers_from_regsurfs(Grid &grd,
                                     const std::vector<regsurf::RegularSurface> &rsurfs);
 

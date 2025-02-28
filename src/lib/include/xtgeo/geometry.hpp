@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <vector>
+#include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
 
 namespace py = pybind11;
@@ -93,7 +94,8 @@ is_xy_point_in_quadrilateral(const double x,
                              const xyz::Point &p1,
                              const xyz::Point &p2,
                              const xyz::Point &p3,
-                             const xyz::Point &p4);
+                             const xyz::Point &p4,
+                             const double tolerance = numerics::TOLERANCE);
 double
 interpolate_z_4p_regular(const double x,
                          const double y,
