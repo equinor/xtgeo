@@ -2097,7 +2097,7 @@ class Grid(_Grid3D):
 
     def translate_coordinates(
         self,
-        translate: tuple[int, int, int] = (0, 0, 0),
+        translate: tuple[float, float, float] = (0.0, 0.0, 0.0),
         flip: tuple[int, int, int] = (1, 1, 1),
     ) -> None:
         """Translate (move) and/or flip grid coordinates in 3D.
