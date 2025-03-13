@@ -8,9 +8,8 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
-from xtgeo import _cxtgeo
+import xtgeo._internal as _internal
 from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.roxutils._roxar_loader import roxar, roxar_grids
 from xtgeo.roxutils.roxutils import RoxUtils
 
@@ -35,10 +34,10 @@ if TYPE_CHECKING:
 # ======================================================================================
 
 
-def import_grid_roxapi(
+def load_grid_from_rms(
     projectname: str, gname: str, realisation: int, info: bool
 ) -> dict[str, Any]:
-    """Import a Grid via ROXAR API spec.
+    """Load a Grid via ROXAR API spec and convert to XTGeo internal storage.
 
     Returns:
         dictionary of parameters to be used in the Grid constructor function.
@@ -46,7 +45,7 @@ def import_grid_roxapi(
     """
 
     rox = RoxUtils(projectname, readonly=True)
-    return _import_grid_roxapi(rox, gname, realisation, info)
+    return _load_grid_from_rms_viaroxapi(rox, gname, realisation, info)
 
 
 def _display_roxapi_grid_info(roxgrid: RoxarGrid3DType) -> None:
@@ -70,7 +69,7 @@ def _display_roxapi_grid_info(roxgrid: RoxarGrid3DType) -> None:
             xtg.say(f"Depths\n{zco}")
 
 
-def _import_grid_roxapi(
+def _load_grid_from_rms_viaroxapi(
     rox: RoxUtils, gname: str, realisation: int, info: bool
 ) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec."""
@@ -125,18 +124,20 @@ def _convert_to_xtgeo_grid(roxgrid: RoxarGrid3DType, gname: str) -> dict[str, An
     coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
     zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
     actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
-
     for icol in range(nncol):
         for jrow in range(nnrow):
             topc, basc, zcorn = geom.get_pillar_data(icol, jrow)
             coordsv[icol, jrow, 0:3] = topc
             coordsv[icol, jrow, 3:6] = basc
-
-            zcorn = np.ma.filled(zcorn, fill_value=0.0)
-
+            zcorn = np.ma.filled(zcorn, fill_value=np.nan)
             zcornsv[icol, jrow, :, :] = zcorn.T
 
-    _cxtgeo.grdcp3d_process_edges(ncol, nrow, nlay, zcornsv)
+    median_zcornsv = np.nanmedian(zcornsv)
+    # replace nan with median of the zorner values
+    zcornsv[np.isnan(zcornsv)] = median_zcornsv
+
+    _internal.grid3d.process_edges_rmsapi(zcornsv)
+
     result["coordsv"] = coordsv
     result["zcornsv"] = zcornsv
 
@@ -167,34 +168,33 @@ def _convert_to_xtgeo_grid(roxgrid: RoxarGrid3DType, gname: str) -> dict[str, An
 # ======================================================================================
 
 
-def export_grid_roxapi(
+def save_grid_to_rms(
     self: Grid,
     projectname: str,
     gname: str,
     realisation: int,
     info: bool = False,
-    method: str | Literal["cpg"] = "cpg",
+    method: str | Literal["cpg", "roff"] = "cpg",
 ) -> None:
-    """Export (i.e. store in RMS) via ROXAR API spec.
+    """Save (i.e. store in RMS) via RMSAPI (former ROXAPI) spec.
 
     Using method 'cpg' means that the CPG method is applied (from ROXAPI 1.3).
     This is possible from version ROXAPI ver 1.3, where the CornerPointGeometry
     class is defined.
 
     An alternative is to use simple roff import (via some /tmp area),
-    can be used from version 1.2
+    can be used from version 1.2. The "roff" method is also better if the user
+    want to activate undefined cells as a part of the work flow.
 
     """
     rox = RoxUtils(projectname, readonly=False)
 
     if method == "cpg":
-        if self._xtgformat == 1:
-            _export_grid_cornerpoint_roxapi_v1(self, rox, gname, realisation, info)
-        else:
-            _export_grid_cornerpoint_roxapi_v2(self, rox, gname, realisation, info)
+        self._xtgformat2()
+        _save_grid_to_rms_cornerpoint(self, rox, gname, realisation, info)
 
     else:
-        _export_grid_viaroff_roxapi(self, rox, gname, realisation)
+        _save_grid_to_rms_viaroff(self, rox, gname, realisation)
 
     if rox._roxexternal:
         rox.project.save()
@@ -202,72 +202,7 @@ def export_grid_roxapi(
     rox.safe_close()
 
 
-def _export_grid_cornerpoint_roxapi_v1(
-    self: Grid, rox: RoxUtils, gname: str, realisation: int, info: bool
-) -> None:
-    """Convert xtgeo geometry to pillar spec in ROXAPI and store."""
-
-    logger.info("Load grid via CornerPointGridGeometry...")
-
-    grid_model = rox.project.grid_models.create(gname)
-    grid_model.set_empty(realisation)
-    grid = grid_model.get_grid(realisation)
-
-    roxar_grid_: RoxarGridType = roxar_grids  # for mypy
-    geom = roxar_grid_.CornerPointGridGeometry.create(self.dimensions)
-
-    logger.info(geom)
-    scopy = self.copy()
-    scopy.make_zconsistent()
-    scopy._xtgformat1()
-    self._xtgformat1()
-
-    npill = (self.ncol + 1) * (self.nrow + 1) * 3
-    nzcrn = (self.ncol + 1) * (self.nrow + 1) * 4 * (self.nlay + 1)
-
-    _ier, tpi, bpi, zco = _cxtgeo.grd3d_conv_grid_roxapi(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        scopy._zcornsv,
-        self._actnumsv,
-        npill,
-        npill,
-        nzcrn,
-    )
-
-    tpi = tpi.reshape(self.ncol + 1, self.nrow + 1, 3)
-    bpi = bpi.reshape(self.ncol + 1, self.nrow + 1, 3)
-
-    zco = np.ma.masked_greater(zco, UNDEF_LIMIT)
-    zco = zco.reshape((self.ncol + 1, self.nrow + 1, 4, self.nlay + 1))
-
-    for ipi in range(self.ncol + 1):
-        for jpi in range(self.nrow + 1):
-            zzco = zco[ipi, jpi].reshape((self.nlay + 1), 4).T
-            geom.set_pillar_data(
-                ipi,
-                jpi,
-                top_point=tpi[ipi, jpi],
-                bottom_point=bpi[ipi, jpi],
-                depth_values=zzco,
-            )
-            if info and ipi < 5 and jpi < 5:
-                if ipi == 0 and jpi == 0:
-                    xtg.say("Showing info for i<5 and j<5 only!")
-                xtg.say(f"XTGeo pillar {ipi}, {jpi}\n")
-                xtg.say(f"XTGeo Tops\n{tpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Depths\n{zzco}")
-
-    geom.set_defined_cells(self.get_actnum().values.astype(bool))
-    grid.set_geometry(geom)
-
-    _set_subgrids(self, rox, grid)
-
-
-def _export_grid_cornerpoint_roxapi_v2(
+def _save_grid_to_rms_cornerpoint(
     self: Grid, rox: RoxUtils, gname: str, realisation: int, info: bool
 ) -> None:
     """Convert xtgeo geometry to pillar spec in ROXAPI and store _xtgformat=2."""
@@ -279,53 +214,30 @@ def _export_grid_cornerpoint_roxapi_v2(
     roxar_grids_: RoxarGridType = roxar_grids  # for mypy
     geom = roxar_grids_.CornerPointGridGeometry.create(self.dimensions)
 
-    scopy = self.copy()
-    scopy.make_zconsistent()
-    scopy._xtgformat2()
+    grid_cpp = _internal.grid3d.Grid(self)
+    tpi, bpi, zco, zma = grid_cpp.convert_xtgeo_to_rmsapi()
+    zco = np.ma.array(zco, mask=zma)
 
-    npill = (self.ncol + 1) * (self.nrow + 1) * 3
-    nzcrn = (self.ncol + 1) * (self.nrow + 1) * (self.nlay + 1) * 4
-
-    _ier, tpi, bpi, zco = _cxtgeo.grdcp3d_conv_grid_roxapi(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        scopy._zcornsv,
-        npill,
-        npill,
-        nzcrn,
-    )
-
-    tpi = tpi.reshape(self.ncol + 1, self.nrow + 1, 3)
-    bpi = bpi.reshape(self.ncol + 1, self.nrow + 1, 3)
-
-    zco = np.ma.masked_greater(zco, UNDEF_LIMIT)
-    zco = zco.reshape((self.ncol + 1, self.nrow + 1, 4, self.nlay + 1))
+    # NOTE (KEEP), it is a bit unclear if mask is needed. A possible simpilification is
+    # zco = self._zcornsv.astype(np.float64)
+    # zco = np.moveaxis(zco, 2, 3)
+    # tpi = self._coordsv[:, :, 0:3]
+    # bpi = self._coordsv[:, :, 3:6]
+    # This would be 10-20% faster, but the mask is kept for now.
 
     for ipi in range(self.ncol + 1):
         for jpi in range(self.nrow + 1):
-            zzco = zco[ipi, jpi].reshape((self.nlay + 1), 4).T
             geom.set_pillar_data(
                 ipi,
                 jpi,
                 top_point=tpi[ipi, jpi],
                 bottom_point=bpi[ipi, jpi],
-                depth_values=zzco,
+                depth_values=zco[ipi, jpi],
             )
-            if info and ipi < 5 and jpi < 5:
-                if ipi == 0 and jpi == 0:
-                    xtg.say("Showing info for i<5 and j<5 only!")
-                xtg.say(f"XTGeo pillar {ipi}, {jpi}\n")
-                xtg.say(f"XTGeo Tops\n{tpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Bots\n{bpi[ipi, jpi]}")
-                xtg.say(f"XTGeo Depths\n{zzco}")
 
     geom.set_defined_cells(self._actnumsv.astype(bool))
     grid.set_geometry(geom)
     _set_subgrids(self, rox, grid)
-
-    del scopy
 
 
 def _set_subgrids(self: Grid, rox: RoxUtils, grid: RoxarGrid3DType) -> None:
@@ -356,10 +268,10 @@ def _set_subgrids(self: Grid, rox: RoxUtils, grid: RoxarGrid3DType) -> None:
         )
 
 
-def _export_grid_viaroff_roxapi(
+def _save_grid_to_rms_viaroff(
     self: Grid, rox: RoxUtils, gname: str, realisation: int
 ) -> None:
-    """Convert xtgeo geometry to internal RMS via i/o ROFF tricks."""
+    """Save xtgeo geometry to internal RMS via i/o ROFF tricks."""
     logger.info("Realisation is %s", realisation)
 
     # make a temporary folder and work within the with.. block

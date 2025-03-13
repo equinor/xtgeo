@@ -47,6 +47,11 @@ def pytest_addoption(parser):
     )
 
 
+def _in_roxar_env():
+    """Helper function to check if running in Roxar/RMS environment"""
+    return any(env in os.environ for env in ["ROXENV", "RMSENV_RELEASE"])
+
+
 def pytest_runtest_setup(item):
     """Called for each test."""
 
@@ -57,8 +62,8 @@ def pytest_runtest_setup(item):
         pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
     # pytest.mark.requires_roxar:
-    if "requires_roxar" in markers and "ROXENV" not in os.environ:
-        pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
+    if "requires_roxar" in markers and not _in_roxar_env():
+        pytest.skip("Skip test if outside RMSENV_RELEASE (former ROXENV)")
 
     # pytest.mark.requires_opm:
     if "requires_opm" in markers and "HAS_OPM" not in os.environ:
@@ -80,14 +85,14 @@ def tmp_path_cwd(tmp_path, monkeypatch):
 @pytest.fixture(name="show_plot")
 def fixture_xtgshow():
     """For eventual plotting, to be uses in an if sence inside a test."""
-    if "ROXENV" in os.environ:
+    if _in_roxar_env():
         pytest.skip("Skip plotting tests in roxar environment")
     return any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"])
 
 
 @pytest.fixture(name="generate_plot")
 def fixture_generate_plot(request):
-    if "ROXENV" in os.environ:
+    if _in_roxar_env():
         pytest.skip("Skip plotting tests in roxar environment")
     return request.config.getoption("--generate-plots")
 

@@ -50,6 +50,15 @@ get_gridprop_value_between_surfaces(const Grid &grd,
                                     const regsurf::RegularSurface &top,
                                     const regsurf::RegularSurface &bot);
 
+std::tuple<py::array_t<double>,
+           py::array_t<double>,
+           py::array_t<double>,
+           py::array_t<bool>>
+convert_xtgeo_to_rmsapi(const Grid &grd);
+
+void
+process_edges_rmsapi(py::array_t<float> zcornsv);
+
 inline void
 init(py::module &m)
 {
@@ -75,6 +84,8 @@ init(py::module &m)
            "Compute the height above a FFL (free fluid level).")
       .def("get_cell_corners_from_ijk", &get_cell_corners_from_ijk,
            "Get a vector containing the corners of a specified IJK cell.")
+      .def("convert_xtgeo_to_rmsapi", &convert_xtgeo_to_rmsapi,
+           "Convert XTGeo grid to RMSAPI grid layout (for storing grid in RMS)")
 
       ;
 
@@ -104,6 +115,7 @@ init(py::module &m)
                  "Determine if a XY point is inside a cell, top or base.");
     m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
                  "Determine the interpolated cell face Z from XY, top or base.");
+    m_grid3d.def("process_edges_rmsapi", &process_edges_rmsapi, "Edge prosessing...");
 }
 
 }  // namespace xtgeo::grid3d
