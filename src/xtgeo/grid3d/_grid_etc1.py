@@ -1185,7 +1185,7 @@ def reduce_to_one_layer(self: Grid) -> None:
 
 def translate_coordinates(
     self: Grid,
-    translate: tuple[int, int, int] = (0, 0, 0),
+    translate: tuple[float, float, float] = (0.0, 0.0, 0.0),
     flip: tuple[int, int, int] = (1, 1, 1),
 ) -> None:
     """Translate grid coordinates."""
