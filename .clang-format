@@ -1,5 +1,5 @@
 ---
-Language:        Cpp
+# Language: C
 # BasedOnStyle:  Mozilla
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align

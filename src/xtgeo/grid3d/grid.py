@@ -167,7 +167,7 @@ def grid_from_roxar(
         mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
 
     """
-    return Grid(**_grid_roxapi.import_grid_roxapi(project, gname, realisation, info))
+    return Grid(**_grid_roxapi.load_grid_from_rms(project, gname, realisation, info))
 
 
 def create_box_grid(
@@ -817,7 +817,7 @@ class Grid(_Grid3D):
         gname: str,
         realisation: int = 0,
         info: bool = False,
-        method: str = "cpg",
+        method: Literal["cpg", "roff"] = "cpg",
     ) -> None:
         """Export (upload) a grid from XTGeo to RMS via Roxar API.
 
@@ -832,10 +832,20 @@ class Grid(_Grid3D):
             gname (str): Name of grid in RMS
             realisation (int): Realisation umber, default 0
             info (bool): TBD
-            method (str): Save approach
+            method (str): Save approach, the default is 'cpg' which applied the internal
+                RMS API, while 'roff' will do a save to a temporary area, and then load
+                into RMS. For strange reasons, the 'roff' method is per RMS version
+                14.2 a faster method (strange since file i/o is way more costly than
+                direct API access, in theory).
+
+        Note:
+            When storing grids that needs manipulation of inactive cells, .e.g.
+            ``activate_all()`` method, using method='roff' is recommended. The reason
+            is that saving cells using 'cpg' method will force zero depth values on
+            inactive cells.
 
         """
-        _grid_roxapi.export_grid_roxapi(
+        _grid_roxapi.save_grid_to_rms(
             self, project, gname, realisation, info=info, method=method
         )
 

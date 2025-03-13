@@ -1590,22 +1590,6 @@ extern "C"
                                      double *swig_np_dbl_aout_v3,  // zarr
                                      long n_swig_np_dbl_aout_v3);
 
-    int grdcp3d_conv_grid_roxapi(long ncol,
-                                 long nrow,
-                                 long nlay,
-
-                                 double *swig_np_dbl_inplaceflat_v1,  // coordsv
-                                 long n_swig_np_dbl_inplaceflat_v1,   // ncoord
-                                 float *swig_np_flt_inplaceflat_v1,   // zcornsv
-                                 long n_swig_np_flt_inplaceflat_v1,   // nzcorn
-
-                                 double *swig_np_dbl_aout_v1,  // tpillars
-                                 long n_swig_np_dbl_aout_v1,   // ntpillars
-                                 double *swig_np_dbl_aout_v2,  // bpillars
-                                 long n_swig_np_dbl_aout_v2,   // nbpillars
-                                 double *swig_np_dbl_aout_v3,  // zcornsv
-                                 long n_swig_np_dbl_aout_v3);  // nzcorners
-
     void grdcp3d_quality_indicators(long ncol,
                                     long nrow,
                                     long nlay,

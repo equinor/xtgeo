@@ -73,6 +73,7 @@ def tmp_data_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("data")
 
 
+@pytest.mark.requires_roxar
 @pytest.fixture(name="roxinstance", scope="module")
 def fixture_roxinstance():
     """Create roxinstance in module scope."""
@@ -464,18 +465,65 @@ def test_rox_get_modify_set_gridproperty(rms_project_path):
 
 
 @pytest.mark.requires_roxar
-def test_rox_get_modify_set_grid(rms_project_path):
+def test_rox_get_modify_set_grid_basic(rms_project_path):
     """Get, modify and set a grid from a RMS project."""
     grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
-    grd.translate_coordinates(translate=(200, 3000, 300))
+    grd1.translate_coordinates(translate=(200, 3000, 300))
 
-    grd.to_roxar(rms_project_path, GRIDNAME1 + "_edit1")
+    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_edit1")
 
     grd2 = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_edit1")
 
     assert grd2.dimensions == grd1.dimensions
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_modify_set_grid_method_roff(rms_project_path):
+    """Get, modify and set a grid from a RMS project."""
+    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd1 = grd.copy()
+
+    grd1.translate_coordinates(translate=(200, 3000, 300))
+
+    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_roff", method="roff")
+    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
+
+    grd2_roff = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_roff")
+    grd2_cpg = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_cpg")
+
+    assert grd2_roff.dimensions == grd2_cpg.dimensions
+
+
+@pytest.mark.benchmark(group="grid_to_roxar_method")
+@pytest.mark.requires_roxar
+def test_rox_set_grid_method_benchmark_cpg(rms_project_path, benchmark):
+    """Get, modify and set a grid from a RMS project."""
+    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd1 = grd.copy()
+
+    grd1.translate_coordinates(translate=(200, 3000, 300))
+
+    def store_method_cpg():
+        grd1.to_roxar(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
+
+    benchmark(store_method_cpg)
+
+
+@pytest.mark.benchmark(group="grid_to_roxar_method")
+@pytest.mark.requires_roxar
+def test_rox_set_grid_method_benchmark_roff(rms_project_path, benchmark):
+    """Get, modify and set a grid from a RMS project."""
+    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd1 = grd.copy()
+
+    grd1.translate_coordinates(translate=(200, 3000, 300))
+
+    def store_method_roff():
+        grd1.to_roxar(rms_project_path, GRIDNAME1 + "_roff", method="roff")
+
+    benchmark(store_method_roff)
 
 
 @pytest.mark.requires_roxar

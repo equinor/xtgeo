@@ -179,3 +179,81 @@ def test_get_cell_centers(get_drogondata):
     assert np.isnan(xcor[62, 33, 37])
     assert np.isnan(ycor[62, 33, 37])
     assert np.isnan(zcor[62, 33, 37])
+
+
+def test_process_edges_rmsapi(get_drogondata):
+    """Test function that process boundary values."""
+
+    grid, _, _ = get_drogondata
+
+    zcv = grid._zcornsv.copy()
+
+    # now manipulate pillar corner i=0, j=0, k=2 where the four numbers are equal.
+    # Corner 0, 1, 2 are at edge and per se _outside_ the grid, while corner 3 (NE) is
+    # inside. If I change corner 3, the routine should fix this so that the
+    # remaining outside corners will have the same value
+    #
+    #      |
+    #      |    CELL (0, 0, *)
+    #      |
+    #    2 | 3
+    #    ------------------
+    #    0 | 1
+
+    # initially
+    assert zcv[0, 0, 2, :].tolist() == pytest.approx(
+        [1731.4475, 1731.4475, 1731.4475, 1731.4475]
+    )
+
+    # manipulate corner 3 (NorthEast, NE)
+    zcv[0, 0, 2, 3] = 1730.0
+
+    assert zcv[0, 0, 2, :].tolist() == pytest.approx(
+        [1731.4475, 1731.4475, 1731.4475, 1730.0]
+    )
+
+    # process edges
+    _internal.grid3d.process_edges_rmsapi(zcv)
+    assert zcv[0, 0, 2, :].tolist() == pytest.approx([1730.0, 1730.0, 1730.0, 1730.0])
+
+
+def test_convert_xtgeo_to_rmsapi(get_drogondata):
+    """Test function that convert from xtgeo 3D grid to RMSAPI."""
+
+    grid, _, _ = get_drogondata
+
+    grid_cpp = _internal.grid3d.Grid(grid)
+    tpillars, bpillars, zcorners, zmask = grid_cpp.convert_xtgeo_to_rmsapi()
+
+    assert tpillars.all() == grid._coordsv[:, :, :3].all()
+    assert bpillars.all() == grid._coordsv[:, :, 3:].all()
+
+    assert np.all(zmask[0, 0, 0, :])
+    assert np.all(zmask[grid.ncol, grid.nrow, 3, :])
+    assert not np.all(zmask[grid.ncol, grid.nrow, 0, :])
+
+    assert zcorners[10, 10, 0, :].all() == grid._zcornsv[10, 10, :, 0].all()
+
+
+def test_convert_xtgeo_to_rmsapi_warnings(get_drogondata):
+    """Test warnings when convert from xtgeo 3D grid to RMSAPI."""
+
+    grid, _, _ = get_drogondata
+
+    # manipulate grid values
+    use_grid = grid.copy()
+    use_grid._coordsv[10, 10, 2] = use_grid._coordsv[10, 10, 5] = 1999.0
+
+    grid_cpp = _internal.grid3d.Grid(use_grid)
+
+    with pytest.warns(UserWarning, match="Equal Z coordinates detected"):
+        grid_cpp.convert_xtgeo_to_rmsapi()
+
+    # crossing zcoords
+    use_grid = grid.copy()
+
+    use_grid._zcornsv[10, 10, 5, 0] = 1999.9999
+
+    grid_cpp = _internal.grid3d.Grid(use_grid)
+    with pytest.warns(UserWarning, match="One or more ZCORN values are crossing"):
+        grid_cpp.convert_xtgeo_to_rmsapi()
