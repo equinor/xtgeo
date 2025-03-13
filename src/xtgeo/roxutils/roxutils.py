@@ -67,10 +67,7 @@ class RoxUtils(object):
 
         if project is not None and isinstance(project, str):
             projectname = project
-            if readonly:
-                self._project = roxar.Project.open_import(projectname)
-            else:
-                self._project = roxar.Project.open(projectname)
+            self._project = roxar.Project.open(projectname, readonly=readonly)
             logger.info("Open RMS project from %s", projectname)
 
         elif isinstance(project, roxar.Project):
