@@ -90,7 +90,7 @@ def remainder_saturations(saturations):
     rest = sum(saturations.values())
     if len(saturations) == 2 or np.allclose(rest, 1.0):
         missing = set(sat_keys).difference(set(saturations.keys()))
-        return {m: 1.0 - rest for m in missing}
+        return dict.fromkeys(missing, 1.0 - rest)
     return {}
 
 
