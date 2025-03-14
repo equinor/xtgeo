@@ -161,7 +161,7 @@ def import_xyz_roxapi(
     if attributes and not rox.version_required("1.6"):
         result = _roxapi_import_xyz_viafile(rox, name, category, stype, is_polygons)
     elif stype == STYPE.WELL_PICKS:
-        category = cast(Literal["fault", "horizon"], category)
+        category = cast("Literal['fault', 'horizon']", category)
         result = _roxapi_import_wellpicks(
             rox=rox,
             well_pick_set=name,
@@ -344,7 +344,7 @@ def export_xyz_roxapi(
         )
     elif stype == STYPE.WELL_PICKS:
         assert isinstance(self, points.Points)
-        category = cast(Literal["fault", "horizon"], category)
+        category = cast("Literal['fault', 'horizon']", category)
         _roxapi_export_xyz_well_picks(self, rox, name, category, attributes, pfilter)
     else:
         _roxapi_export_xyz(

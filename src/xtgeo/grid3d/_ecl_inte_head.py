@@ -144,5 +144,5 @@ class InteHead:
         return (
             None
             if value is None
-            else TypeOfGrid.alternate_code(cast(Literal[0, 1, 2, 3], value))
+            else TypeOfGrid.alternate_code(cast("Literal[0, 1, 2, 3]", value))
         )
