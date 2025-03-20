@@ -250,6 +250,53 @@ def grid_from_cube(
     return grd
 
 
+def grid_from_surfaces(
+    surfaces: xtgeo.Surfaces,
+    ij_dimension: tuple[int, int] | None = None,
+    ij_origin: tuple[float, float] | None = None,
+    ij_increment: tuple[float, float] | None = None,
+    rotation: float | None = None,
+    tolerance: float | None = None,
+) -> Grid:
+    """Create a simple grid (non-faulted) from a stack of surfaces.
+
+    The surfaces shall be sorted from top to base, and they should not cross in depth.
+    In addition, it is required that they have the same settings (origin, rotation,
+    etc).
+
+    Args:
+        surfaces: The Surfaces instance
+        ij_dimension: The dimensions of the grid (ncol, nrow), default is to use the
+            dimension from the surfaces
+        ij_origin: The origin of the grid (x, y)
+        ij_increment: The increment of the grid (xinc, yinc), default is to use the
+            increment from the surfaces
+        rotation: The rotation of the grid in degrees, default is to use the rotation
+            from the surfaces
+        tolerance: The tolerance for sampling the surfaces. In particualar if the grid
+            origin, resolution and rotation are exactly the same as the surfaces,
+            the grid may not be able to sample the surfaces exactly at edges.
+            Lowering the tolerance may be used to avoid this. Default is 1e-6.
+
+    Example::
+
+        import xtgeo
+        surf1 = xtgeo.surface_from_file("top.surf")
+        surf2 = xtgeo.surface_from_file("base.surf")
+        surfaces = xtgeo.Surfaces([surf1, surf2])
+
+        grid = xtgeo.grid_from_surfaces(surfaces, ij_dimension=(20,30),
+                                        ij_increment=(50, 50), rotation=10)
+
+    """
+
+    tolerance = tolerance if tolerance else 1e-6
+
+    return _grid_etc1.create_grid_from_surfaces(
+        surfaces, ij_dimension, ij_origin, ij_increment, rotation, tolerance
+    )
+
+
 # --------------------------------------------------------------------------------------
 # Comment on dual porosity grids:
 #

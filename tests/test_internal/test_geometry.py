@@ -164,23 +164,53 @@ def test_xy_point_in_quadrilateral():
     ]
 
     assert _internal.geometry.is_xy_point_in_quadrilateral(90, 75, *points)
+    assert _internal.geometry.is_xy_point_in_quadrilateral(90.0, 75.0, *points)
     assert _internal.geometry.is_xy_point_in_quadrilateral(75.001, 50.001, *points)
     assert not _internal.geometry.is_xy_point_in_quadrilateral(0, 0, *points)
 
 
 @pytest.mark.parametrize(
-    "point, expected",
+    "point, tolerance, expected",
     [
-        ((0.09, 0.09), True),
-        ((0.1, 0.1), True),
-        ((0.9999999, 0.9999999), True),
-        ((1.0000001, 1.0000001), False),
+        ((75, 50), 1e-19, True),
+        ((75, 50), 1e-2, True),
+        ((74.9999999, 50), 1e-19, False),
+        ((74.9999999, 50), 1e-2, True),  # is actually outside, but tolerance is low
+        ((75, 50.0000001), 1e-19, True),
+        ((75, 50.0000001), 1e-2, True),
+        ((75.0000001, 50.0000001), 1e-19, True),
+        ((75.0000001, 50.0000001), 1e-2, True),
     ],
 )
-def test_xy_point_in_quadrilateral_skew(point, expected):
+def test_xy_point_in_quadrilateral_tolerance(point, tolerance, expected):
+    """Test the is_xy_point_in_quadrilateral function, tolerance parameter."""
+
+    points = [
+        _internal.xyz.Point(75.0, 50.0, 0.0),
+        _internal.xyz.Point(100.0, 50.0, 0.0),
+        _internal.xyz.Point(100.0, 100.0, 0.55),
+        _internal.xyz.Point(75.0, 100.0, 0.0),
+    ]
+
+    assert (
+        _internal.geometry.is_xy_point_in_quadrilateral(*point, *points, tolerance)
+        is expected
+    )
+
+
+@pytest.mark.parametrize(
+    "point, tolerance, expected",
+    [
+        ((0.09, 0.09), 1e-19, True),
+        ((0.1, 0.1), 1e-19, True),
+        ((0.9999999, 0.9999999), 1e-19, True),
+        ((1.0000001, 1.0000001), 1e-19, False),
+    ],
+)
+def test_xy_point_in_quadrilateral_skew(point, tolerance, expected):
     """Test the is_xy_point_in_quadrilateral function, unordered corners.
 
-    The quadrilateral is rather scewed, so the point appears not is not inside the
+    The quadrilateral is rather scewed, so the point appears not inside the
     quadrilateral, but that is wrong. Meaning that the function is only safe for
     "convex" quadrilaterals.
     """
@@ -196,11 +226,15 @@ def test_xy_point_in_quadrilateral_skew(point, expected):
     p4 = _internal.xyz.Point(*c4)
 
     assert (
-        _internal.geometry.is_xy_point_in_quadrilateral(*point, p1, p2, p3, p4)
+        _internal.geometry.is_xy_point_in_quadrilateral(
+            *point, p1, p2, p3, p4, tolerance
+        )
         is expected
     )
     assert (
-        _internal.geometry.is_xy_point_in_quadrilateral(*point, p1, p4, p3, p2)
+        _internal.geometry.is_xy_point_in_quadrilateral(
+            *point, p1, p4, p3, p2, tolerance
+        )
         is expected
     )
 

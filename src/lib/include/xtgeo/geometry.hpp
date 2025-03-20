@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <vector>
+#include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
 
 namespace py = pybind11;
@@ -93,14 +94,16 @@ is_xy_point_in_quadrilateral(const double x,
                              const xyz::Point &p1,
                              const xyz::Point &p2,
                              const xyz::Point &p3,
-                             const xyz::Point &p4);
+                             const xyz::Point &p4,
+                             const double tolerance = numerics::TOLERANCE);
 double
 interpolate_z_4p_regular(const double x,
                          const double y,
                          const xyz::Point &p1,
                          const xyz::Point &p2,
                          const xyz::Point &p3,
-                         const xyz::Point &p4);
+                         const xyz::Point &p4,
+                         const double tolerance = numerics::TOLERANCE);
 
 double
 interpolate_z_4p(const double x,
@@ -108,7 +111,15 @@ interpolate_z_4p(const double x,
                  const xyz::Point &p1,
                  const xyz::Point &p2,
                  const xyz::Point &p3,
-                 const xyz::Point &p4);
+                 const xyz::Point &p4,
+                 const double tolerance = numerics::TOLERANCE);
+
+std::array<double, 8>
+find_rect_corners_from_center(const double x,
+                              const double y,
+                              const double xinc,
+                              const double yinc,
+                              const double rot);
 
 // functions exposed to Python:
 inline void
@@ -122,13 +133,22 @@ init(py::module &m)
                    "False otherwise.");
     m_geometry.def("is_xy_point_in_quadrilateral", &is_xy_point_in_quadrilateral,
                    "Return True if a XY point is inside a quadrilateral seen from , "
-                   "above. False otherwise.");
+                   "above. False otherwise.",
+                   py::arg("x"), py::arg("y"), py::arg("p1"), py::arg("p2"),
+                   py::arg("p3"), py::arg("p4"),
+                   py::arg("tolerance") = numerics::TOLERANCE);
     m_geometry.def("interpolate_z_4p_regular", &interpolate_z_4p_regular,
                    "Interpolate Z when having 4 corners in a regular XY space, "
-                   "typically a regular surface.");
+                   "typically a regular surface.",
+                   py::arg("x"), py::arg("y"), py::arg("p1"), py::arg("p2"),
+                   py::arg("p3"), py::arg("p4"),
+                   py::arg("tolerance") = numerics::TOLERANCE);
     m_geometry.def("interpolate_z_4p", &interpolate_z_4p,
                    "Interpolate Z when having 4 corners in a non regular XY space, "
-                   "like the top of a 3D grid cell.");
+                   "like the top of a 3D grid cell.",
+                   py::arg("x"), py::arg("y"), py::arg("p1"), py::arg("p2"),
+                   py::arg("p3"), py::arg("p4"),
+                   py::arg("tolerance") = numerics::TOLERANCE);
 }
 }  // namespace xtgeo::geometry
 

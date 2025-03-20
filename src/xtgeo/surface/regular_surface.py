@@ -1453,13 +1453,13 @@ class RegularSurface:
 
         return diff
 
-    def compare_topology(self, other, strict=True):
+    def compare_topology(self, other: RegularSurface, strict: bool = True) -> bool:
         """Check that two object has the same topology, i.e. map definitions.
 
         Map definitions such as origin, dimensions, number of defined cells...
 
         Args:
-            other (surface object): The other surface to compare with
+            other: The other surface to compare with
             strict (bool): If false, the masks are not compared
 
         Returns:

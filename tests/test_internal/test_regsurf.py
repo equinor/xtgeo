@@ -126,7 +126,8 @@ def test_get_xy_from_ij():
 
     regsurf_cpp = _internal.regsurf.RegularSurface(surf)
 
-    point = regsurf_cpp.get_xy_from_ij(2, 4)
+    yflip = 1
+    point = regsurf_cpp.get_xy_from_ij(2, 4, yflip)
 
     print(point.x, point.y)
     assert point.x == pytest.approx(-0.2679491924)
