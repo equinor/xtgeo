@@ -71,10 +71,21 @@ class Surfaces:
 
         self._surfaces = slist
 
-    def append(self, slist):
-        """Append surfaces from either a list of RegularSurface objects,
-        a list of files, or a mix."""
-        for item in slist:
+    def append(self, input: list[RegularSurface] | list[str] | RegularSurface) -> None:
+        """Append surface(s) from a RegularSurface or a list of objects or files.
+
+        Args:
+            input: A single RegularSurface, or list of RegularSurface objects and/or
+                file names.
+        """
+        if isinstance(input, RegularSurface):
+            self.surfaces.append(input)
+            return
+
+        if not isinstance(input, list):
+            raise ValueError("Input not a list or a RegularSurface object.")
+
+        for item in input:
             if isinstance(item, RegularSurface):
                 self.surfaces.append(item)
             else:
@@ -217,3 +228,49 @@ class Surfaces:
                     result["median"] = result["p50"]
 
         return result
+
+    def is_depth_consistent(self) -> bool:
+        """Check that surfaces are depth consistent, i.e. not crossing each other."""
+        previous = self.surfaces[0]
+        for surf in self.surfaces[1:]:
+            ok_topology = previous.compare_topology(surf, strict=True)
+            if not ok_topology:
+                raise ValueError(
+                    "Cannot check if surfaces are depth consistent, surfaces differ "
+                    "in topology (definitions of origin, shape, etc.)"
+                )
+
+            diff = surf - previous
+            if np.any(diff.values < 0):
+                return False
+            previous = surf
+        return True
+
+    def make_depth_consistent(self, inplace: bool = True) -> Surfaces | None:
+        """Make surfaces depth consistent, i.e. not crossing each other.
+
+        The algorithm is starting with top surface and iteratively adjust
+        the surface below to be consistent with the previous surface.
+
+        Args:
+            inplace: If True (default), the object is changed in-place, if False,
+                a new object is returned.
+        """
+        logger.debug("Make surfaces depth consistent (in-place=%s)", inplace)
+
+        surfs = self.copy() if not inplace else self
+
+        previous = surfs.surfaces[0]
+        for surf in surfs.surfaces[1:]:
+            ok_topology = previous.compare_topology(surf, strict=True)
+            if not ok_topology:
+                raise ValueError(
+                    "Cannot make surfaces depth consistent, surfaces differ in "
+                    "topology (definitions of origin, shape, etc.)"
+                )
+
+            surf.values = np.where(
+                surf.values < previous.values, previous.values, surf.values
+            )
+            previous = surf
+        return surfs if not inplace else None
