@@ -7,6 +7,7 @@
 #include <optional>
 #include <stdexcept>
 #include <tuple>
+#include <xtgeo/regsurf.hpp>
 #include <xtgeo/types.hpp>
 
 namespace py = pybind11;
@@ -14,10 +15,12 @@ namespace py = pybind11;
 namespace xtgeo::grid3d {
 
 py::array_t<double>
-get_cell_volumes(const Grid &grid_cpp, const int precision, const bool asmasked);
+get_cell_volumes(const Grid &grid_cpp,
+                 const int precision,
+                 const bool asmasked = false);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-get_cell_centers(const Grid &grid_cpp, const bool asmasked);
+get_cell_centers(const Grid &grid_cpp, const bool asmasked = false);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_height_above_ffl(const Grid &grid_cpp,
@@ -63,6 +66,12 @@ std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
 create_grid_from_cube(const cube::Cube &cube,
                       const bool use_cell_center = false,
                       const int flip = 1);
+
+std::tuple<pybind11::array_t<float>, pybind11::array_t<int>>
+adjust_boxgrid_layers_from_regsurfs(Grid &grd,
+                                    const std::vector<regsurf::RegularSurface> &rsurfs,
+                                    const double tolerance = numerics::TOLERANCE);
+
 inline void
 init(py::module &m)
 {
@@ -78,7 +87,8 @@ init(py::module &m)
       .def_readonly("zcornsv", &Grid::zcornsv)
       .def_readonly("actnumsv", &Grid::actnumsv)
 
-      .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.")
+      .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.",
+           py::arg("precision"), py::arg("asmasked") = false)
 
       .def("get_cell_centers", &get_cell_centers,
            "Compute the cells centers coordinates as 3 arrays")
@@ -90,6 +100,9 @@ init(py::module &m)
            "Get a vector containing the corners of a specified IJK cell.")
       .def("convert_xtgeo_to_rmsapi", &convert_xtgeo_to_rmsapi,
            "Convert XTGeo grid to RMSAPI grid layout (for storing grid in RMS)")
+      .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
+           "Adjust layers in a boxgrid given a list of regular surfaces.",
+           py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
 
       ;
 

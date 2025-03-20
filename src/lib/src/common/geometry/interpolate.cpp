@@ -13,7 +13,8 @@ interpolate_z_triangles(const double x,
                         const Point &p1,
                         const Point &p2,
                         const Point &p3,
-                        const Point &p4)
+                        const Point &p4,
+                        const double tolerance = numerics::TOLERANCE)
 {
     Point apply_point = { x, y, 0.0 };
 
@@ -25,7 +26,7 @@ interpolate_z_triangles(const double x,
     double z_estimated = std::numeric_limits<double>::quiet_NaN();
 
     // Check if the point is in the triangle
-    if (std::abs(total_area - (area1 + area2 + area3)) < numerics::TOLERANCE) {
+    if (std::abs(total_area - (area1 + area2 + area3)) < tolerance) {
         double w1 = area1 / total_area;
         double w2 = area2 / total_area;
         double w3 = area3 / total_area;
@@ -42,7 +43,7 @@ interpolate_z_triangles(const double x,
     total_area = triangle_area(p1, p3, p4);
 
     // Check if the point is in the triangle
-    if (std::abs(total_area - (area1 + area2 + area3)) < numerics::TOLERANCE) {
+    if (std::abs(total_area - (area1 + area2 + area3)) < tolerance) {
         double w1 = area1 / total_area;
         double w2 = area2 / total_area;
         double w3 = area3 / total_area;
@@ -77,10 +78,11 @@ interpolate_z_4p_regular(const double x,
                          const Point &p1,
                          const Point &p2,
                          const Point &p3,
-                         const Point &p4)
+                         const Point &p4,
+                         const double tolerance)
 {
     // Quick check if the point is inside the quadrilateral; note ordering of points
-    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3)) {
+    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3, tolerance)) {
         return numerics::QUIET_NAN;
     }
 
@@ -113,15 +115,16 @@ interpolate_z_4p(const double x,
                  const Point &p1,
                  const Point &p2,
                  const Point &p3,
-                 const Point &p4)
+                 const Point &p4,
+                 const double tolerance)
 {
     // Quick check if the point is inside the quadrilateral (note order)
-    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3)) {
+    if (!is_xy_point_in_quadrilateral(x, y, p1, p2, p4, p3, tolerance)) {
         return numerics::QUIET_NAN;
     }
 
-    double z1 = interpolate_z_triangles(x, y, p1, p2, p3, p4);
-    double z2 = interpolate_z_triangles(x, y, p2, p1, p4, p3);
+    double z1 = interpolate_z_triangles(x, y, p1, p2, p3, p4, tolerance);
+    double z2 = interpolate_z_triangles(x, y, p2, p1, p4, p3, tolerance);
 
     // If either interpolation returns NaN, return the other value
     if (std::isnan(z1))

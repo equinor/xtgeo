@@ -75,4 +75,94 @@ get_gridprop_value_between_surfaces(const Grid &grd,
     return result;
 }  // get_gridprop_value_between_surfaces
 
+/*
+ * Given a 3D grid and surfaces, construct layers in 3D grid (zcorns) from surface. Note
+ * that this grid is based on a "shoebox grid", which has vertical pillars in the input!
+ *
+ * @param grd Grid instance, which already has the correct number of layers
+ * @param rsurfs The RegularSurface objects (array/list input), sorted from top
+ * to bottom
+ * @param tolerance The tolerance for the interpolation
+ * @return updated zcorn and actnum values in the grid
+ */
+
+std::tuple<py::array_t<float>, py::array_t<int>>
+adjust_boxgrid_layers_from_regsurfs(Grid &grd,
+                                    const std::vector<regsurf::RegularSurface> &rsurfs,
+                                    const double tolerance)
+{
+    std::vector<size_t> shape = { grd.ncol + 1, grd.nrow + 1, grd.nlay + 1, 4 };
+    // Create the array with the specified shape
+    py::array_t<float> zcorn_result(shape);
+    py::array_t<int> actnum_result({ grd.ncol, grd.nrow, grd.nlay });
+
+    auto zcorn_result_ = zcorn_result.mutable_unchecked<4>();
+    auto actnum_result_ = actnum_result.mutable_unchecked<3>();
+
+    auto coordsv_ = grd.coordsv.unchecked<3>();
+
+    for (size_t i = 0; i < actnum_result_.shape(0); ++i) {
+        for (size_t j = 0; j < actnum_result_.shape(1); ++j) {
+            for (size_t k = 0; k < actnum_result_.shape(2); ++k) {
+                actnum_result_(i, j, k) = 1;
+            }
+        }
+    }
+
+    if (rsurfs.size() != grd.nlay + 1) {
+        throw std::invalid_argument("Wrong number of input surfaces vs grid layers");
+    }
+
+    for (size_t icol = 0; icol < grd.ncol + 1; icol++) {
+        for (size_t jrow = 0; jrow < grd.nrow + 1; jrow++) {
+            // Get pillar coordinate, just using the top pillar point as the pillars
+            // shall be vertical
+            double x = coordsv_(icol, jrow, 0);
+            double y = coordsv_(icol, jrow, 1);
+            size_t ksurf = 0;
+
+            int actnum = 1;
+
+            for (const auto &rsurf : rsurfs) {
+                double z = regsurf::get_z_from_xy(rsurf, x, y, tolerance);
+
+                if (std::isnan(z)) {
+                    z = 1000;  // Default value; TODO make this better
+                    actnum = 0;
+                }
+
+                // Update the z values of the cell corners
+                for (size_t l = 0; l < 4; l++) {
+                    zcorn_result_(icol, jrow, ksurf, l) = z;
+                }
+
+                ksurf++;
+            }
+
+            // If actnum is 0, then all 4 cells that share this pillar should be
+            // inactive for the entire column
+            if (actnum == 0) {
+                int ia = static_cast<int>(icol);
+                int ja = static_cast<int>(jrow);
+
+                for (size_t k = 0; k < grd.nlay; k++) {
+                    for (int ii = ia - 1; ii <= ia; ii++) {
+                        for (int jj = ja - 1; jj <= ja; jj++) {
+                            // Ensure indices are within bounds
+                            size_t apply_i =
+                              std::clamp(ii, 0, static_cast<int>(grd.ncol - 1));
+                            size_t apply_j =
+                              std::clamp(jj, 0, static_cast<int>(grd.nrow - 1));
+
+                            // Set actnum_result_ to 0 for the entire column
+                            actnum_result_(apply_i, apply_j, k) = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return std::make_tuple(zcorn_result, actnum_result);
+}
+
 }  // namespace xtgeo::grid3d

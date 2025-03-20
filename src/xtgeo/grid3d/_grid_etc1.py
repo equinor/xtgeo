@@ -16,6 +16,7 @@ from xtgeo import _cxtgeo
 from xtgeo.common.calc import find_flip
 from xtgeo.common.constants import UNDEF_INT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
+from xtgeo.common.types import Dimensions
 from xtgeo.grid3d.grid_properties import GridProperties
 from xtgeo.xyz.polygons import Polygons
 
@@ -24,10 +25,10 @@ from ._grid3d_fence import _update_tmpvars
 from .grid_property import GridProperty
 
 if TYPE_CHECKING:
-    from xtgeo.common.types import Dimensions
     from xtgeo.grid3d import Grid
     from xtgeo.grid3d.types import METRIC
     from xtgeo.surface.regular_surface import RegularSurface
+    from xtgeo.surface.surfaces import Surfaces
     from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
@@ -74,8 +75,78 @@ def create_box(
     return {
         "coordsv": coordsv,
         "zcornsv": zcornsv,
-        "actnumsv": actnumsv,
+        "actnumsv": actnumsv.astype(np.int32),
     }
+
+
+def create_grid_from_surfaces(
+    srfs: Surfaces,
+    ij_dimension: tuple[int, int] | None = None,
+    ij_origin: tuple[float, float] | None = None,
+    ij_increment: tuple[float, float] | None = None,
+    rotation: float | None = None,
+    tolerance: float = _internal.numerics.TOLERANCE,
+) -> Grid:
+    """Use a stack of surfaces to create a nonfaulted grid.
+
+    Technically, a shoebox grid is made first, then the layers are adjusted to follow
+    surfaces.
+    """
+    from xtgeo.grid3d.grid import create_box_grid
+
+    n_surfaces = len(srfs.surfaces)
+
+    # ensure that surfaces are consistent
+    if not srfs.is_depth_consistent():
+        raise ValueError(
+            "Surfaces are not depth consistent, they must not cross is depth"
+        )
+    top = srfs.surfaces[0]
+    base = srfs.surfaces[-1]
+
+    zinc = (base.values.mean() - top.values.mean()) / (n_surfaces - 1)
+    kdim: int = n_surfaces - 1
+    zori = top.values.mean()
+    ncol: int = top.ncol - 1  # since surface are nodes while grid is cell centered
+    nrow: int = top.nrow - 1
+
+    if ij_dimension:  # mypy needs this:
+        dimension = Dimensions(int(ij_dimension[0]), int(ij_dimension[1]), kdim)
+    else:
+        dimension = Dimensions(ncol, nrow, kdim)
+
+    increment = (*ij_increment, zinc) if ij_increment else (top.xinc, top.yinc, zinc)
+    origin = (*ij_origin, zori) if ij_origin else (top.xori, top.yori, zori)
+    rotation = rotation if rotation is not None else top.rotation
+
+    grd = create_box_grid(
+        dimension=dimension,
+        origin=origin,
+        increment=increment,
+        rotation=rotation,
+        oricenter=False,
+        flip=1,
+    )
+
+    # now adjust the grid to surfaces
+    surf_list = []
+    for surf in srfs.surfaces:
+        cpp_surf = _internal.regsurf.RegularSurface(surf)
+        surf_list.append(cpp_surf)
+
+    grd_cpp = _internal.grid3d.Grid(grd)
+    new_zcorns, new_actnum = grd_cpp.adjust_boxgrid_layers_from_regsurfs(
+        surf_list, tolerance
+    )
+
+    grd._zcornsv = new_zcorns
+    grd._actnumsv = new_actnum
+
+    # set the subgrid index (zones)
+    subgrids = {f"zone_{i + 1}": 1 for i in range(n_surfaces - 1)}
+    grd.set_subgrids(subgrids)
+
+    return grd
 
 
 method_factory = {

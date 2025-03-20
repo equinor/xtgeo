@@ -84,17 +84,21 @@ get_outer_corners(const RegularSurface &regsurf)
  * @param regsurf The RegularSurface struct representing the surface
  * @param i The i-coordinate of the origin
  * @param j The j-coordinate of the origin
+ * @param yflip The flip factor for the Y-coordinate
  * @return A tuple of 4 points representing the outer corners of the regsurf
  */
 Point
-get_xy_from_ij(const RegularSurface &regsurf, const size_t i, const size_t j)
+get_xy_from_ij(const RegularSurface &regsurf,
+               const size_t i,
+               const size_t j,
+               const int yflip)
 {
     // Convert the angle to radians
     double angle_rad = regsurf.rotation * M_PI / 180.0;
 
     // Calculate the unrotated corners of the cell (i, j)
-    Point point = { regsurf.xori + i * regsurf.xinc, regsurf.yori + j * regsurf.yinc,
-                    0 };
+    Point point = { regsurf.xori + i * regsurf.xinc,
+                    regsurf.yori + j * regsurf.yinc * yflip, 0 };
 
     // Get the position of the point in the rotated grid
     Point point_rot = rotate_point(point, regsurf.xori, regsurf.yori, angle_rad);
@@ -220,7 +224,10 @@ find_cell_range(const RegularSurface &regsurf,
  */
 
 double
-get_z_from_xy(const RegularSurface &regsurf, const double x, const double y)
+get_z_from_xy(const RegularSurface &regsurf,
+              const double x,
+              const double y,
+              const double tolerance)
 {
     // Convert the angle to radians
     double angle_rad = regsurf.rotation * M_PI / 180.0;
@@ -233,28 +240,36 @@ get_z_from_xy(const RegularSurface &regsurf, const double x, const double y)
     int i_temp = static_cast<int>(p_rel.x / regsurf.xinc);
     int j_temp = static_cast<int>(p_rel.y / regsurf.yinc);
 
+    // check inside status, with a tolerance
+    bool is_inside = geometry::is_xy_point_in_quadrilateral(
+      p_rel.x, p_rel.y, { 0.0, 0.0, 0.0 },
+      { (regsurf.ncol - 1) * regsurf.xinc, 0.0, 0.0 },
+      { (regsurf.ncol - 1) * regsurf.xinc, (regsurf.nrow - 1) * regsurf.yinc, 0.0 },
+      { 0.0, (regsurf.nrow - 1) * regsurf.yinc, 0.0 }, tolerance);
+
     // Check if the point is outside the grid, and return NaN if it is
-    if (i_temp < 0 || i_temp >= static_cast<int>(regsurf.ncol - 1) || j_temp < 0 ||
-        j_temp >= static_cast<int>(regsurf.nrow - 1)) {
+    // (a bit double checking here)
+    if (!is_inside || i_temp < 0 || i_temp > static_cast<int>(regsurf.ncol - 1) ||
+        j_temp < 0 || j_temp > static_cast<int>(regsurf.nrow - 1)) {
+
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    // Convert to size_t after validation
+    // Convert to size_t
     size_t i = static_cast<size_t>(i_temp);
     size_t j = static_cast<size_t>(j_temp);
     // Access the array without bounds checking
-    auto values_unchecked = regsurf.values.unchecked<2>();
-    auto mask_unchecked = regsurf.mask.unchecked<2>();
+    auto values = regsurf.values.unchecked<2>();
+    auto mask = regsurf.mask.unchecked<2>();
 
-    // Get the values at the corners of the cell
-    double z11 = values_unchecked(i, j);
-    double z12 = values_unchecked(i, j + 1);
-    double z21 = values_unchecked(i + 1, j);
-    double z22 = values_unchecked(i + 1, j + 1);
+    // Get the values at the corners of the cell, beware edge effects
+    size_t i2 = std::min(i + 1, regsurf.ncol - 1);
+    size_t j2 = std::min(j + 1, regsurf.nrow - 1);
 
-    // Check if any of the corner values are masked
-    if (mask_unchecked(i, j) || mask_unchecked(i, j + 1) || mask_unchecked(i + 1, j) ||
-        mask_unchecked(i + 1, j + 1)) {
+    double z11 = values(i, j), z12 = values(i, j2);
+    double z21 = values(i2, j), z22 = values(i2, j2);
+
+    if (mask(i, j) || mask(i, j2) || mask(i2, j) || mask(i2, j2)) {
         return std::numeric_limits<double>::quiet_NaN();
     }
 
@@ -264,9 +279,11 @@ get_z_from_xy(const RegularSurface &regsurf, const double x, const double y)
     double y1 = j * regsurf.yinc;
     double y2 = (j + 1) * regsurf.yinc;
 
-    return geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
-                                              { x2, y1, z21 }, { x1, y2, z12 },
-                                              { x2, y2, z22 });
+    auto res = geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
+                                                  { x2, y1, z21 }, { x1, y2, z12 },
+                                                  { x2, y2, z22 }, tolerance);
+    return res;
+
 }  // get_z_from_xy
 
 }  // namespace xtgeo::regsurf

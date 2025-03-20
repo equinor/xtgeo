@@ -23,7 +23,7 @@ namespace xtgeo::grid3d {
  * @return An array containing the volume of every cell
  */
 py::array_t<double>
-get_cell_volumes(const Grid &grd, const int precision, const bool asmasked = false)
+get_cell_volumes(const Grid &grd, const int precision, const bool asmasked)
 {
     pybind11::array_t<double> cellvols({ grd.ncol, grd.nrow, grd.nlay });
     auto cellvols_ = cellvols.mutable_data();
@@ -53,7 +53,7 @@ get_cell_volumes(const Grid &grd, const int precision, const bool asmasked = fal
  * @return Arrays with the X, Y, Z coordinates of the cell centers
  */
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-get_cell_centers(const Grid &grd, const bool asmasked = false)
+get_cell_centers(const Grid &grd, const bool asmasked)
 {
     pybind11::array_t<double> xmid({ grd.ncol, grd.nrow, grd.nlay });
     pybind11::array_t<double> ymid({ grd.ncol, grd.nrow, grd.nlay });

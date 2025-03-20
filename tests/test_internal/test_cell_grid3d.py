@@ -257,3 +257,23 @@ def test_convert_xtgeo_to_rmsapi_warnings(get_drogondata):
     grid_cpp = _internal.grid3d.Grid(use_grid)
     with pytest.warns(UserWarning, match="One or more ZCORN values are crossing"):
         grid_cpp.convert_xtgeo_to_rmsapi()
+
+
+def test_adjust_box_grid_to_regsurfs():
+    """Test the adjust_box_grid function, which updates zcorns in the grid."""
+    # Create a simple grid
+    grid = xtgeo.create_box_grid((8, 4, 5))
+
+    assert grid._zcornsv[4, 2, :, 1].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+
+    surf = xtgeo.surface_from_grid3d(grid, where="top")
+    surfaces = []
+    for i in range(6):
+        surfn = surf.copy()
+        surfn.values += 2 * i
+        surf_cpp = _internal.regsurf.RegularSurface(surfn)
+        surfaces.append(surf_cpp)
+
+    grd_cpp = _internal.grid3d.Grid(grid)
+    new_zcorns, _active = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surfaces)
+    assert new_zcorns[4, 2, :, 1].tolist() == [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
