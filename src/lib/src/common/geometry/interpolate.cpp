@@ -134,4 +134,34 @@ interpolate_z_4p(const double x,
 
 }  // interpolate_z_4p
 
+/*
+ * Function that given a midpoint in a rectangular cell with known increments and
+ * rotation, returns the XY corners of the cell
+ * @param x X coordinate of the midpoint
+ * @param y Y coordinate of the midpoint
+ * @param xinc X increment
+ * @param yinc Y increment
+ * @param rot Rotation in degrees
+ * @return std::array<double, 8>
+ */
+std::array<double, 8>
+find_rect_corners_from_center(const double x,
+                              const double y,
+                              const double xinc,
+                              const double yinc,
+                              const double rot)
+{
+    double rrot = rot * M_PI / 180.0;
+
+    double cv = cos(rrot);
+    double sv = sin(rrot);
+
+    double r1x = -0.5 * xinc * cv - 0.5 * yinc * sv;
+    double r1y = -0.5 * xinc * sv + 0.5 * yinc * cv;
+    double r2x = 0.5 * xinc * cv - 0.5 * yinc * sv;
+    double r2y = 0.5 * xinc * sv + 0.5 * yinc * cv;
+
+    return { x + r1x, y + r1y, x + r2x, y + r2y, x - r1x, y - r1y, x - r2x, y - r2y };
+}  // find_rect_corners_from_center
+
 }  // namespace xtgeo::geometry

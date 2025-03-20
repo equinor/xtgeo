@@ -59,6 +59,10 @@ convert_xtgeo_to_rmsapi(const Grid &grd);
 void
 process_edges_rmsapi(py::array_t<float> zcornsv);
 
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+create_grid_from_cube(const cube::Cube &cube,
+                      const bool use_cell_center = false,
+                      const int flip = 1);
 inline void
 init(py::module &m)
 {
@@ -116,6 +120,9 @@ init(py::module &m)
     m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
                  "Determine the interpolated cell face Z from XY, top or base.");
     m_grid3d.def("process_edges_rmsapi", &process_edges_rmsapi, "Edge prosessing...");
+    m_grid3d.def("create_grid_from_cube", &create_grid_from_cube,
+                 "Create a 3D grid from a cube specification.", py::arg("cube"),
+                 py::arg("use_cell_center") = false, py::arg("flip") = 1);
 }
 
 }  // namespace xtgeo::grid3d
