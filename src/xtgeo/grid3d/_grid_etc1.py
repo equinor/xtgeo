@@ -42,6 +42,9 @@ def create_box(
     flip: Literal[1, -1],
 ) -> dict[str, np.ndarray]:
     """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
+
+    from xtgeo.cube.cube1 import Cube
+
     ncol, nrow, nlay = dimension
     nncol = ncol + 1
     nnrow = nrow + 1
@@ -51,26 +54,23 @@ def create_box(
     zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
     actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
 
-    option = 0 if not oricenter else 1
-
-    _cxtgeo.grdcp3d_from_cube(
-        ncol,
-        nrow,
-        nlay,
-        coordsv,
-        zcornsv,
-        actnumsv,
-        origin[0],
-        origin[1],
-        origin[2],
-        increment[0],
-        increment[1],
-        increment[2],
-        rotation,
-        flip,
-        option,
+    cube = Cube(
+        ncol=ncol,
+        nrow=nrow,
+        nlay=nlay,
+        xinc=increment[0],
+        yinc=increment[1],
+        zinc=increment[2],
+        xori=origin[0],
+        yori=origin[1],
+        zori=origin[2],
+        rotation=rotation,
     )
 
+    cubecpp = _internal.cube.Cube(cube)
+    coordsv, zcornsv, actnumsv = _internal.grid3d.create_grid_from_cube(
+        cubecpp, oricenter, flip
+    )
     return {
         "coordsv": coordsv,
         "zcornsv": zcornsv,
