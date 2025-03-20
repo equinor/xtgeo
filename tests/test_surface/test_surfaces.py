@@ -129,3 +129,84 @@ def test_get_surfaces_from_3dgrid(tmp_path, testdata_path):
     assert surfs.surfaces[-1].values.min() == pytest.approx(1589.6826, abs=0.04)
     assert surfs.surfaces[-1].values.max() == pytest.approx(1977.2864, abs=0.04)
     assert surfs.surfaces[0].values.mean() == pytest.approx(1697.0290, abs=0.04)
+
+
+def test_is_depth_consistent():
+    """Test surface depth consistency checking."""
+    # Create three surfaces with known geometry
+    surf1 = xtgeo.RegularSurface(ncol=5, nrow=3, xinc=1.0, yinc=1.0)
+    surf2 = xtgeo.RegularSurface(ncol=5, nrow=3, xinc=1.0, yinc=1.0)
+    surf3 = xtgeo.RegularSurface(ncol=5, nrow=3, xinc=1.0, yinc=1.0)
+
+    # Set values for each surface (increasing depth)
+    surf1.values = np.full((3, 5), 100.0)
+    surf2.values = np.full((3, 5), 200.0)
+    surf3.values = np.full((3, 5), 300.0)
+
+    # Test consistent surfaces
+    surfs = xtgeo.Surfaces([surf1, surf2, surf3])
+    assert surfs.is_depth_consistent() is True
+
+    # Test inconsistent surfaces by making one point cross
+    surf2.values[1, 1] = 50.0  # Make surface 2 cross surface 1
+    assert surfs.is_depth_consistent() is False
+
+    # Test topology mismatch
+    surf4 = xtgeo.RegularSurface(ncol=6, nrow=3, xori=0.0, yori=0.0, xinc=1.0, yinc=1.0)
+    with pytest.raises(ValueError, match=".*topology.*"):
+        xtgeo.Surfaces([surf1, surf4]).is_depth_consistent()
+
+
+def test_make_depth_consistent():
+    """Test making surfaces depth consistent."""
+    # Create test surfaces
+    surf1 = xtgeo.RegularSurface(ncol=3, nrow=3, xinc=100.0, yinc=100.0)
+    surf2 = xtgeo.RegularSurface(ncol=3, nrow=3, xinc=100.0, yinc=100.0)
+    surf3 = xtgeo.RegularSurface(ncol=3, nrow=3, xinc=100.0, yinc=100.0)
+
+    # Set initial values with some crossings
+    surf1.values = np.array(
+        [[100.0, 100.0, 100.0], [100.0, 100.0, 100.0], [100.0, 100.0, 100.0]]
+    )
+
+    surf2.values = np.array(
+        [
+            [200.0, 90.0, 200.0],  # 90 crosses surf1
+            [200.0, 200.0, 200.0],
+            [200.0, 200.0, 200.0],
+        ]
+    )
+
+    surf3.values = np.array(
+        [
+            [300.0, 300.0, 300.0],
+            [150.0, 300.0, 300.0],  # 150 crosses surf2
+            [300.0, 300.0, 300.0],
+        ]
+    )
+
+    # Test inplace=False
+    surfs = xtgeo.Surfaces([surf1, surf2, surf3])
+    new_surfs = surfs.make_depth_consistent(inplace=False)
+    assert new_surfs is not surfs  # Should be different object
+    assert new_surfs.is_depth_consistent()
+
+    # Original should be unchanged
+    assert surfs.surfaces[1].values[0, 1] == 90.0
+    assert surfs.surfaces[2].values[1, 0] == 150.0
+
+    # Test inplace=True
+    surfs = xtgeo.Surfaces([surf1, surf2, surf3])
+    result = surfs.make_depth_consistent(inplace=True)
+    assert result is None  # Should return None for inplace=True
+
+    # Check values were corrected
+    assert surfs.surfaces[1].values[0, 1] == 100.0  # surf2 adjusted to surf1
+    assert surfs.surfaces[2].values[1, 0] == 200.0  # surf3 adjusted to surf2
+    assert surfs.is_depth_consistent()
+
+    # Test topology mismatch
+    surf4 = xtgeo.RegularSurface(ncol=4, nrow=3, xinc=100.0, yinc=100.0)
+    surfs_bad = xtgeo.Surfaces([surf1, surf4])
+    with pytest.raises(ValueError, match=".*topology.*"):
+        surfs_bad.make_depth_consistent()
