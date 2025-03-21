@@ -293,9 +293,9 @@ class Polygons(XYZ):
         return self._pname
 
     @pname.setter
-    def pname(self, value):
-        super()._check_name(value)
-        self._pname = value
+    def pname(self, name):
+        super()._check_name_and_replace(self._pname, name)
+        self._pname = name
 
     @property
     def hname(self):
@@ -308,9 +308,9 @@ class Polygons(XYZ):
         return self._hname
 
     @hname.setter
-    def hname(self, value):
-        super()._check_name(value)
-        self._hname = value
+    def hname(self, name):
+        super()._check_name_and_replace(self._hname, name)
+        self._hname = name
 
     @property
     def dhname(self):
@@ -323,9 +323,9 @@ class Polygons(XYZ):
         return self._dhname
 
     @dhname.setter
-    def dhname(self, value):
-        super()._check_name(value)
-        self._dhname = value
+    def dhname(self, name):
+        super()._check_name_and_replace(self._dhname, name)
+        self._dhname = name
 
     @property
     def tname(self):
@@ -336,9 +336,9 @@ class Polygons(XYZ):
         return self._tname
 
     @tname.setter
-    def tname(self, value):
-        super()._check_name(value)
-        self._tname = value
+    def tname(self, name):
+        super()._check_name_and_replace(self._tname, name)
+        self._tname = name
 
     @property
     def dtname(self):
@@ -349,9 +349,9 @@ class Polygons(XYZ):
         return self._dtname
 
     @dtname.setter
-    def dtname(self, value):
-        super()._check_name(value)
-        self._dtname = value
+    def dtname(self, name):
+        super()._check_name_and_replace(self._dtname, name)
+        self._dtname = name
 
     @property
     def dataframe(self) -> pd.DataFrame:
