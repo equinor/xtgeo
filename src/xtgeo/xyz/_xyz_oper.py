@@ -535,11 +535,11 @@ def _generic_length(
     self.set_dataframe(dataframe)
 
     if mode2d:
-        self.hname = gname
-        self.dhname = dgname
+        self._hname = gname
+        self._dhname = dgname
     else:
-        self.tname = gname
-        self.dtname = dgname
+        self._tname = gname
+        self._dtname = dgname
 
 
 def extend(self, distance, nsamples, addhlen=True):

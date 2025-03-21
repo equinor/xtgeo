@@ -392,6 +392,51 @@ def test_rename_columns(testdata_path):
     assert "NEWY" in pol.get_dataframe()
 
 
+def test_rename_pname_column(testdata_path):
+    """Renaming pname (aka POLY_ID) column"""
+
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET2)
+    oldname = "POLY_ID"
+    assert pol.pname == oldname
+    assert pol.pname in pol.get_dataframe()
+
+    newname = "NEW_ID"
+
+    pol.pname = newname
+
+    assert pol.pname == newname
+    assert pol.pname in pol.get_dataframe()
+    assert oldname not in pol.get_dataframe()
+
+    # now try to replace with a column name that is already present
+    newname = pol.xname  # as example
+    with pytest.raises(ValueError, match="does already exist as a column name"):
+        pol.pname = newname
+
+
+def test_rename_hname_etc_column(testdata_path):
+    """Renaming hname, tname, dhname, dtname columns."""
+
+    pol = xtgeo.polygons_from_file(testdata_path / POLSET2)
+
+    attrnames = ["hname", "dhname", "tname", "dtname"]
+
+    for attrname in attrnames:
+        myattr = getattr(pol, attrname)
+        assert myattr
+        assert myattr not in pol.get_dataframe()
+
+    # now run methods so that these are changed, ie. added to dataframe
+    pol.hlen()
+    pol.tlen()
+
+    pol.hname += "_new"
+    pol.tname += "_new"
+
+    assert "H_CUMLEN_new" in pol.get_dataframe()
+    assert "T_CUMLEN_new" in pol.get_dataframe()
+
+
 def test_empty_polygon_has_default_name():
     pol = Polygons()
     assert pol.dtname == "T_DELTALEN"
@@ -468,8 +513,11 @@ def test_raise_special_name_name_type(name_attribute):
     pol._pname = "POLY_ID"
     pol.set_dataframe(data)
 
-    with pytest.raises(ValueError, match="does not exist as a column"):
-        setattr(pol, name_attribute, "anyname")
+    if name_attribute == "dtname":
+        setattr(pol, name_attribute, "anyname_" + name_attribute)
+    else:
+        with pytest.raises(ValueError, match="does not exist as a column"):
+            setattr(pol, name_attribute, "anyname_" + name_attribute)
 
 
 @pytest.mark.parametrize(

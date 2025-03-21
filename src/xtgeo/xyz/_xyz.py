@@ -103,15 +103,30 @@ class XYZ(ABC):
         else:
             raise ValueError(f"Wrong type of input to {newname}; must be string")
 
-    def _check_name(self, value):
-        if not isinstance(value, str):
-            raise ValueError(f"Wrong type of input; must be string, was {type(value)}")
-
-        if value not in self.get_dataframe(copy=False).columns:
+    def _check_name_and_replace(self, oldname, newname):
+        """Replace name of a column, doing some checks."""
+        if not isinstance(newname, str):
             raise ValueError(
-                f"{value} does not exist as a column name, must be "
-                f"one of: f{self.get_dataframe(copy=False).columns}"
+                f"Wrong type of input; must be string, was {type(newname)}"
             )
+
+        if oldname not in self.get_dataframe(copy=False).columns:
+            raise ValueError(
+                f"The column {oldname} does not exist as a column name, must be "
+                f"one of: f{self.get_dataframe(copy=False).columns}. Likely a bug!"
+            )
+        # check that newname not already there; will be ambigious
+        if newname in self.get_dataframe(copy=False).columns:
+            raise ValueError(
+                f"The column {newname} does already exist as a column name:"
+                f"f{self.get_dataframe(copy=False).columns}. The new name "
+                "must be unique!"
+            )
+
+        # replace column name
+        df = self.get_dataframe(copy=True)
+        df.rename(columns={oldname: newname}, inplace=True)
+        self.set_dataframe(df)
 
     @abstractmethod
     def copy(self):
