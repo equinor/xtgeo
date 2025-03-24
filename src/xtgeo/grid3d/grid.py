@@ -96,16 +96,16 @@ def _handle_import(
 
 
 def grid_from_file(
-    gfile: str | pathlib.Path,
+    gfile: FileLike | FileWrapper,
     fformat: str | None = None,
     **kwargs: dict[str, Any],
 ) -> Grid:
     """Read a grid (cornerpoint) from filelike and an returns a Grid() instance.
 
     Args:
-        gfile (str or Path): File name to be imported. If fformat="eclipse_run"
+        gfile: File name to be imported. If fformat="eclipse_run"
             then a fileroot name shall be input here, see example below.
-        fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun/xtgcpgeom
+        fformat: File format egrid/roff/grdecl/bgrdecl/eclipserun/xtgcpgeom
             (None is default and means "guess")
         initprops (str list): Optional, and only applicable for file format
             "eclipserun". Provide a list the names of the properties here. A
