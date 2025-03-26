@@ -3,12 +3,16 @@ Tests for roxar RoxarAPI interface as mocks.
 
 """
 
+from unittest.mock import Mock, patch
+
 import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
 import xtgeo
+from xtgeo.common._xyz_enum import _XYZType
+from xtgeo.xyz import _xyz_roxapi
 
 
 @pytest.fixture
@@ -106,3 +110,106 @@ def test_load_polygons_from_roxar():
             columns=["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"],
         ),
     )
+
+
+def test_roxar_polygon_importer():
+    """Test the _roxar_importer function with mocked dependencies."""
+
+    # Mock the load_xyz_from_rms function
+    mock_load = Mock(
+        return_value={"values": "dummy_values", "attributes": {"attr1": "str"}}
+    )
+
+    # Create test inputs
+    project = "dummy_project"
+    name = "test_poly"
+    category = "test_category"
+    stype = "horizons"
+    realisation = 0
+    attributes = True
+
+    # Patch the load_xyz_from_rms function
+    with patch.object(_xyz_roxapi, "load_xyz_from_rms", mock_load):
+        from xtgeo.xyz.polygons import _roxar_importer
+
+        # Call the function
+        result = _roxar_importer(
+            project, name, category, stype, realisation, attributes
+        )
+
+        # Verify the mock was called with correct arguments
+        mock_load.assert_called_once_with(
+            project,
+            name,
+            category,
+            stype,
+            realisation,
+            attributes,
+            _XYZType.POLYGONS.value,
+        )
+
+        # Check the result
+        assert result["name"] == "test_poly"
+        assert "values" in result
+        assert result["values"] == "dummy_values"
+
+
+def test_roxar_polygon_importer_attrs():
+    """Test the _roxar_importer function, include attributes."""
+
+    # Mock the load_xyz_from_rms function with more detailed attributes
+    mock_load = Mock(
+        return_value={
+            "values": "dummy_values",
+            "attributes": {
+                "attr1": {"values": [1, 2, 3], "dtype": "int"},
+                "attr2": {"values": ["a", "b", "c"], "dtype": "str"},
+                "attr3": {"values": [1.1, 2.2, 3.3], "dtype": "float"},
+            },
+        }
+    )
+
+    # Create test inputs
+    project = "dummy_project"
+    name = "test_poly"
+    category = "test_category"
+    stype = "horizons"
+    realisation = 0
+    attributes = ["attr1", "attr2", "attr3"]  # Now testing with specific attributes
+
+    # Patch the load_xyz_from_rms function
+    with patch.object(_xyz_roxapi, "load_xyz_from_rms", mock_load):
+        from xtgeo.xyz.polygons import _roxar_importer
+
+        # Call the function
+        result = _roxar_importer(
+            project, name, category, stype, realisation, attributes
+        )
+
+        # Verify the mock was called with correct arguments
+        mock_load.assert_called_once_with(
+            project,
+            name,
+            category,
+            stype,
+            realisation,
+            attributes,
+            _XYZType.POLYGONS.value,
+        )
+
+        # Check the result
+        assert result["name"] == "test_poly"
+        assert "values" in result
+        assert result["values"] == "dummy_values"
+
+        # Check attributes
+        assert "attributes" in result
+        attrs = result["attributes"]
+        assert len(attrs) == 3
+        assert "attr1" in attrs
+        assert attrs["attr1"]["dtype"] == "int"
+        assert attrs["attr2"]["dtype"] == "str"
+        assert attrs["attr3"]["dtype"] == "float"
+        assert attrs["attr1"]["values"] == [1, 2, 3]
+        assert attrs["attr2"]["values"] == ["a", "b", "c"]
+        assert attrs["attr3"]["values"] == [1.1, 2.2, 3.3]
