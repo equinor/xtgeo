@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 
 import xtgeo
 from xtgeo.xyz import Points, Polygons
@@ -90,6 +91,23 @@ def test_polygons_from_attrs_not_ordereddict():
 
     mypol = Polygons(plist, attributes=attrs)
     assert mypol.get_dataframe()["POLY_ID"].values[2] == 1
+
+
+def test_polygons_with_attrs_copy():
+    plist = [
+        (234, 556, 11, 0, "some", 1.0),
+        (235, 559, 14, 1, "attr", 1.1),
+        (255, 577, 12, 1, "here", 1.2),
+    ]
+    attrs = {}
+    attrs["sometxt"] = "str"
+    attrs["somefloat"] = "float"
+
+    mypol = Polygons(plist, attributes=attrs)
+
+    cppol = mypol.copy()
+
+    assert_frame_equal(mypol.get_dataframe(), cppol.get_dataframe())
 
 
 def test_import_zmap_and_xyz(testdata_path):

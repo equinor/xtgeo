@@ -5,6 +5,7 @@ import contextlib
 import numpy as np
 import pandas as pd
 
+from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.constants import UNDEF, UNDEF_INT
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
@@ -13,25 +14,25 @@ from xtgeo.io._file import FileFormat, FileWrapper
 logger = null_logger(__name__)
 
 
-def import_xyz(pfile, zname="Z_TVDSS"):
+def import_xyz(pfile, zname=_AttrName.ZNAME.value):
     """Simple X Y Z file. All points as Pandas framework."""
     return {
         "zname": zname,
-        "xname": "X_UTME",
-        "yname": "Y_UTMN",
+        "xname": _AttrName.XNAME.value,
+        "yname": _AttrName.YNAME.value,
         "values": pd.read_csv(
             pfile.file,
             sep=r"\s+",
             skiprows=0,
             header=None,
-            names=["X_UTME", "Y_UTMN", zname],
+            names=[_AttrName.XNAME.value, _AttrName.YNAME.value, zname],
             dtype=np.float64,
             na_values=999.00,
         ),
     }
 
 
-def import_zmap(pfile, zname="Z_TVDSS"):
+def import_zmap(pfile, zname=_AttrName.ZNAME.value):
     """The zmap ascii polygon format; not sure about all details."""
     # ...seems that I just
     # take in the columns starting from @<blank> line as is.
@@ -402,7 +403,7 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
     return len(df.index)
 
 
-def _from_list_like(plist, zname, attrs, is_polygons) -> pd.DataFrame:
+def _from_list_like(plist, zname, attrs, xyztype) -> pd.DataFrame:
     """Import Points or Polygons from a list-like input.
 
     The following 'list-like' inputs are possible:
@@ -431,7 +432,7 @@ def _from_list_like(plist, zname, attrs, is_polygons) -> pd.DataFrame:
         plist (str): List of tuples, each tuple is length 3 or 4
         zname (str): Name of third column
         attrs (dict): Attributes, for Points
-        is_polygons (bool): Flag for Points or Polygons
+        xyztype (str): POINTS/POLYGONS/...
 
     Returns:
         A valid datafram
@@ -459,11 +460,11 @@ def _from_list_like(plist, zname, attrs, is_polygons) -> pd.DataFrame:
         if totnum == 3 + lenattrs:
             dfr = pd.DataFrame(plist[:, :3], columns=["X_UTME", "Y_UTMN", zname])
             dfr = dfr.astype(float)
-            if is_polygons:
+            if xyztype == _XYZType.POLYGONS.value:
                 # pname column is missing but assign 0 as ID
                 dfr["POLY_ID"] = 0
 
-        elif totnum == 4 + lenattrs and is_polygons:
+        elif totnum == 4 + lenattrs and xyztype == _XYZType.POLYGONS.value:
             dfr = pd.DataFrame(
                 plist[:, :4],
                 columns=["X_UTME", "Y_UTMN", zname, "POLY_ID"],
@@ -475,8 +476,8 @@ def _from_list_like(plist, zname, attrs, is_polygons) -> pd.DataFrame:
             )
         dfr.dropna()
         dfr = dfr.astype(np.float64)
-        if is_polygons:
-            dfr["POLY_ID"] = dfr["POLY_ID"].astype(np.int32)
+        if xyztype == _XYZType.POLYGONS.value:
+            dfr[_AttrName.PNAME.value] = dfr[_AttrName.PNAME.value].astype(np.int32)
 
         if lenattrs > 0:
             for enum, (key, dtype) in enumerate(attrs.items()):

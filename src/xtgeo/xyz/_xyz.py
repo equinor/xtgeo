@@ -8,6 +8,7 @@ from warnings import warn
 
 import numpy as np
 
+from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 
@@ -42,14 +43,21 @@ class XYZ(ABC):
 
     def __init__(
         self,
-        xname: str = "X_UTME",
-        yname: str = "Y_UTMN",
-        zname: str = "Z_TVDSS",
+        xyztype: _XYZType,
+        xname: str = _AttrName.XNAME.value,
+        yname: str = _AttrName.YNAME.value,
+        zname: str = _AttrName.ZNAME.value,
     ):
         """Concrete initialisation for base class _XYZ."""
+        self._xyztype = xyztype
         self._xname = xname
         self._yname = yname
         self._zname = zname
+
+    @property
+    def xyztype(self):
+        """Read only, returns the type of XYZ data (POINTS, POLYGONS, ...)"""
+        return self._xyztype
 
     @property
     def xname(self):
@@ -93,6 +101,30 @@ class XYZ(ABC):
         if self.get_dataframe(copy=False) is None:
             return 0
         return len(self.get_dataframe(copy=False).index)
+
+    def _dataframe_consistency_check(self):
+        dataframe = self.get_dataframe(copy=False)
+        if self.xname not in dataframe:
+            raise ValueError(
+                f"xname={self.xname} is not a column of dataframe {dataframe.columns}"
+            )
+        if self.yname not in dataframe:
+            raise ValueError(
+                f"yname={self.yname} is not a column of dataframe {dataframe.columns}"
+            )
+        if self.zname not in dataframe:
+            raise ValueError(
+                f"zname={self.zname} is not a column of dataframe {dataframe.columns}"
+            )
+        if self._xyztype == _XYZType.POLYGONS.value and self.pname not in dataframe:
+            raise ValueError(
+                f"pname={self.pname} is not a column of dataframe {dataframe.columns}"
+            )
+        for attr in self._attrs:
+            if attr not in dataframe:
+                raise ValueError(
+                    f"Attribute {attr} is not a column of dataframe {dataframe.columns}"
+                )
 
     def _df_column_rename(self, newname, oldname):
         if isinstance(newname, str):

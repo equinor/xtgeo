@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 
+from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
@@ -68,14 +69,15 @@ def _roxar_importer(
     project: str | Any,
     name: str,
     category: str,
-    stype: str | None = "horizons",
-    realisation: int | None = 0,
+    stype: str = "horizons",
+    realisation: int = 0,
+    attributes: bool | list[str] = False,
 ):  # pragma: no cover
-    kwargs = _xyz_roxapi.import_xyz_roxapi(
-        project, name, category, stype, realisation, None, True
+    kwargs = _xyz_roxapi.load_xyz_from_rms(
+        project, name, category, stype, realisation, attributes, _XYZType.POLYGONS.value
     )
 
-    kwargs["name"] = "poly"
+    kwargs["name"] = name if name else "poly"
     return kwargs
 
 
@@ -138,6 +140,7 @@ def polygons_from_roxar(
     category: str,
     stype: str | None = "horizons",
     realisation: int | None = 0,
+    attributes: bool | list[str] = False,
 ):  # pragma: no cover
     """Load a Polygons instance from Roxar RMS project.
 
@@ -153,6 +156,8 @@ def polygons_from_roxar(
         stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
             'faults', 'general2d_data'
         realisation: Realisation number, default is 0
+        attributes: Polygons can store an attrubute (e.g. a fault name) per polygon,
+            i.e. per "POLY_ID")
 
     Example::
 
@@ -160,7 +165,11 @@ def polygons_from_roxar(
         mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
 
     .. versionadded:: 2.19 general2d_data support is added
+    .. versionadded:: 3.x support for polygon attributes (other than POLY_ID)
     """
+
+    stype = "horizons" if stype is None else stype
+    realisation = realisation if realisation else 0
 
     return Polygons(
         **_roxar_importer(
@@ -169,6 +178,7 @@ def polygons_from_roxar(
             category,
             stype,
             realisation,
+            attributes,
         )
     )
 
@@ -203,8 +213,11 @@ def polygons_from_wells(
     return Polygons(**_wells_importer(wells, zone, resample))
 
 
-class Polygons(XYZ):
-    """Class for a Polygons object (connected points) in the XTGeo framework.
+def _generate_docstring_polygons(
+    xname, yname, zname, pname, hname, dhname, tname, dtname
+):
+    return f"""
+    Class for a Polygons object (connected points) in the XTGeo framework.
 
     The term Polygons is here used in a wider context, as it includes
     polylines that do not connect into closed polygons. A Polygons
@@ -216,10 +229,10 @@ class Polygons(XYZ):
 
     A Polygons instance will have 4 mandatory columns; here by default names:
 
-    * X_UTME - for X UTM coordinate (Easting)
-    * Y_UTMN - For Y UTM coordinate (Northing)
-    * Z_TVDSS - For depth or property from mean SeaLevel; Depth positive down
-    * POLY_ID - for polygon ID as there may be several polylines segments
+    * {xname} - for X UTM coordinate (Easting)
+    * {yname} - For Y UTM coordinate (Northing)
+    * {zname} - For depth or property from mean SeaLevel; Depth positive down
+    * {pname} - for polygon ID as there may be several polylines segments
 
     Each Polygons instance can also a name (through the name attribute).
     Default is 'poly'. E.g. if a well fence, it is logical to name the
@@ -227,47 +240,69 @@ class Polygons(XYZ):
 
     Args:
         values: Provide input values on various forms (list-like or dataframe).
-        xname: Name of first (X) mandatory column, default is X_UTME.
-        yname: Name of second (Y) mandatory column, default is Y_UTMN.
-        zname: Name of third (Z) mandatory column, default is Z_TVDSS.
-        pname: Name of forth (P) mandatory enumerating column, default is POLY_ID.
-        hname: Name of cumulative horizontal length, defaults to "H_CUMLEN" if
+        xname: Name of first (X) mandatory column.
+        yname: Name of second (Y) mandatory column.
+        zname: Name of third (Z) mandatory column.
+        pname: Name of forth (P) mandatory enumerating column.
+        hname: Name of cumulative horizontal length, defaults to "{hname}" if
             in dataframe otherwise None.
-        dhname: Name of delta horizontal length, defaults to "H_DELTALEN" if in
+        dhname: Name of delta horizontal length, defaults to "{dhname}" if in
             dataframe otherwise None.
-        tname: Name of cumulative total length, defaults to "T_CUMLEN" if in
+        tname: Name of cumulative total length, defaults to "{tname}" if in
             dataframe otherwise None.
-        dtname: Name of delta total length, defaults to "T_DELTALEN" if in
+        dtname: Name of delta total length, defaults to "{dtname}" if in
             dataframe otherwise None.
         attributes: A dictionary for attribute columns as 'name: type', e.g.
-            {"WellName": "str", "IX": "int"}. This is applied when values are input
-            and is to name and type the extra attribute columns in a point set.
+            {{"WellName": "str", "IX": "int"}}. This is applied when values are input
+            and is to name and type the extra attribute columns in a polygons set.
+
+    Note:
+        Most export/import file formats do not support additional attributes; only the
+        three first columns (X, Y, Z) are fully supported.
     """
+
+
+class Polygons(XYZ):
+    __doc__ = _generate_docstring_polygons(
+        _AttrName.XNAME.value,
+        _AttrName.YNAME.value,
+        _AttrName.ZNAME.value,
+        _AttrName.PNAME.value,
+        _AttrName.HNAME.value,
+        _AttrName.DHNAME.value,
+        _AttrName.TNAME.value,
+        _AttrName.DTNAME.value,
+    )
 
     def __init__(
         self,
         values: list | np.ndarray | pd.DataFrame = None,
-        xname: str = "X_UTME",
-        yname: str = "Y_UTMN",
-        zname: str = "Z_TVDSS",
-        pname: str = "POLY_ID",
-        hname: str = "H_CUMLEN",
-        dhname: str = "H_DELTALEN",
-        tname: str = "T_CUMLEN",
-        dtname: str = "T_DELTALEN",
+        xname: str = _AttrName.XNAME.value,
+        yname: str = _AttrName.YNAME.value,
+        zname: str = _AttrName.ZNAME.value,
+        pname: str = _AttrName.PNAME.value,
+        hname: str = _AttrName.R_HLEN_NAME.value,
+        dhname: str = _AttrName.DHNAME.value,
+        tname: str = _AttrName.TNAME.value,
+        dtname: str = _AttrName.DTNAME.value,
         name: str = "poly",
         attributes: dict | None = None,
         # from legacy initialization, remove in 4.0, undocumented by purpose:
         fformat: str = "guess",
+        filesrc: str = None,
     ):
-        super().__init__(xname, yname, zname)
+        self._xyztype: str = _XYZType.POLYGONS.value
+
+        super().__init__(self._xyztype, xname, yname, zname)
+        self._pname = pname
 
         if values is None:
             values = []
 
-        # additonal state properties for Polygons
-        self._pname = pname
+        self._attrs = attributes if attributes is not None else {}
+        self._filesrc = filesrc
 
+        # additional optional state properties for Polygons
         self._hname = hname
         self._dhname = dhname
         self._tname = tname
@@ -275,9 +310,12 @@ class Polygons(XYZ):
         self._name = name
 
         if not isinstance(values, pd.DataFrame):
-            self._df = _xyz_io._from_list_like(values, self._zname, attributes, True)
+            self._df = _xyz_io._from_list_like(
+                values, self._zname, attributes, self._xyztype
+            )
         else:
             self._df = values
+            self._dataframe_consistency_check()
 
     @property
     def name(self):
@@ -472,6 +510,7 @@ class Polygons(XYZ):
         category,
         stype="horizons",
         realisation=0,
+        attributes=False,
     ):  # pragma: no cover
         """Export (store) a Polygons item to a Roxar RMS project.
 
@@ -495,19 +534,20 @@ class Polygons(XYZ):
             stype (str): RMS folder type, 'horizons' (default), 'zones'
                 or 'faults' or 'clipboard'  (in prep: well picks)
             realisation (int): Realisation number, default is 0
-
-
-        Returns:
-            Object instance updated
+            attributes (bool): If True, attributes will be preserved (from RMS 13)
 
         Raises:
             ValueError: Various types of invalid inputs.
             NotImplementedError: Not supported in this ROXAPI version
 
+        Note:
+            Setting (storing) polygons with attributes is not supported in RMSAPI.
+
         .. versionadded:: 2.19 general2d_data support is added
+        .. versionadded:: 4.X Added attributes
         """
 
-        _xyz_roxapi.export_xyz_roxapi(
+        _xyz_roxapi.save_xyz_to_rms(
             self,
             project,
             name,
@@ -515,12 +555,13 @@ class Polygons(XYZ):
             stype,
             None,
             realisation,
-            None,
+            attributes,
         )
 
     def copy(self):
         """Returns a deep copy of an instance"""
         mycopy = self.__class__()
+        mycopy._xyztype = self._xyztype
         mycopy._df = self._df.apply(deepcopy)  # df.copy() is not fully deep!
         mycopy._xname = self._xname
         mycopy._yname = self._yname
@@ -530,6 +571,9 @@ class Polygons(XYZ):
         mycopy._dhname = self._dhname
         mycopy._tname = self._tname
         mycopy._dtname = self._dtname
+
+        if self._attrs:
+            mycopy._attrs = dict(self._attrs.items())
 
         return mycopy
 

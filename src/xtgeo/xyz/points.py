@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import inherit_docstring
@@ -54,7 +55,7 @@ def _file_importer(
     return kwargs
 
 
-def _surface_importer(surf, zname="Z_TVDSS"):
+def _surface_importer(surf, zname=_AttrName.ZNAME.value):
     """General function for _read_surface()"""
     val = surf.values
     xc, yc = surf.get_xy_values()
@@ -68,8 +69,8 @@ def _surface_importer(surf, zname="Z_TVDSS"):
     return {
         "values": pd.DataFrame(
             {
-                "X_UTME": coord[0],
-                "Y_UTMN": coord[1],
+                _AttrName.XNAME.value: coord[0],
+                _AttrName.YNAME.value: coord[1],
                 zname: coord[2],
             }
         ),
@@ -85,8 +86,8 @@ def _roxar_importer(
     realisation: int = 0,
     attributes: bool | list[str] = False,
 ):
-    return _xyz_roxapi.import_xyz_roxapi(
-        project, name, category, stype, realisation, attributes, False
+    return _xyz_roxapi.load_xyz_from_rms(
+        project, name, category, stype, realisation, attributes, _XYZType.POINTS.value
     )
 
 
@@ -253,7 +254,7 @@ def points_from_roxar(
 
 def points_from_surface(
     regular_surface,
-    zname: str = "Z_TVDSS",
+    zname: str = _AttrName.ZNAME.value,
 ):
     """This makes an instance of a Points directly from a RegularSurface object.
 
@@ -346,8 +347,10 @@ def points_from_wells_dfrac(
     )
 
 
-class Points(XYZ):
-    """Class for a Points data in XTGeo.
+def _generate_docstring_points(xname, yname, zname):
+    """In order to have dynamic naming of xname, yname, etc"""
+    return f"""
+    Class for Points data in XTGeo.
 
     The Points class is a subclass of the :py:class:`~xtgeo.xyz._xyz.XYZ` abstract
     class, and the point set itself is a `pandas <http://pandas.pydata.org>`_
@@ -378,7 +381,7 @@ class Points(XYZ):
             (234, 556, 12, "Well1", 22),
             (235, 559, 14, "Well2", 44),
             (255, 577, 12, "Well3", 55)]
-        attrs = {"WellName": "str", "ID", "int"}
+        attrs = {{"WellName": "str", "ID": "int"}}
         mypoints = Points(values=plist, attributes=attrs)
 
     And points can be initialised from a 2D numpy array or an existing dataframe::
@@ -387,7 +390,7 @@ class Points(XYZ):
         >>> mypoints2 = Points(
         ...     values=pd.DataFrame(
         ...          [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
-        ...          columns=["X_UTME", "Y_UTMN", "Z_TVDSS"]
+        ...          columns=["{xname}", "{yname}", "{zname}"]
         ...     )
         ... )
 
@@ -396,9 +399,9 @@ class Points(XYZ):
 
     Default column names in the dataframe:
 
-    * X_UTME: UTM X coordinate  as self._xname
-    * Y_UTMN: UTM Y coordinate  as self._yname
-    * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
+    * {xname}: UTM X coordinate  as self._xname
+    * {yname}: UTM Y coordinate  as self._yname
+    * {zname}: Z coordinate, often depth below TVD SS, but may also be
       something else! Use zname attribute to change name.
 
     Note:
@@ -412,25 +415,34 @@ class Points(XYZ):
 
     Args:
         values: Provide input values on various forms (list-like or dataframe).
-        xname: Name of first (X) mandatory column, default is X_UTME.
-        yname: Name of second (Y) mandatory column, default is Y_UTMN.
-        zname: Name of third (Z) mandatory column, default is Z_TVDSS.
+        xname: Name of first (X) mandatory column
+        yname: Name of second (Y) mandatory column
+        zname: Name of third (Z) mandatory column
         attributes: A dictionary for attribute columns as 'name: type', e.g.
-            {"WellName": "str", "IX": "int"}. This is applied when values are input
+            {{"WellName": "str", "IX": "int"}}. This is applied when values are input
             and is to name and type the extra attribute columns in a point set.
     """
+
+
+class Points(XYZ):
+    __doc__ = _generate_docstring_points(
+        _AttrName.XNAME.value, _AttrName.YNAME.value, _AttrName.ZNAME.value
+    )
 
     def __init__(
         self,
         values: list | np.ndarray | pd.DataFrame = None,
-        xname: str = "X_UTME",
-        yname: str = "Y_UTMN",
-        zname: str = "Z_TVDSS",
+        xname: str = _AttrName.XNAME.value,
+        yname: str = _AttrName.YNAME.value,
+        zname: str = _AttrName.ZNAME.value,
         attributes: dict | None = None,
         filesrc: str = None,
     ):
         """Initialisation of Points()."""
-        super().__init__(xname, yname, zname)
+        self._xyztype = _XYZType.POINTS.value
+
+        super().__init__(self._xyztype, xname, yname, zname)
+
         if values is None:
             values = []
 
@@ -438,30 +450,12 @@ class Points(XYZ):
         self._filesrc = filesrc
 
         if not isinstance(values, pd.DataFrame):
-            self._df = _xyz_io._from_list_like(values, self._zname, attributes, False)
+            self._df = _xyz_io._from_list_like(
+                values, self._zname, attributes, self._xyztype
+            )
         else:
             self._df: pd.DataFrame = values
             self._dataframe_consistency_check()
-
-    def _dataframe_consistency_check(self):
-        dataframe = self.get_dataframe(copy=False)
-        if self.xname not in dataframe:
-            raise ValueError(
-                f"xname={self.xname} is not a column of dataframe {dataframe.columns}"
-            )
-        if self.yname not in dataframe:
-            raise ValueError(
-                f"yname={self.yname} is not a column of dataframe {dataframe.columns}"
-            )
-        if self.zname not in dataframe:
-            raise ValueError(
-                f"zname={self.zname} is not a column of dataframe {dataframe.columns}"
-            )
-        for attr in self._attrs:
-            if attr not in dataframe:
-                raise ValueError(
-                    f"Attribute {attr} is not a column of dataframe {dataframe.columns}"
-                )
 
     def __repr__(self):
         # should be able to newobject = eval(repr(thisobject))
@@ -630,9 +624,6 @@ class Points(XYZ):
             realisation (int): Realisation number, default is 0
             attributes (bool): If True, attributes will be preserved (from RMS 11)
 
-        Returns:
-            Object instance updated
-
         Raises:
             ValueError: Various types of invalid inputs.
             NotImplementedError: Not supported in this ROXAPI version
@@ -640,7 +631,7 @@ class Points(XYZ):
         .. versionadded:: 2.19 general2d_data support is added
         """
 
-        _xyz_roxapi.export_xyz_roxapi(
+        _xyz_roxapi.save_xyz_to_rms(
             self,
             project,
             name,
@@ -654,10 +645,14 @@ class Points(XYZ):
     def copy(self):
         """Returns a deep copy of an instance."""
         mycopy = self.__class__()
+        mycopy._xyztype = self._xyztype
         mycopy._df = self._df.apply(deepcopy)
         mycopy._xname = self._xname
         mycopy._yname = self._yname
         mycopy._zname = self._zname
+
+        if self._attrs:
+            mycopy._attrs = dict(self._attrs.items())
 
         return mycopy
 

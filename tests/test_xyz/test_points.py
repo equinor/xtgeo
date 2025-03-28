@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from hypothesis import given, strategies as st
+from pandas.testing import assert_frame_equal
 
 import xtgeo
 from xtgeo.xyz import Points
@@ -49,6 +50,24 @@ def test_points_from_list_of_tuples():
     z2 = mypoints.get_dataframe()["Z_TVDSS"].values[2]
     assert x0 == 234
     assert z2 == 12
+
+
+def test_points_with_attrs_copy():
+    plist = [
+        (234, 556, 11, "some", 1.0),
+        (235, 559, 14, "attr", 1.1),
+        (255, 577, 12, "here", 1.2),
+    ]
+    attrs = {}
+    attrs["sometxt"] = "str"
+    attrs["somefloat"] = "float"
+
+    mypoi = Points(plist, attributes=attrs)
+
+    cppoi = mypoi.copy()
+
+    assert_frame_equal(mypoi.get_dataframe(), cppoi.get_dataframe())
+    assert "somefloat" in mypoi.get_dataframe().columns
 
 
 @st.composite

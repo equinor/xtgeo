@@ -1,23 +1,20 @@
 # coding: utf-8
-"""Roxar API functions for XTGeo Points/Polygons"""
+"""RMSAPI (former Roxar API) functions for XTGeo Points/Polygons, i.e. XYZ data."""
 
 from __future__ import annotations
 
-import os
-import tempfile
 from enum import Enum
 from typing import Any, Literal, Type, cast
 
 import numpy as np
 import pandas as pd
 
-from xtgeo.common._xyz_enum import _AttrName
+from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
-from xtgeo.io._file import FileWrapper
 from xtgeo.roxutils import RoxUtils
 from xtgeo.roxutils._roxar_loader import RoxarType, roxar, roxar_well_picks
-from xtgeo.xyz import _xyz_io, points, polygons
+from xtgeo.xyz import points, polygons
 
 if roxar:
     roxwp = roxar_well_picks
@@ -40,8 +37,12 @@ class STYPE(str, Enum):
 
 
 XYZ_COLUMNS = [_AttrName.XNAME.value, _AttrName.YNAME.value, _AttrName.ZNAME.value]
-REQUIRED_WELL_PICK_ATTRIBUTES = [_AttrName.M_MD_NAME.value, "WELLNAME", "TRAJECTORY"]
-VALID_WELL_PICK_TYPES = ["fault", "horizon"]
+REQUIRED_WELL_PICK_ATTRIBUTES = [
+    _AttrName.M_MD_NAME.value,
+    _AttrName.WELLNAME.value,
+    _AttrName.TRAJECTORY.value,
+]
+VALID_WELL_PICK_TYPES = ["fault", "horizon"]  # note, not plural as in STYPE
 
 
 def _check_input_and_version_requirement(
@@ -49,7 +50,7 @@ def _check_input_and_version_requirement(
     stype: STYPE,
     category: str | list[str] | None,
     attributes: list[str] | bool | None,
-    is_polygons: bool,
+    xyztype: _XYZType,
     mode: Literal["set", "get"],
 ) -> None:
     """General check of some input values."""
@@ -78,7 +79,7 @@ def _check_input_and_version_requirement(
             raise ValueError(
                 f"Invalid {category=}. Valid entries are {VALID_WELL_PICK_TYPES}"
             )
-        if is_polygons:
+        if xyztype == _XYZType.POLYGONS.value:
             raise ValueError(f"Polygons does not support stype={stype.value}.")
 
 
@@ -125,14 +126,14 @@ def _check_presence_in_project(
             raise ValueError(f"Well pick set {name} is not within Well Picks.")
 
 
-def import_xyz_roxapi(
+def load_xyz_from_rms(
     project: RoxarType.project,
     name: str,
     category: str | list[str],
-    stype: str = "horizons",
+    stype: str = STYPE.HORIZONS.value,
     realisation: int = 0,
     attributes: list[str] | bool | None = False,
-    is_polygons: bool = False,
+    xyztype: str = _XYZType.POINTS.value,
 ) -> dict[str, Any]:
     """Import a Points or Polygons item via ROXAR API spec.
 
@@ -154,76 +155,37 @@ def import_xyz_roxapi(
     stype = STYPE(stype.lower())
 
     _check_input_and_version_requirement(
-        rox, stype, category, attributes, is_polygons, mode="get"
+        rox, stype, category, attributes, xyztype, mode="get"
     )
     _check_presence_in_project(rox, name, category, stype, realisation, mode="get")
 
-    if attributes and not rox.version_required("1.6"):
-        result = _roxapi_import_xyz_viafile(rox, name, category, stype, is_polygons)
-    elif stype == STYPE.WELL_PICKS:
+    if stype == STYPE.WELL_PICKS:
         category = cast("Literal['fault', 'horizon']", category)
-        result = _roxapi_import_wellpicks(
+        result = _load_wellpicks_from_rms(
             rox=rox,
             well_pick_set=name,
             wp_category=category,
             attributes=attributes,
         )
     else:
-        result = _roxapi_import_xyz(
-            rox, name, category, stype, realisation, is_polygons, attributes
+        result = _load_xyz_from_rms(
+            rox, name, category, stype, realisation, xyztype, attributes
         )
 
     rox.safe_close()
     return result
 
 
-def _roxapi_import_xyz_viafile(
-    rox: RoxUtils,
-    name: str,
-    category: str | list[str] | None,
-    stype: STYPE,
-    is_polygons: bool,
-) -> dict[str, Any]:
-    """Read XYZ from file due to a missing feature in Roxar API wrt attributes.
-
-    However, attributes will be present in Roxar API from RMS version 12, and this
-    routine should be replaced!
-    """
-
-    rox_xyz = _get_roxitem(
-        rox,
-        name,
-        category,
-        stype,
-        mode="get",
-        is_polygons=is_polygons,
-    )
-
-    kwargs = {}
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            logger.info("Made a tmp folder: %s", tmpdir)
-            tfile = os.path.join(tmpdir, "generic.rmsattr")
-            rox_xyz.save(tfile, roxar.FileFormat.RMS_POINTS)
-            pfile = FileWrapper(tfile)
-            kwargs = _xyz_io.import_rms_attr(pfile)
-
-    except KeyError as kwe:
-        logger.error(kwe)
-
-    return kwargs
-
-
-def _roxapi_import_xyz(
+def _load_xyz_from_rms(
     rox: RoxUtils,
     name: str,
     category: str | list[str] | None,
     stype: STYPE,
     realisation: int,
-    is_polygons: bool,
+    xyztype: str,
     attributes: bool | list[str],
 ) -> dict[str, str | dict | pd.DataFrame]:
-    """From RMS to XTGeo"""
+    """From RMS Points, Polygons, Picks to XTGeo"""
 
     kwargs: dict[str, str | dict | pd.DataFrame] = {
         "xname": _AttrName.XNAME.value,
@@ -231,8 +193,8 @@ def _roxapi_import_xyz(
         "zname": _AttrName.ZNAME.value,
     }
 
-    if is_polygons:
-        kwargs["pname"] = "POLY_ID"
+    if xyztype == _XYZType.POLYGONS.value:
+        kwargs["pname"] = _AttrName.PNAME.value
 
     roxxyz = _get_roxitem(
         rox,
@@ -240,38 +202,39 @@ def _roxapi_import_xyz(
         category,
         stype,
         mode="get",
-        is_polygons=is_polygons,
+        xyztype=xyztype,
     )
     values = _get_roxvalues(roxxyz, realisation=realisation)
 
-    dfr = _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
+    dfr = _rmsapi_xyz_to_dataframe(values, xyztype)
 
-    # handling attributes for points, from Roxar API version 1.6
-    if attributes and not is_polygons:
+    # handling attributes for points and polygons/polylines, from Roxar API version 1.6
+    if attributes:
         attr_names = roxxyz.get_attributes_names(realisation=realisation)
         if isinstance(attributes, list):
             attr_names = [a for a in attr_names if a in attributes]
         logger.info("XYZ attribute names are: %s", attr_names)
         attr_dict = _get_rox_attrvalues(roxxyz, attr_names, realisation=realisation)
-        dfr, datatypes = _add_attributes_to_dataframe(dfr, attr_dict)
+
+        poly_id = None if xyztype == _XYZType.POINTS.value else kwargs["pname"]
+
+        dfr, datatypes = _add_attributes_to_dataframe(dfr, attr_dict, xyztype, poly_id)
         kwargs["attributes"] = datatypes
 
     kwargs["values"] = dfr
     return kwargs
 
 
-def _roxapi_xyz_to_dataframe(
-    roxxyz: list[np.ndarray] | np.ndarray, is_polygons: bool = False
+def _rmsapi_xyz_to_dataframe(
+    roxxyz: list[np.ndarray] | np.ndarray, xyztype: str = _XYZType.POINTS.value
 ) -> pd.DataFrame:
-    """Transforming some XYZ from ROXAPI to a Pandas dataframe."""
+    """Transforming some XYZ from ROXAPI/RMSAPI to a Pandas dataframe."""
 
     # In ROXAPI, polygons/polylines are a list of numpies, while
     # points is just a numpy array. Hence a polyg* may be identified
     # by being a list after import
 
-    logger.info("Points/polygons/polylines from roxapi to xtgeo...")
-
-    if is_polygons and isinstance(roxxyz, list):
+    if xyztype == _XYZType.POLYGONS.value and isinstance(roxxyz, list):
         # polylines/-gons
         dfs = []
         for idx, poly in enumerate(roxxyz):
@@ -281,44 +244,64 @@ def _roxapi_xyz_to_dataframe(
 
         dfr = pd.concat(dfs)
 
-    elif not is_polygons and isinstance(roxxyz, np.ndarray):
+    elif xyztype == _XYZType.POINTS.value and isinstance(roxxyz, np.ndarray):
         # points
         dfr = pd.DataFrame.from_records(roxxyz, columns=XYZ_COLUMNS)
 
     else:
-        raise RuntimeError(f"Unknown error in getting data from Roxar: {type(roxxyz)}")
+        raise RuntimeError(f"Unknown error in getting data from RMS: {type(roxxyz)}")
 
     dfr.reset_index(drop=True, inplace=True)
     return dfr
 
 
+def _infer_type(values: np.array) -> Literal["str", "float", "int"]:
+    """Helper function for points/polygons attributes type."""
+    dtype = str(values.dtype)
+    if "int" in dtype:
+        return "int"
+    if "float" in dtype:
+        return "float"
+    return "str"
+
+
 def _add_attributes_to_dataframe(
-    dfr: pd.DataFrame, attributes: dict
+    dfr: pd.DataFrame,
+    attributes: dict,
+    xyztype: _XYZType,
+    poly_id_name: str = _AttrName.PNAME.value,
 ) -> tuple[pd.DataFrame, dict[str, str]]:
-    """Add attributes to dataframe (points only) for Roxar API ver 1.6+"""
+    """Add attributes to dataframe (points and polygons) for Roxar API ver 1.6+
+
+    Note that Points and Polygons behave a bit different, as for Polygons only
+    a value per POLY_ID is given in a list, while Points deals with numpy arrays.
+    """
 
     logger.info("Attributes adding to dataframe...")
     newdfr = dfr.copy()
 
     datatypes = {}
     for name, values in attributes.items():
-        dtype = str(values.dtype)
-        if "int" in dtype:
-            datatypes[name] = "int"
-            values = np.ma.filled(values, fill_value=UNDEF_INT)
-        elif "float" in dtype:
-            datatypes[name] = "float"
-            values = np.ma.filled(values, fill_value=UNDEF)
-        else:
-            datatypes[name] = "str"
-            values = np.ma.filled(values, fill_value="UNDEF")
+        datatypes[name] = _infer_type(values)
 
-        newdfr[name] = values
+        fill_value = (
+            UNDEF_INT
+            if datatypes[name] == "int"
+            else UNDEF
+            if datatypes[name] == "float"
+            else "UNDEF"
+        )
+
+        if xyztype == _XYZType.POLYGONS.value:
+            id_to_name = {id_no: value for id_no, value in enumerate(values)}  # noqa: C416
+            newdfr[name] = newdfr[poly_id_name].map(id_to_name)
+        else:
+            newdfr[name] = np.ma.filled(values, fill_value=fill_value)
 
     return newdfr, datatypes
 
 
-def export_xyz_roxapi(
+def save_xyz_to_rms(
     self: points.Points | polygons.Polygons,
     project: RoxarType.Project,
     name: str,
@@ -329,25 +312,21 @@ def export_xyz_roxapi(
     attributes: bool = False,
 ) -> None:
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
-    is_polygons = isinstance(self, polygons.Polygons)
+
     rox = RoxUtils(project, readonly=False)
     stype = STYPE(stype.lower())
 
     _check_input_and_version_requirement(
-        rox, stype, category, attributes, is_polygons, mode="set"
+        rox, stype, category, attributes, self._xyztype, mode="set"
     )
     _check_presence_in_project(rox, name, category, stype, realisation, mode="set")
 
-    if attributes and not rox.version_required("1.6"):
-        _roxapi_export_xyz_viafile(
-            self, rox, name, category, stype, pfilter, realisation, attributes
-        )
-    elif stype == STYPE.WELL_PICKS:
+    if stype == STYPE.WELL_PICKS:
         assert isinstance(self, points.Points)
         category = cast("Literal['fault', 'horizon']", category)
-        _roxapi_export_xyz_well_picks(self, rox, name, category, attributes, pfilter)
+        _save_well_picks_to_rms(self, rox, name, category, attributes, pfilter)
     else:
-        _roxapi_export_xyz(
+        _save_xyz_to_rms(
             self, rox, name, category, stype, pfilter, realisation, attributes
         )
 
@@ -357,42 +336,7 @@ def export_xyz_roxapi(
     rox.safe_close()
 
 
-def _roxapi_export_xyz_viafile(
-    self: points.Points | polygons.Polygons,
-    rox: RoxUtils,
-    name: str,
-    category: str | list[str] | None,
-    stype: STYPE,
-    pfilter: dict[str, list],
-    realisation: int,
-    attributes: bool,
-) -> None:
-    """Set points/polys within RMS with attributes, using file workaround"""
-
-    logger.warning("Realisation %s not in use", realisation)
-
-    is_polygons = isinstance(self, polygons.Polygons)
-    roxxyz = _get_roxitem(
-        rox, name, category, stype, mode="set", is_polygons=is_polygons
-    )
-
-    # make a temporary folder and work within the with.. block
-    with tempfile.TemporaryDirectory() as tmpdir:
-        logger.info("Made a tmp folder: %s", tmpdir)
-        ncount = self.to_file(
-            os.path.join(tmpdir, "generic.rmsattr"),
-            fformat="rms_attr",
-            pfilter=pfilter,
-            attributes=attributes,
-        )
-
-        if ncount:
-            roxxyz.load(
-                os.path.join(tmpdir, "generic.rmsattr"), roxar.FileFormat.RMS_POINTS
-            )
-
-
-def _roxapi_export_xyz(
+def _save_xyz_to_rms(
     self: points.Points | polygons.Polygons,
     rox: RoxUtils,
     name: str,
@@ -409,7 +353,6 @@ def _roxapi_export_xyz(
         logger.warning("Empty dataframe! Skipping object update...")
         return
 
-    is_polygons = isinstance(self, polygons.Polygons)
     xyz_columns = [self.xname, self.yname, self.zname]
     if not set(xyz_columns).issubset(df.columns):
         raise ValueError(
@@ -420,7 +363,12 @@ def _roxapi_export_xyz(
         )
 
     roxxyz = _get_roxitem(
-        rox, name, category, stype, mode="set", is_polygons=is_polygons
+        rox,
+        name,
+        category,
+        stype,
+        mode="set",
+        xyztype=self._xyztype,
     )
 
     df = _apply_pfilter_to_dataframe(df, pfilter)
@@ -430,20 +378,25 @@ def _roxapi_export_xyz(
 
     arrxyz = (
         [polydf[xyz_columns].to_numpy() for _, polydf in df.groupby(self.pname)]
-        if is_polygons
+        if self._xyztype == _XYZType.POLYGONS.value
         else df[xyz_columns].to_numpy()
     )
 
     roxxyz.set_values(arrxyz)
 
-    if attributes and isinstance(self, points.Points):
-        for attr in _get_attribute_names_from_dataframe(df, xyz_columns):
-            values = _replace_undefined_values(
-                values=df[attr].values, dtype=self._attrs.get(attr), asmasked=True
-            )
+    if attributes:
+        if self._xyztype == _XYZType.POINTS.value:
+            for attr in _get_attribute_names_from_dataframe(df, xyz_columns):
+                values = _replace_undefined_values(
+                    values=df[attr].values, dtype=self._attrs.get(attr), asmasked=True
+                )
 
-            logger.info("Store Point attribute %s to Roxar API", name)
-            roxxyz.set_attribute_values(attr, values)
+                logger.info("Store Point attribute %s to Roxar API", name)
+                roxxyz.set_attribute_values(attr, values)
+        elif self._xyztype == _XYZType.POLYGONS.value:
+            raise NotImplementedError(
+                "Setting attributes for Polygons is not implemented in RMS API"
+            )
 
 
 def _get_attribute_names_from_dataframe(
@@ -527,7 +480,7 @@ def _get_roxitem(
     category: str | list[str] | None,
     stype: STYPE,
     mode: Literal["set", "get"] = "set",
-    is_polygons: bool = False,
+    xyztype: str = _XYZType.POINTS.value,
 ) -> Any:
     """Get the correct rox_xyz which is some pointer to a RoxarAPI structure."""
 
@@ -543,7 +496,7 @@ def _get_roxitem(
     # clipboard folders will be created if not present, and overwritten else
     return (
         project_attr.create_polylines(name, folders)
-        if is_polygons
+        if xyztype == _XYZType.POLYGONS.value
         else project_attr.create_points(name, folders)
     )
 
@@ -570,7 +523,7 @@ def _get_rox_attrvalues(
     return roxitems
 
 
-def _roxapi_import_wellpicks(
+def _load_wellpicks_from_rms(
     rox: RoxUtils,
     well_pick_set: str,
     wp_category: Literal["fault", "horizon"] = "horizon",
@@ -644,7 +597,7 @@ def _create_dataframe_from_wellpicks(
     return pd.DataFrame(items)
 
 
-def _roxapi_export_xyz_well_picks(
+def _save_well_picks_to_rms(
     self: points.Points,
     rox: RoxUtils,
     well_pick_set: str,
