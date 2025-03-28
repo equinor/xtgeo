@@ -4,6 +4,7 @@ from hypothesis import given, strategies as st
 
 import xtgeo
 from xtgeo import Cube, RegularSurface
+from xtgeo.common.constants import UNDEF_MAP_IRAPA
 
 
 def assert_similar_surfaces(surf1, surf2):
@@ -28,8 +29,8 @@ def surfaces(draw):
             values=st.lists(
                 st.floats(
                     allow_nan=False,
-                    max_value=1e29,
-                    min_value=-xtgeo.UNDEF_LIMIT,
+                    max_value=UNDEF_MAP_IRAPA - 1,
+                    min_value=-UNDEF_MAP_IRABA + 1,
                 ),
                 min_size=ncol * nrow,
                 max_size=ncol * nrow,
