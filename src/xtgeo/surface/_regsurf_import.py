@@ -17,6 +17,8 @@ from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.metadata.metadata import MetaDataRegularSurface
 
+import surfio
+
 from ._regsurf_ijxyz_parser import parse_ijxyz
 from ._zmap_parser import parse_zmap
 
@@ -109,7 +111,7 @@ def import_irap_binary(mfile: FileWrapper, values: bool = True, **_):
 
 
 def import_irap_ascii(mfile: FileWrapper, **_):
-    """Import Irap in pure python code, suitable for memstreams, and now efficient.
+    """Import Irap ascii which has the following format:
     -996  2010      5.000000      5.000000
     461587.553724   467902.553724  5927061.430176  5937106.430176
     1264       30.000011   461587.553724  5927061.430176
@@ -124,33 +126,27 @@ def import_irap_ascii(mfile: FileWrapper, **_):
     if mfile.memstream:
         mfile.file.seek(0)
         buf = mfile.file.read().decode()
+        surface = surfio.IrapSurface.import_ascii(buf)
+        del buf
     else:
-        with open(mfile.file) as fhandle:
-            buf = fhandle.read()
+        surface = surfio.IrapSurface.import_ascii_file(str(mfile.file))
 
-    buf = buf.split(maxsplit=19)
-    args = {}
-    args["nrow"] = int(buf[1])
-    args["xinc"] = float(buf[2])
-    args["yinc"] = float(buf[3])
-    args["xori"] = float(buf[4])
-    args["yori"] = float(buf[6])
-    args["ncol"] = int(buf[8])
-    args["rotation"] = float(buf[9])
-
-    nvalues = args["nrow"] * args["ncol"]
-    values = np.fromstring(buf[19], dtype=np.double, count=nvalues, sep=" ")
-
-    values = np.reshape(values, (args["ncol"], args["nrow"]), order="F")
-    values = np.array(values, order="C")
-    args["values"] = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPA)
+    args = {
+        "nrow": surface.header.ny,
+        "xinc": surface.header.xinc,
+        "yinc": surface.header.yinc,
+        "xori": surface.header.xori,
+        "yori": surface.header.yori,
+        "ncol": surface.header.nx,
+        "rotation": surface.header.rot,
+        "values": np.ma.masked_invalid(surface.values),
+    }
 
     args["yflip"] = 1
     if args["yinc"] < 0.0:
         args["yinc"] *= -1
         args["yflip"] = -1
 
-    del buf
     return args
 
 
