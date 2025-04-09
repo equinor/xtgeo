@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 import numpy as np
@@ -5,13 +6,9 @@ import numpy.ma as ma
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
 
-# set default level
-xtg = XTGeoDialog()
-
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 ROFF1_GRID = pathlib.Path("3dgrids/eme/1/emerald_hetero_grid.roff")
 ROFF1_PROPS = pathlib.Path("3dgrids/eme/1/emerald_hetero.roff")
@@ -84,7 +81,6 @@ def test_hcpvfz1(tmp_path, generate_plot, testdata_path):
     zp = np.ones((grd.ncol, grd.nrow, grd.nlay))
     # now make hcpf map
 
-    t1 = xtg.timer()
     hcmap.hc_thickness_from_3dprops(
         xprop=xcv,
         yprop=ycv,
@@ -96,11 +92,6 @@ def test_hcpvfz1(tmp_path, generate_plot, testdata_path):
 
     assert hcmap.values.mean() == pytest.approx(1.447, abs=0.1)
 
-    t2 = xtg.timer(t1)
-
-    logger.info("Speed basic is %s", t2)
-
-    t1 = xtg.timer()
     hcmap2.hc_thickness_from_3dprops(
         xprop=xcv,
         yprop=ycv,
@@ -112,9 +103,6 @@ def test_hcpvfz1(tmp_path, generate_plot, testdata_path):
         zone_minmax=(1, 1),
         mask_outside=True,
     )
-    t2 = xtg.timer(t1)
-
-    logger.info("Speed zoneavg coarsen 2 is %s", t2)
 
     if generate_plot:
         hcmap.quickplot(filename=tmp_path / "quickplot_hcpv.png")

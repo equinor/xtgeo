@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 import hypothesis.strategies as st
@@ -7,15 +8,13 @@ import segyio
 from hypothesis import HealthCheck, given, settings
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
 from xtgeo.cube._cube_import import (
     _import_segy_all_traces,
     _import_segy_incomplete_traces,
 )
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 SFILE1 = pathlib.Path("cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
 SFILE3 = pathlib.Path("cubes/reek/syntseis_20000101_seismic_depth_stack.storm")
@@ -142,15 +141,9 @@ def test_segy_export_import(tmp_path, testdata_path):
 def test_storm_import(testdata_path):
     """Import Cube using Storm format (case Reek)."""
 
-    st1 = xtg.timer()
     acube = xtgeo.cube_from_file(testdata_path / SFILE3, fformat="storm")
-    elapsed = xtg.timer(st1)
-    logger.info("Reading Storm format took %s", elapsed)
-
     assert acube.ncol == 280, "NCOL"
-
     vals = acube.values
-
     assert vals[180, 185, 4] == pytest.approx(0.117074, 0.0001)
 
 
@@ -159,10 +152,7 @@ def test_storm_import(testdata_path):
 def test_segy_import(loadsfile1):
     """Import SEGY using internal reader (case 1 Reek)."""
 
-    st1 = xtg.timer()
     xcu = loadsfile1
-    elapsed = xtg.timer(st1)
-    logger.info("Reading with XTGEO took %s", elapsed)
 
     assert xcu.ncol == 408, "NCOL"
 
@@ -170,17 +160,13 @@ def test_segy_import(loadsfile1):
 
     assert dim == (408, 280, 70), "Dimensions 3D"
 
-    print(xcu.values.max())
     assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
 def test_segyio_import(loadsfile1):
     """Import SEGY (case 1 Reek) via SegIO library."""
 
-    st1 = xtg.timer()
     xcu = loadsfile1
-    elapsed = xtg.timer(st1)
-    logger.info("Reading with SEGYIO took %s", elapsed)
 
     assert xcu.ncol == 408, "NCOL"
     dim = xcu.values.shape

@@ -11,6 +11,7 @@ ran in e.g. public Github actions.
 
 from __future__ import annotations
 
+import logging
 import pathlib
 from typing import Any
 
@@ -18,11 +19,9 @@ import numpy as np
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.roxutils._roxar_loader import roxar, roxar_jobs, roxar_well_picks
 
-xtg = XTGeoDialog()
-logger = null_logger(__name__)
+logger = logging.getLogger(__name__)
 
 PROJNAME = "tmp_project.rmsxxx"
 

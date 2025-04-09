@@ -7,14 +7,14 @@ import numpy as np
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.surface._regsurf_ijxyz_parser import SurfaceIJXYZ
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 IJXYZFILE1 = pathlib.Path("surfaces/etc/ijxyz1.dat")  # OW IJXYZ format with comments

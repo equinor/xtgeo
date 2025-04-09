@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 import numpy as np
@@ -5,10 +6,8 @@ import numpy.ma as ma
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 SURF1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
 POLY1 = pathlib.Path("polygons/reek/1/closedpoly1.pol")

@@ -1,6 +1,7 @@
 """Testing: test_grid_operations"""
 
 import io
+import logging
 import pathlib
 
 import hypothesis.strategies as st
@@ -8,15 +9,13 @@ import pytest
 from hypothesis import assume, given
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import GridProperties, GridProperty
 
 from .grid_generator import xtgeo_grids
 from .gridprop_generator import grid_properties as gridproperties_elements, keywords
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 GFILE1 = pathlib.Path("3dgrids/reek/REEK.EGRID")
 IFILE1 = pathlib.Path("3dgrids/reek/REEK.INIT")
@@ -124,12 +123,8 @@ def test_gridproperties_invalid_format(grid_property):
 
 def test_scan_dates(testdata_path):
     """A static method to scan dates in a RESTART file"""
-    t1 = xtg.timer()
     assert GridProperties.scan_dates(testdata_path / RFILE2) == [(0, 20220101)]
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
 
-    t1 = xtg.timer()
     assert GridProperties.scan_dates(testdata_path / RFILE1) == [
         (0, 19991201),
         (1, 20000101),
@@ -147,9 +142,6 @@ def test_scan_dates(testdata_path):
         (13, 20010101),
         (14, 20030101),
     ]
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
-    t1 = xtg.timer()
     assert GridProperties.scan_dates(testdata_path / SPEFILE1) == [
         (0, 19900101),
         (1, 19900102),
@@ -188,8 +180,6 @@ def test_scan_dates(testdata_path):
         (34, 19920505),
         (35, 19920619),
     ]
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
 
 
 def test_scan_dates_invalid_file(testdata_path):
@@ -200,13 +190,9 @@ def test_scan_dates_invalid_file(testdata_path):
 
 def test_dates_from_restart(testdata_path):
     """A simpler static method to scan dates in a RESTART file"""
-    t1 = xtg.timer()
     assert GridProperties.scan_dates(testdata_path / RFILE2, datesonly=True) == [
         20220101
     ]
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {RFILE2} scanned in {t2} seconds")
-    t1 = xtg.timer()
     assert GridProperties.scan_dates(testdata_path / RFILE1, datesonly=True) == [
         19991201,
         20000101,
@@ -224,9 +210,6 @@ def test_dates_from_restart(testdata_path):
         20010101,
         20030101,
     ]
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {RFILE1} scanned in {t2} seconds")
-    t1 = xtg.timer()
     assert GridProperties.scan_dates(testdata_path / SPEFILE1, datesonly=True) == [
         19900101,
         19900102,
@@ -265,8 +248,6 @@ def test_dates_from_restart(testdata_path):
         19920505,
         19920619,
     ]
-    t2 = xtg.timer(t1)
-    logger.info(f"Scanned {SPEFILE1} scanned in {t2} seconds")
 
 
 def test_get_dataframe(testdata_path):

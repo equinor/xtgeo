@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 import numpy as np
@@ -5,9 +6,8 @@ import numpy.ma as ma
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
+logger = logging.getLogger(__name__)
 
 RPATH1 = pathlib.Path("surfaces/reek")
 RPATH3 = pathlib.Path("surfaces/etc")

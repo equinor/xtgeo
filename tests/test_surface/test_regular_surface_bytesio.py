@@ -2,16 +2,15 @@
 
 import base64
 import io
+import logging
 import pathlib
 import threading
 
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 TESTSET1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
 TESTSET2 = pathlib.Path("surfaces/reek/1/topreek_rota.fgr")

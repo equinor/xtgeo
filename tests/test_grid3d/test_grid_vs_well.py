@@ -1,12 +1,11 @@
+import logging
 import pathlib
 
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 GRIDFILE = pathlib.Path("3dgrids/reek/reek_sim_grid.roff")
 ZONEFILE = pathlib.Path("3dgrids/reek/reek_sim_zone.roff")

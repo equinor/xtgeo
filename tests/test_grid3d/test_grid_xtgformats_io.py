@@ -1,6 +1,7 @@
 # coding: utf-8
 """Testing new xtgf and hdf5/h5 formats."""
 
+import logging
 from os.path import join
 
 import hypothesis.strategies as st
@@ -10,10 +11,8 @@ from hypothesis import HealthCheck, given, settings
 from numpy.testing import assert_allclose
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 BIGBOX_DIMENSIONS = (100, 100, 20)

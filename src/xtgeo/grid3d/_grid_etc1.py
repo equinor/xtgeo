@@ -69,6 +69,7 @@ def create_box(
     )
 
     cubecpp = _internal.cube.Cube(cube)
+    logger.debug("Calling CPP internal 'create_grid_from_cube'...")
     coordsv, zcornsv, actnumsv = _internal.grid3d.create_grid_from_cube(
         cubecpp, oricenter, flip
     )

@@ -11,16 +11,11 @@ import pytest
 from hypothesis import HealthCheck, example, given, settings
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
 from xtgeo.grid3d import GridProperty
 
 from .grid_generator import dimensions, xtgeo_grids
 from .gridprop_generator import grid_properties
-
-# set default level
-xtg = XTGeoDialog()
-
 
 TESTFILE1 = pathlib.Path("3dgrids/reek/reek_sim_poro.roff")
 TESTFILE2 = pathlib.Path("3dgrids/eme/1/emerald_hetero.roff")
