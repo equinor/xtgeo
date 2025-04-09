@@ -71,8 +71,10 @@ def export_irap_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
         # Find the nearest factorization
         for i in range(start, 1, -1):
             if size % i == 0:
-                return (size // i, i)
-        return (vals, 1)
+                return (int(size // i), int(i))  # Ensure integers are returned
+
+        # If we can't find a perfect divisor, return a valid shape
+        return (int(size), 1)
 
     buffer = io.StringIO()
 
