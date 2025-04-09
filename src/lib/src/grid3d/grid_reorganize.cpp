@@ -2,6 +2,7 @@
 #include <pybind11/numpy.h>
 #include <tuple>
 #include <xtgeo/grid3d.hpp>
+#include <xtgeo/logging.hpp>
 #include <xtgeo/types.hpp>
 
 namespace py = pybind11;
@@ -17,6 +18,10 @@ std::tuple<py::array_t<double>,
            py::array_t<bool>>
 convert_xtgeo_to_rmsapi(const Grid &grd)
 {
+    auto &logger =
+      xtgeo::logging::LoggerManager::get("xtgeo.grid3d.convert_xtgeo_to_rmsapi");
+    logger.debug("Converting XTGeo grid to RMSAPI grid layout");
+
     auto coordsv = grd.coordsv.unchecked<3>();
     auto zcornsv = grd.zcornsv.unchecked<4>();
     auto actnumsv = grd.actnumsv.unchecked<3>();
@@ -166,7 +171,7 @@ convert_xtgeo_to_rmsapi(const Grid &grd)
             }
         }
     }
-
+    logger.debug("Conversion to RMSAPI grid layout completed");
     return std::make_tuple(tpillars, bpillars, zcorners, zmask);
 }
 

@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <xtgeo/grid3d.hpp>
+#include <xtgeo/logging.hpp>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/regsurf.hpp>
 
@@ -37,9 +38,15 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                     const int index_position,  // 0: top, 1: base|bot, 2: center
                     const int num_threads)
 {
+    auto &logger =
+      xtgeo::logging::LoggerManager::get("xtgeo.regsurf.sample_grid3d_layer");
+    logger.debug("Sampling grid3d layer ", klayer, " to regular surface");
+    logger.debug("Initial number of threads: ", num_threads);
+
     // clang-format off
     #ifdef __linux__
       if (num_threads > 0) omp_set_num_threads(num_threads);
+      logger.debug("Actual number of threads: ", omp_get_max_threads());
     #endif
     // clang-format on
 
