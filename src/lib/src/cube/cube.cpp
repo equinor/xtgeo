@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 #include <xtgeo/cube.hpp>
+#include <xtgeo/logging.hpp>
 #include <xtgeo/numerics.hpp>
 
 namespace py = pybind11;
@@ -28,6 +29,8 @@ namespace xtgeo::cube {
 std::unordered_map<std::string, py::array_t<double>>
 cube_stats_along_z(const Cube &cube)
 {
+    auto &logger = xtgeo::logging::LoggerManager::get("xtgeo.cube.cube_stats_along_z");
+    logger.debug("Computing cube statistics along Z axis");
     size_t ncol = cube.ncol;
     size_t nrow = cube.nrow;
     size_t nlay = cube.nlay;
@@ -181,6 +184,7 @@ cube_stats_along_z(const Cube &cube)
     stats["sumneg"] = sumnegv;
     stats["sumabs"] = sumabsv;
 
+    logger.debug("Cube statistics computed successfully");
     return stats;
 }  // cube_stats_along_z()
 

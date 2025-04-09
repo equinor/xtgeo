@@ -5,6 +5,7 @@
 #include <tuple>
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/grid3d.hpp>
+#include <xtgeo/logging.hpp>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
 #include <xtgeo/xtgeo.h>
@@ -166,6 +167,15 @@ create_grid_from_cube(const cube::Cube &cube,
                       const bool use_cell_center,
                       const int flip)
 {
+
+    // logging here, more for demonstration than anything else
+    auto &logger =
+      xtgeo::logging::LoggerManager::get("xtgeo.grid3d.create_grid_from_cube");
+
+    logger.debug("Creating grid from cube with dimensions {} {} {} and cube "
+                 "xori/yori/zori: {:6.2f} {:6.2f} {:6.2f}",
+                 cube.ncol, cube.nrow, cube.nlay, cube.xori, cube.yori, cube.zori);
+
     // Define the shape of the arrays
     std::vector<size_t> coordsv_shape = { cube.ncol + 1, cube.nrow + 1, 6 };
     std::vector<size_t> zcornsv_shape = { cube.ncol + 1, cube.nrow + 1, cube.nlay + 1,

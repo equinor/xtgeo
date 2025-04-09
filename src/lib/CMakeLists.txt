@@ -21,6 +21,21 @@ message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
 message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
 message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
 
+# Ensure position independent code for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Use FetchContent for fmt library
+include(FetchContent)
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG 9.1.0)
+
+# Configure fmt options before making it available
+set(FMT_MASTER_PROJECT OFF)
+set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(fmt)
+
 # TODO: replace globbing with unique list, as globbing is bad practice
 file(GLOB SOURCES ${SRC}/*.c)
 add_library(xtgeo STATIC ${SOURCES})
@@ -30,7 +45,7 @@ if(MSVC)
   set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
 else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
-  set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef)
+  set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
 endif()
 
 pybind11_add_module(
@@ -40,6 +55,7 @@ pybind11_add_module(
   "${SRC}/common/geometry/polygons.cpp"
   "${SRC}/common/geometry/quadrilateral.cpp"
   "${SRC}/common/geometry/volumes.cpp"
+  "${SRC}/common/logging/logging.cpp"
   "${SRC}/grid3d/cell.cpp"
   "${SRC}/grid3d/grid.cpp"
   "${SRC}/grid3d/grid_reorganize.cpp"
@@ -56,6 +72,8 @@ if(UNIX
    AND OpenMP_CXX_FOUND)
   target_link_libraries(_internal PRIVATE OpenMP::OpenMP_CXX)
 endif()
+
+target_link_libraries(_internal PRIVATE fmt::fmt)
 
 message(STATUS "Compiling swig bindings")
 
