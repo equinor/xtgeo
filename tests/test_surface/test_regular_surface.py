@@ -29,6 +29,7 @@ TESTSET6B = pathlib.Path("surfaces/etc/seabed_p.gri")
 TESTSET6C = pathlib.Path("surfaces/etc/seabed_p_v2.pmd")
 TESTSET7A = pathlib.Path("surfaces/etc/topvolantis_genhash.gri")
 TESTSET7B = pathlib.Path("surfaces/etc/toptherys_genhash.gri")
+TESTSET8 = pathlib.Path("surfaces/etc/some_top.gri")
 
 FENCE1 = pathlib.Path("polygons/reek/1/fence.pol")
 
@@ -469,6 +470,17 @@ def test_irapasc_io(tmp_path, default_surface):
     xsurf2 = xtgeo.surface_from_file(usefile, fformat="irap_ascii")
 
     assert xsurf1.values[1, 1] == xsurf2.values[1, 1]
+
+
+def test_irapasc_io_realcase(tmp_path, testdata_path):
+    """Test IO using pure python read/write"""
+    xsurf1 = xtgeo.surface_from_file(testdata_path / TESTSET8, fformat="irap_binary")
+
+    usefile = tmp_path / "test8.fgr"
+
+    xsurf1.to_file(usefile, fformat="irap_ascii")
+    xsurf2 = xtgeo.surface_from_file(usefile, fformat="irap_ascii")
+    np.testing.assert_array_equal(xsurf1.values, xsurf2.values)
 
 
 def test_minmax_rotated_map(testdata_path):
