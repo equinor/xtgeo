@@ -1,16 +1,15 @@
+import logging
 import pathlib
 from pathlib import Path
 
 import pytest
 
-from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import list_gridproperties
 from xtgeo.grid3d._gridprops_import_roff import read_roff_properties
 from xtgeo.io._file import FileWrapper
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 E100_BO_FINIT = pathlib.Path("3dgrids/simpleb8/E100_BO.FINIT")
 E100_BO_FUNRST = pathlib.Path("3dgrids/simpleb8/E100_BO.FUNRST")

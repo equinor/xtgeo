@@ -1,12 +1,11 @@
+import logging
 from os.path import join
 
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(name="loadwell1")

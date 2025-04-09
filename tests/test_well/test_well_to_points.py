@@ -1,12 +1,11 @@
+import logging
 import pathlib
 
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 WFILE = pathlib.Path("wells/etc/otest.rmswell")
 

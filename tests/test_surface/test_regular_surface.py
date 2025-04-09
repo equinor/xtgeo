@@ -1,5 +1,6 @@
 """Testing RegularSurface class with methods."""
 
+import logging
 import pathlib
 import sys
 
@@ -9,11 +10,9 @@ import pytest
 
 import xtgeo
 from xtgeo import RegularSurface
-from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import InvalidFileFormatError
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 TESTSET1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
 TESTSET1A = pathlib.Path("surfaces/reek/1/basereek_rota.gri")
@@ -255,18 +254,12 @@ def test_irapbin_import_metadatafirst(testdata_path):
 
     nsurf = 10
     sur = []
-    t1 = xtg.timer()
     for ix in range(nsurf):
         sur.append(xtgeo.surface_from_file(testdata_path / TESTSET2, values=False))
-    t2 = xtg.timer(t1)
-    logger.info("Loading %s surfaces lazy took %s secs.", nsurf, t2)
     assert sur[nsurf - 1].ncol == 1264
 
-    t1 = xtg.timer()
     for ix in range(nsurf):
         sur[ix].load_values()
-    t2 = xtg.timer(t1)
-    logger.info("Loading %s surfaces actual values took %s secs.", nsurf, t2)
 
     assert sur[nsurf - 1].ncol == 1264
     assert sur[nsurf - 1].nrow == 2010

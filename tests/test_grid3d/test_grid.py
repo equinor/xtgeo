@@ -1,5 +1,6 @@
 """Tests for 3D grid."""
 
+import logging
 import math
 import pathlib
 import warnings
@@ -9,14 +10,12 @@ import pytest
 from hypothesis import given
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.common.log import functimer
 from xtgeo.grid3d import Grid
 
 from .grid_generator import dimensions, increments, xtgeo_grids
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__, info=True)
+logger = logging.getLogger(__name__)
 
 REEKFILE = pathlib.Path("3dgrids/reek/REEK.EGRID")
 REEKFIL2 = pathlib.Path("3dgrids/reek3/reek_sim.grdecl")  # ASCII GRDECL
@@ -65,11 +64,15 @@ def test_create_shoebox(tmp_path):
     grd = xtgeo.create_box_grid((2, 3, 4), flip=-1)
     grd.to_file(tmp_path / "shoebox_default_flipped.roff")
 
-    timer1 = xtg.timer()
+    @functimer(output="info", comment="Large box grid created, with 1.8 mill cells")
+    def box_grid_large_create():
+        _ = xtgeo.create_box_grid((300, 200, 30), increment=(20, 20, 1))
+
+    box_grid_large_create()
+
     grd = xtgeo.create_box_grid(
         origin=(0, 0, 1000), dimension=(300, 200, 30), increment=(20, 20, 1), flip=-1
     )
-    logger.info("Making a a 1,8 mill cell grid took %5.3f secs", xtg.timer(timer1))
 
     dx, dy = (grd.get_dx(), grd.get_dy())
 
@@ -187,13 +190,11 @@ def test_subgrids():
     assert grd._subgrids is None
 
 
+@functimer(output="info", comment="Roff binary import using new API, run 100 times")
 def test_roffbin_import_v2stress(testdata_path):
-    """Test roff binary import ROFF using new API, comapre timing etc."""
-    t0 = xtg.timer()
+    """Test roff binary import ROFF using new API, compare timing etc."""
     for _ino in range(100):
         xtgeo.grid_from_file(testdata_path / REEKFIL4)
-    t1 = xtg.timer(t0)
-    print("100 loops with ROXAPIV 2 took: ", t1)
 
 
 def test_convert_vs_xyz_cell_corners(testdata_path):

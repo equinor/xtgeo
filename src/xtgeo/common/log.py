@@ -39,6 +39,7 @@ def functimer(
     func: Optional[Callable] = None,
     *,
     output: Literal["debug", "info", "print"] = "debug",
+    comment: str = "",
 ) -> Callable:
     """A decorator function to measure the execution time of a function.
 
@@ -47,7 +48,7 @@ def functimer(
 
     Usage is simple, just add the decorator to the function you want to measure:
 
-    @functimer(output="print")
+    @functimer(output="print", comment="My function took a while to run")
     def my_function():
         pass
 
@@ -61,7 +62,7 @@ def functimer(
     if func is None:
 
         def decorator(func: Callable) -> Callable:
-            return functimer(func, output=output)
+            return functimer(func, output=output, comment=comment)
 
         return decorator
 
@@ -73,16 +74,20 @@ def functimer(
         result = func(*args, **kwargs)  # Execute the function
         end_time = time.perf_counter()  # End the timer
         elapsed_time = f"{end_time - start_time: .5f}"
+
+        # Build message with optional comment
+        message = f"Function {func.__name__} executed in {elapsed_time} seconds"
+        if comment:
+            message += f" - {comment}"
+
+        # Output according to specified method
         if output == "print":
-            print(f"Function {func.__name__} executed in {elapsed_time} seconds")
+            print(message)
         elif output == "info":
-            logger.info(
-                "Function %s executed in %s seconds", func.__name__, elapsed_time
-            )
+            logger.info(message)
         else:
-            logger.debug(
-                "Function %s executed in %s seconds", func.__name__, elapsed_time
-            )
+            logger.debug(message)
+
         return result
 
     return wrapper

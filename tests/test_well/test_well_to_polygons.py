@@ -1,10 +1,9 @@
+import logging
 import os
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def test_well_to_polygons(testdata_path):

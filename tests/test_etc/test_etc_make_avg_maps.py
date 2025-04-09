@@ -1,16 +1,13 @@
+import logging
 import pathlib
 
 import numpy as np
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
 
-# set default level
-xtg = XTGeoDialog()
-
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 GFILE2 = pathlib.Path("3dgrids/reek/REEK.EGRID")
 IFILE2 = pathlib.Path("3dgrids/reek/REEK.INIT")

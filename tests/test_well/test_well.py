@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 import numpy as np
@@ -5,12 +6,10 @@ import pandas as pd
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.well import Well
 from xtgeo.xyz import Polygons
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 WFILE = pathlib.Path("wells/reek/1/OP_1.w")
 WFILE2 = pathlib.Path("wells/reek/2/OP_6a.w")
@@ -286,15 +285,11 @@ def test_shortwellname(create_well):
 
 
 def test_import_export_rmsasc(tmp_path, simple_well):
-    t0 = xtg.timer()
     wname = (tmp_path / "$random").with_suffix(".rmsasc")
     wuse = simple_well.to_file(wname)
-    print("Time for save RMSASC: ", xtg.timer(t0))
 
-    t0 = xtg.timer()
     result = xtgeo.well_from_file(wuse)
     assert result.get_dataframe().equals(result.get_dataframe())
-    print("Time for load RMSASC: ", xtg.timer(t0))
 
 
 def test_create_and_delete_logs(loadwell3):

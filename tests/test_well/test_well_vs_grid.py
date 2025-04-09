@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+import logging
 import pathlib
 
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 WFILE = pathlib.Path("wells/reek/1/OP_1.w")
 GFILE = pathlib.Path("3dgrids/reek/REEK.EGRID")

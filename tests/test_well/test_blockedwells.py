@@ -1,13 +1,12 @@
+import logging
 from os.path import join
 
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.well import BlockedWells
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(name="testblockedwells")

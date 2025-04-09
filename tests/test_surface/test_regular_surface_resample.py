@@ -1,16 +1,15 @@
 """Testing regular surface vs resampling."""
 
+import logging
 import pathlib
 
 import numpy as np
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 FTOP1 = pathlib.Path("surfaces/reek/1/topreek_rota.gri")
 

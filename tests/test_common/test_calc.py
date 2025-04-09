@@ -1,3 +1,4 @@
+import logging
 import math
 import pathlib
 
@@ -10,7 +11,7 @@ import xtgeo.common.calc as xcalc
 from xtgeo import _cxtgeo
 
 xtg = xtgeo.XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 TESTGRID = pathlib.Path("3dgrids/etc/gridqc1.roff")
 TESTGRID_TBULK = pathlib.Path("3dgrids/etc/gridqc1_totbulk.roff")

@@ -1,14 +1,13 @@
+import logging
 import pathlib
 
 import pytest
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Points
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = logging.getLogger(__name__)
 
 FTOP1 = pathlib.Path("surfaces/reek/1/reek_stooip_map.gri")
 
