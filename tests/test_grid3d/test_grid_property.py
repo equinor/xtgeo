@@ -302,8 +302,28 @@ def test_roff_export(fformat, tmp_path):
     gp.to_file(tmp_path / f"gprop.{fformat}", fformat=fformat)
 
 
+def test_grdecl_rle(tmp_path, testdata_path):
+    """Test re-importing file written with RLE option"""
+    gg = xtgeo.grid_from_file(testdata_path / TESTFILE13A, fformat="egrid")
+    po = xtgeo.gridproperty_from_file(
+        testdata_path / TESTFILE13B, name="SATNUM", grid=gg
+    )
+
+    gg.to_file(tmp_path / "grid_rle.grdecl", fformat="grdecl", rle=True)
+    po.to_file(tmp_path / "grid_satnum_rle.grdecl", fformat="grdecl", rle=True)
+
+    grid = xtgeo.grid_from_file(tmp_path / "grid_rle.grdecl")
+    assert np.array_equal(grid.actnum_array, gg.actnum_array)
+
+    p1 = xtgeo.gridproperty_from_file(
+        tmp_path / "grid_satnum_rle.grdecl", grid=grid, name="SATNUM"
+    )
+    p1.isdiscrete = True
+    assert np.array_equal(po.get_npvalues3d(), p1.get_npvalues3d())
+
+
 def test_eclinit_simple_importexport(tmp_path, testdata_path):
-    """Property import and export with anoother name"""
+    """Property import and export with another name"""
 
     # let me guess the format (shall be egrid)
     gg = xtgeo.grid_from_file(testdata_path / TESTFILE13A, fformat="egrid")
