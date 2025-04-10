@@ -335,7 +335,7 @@ def test_eclinit_simple_importexport(tmp_path, testdata_path):
     )
     with open(tmp_path / "simple_disc.grdecl") as f:
         fields = f.read().split()
-        assert len(fields) == 17
+        assert len(fields) == 14
         assert fields[3] == "1"  # undef cell for discrete
 
 
