@@ -41,7 +41,7 @@ from ._ecl_grid import (
     MapAxes,
     Units,
 )
-from ._grdecl_format import IGNORE_ALL, open_grdecl
+from ._grdecl_format import IGNORE_ALL, open_grdecl, run_length_encoding
 
 
 @dataclass
@@ -340,14 +340,24 @@ class GrdeclGrid(EclGrid):
                 if values is None:
                     continue
                 filestream.write(f"{kw}\n")
-                numcolumns = 0
-                for value in values:
-                    numcolumns += 1
-                    filestream.write(f" {value}")
+                if kw == "ACTNUM":
+                    counts, unique_values = run_length_encoding(values)
+                    for i, (count, unique_value) in enumerate(
+                        zip(counts, unique_values)
+                    ):
+                        filestream.write(
+                            f" {count}*{unique_value}"
+                            if count > 1
+                            else f" {unique_value}"
+                        )
+                        if i % 6 == 5:
+                            filestream.write("\n")
+                else:
+                    for i, value in enumerate(values):
+                        filestream.write(f" {value}")
 
-                    if numcolumns >= 6:  # 6 should ensure < 128 character width total
-                        filestream.write("\n")
-                        numcolumns = 0
+                        if i % 6 == 5:  # 6 should ensure < 128 character width total
+                            filestream.write("\n")
 
                 filestream.write("\n /\n")
 

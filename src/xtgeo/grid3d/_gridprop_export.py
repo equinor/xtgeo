@@ -17,6 +17,7 @@ from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
 
+from ._grdecl_format import run_length_encoding
 from ._roff_parameter import RoffParameter
 
 if TYPE_CHECKING:
@@ -130,16 +131,19 @@ def _export_grdecl(
         else:
             # Always the case when not binary
             assert isinstance(fout, io.TextIOWrapper)
-            fout.write(name)
-            fout.write("\n")
-            for i, v in enumerate(vals):
+            fout.write(f"{name}\n")
+            counts, unique_values = run_length_encoding(vals)
+            for i, (count, unique_value) in enumerate(zip(counts, unique_values)):
                 fout.write(" ")
                 if fmt:
-                    fout.write(fmt % v)
+                    formatted_value = fmt % unique_value
                 elif gridprop.isdiscrete:
-                    fout.write(str(v))
+                    formatted_value = str(unique_value)
                 else:
-                    fout.write(f"{v:3e}")
+                    formatted_value = f"{unique_value:3e}"
+                fout.write(
+                    f"{count}*{formatted_value}" if count > 1 else formatted_value
+                )
                 if i % 6 == 5:
                     fout.write("\n")
             fout.write(" /\n")
