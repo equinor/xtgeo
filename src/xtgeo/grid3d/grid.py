@@ -1293,7 +1293,10 @@ class Grid(_Grid3D):
         for izone in range(minzone, maxzone + 1):
             mininzn = int(kval[zprval == izone].min())  # 1 base
             maxinzn = int(kval[zprval == izone].max())  # 1 base
-            newd["zone" + str(izone)] = range(mininzn, maxinzn + 1)
+
+            newd[zoneprop.codes.get(izone, "zone" + str(izone))] = range(
+                mininzn, maxinzn + 1
+            )
 
         self.subgrids = newd  # type: ignore
 

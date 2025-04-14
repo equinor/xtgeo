@@ -132,7 +132,7 @@ def test_refine_vertically_per_zone(testdata_path):
     refinement = {1: 4, 2: 2}
     grd.refine_vertically(refinement, zoneprop=emerald2_zone)
 
-    assert grd.get_subgrids() == {"zone1": 64, "zone2": 60}
+    assert grd.get_subgrids() == {"Zone1": 64, "Zone2": 60}
 
     grd = emerald2_grid.copy()
     grd.refine_vertically(refinement)  # no zoneprop
