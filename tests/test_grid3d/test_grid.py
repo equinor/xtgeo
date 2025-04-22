@@ -178,8 +178,10 @@ def test_subgrids():
     zprop = k_index.copy()
     zprop.values[k_index.values > 4] = 2
     zprop.values[k_index.values <= 4] = 1
+    zprop.codes = {1: "Upper", 2: "Lower"}
 
-    grd.subgrids_from_zoneprop(zprop)
+    subgrids = grd.subgrids_from_zoneprop(zprop)
+    assert "Upper" in subgrids
 
     # rename
     grd.rename_subgrids(["AAAA", "BBBB"])
