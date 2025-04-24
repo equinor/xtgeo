@@ -196,7 +196,6 @@ def _check_special_logs(dfr, mdlogname, zonelogname, strict, wname):
 
 def export_rms_ascii(self, wfile, precision=4):
     """Export to RMS well format."""
-
     with open(wfile, "w", encoding="utf-8") as fwell:
         print("1.0", file=fwell)
         print("Unknown", file=fwell)
@@ -225,7 +224,7 @@ def export_rms_ascii(self, wfile, precision=4):
     # make the disc as is np.int
     for lname in self.wlogtypes:
         if self.wlogtypes[lname] == _AttrType.DISC.value:
-            tmpdf[[lname]] = tmpdf[[lname]].astype(int)
+            tmpdf[[lname]] = tmpdf[[lname]].fillna(-999).astype(int)
 
     cformat = "%-." + str(precision) + "f"
     tmpdf.to_csv(
@@ -234,7 +233,7 @@ def export_rms_ascii(self, wfile, precision=4):
         header=False,
         index=False,
         float_format=cformat,
-        escapechar=" ",
+        escapechar="\\",
         mode="a",
     )
 
