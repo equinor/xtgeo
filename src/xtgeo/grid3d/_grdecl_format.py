@@ -4,6 +4,8 @@ import warnings
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from xtgeo.common import null_logger
 
 if TYPE_CHECKING:
@@ -13,6 +15,47 @@ if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
 
 logger = null_logger(__name__)
+
+
+def run_length_encoding(arr: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Perform run-length encoding on a 1D NumPy array.
+
+    Run-length encoding is a data compression technique that represents
+    consecutive  repeated values as a single value and its count.
+
+    Args:
+        arr (np.ndarray): A 1D NumPy array to be encoded.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: A tuple containing two 1D NumPy arrays:
+            - counts (np.ndarray): An array of counts representing the number
+              of consecutive occurrences of each unique value.
+            - values (np.ndarray): An array of the unique values corresponding to
+              the counts.
+
+    Examples:
+        >>> import numpy as np
+        >>> arr = np.array([1, 1, 2, 2, 2, 3, 3, 1, 1, 1])
+        >>> counts, values = run_length_encoding(arr)
+        >>> print(counts)
+        [2 3 2 3]
+        >>> print(values)
+        [1 2 3 1]
+
+        >>> arr = np.array([5, 5, 5, 5, 5])
+        >>> counts, values = run_length_encoding(arr)
+        >>> print(counts)
+        [5]
+        >>> print(values)
+        [5]
+
+    """
+    change_indices = np.where(~np.isclose(arr[:-1], arr[1:]))[0] + 1
+    counts = np.diff(np.concatenate(([0], change_indices, [len(arr)])))
+    values = arr[np.concatenate(([0], change_indices))]
+
+    return counts, values
 
 
 def split_line(line: str) -> Generator[str, None, None]:
