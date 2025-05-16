@@ -72,6 +72,9 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
                                     const std::vector<regsurf::RegularSurface> &rsurfs,
                                     const double tolerance = numerics::TOLERANCE);
 
+std::tuple<py::array_t<float>, py::array_t<int8_t>>
+refine_vertically(const Grid &grid_cpp, const py::array_t<int8_t> refine_layer);
+
 inline void
 init(py::module &m)
 {
@@ -103,8 +106,10 @@ init(py::module &m)
       .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
            "Adjust layers in a boxgrid given a list of regular surfaces.",
            py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
+      .def("refine_vertically", &refine_vertically,
+           "Refine vertically, proportionally");
 
-      ;
+    ;
 
     py::class_<CellCorners>(m_grid3d, "CellCorners")
       // a constructor that takes 8 xyz::Point objects

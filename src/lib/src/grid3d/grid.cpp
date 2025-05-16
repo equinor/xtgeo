@@ -247,4 +247,66 @@ create_grid_from_cube(const cube::Cube &cube,
     return std::make_tuple(coordsv, zcornsv, actnumsv);
 }
 
+std::tuple<py::array_t<float>, py::array_t<int8_t>>
+refine_vertically(const Grid &grid_cpp, const py::array_t<int8_t> refinement_per_layer)
+{
+    auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
+    auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
+    auto refinement_data = refinement_per_layer.unchecked<1>();
+
+    // logging here, more for demonstration than anything else
+    auto &logger = xtgeo::logging::LoggerManager::get("xtgeo.grid3d.refine_vertically");
+
+    size_t total_refinement = 0;
+
+    for (size_t i = 0; i < refinement_data.shape(0); i++) {
+        total_refinement += refinement_data(i);
+    }
+
+    // Shape
+    std::vector<size_t> zcorn_shape = { grid_cpp.ncol + 1, grid_cpp.nrow + 1,
+                                        total_refinement + 1, 4 };
+    py::array_t<float> zcornref(zcorn_shape);
+    py::array_t<int8_t> actnumref({ grid_cpp.ncol, grid_cpp.nrow, total_refinement });
+    auto zcornref_ = zcornref.mutable_unchecked<4>();
+    auto actnumref_ = actnumref.mutable_unchecked<3>();
+
+    logger.debug("Refine vertically from {} layers to {} layers", grid_cpp.nlay,
+                 total_refinement);
+
+    for (size_t j = 0; j < grid_cpp.nrow; j++)
+        for (size_t i = 0; i < grid_cpp.ncol; i++) {
+            int kk = 0; /* refined grid K counter */
+            for (size_t k = 0; k < grid_cpp.nlay; k++) {
+                int rfactor = refinement_data[k];
+                int iact = actnumsv_(i, j, k);
+                /* look at each pillar in each cell, find top */
+                /* and bottom, and divide */
+                for (size_t ic = 0; ic < 4; ic++) {
+                    double ztop = zcornsv_(i, j, k, ic);
+                    double zbot = zcornsv_(i, j, k + 1, ic);
+
+                    /* now divide and assign to new zcorn for refined: */
+                    double rdz = (zbot - ztop) / (double)rfactor;
+
+                    if (rdz < -1 * FLOATEPS) {
+                        logger.error("STOP! Negative cell thickness found at %d %d %d",
+                                     i + 1, j + 1, k + 1);
+                        throw std::runtime_error(
+                          "Negative cell thickness found during vertical refinement");
+                    }
+                    /* now assign corners for the refined grid: */
+                    for (size_t kr = 0; kr < rfactor; kr++) {
+                        actnumref_(i, j, kk + kr) = iact;
+
+                        zcornref_(i, j, kk + kr, ic) = ztop + kr * rdz;
+                        zcornref_(i, j, kk + kr + 1, ic) = ztop + (kr + 1) * rdz;
+                    }
+                }
+                kk = kk + rfactor;
+            }
+        }
+    return std::make_tuple(zcornref, actnumref);
+}
+
 }  // namespace xtgeo::grid3d
