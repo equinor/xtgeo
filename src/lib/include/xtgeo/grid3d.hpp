@@ -106,7 +106,8 @@ init(py::module &m)
       .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
            "Adjust layers in a boxgrid given a list of regular surfaces.",
            py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
-      .def("refine_vertically", &refine_vertically,"Refine vertically, proportionally");
+      .def("refine_vertically", &refine_vertically,
+           "Refine vertically, proportionally");
 
     ;
 

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 import xtgeo._internal as _internal  # type: ignore
 from xtgeo.common import XTGeoDialog, null_logger
 
@@ -90,7 +88,6 @@ def refine_vertically(
     self._xtgformat2()
     grid_cpp = _internal.grid3d.Grid(self)
     ref_zcornsv, ref_actnumsv = grid_cpp.refine_vertically(refine_factor)
-
 
     # update instance:
     self._nlay = newnlay
