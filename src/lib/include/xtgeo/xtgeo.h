@@ -1087,24 +1087,6 @@ extern "C"
                             long n_swig_np_lng_aout_v1    // nibv
     );
 
-    // int grd3d_refine_vert(int nx,
-    //                       int ny,
-    //                       int nz,
-
-    //                       double *swig_np_dbl_in_v2,  // *zcornsv
-    //                       long n_swig_np_dbl_in_v2,   // nzcorn
-    //                       int *swig_np_int_in_v1,     // *actnumsv
-    //                       long n_swig_np_int_in_v1,   // nact
-
-    //                       int nzref,
-
-    //                       double *swig_np_dbl_inplace_v2,  // *p_zcornref_v
-    //                       long n_swig_np_dbl_inplace_v2,   // nzcornref
-    //                       int *swig_np_int_inplace_v1,     // *p_actnumref_v
-    //                       long n_swig_np_int_inplace_v1,   // nactref
-
-    //                       int *rfac);
-
     void grd3d_convert_hybrid(int nx,
                               int ny,
                               int nz,
