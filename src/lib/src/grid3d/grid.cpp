@@ -274,12 +274,11 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<int8_t> refinement_per
     logger.debug("Refine vertically from {} layers to {} layers", grid_cpp.nlay,
                  total_refinement);
 
-    for (size_t j = 0; j < grid_cpp.nrow; j++)
-        for (size_t i = 0; i < grid_cpp.ncol; i++) {
+    for (size_t i = 0; i <= grid_cpp.ncol; i++)
+        for (size_t j = 0; j <= grid_cpp.nrow; j++) {
             int kk = 0; /* refined grid K counter */
             for (size_t k = 0; k < grid_cpp.nlay; k++) {
                 int rfactor = refinement_data[k];
-                int iact = actnumsv_(i, j, k);
                 /* look at each pillar in each cell, find top */
                 /* and bottom, and divide */
                 for (size_t ic = 0; ic < 4; ic++) {
@@ -297,7 +296,8 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<int8_t> refinement_per
                     }
                     /* now assign corners for the refined grid: */
                     for (size_t kr = 0; kr < rfactor; kr++) {
-                        actnumref_(i, j, kk + kr) = iact;
+                        if (i < grid_cpp.ncol && j < grid_cpp.nrow)
+                            actnumref_(i, j, kk + kr) = actnumsv_(i, j, k);
 
                         zcornref_(i, j, kk + kr, ic) = ztop + kr * rdz;
                         zcornref_(i, j, kk + kr + 1, ic) = ztop + (kr + 1) * rdz;
