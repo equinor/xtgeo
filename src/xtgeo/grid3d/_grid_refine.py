@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from xtgeo import _cxtgeo
+import xtgeo._internal as _internal  # type: ignore
 from xtgeo.common import XTGeoDialog, null_logger
 
 xtg = XTGeoDialog()
@@ -26,6 +26,7 @@ def refine_vertically(
     See details in caller.
     """
     self._xtgformat1()
+    self.make_zconsistent()
 
     rfactord = {}
 
@@ -80,37 +81,16 @@ def refine_vertically(
 
     logger.debug("New layers: %s", newnlay)
 
-    # refinefactors is an array with length nlay; has N refinements per single K layer
-    refinefactors = _cxtgeo.new_intarray(self.nlay)
-
-    totvector = []
+    refine_factors = []
 
     for (_, rfi), (_, arr) in zip(rfactord.items(), self.subgrids.items()):
         for _ in range(len(arr)):
-            totvector.append(rfi)
+            refine_factors.append(rfi)
 
-    for inn, rfi in enumerate(totvector):
-        _cxtgeo.intarray_setitem(refinefactors, inn, rfi)
-
-    ref_zcornsv = np.zeros(self.ncol * self.nrow * (newnlay + 1) * 4, dtype=np.float64)
-    ref_actnumsv = np.zeros(self.ncol * self.nrow * newnlay, dtype=np.int32)
-
-    ier = _cxtgeo.grd3d_refine_vert(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._zcornsv,
-        self._actnumsv,
-        newnlay,
-        ref_zcornsv,
-        ref_actnumsv,
-        refinefactors,
-    )
-
-    if ier != 0:
-        raise RuntimeError(
-            f"An error occured in the C routine grd3d_refine_vert, code {ier}"
-        )
+    self._xtgformat2()
+    grid_cpp = _internal.grid3d.Grid(self)
+    refine_factors = np.array(refine_factors, dtype=np.int8)
+    ref_zcornsv, ref_actnumsv = grid_cpp.refine_vertically(refine_factors)
 
     # update instance:
     self._nlay = newnlay
