@@ -248,14 +248,14 @@ create_grid_from_cube(const cube::Cube &cube,
 }
 
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
-refine_vertically(const Grid &grid_cpp, const py::array_t<int8_t> refinement_per_layer)
+refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refinement_per_layer)
 {
     auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
     auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
     auto refinement_data = refinement_per_layer.unchecked<1>();
 
     // logging here, more for demonstration than anything else
-    auto &logger = xtgeo::logging::LoggerManager::get("xtgeo.grid3d.refine_vertically");
+    auto &logger = xtgeo::logging::LoggerManager::get("refine_vertically");
 
     size_t total_refinement = 0;
 
@@ -276,7 +276,7 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<int8_t> refinement_per
 
     for (size_t i = 0; i <= grid_cpp.ncol; i++)
         for (size_t j = 0; j <= grid_cpp.nrow; j++) {
-            int kk = 0; /* refined grid K counter */
+            size_t kk = 0; /* refined grid K counter */
             for (size_t k = 0; k < grid_cpp.nlay; k++) {
                 int rfactor = refinement_data[k];
                 /* look at each pillar in each cell, find top */

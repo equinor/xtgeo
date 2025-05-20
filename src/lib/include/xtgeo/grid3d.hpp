@@ -73,7 +73,7 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
                                     const double tolerance = numerics::TOLERANCE);
 
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
-refine_vertically(const Grid &grid_cpp, const py::array_t<int8_t> refine_layer);
+refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refine_layer);
 
 inline void
 init(py::module &m)
