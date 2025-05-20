@@ -14,6 +14,10 @@ namespace py = pybind11;
 
 namespace xtgeo::logging {
 
+// Macro to check if Python logging debug is enabled for a specific logger
+#define PYTHON_LOGGING_DEBUG(logger_name)                                              \
+    (xtgeo::logging::python_logging_debug_enabled(logger_name))
+
 // Logger class for logging messages to Python's logging module
 // This class is thread-safe and can be used in a multi-threaded environment, inlcuding
 // OMP, but possibly be careful in parallel regions
@@ -128,95 +132,33 @@ public:
     }
 
     template<typename... Args>
-    void debug(const std::string &message, Args... args)
+    void debug(const std::string &message, Args &&...args)
     {
-        // Check if debug level is enabled before formatting message
-        bool enabled = false;
-        {
-            py::gil_scoped_acquire gil;
-            if (!m_logger) {
-                initialize_python_objects();
-            }
-            enabled = m_logger.attr("isEnabledFor")(m_debug_level).cast<bool>();
-        }
-
-        if (!enabled) {
-            return;
-        }
-        log("debug", message, args...);
+        log("debug", message, std::forward<Args>(args)...);
     }
 
-    // Other level methods similar to debug()...
     template<typename... Args>
     void info(const std::string &message, Args... args)
     {
-        bool enabled = false;
-        {
-            py::gil_scoped_acquire gil;
-            if (!m_logger) {
-                initialize_python_objects();
-            }
-            enabled = m_logger.attr("isEnabledFor")(m_info_level).cast<bool>();
-        }
-
-        if (!enabled) {
-            return;
-        }
-        log("info", message, args...);
+        log("info", message, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
     void warning(const std::string &message, Args... args)
     {
-        bool enabled = false;
-        {
-            py::gil_scoped_acquire gil;
-            if (!m_logger) {
-                initialize_python_objects();
-            }
-            enabled = m_logger.attr("isEnabledFor")(m_warning_level).cast<bool>();
-        }
-
-        if (!enabled) {
-            return;
-        }
-        log("warning", message, args...);
+        log("warning", message, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
     void error(const std::string &message, Args... args)
     {
-        bool enabled = false;
-        {
-            py::gil_scoped_acquire gil;
-            if (!m_logger) {
-                initialize_python_objects();
-            }
-            enabled = m_logger.attr("isEnabledFor")(m_error_level).cast<bool>();
-        }
-
-        if (!enabled) {
-            return;
-        }
-        log("error", message, args...);
+        log("error", message, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
     void critical(const std::string &message, Args... args)
     {
-        bool enabled = false;
-        {
-            py::gil_scoped_acquire gil;
-            if (!m_logger) {
-                initialize_python_objects();
-            }
-            enabled = m_logger.attr("isEnabledFor")(m_critical_level).cast<bool>();
-        }
-
-        if (!enabled) {
-            return;
-        }
-        log("critical", message, args...);
+        log("critical", message, std::forward<Args>(args)...);
     }
 
 private:
@@ -248,6 +190,23 @@ private:
 
 void
 test_logging_levels(const std::string &logger_name);
+
+inline bool
+python_logging_debug_enabled(const std::string &logger_name = "")
+{
+    py::gil_scoped_acquire gil;
+    py::object logging = py::module::import("logging");
+
+    if (logger_name.empty()) {
+        // Check the root logger's debug level
+        py::object root_logger = logging.attr("getLogger")();
+        return root_logger.attr("isEnabledFor")(logging.attr("DEBUG")).cast<bool>();
+    } else {
+        // Check a specific logger's debug level
+        py::object specific_logger = logging.attr("getLogger")(logger_name);
+        return specific_logger.attr("isEnabledFor")(logging.attr("DEBUG")).cast<bool>();
+    }
+}
 
 inline void
 init(py::module &m)
