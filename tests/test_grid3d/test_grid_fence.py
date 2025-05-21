@@ -90,7 +90,7 @@ def test_randomline_fence_calczminzmax(show_plot, testdata_path):
     fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
 
     hmin, hmax, vmin, vmax, xx = grd.get_randomline(fspec, "PORO", zmin=None, zmax=None)
-    assert vmin == pytest.approx(1548.30, abs=0.01)
+    assert vmin == pytest.approx(1547.98, abs=0.01)
     if show_plot:
         import matplotlib.pyplot as plt
 

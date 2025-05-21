@@ -132,16 +132,20 @@ class DeriveSurfaceFromGrid3D:
             geom = self.grid.get_geometrics(
                 allcells=True, cellcenter=True, return_dict=True, _ver=2
             )
+            gminx, gminy, _, gmaxx, gmaxy, _ = self.grid.get_bounding_box()
 
-            xlen = 1.1 * (geom["xmax"] - geom["xmin"])
-            ylen = 1.1 * (geom["ymax"] - geom["ymin"])
-            xori = geom["xmin"] - 0.05 * xlen
-            yori = geom["ymin"] - 0.05 * ylen
-            # take same xinc and yinc
-
+            xlen = gmaxx - gminx
+            ylen = gmaxy - gminy
             xinc = yinc = (1.0 / self.rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
-            ncol = int(xlen / xinc)
-            nrow = int(ylen / yinc)
+            xori = gminx - xinc
+            yori = gminy - xinc
+
+            xlen += 2 * xinc
+            ylen += 2 * yinc
+
+            # take same xinc and yinc
+            ncol = int(xlen / xinc) + 1
+            nrow = int(ylen / yinc) + 1
 
             args["xori"] = xori
             args["yori"] = yori

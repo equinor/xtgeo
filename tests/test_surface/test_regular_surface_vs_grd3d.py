@@ -108,7 +108,7 @@ def test_surface_from_grd3d_layer(
     surf = xtgeo.surface_from_grid3d(
         grd, template=tmp, property="depth", where="3_base"
     )
-    assert surf.values.mean() == pytest.approx(1714.444, abs=0.01)
+    assert surf.values.mean() == pytest.approx(1714.388, abs=0.01)
     if generate_plot:
         surf.quickplot(filename=tmp_path / "surf_from_grid3d_3base.png")
 

@@ -592,7 +592,7 @@ def test_get_property_between_surfaces_w_holes(testdata_path):
 
     prop = grd.get_property_between_surfaces(surf1, surf2)
 
-    assert prop.values.sum() == 131130  # verified manually in RMS
+    assert prop.values.sum() == 129591  # verified manually in RMS
 
 
 def test_bad_egrid_ends_before_kw(tmp_path):
@@ -895,3 +895,33 @@ def test_get_vtk_esg_geometry_data_box():
     assert len(vertex_arr) == 3 * 7 * 5
     assert len(conn_arr) == 8 * 2 * 6 * 4
     assert len(inactive_cell_indices) == 2
+
+
+def test_grid_cache():
+    """Test internal grid cache, which relates to class _GridCache."""
+    grd1 = xtgeo.create_box_grid(dimension=(10, 10, 10))
+    cache1 = grd1._get_cache()
+
+    grd2 = xtgeo.create_box_grid(dimension=(10, 10, 10))  # identical, but other id
+    cache2 = grd2._get_cache()
+
+    # they will get identical hashes, but different id on hashes
+    assert cache1.hash == cache2.hash
+    assert id(cache1) != id(cache2)
+
+    # update of cache1 should receive same id
+
+    cache1_updated = grd1._get_cache()
+
+    assert id(cache1_updated) == id(cache1)
+
+    # but changing the grid should change the cache id
+    grd1._zcornsv += 0.001
+    cache1_updated = grd1._get_cache()
+    assert id(cache1_updated) != id(cache1)
+
+    # if the grid is copied, the cache id may change but cache hash should be the same
+    grd1_copy = grd1.copy()
+    cache1_copy = grd1_copy._get_cache()
+    assert id(cache1_copy) != id(cache1_updated)
+    assert cache1_copy.hash == cache1_updated.hash

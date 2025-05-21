@@ -97,5 +97,6 @@ def test_read_grid3d():
     )  # this creates an example Grid (no other way to do it currently)
     surf = RegularSurface._read_grid3d(grid=grid)
     # There is some resolution changes between the grid and the surface, so we cant
-    # expect identical sizes, even for regular grids.
-    assert (surf.ncol, surf.nrow) == (3, 3)
+    # expect identical sizes, even for regular grids. Also the surf will be
+    # slightly expanded.
+    assert (surf.ncol, surf.nrow) == (7, 7)

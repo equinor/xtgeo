@@ -232,4 +232,63 @@ process_edges_rmsapi(py::array_t<float> zcornsv)
     }
 }
 
+/**
+ * @brief: Given an input cornerpoint grid, return a grid with only top and base
+ *         The usage for this is mainly to speed up some operations, like finding
+ *         if a point is inside a grid.
+ */
+
+Grid
+extract_onelayer_grid(const Grid &original_grid)
+{
+    // Access the original zcornsv array
+    auto zcornsv_ = original_grid.zcornsv.unchecked<4>();
+
+    const size_t mcol = zcornsv_.shape(0);
+    const size_t mrow = zcornsv_.shape(1);
+    const size_t nnlay = zcornsv_.shape(2);
+    const size_t ncorners = zcornsv_.shape(3);
+
+    // If the grid has fewer than 2 layers, return a true copy of the original grid
+    if (nnlay < 2) {
+        Grid copy_grid = original_grid;  // Create a copy of the original grid
+        return copy_grid;
+    }
+
+    // Create a new zcornsv array with only 2 layers
+    std::vector<size_t> zcornsv_shape = { mcol, mrow, 2, ncorners };
+    py::array_t<float> new_zcornsv(zcornsv_shape);
+    auto new_zcornsv_ = new_zcornsv.mutable_unchecked<4>();
+
+    // Copy the top layer (first layer)
+    for (size_t i = 0; i < mcol; i++) {
+        for (size_t j = 0; j < mrow; j++) {
+            for (size_t c = 0; c < 4; c++) {
+                new_zcornsv_(i, j, 0, c) = zcornsv_(i, j, 0, c);
+                new_zcornsv_(i, j, 1, c) = zcornsv_(i, j, nnlay - 1, c);
+            }
+        }
+    }
+
+    // Create a new actnumsv array with only 1 layer and set all values to 1
+    auto actnum_ = original_grid.actnumsv.unchecked<3>();
+    const size_t ncol = actnum_.shape(0);
+    const size_t nrow = actnum_.shape(1);
+    const size_t nlay = actnum_.shape(2);
+    std::vector<size_t> actnumsv_shape = { ncol, nrow, 1 };
+    py::array_t<int8_t> new_actnumsv(actnumsv_shape);
+    auto new_actnumsv_ = new_actnumsv.mutable_unchecked<3>();
+
+    // Use std::fill to set all values in the actnumsv array to 1
+    std::fill(new_actnumsv.mutable_data(),
+              new_actnumsv.mutable_data() + new_actnumsv.size(), 1);
+
+    Grid new_grid = original_grid;   // Copy the original grid
+    new_grid.zcornsv = new_zcornsv;  // Replace zcornsv with the reduced version
+    new_grid.actnumsv = new_actnumsv;
+    new_grid.nlay = 1;  // Update the number of layers to reflect the new grid
+
+    return new_grid;
+}
+
 }  // namespace xtgeo::grid3d

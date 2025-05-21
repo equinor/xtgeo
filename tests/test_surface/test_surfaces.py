@@ -126,8 +126,8 @@ def test_get_surfaces_from_3dgrid(tmp_path, testdata_path):
         srf.to_file(tmp_path / pathlib.Path(f"{srf.name}.gri"))
 
     assert surfs.surfaces[-1].values.mean() == pytest.approx(1742.2699, abs=0.04)
-    assert surfs.surfaces[-1].values.min() == pytest.approx(1589.6826, abs=0.04)
-    assert surfs.surfaces[-1].values.max() == pytest.approx(1977.2864, abs=0.04)
+    assert surfs.surfaces[-1].values.min() == pytest.approx(1590.5657, abs=0.04)
+    assert surfs.surfaces[-1].values.max() == pytest.approx(1977.2443, abs=0.04)
     assert surfs.surfaces[0].values.mean() == pytest.approx(1697.0290, abs=0.04)
 
 

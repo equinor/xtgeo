@@ -7,6 +7,7 @@
 #include <optional>
 #include <stdexcept>
 #include <tuple>
+#include <xtgeo/geometry.hpp>
 #include <xtgeo/regsurf.hpp>
 #include <xtgeo/types.hpp>
 
@@ -14,18 +15,9 @@ namespace py = pybind11;
 
 namespace xtgeo::grid3d {
 
-py::array_t<double>
-get_cell_volumes(const Grid &grid_cpp,
-                 const int precision,
-                 const bool asmasked = false);
-
-std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-get_cell_centers(const Grid &grid_cpp, const bool asmasked = false);
-
-std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
-get_height_above_ffl(const Grid &grid_cpp,
-                     const py::array_t<float> &ffl,
-                     const size_t option);
+// =====================================================================================
+// OPERATIONS ON INDIVIDUAL CELLS
+// =====================================================================================
 
 CellCorners
 get_cell_corners_from_ijk(const Grid &grid_cpp,
@@ -34,7 +26,10 @@ get_cell_corners_from_ijk(const Grid &grid_cpp,
                           const size_t k);
 
 std::vector<double>
-get_corners_minmax(CellCorners &get_cell_corners_from_ijk);
+get_corners_minmax(const CellCorners &corners);
+
+std::tuple<xyz::Point, xyz::Point>
+get_cell_bounding_box(const CellCorners &corners);
 
 bool
 is_xy_point_in_cell(const double x,
@@ -42,11 +37,40 @@ is_xy_point_in_cell(const double x,
                     const CellCorners &corners,
                     int option);
 
+bool
+is_point_in_cell(const xyz::Point &point,
+                 const CellCorners &corners,
+                 geometry::PointInHexahedronMethod method =
+                   geometry::PointInHexahedronMethod::Optimized);
+
 double
 get_depth_in_cell(const double x,
                   const double y,
                   const CellCorners &corners,
                   int option);
+
+bool
+is_cell_non_convex(const CellCorners &corners);
+
+bool
+is_cell_distorted(const CellCorners &corners);
+
+// =====================================================================================
+// OPERATIONS ON MULTIPLE CELLS/GRID
+// =====================================================================================
+
+py::array_t<double>
+get_cell_volumes(const Grid &grid_cpp,
+                 geometry::HexVolumePrecision precision,
+                 const bool asmasked);
+
+std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
+get_cell_centers(const Grid &grid_cpp, const bool asmasked = false);
+
+std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
+get_height_above_ffl(const Grid &grid_cpp,
+                     const py::array_t<float> &ffl,
+                     const size_t option);
 
 py::array_t<int8_t>
 get_gridprop_value_between_surfaces(const Grid &grd,
@@ -74,6 +98,25 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
 
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
 refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refine_layer);
+Grid
+extract_onelayer_grid(const Grid &original_grid);
+
+std::tuple<xyz::Point, xyz::Point>
+get_bounding_box(const Grid &grid);
+
+std::tuple<py::array_t<int>, py::array_t<int>, py::array_t<int>>
+get_indices_from_pointset(const Grid &grid,
+                          const xyz::PointSet &points,
+                          const Grid &one_grid,
+                          const regsurf::RegularSurface &top_i,
+                          const regsurf::RegularSurface &top_j,
+                          const regsurf::RegularSurface &base_i,
+                          const regsurf::RegularSurface &base_j,
+                          const bool active_only);
+
+// =====================================================================================
+// PYTHON BINDINGS, IF NEEDED
+// =====================================================================================
 
 inline void
 init(py::module &m)
@@ -90,8 +133,7 @@ init(py::module &m)
       .def_readonly("zcornsv", &Grid::zcornsv)
       .def_readonly("actnumsv", &Grid::actnumsv)
 
-      .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.",
-           py::arg("precision"), py::arg("asmasked") = false)
+      .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.")
 
       .def("get_cell_centers", &get_cell_centers,
            "Compute the cells centers coordinates as 3 arrays")
@@ -106,10 +148,13 @@ init(py::module &m)
       .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
            "Adjust layers in a boxgrid given a list of regular surfaces.",
            py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
-      .def("refine_vertically", &refine_vertically,
-           "Refine vertically, proportionally");
+      .def("refine_vertically", &refine_vertically, "Refine vertically, proportionally")
+      .def("extract_onelayer_grid", &extract_onelayer_grid, "Get a a onelayer grid")
+      .def("get_bounding_box", &get_bounding_box, "Get bounding box of full grid")
+      .def("get_indices_from_pointset", &get_indices_from_pointset,
+           "Get the indices of a point set in the grid")
 
-    ;
+      ;
 
     py::class_<CellCorners>(m_grid3d, "CellCorners")
       // a constructor that takes 8 xyz::Point objects
@@ -133,11 +178,21 @@ init(py::module &m)
 
     m_grid3d.def("get_corners_minmax", &get_corners_minmax,
                  "Get a vector containing the minmax of a single corner set");
+    m_grid3d.def("get_cell_bounding_box", &get_cell_bounding_box,
+                 "Get the bounding box for a cell");
+    m_grid3d.def("is_cell_non_convex", &is_cell_non_convex,
+                 "Check if a cell is non-convex");
+    m_grid3d.def("is_cell_distorted", &is_cell_distorted,
+                 "Check if a cell is (highly) distorted");
     m_grid3d.def("is_xy_point_in_cell", &is_xy_point_in_cell,
                  "Determine if a XY point is inside a cell, top or base.");
+    m_grid3d.def("is_point_in_cell", &is_point_in_cell,
+                 "Determine if a point XYZ is inside a cell, in 3D", py::arg("point"),
+                 py::arg("corners"),
+                 py::arg("method") = geometry::PointInHexahedronMethod::Optimized);
     m_grid3d.def("get_depth_in_cell", &get_depth_in_cell,
                  "Determine the interpolated cell face Z from XY, top or base.");
-    m_grid3d.def("process_edges_rmsapi", &process_edges_rmsapi, "Edge prosessing...");
+    m_grid3d.def("process_edges_rmsapi", &process_edges_rmsapi, "Edge processing...");
     m_grid3d.def("create_grid_from_cube", &create_grid_from_cube,
                  "Create a 3D grid from a cube specification.", py::arg("cube"),
                  py::arg("use_cell_center") = false, py::arg("flip") = 1);
