@@ -606,6 +606,10 @@ class Polygons(XYZ):
     def get_boundary(self):
         return super().get_boundary()
 
+    @inherit_docstring(inherit_from=XYZ.get_xyz_arrays)
+    def get_xyz_arrays(self):
+        return super().get_xyz_arrays()
+
     def simplify(
         self, tolerance: float | None = 0.1, preserve_topology: bool | None = True
     ) -> bool:

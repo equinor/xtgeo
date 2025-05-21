@@ -135,7 +135,7 @@ def test_report_zlog_mismatch_perflog(tmp_path, testdata_path):
     mywell.to_file(tmp_path / "w1_perf_report.rmswell")
 
     assert res["MATCH2"] == pytest.approx(81, 1.5)
-    assert res["TCOUNT2"] == 57
+    assert res["TCOUNT2"] == 56
     assert res["MCOUNT2"] == 46
 
     w1 = xtgeo.well_from_file(testdata_path / WELL1)

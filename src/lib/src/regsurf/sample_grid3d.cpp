@@ -88,7 +88,9 @@ sample_grid3d_layer(const RegularSurface &regsurf,
               numerics::QUIET_NAN);
 
     // clang-format off
-    #pragma omp parallel for collapse(2) schedule(static)
+    #ifdef __linux__
+      #pragma omp parallel for collapse(2) schedule(static)
+    #endif
     // clang-format on
 
     for (size_t icell = 0; icell < grd.ncol; icell++) {

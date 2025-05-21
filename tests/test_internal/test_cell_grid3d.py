@@ -277,3 +277,48 @@ def test_adjust_box_grid_to_regsurfs():
     grd_cpp = _internal.grid3d.Grid(grid)
     new_zcorns, _active = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surfaces)
     assert new_zcorns[4, 2, :, 1].tolist() == [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
+
+
+def test_extract_onelayer_grid(get_drogondata):
+    """get a grid with one layer"""
+
+    @functimer(output="print")
+    def _create_grid(get_drogondata):
+        grid, _, _ = get_drogondata
+
+        grid_cpp = _internal.grid3d.Grid(grid)
+
+        return grid_cpp.extract_onelayer_grid()
+
+    new_grid_cpp = _create_grid(get_drogondata)
+
+    assert isinstance(new_grid_cpp, xtgeo._internal.grid3d.Grid)
+
+    # now make into Python; not needed bit for eventual QC
+    grd = xtgeo.Grid(
+        coordsv=new_grid_cpp.coordsv,
+        zcornsv=new_grid_cpp.zcornsv,
+        actnumsv=new_grid_cpp.actnumsv,
+    )
+    assert isinstance(grd, xtgeo.Grid)
+    assert grd.nlay == 1
+    assert grd.ncol == 92
+    assert grd.nrow == 146
+
+
+def test_get_grid_boundingbox(get_drogondata):
+    """Test the get_bounding_box function"""
+
+    grid, _, _ = get_drogondata
+
+    grid_cpp = _internal.grid3d.Grid(grid)
+
+    pmin, pmax = grid_cpp.get_bounding_box()
+
+    assert (pmin.x, pmin.y, pmin.z) == pytest.approx(
+        (456063.6875, 5926551.0, 1554.1617431640625)
+    )
+
+    assert (pmax.x, pmax.y, pmax.z) == pytest.approx(
+        (467489.34375, 5939441.0, 2001.5931396484375)
+    )

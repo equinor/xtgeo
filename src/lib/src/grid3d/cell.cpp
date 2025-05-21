@@ -10,6 +10,7 @@
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
 #include <xtgeo/xtgeo.h>
+#include <xtgeo/xyz.hpp>
 
 namespace py = pybind11;
 
@@ -101,7 +102,7 @@ get_cell_corners_from_ijk(const Grid &grd,
  * @return std::vector<double>
  */
 std::vector<double>
-get_corners_minmax(CellCorners &get_cell_corners_from_ijk)
+get_corners_minmax(const CellCorners &cell_corners)
 {
     double xmin = std::numeric_limits<double>::max();
     double xmax = std::numeric_limits<double>::min();
@@ -110,7 +111,7 @@ get_corners_minmax(CellCorners &get_cell_corners_from_ijk)
     double zmin = std::numeric_limits<double>::max();
     double zmax = std::numeric_limits<double>::min();
 
-    auto corners = get_cell_corners_from_ijk.arrange_corners();
+    auto corners = cell_corners.arrange_corners();
 
     for (auto i = 0; i < 24; i += 3) {
         if (corners[i] < xmin) {
@@ -136,53 +137,19 @@ get_corners_minmax(CellCorners &get_cell_corners_from_ijk)
     return minmax;
 }  // get_corners_minmax
 
-/*
- * Estimate if a point is inside a cell face top (option != 1) or cell face bottom
- * (option = 1), seen from above, and return True if it is inside, False otherwise.
- * @param x X coordinate of the point
- * @param y Y coordinate of the point
+/**
+ * @brief Get the bounding box for a cell, a wrapper for get_corners_minmax.
  * @param CellCorners struct
- * @param option 0: Use cell top, 1: Use cell bottom, 2 for center
- * @return Boolean
+ * @return std::tuple<xyz::Point, xyz::Point> {min_point, max_point}
  */
-bool
-is_xy_point_in_cell(const double x,
-                    const double y,
-                    const CellCorners &corners,
-                    int option)
+std::tuple<xyz::Point, xyz::Point>
+get_cell_bounding_box(const CellCorners &corners)
 {
-    if (option < 0 || option > 2) {
-        throw std::invalid_argument("BUG! Invalid option");
-    }
-
-    // determine if point is inside the polygon
-    if (option == 0) {
-        return geometry::is_xy_point_in_quadrilateral(
-          x, y, corners.upper_sw, corners.upper_se, corners.upper_ne, corners.upper_nw);
-    } else if (option == 1) {
-        return geometry::is_xy_point_in_quadrilateral(
-          x, y, corners.lower_sw, corners.lower_se, corners.lower_ne, corners.lower_nw);
-    } else if (option == 2) {
-        // find the center Z point of the cell
-        auto mid_sw = numerics::lerp3d(corners.upper_sw.x, corners.upper_sw.y,
-                                       corners.upper_sw.z, corners.lower_sw.x,
-                                       corners.lower_sw.y, corners.lower_sw.z, 0.5);
-        auto mid_se = numerics::lerp3d(corners.upper_se.x, corners.upper_se.y,
-                                       corners.upper_se.z, corners.lower_se.x,
-                                       corners.lower_se.y, corners.lower_se.z, 0.5);
-        auto mid_nw = numerics::lerp3d(corners.upper_nw.x, corners.upper_nw.y,
-                                       corners.upper_nw.z, corners.lower_nw.x,
-                                       corners.lower_nw.y, corners.lower_nw.z, 0.5);
-        auto mid_ne = numerics::lerp3d(corners.upper_ne.x, corners.upper_ne.y,
-                                       corners.upper_ne.z, corners.lower_ne.x,
-                                       corners.lower_ne.y, corners.lower_ne.z, 0.5);
-
-        return geometry::is_xy_point_in_quadrilateral(
-          x, y, { mid_sw.x, mid_sw.y, mid_sw.z }, { mid_se.x, mid_se.y, mid_se.z },
-          { mid_ne.x, mid_ne.y, mid_ne.z }, { mid_nw.x, mid_nw.y, mid_nw.z });
-    }
-    return false;  // unreachable
-}  // is_xy_point_in_cell
+    auto minmax = get_corners_minmax(corners);
+    auto min_point = xyz::Point(minmax[0], minmax[2], minmax[4]);
+    auto max_point = xyz::Point(minmax[1], minmax[3], minmax[5]);
+    return std::make_tuple(min_point, max_point);
+}  // get_cell_bounding_box
 
 /*
  * Get the depth of a point inside a cell.
@@ -214,5 +181,19 @@ get_depth_in_cell(const double x,
     }
     return depth;
 }  // get_depth_in_cell
+
+bool
+is_cell_non_convex(const CellCorners &corners)
+{
+    // Check if the cell is non-convex
+    return geometry::is_hexahedron_non_convex(corners.to_hexahedron_corners());
+}  // is_cell_non_convex
+
+bool
+is_cell_distorted(const CellCorners &corners)
+{
+    // Check if the cell is distorted heavily
+    return geometry::is_hexahedron_severely_distorted(corners.to_hexahedron_corners());
+}  // is_cell_distorted
 
 }  // namespace xtgeo::grid3d

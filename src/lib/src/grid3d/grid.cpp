@@ -8,12 +8,54 @@
 #include <xtgeo/logging.hpp>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
-#include <xtgeo/xtgeo.h>
+
+#ifdef __linux__
+#include <omp.h>
+#endif
+
+#define FLOATEPS 1.0e-05
 
 namespace py = pybind11;
 
 namespace xtgeo::grid3d {
 
+void
+Grid::compute_cell_corners()
+{
+    auto &logger = xtgeo::logging::LoggerManager::get("Grid::compute_cell_corners");
+    cell_corners_cache.resize(ncol * nrow * nlay);
+    logger.info("Computing cell corners for grid ({}, {}, {})", ncol, nrow, nlay);
+
+    // clang-format off
+    #ifdef __linux__
+      #pragma omp parallel for collapse(3)
+    #endif
+    // clang-format on
+    for (size_t i = 0; i < ncol; ++i) {
+        for (size_t j = 0; j < nrow; ++j) {
+            for (size_t k = 0; k < nlay; ++k) {
+                cell_corners_cache[i * nrow * nlay + j * nlay + k] =
+                  get_cell_corners_from_ijk(*this, i, j, k);
+            }
+        }
+    }
+    logger.info("Computing cell corners for grid - DONE", ncol, nrow, nlay);
+}
+
+void
+Grid::ensure_cell_corners_cache() const
+{
+    auto &logger =
+      xtgeo::logging::LoggerManager::get("Grid::ensure_cell_corners_cache");
+    if (cell_corners_cache.size() != ncol * nrow * nlay) {
+        logger.info("Cell corners cache is empty, computing cell corners");
+        logger.info("Current size: {}", cell_corners_cache.size());
+
+        // const_cast is needed because we're modifying a mutable member in a const
+        // method
+        const_cast<Grid *>(this)->compute_cell_corners();
+    }
+}
 /*
  * Compute bulk volume of cells in a grid. Tests shows that this is very close
  * to what RMS will compute; almost identical
@@ -24,21 +66,35 @@ namespace xtgeo::grid3d {
  * @return An array containing the volume of every cell
  */
 py::array_t<double>
-get_cell_volumes(const Grid &grd, const int precision, const bool asmasked)
+get_cell_volumes(const Grid &grd,
+                 geometry::HexVolumePrecision precision,
+                 const bool asmasked)
 {
-    pybind11::array_t<double> cellvols({ grd.ncol, grd.nrow, grd.nlay });
+    py::array_t<double> cellvols({ grd.ncol, grd.nrow, grd.nlay });
     auto cellvols_ = cellvols.mutable_data();
     auto actnumsv_ = grd.actnumsv.data();
 
-    for (auto i = 0; i < grd.ncol; i++) {
-        for (auto j = 0; j < grd.nrow; j++) {
-            for (auto k = 0; k < grd.nlay; k++) {
-                auto idx = i * grd.nrow * grd.nlay + j * grd.nlay + k;
+    size_t ncol = grd.ncol;
+    size_t nrow = grd.nrow;
+    size_t nlay = grd.nlay;
+
+    grd.ensure_cell_corners_cache();
+
+    // clang-format off
+    #ifdef __linux__
+      #pragma omp parallel for collapse(3)
+    #endif
+    // clang-format on
+
+    for (auto i = 0; i < ncol; i++) {
+        for (auto j = 0; j < nrow; j++) {
+            for (auto k = 0; k < nlay; k++) {
+                auto idx = i * nrow * nlay + j * nlay + k;
                 if (asmasked && actnumsv_[idx] == 0) {
                     cellvols_[idx] = numerics::UNDEF_XTGEO;
                     continue;
                 }
-                auto crn = grid3d::get_cell_corners_from_ijk(grd, i, j, k);
+                auto crn = grd.cell_corners_cache[i * nrow * nlay + j * nlay + k];
                 cellvols_[idx] = geometry::hexahedron_volume(crn, precision);
             }
         }
@@ -64,6 +120,8 @@ get_cell_centers(const Grid &grd, const bool asmasked)
     auto zmid_ = zmid.mutable_unchecked<3>();
     auto actnumsv_ = grd.actnumsv.unchecked<3>();
 
+    grd.ensure_cell_corners_cache();
+
     for (size_t i = 0; i < grd.ncol; i++) {
         for (size_t j = 0; j < grd.nrow; j++) {
             for (size_t k = 0; k < grd.nlay; k++) {
@@ -73,7 +131,8 @@ get_cell_centers(const Grid &grd, const bool asmasked)
                     zmid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
                     continue;
                 }
-                auto crn = grid3d::get_cell_corners_from_ijk(grd, i, j, k);
+                auto crn =
+                  grd.cell_corners_cache[i * grd.nrow * grd.nlay + j * grd.nlay + k];
 
                 xmid_(i, j, k) =
                   0.125 *
@@ -94,9 +153,9 @@ get_cell_centers(const Grid &grd, const bool asmasked)
 }
 
 /*
- * Compute cell height above ffl (free fluid level), as input to water saturation. Will
- * return hbot, htop, hmid (bottom of cell, top of cell, midpoint), but compute method
- * depends on option: 1: cell center above ffl, 2: cell corners above ffl
+ * Compute cell height above ffl (free fluid level), as input to water saturation.
+ * Will return hbot, htop, hmid (bottom of cell, top of cell, midpoint), but compute
+ * method depends on option: 1: cell center above ffl, 2: cell corners above ffl
  *
  * @param grd Grid struct
  * @param ffl Free fluid level per cell
@@ -118,6 +177,7 @@ get_height_above_ffl(const Grid &grd,
     auto actnumsv_ = grd.actnumsv.data();
     auto ffl_ = ffl.data();
 
+    grd.ensure_cell_corners_cache();
     for (size_t i = 0; i < grd.ncol; i++) {
         for (size_t j = 0; j < grd.nrow; j++) {
             for (size_t k = 0; k < grd.nlay; k++) {
@@ -128,7 +188,8 @@ get_height_above_ffl(const Grid &grd,
                     hmid_[idx] = numerics::UNDEF_XTGEO;
                     continue;
                 }
-                auto corners = grid3d::get_cell_corners_from_ijk(grd, i, j, k);
+                auto corners =
+                  grd.cell_corners_cache[i * grd.nrow * grd.nlay + j * grd.nlay + k];
                 if (option == 1) {
                     htop_[idx] =
                       ffl_[idx] - 0.25 * (corners.upper_sw.z + corners.upper_se.z +
@@ -307,6 +368,57 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refinement_pe
             }
         }
     return std::make_tuple(zcornref, actnumref);
+}
+/** @brief Get bounding box for 3D grid
+ * @param Grid input grid
+ * @return A tuple of two points, minimum values and maximum values
+ */
+
+std::tuple<xyz::Point, xyz::Point>
+get_bounding_box(const Grid &grid)
+{
+    // Initialize min and max values
+    double xmin = std::numeric_limits<double>::max();
+    double xmax = std::numeric_limits<double>::lowest();
+    double ymin = std::numeric_limits<double>::max();
+    double ymax = std::numeric_limits<double>::lowest();
+    double zmin = std::numeric_limits<double>::max();
+    double zmax = std::numeric_limits<double>::lowest();
+
+    Grid onelayer_grid = extract_onelayer_grid(grid);
+    onelayer_grid.ensure_cell_corners_cache();
+
+    // Step 2: Loop through all cells and find min/max values
+    for (size_t i = 0; i < grid.ncol; i++) {
+        for (size_t j = 0; j < grid.nrow; j++) {
+            // Get the corners of the cell
+            CellCorners corners =
+              onelayer_grid
+                .cell_corners_cache[i * onelayer_grid.nrow * onelayer_grid.nlay +
+                                    j * onelayer_grid.nlay + 0];
+
+            // Loop through the 8 corners to find min/max values
+            std::array<xyz::Point, 8> corner_points = {
+                corners.upper_sw, corners.upper_se, corners.upper_nw, corners.upper_ne,
+                corners.lower_sw, corners.lower_se, corners.lower_nw, corners.lower_ne
+            };
+
+            for (const auto &point : corner_points) {
+                xmin = std::min(xmin, point.x);
+                xmax = std::max(xmax, point.x);
+                ymin = std::min(ymin, point.y);
+                ymax = std::max(ymax, point.y);
+                zmin = std::min(zmin, point.z);
+                zmax = std::max(zmax, point.z);
+            }
+        }
+    }
+
+    // Create points to return
+    xyz::Point minv = { xmin, ymin, zmin };
+    xyz::Point maxv = { xmax, ymax, zmax };
+
+    return std::make_tuple(minv, maxv);
 }
 
 }  // namespace xtgeo::grid3d

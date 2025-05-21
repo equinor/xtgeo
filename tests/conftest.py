@@ -49,7 +49,7 @@ def pytest_addoption(parser):
 
 def _in_roxar_env():
     """Helper function to check if running in Roxar/RMS environment"""
-    return any(env in os.environ for env in ["ROXENV", "RMSENV_RELEASE"])
+    return any(env in os.environ for env in ["ROXENV", "RMSVENV_RELEASE"])
 
 
 def pytest_runtest_setup(item):
@@ -63,7 +63,7 @@ def pytest_runtest_setup(item):
 
     # pytest.mark.requires_roxar:
     if "requires_roxar" in markers and not _in_roxar_env():
-        pytest.skip("Skip test if outside RMSENV_RELEASE (former ROXENV)")
+        pytest.skip("Skip test if outside RMSVENV_RELEASE (former ROXENV)")
 
     # pytest.mark.requires_opm:
     if "requires_opm" in markers and "HAS_OPM" not in os.environ:

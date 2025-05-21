@@ -189,6 +189,23 @@ class XYZ(ABC):
         """Set the Pandas dataframe object."""
         ...
 
+    def get_xyz_arrays(self):
+        """Get the X, Y, Z arrays from the dataframe as a numpy (n, 3) vector.
+
+        Returns:
+            A numpy array with shape (n, 3) with the X, Y, Z values.
+
+        _versionadded:: 4.9
+        """
+        dataframe = self.get_dataframe(copy=False)
+        if dataframe is None:
+            return None
+        xarr = dataframe[self.xname].to_numpy()
+        yarr = dataframe[self.yname].to_numpy()
+        zarr = dataframe[self.zname].to_numpy()
+
+        return np.array([xarr, yarr, zarr]).T
+
     def protected_columns(self):
         """
         Returns:

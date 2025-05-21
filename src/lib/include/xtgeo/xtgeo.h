@@ -1181,48 +1181,6 @@ extern "C"
                              int *nradsearch,
                              int option);
 
-    int grd3d_points_ijk_cells(double *swig_np_dbl_in_v1,  // *xvec
-                               long n_swig_np_dbl_in_v1,   // nxvec
-                               double *swig_np_dbl_in_v2,  // *yvec
-                               long n_swig_np_dbl_in_v2,   // nyvec
-                               double *swig_np_dbl_in_v3,  // *zvec
-                               long n_swig_np_dbl_in_v3,   // nzvec
-
-                               int mcol,
-                               int mrow,
-                               double xori,
-                               double yori,
-                               double xinc,
-                               double yinc,
-                               double rotation,
-                               int yflip,
-                               double *maptopi,
-                               double *maptopj,
-                               double *mapbasi,
-                               double *mapbasj,
-
-                               int nx,
-                               int ny,
-                               int nz,
-                               double *swig_np_dbl_in_v4,  // *coordsv
-                               long n_swig_np_dbl_in_v4,   // ncoordin
-                               double *swig_np_dbl_in_v5,  // *p_zcoord_v
-                               long n_swig_np_dbl_in_v5,   // nzcornin
-                               int *swig_np_int_in_v1,     // *actnumsv
-                               long n_swig_np_int_in_v1,   // nactin
-
-                               double *swig_np_dbl_in_v6,  // *p_zcoordone_v
-                               long n_swig_np_dbl_in_v6,   // nzcornonein
-
-                               int actnumoption,
-
-                               int *swig_np_int_aout_v1,     // *ivec
-                               long n_swig_np_int_aout_v1,   // nivec
-                               int *swig_np_int_aout_v2,     // *jvec
-                               long n_swig_np_int_aout_v2,   // njvec
-                               int *swig_np_int_aout_v3,     // *kvec
-                               long n_swig_np_int_aout_v3);  // nkvec
-
     int grd3d_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,
                              long n_swig_np_dbl_in_v1,   // nxvec,
                              double *swig_np_dbl_in_v2,  // *yvec,

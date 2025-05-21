@@ -679,3 +679,7 @@ class Points(XYZ):
     @inherit_docstring(inherit_from=XYZ.get_boundary)
     def get_boundary(self):
         return super().get_boundary()
+
+    @inherit_docstring(inherit_from=XYZ.get_xyz_arrays)
+    def get_xyz_arrays(self):
+        return super().get_xyz_arrays()

@@ -26,12 +26,202 @@ def test_hexahedron_volume():
     # Get the corners of the first cell
     corners = _internal.grid3d.Grid(grid).get_cell_corners_from_ijk(0, 0, 0)
 
-    for prec in range(1, 5):
+    for prec in [
+        _internal.geometry.HexVolumePrecision.P1,
+        _internal.geometry.HexVolumePrecision.P2,
+        _internal.geometry.HexVolumePrecision.P4,
+    ]:
         volume = _internal.geometry.hexahedron_volume(corners, prec)
         assert volume == pytest.approx(1.0)
 
 
-def test_hexahedron_volume_banal6_cell(testdata_path):
+def test_simple_cell_volume():
+    """Test volumes using the overload cellcorners"""
+
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    known_volume = 1.0
+
+    vert = np.array(vertices, dtype=np.float64).flatten()
+    cell = _internal.grid3d.CellCorners(vert)
+    # Get the volume
+    volume_new = _internal.geometry.hexahedron_volume(cell, _internal.geometry.P2)
+    assert volume_new == pytest.approx(known_volume)
+
+
+def test_distorted_v1_cell_volume():
+    """Distorted cell with known volume"""
+
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 0.5, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.0, 0.5, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    known_volume = 0.75
+
+    vert = np.array(vertices, dtype=np.float64).flatten()
+    cell = _internal.grid3d.CellCorners(vert)
+    # Get the volume
+    volume = _internal.geometry.hexahedron_volume(
+        cell, _internal.geometry.HexVolumePrecision.P2
+    )
+    assert volume == pytest.approx(known_volume)
+
+
+def test_distorted_v2_cell_volume():
+    """Distorted cell with known volume, here the cells is a triangle"""
+
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    known_volume = 0.5
+
+    vert = np.array(vertices, dtype=np.float64).flatten()
+    cell = _internal.grid3d.CellCorners(vert)
+    # Get the volume
+    volume = _internal.geometry.hexahedron_volume(
+        cell, _internal.geometry.HexVolumePrecision.P2
+    )
+    assert volume == pytest.approx(known_volume)
+
+
+def test_distorted_v2_rev_cell_volume():
+    """As v2 but cells are mirrored"""
+
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    known_volume = 0.5
+
+    vert = np.array(vertices, dtype=np.float64).flatten()
+    cell = _internal.grid3d.CellCorners(vert)
+    # Get the volume
+    volume = _internal.geometry.hexahedron_volume(
+        cell, _internal.geometry.HexVolumePrecision.P2
+    )
+    assert volume == pytest.approx(known_volume)
+
+
+def test_distorted_v3_cell_volume():
+    """Distorted cell with known volume, here the cells is just collapsed"""
+
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    known_volume = 0.0
+
+    vert = np.array(vertices, dtype=np.float64).flatten()
+    cell = _internal.grid3d.CellCorners(vert)
+    # Get the volume
+    volume_new = _internal.geometry.hexahedron_volume(
+        cell, _internal.geometry.HexVolumePrecision.P2
+    )
+    assert volume_new == pytest.approx(known_volume)
+
+
+def test_distorted_v4_cell_volume():
+    """Distorted cell with known volume, here the cells are almost collapsed"""
+
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.99, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.99, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    known_volume = 0.005
+
+    vert = np.array(vertices, dtype=np.float64).flatten()
+    cell = _internal.grid3d.CellCorners(vert)
+    # Get the volume
+    volume_new = _internal.geometry.hexahedron_volume(
+        cell, _internal.geometry.HexVolumePrecision.P2
+    )
+    assert volume_new == pytest.approx(known_volume)
+
+
+def test_cell_volume_speed():
+    """Compare the speed of cell colume calculations"""
+
+    vertices = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ]
+
+    vert = np.array(vertices, dtype=np.float64).flatten()
+    cell_corners = _internal.grid3d.CellCorners(vert)
+
+    iterations = 100000
+    comment = f"Using {iterations} iterations"
+
+    @functimer(output="print", comment=comment)
+    def volume_2():
+        for i in range(iterations):
+            _internal.geometry.hexahedron_volume(
+                cell_corners, _internal.geometry.HexVolumePrecision.P2
+            )
+
+    @functimer(output="print", comment=comment)
+    def volume_4():
+        for i in range(iterations):
+            _internal.geometry.hexahedron_volume(
+                cell_corners, _internal.geometry.HexVolumePrecision.P4
+            )
+
+    volume_2()
+    volume_4()
+
+
+def test_hexahedron_volume_my_banal6_cell(testdata_path):
     """Test the hexahedron function using banal6 synth case"""
     # Read the banal6 grid
     grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/etc/banal6.roff")
@@ -39,16 +229,22 @@ def test_hexahedron_volume_banal6_cell(testdata_path):
     # Get the corners of a skew cell (2,1,2 in RMS using 1-based indexing)
     corners = _internal.grid3d.Grid(grid).get_cell_corners_from_ijk(1, 0, 1)
 
-    for prec in range(1, 5):
-        volume = _internal.geometry.hexahedron_volume(corners, prec)
-        assert volume == pytest.approx(1093.75, rel=1e-3)  # 1093.75 is RMS' value
+    precrange = [
+        _internal.geometry.HexVolumePrecision.P1,
+        _internal.geometry.HexVolumePrecision.P2,
+        _internal.geometry.HexVolumePrecision.P4,
+    ]
+
+    for prec in precrange:
+        volume1 = _internal.geometry.hexahedron_volume(corners, prec)
+        assert volume1 == pytest.approx(1093.75, rel=1e-3)  # 1093.75 is RMS' value
 
     # Get the corners of a another skew cell (4,1,2)
     corners = _internal.grid3d.Grid(grid).get_cell_corners_from_ijk(3, 0, 1)
 
-    for prec in range(1, 5):
-        volume = _internal.geometry.hexahedron_volume(corners, prec)
-        assert volume == pytest.approx(468.75, rel=1e-3)  # 468.75 is RMS' value
+    for prec in precrange:
+        volume2 = _internal.geometry.hexahedron_volume(corners, prec)
+        assert volume2 == pytest.approx(468.75, rel=1e-3)  # 468.75 is RMS' value
 
     # some work on the corners
     corners_np = corners.to_numpy()
