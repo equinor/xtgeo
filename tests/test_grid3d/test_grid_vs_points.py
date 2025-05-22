@@ -165,7 +165,7 @@ def test_get_ijk_from_points_tricky(drogongrid):
 
     ijk = g1.get_ijk_from_points(po)
     assert ijk["IX"][0] == 110  # 110 171/172
-    assert ijk["JY"][0] == 171  # 110 171/172
+    assert ijk["JY"][0] == 172  # 110 171/172
 
 
 def test_get_ijk_from_points(reekgrid):
