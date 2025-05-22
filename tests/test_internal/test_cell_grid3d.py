@@ -168,8 +168,8 @@ def test_get_cell_centers(get_drogondata):
     assert np.nanstd(ycor) == pytest.approx(2945.992, abs=0.1)
     assert np.nanstd(zcor) == pytest.approx(67.27, abs=0.1)
 
-    assert np.nansum(xcor) == pytest.approx(301686967304.8, abs=0.1)  # RMS 301686967112
-    assert np.nansum(ycor) == pytest.approx(3878865619174.5, abs=0.1)  # 3878865622519
+    assert np.nansum(xcor) == pytest.approx(301686967302.5, abs=0.1)  # RMS 301686967112
+    assert np.nansum(ycor) == pytest.approx(3878865619840.2, abs=0.1)  # 3878865622519
     assert np.nansum(zcor) == pytest.approx(1131994843.5, abs=0.1)  # 1131994843
 
     assert xcor[75, 23, 37] == pytest.approx(461837.19, abs=0.1)

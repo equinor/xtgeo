@@ -232,6 +232,7 @@ class RoffGrid:
         offset = (self.xoffset, self.yoffset, self.zoffset)
         scale = (self.xscale, self.yscale, self.zscale)
         coordsv = self.corner_lines.reshape((self.nx + 1, self.ny + 1, 2, 3))
+        coordsv = coordsv.astype(np.float64)  # ensure 64 bit precision for large coords
         coordsv = np.flip(coordsv, -2)
         coordsv = coordsv + offset
         coordsv *= scale

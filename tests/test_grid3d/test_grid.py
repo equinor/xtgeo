@@ -134,7 +134,7 @@ def test_emerald_grid_values(emerald_grid):
     mydy = float(dyv.values[31:32, 72:73, 0:1])
 
     assert mydx == pytest.approx(118.51, abs=0.01), "Grid DX Emerald"
-    assert mydy == pytest.approx(141.26, abs=0.01), "Grid DY Emerald"
+    assert mydy == pytest.approx(141.21, abs=0.01), "Grid DY Emerald"
 
     xvv, yvv, zvv = emerald_grid.get_xyz(names=["xxx", "yyy", "zzz"])
 
@@ -197,6 +197,15 @@ def test_roffbin_import_v2stress(testdata_path):
     """Test roff binary import ROFF using new API, compare timing etc."""
     for _ino in range(100):
         xtgeo.grid_from_file(testdata_path / REEKFIL4)
+
+
+def test_roff_coords_precision(testdata_path):
+    """Secure that ROFF reads large coords (Y mostly) correct."""
+    grd = xtgeo.grid_from_file(testdata_path / REEKFIL4)
+    clist = grd.get_xyz_cell_corners(ijk=(41, 64, 1))
+
+    assert clist[1] == pytest.approx(5933003.0812, abs=0.001)
+    assert clist[4] == pytest.approx(5933036.8560, abs=0.001)
 
 
 def test_convert_vs_xyz_cell_corners(testdata_path):
@@ -592,7 +601,7 @@ def test_get_property_between_surfaces_w_holes(testdata_path):
 
     prop = grd.get_property_between_surfaces(surf1, surf2)
 
-    assert prop.values.sum() == 129591  # verified manually in RMS
+    assert prop.values.sum() == 129592  # ~verified  in RMS (129591 there ~precision)
 
 
 def test_bad_egrid_ends_before_kw(tmp_path):
