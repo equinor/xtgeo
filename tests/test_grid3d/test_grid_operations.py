@@ -96,6 +96,35 @@ def test_inactivate_thin_cells(tmp_path, testdata_path):
     grd.to_file(tmp_path / "test_hybridgrid2_inact_thin.roff")
 
 
+def test_refine(testdata_path):
+    """Do a grid refinement in all diretion."""
+
+    emerald_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
+    assert emerald_grid.get_subgrids() == {"subgrid_0": 16, "subgrid_1": 30}
+
+    avg_dx1 = emerald_grid.get_dx().values.mean()
+    avg_dy1 = emerald_grid.get_dy().values.mean()
+    avg_dz1 = emerald_grid.get_dz().values.mean()
+
+    refine_x = 2
+    refine_y = 2
+    refine_z = 3
+
+    # idea; either a scalar (all cells), or a dictionary for zone wise
+    emerald_grid.refine(refine_x, refine_y, refine_z)
+
+    avg_dx2 = emerald_grid.get_dx().values.mean()
+    avg_dy2 = emerald_grid.get_dy().values.mean()
+    avg_dz2 = emerald_grid.get_dz().values.mean()
+
+    assert avg_dx1 == pytest.approx(refine_x * avg_dx2, abs=0.0001)
+    assert avg_dy1 == pytest.approx(refine_y * avg_dy2, abs=0.0001)
+    assert avg_dz1 == pytest.approx(refine_z * avg_dz2, abs=0.0001)
+
+    assert emerald_grid.get_subgrids() == {"subgrid_0": 48, "subgrid_1": 90}
+    emerald_grid.inactivate_by_dz(0.001)
+
+
 def test_refine_vertically(testdata_path):
     """Do a grid refinement vertically."""
 

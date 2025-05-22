@@ -421,4 +421,146 @@ get_bounding_box(const Grid &grid)
     return std::make_tuple(minv, maxv);
 }
 
+inline double
+interp1d(const double x1, const double x2, const double fx)
+{
+    return x1 + fx * (x2 - x1);
+};
+
+inline xyz::Point
+interp(const xyz::Point pt1, const xyz::Point pt2, const double f)
+{
+    return xyz::Point{ pt1.x + f * (pt2.x - pt1.x), pt1.y + f * (pt2.y - pt1.y),
+                       pt1.z + f * (pt2.z - pt1.z) };
+}
+
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+refine(const Grid &grid_cpp,
+       const py::array_t<uint8_t> refinement_per_col,
+       const py::array_t<uint8_t> refinement_per_row,
+       const py::array_t<uint8_t> refinement_per_layer)
+{
+    auto &logger = xtgeo::logging::LoggerManager::get("refine");
+
+    auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
+    auto coordsv_ = grid_cpp.coordsv.unchecked<3>();
+    auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
+
+    const auto *col_ref = refinement_per_col.data();
+    const auto *row_ref = refinement_per_row.data();
+    const auto *lay_ref = refinement_per_layer.data();
+
+    size_t ncol_ref = std::accumulate(col_ref, col_ref + grid_cpp.ncol, size_t(0));
+    size_t nrow_ref = std::accumulate(row_ref, row_ref + grid_cpp.nrow, size_t(0));
+    size_t nlay_ref = std::accumulate(lay_ref, lay_ref + grid_cpp.nlay, size_t(0));
+
+    py::array_t<double> coordref(std::vector<size_t>{ ncol_ref + 1, nrow_ref + 1, 6 });
+    py::array_t<float> zcornref(
+      std::vector<size_t>{ ncol_ref + 1, nrow_ref + 1, nlay_ref + 1, 4 });
+    py::array_t<int8_t> actnumref({ ncol_ref, nrow_ref, nlay_ref });
+
+    auto coordref_ = coordref.mutable_unchecked<3>();
+    auto zcornref_ = zcornref.mutable_unchecked<4>();
+    auto actnumref_ = actnumref.mutable_unchecked<3>();
+    logger.debug("Refine grid from {}x{}x{} to {}x{}x{} layers", grid_cpp.ncol,
+                 grid_cpp.nrow, grid_cpp.nlay, ncol_ref, nrow_ref, nlay_ref);
+
+    size_t ii = 0;  // Refine grid i counter
+    for (size_t i = 0; i < grid_cpp.ncol; i++) {
+        int rfi = col_ref[i];
+        size_t jj = 0;  // Refine grid i counter
+        for (size_t j = 0; j < grid_cpp.nrow; j++) {
+            int rfj = row_ref[j];
+            // Interpolate coordinates (top and bottom)
+            for (size_t ic = 0; ic < 2; ic++) {
+                /*
+                0 --a-- 1
+                |   |   |   0 - 1 looping through column
+                |   c-- |
+                |   |   |   0 - 2 looping through row
+                2 --b-- 3
+                */
+
+                xyz::Point pt[4] = {
+
+                    { coordsv_(i, j, 3 * ic), coordsv_(i, j, 3 * ic + 1),
+                      coordsv_(i, j, 3 * ic + 2) },
+                    { coordsv_(i + 1, j, 3 * ic), coordsv_(i + 1, j, 3 * ic + 1),
+                      coordsv_(i + 1, j, 3 * ic + 2) },
+                    { coordsv_(i, j + 1, 3 * ic), coordsv_(i, j + 1, 3 * ic + 1),
+                      coordsv_(i, j + 1, 3 * ic + 2) },
+                    { coordsv_(i + 1, j + 1, 3 * ic),
+                      coordsv_(i + 1, j + 1, 3 * ic + 1),
+                      coordsv_(i + 1, j + 1, 3 * ic + 2) }
+                };
+
+                for (int ir = 0; ir <= rfi; ir++) {
+                    if (i > 0 && ir == 0)
+                        continue;
+
+                    double fx = double(ir) / rfi;
+                    xyz::Point pta = interp(pt[0], pt[1], fx);
+                    xyz::Point ptb = interp(pt[2], pt[3], fx);
+                    for (int jr = 0; jr <= rfj; jr++) {
+                        if (j > 0 && jr == 0)
+                            continue;
+                        double fy = double(jr) / rfj;
+                        xyz::Point ptc = interp(pta, ptb, fy);
+                        coordref_(ii + ir, jj + jr, 3 * ic) = ptc.x;
+                        coordref_(ii + ir, jj + jr, 3 * ic + 1) = ptc.y;
+                        coordref_(ii + ir, jj + jr, 3 * ic + 2) = ptc.z;
+                    }
+                }
+            }
+
+            size_t kk = 0;  // Refine grid k counter
+            for (size_t k = 0; k < grid_cpp.nlay; k++) {
+                int rfk = lay_ref[k];
+                // Interpolate zcorners
+                for (size_t ic = 0; ic < 4; ++ic) {
+                    double ztop[4] = { zcornsv_(i, j, k, ic), zcornsv_(i + 1, j, k, ic),
+                                       zcornsv_(i, j + 1, k, ic),
+                                       zcornsv_(i + 1, j + 1, k, ic) };
+                    double zbot[4] = { zcornsv_(i, j, k + 1, ic),
+                                       zcornsv_(i + 1, j, k + 1, ic),
+                                       zcornsv_(i, j + 1, k + 1, ic),
+                                       zcornsv_(i + 1, j + 1, k + 1, ic) };
+                    for (int ir = 0; ir <= rfi; ir++) {
+                        if (i > 0 && ir == 0)
+                            continue;
+                        double fx = double(ir) / rfi;
+                        double za_top = interp1d(ztop[0], ztop[1], fx);
+                        double zb_top = interp1d(ztop[2], ztop[3], fx);
+                        double za_bot = interp1d(zbot[0], zbot[1], fx);
+                        double zb_bot = interp1d(zbot[2], zbot[3], fx);
+                        for (int jr = 0; jr <= rfj; ++jr) {
+                            if (j > 0 && jr == 0)
+                                continue;
+                            double fy = double(jr) / rfj;
+                            double zc_top = interp1d(za_top, zb_top, fy);
+                            double zc_bot = interp1d(za_bot, zb_bot, fy);
+                            for (int kr = 0; kr <= rfk; ++kr) {
+                                if (k > 0 && kr == 0)
+                                    continue;
+                                double fz = double(kr) / rfk;
+                                double zc = interp1d(zc_top, zc_bot, fz);
+                                zcornref_(ii + ir, jj + jr, kk + kr, ic) = float(zc);
+                            }
+                        }
+                    }
+                }
+                // Refine actnum
+                for (int ir = 0; ir < rfi; ++ir)
+                    for (int jr = 0; jr < rfj; ++jr)
+                        for (int kr = 0; kr < rfk; ++kr)
+                            actnumref_(ii + ir, jj + jr, kk + kr) = actnumsv_(i, j, k);
+                kk += rfk;
+            }
+            jj += rfj;
+        }
+        ii += rfi;
+    }
+    return std::make_tuple(coordref, zcornref, actnumref);
+}
+
 }  // namespace xtgeo::grid3d

@@ -118,6 +118,12 @@ get_indices_from_pointset(const Grid &grid,
 // PYTHON BINDINGS, IF NEEDED
 // =====================================================================================
 
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+refine(const Grid &grid_cpp,
+       const py::array_t<uint8_t> refine_col,
+       const py::array_t<uint8_t> refine_row,
+       const py::array_t<uint8_t> refine_layer);
+
 inline void
 init(py::module &m)
 {
@@ -148,11 +154,12 @@ init(py::module &m)
       .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
            "Adjust layers in a boxgrid given a list of regular surfaces.",
            py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
-      .def("refine_vertically", &refine_vertically, "Refine vertically, proportionally")
       .def("extract_onelayer_grid", &extract_onelayer_grid, "Get a a onelayer grid")
       .def("get_bounding_box", &get_bounding_box, "Get bounding box of full grid")
       .def("get_indices_from_pointset", &get_indices_from_pointset,
            "Get the indices of a point set in the grid")
+      .def("refine_vertically", &refine_vertically, "Refine vertically, proportionally")
+      .def("refine", &refine, "Refine proportionally");
 
       ;
 
