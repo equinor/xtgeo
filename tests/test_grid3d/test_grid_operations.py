@@ -97,7 +97,7 @@ def test_inactivate_thin_cells(tmp_path, testdata_path):
 
 
 def test_refine(testdata_path):
-    """Do a grid refinement in all diretion."""
+    """Do a grid refinement in all direction."""
 
     emerald_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
     assert emerald_grid.get_subgrids() == {"subgrid_0": 16, "subgrid_1": 30}

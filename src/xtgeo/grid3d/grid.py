@@ -2465,7 +2465,7 @@ class Grid(_Grid3D):
         self,
         refine_col: int,
         refine_row: int,
-        refine_layer: int | dict | None,
+        refine_layer: int | dict,
         zoneprop: GridProperty | None = None,
     ) -> None:
         """Refine grid in all direction, proportionally.
@@ -2496,12 +2496,14 @@ class Grid(_Grid3D):
             RuntimeError: if mismatch in dimensions for refine_layer and zoneprop
 
         """
-        _grid_refine.refine(self, refine_col, refine_row, refine_layer)
+        _grid_refine.refine(
+            self, refine_col, refine_row, refine_layer, zoneprop=zoneprop
+        )
         self._tmp = {}
 
     def refine_vertically(
         self,
-        rfactor: int | dict | None,
+        rfactor: int | dict,
         zoneprop: GridProperty | None = None,
     ) -> None:
         """Refine vertically, proportionally.
