@@ -111,6 +111,11 @@ def refine(
     else:
         self.set_subgrids(newsubgrids)
 
+    # Check if grid has any properties
+    if self._props and self._props.props and len(self._props.props) > 0:
+        for prop in self._props.props:
+            prop.refine(refine_col, refine_row, refine_factors)
+
     return self
 
 
@@ -199,5 +204,10 @@ def refine_vertically(
         self.subgrids = None
     else:
         self.set_subgrids(newsubgrids)
+
+    # Check if grid has any properties
+    if self._props and self._props.props and len(self._props.props) > 0:
+        for prop in self._props.props:
+            prop.refine(1, 1, refine_factors)
 
     return self

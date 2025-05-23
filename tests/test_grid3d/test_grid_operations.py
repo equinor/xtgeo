@@ -102,6 +102,12 @@ def test_refine(testdata_path):
     emerald_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
     assert emerald_grid.get_subgrids() == {"subgrid_0": 16, "subgrid_1": 30}
 
+    emerald_grid.append_prop(
+        xtgeo.gridproperty_from_file(testdata_path / EMERFILE, name="REGION")
+    )
+
+    df1 = emerald_grid.get_dataframe()
+
     avg_dx1 = emerald_grid.get_dx().values.mean()
     avg_dy1 = emerald_grid.get_dy().values.mean()
     avg_dz1 = emerald_grid.get_dz().values.mean()
@@ -112,6 +118,10 @@ def test_refine(testdata_path):
 
     # idea; either a scalar (all cells), or a dictionary for zone wise
     emerald_grid.refine(refine_x, refine_y, refine_z)
+
+    df2 = emerald_grid.get_dataframe()
+
+    assert df1["REGION"].mean() == pytest.approx(df2["REGION"].mean(), rel=1e-6)
 
     avg_dx2 = emerald_grid.get_dx().values.mean()
     avg_dy2 = emerald_grid.get_dy().values.mean()
@@ -133,8 +143,18 @@ def test_refine_vertically(testdata_path):
 
     avg_dz1 = emerald_grid.get_dz().values.mean()
 
+    emerald_grid.append_prop(
+        xtgeo.gridproperty_from_file(testdata_path / EMERFILE, name="REGION")
+    )
+
+    df1 = emerald_grid.get_dataframe()
+
     # idea; either a scalar (all cells), or a dictionary for zone wise
     emerald_grid.refine_vertically(3)
+
+    df2 = emerald_grid.get_dataframe()
+
+    assert df1["REGION"].mean() == pytest.approx(df2["REGION"].mean(), rel=1e-6)
 
     avg_dz2 = emerald_grid.get_dz().values.mean()
 
