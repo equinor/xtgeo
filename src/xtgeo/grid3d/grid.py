@@ -2470,9 +2470,9 @@ class Grid(_Grid3D):
     ) -> None:
         """Refine grid in all direction, proportionally.
 
-        The rfactor can be a scalar or a dictionary.
+        The refine_layer can be a scalar or a dictionary.
 
-        If rfactor is a dict and zoneprop is None, then the current
+        If refine_layer is a dict and zoneprop is None, then the current
         subgrids array is used. If zoneprop is defined, the
         current subgrid index will be redefined for the case. A warning will
         be issued if subgrids are defined, but the give zone
@@ -2488,7 +2488,7 @@ class Grid(_Grid3D):
             refine_layer (scalar or dict): Refinement factor for layer, if dict, then
                 the dictionary must be consistent with self.subgrids if this is
                 present.
-            zoneprop (GridProperty): Zone property; must be defined if rfactor
+            zoneprop (GridProperty): Zone property; must be defined if refine_layer
                 is a dict
 
         Returns:
