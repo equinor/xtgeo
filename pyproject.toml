@@ -52,6 +52,7 @@ dependencies = [
     "matplotlib>=3.3",
     "numpy",
     "pandas>=1.1",
+    "pyarrow",
     "resfo>=4.0.0",
     "roffio>=0.0.2",
     "scipy>=1.5",

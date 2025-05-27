@@ -32,9 +32,19 @@ def _data_reader_factory(file_format: FileFormat):
         return _xyz_io.import_zmap
     if file_format == FileFormat.RMS_ATTR:
         return _xyz_io.import_rms_attr
+    if file_format == FileFormat.CSV:
+        return _xyz_io.import_csv_points
+    if file_format == FileFormat.PARQUET:
+        return _xyz_io.import_parquet_points
 
     extensions = FileFormat.extensions_string(
-        [FileFormat.XYZ, FileFormat.ZMAP_ASCII, FileFormat.RMS_ATTR]
+        [
+            FileFormat.XYZ,
+            FileFormat.ZMAP_ASCII,
+            FileFormat.RMS_ATTR,
+            FileFormat.CSV,
+            FileFormat.PARQUET,
+        ]
     )
     raise InvalidFileFormatError(
         f"File format {file_format} is invalid for type Points. "
@@ -183,6 +193,8 @@ def points_from_file(pfile: str | pathlib.Path, fformat: str | None = "guess"):
     Supported formats are:
 
         * 'xyz' or 'poi' or 'pol': Simple XYZ format
+        * 'csv': Comma separated values, with at least three columns X, Y, Z
+        * 'parquet': Parquet format with mandatory columns X, Y, Z
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
         * 'rms_attr': RMS points formats with attributes (extra columns)
         * 'guess': Try to choose file format based on extension
@@ -538,7 +550,7 @@ class Points(XYZ):
         self,
         pfile,
         fformat="xyz",
-        attributes=True,
+        attributes: bool | list[str] = True,
         pfilter=None,
         wcolumn=None,
         hcolumn=None,
@@ -549,7 +561,7 @@ class Points(XYZ):
 
         Args:
             pfile (str): Name of file
-            fformat (str): File format xyz/poi/pol or rms_attr
+            fformat (str): File format xyz/poi/pol/csv/parquet/rms_attr
             attributes (bool or list): List of extra columns to export (some formats)
                 or True for all attributes present
             pfilter (dict): Filter on e.g. top name(s) with keys TopName

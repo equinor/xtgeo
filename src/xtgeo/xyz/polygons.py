@@ -38,8 +38,14 @@ def _data_reader_factory(file_format: FileFormat):
         return _xyz_io.import_xyz
     if file_format == FileFormat.ZMAP_ASCII:
         return _xyz_io.import_zmap
+    if file_format == FileFormat.CSV:
+        return _xyz_io.import_csv_polygons
+    if file_format == FileFormat.PARQUET:
+        return _xyz_io.import_parquet_polygons
 
-    extensions = FileFormat.extensions_string([FileFormat.XYZ, FileFormat.ZMAP_ASCII])
+    extensions = FileFormat.extensions_string(
+        [FileFormat.XYZ, FileFormat.ZMAP_ASCII, FileFormat.CSV, FileFormat.PARQUET]
+    )
     raise InvalidFileFormatError(
         f"File format {file_format} is invalid for type Polygons. "
         f"Supported formats are {extensions}."
@@ -119,6 +125,8 @@ def polygons_from_file(pfile: str | pathlib.Path, fformat: str | None = "guess")
     Supported formats are:
 
         * 'xyz' or 'pol': Simple XYZ format
+        * 'csv': CSV format with mandatory columns X, Y, Z and POLY_ID
+        * 'parquet': Parquet format with mandatory columns X, Y, Z and POLY_ID
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
         * 'guess': Try to choose file format based on extension
 
@@ -489,19 +497,23 @@ class Polygons(XYZ):
     def to_file(
         self,
         pfile,
-        fformat="xyz",
+        fformat: str = "xyz",
+        attributes: bool | list[str] = False,
     ):
         """Export Polygons to file.
 
         Args:
             pfile (str): Name of file
-            fformat (str): File format xyz/poi/pol
+            fformat (str): File format xyz/pol/csv/parquet
+            attributes: If True or a list, attributes (additional columns) will be
+                preserved if supported by the file format (currently only supported
+                by CSV and PARQUET format). The default is False.
 
         Returns:
             Number of polygon points exported
         """
 
-        return _xyz_io.to_file(self, pfile, fformat=fformat, ispolygons=True)
+        return _xyz_io.to_file(self, pfile, fformat=fformat, attributes=attributes)
 
     def to_roxar(
         self,

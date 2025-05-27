@@ -85,6 +85,8 @@ class FileFormat(Enum):
     XTG = ["xtg", "xtgeo", "xtgf", "xtgcpprop", "xtg.*"]
     XYZ = ["xyz", "poi", "pol"]
     RMS_ATTR = ["rms_attr", "rms_attrs", "rmsattr.*"]
+    CSV = ["csv", "csv.*"]
+    PARQUET = ["parquet", "parquet.*", "pq"]
     UNKNOWN = ["unknown"]
 
     @staticmethod
