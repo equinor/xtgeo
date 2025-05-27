@@ -5,7 +5,6 @@ import pytest
 
 import xtgeo
 from xtgeo.surface import RegularSurface
-from xtgeo.xyz import Points
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +33,6 @@ def test_list_xy_points_as_numpies(reek_map):
 
 def test_map_to_points(tmp_path, reek_map, testdata_path):
     """Get the list of the coordinates"""
-
-    px = Points()
 
     surf = xtgeo.surface_from_file(testdata_path / FTOP1)
 

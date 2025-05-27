@@ -1,6 +1,9 @@
 """Private import and export routines for XYZ stuff."""
 
+from __future__ import annotations
+
 import contextlib
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -30,6 +33,132 @@ def import_xyz(pfile, zname=_AttrName.ZNAME.value):
             na_values=999.00,
         ),
     }
+
+
+def _import_table(pfile, xyztype, file_format="csv"):
+    """Simple CSV or Parquet file. Generic reader for Points and Polygons.
+
+    Table files (CSV, ...) can have some variants, e.g.:
+    * 3 columns, X Y Z
+    * 4 columns, X Y Z POLYID  (if polygon)
+    * 4 columns, <index>, X Y Z
+    * 5 columns, <index>, X Y Z POLYID
+    * 5+ columns, <index>, X Y Z POLYID <name> <attr1> <attr2> ...
+    * 4+ columns, <index>, X Y Z <attr1> <attr2> ... (points)
+    """
+
+    # First do a raw read to get the columns and check if it is a valid CSV
+    # file. If not, then raise an error.
+    if file_format == "parquet":
+        try:
+            dataframe = pd.read_parquet(pfile.file)
+        except ValueError as verr:
+            # If the file is not a valid Parquet
+            raise IOError(f"File is not a valid Parquet file: {verr}")
+    else:
+        try:
+            dataframe = pd.read_csv(pfile.file, comment="#")
+        except ValueError as verr:
+            # If the file is not a valid CSV
+            raise IOError(f"File is not a valid CSV file: {verr}")
+
+    columns = dataframe.columns
+    if "Unnamed" in columns[0]:
+        # The first column is an index column which is removed
+        dataframe = dataframe.iloc[:, 1:]
+        columns = dataframe.columns
+    ncol = len(columns)
+
+    if ncol == 3:
+        if xyztype == _XYZType.POLYGONS.value:
+            # If the file is a polygon file, add a POLY_ID column
+            dataframe["POLY_ID"] = 0
+            return {
+                "xname": columns[0],
+                "yname": columns[1],
+                "zname": columns[2],
+                "pname": _AttrName.PNAME.value,
+                "values": dataframe,
+            }
+
+        # points with 3 columns, X Y Z
+        return {
+            "xname": columns[0],
+            "yname": columns[1],
+            "zname": columns[2],
+            "values": dataframe,
+        }
+    if xyztype == _XYZType.POLYGONS.value and ncol == 4:
+        return {
+            "xname": columns[0],
+            "yname": columns[1],
+            "zname": columns[2],
+            "pname": columns[3],
+            "values": dataframe,
+        }
+    if xyztype == _XYZType.POLYGONS.value and ncol > 4:
+        # need to infer the attrs from column 5...
+        attr_names = columns[4:]
+        attrs = {}
+        for attr in attr_names:
+            # Check if the column is numeric
+            if pd.api.types.is_numeric_dtype(dataframe[attr]):
+                # next infer if it is a float or int
+                if pd.api.types.is_float_dtype(dataframe[attr]):
+                    attrs[attr] = "float"
+                elif pd.api.types.is_integer_dtype(dataframe[attr]):
+                    attrs[attr] = "int"
+            else:
+                attrs[attr] = "str"
+
+        return {
+            "xname": columns[0],
+            "yname": columns[1],
+            "zname": columns[2],
+            "pname": columns[3],
+            "attributes": attrs,
+            "values": dataframe,
+        }
+    if xyztype == _XYZType.POINTS.value and ncol > 3:
+        # need to infer the attrs from column 5...
+        attr_names = columns[3:]
+        attrs = {}
+        for attr in attr_names:
+            # Check if the column is numeric
+            if pd.api.types.is_numeric_dtype(dataframe[attr]):
+                # next infer if it is a float or int
+                if pd.api.types.is_float_dtype(dataframe[attr]):
+                    attrs[attr] = "float"
+                elif pd.api.types.is_integer_dtype(dataframe[attr]):
+                    attrs[attr] = "int"
+            else:
+                attrs[attr] = "str"
+
+        return {
+            "xname": columns[0],
+            "yname": columns[1],
+            "zname": columns[2],
+            "attributes": attrs,
+            "values": dataframe,
+        }
+    return None
+    # More than 4 columns, assume that the first three are X Y Z
+
+
+def import_csv_polygons(pfile):
+    return _import_table(pfile, _XYZType.POLYGONS.value, file_format="csv")
+
+
+def import_csv_points(pfile):
+    return _import_table(pfile, _XYZType.POINTS.value, file_format="csv")
+
+
+def import_parquet_polygons(pfile):
+    return _import_table(pfile, _XYZType.POLYGONS.value, file_format="parquet")
+
+
+def import_parquet_points(pfile):
+    return _import_table(pfile, _XYZType.POINTS.value, file_format="parquet")
 
 
 def import_zmap(pfile, zname=_AttrName.ZNAME.value):
@@ -179,26 +308,26 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
 
 
 def to_file(
-    xyz,
+    xyz,  # Points | Polygons instance
     pfile,
     fformat="xyz",
-    attributes=False,
+    attributes: bool | list[str] = False,
     pfilter=None,
     wcolumn=None,
     hcolumn=None,
     mdcolumn="M_MDEPTH",
-    ispolygons=False,
     **kwargs,
 ):
     """Export XYZ (Points/Polygons) to file.
 
     Args:
         pfile (str): Name of file
-        fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
+        fformat (str): File format xyz/poi/pol/rms_attr/rms_wellpicks/csv/parquet,
+            dependent if Points or Polygons
         attributes (bool or list): List of extra columns to export (some formats)
             or True for all attributes present
         pfilter (dict): Filter on e.g. top name(s) with keys TopName
-            or ZoneName as {'TopName': ['Top1', 'Top2']}
+            or ZoneName as {'TopName': ['Top1', 'Top2']}. Only for points!
         wcolumn (str): Name of well column (rms_wellpicks format only)
         hcolumn (str): Name of horizons column (rms_wellpicks format only)
         mdcolumn (str): Name of MD column (rms_wellpicks format only)
@@ -230,9 +359,7 @@ def to_file(
     if fformat is None or fformat in FileFormat.XYZ.value:
         # NB! reuse export_rms_attr function, but no attributes
         # are possible
-        ncount = export_rms_attr(
-            xyz, pfile.name, attributes=False, pfilter=pfilter, ispolygons=ispolygons
-        )
+        ncount = export_rms_attr(xyz, pfile.name, attributes=False, pfilter=pfilter)
 
     elif fformat in FileFormat.RMS_ATTR.value:
         ncount = export_rms_attr(
@@ -240,12 +367,29 @@ def to_file(
             pfile.name,
             attributes=attributes,
             pfilter=pfilter,
-            ispolygons=ispolygons,
+        )
+    elif fformat in FileFormat.CSV.value:
+        ncount = export_table(
+            xyz,
+            pfile.name,
+            attributes=attributes,
+            pfilter=pfilter,
+            file_format="csv",
+        )
+    elif fformat in FileFormat.PARQUET.value:
+        ncount = export_table(
+            xyz,
+            pfile.name,
+            attributes=attributes,
+            pfilter=pfilter,
+            file_format="parquet",
         )
     elif fformat == "rms_wellpicks":
         ncount = export_rms_wpicks(xyz, pfile.name, hcolumn, wcolumn, mdcolumn=mdcolumn)
     else:
-        extensions = FileFormat.extensions_string([FileFormat.XYZ, FileFormat.RMS_ATTR])
+        extensions = FileFormat.extensions_string(
+            [FileFormat.XYZ, FileFormat.RMS_ATTR, FileFormat.PARQUET, FileFormat.CSV]
+        )
         raise InvalidFileFormatError(
             f"File format {fformat} is invalid for type Points or Polygons. "
             f"Supported formats are {extensions}, 'rms_wellpicks'."
@@ -260,7 +404,7 @@ def to_file(
     return ncount
 
 
-def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False):
+def export_rms_attr(self, pfile, attributes=True, pfilter=None):
     """Export til RMS attribute, also called RMS extended set.
 
     If attributes is None, then it will be a simple XYZ file.
@@ -300,24 +444,35 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
                     f"Valid keys are {df.columns}"
                 )
 
-    if ispolygons:
+    if self._xyztype == _XYZType.POLYGONS.value:  # a bit weird: TODO fixup
         if not attributes and self._pname in df.columns:
             # need to convert the dataframe
             df = _convert_idbased_xyz(self, df)
-    elif attributes is True:
-        attributes = list(self._attrs.keys())
-        logger.info("Use all attributes: %s", attributes)
+    elif attributes:
+        use_attributes = list(self._attrs.keys())
+        if isinstance(attributes, bool):
+            all_attrs = list(self._attrs.keys())
+            logger.info("Use all attributes: %s", all_attrs)
 
-        for column in (self._xname, self._yname, self._zname):
-            try:
-                attributes.remove(column)
-            except ValueError:
-                continue
-    if isinstance(attributes, list):
+        elif attributes and isinstance(attributes, list):
+            all_attrs = list(self._attrs.keys())
+            # Ensure that the attributes are in the dataframe
+            for attr in attributes:
+                if attr not in all_attrs:
+                    raise ValueError(
+                        f"Attribute {attr} is not a valid attribute. "
+                        f"Valid attributes are: {all_attrs}"
+                    )
+            use_attributes = deepcopy(attributes)
+        else:
+            raise TypeError(
+                f"Attributes must be a bool or a list, not {type(attributes)}"
+            )
+
         mode = "a"
-        columns += attributes
+        columns += use_attributes
         with open(pfile, "w") as fout:
-            for col in attributes:
+            for col in use_attributes:
                 if col in df.columns:
                     fout.write(transl[self._attrs[col]] + " " + col + "\n")
                     if self._attrs[col] == "int":
@@ -325,8 +480,98 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None, ispolygons=False
                     elif self._attrs[col] == "float":
                         df[col] = df[col].replace(UNDEF, "UNDEF")
 
+    elif not attributes:
+        df = df[[self._xname, self._yname, self.zname]]
+
     with open(pfile, mode) as fc:
         df.to_csv(fc, sep=" ", header=None, columns=columns, index=False)
+
+    return len(df.index)
+
+
+def export_table(self, pfile, file_format="csv", attributes=False, pfilter=None):
+    """Export to CSV or Parquet file.
+
+    Args:
+        pfile: Output file path.
+        file_format: "csv" or "parquet".
+        attributes: bool or list. If True, use all attributes.
+        pfilter: Optional filter dict.
+
+    Returns:
+        Number of rows exported.
+    """
+    df = self.get_dataframe(copy=True)
+
+    if not df.index.any():
+        logger.warning("Nothing to export")
+        return 0
+
+    # Fill NaNs for CSV (optional: you may want to skip for Parquet)
+    if file_format == "csv":
+        df = df.fillna(value=999.0)
+
+    # Apply filter if any (Points only)
+    if self._xyztype == _XYZType.POINTS.value and pfilter:
+        for key, val in pfilter.items():
+            if key in df.columns:
+                df = df.loc[df[key].isin(val)]
+            else:
+                raise KeyError(
+                    f"The requested pfilter key {key} was not found in dataframe. "
+                    f"Valid keys are {df.columns}"
+                )
+
+    # Select columns based on type and attributes
+    if self._xyztype == _XYZType.POLYGONS.value and not attributes:
+        df = df.iloc[:, 0:4]
+    elif self._xyztype == _XYZType.POINTS.value and not attributes:
+        df = df.iloc[:, 0:3]
+    elif attributes:
+        if isinstance(attributes, bool):
+            attributes = list(self._attrs.keys())
+            logger.info("Use all attributes: %s", attributes)
+            print("Attributes are: ", attributes)
+        elif isinstance(attributes, list):
+            logger.info("Use attributes: %s", attributes)
+            all_attrs = list(self._attrs.keys())
+
+            # Ensure that the attributes are in the dataframe
+            for attr in attributes:
+                if attr not in all_attrs:
+                    raise ValueError(
+                        f"Attribute {attr} is not a valid attribute. "
+                        f"Valid attributes are: {all_attrs}"
+                    )
+
+            for attr in all_attrs:
+                if attr not in attributes:
+                    # If the attribute is not in the list, remove it
+                    del df[attr]
+                    logger.debug(
+                        "Attribute %s is not in the export list, removing", attr
+                    )
+
+        else:
+            raise TypeError(
+                f"Attributes must be a bool or a list, not {type(attributes)}"
+            )
+
+        if self._xyztype == _XYZType.POLYGONS.value:
+            # Ensure POLY_ID is included
+            if self._pname not in df.columns:
+                df[self._pname] = 0
+            df = df[[self._xname, self._yname, self._zname, self._pname] + attributes]
+        else:
+            df = df[[self._xname, self._yname, self._zname] + attributes]
+    # Export
+    if file_format == "csv":
+        with open(pfile, "w") as fc:
+            df.to_csv(fc, index=False)
+    elif file_format == "parquet":
+        df.to_parquet(pfile, index=False)
+    else:
+        raise ValueError(f"Unsupported file format: {file_format}")
 
     return len(df.index)
 

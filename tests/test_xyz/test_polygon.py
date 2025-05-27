@@ -11,11 +11,27 @@ from xtgeo.xyz import Points, Polygons
 PFILE1A = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 PFILE1B = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.xyz")
 PFILE1C = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.pol")
+PFILE1D = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.csv")
+PFILE1E = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly_with_index.csv")
 PFILE = pathlib.Path("points/eme/1/emerald_10_random.poi")
 POLSET2 = pathlib.Path("polygons/reek/1/polset2.pol")
 POLSET3 = pathlib.Path("polygons/etc/outline.pol")
 POLSET4 = pathlib.Path("polygons/etc/well16.pol")
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
+
+
+@pytest.fixture
+def polygons_with_attrs():
+    plist = [
+        (234.0, 556.0, 11.0, 0, "some", 1.0),
+        (235.0, 559.0, 14.0, 1, "attr", 1.1),
+        (255.0, 577.0, 12.0, 1, "here", 1.2),
+    ]
+    attrs = {
+        "sometxt": "str",
+        "somefloat": "float",
+    }
+    return plist, attrs
 
 
 @pytest.mark.parametrize(
@@ -24,6 +40,8 @@ POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
         (PFILE1A, "zmap"),
         (PFILE1B, "xyz"),
         (PFILE1C, "pol"),
+        (PFILE1D, "csv"),
+        (PFILE1E, "csv"),
     ],
 )
 def test_polygons_from_file_alternatives(testdata_path, filename, fformat):
@@ -31,6 +49,117 @@ def test_polygons_from_file_alternatives(testdata_path, filename, fformat):
     polygons2 = xtgeo.polygons_from_file(testdata_path / filename)
 
     pd.testing.assert_frame_equal(polygons1.get_dataframe(), polygons2.get_dataframe())
+
+
+def test_polygons_io_file_roundtrip(testdata_path, tmp_path):
+    """Test roundtrip of polygons from file and back"""
+
+    mypol = xtgeo.polygons_from_file(testdata_path / PFILE1A, fformat="zmap")
+
+    # pol
+    mypol.to_file(tmp_path / "test_roundtrip.pol", fformat="pol")
+
+    mypol2 = xtgeo.polygons_from_file(tmp_path / "test_roundtrip.pol", fformat="pol")
+
+    pd.testing.assert_frame_equal(
+        mypol.get_dataframe(), mypol2.get_dataframe(), check_dtype=False
+    )
+
+    # csv
+    mypol.to_file(tmp_path / "test_roundtrip.csv", fformat="csv")
+    mypol2 = xtgeo.polygons_from_file(tmp_path / "test_roundtrip.csv", fformat="csv")
+    pd.testing.assert_frame_equal(
+        mypol.get_dataframe(), mypol2.get_dataframe(), check_dtype=False
+    )
+
+
+def test_polygons_io_with_attrs(polygons_with_attrs, tmp_path):
+    """Test roundtrip of polygons with attributes from file and back.
+
+    Note that some formats does not store attributes.
+    """
+
+    plist, attrs = polygons_with_attrs
+
+    mypol = Polygons(plist, attributes=attrs)
+    mypol_no_attrs = mypol.copy()
+    mypol_no_attrs.set_dataframe(
+        mypol_no_attrs.get_dataframe()[["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]]
+    )
+
+    # pol
+    usefile = tmp_path / "test_roundtrip_no_attrs.pol"
+    mypol_no_attrs.to_file(usefile, fformat="pol")
+    mypol2 = xtgeo.polygons_from_file(usefile, fformat="pol")
+    pd.testing.assert_frame_equal(
+        mypol_no_attrs.get_dataframe(), mypol2.get_dataframe(), check_dtype=False
+    )
+
+    # csv, no attributes
+    usefile = tmp_path / "test_roundtrip_no_attrs.csv"
+    mypol.to_file(usefile, fformat="csv")
+    mypol2 = xtgeo.polygons_from_file(usefile, fformat="csv")
+    pd.testing.assert_frame_equal(
+        mypol_no_attrs.get_dataframe(), mypol2.get_dataframe(), check_dtype=False
+    )
+
+    # csv, with attributes
+    usefile = tmp_path / "test_roundtrip_with_attrs.csv"
+    print("Using", usefile)
+    mypol.to_file(usefile, fformat="csv", attributes=True)
+    mypol2 = xtgeo.polygons_from_file(usefile, fformat="csv")
+    pd.testing.assert_frame_equal(
+        mypol.get_dataframe(), mypol2.get_dataframe(), check_dtype=False
+    )
+
+
+def test_polygons_io_table_with_some_attrs(polygons_with_attrs, tmp_path):
+    """Test roundtrip with selected attributes from file and back for csv/pq."""
+
+    plist, attrs = polygons_with_attrs
+
+    mypol = Polygons(plist, attributes=attrs)
+    mypol_no_attrs = mypol.copy()
+    mypol_no_attrs.set_dataframe(
+        mypol_no_attrs.get_dataframe()[["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]]
+    )
+
+    # csv/parquet, "somefloat" only as attr
+    for fmt in ["csv", "parquet"]:
+        usefile = tmp_path / f"test_roundtrip_some_attrs.{fmt}"
+        mypol.to_file(usefile, fformat=fmt, attributes=["somefloat"])
+        mypol2 = xtgeo.polygons_from_file(usefile, fformat=fmt)
+
+        pd.testing.assert_frame_equal(
+            mypol.get_dataframe().iloc[:, :4],
+            mypol2.get_dataframe().iloc[:, :4],
+            check_dtype=False,
+        )
+
+        assert "somefloat" in mypol2.get_dataframe().columns
+        assert "sometxt" not in mypol2.get_dataframe().columns
+
+
+def test_polygons_io_table_with_wrong_attrs(polygons_with_attrs, tmp_path):
+    """Test when wrong attributes to file."""
+
+    plist, attrs = polygons_with_attrs
+
+    mypol = Polygons(plist, attributes=attrs)
+    mypol_no_attrs = mypol.copy()
+    mypol_no_attrs.set_dataframe(
+        mypol_no_attrs.get_dataframe()[["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]]
+    )
+
+    usefile = tmp_path / "test_table_wrong_attrs.csv"
+
+    with pytest.raises(ValueError, match="Attribute nosuch1 is not a valid attribute"):
+        # this should raise an error
+        mypol.to_file(usefile, fformat="csv", attributes=["nosuch1", "nosuch2"])
+
+    # Here attributes is not a list or a bool
+    with pytest.raises(TypeError, match="Attributes must be a bool or a list"):
+        mypol.to_file(usefile, fformat="csv", attributes="nosuch1")
 
 
 def test_polygons_from_lists():
@@ -55,15 +184,8 @@ def test_polygons_from_lists():
     assert mypol.get_dataframe().equals(mypol2.get_dataframe())
 
 
-def test_polygons_from_list_and_attrs():
-    plist = [
-        (234, 556, 11, 0, "some", 1.0),
-        (235, 559, 14, 1, "attr", 1.1),
-        (255, 577, 12, 1, "here", 1.2),
-    ]
-    attrs = {}
-    attrs["sometxt"] = "str"
-    attrs["somefloat"] = "float"
+def test_polygons_from_list_and_attrs(polygons_with_attrs):
+    plist, attrs = polygons_with_attrs
 
     mypol = Polygons(plist, attributes=attrs)
     assert mypol.get_dataframe()["POLY_ID"].values[2] == 1
@@ -73,18 +195,17 @@ def test_polygons_from_list_and_attrs():
     assert mypol.get_dataframe().equals(mypol2.get_dataframe())
 
 
-def test_polygons_from_attrs_not_ordereddict():
+def test_polygons_from_attrs_not_ordereddict(polygons_with_attrs):
     """Make polygons with attrs from list of tuples ndarray or dataframe.
 
     It seems that python 3.6 dicts are actually ordered "but cannot be trusted"?
     In python 3.7+ it is a feature.
     """
 
-    plist = [
-        (234, 556, 11, 0, "some", 1.0),
-        (235, 559, 14, 1, "attr", 1.1),
-        (255, 577, 12, 1, "here", 1.2),
-    ]
+    plist, attrs = polygons_with_attrs
+
+    mypol = Polygons(plist, attributes=attrs)
+
     attrs = {}
     attrs["sometxt"] = "str"
     attrs["somefloat"] = "float"
@@ -93,15 +214,8 @@ def test_polygons_from_attrs_not_ordereddict():
     assert mypol.get_dataframe()["POLY_ID"].values[2] == 1
 
 
-def test_polygons_with_attrs_copy():
-    plist = [
-        (234, 556, 11, 0, "some", 1.0),
-        (235, 559, 14, 1, "attr", 1.1),
-        (255, 577, 12, 1, "here", 1.2),
-    ]
-    attrs = {}
-    attrs["sometxt"] = "str"
-    attrs["somefloat"] = "float"
+def test_polygons_with_attrs_copy(polygons_with_attrs):
+    plist, attrs = polygons_with_attrs
 
     mypol = Polygons(plist, attributes=attrs)
 
@@ -110,19 +224,24 @@ def test_polygons_with_attrs_copy():
     assert_frame_equal(mypol.get_dataframe(), cppol.get_dataframe())
 
 
-def test_import_zmap_and_xyz(testdata_path):
+def test_import_zmap_xyz_csv(testdata_path):
     """Import XYZ polygons on ZMAP and XYZ format from file"""
 
     mypol2a = xtgeo.polygons_from_file(testdata_path / PFILE1A, fformat="zmap")
     mypol2b = xtgeo.polygons_from_file(testdata_path / PFILE1B)
     mypol2c = xtgeo.polygons_from_file(testdata_path / PFILE1C)
+    mypol2d = xtgeo.polygons_from_file(testdata_path / PFILE1D)
 
     assert mypol2a.nrow == mypol2b.nrow
     assert mypol2b.nrow == mypol2c.nrow
+    assert mypol2c.nrow == mypol2d.nrow
 
     for col in ["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]:
         assert np.allclose(
             mypol2a.get_dataframe()[col].values, mypol2b.get_dataframe()[col].values
+        )
+        assert np.allclose(
+            mypol2c.get_dataframe()[col].values, mypol2d.get_dataframe()[col].values
         )
 
 
