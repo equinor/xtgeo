@@ -548,7 +548,7 @@ class GridProperty(_Grid3D):
         self._filesrc = src
 
     @property
-    def roxar_dtype(self) -> Roxar_DType | None:
+    def roxar_dtype(self) -> Roxar_DType:
         """Get or set the roxar dtype (if any)."""
         return self._roxar_dtype
 
@@ -1102,7 +1102,8 @@ class GridProperty(_Grid3D):
         xprop.roxorigin = self._roxorigin
         xprop.roxar_dtype = self.roxar_dtype
 
-        xprop.filesrc = self._filesrc
+        if self._filesrc:
+            xprop.filesrc = self._filesrc
 
         return xprop
 
