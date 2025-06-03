@@ -96,6 +96,56 @@ def test_inactivate_thin_cells(tmp_path, testdata_path):
     grd.to_file(tmp_path / "test_hybridgrid2_inact_thin.roff")
 
 
+def test_refine(testdata_path):
+    """Do a grid refinement in all direction."""
+
+    grid = xtgeo.create_box_grid(
+        (100, 100, 50), increment=(100, 100, 20), rotation=45.0
+    )
+
+    avg_dx1 = grid.get_dx().values.mean()
+    avg_dy1 = grid.get_dy().values.mean()
+    avg_dz1 = grid.get_dz().values.mean()
+
+    refine_x = 2
+    refine_y = 2
+    refine_z = 3
+
+    # idea; either a scalar (all cells), or a dictionary for zone wise
+    grid.refine(refine_x, refine_y, refine_z)
+
+    avg_dx2 = grid.get_dx().values.mean()
+    avg_dy2 = grid.get_dy().values.mean()
+    avg_dz2 = grid.get_dz().values.mean()
+
+    assert avg_dx1 == pytest.approx(refine_x * avg_dx2, abs=0.0001)
+    assert avg_dy1 == pytest.approx(refine_y * avg_dy2, abs=0.0001)
+    assert avg_dz1 == pytest.approx(refine_z * avg_dz2, abs=0.0001)
+
+
+def test_refine_lateral_with_dict(testdata_path):
+    """Do lateral grid refinement from i = 41 - 60, j = 41 - 60 with factor 2"""
+
+    grid = xtgeo.create_box_grid(
+        (100, 100, 50), increment=(100, 100, 20), rotation=45.0
+    )
+
+    avg_dx1 = grid.get_dx().values[40:60, 40:60, :].mean()
+    avg_dy1 = grid.get_dy().values[40:60, 40:60, :].mean()
+
+    refinement = 2
+
+    refine_factor = dict.fromkeys(range(41, 61), refinement)
+
+    grid.refine(refine_factor, refine_factor, 1)
+
+    avg_dx2 = grid.get_dx().values[40:80, 40:80, :].mean()
+    avg_dy2 = grid.get_dy().values[40:80, 40:80, :].mean()
+
+    assert avg_dx1 == pytest.approx(refinement * avg_dx2, abs=0.0001)
+    assert avg_dy1 == pytest.approx(refinement * avg_dy2, abs=0.0001)
+
+
 def test_refine_vertically(testdata_path):
     """Do a grid refinement vertically."""
 

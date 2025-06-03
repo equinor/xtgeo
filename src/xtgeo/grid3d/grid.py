@@ -2461,9 +2461,49 @@ class Grid(_Grid3D):
             region_number=region_number,
         )
 
+    def refine(
+        self,
+        refine_col: int | dict[int, int],
+        refine_row: int | dict[int, int],
+        refine_layer: int | dict,
+        zoneprop: GridProperty | None = None,
+    ) -> None:
+        """Refine grid in all direction, proportionally.
+
+        The refine_layer can be a scalar or a dictionary.
+
+        If refine_layer is a dict and zoneprop is None, then the current
+        subgrids array is used. If zoneprop is defined, the
+        current subgrid index will be redefined for the case. A warning will
+        be issued if subgrids are defined, but the give zone
+        property is inconsistent with this.
+
+        Also, if a zoneprop is defined but no current subgrids in the grid,
+        then subgrids will be added to the grid, if more than 1 subgrid.
+
+        Args:
+            self (object): A grid XTGeo object
+            refine_col (scalar or dict): Refinement factor for each column.
+            refine_row (scalar or dict): Refinement factor for each row.
+            refine_layer (scalar or dict): Refinement factor for layer, if dict, then
+                the dictionary must be consistent with self.subgrids if this is
+                present.
+            zoneprop (GridProperty): Zone property; must be defined if refine_layer
+                is a dict
+
+        Returns:
+            ValueError: if..
+            RuntimeError: if mismatch in dimensions for refine_layer and zoneprop
+
+        """
+        _grid_refine.refine(
+            self, refine_col, refine_row, refine_layer, zoneprop=zoneprop
+        )
+        self._tmp = {}
+
     def refine_vertically(
         self,
-        rfactor: int | dict | None,
+        rfactor: int | dict,
         zoneprop: GridProperty | None = None,
     ) -> None:
         """Refine vertically, proportionally.
