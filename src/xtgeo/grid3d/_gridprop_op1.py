@@ -172,3 +172,35 @@ def operation_polygons(
 
     self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
     del tmp
+
+
+def refine(
+    self: GridProperty,
+    refine_col: int | list[int],
+    refine_row: int | list[int],
+    refine_layer: int | list[int],
+) -> None:
+    """
+    Refines the grid property values along specified columns, rows, and layers.
+    This method increases the resolution of the grid property by repeating
+    the values along the specified axes. The number of repetitions for each
+    axis can be provided as either an integer or a list of integers.
+    Args:
+        refine_col (int | list[int]): Number of times to repeat values along the
+            column axis. Can be a single integer or a list of integers specifying
+            repetitions for each column.
+        refine_row (int | list[int]): Number of times to repeat values along the row
+            axis. Can be a single integer or a list of integers specifying
+            repetitions for each row.
+        refine_layer (int | list[int]): Number of times to repeat values along the
+            layer axis. Can be a single integer or a list of integers
+            specifying repetitions for each layer.
+    Returns:
+        None: The method updates the internal grid property values in place.
+    """
+    mask = np.ma.getmaskarray(self._values)
+    values = self._values.data
+    for i, val in enumerate([refine_col, refine_row, refine_layer]):
+        values = np.repeat(values, val, axis=i)
+        mask = np.repeat(mask, val, axis=i)
+    self._values = np.ma.array(values, mask=mask)

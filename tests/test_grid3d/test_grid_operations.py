@@ -154,8 +154,18 @@ def test_refine_vertically(testdata_path):
 
     avg_dz1 = emerald_grid.get_dz().values.mean()
 
+    emerald_grid.append_prop(
+        xtgeo.gridproperty_from_file(testdata_path / EMERFILE, name="REGION")
+    )
+
+    df1 = emerald_grid.get_dataframe()
+
     # idea; either a scalar (all cells), or a dictionary for zone wise
     emerald_grid.refine_vertically(3)
+
+    df2 = emerald_grid.get_dataframe()
+
+    assert df1["REGION"].mean() == pytest.approx(df2["REGION"].mean(), rel=1e-6)
 
     avg_dz2 = emerald_grid.get_dz().values.mean()
 
