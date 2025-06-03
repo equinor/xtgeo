@@ -34,6 +34,12 @@ shape_function(int i, double xi, double eta, double zeta)
            (1.0 + zeta * zeta_coords[i]);
 }
 
+inline double
+lerp(double x1, double x2, double t)
+{
+    return x1 + (x2 - x1) * t;
+}
+
 }  // namespace xtgeo::geometry::generic
 
 namespace xtgeo::geometry::point {

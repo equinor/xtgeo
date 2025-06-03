@@ -114,6 +114,11 @@ get_indices_from_pointset(const Grid &grid,
                           const regsurf::RegularSurface &base_j,
                           const bool active_only);
 
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
+
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
 // =====================================================================================
 // PYTHON BINDINGS, IF NEEDED
 // =====================================================================================
@@ -148,13 +153,15 @@ init(py::module &m)
       .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
            "Adjust layers in a boxgrid given a list of regular surfaces.",
            py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
-      .def("refine_vertically", &refine_vertically, "Refine vertically, proportionally")
       .def("extract_onelayer_grid", &extract_onelayer_grid, "Get a a onelayer grid")
       .def("get_bounding_box", &get_bounding_box, "Get bounding box of full grid")
       .def("get_indices_from_pointset", &get_indices_from_pointset,
            "Get the indices of a point set in the grid")
+      .def("refine_vertically", &refine_vertically, "Refine vertically, proportionally")
+      .def("refine_columns", &refine_columns, "Refine per column proportionally")
+      .def("refine_rows", &refine_rows, "Refine per row proportionally");
 
-      ;
+    ;
 
     py::class_<CellCorners>(m_grid3d, "CellCorners")
       // a constructor that takes 8 xyz::Point objects

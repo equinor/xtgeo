@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <tuple>
 #include <xtgeo/geometry.hpp>
+#include <xtgeo/geometry_basics.hpp>
 #include <xtgeo/grid3d.hpp>
 #include <xtgeo/logging.hpp>
 #include <xtgeo/numerics.hpp>
@@ -369,6 +370,7 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refinement_pe
         }
     return std::make_tuple(zcornref, actnumref);
 }
+
 /** @brief Get bounding box for 3D grid
  * @param Grid input grid
  * @return A tuple of two points, minimum values and maximum values
@@ -419,6 +421,224 @@ get_bounding_box(const Grid &grid)
     xyz::Point maxv = { xmax, ymax, zmax };
 
     return std::make_tuple(minv, maxv);
+}
+
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
+{
+    auto &logger = xtgeo::logging::LoggerManager::get("refine_columns");
+    auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
+    auto coordsv_ = grid_cpp.coordsv.unchecked<3>();
+    auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
+
+    const size_t ncol = grid_cpp.ncol;
+    const size_t nrow = grid_cpp.nrow;
+    const size_t nlay = grid_cpp.nlay;
+
+    const auto refinement_data = refinement.data();
+    const size_t ncol_ref =
+      std::accumulate(refinement_data, refinement_data + grid_cpp.ncol, size_t(0));
+
+    py::array_t<double> coordref(std::vector<size_t>{ ncol_ref + 1, nrow + 1, 6 });
+    py::array_t<float> zcornref(
+      std::vector<size_t>{ ncol_ref + 1, nrow + 1, nlay + 1, 4 });
+    py::array_t<int8_t> actnumref({ ncol_ref, nrow, nlay });
+
+    auto coordref_ = coordref.mutable_unchecked<3>();
+    auto zcornref_ = zcornref.mutable_unchecked<4>();
+    auto actnumref_ = actnumref.mutable_unchecked<3>();
+    logger.debug("Refine grid from {}x{}x{} to {}x{}x{} layers", ncol, nrow, nlay,
+                 ncol_ref, nrow, nlay);
+
+    size_t ii = 0;  // Refine grid i counter
+    for (size_t i = 0; i < ncol; i++) {
+        size_t ref_factor = refinement_data[i];
+        for (size_t j = 0; j < nrow + 1; j++) {
+            // Calculate COORD
+            // Interpolate coordinates (top and bottom)
+            for (size_t ic = 0; ic < 2; ic++) {
+                double x1 = coordsv_(i, j, 3 * ic);
+                double y1 = coordsv_(i, j, 3 * ic + 1);
+                double z1 = coordsv_(i, j, 3 * ic + 2);
+
+                double x2 = coordsv_(i + 1, j, 3 * ic);
+                double y2 = coordsv_(i + 1, j, 3 * ic + 1);
+                double z2 = coordsv_(i + 1, j, 3 * ic + 2);
+
+                for (int ir = 0; ir <= ref_factor; ir++) {
+                    if (i > 0 && ir == 0)
+                        continue;  // Skip re-calculate previous point
+
+                    if (ir == 0) {
+                        coordref_(ii + ir, j, 3 * ic) = x1;
+                        coordref_(ii + ir, j, 3 * ic + 1) = y1;
+                        coordref_(ii + ir, j, 3 * ic + 2) = z1;
+                    } else if (ir == ref_factor) {
+                        coordref_(ii + ir, j, 3 * ic) = x2;
+                        coordref_(ii + ir, j, 3 * ic + 1) = y2;
+                        coordref_(ii + ir, j, 3 * ic + 2) = z2;
+                    } else {
+                        auto pt = numerics::lerp3d(x1, y1, z1, x2, y2, z2,
+                                                   double(ir) / ref_factor);
+                        coordref_(ii + ir, j, 3 * ic) = pt.x;
+                        coordref_(ii + ir, j, 3 * ic + 1) = pt.y;
+                        coordref_(ii + ir, j, 3 * ic + 2) = pt.z;
+                    }
+                }
+            }
+
+            // Calculate ZCORN
+            for (size_t k = 0; k < nlay + 1; k++) {
+                double pillar[4] = { // South pilar
+                                     zcornsv_(i, j, k, 1), zcornsv_(i + 1, j, k, 0),
+                                     // North pillar
+                                     zcornsv_(i, j, k, 3), zcornsv_(i + 1, j, k, 2)
+                };
+                for (int ir = 0; ir <= ref_factor; ir++) {
+                    if (i > 0 && ir == 0)
+                        continue;  // Skip re-calculate previous point
+
+                    if (ir == 0) {
+                        for (size_t ic = 0; ic < 4; ic++)
+                            zcornref_(ii + ir, j, k, ic) = zcornsv_(i, j, k, ic);
+                    } else {
+
+                        double fr = double(ir) / ref_factor;
+                        double z_south =
+                          geometry::generic::lerp(pillar[0], pillar[1], fr);
+                        double z_north =
+                          geometry::generic::lerp(pillar[2], pillar[3], fr);
+                        if (ir == ref_factor) {
+                            zcornref_(ii + ir, j, k, 0) = z_south;
+                            zcornref_(ii + ir, j, k, 1) = zcornsv_(i + 1, j, k, 1);
+                            zcornref_(ii + ir, j, k, 2) = z_north;
+                            zcornref_(ii + ir, j, k, 3) = zcornsv_(i + 1, j, k, 3);
+                        } else {
+                            zcornref_(ii + ir, j, k, 0) = z_south;
+                            zcornref_(ii + ir, j, k, 1) = z_south;
+                            zcornref_(ii + ir, j, k, 2) = z_north;
+                            zcornref_(ii + ir, j, k, 3) = z_north;
+                        }
+                    }
+                }
+                if (j < nrow && k < nlay)
+                    // Refine actnum
+                    for (int ir = 0; ir < ref_factor; ++ir)
+                        actnumref_(ii + ir, j, k) = actnumsv_(i, j, k);
+            }
+        }
+        ii += ref_factor;
+    }
+    return std::make_tuple(coordref, zcornref, actnumref);
+}
+
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
+refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
+{
+    auto &logger = xtgeo::logging::LoggerManager::get("refine_rows");
+    auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
+    auto coordsv_ = grid_cpp.coordsv.unchecked<3>();
+    auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
+
+    const size_t ncol = grid_cpp.ncol;
+    const size_t nrow = grid_cpp.nrow;
+    const size_t nlay = grid_cpp.nlay;
+
+    const auto refinement_data = refinement.data();
+    const size_t nrow_ref =
+      std::accumulate(refinement_data, refinement_data + grid_cpp.nrow, size_t(0));
+
+    py::array_t<double> coordref(std::vector<size_t>{ ncol + 1, nrow_ref + 1, 6 });
+    py::array_t<float> zcornref(
+      std::vector<size_t>{ ncol + 1, nrow_ref + 1, nlay + 1, 4 });
+    py::array_t<int8_t> actnumref({ ncol, nrow_ref, nlay });
+
+    auto coordref_ = coordref.mutable_unchecked<3>();
+    auto zcornref_ = zcornref.mutable_unchecked<4>();
+    auto actnumref_ = actnumref.mutable_unchecked<3>();
+    logger.debug("Refine grid from {}x{}x{} to {}x{}x{} layers", ncol, nrow, nlay, ncol,
+                 nrow_ref, nlay);
+
+    for (size_t i = 0; i < ncol + 1; i++) {
+        size_t jj = 0;  // Refine grid j counter
+        for (size_t j = 0; j < nrow; j++) {
+            size_t ref_factor = refinement_data[j];
+            // Calculate COORD
+            for (size_t ic = 0; ic < 2; ic++) {
+                double x1 = coordsv_(i, j, 3 * ic);
+                double y1 = coordsv_(i, j, 3 * ic + 1);
+                double z1 = coordsv_(i, j, 3 * ic + 2);
+
+                double x2 = coordsv_(i, j + 1, 3 * ic);
+                double y2 = coordsv_(i, j + 1, 3 * ic + 1);
+                double z2 = coordsv_(i, j + 1, 3 * ic + 2);
+
+                for (size_t jr = 0; jr <= ref_factor; jr++) {
+                    if (j > 0 && jr == 0)
+                        continue;  // Skip re-calculate previous point
+                    if (jr == 0) {
+                        coordref_(i, jj + jr, 3 * ic) = x1;
+                        coordref_(i, jj + jr, 3 * ic + 1) = y1;
+                        coordref_(i, jj + jr, 3 * ic + 2) = z1;
+                    } else if (jr == ref_factor) {
+                        coordref_(i, jj + jr, 3 * ic) = x2;
+                        coordref_(i, jj + jr, 3 * ic + 1) = y2;
+                        coordref_(i, jj + jr, 3 * ic + 2) = z2;
+                    } else {
+                        auto pt = numerics::lerp3d(x1, y1, z1, x2, y2, z2,
+                                                   double(jr) / ref_factor);
+                        coordref_(i, jj + jr, 3 * ic) = pt.x;
+                        coordref_(i, jj + jr, 3 * ic + 1) = pt.y;
+                        coordref_(i, jj + jr, 3 * ic + 2) = pt.z;
+                    }
+                }
+            }
+
+            // Calculate ZCORN
+            for (size_t k = 0; k < grid_cpp.nlay; k++) {
+                for (size_t idx_vert = 0; idx_vert < 2;
+                     idx_vert++)  // Vertical loop, Top - Bottom
+                {
+                    double pillar[4] = { // West pilar
+                                         zcornsv_(i, j, k + idx_vert, 2),
+                                         zcornsv_(i, j + 1, k + idx_vert, 0),
+                                         // East pillar
+                                         zcornsv_(i, j, k + idx_vert, 3),
+                                         zcornsv_(i, j + 1, k + idx_vert, 1)
+                    };
+                    for (int jr = 0; jr <= ref_factor; jr++) {
+                        if (j > 0 && jr == 0)
+                            continue;  // Skip re-calculate previous point
+                        if (jr == 0) {
+                            for (size_t ic = 0; ic < 4; ic++)
+                                zcornref_(i, jj + jr, k + idx_vert, ic) =
+                                  zcornsv_(i, j, k + idx_vert, ic);
+                        } else if (jr == ref_factor) {
+                            for (size_t ic = 0; ic < 4; ic++)
+                                zcornref_(i, jj + jr, k + idx_vert, ic) =
+                                  zcornsv_(i, j + 1, k + idx_vert, ic);
+                        } else {
+                            double fr = double(jr) / ref_factor;
+                            double z_west =
+                              geometry::generic::lerp(pillar[0], pillar[1], fr);
+                            double z_east =
+                              geometry::generic::lerp(pillar[2], pillar[3], fr);
+                            zcornref_(i, jj + jr, k + idx_vert, 0) =
+                              zcornref_(i, jj + jr, k + idx_vert, 2) = z_west;
+                            zcornref_(i, jj + jr, k + idx_vert, 1) =
+                              zcornref_(i, jj + jr, k + idx_vert, 3) = z_east;
+                        }
+                    }
+                }
+                if (i < ncol)
+                    // Refine actnum
+                    for (int jr = 0; jr < ref_factor; ++jr)
+                        actnumref_(i, jj + jr, k) = actnumsv_(i, j, k);
+            }
+            jj += ref_factor;
+        }
+    }
+    return std::make_tuple(coordref, zcornref, actnumref);
 }
 
 }  // namespace xtgeo::grid3d
