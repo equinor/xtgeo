@@ -513,7 +513,7 @@ def get_ijk_from_points(
     proplist = {}
     if includepoints:
         proplist["X_UTME"] = points_df[points.xname].to_numpy()
-        proplist["Y_UTME"] = points_df[points.yname].to_numpy()
+        proplist["Y_UTMN"] = points_df[points.yname].to_numpy()
         proplist["Z_TVDSS"] = points_df[points.zname].to_numpy()
 
     proplist[columnnames[0]] = iarr
