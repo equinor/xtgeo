@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -629,7 +629,16 @@ class Well:
         )
         return cls(**kwargs)
 
-    def to_roxar(self, *args, **kwargs):
+    def to_roxar(
+        self,
+        project: Any,
+        wname: str,
+        lognames: str | list[str] = "all",
+        realisation: int = 0,
+        trajectory: str = "Drilled trajectory",
+        logrun: str = "log",
+        update_option: str = None,
+    ):
         """Export (save/store) a well to a roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
@@ -640,13 +649,13 @@ class Well:
 
 
         Args:
-            project (str, object): Magic string 'project' or file path to project
-            wname (str): Name of well, as shown in RMS.
-            lognames (:obj:list or :obj:str): List of lognames to save, or
+            project: Magic string 'project' or file path to project
+            wname: Name of well, as shown in RMS.
+            lognames: List of lognames to save, or
                 use simply 'all' for current logs for this well. Default is 'all'
-            realisation (int): Currently inactive
-            trajectory (str): Name of trajectory in RMS, default is "Drilled trajectory"
-            logrun (str): Name of logrun in RMS, defaault is "log"
+            realisation: Currently inactive
+            trajectory: Name of trajectory in RMS, default is "Drilled trajectory"
+            logrun: Name of logrun in RMS, default is "log"
             update_option (str): None | "overwrite" | "append". This only applies
                 when the well (wname) exists in RMS, and rules are based on name
                 matching. Default is None which means that all well logs in
@@ -693,18 +702,6 @@ class Well:
         .. versionchanged:: 3.5
             Add key ``update_option``
         """
-        # use *args, **kwargs since this method is overrided in blocked_well, and
-        # signature should be the same (TODO: change this to keywords; think this is
-        # a python 2.7 relict?)
-
-        project = args[0]
-        wname = args[1]
-        lognames = kwargs.get("lognames", "all")
-        trajectory = kwargs.get("trajectory", "Drilled trajectory")
-        logrun = kwargs.get("logrun", "log")
-        realisation = kwargs.get("realisation", 0)
-        update_option = kwargs.get("update_option")
-
         logger.debug("Not in use: realisation %s", realisation)
 
         _well_roxapi.export_well_roxapi(
