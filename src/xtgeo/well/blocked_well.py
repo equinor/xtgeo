@@ -1,5 +1,9 @@
 """XTGeo blockedwell module"""
 
+from __future__ import annotations
+
+from typing import Any
+
 import pandas as pd
 
 from xtgeo.common._xyz_enum import _AttrName
@@ -168,7 +172,16 @@ class BlockedWell(Well):
 
         return newbw
 
-    def to_roxar(self, *args, **kwargs):
+    def to_roxar(
+        self,
+        project: Any,
+        gridname: str,
+        bwname: str,
+        wname: str,
+        lognames: str | list[str] = "all",
+        realisation: int = 0,
+        ijk: bool = False,
+    ) -> None:
         """Set (export) a single blocked well item inside roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
@@ -181,33 +194,24 @@ class BlockedWell(Well):
            will not be saved until the user do an explicit project save action.
 
         Args:
-            project (str or object): Magic object 'project' or file path to project
-            gname (str): Name of GridModel icon in RMS
-            bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
-            wname (str): Name of well, as shown in RMS.
-            lognames (list or "all"): List of lognames to include, or use 'all' for
+            project: Magic object 'project' or file path to project
+            gridname: Name of GridModel icon in RMS
+            bwname: Name of Blocked Well icon in RMS, usually 'BW'
+            wname: Name of well, as shown in RMS.
+            lognames: List of lognames to include, or use 'all' for
                 all current blocked logs for this well (except index logs). Default is
                 "all".
-            realisation (int): Realisation index (0 is default)
-            ijk (bool): If True, then also write special index logs if they exist,
+            realisation: Realisation index (0 is default)
+            ijk: If True, then also write special index logs if they exist,
                 such as I_INDEX, J_INDEX, K_INDEX, etc. Default is False
 
         .. versionadded: 2.12
 
         """
-        # TODO: go from *args, **kwargs to keywords
-        project = args[0]
-        gname = args[1]
-        bwname = args[2]
-        wname = args[3]
-        lognames = kwargs.get("lognames", "all")
-        ijk = kwargs.get("ijk", False)
-        realisation = kwargs.get("realisation", 0)
-
         _blockedwell_roxapi.export_bwell_roxapi(
             self,
             project,
-            gname,
+            gridname,
             bwname,
             wname,
             lognames=lognames,

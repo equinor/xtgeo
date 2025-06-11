@@ -1,5 +1,9 @@
 """BlockedWells module, (collection of BlockedWell objects)"""
 
+from __future__ import annotations
+
+from typing import Any
+
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
@@ -94,7 +98,15 @@ class BlockedWells(Wells):
         logger.debug("Calling super...")
         return super().get_well(name)
 
-    def _from_roxar(self, *args, **kwargs):  # pragma: no cover
+    def _from_roxar(
+        self,
+        project: Any,
+        gridname: str,
+        bwname: str,
+        lognames: str | list[str],
+        ijk: bool,
+        realisation: int = 0,
+    ):
         """Import (retrieve) blocked wells from roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
@@ -103,20 +115,20 @@ class BlockedWells(Wells):
         All the wells present in the bwname icon will be imported.
 
         Args:
-            project (str): Magic string 'project' or file path to project
-            gname (str): Name of GridModel icon in RMS
-            bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
-            lognames (list): List of lognames to include, or use 'all' for
+            project: Magic string 'project' or file path to project
+            gridname: Name of GridModel icon in RMS
+            bwname: Name of Blocked Well icon in RMS, usually 'BW'
+            lognames: List of lognames to include, or use 'all' for
                 all current blocked logs for this well.
-            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
-            realisation (int): Realisation index (0 is default)
+            ijk: If True, then logs with grid IJK as I_INDEX, etc
+            realisation: Realisation index (0 is default)
         """
-        project = args[0]
-        gname = args[1]
-        bwname = args[2]
-        lognames = kwargs.get("lognames")
-        ijk = kwargs.get("ijk", True)
-
         _blockedwells_roxapi.import_bwells_roxapi(
-            self, project, gname, bwname, lognames=lognames, ijk=ijk
+            self,
+            project,
+            gridname,
+            bwname,
+            lognames=lognames,
+            ijk=ijk,
+            realisation=realisation,
         )
