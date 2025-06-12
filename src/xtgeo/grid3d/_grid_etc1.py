@@ -420,11 +420,11 @@ def get_ijk(
     """Get I J K as properties."""
     ashape = self.dimensions
 
-    ix, jy, kz = np.indices(ashape)
+    ix_idx, jy_idx, kz_idx = np.indices(ashape)
 
-    ix = ix.ravel()
-    jy = jy.ravel()
-    kz = kz.ravel()
+    ix = ix_idx.ravel()
+    jy = jy_idx.ravel()
+    kz = kz_idx.ravel()
 
     if asmasked:
         actnum = self.get_actnum()
@@ -438,7 +438,7 @@ def get_ijk(
         jy += 1
         kz += 1
 
-    ix = GridProperty(
+    ix_gprop = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -446,7 +446,7 @@ def get_ijk(
         name=names[0],
         discrete=True,
     )
-    jy = GridProperty(
+    jy_gprop = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -454,7 +454,7 @@ def get_ijk(
         name=names[1],
         discrete=True,
     )
-    kz = GridProperty(
+    kz_gprop = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -464,7 +464,7 @@ def get_ijk(
     )
 
     # return the objects
-    return ix, jy, kz
+    return ix_gprop, jy_gprop, kz_gprop
 
 
 def get_ijk_from_points(
