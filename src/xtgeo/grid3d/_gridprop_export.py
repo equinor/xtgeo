@@ -20,6 +20,8 @@ from xtgeo.io._file import FileFormat, FileWrapper
 from ._roff_parameter import RoffParameter
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from xtgeo.common.types import FileLike
 
     from .grid_property import GridProperty
@@ -104,7 +106,7 @@ def _export_grdecl(
     fmt: str | None = None,
 ) -> None:
     """Export ascii or binary GRDECL"""
-    vals = gridprop.values.ravel(order="F")
+    vals: npt.NDArray = gridprop.values.ravel(order="F")
     if np.ma.isMaskedArray(vals):
         undef_export = 1 if gridprop.isdiscrete or "int" in str(dtype) else 0.0
         vals = np.ma.filled(vals, fill_value=undef_export)

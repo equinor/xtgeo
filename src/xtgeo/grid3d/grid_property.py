@@ -7,6 +7,7 @@ from types import FunctionType
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
+import numpy.typing as npt
 
 import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
@@ -47,16 +48,6 @@ if TYPE_CHECKING:
     from ._gridprop_op1 import XYValueLists
     from .grid import Grid
 
-    GridProperty_DType = Union[
-        type[np.uint8],
-        type[np.uint16],
-        type[np.int16],
-        type[np.int32],
-        type[np.int64],
-        type[np.float16],
-        type[np.float32],
-        type[np.float64],
-    ]
     Roxar_DType = Union[type[np.uint8], type[np.uint16], type[np.float32]]
 
 # --------------------------------------------------------------------------------------
@@ -509,7 +500,7 @@ class GridProperty(_Grid3D):
             self.discrete_to_continuous()
 
     @property
-    def dtype(self) -> GridProperty_DType:
+    def dtype(self) -> npt.DTypeLike:
         """
         Get or set the ``values`` numpy dtype.
 
@@ -525,8 +516,8 @@ class GridProperty(_Grid3D):
         return self._values.dtype
 
     @dtype.setter
-    def dtype(self, dtype: GridProperty_DType) -> None:
-        allowed: list[GridProperty_DType] = (
+    def dtype(self, dtype: npt.DTypeLike) -> None:
+        allowed: list[npt.DTypeLike] = (
             [np.uint8, np.uint16, np.int16, np.int32, np.int64]
             if self.isdiscrete
             else [np.float16, np.float32, np.float64]
@@ -957,15 +948,17 @@ class GridProperty(_Grid3D):
             Non-masked array copy of 3D-shaped values
 
         """
+        fvalue: float | int
         if fill_value is None:
             if self._isdiscrete:
-                fvalue: npt.ArrayLike = UNDEF_INT
+                fvalue = UNDEF_INT
                 dtype: type[np.int32] | type[np.float64] = np.int32
             else:
                 fvalue = UNDEF
                 dtype = np.float64
         else:
-            fvalue = fill_value
+            # TODO: possible bug here
+            fvalue = fill_value  # type: ignore
             dtype = np.float64
 
         val = self.values.copy().astype(dtype)
@@ -1181,7 +1174,7 @@ class GridProperty(_Grid3D):
 
     def get_values_by_ijk(
         self, iarr: np.ndarray, jarr: np.ndarray, karr: np.ndarray, base: int = 1
-    ) -> np.ma.MaskedArray | None:
+    ) -> npt.NDArray | None:
         """
         Get a 1D ndarray of values by I J K arrays.
 
