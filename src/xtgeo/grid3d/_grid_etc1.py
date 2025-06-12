@@ -13,7 +13,7 @@ from packaging.version import parse as versionparse
 
 import xtgeo._internal as _internal  # type: ignore
 from xtgeo import _cxtgeo
-from xtgeo.common.calc import find_flip
+from xtgeo._internal.geometry import PointInHexahedronMethod as M  # type: ignore
 from xtgeo.common.constants import UNDEF_INT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.common.types import Dimensions
@@ -92,7 +92,7 @@ def create_grid_from_surfaces(
     Technically, a shoebox grid is made first, then the layers are adjusted to follow
     surfaces.
     """
-    from xtgeo.grid3d.grid import create_box_grid
+    from xtgeo.grid3d.grid import Grid, create_box_grid
 
     n_surfaces = len(srfs.surfaces)
 
@@ -119,7 +119,7 @@ def create_grid_from_surfaces(
     origin = (*ij_origin, zori) if ij_origin else (top.xori, top.yori, zori)
     rotation = rotation if rotation is not None else top.rotation
 
-    grd = create_box_grid(
+    bgrd = create_box_grid(
         dimension=dimension,
         origin=origin,
         increment=increment,
@@ -134,13 +134,11 @@ def create_grid_from_surfaces(
         cpp_surf = _internal.regsurf.RegularSurface(surf)
         surf_list.append(cpp_surf)
 
-    grd_cpp = _internal.grid3d.Grid(grd)
-    new_zcorns, new_actnum = grd_cpp.adjust_boxgrid_layers_from_regsurfs(
+    new_zcorns, new_actnum = bgrd._get_grid_cpp().adjust_boxgrid_layers_from_regsurfs(
         surf_list, tolerance
     )
 
-    grd._zcornsv = new_zcorns
-    grd._actnumsv = new_actnum
+    grd = Grid(coordsv=bgrd._coordsv.copy(), zcornsv=new_zcorns, actnumsv=new_actnum)
 
     # set the subgrid index (zones)
     subgrids = {f"zone_{i + 1}": 1 for i in range(n_surfaces - 1)}
@@ -179,7 +177,7 @@ def get_dz(
         raise ValueError(f"Unknown metric {metric}")
     metric_fun = method_factory[metric]
 
-    self._xtgformat2()
+    self._set_xtgformat2()
     nx, ny, nz = self.dimensions
     result = np.zeros(nx * ny * nz)
     _cxtgeo.grdcp3d_calc_dz(
@@ -215,7 +213,7 @@ def get_dx(
         raise ValueError(f"Unknown metric {metric}")
     metric_fun = method_factory[metric]
 
-    self._xtgformat2()
+    self._set_xtgformat2()
     nx, ny, nz = self.dimensions
     result = np.zeros(nx * ny * nz)
     _cxtgeo.grdcp3d_calc_dx(
@@ -248,7 +246,7 @@ def get_dy(
         raise ValueError(f"Unknown metric {metric}")
     metric_fun = method_factory[metric]
 
-    self._xtgformat2()
+    self._set_xtgformat2()
     nx, ny, nz = self.dimensions
     result = np.zeros(nx * ny * nz)
     _cxtgeo.grdcp3d_calc_dy(
@@ -283,9 +281,9 @@ def get_bulk_volume(
     if precision not in (1, 2, 4):
         raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
 
-    grid._xtgformat2()
+    grid._set_xtgformat2()
 
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
 
     prec_cpp = _internal.geometry.HexVolumePrecision.P2
     if precision == 1:
@@ -322,9 +320,9 @@ def get_heights_above_ffl(
             f"The option key <{option}> is invalid, must be one of {valid_options}"
         )
 
-    grid._xtgformat2()
+    grid._set_xtgformat2()
 
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
     htop_arr, hbot_arr, hmid_arr = grid_cpp.get_height_above_ffl(
         ffl.values.ravel(),
         1 if option == "cell_center_above_ffl" else 2,
@@ -371,10 +369,10 @@ def get_property_between_surfaces(
     if not isinstance(value, int) or value < 1:
         raise ValueError(f"Value (integer) must be positive, >= 1, got: {value}")
 
-    grid._xtgformat2()
+    grid._set_xtgformat2()
     logger.debug("Creating property between surfaces...")
 
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
 
     top_ = top
     base_ = base
@@ -486,7 +484,7 @@ def get_ijk_from_points(
     """
     logger.info("Getting IJK indices from Points...")
 
-    self._xtgformat2()
+    self._set_xtgformat2()
 
     cache = self._get_cache()
 
@@ -494,15 +492,18 @@ def get_ijk_from_points(
 
     p_array = points.get_xyz_arrays()
 
-    assert cache.grid_cpp is not None  # mypy
-    iarr, jarr, karr = cache.grid_cpp.get_indices_from_pointset(
+    iarr, jarr, karr = self._get_grid_cpp().get_indices_from_pointset(
         _internal.xyz.PointSet(p_array),
         cache.onegrid_cpp,
         cache.top_i_index_cpp,
         cache.top_j_index_cpp,
         cache.base_i_index_cpp,
         cache.base_j_index_cpp,
+        cache.top_depth_cpp,
+        cache.base_depth_cpp,
+        cache.threshold_magic_1,
         activeonly,
+        M.Optimized,
     )
 
     if not zerobased:
@@ -550,10 +551,10 @@ def get_xyz(
 ) -> tuple[GridProperty, GridProperty, GridProperty]:
     """Get X Y Z as properties."""
 
-    self._xtgformat2()
+    self._set_xtgformat2()
 
     # note: using _internal here is 2-3 times faster than using the former cxtgeo!
-    grid_cpp = _internal.grid3d.Grid(self)
+    grid_cpp = self._get_grid_cpp()
     xv, yv, zv = grid_cpp.get_cell_centers(asmasked)
 
     xv = np.ma.masked_invalid(xv)
@@ -591,14 +592,15 @@ def get_xyz(
     return xo, yo, zo
 
 
-def get_xyz_cell_corners(
+def get_xyz_cell_corners_internal(
     grid: Grid,
     ijk: tuple[int, int, int] = (1, 1, 1),
     activeonly: bool = True,
     zerobased: bool = False,
 ) -> tuple[int, ...] | None:
     """Get X Y Z cell corners for one cell."""
-    grid._xtgformat2()
+    grid._set_xtgformat2()
+
     i, j, k = ijk
     shift = 1 if zerobased else 0
 
@@ -608,18 +610,14 @@ def get_xyz_cell_corners(
         if np.all(iact == 0):
             return None
 
-    corners = _internal.grid3d.Grid(grid).get_cell_corners_from_ijk(
+    # there are some cases where we don't want to use cache due to recusion issues
+    corners = grid._get_grid_cpp().get_cell_corners_from_ijk(
         i + shift - 1,
         j + shift - 1,
         k + shift - 1,
     )
-    # Existing functionality relies on the grid being in xtgformat1 after this
-    # function returns. Most probably as a result of some invocation of
-    # `estimate_flip` or `ijk_handedness` or `reverse_row_axis` somewhere.
-    grid._xtgformat1()
 
     corners = corners.to_numpy().flatten().tolist()
-
     return tuple(corners)
 
 
@@ -627,7 +625,7 @@ def get_xyz_corners(
     self: Grid, names: tuple[str, str, str] = ("X_UTME", "Y_UTMN", "Z_TVDSS")
 ) -> tuple[GridProperty, ...]:
     """Get X Y Z cell corners for all cells (as 24 GridProperty objects)."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     ntot = self.dimensions
 
@@ -717,7 +715,7 @@ def get_vtk_esg_geometry_data(
     - inactive cell indices, numpy array with integer indices
     """
 
-    self._xtgformat2()
+    self._set_xtgformat2()
 
     # Number of elements to allocate in the vertex and connectivity arrays
     num_cells = self.ncol * self.nrow * self.nlay
@@ -748,7 +746,7 @@ def get_vtk_esg_geometry_data(
 
 def get_vtk_geometries(self: Grid) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return actnum, corners and dims arrays for VTK ExplicitStructuredGrid usage."""
-    self._xtgformat2()
+    self._set_xtgformat2()
 
     narr = 8 * self.ncol * self.nrow * self.nlay
     xarr, yarr, zarr = _cxtgeo.grdcp3d_get_vtk_grid_arrays(
@@ -781,7 +779,7 @@ def get_cell_volume(
     """Get bulk cell volume for one cell."""
     if precision not in (1, 2, 4):
         raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
-    grid._xtgformat2()
+    grid._set_xtgformat2()
 
     i, j, k = ijk
     shift = 1 if zerobased else 0
@@ -792,7 +790,7 @@ def get_cell_volume(
         if np.all(iact == 0):
             return None
 
-    corners = _internal.grid3d.Grid(grid).get_cell_corners_from_ijk(
+    corners = grid._get_grid_cpp().get_cell_corners_from_ijk(
         i + shift - 1,
         j + shift - 1,
         k + shift - 1,
@@ -810,7 +808,7 @@ def get_layer_slice(
     self: Grid, layer: int, top: bool = True, activeonly: bool = True
 ) -> tuple[np.ndarray, np.ndarray]:
     """Get X Y cell corners (XY per cell; 5 per cell) as array."""
-    self._xtgformat1()
+    self._set_xtgformat1()
     ntot = self._ncol * self._nrow * self._nlay
 
     opt1 = 0 if top else 1
@@ -846,7 +844,7 @@ def get_geometrics(
     _ver: Literal[1, 2] = 1,
 ) -> dict | tuple:
     """Getting cell geometrics."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     geom_function = _get_geometrics_v1 if _ver == 1 else _get_geometrics_v2
     return geom_function(
@@ -985,14 +983,14 @@ def inactivate_by_dz(self: Grid, threshold: float, flip: bool = True) -> None:
         flip (bool): Whether the z-direction should be flipped.
 
     """
-    self._xtgformat2()
+    self._set_xtgformat2()
     dz_values = self.get_dz(asmasked=False, flip=flip).values
     self._actnumsv[dz_values.reshape(self._actnumsv.shape) < threshold] = 0
 
 
 def make_zconsistent(self: Grid, zsep: float | int) -> None:
     """Make consistent in z."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     if isinstance(zsep, int):
         zsep = float(zsep)
@@ -1017,7 +1015,7 @@ def inactivate_inside(
     force_close: bool = False,
 ) -> None:
     """Inactivate inside a polygon (or outside)."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     if not isinstance(poly, Polygons):
         raise ValueError("Input polygon not a XTGeo Polygons instance")
@@ -1057,7 +1055,7 @@ def inactivate_inside(
 
 def collapse_inactive_cells(self: Grid) -> None:
     """Collapse inactive cells."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     _cxtgeo.grd3d_collapse_inact(
         self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv
@@ -1070,7 +1068,7 @@ def copy(self: Grid) -> Grid:
     Returns:
         A new instance (attached grid properties will also be unique)
     """
-    self._xtgformat2()
+    self._set_xtgformat2()
 
     copy_tag = " (copy)"
 
@@ -1115,7 +1113,7 @@ def crop(
     Returns:
         The instance is updated (cropped)
     """
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
 
@@ -1216,7 +1214,7 @@ def reduce_to_one_layer(self: Grid) -> None:
     """
     # need new pointers in C (not for coord)
     # Note this could probably be done with pure numpy operations
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     ptr_new_num_act = _cxtgeo.new_intpointer()
 
@@ -1250,7 +1248,7 @@ def translate_coordinates(
     flip: tuple[int, int, int] = (1, 1, 1),
 ) -> None:
     """Translate grid coordinates."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     tx, ty, tz = translate
     fx, fy, fz = flip
@@ -1281,7 +1279,14 @@ def reverse_row_axis(
     if ijk_handedness == self.ijk_handedness:
         return
 
-    self._xtgformat1()
+    # update the handedness
+    if ijk_handedness is None:
+        self._ijk_handedness = estimate_handedness(self)
+
+    original_handedness = self._ijk_handedness
+    original_xtgformat = self._xtgformat
+
+    self._set_xtgformat1()
 
     ier = _cxtgeo.grd3d_reverse_jrows(
         self._ncol,
@@ -1303,6 +1308,18 @@ def reverse_row_axis(
         for prp in self._props.props:
             prp.values = prp.values[:, ::-1, :]
 
+    # update the handedness
+    if ijk_handedness is None:
+        self._ijk_handedness = estimate_handedness(self)
+
+    if original_handedness == "left":
+        self._ijk_handedness = "right"
+    else:
+        self._ijk_handedness = "left"
+
+    if original_xtgformat == 2:
+        self._set_xtgformat2()
+
     logger.info("Reversing of rows done")
 
 
@@ -1314,7 +1331,7 @@ def get_adjacent_cells(
     activeonly: bool = True,
 ) -> GridProperty:
     """Get adjacents cells."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     if not isinstance(prop, GridProperty):
         raise ValueError("The argument prop is not a xtgeo.GridPropery")
@@ -1427,14 +1444,11 @@ def estimate_design(
     return {"design": status, "dzsimbox": dzavg}
 
 
-def estimate_flip(self: Grid) -> Literal[-1, 1]:
-    """Estimate if grid is left or right handed."""
-    corners = self.get_xyz_cell_corners(activeonly=False)  # for cell 1, 1, 1
+def estimate_handedness(self: Grid) -> Literal["left", "right"]:
+    """Estimate if grid is left or right handed, returning string."""
+    nflip = self.estimate_flip()
 
-    v1 = (corners[3] - corners[0], corners[4] - corners[1], 0.0)
-    v2 = (corners[6] - corners[0], corners[7] - corners[1], 0.0)
-
-    return find_flip(v1, v2)
+    return "left" if nflip == 1 else "right"
 
 
 def _convert_xtgformat2to1(self: Grid) -> None:
@@ -1507,7 +1521,7 @@ def _convert_xtgformat1to2(self: Grid) -> None:
 
 def get_gridquality_properties(self: Grid) -> GridProperties:
     """Get the grid quality properties."""
-    self._xtgformat2()
+    self._set_xtgformat2()
 
     qcnames = {
         0: "minangle_topbase",

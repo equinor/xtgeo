@@ -10,7 +10,6 @@ from xtgeo.common.log import functimer
 METHODS = [
     M.RayCasting,
     M.Tetrahedrons,
-    # M.NonConvex,
     M.UsingPlanes,
     M.Isoparametric,
     M.Legacy,
@@ -21,7 +20,6 @@ METHODS = [
 IDS = [
     "RayCasting",
     "Tetrahedrons (by scheme)",
-    # "NonConvex",
     "UsingPlanes",
     "Isoparametric",
     "Legacy",

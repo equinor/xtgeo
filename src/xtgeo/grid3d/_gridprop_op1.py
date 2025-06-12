@@ -96,7 +96,7 @@ def operation_polygons(
 
     """
     grid = self.geometry
-    grid._xtgformat1()
+    grid._set_xtgformat1()
 
     if not isinstance(poly, xtgeo.xyz.Polygons):
         raise ValueError("The poly input is not a Polygons instance")

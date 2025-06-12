@@ -28,7 +28,7 @@ def refine(
 
     See details in caller.
     """
-    self._xtgformat1()
+    self._set_xtgformat1()
     self.make_zconsistent()
 
     if isinstance(refine_col, int):
@@ -119,7 +119,7 @@ def refine(
         for _ in range(len(arr)):
             refine_factor_layer.append(rfi)
 
-    self._xtgformat2()
+    self._set_xtgformat2()
 
     refine_factor_column = np.array(refine_factor_column, dtype=np.int8)
     refine_factor_row = np.array(refine_factor_row, dtype=np.int8)
@@ -173,7 +173,7 @@ def refine_vertically(
 
     See details in caller.
     """
-    self._xtgformat1()
+    self._set_xtgformat1()
     self.make_zconsistent()
 
     rfactord = {}
@@ -235,7 +235,7 @@ def refine_vertically(
         for _ in range(len(arr)):
             refine_factors.append(rfi)
 
-    self._xtgformat2()
+    self._set_xtgformat2()
     grid_cpp = _internal.grid3d.Grid(self)
     refine_factors = np.array(refine_factors, dtype=np.int8)
     ref_zcornsv, ref_actnumsv = grid_cpp.refine_vertically(refine_factors)

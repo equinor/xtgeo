@@ -10,7 +10,7 @@ jobs:
   build:
     name: Python ${{ matrix.python[0] }} on ${{ matrix.os_arch[0] }}-${{ matrix.os_arch[1] }}
     runs-on: ${{ matrix.os_arch[0] }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

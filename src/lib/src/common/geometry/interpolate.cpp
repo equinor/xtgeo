@@ -30,7 +30,7 @@ interpolate_z_triangles(const double x,
         double w1 = area1 / total_area;
         double w2 = area2 / total_area;
         double w3 = area3 / total_area;
-        z_estimated = w1 * p1.z + w2 * p2.z + w3 * p3.z;
+        z_estimated = w1 * p1.z() + w2 * p2.z() + w3 * p3.z();
     }
     // check that z_estimated is not NaN
     if (!std::isnan(z_estimated)) {
@@ -47,7 +47,7 @@ interpolate_z_triangles(const double x,
         double w1 = area1 / total_area;
         double w2 = area2 / total_area;
         double w3 = area3 / total_area;
-        z_estimated = w1 * p1.z + w2 * p3.z + w3 * p4.z;
+        z_estimated = w1 * p1.z() + w2 * p3.z() + w3 * p4.z();
     }
 
     // If the point is not in any triangles, return NaN
@@ -87,10 +87,10 @@ interpolate_z_4p_regular(const double x,
     }
 
     // Bilinear interpolation
-    double denom = (p2.x - p1.x) * (p3.y - p1.y);
+    double denom = (p2.x() - p1.x()) * (p3.y() - p1.y());
     double z_estimated =
-      ((p2.x - x) * (p3.y - y) * p1.z + (x - p1.x) * (p3.y - y) * p2.z +
-       (p2.x - x) * (y - p1.y) * p3.z + (x - p1.x) * (y - p1.y) * p4.z) /
+      ((p2.x() - x) * (p3.y() - y) * p1.z() + (x - p1.x()) * (p3.y() - y) * p2.z() +
+       (p2.x() - x) * (y - p1.y()) * p3.z() + (x - p1.x()) * (y - p1.y()) * p4.z()) /
       denom;
 
     return z_estimated;

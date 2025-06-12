@@ -204,7 +204,6 @@ def test_get_ijk_from_points(reekgrid):
 
     if reekgrid.ijk_handedness == "right":
         reekgrid.ijk_handedness = "left"
-        reekgrid._tmp = {}
 
     ijk = reekgrid.get_ijk_from_points(po)
 

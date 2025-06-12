@@ -673,7 +673,7 @@ def test_rescale_well_tvdrange_coarsen_upper(tmp_path, testdata_path):
     assert mywell.get_dataframe().iat[10, 3] == pytest.approx(365.8254, abs=0.1)
 
 
-def test_fence(testdata_path):
+def test_fence1(testdata_path):
     """Return a resampled fence."""
 
     mywell = xtgeo.well_from_file(testdata_path / WFILE)

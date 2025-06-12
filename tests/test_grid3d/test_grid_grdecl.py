@@ -191,7 +191,7 @@ def test_grdecl_grid_maprelative_raises(grgrid):
 
 @given(xtgeo_grids)
 def test_to_from_xtgeogrid_format2(xtggrid):
-    xtggrid._xtgformat2()
+    xtggrid._set_xtgformat2()
     grdecl_grid = ggrid.GrdeclGrid.from_xtgeo_grid(xtggrid)
 
     assert grdecl_grid.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
@@ -201,10 +201,10 @@ def test_to_from_xtgeogrid_format2(xtggrid):
 
 @given(xtgeo_grids)
 def test_to_from_xtgeogrid_format1(xtggrid):
-    xtggrid._xtgformat1()
+    xtggrid._set_xtgformat1()
     grdecl_grid = ggrid.GrdeclGrid.from_xtgeo_grid(xtggrid)
 
-    xtggrid._xtgformat2()
+    xtggrid._set_xtgformat2()
     assert grdecl_grid.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
     assert grdecl_grid.xtgeo_coord() == pytest.approx(xtggrid._coordsv, abs=0.02)
     assert grdecl_grid.xtgeo_zcorn() == pytest.approx(xtggrid._zcornsv, abs=0.02)
@@ -263,7 +263,7 @@ def test_from_to_grdeclgrid_write(tmp_path, caplog, grdecl_grid, fileformat):
         tmp_path / ("xtggrid." + fileformat), fformat=fileformat
     )
 
-    xtggrid._xtgformat2()
+    xtggrid._set_xtgformat2()
     if grdecl_grid.actnum is None:
         assert np.all(xtggrid._actnumsv)
     else:

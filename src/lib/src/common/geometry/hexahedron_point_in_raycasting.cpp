@@ -44,16 +44,16 @@ ray_intersects_triangle(const Point &origin,
     const double epsilon = 1e-5;
 
     // Calculate edge vectors
-    Point edge1 = { v1.x - v0.x, v1.y - v0.y, v1.z - v0.z };
-    Point edge2 = { v2.x - v0.x, v2.y - v0.y, v2.z - v0.z };
+    Point edge1 = { v1.x() - v0.x(), v1.y() - v0.y(), v1.z() - v0.z() };
+    Point edge2 = { v2.x() - v0.x(), v2.y() - v0.y(), v2.z() - v0.z() };
 
     // Calculate the cross product (pvec = direction × edge2)
-    Point pvec = { direction.y * edge2.z - direction.z * edge2.y,
-                   direction.z * edge2.x - direction.x * edge2.z,
-                   direction.x * edge2.y - direction.y * edge2.x };
+    Point pvec = { direction.y() * edge2.z() - direction.z() * edge2.y(),
+                   direction.z() * edge2.x() - direction.x() * edge2.z(),
+                   direction.x() * edge2.y() - direction.y() * edge2.x() };
 
     // Calculate determinant (dot product of edge1 and pvec)
-    double det = edge1.x * pvec.x + edge1.y * pvec.y + edge1.z * pvec.z;
+    double det = edge1.x() * pvec.x() + edge1.y() * pvec.y() + edge1.z() * pvec.z();
 
     // If determinant is near zero, ray lies in plane of triangle or ray is parallel to
     // plane Use absolute value to handle both left and right-handed coordinate systems
@@ -63,26 +63,29 @@ ray_intersects_triangle(const Point &origin,
     double inv_det = 1.0 / det;
 
     // Calculate vector from v0 to ray origin
-    Point tvec = { origin.x - v0.x, origin.y - v0.y, origin.z - v0.z };
+    Point tvec = { origin.x() - v0.x(), origin.y() - v0.y(), origin.z() - v0.z() };
 
     // Calculate u parameter and test bounds
-    double u = (tvec.x * pvec.x + tvec.y * pvec.y + tvec.z * pvec.z) * inv_det;
+    double u =
+      (tvec.x() * pvec.x() + tvec.y() * pvec.y() + tvec.z() * pvec.z()) * inv_det;
     if (u < 0.0 || u > 1.0)
         return false;
 
     // Calculate qvec (qvec = tvec × edge1)
-    Point qvec = { tvec.y * edge1.z - tvec.z * edge1.y,
-                   tvec.z * edge1.x - tvec.x * edge1.z,
-                   tvec.x * edge1.y - tvec.y * edge1.x };
+    Point qvec = { tvec.y() * edge1.z() - tvec.z() * edge1.y(),
+                   tvec.z() * edge1.x() - tvec.x() * edge1.z(),
+                   tvec.x() * edge1.y() - tvec.y() * edge1.x() };
 
     // Calculate v parameter and test bounds
     double v =
-      (direction.x * qvec.x + direction.y * qvec.y + direction.z * qvec.z) * inv_det;
+      (direction.x() * qvec.x() + direction.y() * qvec.y() + direction.z() * qvec.z()) *
+      inv_det;
     if (v < 0.0 || u + v > 1.0)
         return false;
 
     // Calculate t parameter - ray intersects triangle
-    double t = (edge2.x * qvec.x + edge2.y * qvec.y + edge2.z * qvec.z) * inv_det;
+    double t =
+      (edge2.x() * qvec.x() + edge2.y() * qvec.y() + edge2.z() * qvec.z()) * inv_det;
 
     // Only consider intersections in front of the ray
     return (t > epsilon);
@@ -121,14 +124,14 @@ is_point_in_hexahedron_using_raycasting(const Point &point_rh,
         // For a ray in +X direction, we need AT LEAST ONE corner has X > point.x
         // the right) We don't need points on the left for the face to possibly
         // intersect the ray
-        bool has_point_right = (a.x > point_rh.x || b.x > point_rh.x ||
-                                c.x > point_rh.x || d.x > point_rh.x);
+        bool has_point_right = (a.x() > point_rh.x() || b.x() > point_rh.x() ||
+                                c.x() > point_rh.x() || d.x() > point_rh.x());
 
         // Check if face's YZ range contains point's YZ coordinates
-        bool y_in_range = (std::min({ a.y, b.y, c.y, d.y }) <= point_rh.y) &&
-                          (std::max({ a.y, b.y, c.y, d.y }) >= point_rh.y);
-        bool z_in_range = (std::min({ a.z, b.z, c.z, d.z }) <= point_rh.z) &&
-                          (std::max({ a.z, b.z, c.z, d.z }) >= point_rh.z);
+        bool y_in_range = (std::min({ a.y(), b.y(), c.y(), d.y() }) <= point_rh.y()) &&
+                          (std::max({ a.y(), b.y(), c.y(), d.y() }) >= point_rh.y());
+        bool z_in_range = (std::min({ a.z(), b.z(), c.z(), d.z() }) <= point_rh.z()) &&
+                          (std::max({ a.z(), b.z(), c.z(), d.z() }) >= point_rh.z());
 
         // To potentially intersect with ray, we need:
         // 1. At least one point to the right of the ray origin
@@ -136,7 +139,8 @@ is_point_in_hexahedron_using_raycasting(const Point &point_rh,
         bool may_intersect = has_point_right && y_in_range && z_in_range;
 
         // Special case: if face is in a plane parallel to ray (all X values equal)
-        if (a.x == b.x && b.x == c.x && c.x == d.x && a.x > point_rh.x) {
+        if (a.x() == b.x() && b.x() == c.x() && c.x() == d.x() &&
+            a.x() > point_rh.x()) {
             // If all points are at the same X coordinate AND that X is greater than
             // the point's X, we may have an intersection
             may_intersect = y_in_range && z_in_range;

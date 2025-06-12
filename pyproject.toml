@@ -116,6 +116,8 @@ test-command = [
 convention = "google"
 match = '(?!(test_|_)).*\.py'
 
+# reminder if pytest on the command line:
+# -o log_cli=true -o log_cli_format="%(levelname)8s (%(relativeCreated)6.0fms) %(filename)44s [%(funcName)40s()] %(lineno)4d >>   %(message)s" -o log_cli_level=debug
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--verbose"

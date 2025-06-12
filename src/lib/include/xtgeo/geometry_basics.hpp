@@ -1,6 +1,8 @@
 #ifndef XTGEO_GEOMETRY_BASICS_HPP_
 #define XTGEO_GEOMETRY_BASICS_HPP_
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -10,7 +12,6 @@
 #include <vector>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
-
 /** Basic mathematic helper functions for geometry */
 
 // =====================================================================================
@@ -42,33 +43,41 @@ lerp(double x1, double x2, double t)
 
 }  // namespace xtgeo::geometry::generic
 
-namespace xtgeo::geometry::point {
+namespace xtgeo::geometry {
+
+// Use Eigen types
+using Vector3d = Eigen::Vector3d;
+using Matrix3d = Eigen::Matrix3d;
+
+namespace point {
 
 using xyz::Point;
 
-// Point operations
+// Point operations using the new Point class with embedded Eigen operations
+// These now simply delegate to the Point's built-in operators
+
 inline Point
 subtract(Point a, Point b)
 {
-    return { a.x - b.x, a.y - b.y, a.z - b.z };
+    return a - b;  // Using Point's operator-
 }
 
 inline Point
 add(Point a, Point b)
 {
-    return { a.x + b.x, a.y + b.y, a.z + b.z };
+    return a + b;  // Using Point's operator+
 }
 
 inline Point
 scale(Point p, double s)
 {
-    return { p.x * s, p.y * s, p.z * s };
+    return p * s;  // Using Point's operator*
 }
 
 inline double
 dot(Point a, Point b)
 {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
+    return a.dot(b);  // Using Point's dot method
 }
 
 inline double
@@ -80,10 +89,10 @@ dot_product(Point a, Point b)
 inline Point
 cross(Point a, Point b)
 {
-    return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
+    return a.cross(b);  // Using Point's cross method
 }
 
-// alias dot to dot_product
+// alias to cross
 inline Point
 cross_product(Point a, Point b)
 {
@@ -93,26 +102,26 @@ cross_product(Point a, Point b)
 inline double
 magnitude(Point p)
 {
-    return std::sqrt(dot(p, p));
+    return p.norm();  // Using Point's norm method
 }
 
 // Helper function to calculate magnitude squared (avoid sqrt)
 inline double
 magnitude_squared(const xyz::Point &v)
 {
-    return v.x * v.x + v.y * v.y + v.z * v.z;
+    return v.squared_norm();  // Using Point's --> Eigen's squaredNorm method
 }
 
 // Maps local coordinates to global coordinates using shape functions
+// This is specific to your application and doesn't need Eigen directly
 inline Point
 map_local_to_global(const Point local_pt, const Point hex_vertices[8])
 {
     Point global_pt = { 0, 0, 0 };
     for (int i = 0; i < 8; ++i) {
-        double N_i = generic::shape_function(i, local_pt.x, local_pt.y, local_pt.z);
-        global_pt.x += N_i * hex_vertices[i].x;
-        global_pt.y += N_i * hex_vertices[i].y;
-        global_pt.z += N_i * hex_vertices[i].z;
+        double N_i =
+          generic::shape_function(i, local_pt.x(), local_pt.y(), local_pt.z());
+        global_pt = global_pt + (hex_vertices[i] * N_i);  // Use built-in operators
     }
     return global_pt;
 }
@@ -123,12 +132,8 @@ map_local_to_global(const Point local_pt, const Point hex_vertices[8])
 inline Point
 calculate_normal(const Point &a, const Point &b, const Point &c)
 {
-    // Calculate vectors
-    Point ab = { b.x - a.x, b.y - a.y, b.z - a.z };
-    Point ac = { c.x - a.x, c.y - a.y, c.z - a.z };
-
-    // Compute the cross product
-    return cross(ab, ac);
+    // No need for conversions anymore, just use Point's operators
+    return (b - a).cross(c - a);
 }
 
 }  // namespace xtgeo::geometry::point
@@ -137,7 +142,7 @@ calculate_normal(const Point &a, const Point &b, const Point &c)
 // Matrix operations, namespace xtgeo::geometry::matrix
 // =====================================================================================
 
-namespace xtgeo::geometry::matrix {
+namespace matrix {
 
 constexpr double MATRIX_EPSILON = 1e-9;
 
@@ -145,43 +150,49 @@ using xyz::Point;
 
 using Matrix3x3 = std::array<std::array<double, 3>, 3>;
 
-// Invert a 3x3 matrix. Returns true if successful, false otherwise.
+// Convert between Matrix3x3 and Eigen::Matrix3d
+inline Matrix3d
+to_eigen(const Matrix3x3 &mat)
+{
+    Matrix3d result;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            result(i, j) = mat[i][j];
+        }
+    }
+    return result;
+}
+
+inline Matrix3x3
+from_eigen(const Matrix3d &mat)
+{
+    Matrix3x3 result;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            result[i][j] = mat(i, j);
+        }
+    }
+    return result;
+}
+
+// Invert a 3x3 matrix using Eigen. Returns true if successful.
 inline bool
 invert_matrix3x3(const Matrix3x3 &matrix, Matrix3x3 &inv_matrix)
 {
-    // Calculate the determinant using cofactor expansion
-    double det =
-      matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[2][1] * matrix[1][2]) -
-      matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
-      matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
+    // Convert to Eigen
+    Matrix3d eigenMatrix = to_eigen(matrix);
 
+    // Check if matrix is invertible
+    double det = eigenMatrix.determinant();
     if (std::abs(det) < MATRIX_EPSILON) {
         return false;  // Matrix is singular
     }
 
-    double inv_det = 1.0 / det;
+    // Compute inverse
+    Matrix3d eigenInverse = eigenMatrix.inverse();
 
-    // Calculate the cofactor matrix and transpose it to get the adjugate
-    inv_matrix[0][0] =
-      (matrix[1][1] * matrix[2][2] - matrix[2][1] * matrix[1][2]) * inv_det;
-    inv_matrix[0][1] =
-      (matrix[0][2] * matrix[2][1] - matrix[0][1] * matrix[2][2]) * inv_det;
-    inv_matrix[0][2] =
-      (matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1]) * inv_det;
-
-    inv_matrix[1][0] =
-      (matrix[1][2] * matrix[2][0] - matrix[1][0] * matrix[2][2]) * inv_det;
-    inv_matrix[1][1] =
-      (matrix[0][0] * matrix[2][2] - matrix[0][2] * matrix[2][0]) * inv_det;
-    inv_matrix[1][2] =
-      (matrix[1][0] * matrix[0][2] - matrix[0][0] * matrix[1][2]) * inv_det;
-
-    inv_matrix[2][0] =
-      (matrix[1][0] * matrix[2][1] - matrix[2][0] * matrix[1][1]) * inv_det;
-    inv_matrix[2][1] =
-      (matrix[2][0] * matrix[0][1] - matrix[0][0] * matrix[2][1]) * inv_det;
-    inv_matrix[2][2] =
-      (matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1]) * inv_det;
+    // Convert back to Matrix3x3
+    inv_matrix = from_eigen(eigenInverse);
 
     return true;
 }
@@ -189,14 +200,22 @@ invert_matrix3x3(const Matrix3x3 &matrix, Matrix3x3 &inv_matrix)
 inline Point
 multiply_matrix_vector(const Matrix3x3 &matrix, Point vec)
 {
-    return { matrix[0][0] * vec.x + matrix[0][1] * vec.y + matrix[0][2] * vec.z,
-             matrix[1][0] * vec.x + matrix[1][1] * vec.y + matrix[1][2] * vec.z,
-             matrix[2][0] * vec.x + matrix[2][1] * vec.y + matrix[2][2] * vec.z };
+    // Convert to Eigen
+    Matrix3d eigenMatrix = to_eigen(matrix);
+
+    // Get the internal Eigen vector directly
+    const Eigen::Vector3d &eigenVec = vec.data();
+
+    // Multiply
+    Eigen::Vector3d result = eigenMatrix * eigenVec;
+
+    // Return as Point - use the constructor that takes Eigen::Vector3d
+    return Point(result);
 }
 
 // --- Isoparametric Mapping Constants and Functions ---
 
-// Derivatives of shape functions
+// Derivatives of shape functions (not changing these)
 inline double
 dn_dxi(int i, double xi, double eta, double zeta)
 {
@@ -217,36 +236,44 @@ dn_dzeta(int i, double xi, double eta, double zeta)
     return 0.125 * generic::zeta_coords[i] * (1.0 + xi * generic::xi_coords[i]) *
            (1.0 + eta * generic::eta_coords[i]);
 }
+
 // Calculates the Jacobian matrix at given local coordinates
 inline Matrix3x3
 calculate_jacobian(const Point local_pt, const Point hex_vertices[8])
 {
-    Matrix3x3 J = { { { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } } };
+    // Initialize Eigen matrix
+    Matrix3d J = Matrix3d::Zero();
 
-    double xi = local_pt.x;
-    double eta = local_pt.y;
-    double zeta = local_pt.z;
+    double xi = local_pt.x();
+    double eta = local_pt.y();
+    double zeta = local_pt.z();
 
     for (int i = 0; i < 8; ++i) {
         double dNi_dxi = dn_dxi(i, xi, eta, zeta);
         double dNi_deta = dn_deta(i, xi, eta, zeta);
         double dNi_dzeta = dn_dzeta(i, xi, eta, zeta);
 
-        J[0][0] += dNi_dxi * hex_vertices[i].x;
-        J[0][1] += dNi_deta * hex_vertices[i].x;
-        J[0][2] += dNi_dzeta * hex_vertices[i].x;
+        // Access vertex data directly
+        const Eigen::Vector3d &vertex = hex_vertices[i].data();
 
-        J[1][0] += dNi_dxi * hex_vertices[i].y;
-        J[1][1] += dNi_deta * hex_vertices[i].y;
-        J[1][2] += dNi_dzeta * hex_vertices[i].y;
+        J(0, 0) += dNi_dxi * vertex.x();
+        J(0, 1) += dNi_deta * vertex.x();
+        J(0, 2) += dNi_dzeta * vertex.x();
 
-        J[2][0] += dNi_dxi * hex_vertices[i].z;
-        J[2][1] += dNi_deta * hex_vertices[i].z;
-        J[2][2] += dNi_dzeta * hex_vertices[i].z;
+        J(1, 0) += dNi_dxi * vertex.y();
+        J(1, 1) += dNi_deta * vertex.y();
+        J(1, 2) += dNi_dzeta * vertex.y();
+
+        J(2, 0) += dNi_dxi * vertex.z();
+        J(2, 1) += dNi_deta * vertex.z();
+        J(2, 2) += dNi_dzeta * vertex.z();
     }
-    return J;
+
+    // Convert back to Matrix3x3
+    return from_eigen(J);
 }
 
-}  // namespace xtgeo::geometry::matrix
+}  // namespace matrix
+}  // namespace xtgeo::geometry
 
 #endif  // XTGEO_GEOMETRY_BASICS_HPP_

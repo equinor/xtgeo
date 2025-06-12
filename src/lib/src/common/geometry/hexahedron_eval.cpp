@@ -224,18 +224,18 @@ get_hexahedron_minmax(const HexahedronCorners &cell_corners)
 
     // Iterate over all corners to find min/max values
     for (const auto &corner : corners) {
-        if (corner.x < xmin)
-            xmin = corner.x;
-        if (corner.x > xmax)
-            xmax = corner.x;
-        if (corner.y < ymin)
-            ymin = corner.y;
-        if (corner.y > ymax)
-            ymax = corner.y;
-        if (corner.z < zmin)
-            zmin = corner.z;
-        if (corner.z > zmax)
-            zmax = corner.z;
+        if (corner.x() < xmin)
+            xmin = corner.x();
+        if (corner.x() > xmax)
+            xmax = corner.x();
+        if (corner.y() < ymin)
+            ymin = corner.y();
+        if (corner.y() > ymax)
+            ymax = corner.y();
+        if (corner.z() < zmin)
+            zmin = corner.z();
+        if (corner.z() > zmax)
+            zmax = corner.z();
     }
 
     return { xmin, xmax, ymin, ymax, zmin, zmax };
@@ -252,8 +252,8 @@ is_hexahedron_severely_distorted(const xtgeo::geometry::HexahedronCorners &corne
 
     // Helper function to calculate the length of an edge
     auto edge_length = [](const Point &p1, const Point &p2) {
-        return std::sqrt(std::pow(p2.x - p1.x, 2) + std::pow(p2.y - p1.y, 2) +
-                         std::pow(p2.z - p1.z, 2));
+        return std::sqrt(std::pow(p2.x() - p1.x(), 2) + std::pow(p2.y() - p1.y(), 2) +
+                         std::pow(p2.z() - p1.z(), 2));
     };
 
     // ---------------------------------------------------------------------------------
@@ -295,9 +295,9 @@ is_hexahedron_severely_distorted(const xtgeo::geometry::HexahedronCorners &corne
         if (mag <= 1e-9) {
             return false;
         }
-        normal.x /= mag;
-        normal.y /= mag;
-        normal.z /= mag;
+        normal.x() /= mag;
+        normal.y() /= mag;
+        normal.z() /= mag;
 
         for (const auto &point : face) {
             auto vec = subtract(point, face[0]);
@@ -396,12 +396,12 @@ is_hexahedron_thin(const HexahedronCorners &corners, const double threshold)
     auto calculate_area = [](const Point &p1, const Point &p2, const Point &p3,
                              const Point &p4) -> double {
         auto cross = [](const Point &a, const Point &b) {
-            return Point{ a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
-                          a.x * b.y - a.y * b.x };
+            return Point{ a.y() * b.z() - a.z() * b.y(), a.z() * b.x() - a.x() * b.z(),
+                          a.x() * b.y() - a.y() * b.x() };
         };
 
         auto subtract = [](const Point &a, const Point &b) {
-            return Point{ a.x - b.x, a.y - b.y, a.z - b.z };
+            return Point{ a.x() - b.x(), a.y() - b.y(), a.z() - b.z() };
         };
 
         // Divide the quadrilateral into two triangles and calculate their areas
@@ -409,12 +409,12 @@ is_hexahedron_thin(const HexahedronCorners &corners, const double threshold)
         Point v2 = subtract(p3, p1);
         Point v3 = subtract(p4, p1);
 
-        double area1 =
-          0.5 * std::sqrt(std::pow(cross(v1, v2).x, 2) + std::pow(cross(v1, v2).y, 2) +
-                          std::pow(cross(v1, v2).z, 2));
-        double area2 =
-          0.5 * std::sqrt(std::pow(cross(v2, v3).x, 2) + std::pow(cross(v2, v3).y, 2) +
-                          std::pow(cross(v2, v3).z, 2));
+        double area1 = 0.5 * std::sqrt(std::pow(cross(v1, v2).x(), 2) +
+                                       std::pow(cross(v1, v2).y(), 2) +
+                                       std::pow(cross(v1, v2).z(), 2));
+        double area2 = 0.5 * std::sqrt(std::pow(cross(v2, v3).x(), 2) +
+                                       std::pow(cross(v2, v3).y(), 2) +
+                                       std::pow(cross(v2, v3).z(), 2));
 
         return area1 + area2;
     };
@@ -430,10 +430,10 @@ is_hexahedron_thin(const HexahedronCorners &corners, const double threshold)
 
     // Calculate the thickness (difference in Z-coordinates between upper and lower
     // faces)
-    double thickness = 0.25 * (std::abs(corners.upper_sw.z - corners.lower_sw.z) +
-                               std::abs(corners.upper_se.z - corners.lower_se.z) +
-                               std::abs(corners.upper_ne.z - corners.lower_ne.z) +
-                               std::abs(corners.upper_nw.z - corners.lower_nw.z));
+    double thickness = 0.25 * (std::abs(corners.upper_sw.z() - corners.lower_sw.z()) +
+                               std::abs(corners.upper_se.z() - corners.lower_se.z()) +
+                               std::abs(corners.upper_ne.z() - corners.lower_ne.z()) +
+                               std::abs(corners.upper_nw.z() - corners.lower_nw.z()));
 
     if (thickness <= numerics::TOLERANCE) {
         return true;  // Cell is considered thin if thickness or area is too small
@@ -459,15 +459,15 @@ is_hexahedron_concave_projected(const HexahedronCorners &corners)
 {
     // Extract the X and Y coordinates of the corners for top and base
     std::array<std::array<double, 2>, 4> xp, yp;
-    xp[0] = { corners.upper_sw.x, corners.lower_sw.x };
-    xp[1] = { corners.upper_se.x, corners.lower_se.x };
-    xp[2] = { corners.upper_ne.x, corners.lower_ne.x };
-    xp[3] = { corners.upper_nw.x, corners.lower_nw.x };
+    xp[0] = { corners.upper_sw.x(), corners.lower_sw.x() };
+    xp[1] = { corners.upper_se.x(), corners.lower_se.x() };
+    xp[2] = { corners.upper_ne.x(), corners.lower_ne.x() };
+    xp[3] = { corners.upper_nw.x(), corners.lower_nw.x() };
 
-    yp[0] = { corners.upper_sw.y, corners.lower_sw.y };
-    yp[1] = { corners.upper_se.y, corners.lower_se.y };
-    yp[2] = { corners.upper_ne.y, corners.lower_ne.y };
-    yp[3] = { corners.upper_nw.y, corners.lower_nw.y };
+    yp[0] = { corners.upper_sw.y(), corners.lower_sw.y() };
+    yp[1] = { corners.upper_se.y(), corners.lower_se.y() };
+    yp[2] = { corners.upper_ne.y(), corners.lower_ne.y() };
+    yp[3] = { corners.upper_nw.y(), corners.lower_nw.y() };
 
     // Check for concavity at both the top and base
     for (int ntop = 0; ntop < 2; ++ntop) {
@@ -521,13 +521,13 @@ is_point_in_hexahedron_bounding_box(const Point &point,
     // Quick rejection test using bounding box; this is independent of the method
     auto [min_pt, max_pt] = get_hexahedron_bounding_box(hexahedron_corners);
 
-    double epsilon = 1e-8 * std::max({ max_pt.x - min_pt.x, max_pt.y - min_pt.y,
-                                       max_pt.z - min_pt.z });
+    double epsilon = 1e-8 * std::max({ max_pt.x() - min_pt.x(), max_pt.y() - min_pt.y(),
+                                       max_pt.z() - min_pt.z() });
 
     // Use an epsilon for the bounding box check to handle numerical precision
-    if (point.x < min_pt.x - epsilon || point.x > max_pt.x + epsilon ||
-        point.y < min_pt.y - epsilon || point.y > max_pt.y + epsilon ||
-        point.z < min_pt.z - epsilon || point.z > max_pt.z + epsilon) {
+    if (point.x() < min_pt.x() - epsilon || point.x() > max_pt.x() + epsilon ||
+        point.y() < min_pt.y() - epsilon || point.y() > max_pt.y() + epsilon ||
+        point.z() < min_pt.z() - epsilon || point.z() > max_pt.z() + epsilon) {
         return false;
     }
     return true;  // Point is within the bounding box
@@ -548,13 +548,13 @@ is_point_in_hexahedron_bounding_box_minmax_pt(const Point &point,
                                               const Point &max_pt)
 {
 
-    double epsilon = 1e-8 * std::max({ max_pt.x - min_pt.x, max_pt.y - min_pt.y,
-                                       max_pt.z - min_pt.z });
+    double epsilon = 1e-8 * std::max({ max_pt.x() - min_pt.x(), max_pt.y() - min_pt.y(),
+                                       max_pt.z() - min_pt.z() });
 
     // Use an epsilon for the bounding box check to handle numerical precision
-    if (point.x < min_pt.x - epsilon || point.x > max_pt.x + epsilon ||
-        point.y < min_pt.y - epsilon || point.y > max_pt.y + epsilon ||
-        point.z < min_pt.z - epsilon || point.z > max_pt.z + epsilon) {
+    if (point.x() < min_pt.x() - epsilon || point.x() > max_pt.x() + epsilon ||
+        point.y() < min_pt.y() - epsilon || point.y() > max_pt.y() + epsilon ||
+        point.z() < min_pt.z() - epsilon || point.z() > max_pt.z() + epsilon) {
         return false;
     }
     return true;  // Point is within the bounding box

@@ -46,9 +46,9 @@ is_point_in_hexahedron_usingplanes_internal(const Point &point,
                                             const Point &min_pt,
                                             const Point &max_pt)
 {
-    double diagonal =
-      std::sqrt(std::pow(max_pt.x - min_pt.x, 2) + std::pow(max_pt.y - min_pt.y, 2) +
-                std::pow(max_pt.z - min_pt.z, 2));
+    double diagonal = std::sqrt(std::pow(max_pt.x() - min_pt.x(), 2) +
+                                std::pow(max_pt.y() - min_pt.y(), 2) +
+                                std::pow(max_pt.z() - min_pt.z(), 2));
     // If diagonal is zero (degenerate hexahedron), handle appropriately
     if (diagonal < std::numeric_limits<double>::epsilon()) {
         // All vertices are coincident. Point is inside only if it matches the vertex.
@@ -79,13 +79,13 @@ is_point_in_hexahedron_usingplanes_internal(const Point &point,
     // Calculate the centroid of the hexahedron
     Point centroid = { 0.0, 0.0, 0.0 };
     for (const auto &v : vertices) {
-        centroid.x += v.x;
-        centroid.y += v.y;
-        centroid.z += v.z;
+        centroid.x() += v.x();
+        centroid.y() += v.y();
+        centroid.z() += v.z();
     }
-    centroid.x /= 8.0;
-    centroid.y /= 8.0;
-    centroid.z /= 8.0;
+    centroid.x() /= 8.0;
+    centroid.y() /= 8.0;
+    centroid.z() /= 8.0;
 
     // Check the point against the planes defined by the triangles of each face
     for (const auto &face_indices : faces) {
@@ -120,9 +120,9 @@ is_point_in_hexahedron_usingplanes_internal(const Point &point,
             Point p0_to_centroid = subtract(centroid, p0);
             if (dot_product(normal, p0_to_centroid) > 0) {
                 // Normal is pointing inwards relative to the centroid, flip it
-                normal.x = -normal.x;
-                normal.y = -normal.y;
-                normal.z = -normal.z;
+                normal.x() = -normal.x();
+                normal.y() = -normal.y();
+                normal.z() = -normal.z();
             }
 
             // Check if the test point is on the outer side of the plane defined by the

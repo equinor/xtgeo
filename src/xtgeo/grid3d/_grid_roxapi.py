@@ -190,7 +190,7 @@ def save_grid_to_rms(
     rox = RoxUtils(projectname, readonly=False)
 
     if method == "cpg":
-        self._xtgformat2()
+        self._set_xtgformat2()
         _save_grid_to_rms_cornerpoint(self, rox, gname, realisation, info)
 
     else:
@@ -214,7 +214,7 @@ def _save_grid_to_rms_cornerpoint(
     roxar_grids_: RoxarGridType = roxar_grids  # for mypy
     geom = roxar_grids_.CornerPointGridGeometry.create(self.dimensions)
 
-    grid_cpp = _internal.grid3d.Grid(self)
+    grid_cpp = self._get_grid_cpp()
     tpi, bpi, zco, zma = grid_cpp.convert_xtgeo_to_rmsapi()
     zco = np.ma.array(zco, mask=zma)
 

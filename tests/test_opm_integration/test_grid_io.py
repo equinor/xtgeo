@@ -86,8 +86,8 @@ def test_grdecl_roundtrip(xtgeo_grid):
     egrid_file = convert_to_egrid(xtgeo_grid.dimensions, grdecl_file)
     opm_grid = xtgeo.grid_from_file(str(egrid_file), fformat="egrid")
 
-    opm_grid._xtgformat2()
-    xtgeo_grid._xtgformat2()
+    opm_grid._set_xtgformat2()
+    xtgeo_grid._set_xtgformat2()
     assert opm_grid.dimensions == xtgeo_grid.dimensions
     assert_allclose(opm_grid._actnumsv, xtgeo_grid._actnumsv)
     assert_allclose(opm_grid._coordsv, xtgeo_grid._coordsv, atol=0.02)
@@ -108,8 +108,8 @@ def test_egrid_roundtrip(xtgeo_grid):
     opm_egrid_file = read_write_egrid(xtgeo_grid.dimensions, egrid_file)
     opm_grid = xtgeo.grid_from_file(str(opm_egrid_file), fformat="egrid")
 
-    opm_grid._xtgformat2()
-    xtgeo_grid._xtgformat2()
+    opm_grid._set_xtgformat2()
+    xtgeo_grid._set_xtgformat2()
     assert opm_grid.dimensions == xtgeo_grid.dimensions
     assert_allclose(opm_grid._actnumsv, xtgeo_grid._actnumsv)
     assert_allclose(opm_grid._coordsv, xtgeo_grid._coordsv, atol=0.02)

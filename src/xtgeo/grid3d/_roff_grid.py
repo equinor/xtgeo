@@ -340,7 +340,7 @@ class RoffGrid:
         Returns:
             That grid geometry converted to a RoffGrid.
         """
-        xtgeo_grid._xtgformat2()
+        xtgeo_grid._set_xtgformat2()
         nx, ny, nz = xtgeo_grid.dimensions
         active = xtgeo_grid._actnumsv.reshape((nx, ny, nz))
         active = np.flip(active, -1).ravel().astype(np.bool_)

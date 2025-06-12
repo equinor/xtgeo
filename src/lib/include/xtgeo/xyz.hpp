@@ -21,12 +21,12 @@ get_bounding_box(const Polygon &polygon)
     double max_z = std::numeric_limits<double>::min();
 
     for (const auto &point : polygon.points) {
-        min_x = std::min(min_x, point.x);
-        max_x = std::max(max_x, point.x);
-        min_y = std::min(min_y, point.y);
-        max_y = std::max(max_y, point.y);
-        min_z = std::min(min_z, point.z);
-        max_z = std::max(max_z, point.z);
+        min_x = std::min(min_x, point.x());
+        max_x = std::max(max_x, point.x());
+        min_y = std::min(min_y, point.y());
+        max_y = std::max(max_y, point.y());
+        min_z = std::min(min_z, point.z());
+        max_z = std::max(max_z, point.z());
     }
 
     return { { min_x, min_y, min_z }, { max_x, max_y, max_z } };
@@ -42,9 +42,9 @@ init(py::module &m)
       .def(py::init<double, double>())          // Constructor with 2 arguments
       .def(py::init<double, double, double>())  // Constructor with 3 arguments
 
-      .def_readonly("x", &Point::x)
-      .def_readonly("y", &Point::y)
-      .def_readonly("z", &Point::z);
+      .def_property("x", &Point::get_x, &Point::set_x)
+      .def_property("y", &Point::get_y, &Point::set_y)
+      .def_property("z", &Point::get_z, &Point::set_z);
 
     py::class_<Polygon>(m_xyz, "Polygon")
       .def(py::init<const std::vector<xtgeo::xyz::Point> &>())

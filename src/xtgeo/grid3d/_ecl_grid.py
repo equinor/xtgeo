@@ -724,7 +724,7 @@ class EclGrid(ABC):
 
     @classmethod
     def from_xtgeo_grid(cls, xtgeo_grid):
-        xtgeo_grid._xtgformat2()
+        xtgeo_grid._set_xtgformat2()
 
         nx, ny, nz = xtgeo_grid.dimensions
         actnum = xtgeo_grid._actnumsv.reshape(nx, ny, nz)

@@ -24,8 +24,8 @@ rotate_point(const Point p,
              const double angle_rad)
 {
     // Translate point back to origin
-    double x_trans = p.x - xori;
-    double y_trans = p.y - yori;
+    double x_trans = p.x() - xori;
+    double y_trans = p.y() - yori;
 
     // Apply rotation matrix
     double x_rot = x_trans * std::cos(angle_rad) - y_trans * std::sin(angle_rad);
@@ -114,8 +114,8 @@ inverse_rotate_and_translate(const Point p,
                              const double sin_a)
 {
     // Translation
-    double x_trans = p.x - xori;
-    double y_trans = p.y - yori;
+    double x_trans = p.x() - xori;
+    double y_trans = p.y() - yori;
     // Rotation
     double x_rot = x_trans * cos_a + y_trans * sin_a;
     double y_rot = -x_trans * sin_a + y_trans * cos_a;
@@ -185,8 +185,8 @@ find_cell_range(const RegularSurface &regsurf,
                                                           regsurf.yori, cos_a, sin_a);
 
         // Find grid indices for columns (i for NCOL) and rows (j for NROW)
-        int i_grid = get_index(grid2d_coord.x, regsurf.xinc, regsurf.ncol);
-        int j_grid = get_index(grid2d_coord.y, regsurf.yinc, regsurf.nrow);
+        int i_grid = get_index(grid2d_coord.x(), regsurf.xinc, regsurf.ncol);
+        int j_grid = get_index(grid2d_coord.y(), regsurf.yinc, regsurf.nrow);
 
         // Update the range of indices, ensuring they are within the grid bounds
         i_min = std::min(i_min, i_grid);
@@ -237,12 +237,12 @@ get_z_from_xy(const RegularSurface &regsurf,
       p, regsurf.xori, regsurf.yori, std::cos(angle_rad), std::sin(angle_rad));
 
     // Find the indices of the grid cell containing the point
-    int i_temp = static_cast<int>(p_rel.x / regsurf.xinc);
-    int j_temp = static_cast<int>(p_rel.y / regsurf.yinc);
+    int i_temp = static_cast<int>(p_rel.x() / regsurf.xinc);
+    int j_temp = static_cast<int>(p_rel.y() / regsurf.yinc);
 
     // check inside status, with a tolerance
     bool is_inside = geometry::is_xy_point_in_quadrilateral(
-      p_rel.x, p_rel.y, { 0.0, 0.0, 0.0 },
+      p_rel.x(), p_rel.y(), { 0.0, 0.0, 0.0 },
       { (regsurf.ncol - 1) * regsurf.xinc, 0.0, 0.0 },
       { (regsurf.ncol - 1) * regsurf.xinc, (regsurf.nrow - 1) * regsurf.yinc, 0.0 },
       { 0.0, (regsurf.nrow - 1) * regsurf.yinc, 0.0 }, tolerance);
@@ -279,7 +279,7 @@ get_z_from_xy(const RegularSurface &regsurf,
     double y1 = j * regsurf.yinc;
     double y2 = (j + 1) * regsurf.yinc;
 
-    auto res = geometry::interpolate_z_4p_regular(p_rel.x, p_rel.y, { x1, y1, z11 },
+    auto res = geometry::interpolate_z_4p_regular(p_rel.x(), p_rel.y(), { x1, y1, z11 },
                                                   { x2, y1, z21 }, { x1, y2, z12 },
                                                   { x2, y2, z22 }, tolerance);
     return res;
