@@ -22,13 +22,18 @@ convert_xtgeo_to_rmsapi(const Grid &grd)
       xtgeo::logging::LoggerManager::get("xtgeo.grid3d.convert_xtgeo_to_rmsapi");
     logger.debug("Converting XTGeo grid to RMSAPI grid layout");
 
-    auto coordsv = grd.coordsv.unchecked<3>();
-    auto zcornsv = grd.zcornsv.unchecked<4>();
-    auto actnumsv = grd.actnumsv.unchecked<3>();
+    auto coordsv_arr = grd.get_coordsv();
+    auto zcornsv_arr = grd.get_zcornsv();
+    auto actnumsv_arr = grd.get_actnumsv();
 
-    const size_t nncol = grd.ncol + 1;
-    const size_t nnrow = grd.nrow + 1;
-    const size_t nnlay = grd.nlay + 1;
+    auto coordsv = coordsv_arr.unchecked<3>();
+    auto zcornsv = zcornsv_arr.unchecked<4>();
+    auto actnumsv = actnumsv_arr.unchecked<3>();
+
+    const size_t nncol = grd.get_ncol() + 1;
+    const size_t nnrow = grd.get_nrow() + 1;
+    const size_t nnlay = grd.get_nlay() + 1;
+
     const double undef = 1e32;
 
     // Pre-allocate arrays with correct sizes
@@ -126,8 +131,8 @@ convert_xtgeo_to_rmsapi(const Grid &grd)
 
     bool _COLUMNS = false;  // TODO evaluate later
 
-    for (size_t icol = 0; icol < grd.ncol; icol++) {
-        for (size_t jrow = 0; jrow < grd.nrow; jrow++) {
+    for (size_t icol = 0; icol < grd.get_ncol(); icol++) {
+        for (size_t jrow = 0; jrow < grd.get_nrow(); jrow++) {
             bool inactive_column = true;
             for (size_t klay = 0; klay < nnlay; klay++) {
 
@@ -137,7 +142,7 @@ convert_xtgeo_to_rmsapi(const Grid &grd)
                     zmask_(icol, jrow + 1, 0, klay) = true;
                     zmask_(icol, jrow + 1, 2, klay) = true;
                 }
-                if (icol == grd.ncol - 1) {
+                if (icol == grd.get_ncol() - 1) {
                     zmask_(icol + 1, jrow, 1, klay) = true;
                     zmask_(icol + 1, jrow, 3, klay) = true;
                     zmask_(icol + 1, jrow + 1, 1, klay) = true;
@@ -149,7 +154,7 @@ convert_xtgeo_to_rmsapi(const Grid &grd)
                     zmask_(icol + 1, jrow, 0, klay) = true;
                     zmask_(icol + 1, jrow, 1, klay) = true;
                 }
-                if (jrow == nnrow - 1) {
+                if (jrow == grd.get_nrow() - 1) {
                     zmask_(icol, jrow + 1, 2, klay) = true;
                     zmask_(icol, jrow + 1, 3, klay) = true;
                     zmask_(icol + 1, jrow + 1, 2, klay) = true;
@@ -233,26 +238,35 @@ process_edges_rmsapi(py::array_t<float> zcornsv)
 }
 
 /**
- * @brief: Given an input cornerpoint grid, return a grid with only top and base
+ * @brief: Given an input cornerpoint grid, return a grid spec with only top and base
  *         The usage for this is mainly to speed up some operations, like finding
  *         if a point is inside a grid.
  */
-
-Grid
-extract_onelayer_grid(const Grid &original_grid)
+std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int>>
+Grid::extract_onelayer_grid() const
 {
     // Access the original zcornsv array
-    auto zcornsv_ = original_grid.zcornsv.unchecked<4>();
+    auto zcornsv = this->get_zcornsv();
+    auto zcornsv_ = zcornsv.unchecked<4>();
 
     const size_t mcol = zcornsv_.shape(0);
     const size_t mrow = zcornsv_.shape(1);
     const size_t nnlay = zcornsv_.shape(2);
     const size_t ncorners = zcornsv_.shape(3);
 
-    // If the grid has fewer than 2 layers, return a true copy of the original grid
+    // If the grid has fewer than 2 layers, return a new grid with the same data
     if (nnlay < 2) {
-        Grid copy_grid = original_grid;  // Create a copy of the original grid
-        return copy_grid;
+        auto coordsv_copy = py::reinterpret_borrow<py::array_t<double>>(
+          this->get_coordsv().attr("copy")());
+
+        auto zcornsv_copy = py::reinterpret_borrow<py::array_t<float>>(
+          this->get_zcornsv().attr("copy")());
+
+        auto actnumsv_copy =
+          py::reinterpret_borrow<py::array_t<int>>(this->get_actnumsv().attr("copy")());
+
+        // return py arrays to construct a new grid
+        return std::make_tuple(coordsv_copy, zcornsv_copy, actnumsv_copy);
     }
 
     // Create a new zcornsv array with only 2 layers
@@ -271,24 +285,25 @@ extract_onelayer_grid(const Grid &original_grid)
     }
 
     // Create a new actnumsv array with only 1 layer and set all values to 1
-    auto actnum_ = original_grid.actnumsv.unchecked<3>();
+    auto actnum_ = this->get_actnumsv().unchecked<3>();
     const size_t ncol = actnum_.shape(0);
     const size_t nrow = actnum_.shape(1);
     const size_t nlay = actnum_.shape(2);
+
     std::vector<size_t> actnumsv_shape = { ncol, nrow, 1 };
-    py::array_t<int8_t> new_actnumsv(actnumsv_shape);
+    py::array_t<int> new_actnumsv(actnumsv_shape);
     auto new_actnumsv_ = new_actnumsv.mutable_unchecked<3>();
 
     // Use std::fill to set all values in the actnumsv array to 1
     std::fill(new_actnumsv.mutable_data(),
               new_actnumsv.mutable_data() + new_actnumsv.size(), 1);
 
-    Grid new_grid = original_grid;   // Copy the original grid
-    new_grid.zcornsv = new_zcornsv;  // Replace zcornsv with the reduced version
-    new_grid.actnumsv = new_actnumsv;
-    new_grid.nlay = 1;  // Update the number of layers to reflect the new grid
+    size_t new_nlay = 1;
+    auto coordsv_copy =
+      py::reinterpret_borrow<py::array_t<double>>(this->get_coordsv().attr("copy")());
 
-    return new_grid;
+    // return py arrays to construct a new grid
+    return std::make_tuple(coordsv_copy, new_zcornsv, new_actnumsv);
 }
 
 }  // namespace xtgeo::grid3d

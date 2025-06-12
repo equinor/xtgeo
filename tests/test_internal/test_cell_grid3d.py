@@ -58,7 +58,7 @@ def test_cell_corners(cell, expected_firstcorner, expected_lastcorner):
     grid = xtgeo.create_box_grid((3, 4, 5))
 
     # Get the corners of the first cell
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
     corners_struct = grid_cpp.get_cell_corners_from_ijk(*cell)
 
     assert isinstance(corners_struct, _internal.grid3d.CellCorners)
@@ -75,8 +75,7 @@ def test_cell_corners_minmax(testdata_path):
 
     cell = (0, 0, 0)
     grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/etc/banal6.roff")
-    grid_cpp = _internal.grid3d.Grid(grid)
-    corners = grid_cpp.get_cell_corners_from_ijk(*cell)
+    corners = grid._get_grid_cpp().get_cell_corners_from_ijk(*cell)
     # Get the min and max of the first cell
     minmax = _internal.grid3d.get_corners_minmax(corners)
 
@@ -100,9 +99,8 @@ def test_is_xy_point_in_cell(x, y, cell, position, expected):
     """Test the XY point is inside a hexahedron cell, seen from top or base."""
 
     grid = xtgeo.create_box_grid((3, 4, 5))
-    grid_cpp = _internal.grid3d.Grid(grid)
 
-    corners = grid_cpp.get_cell_corners_from_ijk(*cell)
+    corners = grid._get_grid_cpp().get_cell_corners_from_ijk(*cell)
     assert (
         _internal.grid3d.is_xy_point_in_cell(
             x,
@@ -128,7 +126,7 @@ def test_get_depth_in_cell(testdata_path, x, y, cell, position, expected):
     # Read the banal6 grid
     grid = xtgeo.grid_from_file(f"{testdata_path}/3dgrids/etc/banal6.roff")
 
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
 
     corners = grid_cpp.get_cell_corners_from_ijk(*cell)
     # Get the depth of the first cell
@@ -151,7 +149,7 @@ def test_get_cell_centers(get_drogondata):
 
     grid, _, _ = get_drogondata  # total cells 899944
 
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
     xcor, ycor, zcor = grid_cpp.get_cell_centers(True)
 
     assert isinstance(xcor, np.ndarray)
@@ -222,7 +220,7 @@ def test_convert_xtgeo_to_rmsapi(get_drogondata):
 
     grid, _, _ = get_drogondata
 
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
     tpillars, bpillars, zcorners, zmask = grid_cpp.convert_xtgeo_to_rmsapi()
 
     assert tpillars.all() == grid._coordsv[:, :, :3].all()
@@ -244,7 +242,7 @@ def test_convert_xtgeo_to_rmsapi_warnings(get_drogondata):
     use_grid = grid.copy()
     use_grid._coordsv[10, 10, 2] = use_grid._coordsv[10, 10, 5] = 1999.0
 
-    grid_cpp = _internal.grid3d.Grid(use_grid)
+    grid_cpp = use_grid._get_grid_cpp()
 
     with pytest.warns(UserWarning, match="Equal Z coordinates detected"):
         grid_cpp.convert_xtgeo_to_rmsapi()
@@ -254,7 +252,7 @@ def test_convert_xtgeo_to_rmsapi_warnings(get_drogondata):
 
     use_grid._zcornsv[10, 10, 5, 0] = 1999.9999
 
-    grid_cpp = _internal.grid3d.Grid(use_grid)
+    grid_cpp = use_grid._get_grid_cpp()
     with pytest.warns(UserWarning, match="One or more ZCORN values are crossing"):
         grid_cpp.convert_xtgeo_to_rmsapi()
 
@@ -274,7 +272,7 @@ def test_adjust_box_grid_to_regsurfs():
         surf_cpp = _internal.regsurf.RegularSurface(surfn)
         surfaces.append(surf_cpp)
 
-    grd_cpp = _internal.grid3d.Grid(grid)
+    grd_cpp = grid._get_grid_cpp()
     new_zcorns, _active = grd_cpp.adjust_boxgrid_layers_from_regsurfs(surfaces)
     assert new_zcorns[4, 2, :, 1].tolist() == [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
 
@@ -282,23 +280,25 @@ def test_adjust_box_grid_to_regsurfs():
 def test_extract_onelayer_grid(get_drogondata):
     """get a grid with one layer"""
 
-    @functimer(output="print")
-    def _create_grid(get_drogondata):
-        grid, _, _ = get_drogondata
+    grid, _, _ = get_drogondata
 
-        grid_cpp = _internal.grid3d.Grid(grid)
+    @functimer(output="print")
+    def _create_grid():
+        grid_cpp = grid._get_grid_cpp()
 
         return grid_cpp.extract_onelayer_grid()
 
-    new_grid_cpp = _create_grid(get_drogondata)
+    res = _create_grid()
 
-    assert isinstance(new_grid_cpp, xtgeo._internal.grid3d.Grid)
+    coo, zco, act = res
+
+    assert coo.size == grid._coordsv.size
 
     # now make into Python; not needed bit for eventual QC
     grd = xtgeo.Grid(
-        coordsv=new_grid_cpp.coordsv,
-        zcornsv=new_grid_cpp.zcornsv,
-        actnumsv=new_grid_cpp.actnumsv,
+        coordsv=coo,
+        zcornsv=zco,
+        actnumsv=act,
     )
     assert isinstance(grd, xtgeo.Grid)
     assert grd.nlay == 1
@@ -311,7 +311,7 @@ def test_get_grid_boundingbox(get_drogondata):
 
     grid, _, _ = get_drogondata
 
-    grid_cpp = _internal.grid3d.Grid(grid)
+    grid_cpp = grid._get_grid_cpp()
 
     pmin, pmax = grid_cpp.get_bounding_box()
 

@@ -10,7 +10,7 @@
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
 
-#ifdef __linux__
+#ifdef XTGEO_USE_OPENMP
 #include <omp.h>
 #endif
 
@@ -20,45 +20,115 @@ namespace py = pybind11;
 
 namespace xtgeo::grid3d {
 
+// =====================================================================================
+// Currently private member functions
+// =====================================================================================
 void
-Grid::compute_cell_corners()
+Grid::impl_compute_cell_corners() const
 {
-    auto &logger = xtgeo::logging::LoggerManager::get("Grid::compute_cell_corners");
-    cell_corners_cache.resize(ncol * nrow * nlay);
-    logger.info("Computing cell corners for grid ({}, {}, {})", ncol, nrow, nlay);
+    auto &logger =
+      xtgeo::logging::LoggerManager::get("Grid::impl_compute_cell_corners");
+    logger.debug("Grid instance ID: {}", static_cast<const void *>(this));
+
+    logger.debug("Computing cell corners for grid ({}, {}, {})", m_ncol, m_nrow,
+                 m_nlay);
+    m_cell_corners_cache.resize(m_ncol * m_nrow * m_nlay);
+    logger.debug("Cell corners cache size: {}", m_cell_corners_cache.size());
 
     // clang-format off
-    #ifdef __linux__
+    #ifdef XTGEO_USE_OPENMP
       #pragma omp parallel for collapse(3)
     #endif
     // clang-format on
-    for (size_t i = 0; i < ncol; ++i) {
-        for (size_t j = 0; j < nrow; ++j) {
-            for (size_t k = 0; k < nlay; ++k) {
-                cell_corners_cache[i * nrow * nlay + j * nlay + k] =
-                  get_cell_corners_from_ijk(*this, i, j, k);
+    for (int i = 0; i < static_cast<int>(m_ncol); ++i) {  // int due to MSVC OpenMP..
+        for (int j = 0; j < static_cast<int>(m_nrow); ++j) {
+            for (int k = 0; k < static_cast<int>(m_nlay); ++k) {
+                size_t idx = i * m_nrow * m_nlay + j * m_nlay + k;
+                m_cell_corners_cache[idx] = get_cell_corners_from_ijk(*this, i, j, k);
             }
         }
     }
-    logger.info("Computing cell corners for grid - DONE", ncol, nrow, nlay);
+    m_cell_corners_computed = true;
+    logger.debug("Cell corners computed for grid ({}, {}, {})", m_ncol, m_nrow, m_nlay);
 }
 
 void
-Grid::ensure_cell_corners_cache() const
+Grid::impl_compute_bounding_box() const
 {
     auto &logger =
-      xtgeo::logging::LoggerManager::get("Grid::ensure_cell_corners_cache");
-    if (cell_corners_cache.size() != ncol * nrow * nlay) {
-        logger.info("Cell corners cache is empty, computing cell corners");
-        logger.info("Current size: {}", cell_corners_cache.size());
+      xtgeo::logging::LoggerManager::get("Grid::impl_compute_bounding_box");
+    logger.debug("Computing bbox for grid ({}, {}, {})", m_ncol, m_nrow, m_nlay);
+    logger.debug("Grid instance ID: {}", static_cast<const void *>(this));
 
-        // const_cast is needed because we're modifying a mutable member in a const
-        // method
-        const_cast<Grid *>(this)->compute_cell_corners();
+    if (!m_cell_corners_computed) {
+        logger.debug("Cell corners not computed, calling compute_cell_corners()");
+        impl_compute_cell_corners();
     }
+
+    // Initialize with first point
+    double min_x = std::numeric_limits<double>::max();
+    double min_y = std::numeric_limits<double>::max();
+    double min_z = std::numeric_limits<double>::max();
+    double max_x = std::numeric_limits<double>::lowest();
+    double max_y = std::numeric_limits<double>::lowest();
+    double max_z = std::numeric_limits<double>::lowest();
+
+    // Process only first and last layers
+    for (size_t i = 0; i < m_ncol; ++i) {
+        for (size_t j = 0; j < m_nrow; ++j) {
+            // Process first layer (k=0)
+            size_t idx_first = i * m_nrow * m_nlay + j * m_nlay + 0;
+            const auto &cell_first = m_cell_corners_cache[idx_first];
+
+            const auto points_first = { &cell_first.upper_sw, &cell_first.upper_se,
+                                        &cell_first.upper_nw, &cell_first.upper_ne,
+                                        &cell_first.lower_sw, &cell_first.lower_se,
+                                        &cell_first.lower_nw, &cell_first.lower_ne };
+
+            for (const auto &point : points_first) {
+                min_x = std::min(min_x, point->x());
+                min_y = std::min(min_y, point->y());
+                min_z = std::min(min_z, point->z());
+                max_x = std::max(max_x, point->x());
+                max_y = std::max(max_y, point->y());
+                max_z = std::max(max_z, point->z());
+            }
+
+            // Process last layer (k=m_nlay-1)
+            if (m_nlay > 1) {  // Only if there's more than one layer
+                size_t idx_last = i * m_nrow * m_nlay + j * m_nlay + (m_nlay - 1);
+                const auto &cell_last = m_cell_corners_cache[idx_last];
+
+                const auto points_last = { &cell_last.upper_sw, &cell_last.upper_se,
+                                           &cell_last.upper_nw, &cell_last.upper_ne,
+                                           &cell_last.lower_sw, &cell_last.lower_se,
+                                           &cell_last.lower_nw, &cell_last.lower_ne };
+
+                for (const auto &point : points_last) {
+                    min_x = std::min(min_x, point->x());
+                    min_y = std::min(min_y, point->y());
+                    min_z = std::min(min_z, point->z());
+                    max_x = std::max(max_x, point->x());
+                    max_y = std::max(max_y, point->y());
+                    max_z = std::max(max_z, point->z());
+                }
+            }
+        }
+    }
+
+    m_min_point = xyz::Point(min_x, min_y, min_z);
+    m_max_point = xyz::Point(max_x, max_y, max_z);
+    logger.debug("Bounding box computed: min ({}, {}, {}), max ({}, {}, {})",
+                 m_min_point.x(), m_min_point.y(), m_min_point.z(), m_max_point.x(),
+                 m_max_point.y(), m_max_point.z());
+    m_bounding_box_computed = true;
 }
+// =====================================================================================
+// Public functions
+// =====================================================================================
+
 /*
- * Compute bulk volume of cells in a grid. Tests shows that this is very close
+ * Compute bulk volume of cells in a grid. Tests show that this is very close
  * to what RMS will compute; almost identical
  *
  * @param grd Grid struct
@@ -71,22 +141,27 @@ get_cell_volumes(const Grid &grd,
                  geometry::HexVolumePrecision precision,
                  const bool asmasked)
 {
-    py::array_t<double> cellvols({ grd.ncol, grd.nrow, grd.nlay });
+    py::array_t<double> cellvols({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
     auto cellvols_ = cellvols.mutable_data();
-    auto actnumsv_ = grd.actnumsv.data();
+    auto actnumsv_ = grd.get_actnumsv().data();
 
-    size_t ncol = grd.ncol;
-    size_t nrow = grd.nrow;
-    size_t nlay = grd.nlay;
+    auto &logger = xtgeo::logging::LoggerManager::get("get_cell_volumes");
+    logger.debug("Computing cell volumes for grid ({}, {}, {})", grd.get_ncol(),
+                 grd.get_nrow(), grd.get_nlay());
 
-    grd.ensure_cell_corners_cache();
+    size_t ncol = grd.get_ncol();
+    size_t nrow = grd.get_nrow();
+    size_t nlay = grd.get_nlay();
 
+    // ensure precomputing the cache outside the OMP loop to avoid race conditions
+    grd.get_cell_corners_cache();
+
+    logger.debug("Start loop computing cell volumes}");
     // clang-format off
-    #ifdef __linux__
+    #ifdef XTGEO_USE_OPENMP
       #pragma omp parallel for collapse(3)
     #endif
     // clang-format on
-
     for (auto i = 0; i < ncol; i++) {
         for (auto j = 0; j < nrow; j++) {
             for (auto k = 0; k < nlay; k++) {
@@ -95,11 +170,13 @@ get_cell_volumes(const Grid &grd,
                     cellvols_[idx] = numerics::UNDEF_XTGEO;
                     continue;
                 }
-                auto crn = grd.cell_corners_cache[i * nrow * nlay + j * nlay + k];
+                auto crn = grd.get_cell_corners_cache()[i * nrow * nlay + j * nlay + k];
                 cellvols_[idx] = geometry::hexahedron_volume(crn, precision);
             }
         }
     }
+    logger.debug("Cell volumes computed for grid ({}, {}, {})", grd.get_ncol(),
+                 grd.get_nrow(), grd.get_nlay());
     return cellvols;
 }
 
@@ -113,19 +190,17 @@ get_cell_volumes(const Grid &grd,
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_cell_centers(const Grid &grd, const bool asmasked)
 {
-    pybind11::array_t<double> xmid({ grd.ncol, grd.nrow, grd.nlay });
-    pybind11::array_t<double> ymid({ grd.ncol, grd.nrow, grd.nlay });
-    pybind11::array_t<double> zmid({ grd.ncol, grd.nrow, grd.nlay });
+    pybind11::array_t<double> xmid({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
+    pybind11::array_t<double> ymid({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
+    pybind11::array_t<double> zmid({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
     auto xmid_ = xmid.mutable_unchecked<3>();
     auto ymid_ = ymid.mutable_unchecked<3>();
     auto zmid_ = zmid.mutable_unchecked<3>();
-    auto actnumsv_ = grd.actnumsv.unchecked<3>();
+    auto actnumsv_ = grd.get_actnumsv().unchecked<3>();
 
-    grd.ensure_cell_corners_cache();
-
-    for (size_t i = 0; i < grd.ncol; i++) {
-        for (size_t j = 0; j < grd.nrow; j++) {
-            for (size_t k = 0; k < grd.nlay; k++) {
+    for (size_t i = 0; i < grd.get_ncol(); i++) {
+        for (size_t j = 0; j < grd.get_nrow(); j++) {
+            for (size_t k = 0; k < grd.get_nlay(); k++) {
                 if (asmasked && actnumsv_(i, j, k) == 0) {
                     xmid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
                     ymid_(i, j, k) = std::numeric_limits<double>::quiet_NaN();
@@ -133,20 +208,21 @@ get_cell_centers(const Grid &grd, const bool asmasked)
                     continue;
                 }
                 auto crn =
-                  grd.cell_corners_cache[i * grd.nrow * grd.nlay + j * grd.nlay + k];
+                  grd.get_cell_corners_cache()[i * grd.get_nrow() * grd.get_nlay() +
+                                               j * grd.get_nlay() + k];
 
                 xmid_(i, j, k) =
-                  0.125 *
-                  (crn.upper_sw.x + crn.upper_se.x + crn.upper_nw.x + crn.upper_ne.x +
-                   crn.lower_sw.x + crn.lower_se.x + crn.lower_nw.x + crn.lower_ne.x);
+                  0.125 * (crn.upper_sw.x() + crn.upper_se.x() + crn.upper_nw.x() +
+                           crn.upper_ne.x() + crn.lower_sw.x() + crn.lower_se.x() +
+                           crn.lower_nw.x() + crn.lower_ne.x());
                 ymid_(i, j, k) =
-                  0.125 *
-                  (crn.upper_sw.y + crn.upper_se.y + crn.upper_nw.y + crn.upper_ne.y +
-                   crn.lower_sw.y + crn.lower_se.y + crn.lower_nw.y + crn.lower_ne.y);
+                  0.125 * (crn.upper_sw.y() + crn.upper_se.y() + crn.upper_nw.y() +
+                           crn.upper_ne.y() + crn.lower_sw.y() + crn.lower_se.y() +
+                           crn.lower_nw.y() + crn.lower_ne.y());
                 zmid_(i, j, k) =
-                  0.125 *
-                  (crn.upper_sw.z + crn.upper_se.z + crn.upper_nw.z + crn.upper_ne.z +
-                   crn.lower_sw.z + crn.lower_se.z + crn.lower_nw.z + crn.lower_ne.z);
+                  0.125 * (crn.upper_sw.z() + crn.upper_se.z() + crn.upper_nw.z() +
+                           crn.upper_ne.z() + crn.lower_sw.z() + crn.lower_se.z() +
+                           crn.lower_nw.z() + crn.lower_ne.z());
             }
         }
     }
@@ -169,20 +245,20 @@ get_height_above_ffl(const Grid &grd,
                      const py::array_t<float> &ffl,
                      const size_t option)
 {
-    pybind11::array_t<double> htop({ grd.ncol, grd.nrow, grd.nlay });
-    pybind11::array_t<double> hbot({ grd.ncol, grd.nrow, grd.nlay });
-    pybind11::array_t<double> hmid({ grd.ncol, grd.nrow, grd.nlay });
+    pybind11::array_t<double> htop({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
+    pybind11::array_t<double> hbot({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
+    pybind11::array_t<double> hmid({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
     auto htop_ = htop.mutable_data();
     auto hbot_ = hbot.mutable_data();
     auto hmid_ = hmid.mutable_data();
-    auto actnumsv_ = grd.actnumsv.data();
+    auto actnumsv_ = grd.get_actnumsv().data();
     auto ffl_ = ffl.data();
 
-    grd.ensure_cell_corners_cache();
-    for (size_t i = 0; i < grd.ncol; i++) {
-        for (size_t j = 0; j < grd.nrow; j++) {
-            for (size_t k = 0; k < grd.nlay; k++) {
-                size_t idx = i * grd.nrow * grd.nlay + j * grd.nlay + k;
+    for (size_t i = 0; i < grd.get_ncol(); i++) {
+        for (size_t j = 0; j < grd.get_nrow(); j++) {
+            for (size_t k = 0; k < grd.get_nlay(); k++) {
+                size_t idx =
+                  i * grd.get_nrow() * grd.get_nlay() + j * grd.get_nlay() + k;
                 if (actnumsv_[idx] == 0) {
                     htop_[idx] = numerics::UNDEF_XTGEO;
                     hbot_[idx] = numerics::UNDEF_XTGEO;
@@ -190,25 +266,26 @@ get_height_above_ffl(const Grid &grd,
                     continue;
                 }
                 auto corners =
-                  grd.cell_corners_cache[i * grd.nrow * grd.nlay + j * grd.nlay + k];
+                  grd.get_cell_corners_cache()[i * grd.get_nrow() * grd.get_nlay() +
+                                               j * grd.get_nlay() + k];
                 if (option == 1) {
                     htop_[idx] =
-                      ffl_[idx] - 0.25 * (corners.upper_sw.z + corners.upper_se.z +
-                                          corners.upper_nw.z + corners.upper_ne.z);
+                      ffl_[idx] - 0.25 * (corners.upper_sw.z() + corners.upper_se.z() +
+                                          corners.upper_nw.z() + corners.upper_ne.z());
                     hbot_[idx] =
-                      ffl_[idx] - 0.25 * (corners.lower_sw.z + corners.lower_se.z +
-                                          corners.lower_nw.z + corners.lower_ne.z);
+                      ffl_[idx] - 0.25 * (corners.lower_sw.z() + corners.lower_se.z() +
+                                          corners.lower_nw.z() + corners.lower_ne.z());
                 } else if (option == 2) {
-                    double upper = corners.upper_sw.z;
-                    upper = std::min(upper, corners.upper_se.z);
-                    upper = std::min(upper, corners.upper_nw.z);
-                    upper = std::min(upper, corners.upper_ne.z);
+                    double upper = corners.upper_sw.z();
+                    upper = std::min(upper, corners.upper_se.z());
+                    upper = std::min(upper, corners.upper_nw.z());
+                    upper = std::min(upper, corners.upper_ne.z());
                     htop_[idx] = ffl_[idx] - upper;
 
-                    double lower = corners.lower_sw.z;
-                    lower = std::max(lower, corners.lower_se.z);
-                    lower = std::max(lower, corners.lower_nw.z);
-                    lower = std::max(lower, corners.lower_ne.z);
+                    double lower = corners.lower_sw.z();
+                    lower = std::max(lower, corners.lower_se.z());
+                    lower = std::max(lower, corners.lower_nw.z());
+                    lower = std::max(lower, corners.lower_ne.z());
                     hbot_[idx] = ffl_[idx] - lower;
                 }
                 htop_[idx] = std::max(htop_[idx], 0.0);
@@ -283,11 +360,11 @@ create_grid_from_cube(const cube::Cube &cube,
     for (size_t i = 0; i < cube.ncol + 1; i++) {
         for (size_t j = 0; j < cube.nrow + 1; j++) {
             xyz::Point p = xtgeo::regsurf::get_xy_from_ij(rsurf, i, j, flip);
-            coordsv_[ibc++] = p.x;
-            coordsv_[ibc++] = p.y;
+            coordsv_[ibc++] = p.x();
+            coordsv_[ibc++] = p.y();
             coordsv_[ibc++] = apply_zori;
-            coordsv_[ibc++] = p.x;
-            coordsv_[ibc++] = p.y;
+            coordsv_[ibc++] = p.x();
+            coordsv_[ibc++] = p.y();
             coordsv_[ibc++] = apply_zori + cube.zinc * (cube.nlay + 1);
         }
     }
@@ -310,10 +387,10 @@ create_grid_from_cube(const cube::Cube &cube,
 }
 
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
-refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refinement_per_layer)
+refine_vertically(const Grid &grd, const py::array_t<uint8_t> refinement_per_layer)
 {
-    auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
-    auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
+    auto actnumsv_ = grd.get_actnumsv().unchecked<3>();
+    auto zcornsv_ = grd.get_zcornsv().unchecked<4>();
     auto refinement_data = refinement_per_layer.unchecked<1>();
 
     // logging here, more for demonstration than anything else
@@ -326,20 +403,20 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refinement_pe
     }
 
     // Shape
-    std::vector<size_t> zcorn_shape = { grid_cpp.ncol + 1, grid_cpp.nrow + 1,
+    std::vector<size_t> zcorn_shape = { grd.get_ncol() + 1, grd.get_nrow() + 1,
                                         total_refinement + 1, 4 };
     py::array_t<float> zcornref(zcorn_shape);
-    py::array_t<int8_t> actnumref({ grid_cpp.ncol, grid_cpp.nrow, total_refinement });
+    py::array_t<int8_t> actnumref({ grd.get_ncol(), grd.get_nrow(), total_refinement });
     auto zcornref_ = zcornref.mutable_unchecked<4>();
     auto actnumref_ = actnumref.mutable_unchecked<3>();
 
-    logger.debug("Refine vertically from {} layers to {} layers", grid_cpp.nlay,
+    logger.debug("Refine vertically from {} layers to {} layers", grd.get_nlay(),
                  total_refinement);
 
-    for (size_t i = 0; i <= grid_cpp.ncol; i++)
-        for (size_t j = 0; j <= grid_cpp.nrow; j++) {
+    for (size_t i = 0; i <= grd.get_ncol(); i++)
+        for (size_t j = 0; j <= grd.get_nrow(); j++) {
             size_t kk = 0; /* refined grid K counter */
-            for (size_t k = 0; k < grid_cpp.nlay; k++) {
+            for (size_t k = 0; k < grd.get_nlay(); k++) {
                 int rfactor = refinement_data[k];
                 /* look at each pillar in each cell, find top */
                 /* and bottom, and divide */
@@ -358,7 +435,7 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refinement_pe
                     }
                     /* now assign corners for the refined grid: */
                     for (size_t kr = 0; kr < rfactor; kr++) {
-                        if (i < grid_cpp.ncol && j < grid_cpp.nrow)
+                        if (i < grd.get_ncol() && j < grd.get_nrow())
                             actnumref_(i, j, kk + kr) = actnumsv_(i, j, k);
 
                         zcornref_(i, j, kk + kr, ic) = ztop + kr * rdz;
@@ -371,73 +448,21 @@ refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refinement_pe
     return std::make_tuple(zcornref, actnumref);
 }
 
-/** @brief Get bounding box for 3D grid
- * @param Grid input grid
- * @return A tuple of two points, minimum values and maximum values
- */
-
-std::tuple<xyz::Point, xyz::Point>
-get_bounding_box(const Grid &grid)
-{
-    // Initialize min and max values
-    double xmin = std::numeric_limits<double>::max();
-    double xmax = std::numeric_limits<double>::lowest();
-    double ymin = std::numeric_limits<double>::max();
-    double ymax = std::numeric_limits<double>::lowest();
-    double zmin = std::numeric_limits<double>::max();
-    double zmax = std::numeric_limits<double>::lowest();
-
-    Grid onelayer_grid = extract_onelayer_grid(grid);
-    onelayer_grid.ensure_cell_corners_cache();
-
-    // Step 2: Loop through all cells and find min/max values
-    for (size_t i = 0; i < grid.ncol; i++) {
-        for (size_t j = 0; j < grid.nrow; j++) {
-            // Get the corners of the cell
-            CellCorners corners =
-              onelayer_grid
-                .cell_corners_cache[i * onelayer_grid.nrow * onelayer_grid.nlay +
-                                    j * onelayer_grid.nlay + 0];
-
-            // Loop through the 8 corners to find min/max values
-            std::array<xyz::Point, 8> corner_points = {
-                corners.upper_sw, corners.upper_se, corners.upper_nw, corners.upper_ne,
-                corners.lower_sw, corners.lower_se, corners.lower_nw, corners.lower_ne
-            };
-
-            for (const auto &point : corner_points) {
-                xmin = std::min(xmin, point.x);
-                xmax = std::max(xmax, point.x);
-                ymin = std::min(ymin, point.y);
-                ymax = std::max(ymax, point.y);
-                zmin = std::min(zmin, point.z);
-                zmax = std::max(zmax, point.z);
-            }
-        }
-    }
-
-    // Create points to return
-    xyz::Point minv = { xmin, ymin, zmin };
-    xyz::Point maxv = { xmax, ymax, zmax };
-
-    return std::make_tuple(minv, maxv);
-}
-
 std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
 refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
 {
     auto &logger = xtgeo::logging::LoggerManager::get("refine_columns");
-    auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
-    auto coordsv_ = grid_cpp.coordsv.unchecked<3>();
-    auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
+    auto actnumsv_ = grid_cpp.get_actnumsv().unchecked<3>();
+    auto coordsv_ = grid_cpp.get_coordsv().unchecked<3>();
+    auto zcornsv_ = grid_cpp.get_zcornsv().unchecked<4>();
 
-    const size_t ncol = grid_cpp.ncol;
-    const size_t nrow = grid_cpp.nrow;
-    const size_t nlay = grid_cpp.nlay;
+    const size_t ncol = grid_cpp.get_ncol();
+    const size_t nrow = grid_cpp.get_nrow();
+    const size_t nlay = grid_cpp.get_nlay();
 
     const auto refinement_data = refinement.data();
     const size_t ncol_ref =
-      std::accumulate(refinement_data, refinement_data + grid_cpp.ncol, size_t(0));
+      std::accumulate(refinement_data, refinement_data + ncol, size_t(0));
 
     py::array_t<double> coordref(std::vector<size_t>{ ncol_ref + 1, nrow + 1, 6 });
     py::array_t<float> zcornref(
@@ -480,9 +505,9 @@ refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
                     } else {
                         auto pt = numerics::lerp3d(x1, y1, z1, x2, y2, z2,
                                                    double(ir) / ref_factor);
-                        coordref_(ii + ir, j, 3 * ic) = pt.x;
-                        coordref_(ii + ir, j, 3 * ic + 1) = pt.y;
-                        coordref_(ii + ir, j, 3 * ic + 2) = pt.z;
+                        coordref_(ii + ir, j, 3 * ic) = pt.x();
+                        coordref_(ii + ir, j, 3 * ic + 1) = pt.y();
+                        coordref_(ii + ir, j, 3 * ic + 2) = pt.z();
                     }
                 }
             }
@@ -536,17 +561,17 @@ std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
 refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
 {
     auto &logger = xtgeo::logging::LoggerManager::get("refine_rows");
-    auto actnumsv_ = grid_cpp.actnumsv.unchecked<3>();
-    auto coordsv_ = grid_cpp.coordsv.unchecked<3>();
-    auto zcornsv_ = grid_cpp.zcornsv.unchecked<4>();
+    auto actnumsv_ = grid_cpp.get_actnumsv().unchecked<3>();
+    auto coordsv_ = grid_cpp.get_coordsv().unchecked<3>();
+    auto zcornsv_ = grid_cpp.get_zcornsv().unchecked<4>();
 
-    const size_t ncol = grid_cpp.ncol;
-    const size_t nrow = grid_cpp.nrow;
-    const size_t nlay = grid_cpp.nlay;
+    const size_t ncol = grid_cpp.get_ncol();
+    const size_t nrow = grid_cpp.get_nrow();
+    const size_t nlay = grid_cpp.get_nlay();
 
     const auto refinement_data = refinement.data();
     const size_t nrow_ref =
-      std::accumulate(refinement_data, refinement_data + grid_cpp.nrow, size_t(0));
+      std::accumulate(refinement_data, refinement_data + nrow, size_t(0));
 
     py::array_t<double> coordref(std::vector<size_t>{ ncol + 1, nrow_ref + 1, 6 });
     py::array_t<float> zcornref(
@@ -587,15 +612,15 @@ refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
                     } else {
                         auto pt = numerics::lerp3d(x1, y1, z1, x2, y2, z2,
                                                    double(jr) / ref_factor);
-                        coordref_(i, jj + jr, 3 * ic) = pt.x;
-                        coordref_(i, jj + jr, 3 * ic + 1) = pt.y;
-                        coordref_(i, jj + jr, 3 * ic + 2) = pt.z;
+                        coordref_(i, jj + jr, 3 * ic) = pt.x();
+                        coordref_(i, jj + jr, 3 * ic + 1) = pt.y();
+                        coordref_(i, jj + jr, 3 * ic + 2) = pt.z();
                     }
                 }
             }
 
             // Calculate ZCORN
-            for (size_t k = 0; k < grid_cpp.nlay; k++) {
+            for (size_t k = 0; k < nlay; k++) {
                 for (size_t idx_vert = 0; idx_vert < 2;
                      idx_vert++)  // Vertical loop, Top - Bottom
                 {

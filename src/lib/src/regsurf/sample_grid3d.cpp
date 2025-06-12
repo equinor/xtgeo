@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstddef>
 
-#ifdef __linux__
+#ifdef XTGEO_USE_OPENMP
 #include <omp.h>
 #endif
 
@@ -41,12 +41,12 @@ sample_grid3d_layer(const RegularSurface &regsurf,
     auto &logger =
       xtgeo::logging::LoggerManager::get("xtgeo.regsurf.sample_grid3d_layer");
     logger.debug("Sampling grid3d layer ", klayer, " to regular surface");
-    logger.debug("Initial number of threads: ", num_threads);
+    logger.debug("Initial number of threads: {}", num_threads);
 
     // clang-format off
-    #ifdef __linux__
+    #ifdef XTGEO_USE_OPENMP
       if (num_threads > 0) omp_set_num_threads(num_threads);
-      logger.debug("Actual number of threads: ", omp_get_max_threads());
+      logger.debug("Actual number of threads: {}", omp_get_max_threads());
     #endif
     // clang-format on
 
@@ -56,7 +56,7 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                               std::to_string(regsurf.yinc));
     }
 
-    auto actnumsv_ = grd.actnumsv.unchecked<3>();
+    auto actnumsv_ = grd.get_actnumsv().unchecked<3>();
 
     // Initialize 2D numpy arrays to store the sampled values
     py::array_t<int> iindex({ regsurf.ncol, regsurf.nrow });
@@ -87,17 +87,26 @@ sample_grid3d_layer(const RegularSurface &regsurf,
               depth_bot_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow),
               numerics::QUIET_NAN);
 
+    grd.get_cell_corners_cache();  // Ensure cell corners are computed
+
+    // Windows (MSVC) does not support size_t in OpenMP (!), so we use int
+    int ncol = static_cast<int>(grd.get_ncol());
+    int nrow = static_cast<int>(grd.get_nrow());
+    int nlay = static_cast<int>(grd.get_nlay());
+
     // clang-format off
-    #ifdef __linux__
+    #ifdef XTGEO_USE_OPENMP
       #pragma omp parallel for collapse(2) schedule(static)
     #endif
     // clang-format on
+    for (int icell = 0; icell < ncol; icell++) {
+        for (int jcell = 0; jcell < nrow; jcell++) {
 
-    for (size_t icell = 0; icell < grd.ncol; icell++) {
-        for (size_t jcell = 0; jcell < grd.nrow; jcell++) {
-
+            size_t i_cell = static_cast<size_t>(icell);
+            size_t j_cell = static_cast<size_t>(jcell);
             // Get cell corners
-            auto corners = grid3d::get_cell_corners_from_ijk(grd, icell, jcell, klayer);
+            auto corners =
+              grid3d::get_cell_corners_from_ijk(grd, i_cell, j_cell, klayer);
 
             // Find the min/max of the cell corners. This is the bounding box of the
             // cell and will narrow the search for the points that are within the
@@ -122,13 +131,13 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                     auto p = regsurf::get_xy_from_ij(regsurf, i, j);
                     // Check if the point is within the cell
                     bool is_inside_top =
-                      grid3d::is_xy_point_in_cell(p.x, p.y, corners, 0);
+                      grid3d::is_xy_point_in_cell(p.x(), p.y(), corners, 0);
 
                     bool is_inside_bot =
-                      grid3d::is_xy_point_in_cell(p.x, p.y, corners, 1);
+                      grid3d::is_xy_point_in_cell(p.x(), p.y(), corners, 1);
 
                     bool is_inside_mid =
-                      grid3d::is_xy_point_in_cell(p.x, p.y, corners, 2);
+                      grid3d::is_xy_point_in_cell(p.x(), p.y(), corners, 2);
 
                     if (is_inside_top && is_inside_bot && !is_inside_mid) {
                         // not sure if this is a bug... but set is_inside_mid too
@@ -138,7 +147,7 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                     if (is_inside_top) {
                         auto previous_depth_top = depth_top_(i, j);
                         auto new_depth_top =
-                          grid3d::get_depth_in_cell(p.x, p.y, corners, 0);
+                          grid3d::get_depth_in_cell(p.x(), p.y(), corners, 0);
 
                         if (std::isnan(previous_depth_top) ||
                             new_depth_top < previous_depth_top) {
@@ -146,32 +155,32 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                             depth_top_(i, j) = new_depth_top;
                         }
                         if (index_position == 0) {
-                            iindex_(i, j) = icell;
-                            jindex_(i, j) = jcell;
+                            iindex_(i, j) = i_cell;
+                            jindex_(i, j) = j_cell;
                         }
                     }
                     if (is_inside_bot) {
                         auto previous_depth_bot = depth_bot_(i, j);
                         auto new_depth_bot =
-                          grid3d::get_depth_in_cell(p.x, p.y, corners, 1);
+                          grid3d::get_depth_in_cell(p.x(), p.y(), corners, 1);
                         if (std::isnan(previous_depth_bot) ||
                             new_depth_bot < previous_depth_bot) {
                             depth_bot_(i, j) = new_depth_bot;
                         }
                         if (index_position == 1) {
-                            iindex_(i, j) = icell;
-                            jindex_(i, j) = jcell;
+                            iindex_(i, j) = i_cell;
+                            jindex_(i, j) = j_cell;
                         }
                     }
                     // the mid cell determines the active status and i, j index
                     if (is_inside_mid) {
                         // Check if the cell is active or not
-                        if (actnumsv_(icell, jcell, klayer) == 0) {
+                        if (actnumsv_(i_cell, j_cell, klayer) == 0) {
                             inactive_(i, j) = true;
                         }
                         if (index_position < 0 || index_position > 1) {
-                            iindex_(i, j) = icell;
-                            jindex_(i, j) = jcell;
+                            iindex_(i, j) = i_cell;
+                            jindex_(i, j) = j_cell;
                         }
                     }
                 }

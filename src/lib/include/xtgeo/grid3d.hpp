@@ -98,11 +98,6 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
 
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
 refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refine_layer);
-Grid
-extract_onelayer_grid(const Grid &original_grid);
-
-std::tuple<xyz::Point, xyz::Point>
-get_bounding_box(const Grid &grid);
 
 std::tuple<py::array_t<int>, py::array_t<int>, py::array_t<int>>
 get_indices_from_pointset(const Grid &grid,
@@ -112,7 +107,25 @@ get_indices_from_pointset(const Grid &grid,
                           const regsurf::RegularSurface &top_j,
                           const regsurf::RegularSurface &base_i,
                           const regsurf::RegularSurface &base_j,
-                          const bool active_only);
+                          const regsurf::RegularSurface &top_d,
+                          const regsurf::RegularSurface &base_d,
+                          const double threshold_magic,
+                          const bool active_only,
+                          const geometry::PointInHexahedronMethod point_in_hex_method);
+
+py::array_t<double>
+get_grid_fence(const Grid &grd,
+               const Grid &one_grid,
+               const py::array_t<double> &fspec,
+               const py::array_t<double> &property,
+               const py::array_t<double> &z_vector,
+               const regsurf::RegularSurface &top_i,
+               const regsurf::RegularSurface &top_j,
+               const regsurf::RegularSurface &base_i,
+               const regsurf::RegularSurface &base_j,
+               const regsurf::RegularSurface &top_d,
+               const regsurf::RegularSurface &base_d,
+               const double threshold_magic);
 
 std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
 refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
@@ -130,16 +143,27 @@ init(py::module &m)
       m.def_submodule("grid3d", "Internal functions for operations on 3d grids.");
 
     py::class_<Grid>(m_grid3d, "Grid")
+      // constructors
       .def(py::init<const py::object &>(), py::arg("grid"))
-      .def_readonly("ncol", &Grid::ncol)
-      .def_readonly("nrow", &Grid::nrow)
-      .def_readonly("nlay", &Grid::nlay)
-      .def_readonly("coordsv", &Grid::coordsv)
-      .def_readonly("zcornsv", &Grid::zcornsv)
-      .def_readonly("actnumsv", &Grid::actnumsv)
+      .def(py::init<size_t, size_t, size_t, const py::array_t<double> &,
+                    const py::array_t<float> &, const py::array_t<int> &>(),
+           py::arg("ncol"), py::arg("nrow"), py::arg("nlay"), py::arg("coordsv"),
+           py::arg("zcornsv"), py::arg("actnumsv"))
 
+      // members and properties
+      .def_property_readonly("ncol", &Grid::get_ncol)
+      .def_property_readonly("nrow", &Grid::get_nrow)
+      .def_property_readonly("nlay", &Grid::get_nlay)
+      .def_property_readonly("coordsv", &Grid::get_coordsv)
+      .def_property_readonly("zcornsv", &Grid::get_zcornsv)
+      .def_property_readonly("actnumsv", &Grid::get_actnumsv)
+
+      .def("extract_onelayer_grid", &Grid::extract_onelayer_grid,
+           "Get a one-layer grid - returns coordv, zcornsv, and actnumsv arrays ")
+      .def("get_bounding_box", &Grid::get_bounding_box, "Get bounding box of full grid")
+
+      // free form functions in C++ to members in Python
       .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.")
-
       .def("get_cell_centers", &get_cell_centers,
            "Compute the cells centers coordinates as 3 arrays")
       .def("get_gridprop_value_between_surfaces", &get_gridprop_value_between_surfaces,
@@ -153,15 +177,15 @@ init(py::module &m)
       .def("adjust_boxgrid_layers_from_regsurfs", &adjust_boxgrid_layers_from_regsurfs,
            "Adjust layers in a boxgrid given a list of regular surfaces.",
            py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
-      .def("extract_onelayer_grid", &extract_onelayer_grid, "Get a a onelayer grid")
-      .def("get_bounding_box", &get_bounding_box, "Get bounding box of full grid")
       .def("get_indices_from_pointset", &get_indices_from_pointset,
            "Get the indices of a point set in the grid")
       .def("refine_vertically", &refine_vertically, "Refine vertically, proportionally")
       .def("refine_columns", &refine_columns, "Refine per column proportionally")
-      .def("refine_rows", &refine_rows, "Refine per row proportionally");
+      .def("refine_rows", &refine_rows, "Refine per row proportionally")
+      .def("get_grid_fence", &get_grid_fence,
+           "Get a grid fence from a grid, fspec, property and z_vector")
 
-    ;
+      ;
 
     py::class_<CellCorners>(m_grid3d, "CellCorners")
       // a constructor that takes 8 xyz::Point objects

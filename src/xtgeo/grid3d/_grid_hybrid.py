@@ -23,7 +23,7 @@ def make_hybridgrid(
     region_number: int | None = None,
 ) -> None:
     """Make hybrid grid."""
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     newnlay = self.nlay * 2 + nhdiv
     newnzcorn = self.ncol * self.nrow * (newnlay + 1) * 4

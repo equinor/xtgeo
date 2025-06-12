@@ -52,22 +52,24 @@ is_xy_point_in_cell(const double x,
           x, y, corners.lower_sw, corners.lower_se, corners.lower_ne, corners.lower_nw);
     } else if (option == 2) {
         // find the center Z point of the cell
-        auto mid_sw = numerics::lerp3d(corners.upper_sw.x, corners.upper_sw.y,
-                                       corners.upper_sw.z, corners.lower_sw.x,
-                                       corners.lower_sw.y, corners.lower_sw.z, 0.5);
-        auto mid_se = numerics::lerp3d(corners.upper_se.x, corners.upper_se.y,
-                                       corners.upper_se.z, corners.lower_se.x,
-                                       corners.lower_se.y, corners.lower_se.z, 0.5);
-        auto mid_nw = numerics::lerp3d(corners.upper_nw.x, corners.upper_nw.y,
-                                       corners.upper_nw.z, corners.lower_nw.x,
-                                       corners.lower_nw.y, corners.lower_nw.z, 0.5);
-        auto mid_ne = numerics::lerp3d(corners.upper_ne.x, corners.upper_ne.y,
-                                       corners.upper_ne.z, corners.lower_ne.x,
-                                       corners.lower_ne.y, corners.lower_ne.z, 0.5);
+        auto mid_sw = numerics::lerp3d(corners.upper_sw.x(), corners.upper_sw.y(),
+                                       corners.upper_sw.z(), corners.lower_sw.x(),
+                                       corners.lower_sw.y(), corners.lower_sw.z(), 0.5);
+        auto mid_se = numerics::lerp3d(corners.upper_se.x(), corners.upper_se.y(),
+                                       corners.upper_se.z(), corners.lower_se.x(),
+                                       corners.lower_se.y(), corners.lower_se.z(), 0.5);
+        auto mid_nw = numerics::lerp3d(corners.upper_nw.x(), corners.upper_nw.y(),
+                                       corners.upper_nw.z(), corners.lower_nw.x(),
+                                       corners.lower_nw.y(), corners.lower_nw.z(), 0.5);
+        auto mid_ne = numerics::lerp3d(corners.upper_ne.x(), corners.upper_ne.y(),
+                                       corners.upper_ne.z(), corners.lower_ne.x(),
+                                       corners.lower_ne.y(), corners.lower_ne.z(), 0.5);
 
         return geometry::is_xy_point_in_quadrilateral(
-          x, y, { mid_sw.x, mid_sw.y, mid_sw.z }, { mid_se.x, mid_se.y, mid_se.z },
-          { mid_ne.x, mid_ne.y, mid_ne.z }, { mid_nw.x, mid_nw.y, mid_nw.z });
+          x, y, { mid_sw.x(), mid_sw.y(), mid_sw.z() },
+          { mid_se.x(), mid_se.y(), mid_se.z() },
+          { mid_ne.x(), mid_ne.y(), mid_ne.z() },
+          { mid_nw.x(), mid_nw.y(), mid_nw.z() });
     }
     return false;  // unreachable
 }  // is_xy_point_in_cell
@@ -122,7 +124,7 @@ is_point_in_cell(const xyz::Point &point,
 {
     // convert to right handed system and HexahedronCorners
     auto hexahedron_corners = corners.to_hexahedron_corners();
-    auto rh_point = xyz::Point(point.x, point.y, -point.z);
+    auto rh_point = xyz::Point(point.x(), point.y(), -point.z());
 
     if (!geometry::is_point_in_hexahedron_bounding_box(rh_point, hexahedron_corners)) {
         return false;  // Quick rejection test, independent of the method

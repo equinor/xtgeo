@@ -42,12 +42,12 @@ get_cell_corners_from_ijk(const Grid &grd,
                           const size_t j,
                           const size_t k)
 {
-    auto coordsv_ = grd.coordsv.data();
-    auto zcornsv_ = grd.zcornsv.data();
+    auto coordsv_ = grd.get_coordsv().data();
+    auto zcornsv_ = grd.get_zcornsv().data();
 
     double coords[4][6]{};
-    auto num_rows = grd.nrow + 1;
-    auto num_layers = grd.nlay + 1;
+    auto num_rows = grd.get_nrow() + 1;
+    auto num_layers = grd.get_nlay() + 1;
     auto n = 0;
     // Each cell is defined by 4 pillars
     for (auto x = 0; x < 2; x++) {
@@ -84,11 +84,11 @@ get_cell_corners_from_ijk(const Grid &grd,
             auto point = numerics::lerp3d(x1, y1, z1, x2, y2, z2, t);
             // If coord lines are collapsed (preserves old behavior)
             if (std::abs(z2 - z1) < numerics::EPSILON) {
-                point.x = x1;
-                point.y = y1;
+                point.set_x(x1);
+                point.set_y(y1);
             }
-            corners[crn_idx++] = point.x;
-            corners[crn_idx++] = point.y;
+            corners[crn_idx++] = point.x();
+            corners[crn_idx++] = point.y();
             corners[crn_idx++] = z_coords[cz_idx];
             cz_idx++;
         }

@@ -30,7 +30,8 @@ get_gridprop_value_between_surfaces(const Grid &grd,
                                     const regsurf::RegularSurface &top,
                                     const regsurf::RegularSurface &bot)
 {
-    pybind11::array_t<int8_t> result({ grd.ncol, grd.nrow, grd.nlay });
+    pybind11::array_t<int8_t> result(
+      { grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
     auto result_ = result.mutable_unchecked<3>();
 
     py::array_t<double> xmid, ymid, zmid;
@@ -41,9 +42,9 @@ get_gridprop_value_between_surfaces(const Grid &grd,
     auto ymid_ = ymid.unchecked<3>();
     auto zmid_ = zmid.unchecked<3>();
 
-    for (size_t i = 0; i < grd.ncol; i++) {
-        for (size_t j = 0; j < grd.nrow; j++) {
-            for (size_t k = 0; k < grd.nlay; k++) {
+    for (size_t i = 0; i < grd.get_ncol(); i++) {
+        for (size_t j = 0; j < grd.get_nrow(); j++) {
+            for (size_t k = 0; k < grd.get_nlay(); k++) {
                 // for every cell, project the center to the top and bottom surfaces
                 double xm = xmid_(i, j, k);
                 double ym = ymid_(i, j, k);
@@ -91,15 +92,16 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
                                     const std::vector<regsurf::RegularSurface> &rsurfs,
                                     const double tolerance)
 {
-    std::vector<size_t> shape = { grd.ncol + 1, grd.nrow + 1, grd.nlay + 1, 4 };
+    std::vector<size_t> shape = { grd.get_ncol() + 1, grd.get_nrow() + 1,
+                                  grd.get_nlay() + 1, 4 };
     // Create the array with the specified shape
     py::array_t<float> zcorn_result(shape);
-    py::array_t<int> actnum_result({ grd.ncol, grd.nrow, grd.nlay });
+    py::array_t<int> actnum_result({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
 
     auto zcorn_result_ = zcorn_result.mutable_unchecked<4>();
     auto actnum_result_ = actnum_result.mutable_unchecked<3>();
 
-    auto coordsv_ = grd.coordsv.unchecked<3>();
+    auto coordsv_ = grd.get_coordsv().unchecked<3>();
 
     for (size_t i = 0; i < actnum_result_.shape(0); ++i) {
         for (size_t j = 0; j < actnum_result_.shape(1); ++j) {
@@ -109,12 +111,12 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
         }
     }
 
-    if (rsurfs.size() != grd.nlay + 1) {
+    if (rsurfs.size() != grd.get_nlay() + 1) {
         throw std::invalid_argument("Wrong number of input surfaces vs grid layers");
     }
 
-    for (size_t icol = 0; icol < grd.ncol + 1; icol++) {
-        for (size_t jrow = 0; jrow < grd.nrow + 1; jrow++) {
+    for (size_t icol = 0; icol < grd.get_ncol() + 1; icol++) {
+        for (size_t jrow = 0; jrow < grd.get_nrow() + 1; jrow++) {
             // Get pillar coordinate, just using the top pillar point as the pillars
             // shall be vertical
             double x = coordsv_(icol, jrow, 0);
@@ -145,14 +147,14 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
                 int ia = static_cast<int>(icol);
                 int ja = static_cast<int>(jrow);
 
-                for (size_t k = 0; k < grd.nlay; k++) {
+                for (size_t k = 0; k < grd.get_nlay(); k++) {
                     for (int ii = ia - 1; ii <= ia; ii++) {
                         for (int jj = ja - 1; jj <= ja; jj++) {
                             // Ensure indices are within bounds
                             size_t apply_i =
-                              std::clamp(ii, 0, static_cast<int>(grd.ncol - 1));
+                              std::clamp(ii, 0, static_cast<int>(grd.get_ncol() - 1));
                             size_t apply_j =
-                              std::clamp(jj, 0, static_cast<int>(grd.nrow - 1));
+                              std::clamp(jj, 0, static_cast<int>(grd.get_nrow() - 1));
 
                             // Set actnum_result_ to 0 for the entire column
                             actnum_result_(apply_i, apply_j, k) = 0;

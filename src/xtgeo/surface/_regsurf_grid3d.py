@@ -31,7 +31,7 @@ def slice_grid3d(
 ):
     """Private function for the Grid3D slicing."""
 
-    grid._xtgformat1()
+    grid._set_xtgformat1()
     if zsurf is not None:
         other = zsurf
     else:
@@ -102,13 +102,13 @@ class DeriveSurfaceFromGrid3D:
 
         xtgformat_convert = self.grid._xtgformat == 1
         if xtgformat_convert:
-            self.grid._xtgformat2()
+            self.grid._set_xtgformat2()
 
         self._sample_regsurf_from_grid3d()
 
         # convert back to original xtgformat due to unforseen consequences
         if xtgformat_convert:
-            self.grid._xtgformat1()
+            self.grid._set_xtgformat1()
 
     def result(self) -> dict:
         args = {}
@@ -222,7 +222,7 @@ class DeriveSurfaceFromGrid3D:
         regsurf_cpp = _internal.regsurf.RegularSurface(self._tempsurf)
 
         iindex, jindex, d_top, d_bot, mask = regsurf_cpp.sample_grid3d_layer(
-            _internal.grid3d.Grid(self.grid),
+            self.grid._get_grid_cpp(),
             self._klayer,
             {"top": 0, "bot": 1, "base": 1}.get(self.index_position, 2),
             -1,  # number of threads for OpenMP; -1 means let the system decide

@@ -4,9 +4,12 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <xtgeo/logging.hpp>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846  // seems like Windows does not define M_PI i cmath
@@ -42,22 +45,58 @@ constexpr double QUIET_NAN = std::numeric_limits<double>::quiet_NaN();
 
 namespace xyz {
 
-struct Point
+class Point
 {
-    // a single point in 3D space, Z is increasing down normally (but agnostic)
-    double x;
-    double y;
-    double z;
+public:
+    // Constructors
+    Point() : m_data(0, 0, 0) {}
+    Point(double x, double y) : m_data(x, y, 0) {}
+    Point(double x, double y, double z) : m_data(x, y, z) {}
 
-    // Default constructor
-    Point() : x(0), y(0), z(0) {}
+    // Allow construction from Eigen::Vector3d
+    explicit Point(const Eigen::Vector3d &v) : m_data(v) {}
 
-    // Constructor that takes two arguments and sets z to 0
-    Point(double x, double y) : x(x), y(y), z(0) {}
+    // Read only getters
+    double x() const { return m_data.x(); }
+    double y() const { return m_data.y(); }
+    double z() const { return m_data.z(); }
 
-    // Constructor that takes three arguments
-    Point(double x, double y, double z) : x(x), y(y), z(z) {}
-};  // struct Point
+    double get_x() const { return x(); }  // Delegates to const x()
+    double get_y() const { return y(); }
+    double get_z() const { return z(); }
+
+    // Setter methods - to set coordinates like point.x() += 5 (compund assignment)
+    double &x() { return m_data.x(); }
+    double &y() { return m_data.y(); }
+    double &z() { return m_data.z(); }
+
+    // Setter methods - to modify coordinates more explicitly
+    void set_x(double val) { m_data.x() = val; }
+    void set_y(double val) { m_data.y() = val; }
+    void set_z(double val) { m_data.z() = val; }
+
+    // Direct access to the Eigen vector
+    Eigen::Vector3d &data() { return m_data; }
+    const Eigen::Vector3d &data() const { return m_data; }
+
+    // Basic vector operations (these will use optimized Eigen operations)
+    Point operator+(const Point &other) const { return Point(m_data + other.m_data); }
+
+    Point operator-(const Point &other) const { return Point(m_data - other.m_data); }
+
+    Point operator*(double scalar) const { return Point(m_data * scalar); }
+
+    double dot(const Point &other) const { return m_data.dot(other.m_data); }
+
+    Point cross(const Point &other) const { return Point(m_data.cross(other.m_data)); }
+
+    double norm() const { return m_data.norm(); }
+
+    double squared_norm() const { return m_data.squaredNorm(); }
+
+private:
+    Eigen::Vector3d m_data;
+};
 
 struct Polygon
 {
@@ -152,7 +191,7 @@ struct HexahedronCorners
       upper_sw(usw), upper_se(use), upper_ne(une), upper_nw(unw), lower_sw(lsw),
       lower_se(lse), lower_ne(lne), lower_nw(lnw)
     {
-        validate_z_coordinates();
+        impl_validate_z_coordinates();
     }
 
     // Constructor that takes a one-dimensional numpy array of 24 elements
@@ -166,7 +205,7 @@ struct HexahedronCorners
       lower_ne(arr.at(18), arr.at(19), arr.at(20)),
       lower_nw(arr.at(21), arr.at(22), arr.at(23))
     {
-        validate_z_coordinates();
+        impl_validate_z_coordinates();
     }
 
     // arrange the corners in a single array for easier access
@@ -178,49 +217,49 @@ struct HexahedronCorners
           arr.mutable_unchecked<2>();  // Access the array without bounds checking
 
         // Fill the array with the corner coordinates
-        r(0, 0) = upper_sw.x;
-        r(0, 1) = upper_sw.y;
-        r(0, 2) = upper_sw.z;
+        r(0, 0) = upper_sw.x();
+        r(0, 1) = upper_sw.y();
+        r(0, 2) = upper_sw.z();
 
-        r(1, 0) = upper_se.x;
-        r(1, 1) = upper_se.y;
-        r(1, 2) = upper_se.z;
+        r(1, 0) = upper_se.x();
+        r(1, 1) = upper_se.y();
+        r(1, 2) = upper_se.z();
 
-        r(2, 0) = upper_ne.x;
-        r(2, 1) = upper_ne.y;
-        r(2, 2) = upper_ne.z;
+        r(2, 0) = upper_ne.x();
+        r(2, 1) = upper_ne.y();
+        r(2, 2) = upper_ne.z();
 
-        r(3, 0) = upper_nw.x;
-        r(3, 1) = upper_nw.y;
-        r(3, 2) = upper_nw.z;
+        r(3, 0) = upper_nw.x();
+        r(3, 1) = upper_nw.y();
+        r(3, 2) = upper_nw.z();
 
-        r(4, 0) = lower_sw.x;
-        r(4, 1) = lower_sw.y;
-        r(4, 2) = lower_sw.z;
+        r(4, 0) = lower_sw.x();
+        r(4, 1) = lower_sw.y();
+        r(4, 2) = lower_sw.z();
 
-        r(5, 0) = lower_se.x;
-        r(5, 1) = lower_se.y;
-        r(5, 2) = lower_se.z;
+        r(5, 0) = lower_se.x();
+        r(5, 1) = lower_se.y();
+        r(5, 2) = lower_se.z();
 
-        r(6, 0) = lower_ne.x;
-        r(6, 1) = lower_ne.y;
-        r(6, 2) = lower_ne.z;
+        r(6, 0) = lower_ne.x();
+        r(6, 1) = lower_ne.y();
+        r(6, 2) = lower_ne.z();
 
-        r(7, 0) = lower_nw.x;
-        r(7, 1) = lower_nw.y;
-        r(7, 2) = lower_nw.z;
+        r(7, 0) = lower_nw.x();
+        r(7, 1) = lower_nw.y();
+        r(7, 2) = lower_nw.z();
 
         return arr;
     }
 
 private:
     // Helper function to validate Z-coordinates
-    void validate_z_coordinates() const
+    void impl_validate_z_coordinates() const
     {
-        assert(upper_sw.z >= lower_sw.z && "upper_sw.z must be >= lower_sw.z");
-        assert(upper_se.z >= lower_se.z && "upper_se.z must be >= lower_se.z");
-        assert(upper_ne.z >= lower_ne.z && "upper_ne.z must be >= lower_ne.z");
-        assert(upper_nw.z >= lower_nw.z && "upper_nw.z must be >= lower_nw.z");
+        assert(upper_sw.z() >= lower_sw.z() && "upper_sw.z() must be >= lower_sw.z");
+        assert(upper_se.z() >= lower_se.z() && "upper_se.z() must be >= lower_se.z");
+        assert(upper_ne.z() >= lower_ne.z() && "upper_ne.z() must be >= lower_ne.z");
+        assert(upper_nw.z() >= lower_nw.z() && "upper_nw.z() must be >= lower_nw.z");
     }
 };  // struct HexahedronCorners
 
@@ -301,12 +340,11 @@ struct CellCorners
     // arrange the corners in a single array for easier access in some cases
     std::array<double, 24> arrange_corners() const
     {
-        return {
-            upper_sw.x, upper_sw.y, upper_sw.z, upper_se.x, upper_se.y, upper_se.z,
-            upper_nw.x, upper_nw.y, upper_nw.z, upper_ne.x, upper_ne.y, upper_ne.z,
-            lower_sw.x, lower_sw.y, lower_sw.z, lower_se.x, lower_se.y, lower_se.z,
-            lower_nw.x, lower_nw.y, lower_nw.z, lower_ne.x, lower_ne.y, lower_ne.z
-        };
+        return { upper_sw.x(), upper_sw.y(), upper_sw.z(), upper_se.x(), upper_se.y(),
+                 upper_se.z(), upper_nw.x(), upper_nw.y(), upper_nw.z(), upper_ne.x(),
+                 upper_ne.y(), upper_ne.z(), lower_sw.x(), lower_sw.y(), lower_sw.z(),
+                 lower_se.x(), lower_se.y(), lower_se.z(), lower_nw.x(), lower_nw.y(),
+                 lower_nw.z(), lower_ne.x(), lower_ne.y(), lower_ne.z() };
     }
 
     // convert CellCorners struct to a std::array<double, 24> array
@@ -329,7 +367,7 @@ struct CellCorners
     xtgeo::geometry::HexahedronCorners to_hexahedron_corners() const
     {
         auto negate_z = [](const xyz::Point &point) {
-            return xyz::Point(point.x, point.y, -point.z);
+            return xyz::Point(point.x(), point.y(), -point.z());
         };
 
         return xtgeo::geometry::HexahedronCorners(
@@ -340,69 +378,157 @@ struct CellCorners
 
 };  // struct CellCorners
 
-struct Grid
+class Grid
 {
+public:
+    // Constructor that takes a Python xtgeo.Grid object. Explicit; to avoid silent
+    // implicit conversions
+    explicit Grid(const py::object &grid) :
+      m_ncol(grid.attr("ncol").cast<size_t>()),
+      m_nrow(grid.attr("nrow").cast<size_t>()),
+      m_nlay(grid.attr("nlay").cast<size_t>()),
+      m_coordsv(grid.attr("_coordsv").cast<py::array_t<double>>()),
+      m_zcornsv(grid.attr("_zcornsv").cast<py::array_t<float>>()),
+      m_actnumsv(grid.attr("_actnumsv").cast<py::array_t<int>>())
 
-    // Also for a 3D grid, Z is increasing upward in C++! For most North Sea cases it
-    // means that Z values are "negative" depths
+    {
+        auto &logger = xtgeo::logging::LoggerManager::get("Grid::Grid");
+        logger.debug("Constructing Grid from python by instance ID: {}",
+                     static_cast<const void *>(this));
+        // Validate dimensions using the newly initialized private members
+        // check dimensions for coords that should be (ncol+1, nrow+1, 6)
+        if (m_coordsv.ndim() != 3) {
+            throw std::runtime_error("m_coordsv should have 3 dimensions");
+        }
+        if (m_coordsv.shape(0) != m_ncol + 1 || m_coordsv.shape(1) != m_nrow + 1 ||
+            m_coordsv.shape(2) != 6) {
+            throw std::runtime_error("m_coordsv should have shape (ncol+1, nrow+1, 6)");
+        }
 
-    size_t ncol;
-    size_t nrow;
-    size_t nlay;
-    py::array_t<double> coordsv;
-    py::array_t<float> zcornsv;
-    py::array_t<int> actnumsv;
+        // check dimensions for zcornsv_ that should be (ncol+1, nrow+1, nlay+1, 4)
+        if (m_zcornsv.ndim() != 4) {
+            throw std::runtime_error("m_zcornsv should have 4 dimensions");
+        }
+        if (m_zcornsv.shape(0) != m_ncol + 1 || m_zcornsv.shape(1) != m_nrow + 1 ||
+            m_zcornsv.shape(2) != m_nlay + 1 || m_zcornsv.shape(3) != 4) {
+            throw std::runtime_error(
+              "m_zcornsv should have shape (ncol+1, nrow+1, nlay+1, 4)");
+        }
 
-    mutable std::vector<CellCorners> cell_corners_cache;
+        // check dimensions for actnumsv_ that should be (ncol, nrow, nlay)
+        if (m_actnumsv.ndim() != 3) {
+            throw std::runtime_error("m_actnumsv should have 3 dimensions");
+        }
+        if (m_actnumsv.shape(0) != m_ncol || m_actnumsv.shape(1) != m_nrow ||
+            m_actnumsv.shape(2) != m_nlay) {
+            throw std::runtime_error("m_actnumsv should have shape (ncol, nrow, nlay)");
+        }
+    }
 
-    // Default constructor (deleted)
+    Grid(size_t ncol,
+         size_t nrow,
+         size_t nlay,
+         const py::array_t<double> &coordsv,
+         const py::array_t<float> &zcornsv,
+         const py::array_t<int> &actnumsv) :
+      m_ncol(ncol), m_nrow(nrow), m_nlay(nlay), m_coordsv(coordsv), m_zcornsv(zcornsv),
+      m_actnumsv(actnumsv)
+    {
+        auto &logger = xtgeo::logging::LoggerManager::get("Grid::Grid");
+        logger.debug("Constructing Grid DIRECTLY by instance ID: {}",
+                     static_cast<const void *>(this));
+        // Validate dimensions just like in the py::object constructor
+        // check dimensions for coords that should be (ncol+1, nrow+1, 6)
+        if (m_coordsv.ndim() != 3) {
+            throw std::runtime_error("m_coordsv should have 3 dimensions");
+        }
+        if (m_coordsv.shape(0) != m_ncol + 1 || m_coordsv.shape(1) != m_nrow + 1 ||
+            m_coordsv.shape(2) != 6) {
+            throw std::runtime_error("m_coordsv should have shape (ncol+1, nrow+1, 6)");
+        }
+
+        // check dimensions for zcornsv_ that should be (ncol+1, nrow+1, nlay+1, 4)
+        if (m_zcornsv.ndim() != 4) {
+            throw std::runtime_error("m_zcornsv should have 4 dimensions");
+        }
+        if (m_zcornsv.shape(0) != m_ncol + 1 || m_zcornsv.shape(1) != m_nrow + 1 ||
+            m_zcornsv.shape(2) != m_nlay + 1 || m_zcornsv.shape(3) != 4) {
+            throw std::runtime_error(
+              "m_zcornsv should have shape (ncol+1, nrow+1, nlay+1, 4)");
+        }
+
+        // check dimensions for actnumsv_ that should be (ncol, nrow, nlay)
+        if (m_actnumsv.ndim() != 3) {
+            throw std::runtime_error("m_actnumsv should have 3 dimensions");
+        }
+        if (m_actnumsv.shape(0) != m_ncol || m_actnumsv.shape(1) != m_nrow ||
+            m_actnumsv.shape(2) != m_nlay) {
+            throw std::runtime_error("m_actnumsv should have shape (ncol, nrow, nlay)");
+        }
+    }
+    // Deleted default constructor - since the class requires specific initialization
     Grid() = delete;
 
-    // Constructor that takes a Python xtgeo.Grid object (using a subset of the attrs)
-    Grid(const py::object &grid)
+    Grid(Grid &&) noexcept = default;
+    Grid &operator=(Grid &&) noexcept = delete;  // can't assign to const members
+    // Keep copy constructor/assignment deleted if you don't want copies
+    Grid(const Grid &) = delete;
+    Grid &operator=(const Grid &) = delete;
+
+    // --- Public Member Functions ---
+
+    std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int>>
+    extract_onelayer_grid() const;
+
+    // --- Public Accessors (Getters) ---
+    size_t get_ncol() const { return m_ncol; }
+    size_t get_nrow() const { return m_nrow; }
+    size_t get_nlay() const { return m_nlay; }
+
+    const py::array_t<double> &get_coordsv() const { return m_coordsv; }
+    const py::array_t<float> &get_zcornsv() const { return m_zcornsv; }
+    const py::array_t<int> &get_actnumsv() const { return m_actnumsv; }
+
+    // Cell corners cache: computed once, then reused
+    const std::vector<CellCorners> &get_cell_corners_cache() const
     {
-        ncol = grid.attr("ncol").cast<size_t>();
-        nrow = grid.attr("nrow").cast<size_t>();
-        nlay = grid.attr("nlay").cast<size_t>();
-        coordsv = grid.attr("_coordsv").cast<py::array_t<double>>();
-        zcornsv = grid.attr("_zcornsv").cast<py::array_t<float>>();
-        actnumsv = grid.attr("_actnumsv").cast<py::array_t<int>>();
-
-        // Add the cache as a member
-
-        // check dimensions for coords that should be (ncol+1, nrow+1, 6)
-        if (coordsv.ndim() != 3) {
-            throw std::runtime_error("coordsv should have 3 dimensions");
+        if (!m_cell_corners_computed) {
+            impl_compute_cell_corners();
         }
-        if (coordsv.shape(0) != ncol + 1 || coordsv.shape(1) != nrow + 1 ||
-            coordsv.shape(2) != 6) {
-            throw std::runtime_error("coordsv should have shape (ncol+1, nrow+1, 6)");
-        }
+        return m_cell_corners_cache;
+    }
 
-        // check dimensions for zcornsv that should be (ncol+1, nrow+1, nlay+1, 4)
-        if (zcornsv.ndim() != 4) {
-            throw std::runtime_error("zcornsv should have 4 dimensions");
+    // Bounding box cache: computed once, then reused
+    std::pair<xyz::Point, xyz::Point> get_bounding_box() const
+    {
+        if (!m_bounding_box_computed) {
+            impl_compute_bounding_box();
         }
-        if (zcornsv.shape(0) != ncol + 1 || zcornsv.shape(1) != nrow + 1 ||
-            zcornsv.shape(2) != nlay + 1 || zcornsv.shape(3) != 4) {
-            throw std::runtime_error(
-              "zcornsv should have shape (ncol+1, nrow+1, nlay+1, 4)");
-        }
+        return { m_min_point, m_max_point };
+    }
 
-        // check dimensions for actnumsv that should be (ncol, nrow, nlay)
-        if (actnumsv.ndim() != 3) {
-            throw std::runtime_error("actnumsv should have 3 dimensions");
-        }
-        if (actnumsv.shape(0) != ncol || actnumsv.shape(1) != nrow ||
-            actnumsv.shape(2) != nlay) {
-            throw std::runtime_error("actnumsv should have shape (ncol, nrow, nlay)");
-        }
-    };
+private:
+    const size_t m_ncol;
+    const size_t m_nrow;
+    const size_t m_nlay;
+    const py::array_t<double> m_coordsv;
+    const py::array_t<float> m_zcornsv;
+    const py::array_t<int> m_actnumsv;
 
-    void compute_cell_corners();
+    // The cache is mutable so it can be modified by const member functions
+    // like ensure_cell_corners_cache() or a const get_cell_corners_cache().
+    mutable std::vector<CellCorners> m_cell_corners_cache;
+    mutable bool m_cell_corners_computed = false;
 
-    void ensure_cell_corners_cache() const;
-};
+    // Bounding box cache
+    mutable xyz::Point m_min_point;
+    mutable xyz::Point m_max_point;
+    mutable bool m_bounding_box_computed = false;
+    // Internal method to compute the bounding box
+    void impl_compute_bounding_box() const;
+    void impl_compute_cell_corners() const;
+
+};  // class Grid
 
 }  // namespace grid3d
 

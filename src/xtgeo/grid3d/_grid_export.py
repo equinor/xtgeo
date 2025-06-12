@@ -69,7 +69,7 @@ def export_xtgcpgeom(grid: Grid, gfile: FileWrapper, subformat: int = 844) -> No
     """Export grid to binary XTGeo xtgcpgeom format, in prep. and experimental."""
     logger.info("Export to native binary xtgeo...")
 
-    grid._xtgformat2()
+    grid._set_xtgformat2()
     logger.info("Export to native binary xtgeo...(2)")
 
     grid.metadata.required = grid
@@ -114,7 +114,7 @@ def export_hdf5_cpgeom(
     subformat: int = 844,
 ) -> None:
     """Export grid to h5/hdf5, in prep. and experimental."""
-    grid._xtgformat2()
+    grid._set_xtgformat2()
 
     logger.debug("Export to hdf5 xtgeo layout...")
 

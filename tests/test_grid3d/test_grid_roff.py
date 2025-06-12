@@ -132,7 +132,7 @@ def test_roff_grid_read_write(rgrid):
 
 @given(xtgeo_grids)
 def test_to_from_xtgeogrid_format2(xtggrid):
-    xtggrid._xtgformat2()
+    xtggrid._set_xtgformat2()
     roff_grid = RoffGrid.from_xtgeo_grid(xtggrid)
 
     assert_allclose(roff_grid.xtgeo_actnum(), xtggrid._actnumsv, atol=0.02)
@@ -143,10 +143,10 @@ def test_to_from_xtgeogrid_format2(xtggrid):
 
 @given(xtgeo_grids)
 def test_to_from_xtgeogrid_format1(xtggrid):
-    xtggrid._xtgformat1()
+    xtggrid._set_xtgformat1()
     roff_grid = RoffGrid.from_xtgeo_grid(xtggrid)
 
-    xtggrid._xtgformat2()
+    xtggrid._set_xtgformat2()
     assert_allclose(roff_grid.xtgeo_actnum(), xtggrid._actnumsv, atol=0.02)
     assert_allclose(roff_grid.xtgeo_coord(), xtggrid._coordsv, atol=0.02)
     assert_allclose(roff_grid.xtgeo_zcorn(), xtggrid._zcornsv, atol=0.02)

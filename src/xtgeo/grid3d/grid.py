@@ -70,6 +70,47 @@ logger = null_logger(__name__)
 # --------------------------------------------------------------------------------------
 
 
+def _estimate_grid_ijk_handedness(coordsv: np.array) -> Literal["left", "right"] | None:
+    """Helper: estimate the ijk handedness from the coordinates.
+
+    Args:
+        coordsv: The coordinates (coordsv) of the grid.
+
+    Returns:
+        "left" or "right" depending on the handedness, or None if cannot determine
+
+    Note:
+        Z array is always assumed positive downwards
+    """
+    p0 = coordsv[0, 0, 0:3]  # origin
+    pz = coordsv[0, 0, 3:6]  # layer direction
+    px = coordsv[-1, 0, 0:3]  # columns direction, aka X
+    py = coordsv[0, -1, 0:3]  # rows direction, aka Y
+
+    # sometimes the pillars are collapsed; assume that the pillars are postive down
+    if pz[2] <= p0[2]:
+        pz[2] = p0[2] + 0.001
+
+    # multiply z by -1 since system is Z positive down
+    p0[2] *= -1
+    pz[2] *= -1
+    px[2] *= -1
+    py[2] *= -1
+
+    vx = np.array(px) - np.array(p0)
+    vy = np.array(py) - np.array(p0)
+    vz = np.array(pz) - np.array(p0)
+    det = np.dot(np.cross(vx, vy), vz)
+
+    if det > 0:
+        return "right"
+
+    if det < 0:
+        return "left"
+
+    return None
+
+
 # METHODS as wrappers to class init + import
 def _handle_import(
     grid_constructor: Callable[..., Grid],
@@ -316,6 +357,7 @@ class _GridCache:
     """
 
     def __init__(self, grid: Grid) -> None:
+        logger.debug("Initialize cache for grid %s", grid.name)
         self.onegrid: Grid | None = None
         self.bbox: tuple[float, float, float, float, float, float] | None = None
         self.top_depth: xtgeo.RegularSurface | None = None
@@ -324,9 +366,11 @@ class _GridCache:
         self.top_j_index: xtgeo.RegularSurface | None = None
         self.base_i_index: xtgeo.RegularSurface | None = None
         self.base_j_index: xtgeo.RegularSurface | None = None
+        logger.debug("Initialize cache for grid .. %s", grid.name)
+
+        self.threshold_magic_1: float = 0.1  # used in a C++ algorithm
 
         # cpp (pybind11) objects
-        self.grid_cpp: GridCPP | None = None
         self.onegrid_cpp: GridCPP | None = None
         self.top_depth_cpp: RegularSurfaceCPP | None = None
         self.base_depth_cpp: RegularSurfaceCPP | None = None
@@ -334,6 +378,7 @@ class _GridCache:
         self.top_j_index_cpp: RegularSurfaceCPP | None = None
         self.base_i_index_cpp: RegularSurfaceCPP | None = None
         self.base_j_index_cpp: RegularSurfaceCPP | None = None
+        logger.debug("Initialize cache for grid .... %s", grid.name)
 
         # these are special SWIG arrays kept until necessary SWIG methods are replaced
         # with pypind 11 / C++
@@ -344,8 +389,10 @@ class _GridCache:
 
         self.name: str = grid.name
         self.hash = hash(grid)  # to remember the grid
+        logger.debug("Initialize cache for grid ...... %s", grid.name)
         # initialize the cache with a one layer grid and surfaces
         self._initialize(grid)
+        logger.debug("Initialized cache for grid %s, DONE", grid.name)
 
     @staticmethod
     def _get_swig_carr_double(surface: xtgeo.RegularSurface) -> Any:
@@ -355,16 +402,24 @@ class _GridCache:
 
     def _initialize(self, grid: Grid) -> None:
         """Initialize the cache with a one layer grid and surfaces."""
-        grid_cpp = _internal.grid3d.Grid(grid)
-        new_grid_cpp = grid_cpp.extract_onelayer_grid()
+        grid._set_xtgformat2()  # ensure xtgformat 2
+        grid_cpp = grid._get_grid_cpp()
+
+        dz = grid.get_dz()
+        self.threshold_magic_1 = dz.values.mean()  # cf. get_indices_from_pointset
+
+        logger.debug("Extracting one layer grid from %s", grid.name)
+        coordsv1, zcornsv1, actnumsv1 = grid_cpp.extract_onelayer_grid()
 
         one = self.onegrid = Grid(
-            coordsv=new_grid_cpp.coordsv,
-            zcornsv=new_grid_cpp.zcornsv,
-            actnumsv=new_grid_cpp.actnumsv,
+            coordsv=coordsv1,
+            zcornsv=zcornsv1,
+            actnumsv=actnumsv1,
         )
 
-        minv, maxv = new_grid_cpp.get_bounding_box()
+        logger.debug("Created one layer grid in python from %s", grid.name)
+
+        minv, maxv = one._get_grid_cpp().get_bounding_box()
         self.bbox = (minv.x, minv.y, minv.z, maxv.x, maxv.y, maxv.z)
 
         self.top_depth = surface_from_grid3d(
@@ -394,8 +449,7 @@ class _GridCache:
         self.base_i_index.fill()
         self.base_j_index.fill()
 
-        self.onegrid_cpp = new_grid_cpp
-        self.grid_cpp = grid_cpp
+        self.onegrid_cpp = one._get_grid_cpp()
         self.top_depth_cpp = _internal.regsurf.RegularSurface(self.top_depth)
         self.base_depth_cpp = _internal.regsurf.RegularSurface(self.base_depth)
         self.top_i_index_cpp = _internal.regsurf.RegularSurface(self.top_i_index)
@@ -414,6 +468,7 @@ class _GridCache:
 
     def clear(self) -> None:
         """Clear the cache."""
+        self.threshold_magic_1 = 0.1
         self.onegrid = None
         self.bbox = None
         self.top_depth = None
@@ -520,6 +575,7 @@ class Grid(_Grid3D):
         roxgrid: Any | None = None,
         roxindexer: Any | None = None,
     ):
+        logger.debug("Initialize Grid...")
         coordsv = np.asarray(coordsv)
         zcornsv = np.asarray(zcornsv)
         actnumsv = np.asarray(actnumsv)
@@ -567,6 +623,11 @@ class Grid(_Grid3D):
         self._dualporo = dualporo
         self._dualperm = dualperm
 
+        # this is a reference to the Grid object in C++. Never access this directly,
+        # but use self._get_grid_cpp() function which validates against hash
+        self._grid_cpp = _internal.grid3d.Grid(self)
+        logger.debug("Initialize Grid... grid_cpp initialized")
+
         self._filesrc = filesrc
 
         self._props: GridProperties | None = (
@@ -576,6 +637,7 @@ class Grid(_Grid3D):
         self._name = name
         self._subgrids = subgrids
         self._ijk_handedness: Literal["left", "right"] | None = None
+        logger.debug("Initialize Grid... subgrids initialized")
 
         self._dualactnum = None
         if dualporo:
@@ -586,16 +648,25 @@ class Grid(_Grid3D):
 
         self._metadata = xtgeo.MetaDataCPGeometry()
         self._metadata.required = self
+        logger.debug("Initialize Grid... metadata initialized")
 
         # Roxar api spesific:
         self._roxgrid = roxgrid
         self._roxindexer = roxindexer
+        logger.debug("Initialize Grid... roxar api initialized (if required)")
 
         self.units = units
 
-        self._cache: _GridCache | None = None
+        self._ijk_handedness = _estimate_grid_ijk_handedness(coordsv.copy())
+        logger.debug(
+            "Initialize Grid... ijk_handedness set to %s", self._ijk_handedness
+        )
+
+        self._hash = hash(self)
 
         self._tmp = {}  # TMP!
+        self._cache: _GridCache | None = None
+        logger.debug("Initialize Grid... DONE!")
 
     def __repr__(self) -> str:
         """The __repr__ method."""
@@ -612,7 +683,8 @@ class Grid(_Grid3D):
         return self.describe(flush=False) or ""
 
     def __hash__(self):
-        """The __hash__ method."""
+        """The __hash__ method, i.e hash(self)."""
+
         return hash(self.generate_hash())
 
     # ==================================================================================
@@ -674,14 +746,6 @@ class Grid(_Grid3D):
         lower-left, while 'right' is origin in upper-left corner.
 
         """
-        nflip = _grid_etc1.estimate_flip(self)
-        if nflip == 1:
-            self._ijk_handedness = "left"
-        elif nflip == -1:
-            self._ijk_handedness = "right"
-        else:
-            self._ijk_handedness = None  # cannot determine
-
         return self._ijk_handedness
 
     @ijk_handedness.setter
@@ -689,7 +753,6 @@ class Grid(_Grid3D):
         if value not in ("right", "left"):
             raise ValueError("The value must be 'right' or 'left'")
         self.reverse_row_axis(ijk_handedness=value)
-        self._ijk_handedness = value
 
     @property
     def subgrids(self) -> dict[str, range | list[int]] | None:
@@ -861,15 +924,30 @@ class Grid(_Grid3D):
     # TODO: do a threading lock of the cache
     # ==================================================================================
 
+    def _get_grid_cpp(self) -> GridCPP:
+        """Get the C++ grid object, creating or updating if needed."""
+        grid_cpp = getattr(self, "_grid_cpp", None)
+        current_hash = hash(self)
+        if grid_cpp is not None and self._hash == current_hash:
+            logger.info("Cache for python Grid is valid, returning current")
+            return grid_cpp
+
+        # update reference to C++ Grid object if hash has changed
+        self._grid_cpp = _internal.grid3d.Grid(self)
+        self._hash = current_hash
+        return self._grid_cpp
+
     def _get_cache(self) -> _GridCache:
         """Get the grid cache object, creating or updating if needed."""
         cache = getattr(self, "_cache", None)
         current_hash = hash(self)
         if cache is not None:
             if cache.hash == current_hash:
-                logger.debug("Cache is valid, returning current")
+                logger.info("Cache for python Grid is valid, returning current")
                 return cache
-            logger.debug("Grid has changed, current cache is invalid, creating new")
+            logger.info(
+                "Python Grid has changed, current cache is invalid, creating new"
+            )
             cache.clear()
         self._cache = _GridCache(self)
         return self._cache
@@ -891,12 +969,14 @@ class Grid(_Grid3D):
         self,
         hashmethod: Literal["md5", "sha256", "blake2b"] = "md5",
     ) -> str:
-        """Return a unique hash ID for current instance.
+        """Return a unique hash ID for current instance (for persistance).
 
         See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
 
         .. versionadded:: 2.14
         """
+        self._set_xtgformat2()  # ensure xtgformat 2!
+
         required = (
             "_ncol",
             "_nrow",
@@ -1186,7 +1266,7 @@ class Grid(_Grid3D):
 
         _versionadded:: 4.9
         """
-        min_pt, max_pt = _internal.grid3d.Grid(self).get_bounding_box()
+        min_pt, max_pt = self._get_grid_cpp().get_bounding_box()
         return (min_pt.x, min_pt.y, min_pt.z, max_pt.x, max_pt.y, max_pt.z)
 
     def get_dataframe(
@@ -1462,12 +1542,14 @@ class Grid(_Grid3D):
 
         .. seealso:: :py:attr:`~ijk_handedness`
         """
-        return _grid_etc1.estimate_flip(self)
+        self._set_xtgformat2()  # ensure xtgformat 2!
+        handedness = _estimate_grid_ijk_handedness(self._coordsv.copy())
+        return -1 if handedness == "right" else 1
 
     def subgrids_from_zoneprop(self, zoneprop: GridProperty) -> dict[str, int] | None:
         """Estimate subgrid index from a zone property.
 
-        The new will esimate which will replace the current if any.
+        The new will estimate which will replace the current if any.
 
         Args:
             zoneprop(GridProperty): a XTGeo GridProperty instance.
@@ -2048,7 +2130,8 @@ class Grid(_Grid3D):
         Raises:
             RuntimeWarning if spesification is invalid.
         """
-        return _grid_etc1.get_xyz_cell_corners(
+
+        return _grid_etc1.get_xyz_cell_corners_internal(
             self, ijk=ijk, activeonly=activeonly, zerobased=zerobased
         )
 
@@ -2341,7 +2424,7 @@ class Grid(_Grid3D):
     def get_onelayer_grid(self) -> Grid:
         """Return a copy of the grid with only one layer."""
 
-        new_grid_cpp = _internal.grid3d.Grid(self).extract_onelayer_grid()
+        new_grid_cpp = self._get_grid_cpp().extract_onelayer_grid()
         return Grid(
             coordsv=new_grid_cpp.coordsv,
             zcornsv=new_grid_cpp.zcornsv,
@@ -2756,10 +2839,10 @@ class Grid(_Grid3D):
         """Convert arrays from old structure xtgformat=1 to new xtgformat=2."""
         _grid_etc1._convert_xtgformat1to2(self)
 
-    def _xtgformat1(self) -> None:
+    def _set_xtgformat1(self) -> None:
         """Shortform... arrays from new structure xtgformat=2 to legacy xtgformat=1."""
         self._convert_xtgformat2to1()
 
-    def _xtgformat2(self) -> None:
+    def _set_xtgformat2(self) -> None:
         """Shortform... arrays from old structure xtgformat=1 to new xtgformat=2."""
         self._convert_xtgformat1to2()

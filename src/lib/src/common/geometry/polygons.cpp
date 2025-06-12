@@ -16,8 +16,8 @@ is_xy_point_in_polygon(const double x, const double y, const xyz::Polygon &polyg
     bool inside = false;
     int n = polygon.size();  // Define the variable n
     for (int i = 0, j = n - 1; i < n; j = i++) {
-        double xi = polygon.points[i].x, yi = polygon.points[i].y;
-        double xj = polygon.points[j].x, yj = polygon.points[j].y;
+        double xi = polygon.points[i].x(), yi = polygon.points[i].y();
+        double xj = polygon.points[j].x(), yj = polygon.points[j].y();
 
         bool intersect =
           ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);

@@ -9,7 +9,6 @@ from xtgeo import _cxtgeo
 from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.constants import UNDEF_INT, UNDEF_INT_LIMIT
 from xtgeo.common.log import null_logger
-from xtgeo.common.sys import _get_carray
 from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
@@ -150,98 +149,8 @@ def make_zone_qual_log(self, zqname):
     del dff
 
 
-def make_ijk_from_grid(self, grid, grid_id="", algorithm=1, activeonly=True):
-    """Make an IJK log from grid indices."""
-    logger.debug("Using algorithm %s in %s", algorithm, __name__)
-
-    if algorithm == 1:
-        _make_ijk_from_grid_v1(self, grid, grid_id=grid_id)
-    else:
-        _make_ijk_from_grid_v2(self, grid, grid_id=grid_id, activeonly=activeonly)
-
-    logger.debug("Using algorithm %s in %s done", algorithm, __name__)
-
-
-def _make_ijk_from_grid_v1(self, grid, grid_id=""):
-    """Getting IJK from a grid and make as well logs.
-
-    This is the first version, using _cxtgeo.grd3d_well_ijk from C
-    """
-    logger.debug("Using algorithm 1 in %s", __name__)
-
-    wxarr = _get_carray(self.get_dataframe(copy=False), self.wlogtypes, self.xname)
-    wyarr = _get_carray(self.get_dataframe(copy=False), self.wlogtypes, self.yname)
-    wzarr = _get_carray(self.get_dataframe(copy=False), self.wlogtypes, self.zname)
-
-    nlen = self.nrow
-    wivec = _cxtgeo.new_intarray(nlen)
-    wjvec = _cxtgeo.new_intarray(nlen)
-    wkvec = _cxtgeo.new_intarray(nlen)
-
-    onelayergrid = grid.copy()
-    onelayergrid.reduce_to_one_layer()
-
-    cstatus = _cxtgeo.grd3d_well_ijk(
-        grid.ncol,
-        grid.nrow,
-        grid.nlay,
-        grid._coordsv,
-        grid._zcornsv,
-        grid._actnumsv,
-        onelayergrid._zcornsv,
-        onelayergrid._actnumsv,
-        self.nrow,
-        wxarr,
-        wyarr,
-        wzarr,
-        wivec,
-        wjvec,
-        wkvec,
-        0,
-    )
-
-    if cstatus != 0:
-        raise RuntimeError(f"Error from C routine, code is {cstatus}")
-
-    indarray = _cxtgeo.swig_carr_to_numpy_i1d(nlen, wivec).astype("float")
-    jndarray = _cxtgeo.swig_carr_to_numpy_i1d(nlen, wjvec).astype("float")
-    kndarray = _cxtgeo.swig_carr_to_numpy_i1d(nlen, wkvec).astype("float")
-
-    indarray[indarray == 0] = np.nan
-    jndarray[jndarray == 0] = np.nan
-    kndarray[kndarray == 0] = np.nan
-
-    icellname = "ICELL" + grid_id
-    jcellname = "JCELL" + grid_id
-    kcellname = "KCELL" + grid_id
-
-    self._wdata.data[icellname] = indarray
-    self._wdata.data[jcellname] = jndarray
-    self._wdata.data[kcellname] = kndarray
-
-    for cellname in [icellname, jcellname, kcellname]:
-        self.set_logtype(cellname, _AttrType.DISC.value)
-
-    self.set_logrecord(icellname, {ncel: str(ncel) for ncel in range(1, grid.ncol + 1)})
-    self.set_logrecord(jcellname, {ncel: str(ncel) for ncel in range(1, grid.nrow + 1)})
-    self.set_logrecord(kcellname, {ncel: str(ncel) for ncel in range(1, grid.nlay + 1)})
-
-    _cxtgeo.delete_intarray(wivec)
-    _cxtgeo.delete_intarray(wjvec)
-    _cxtgeo.delete_intarray(wkvec)
-    _cxtgeo.delete_doublearray(wxarr)
-    _cxtgeo.delete_doublearray(wyarr)
-    _cxtgeo.delete_doublearray(wzarr)
-
-    del onelayergrid
-
-
-def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
-    """Getting IJK from a grid and make as well logs.
-
-    This is a newer version using grid.get_ijk_from_points. This one
-    is believed to be more precise!
-    """
+def make_ijk_from_grid(self, grid, grid_id="", activeonly=True):
+    """Getting IJK from a grid and make as well logs."""
     # establish a Points instance and make points dataframe from well trajectory X Y Z
     wpoints = Points()
     wpdf = self.get_dataframe().loc[:, [self.xname, self.yname, self.zname]]
@@ -296,7 +205,7 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     if isinstance(grid, tuple):
         icl, jcl, kcl = grid
     elif isinstance(grid, Grid):
-        self.make_ijk_from_grid(grid, grid_id="_tmp", algorithm=2)
+        self.make_ijk_from_grid(grid, grid_id="_tmp")
         icl, jcl, kcl = ("ICELL_tmp", "JCELL_tmp", "KCELL_tmp")
         ijk_logs_created_tmp = True
     else:

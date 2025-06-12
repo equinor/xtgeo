@@ -36,7 +36,8 @@ is_xy_point_in_quadrilateral(const double x,
     // line
     auto is_left_or_on = [tolerance](const Point &a, const Point &b,
                                      const std::array<double, 2> &c) {
-        return ((b.x - a.x) * (c[1] - a.y) - (c[0] - a.x) * (b.y - a.y)) >= -tolerance;
+        return ((b.x() - a.x()) * (c[1] - a.y()) - (c[0] - a.x()) * (b.y() - a.y())) >=
+               -tolerance;
     };
 
     std::array<double, 2> p = { x, y };

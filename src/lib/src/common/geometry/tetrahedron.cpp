@@ -24,12 +24,14 @@ static bool
 is_point_in_triangle_2d(const Point &p, const Point &a, const Point &b, const Point &c)
 {
     // Calculate barycentric coordinates in 2D
-    double area =
-      0.5 * (-b.y * c.x + a.y * (-b.x + c.x) + a.x * (b.y - c.y) + b.x * c.y);
+    double area = 0.5 * (-b.y() * c.x() + a.y() * (-b.x() + c.x()) +
+                         a.x() * (b.y() - c.y()) + b.x() * c.y());
     double s = 1.0 / (2.0 * area) *
-               (a.y * c.x - a.x * c.y + (c.y - a.y) * p.x + (a.x - c.x) * p.y);
+               (a.y() * c.x() - a.x() * c.y() + (c.y() - a.y()) * p.x() +
+                (a.x() - c.x()) * p.y());
     double t = 1.0 / (2.0 * area) *
-               (a.x * b.y - a.y * b.x + (a.y - b.y) * p.x + (b.x - a.x) * p.y);
+               (a.x() * b.y() - a.y() * b.x() + (a.y() - b.y()) * p.x() +
+                (b.x() - a.x()) * p.y());
 
     // Check if point is inside the triangle
     return s >= 0 && t >= 0 && (s + t) <= 1;
@@ -47,11 +49,13 @@ get_tetrahedron_bounding_box(const Point &a,
                              const Point &d)
 {
     // Initialize min and max points
-    Point min_pt = { std::min({ a.x, b.x, c.x, d.x }), std::min({ a.y, b.y, c.y, d.y }),
-                     std::min({ a.z, b.z, c.z, d.z }) };
+    Point min_pt = { std::min({ a.x(), b.x(), c.x(), d.x() }),
+                     std::min({ a.y(), b.y(), c.y(), d.y() }),
+                     std::min({ a.z(), b.z(), c.z(), d.z() }) };
 
-    Point max_pt = { std::max({ a.x, b.x, c.x, d.x }), std::max({ a.y, b.y, c.y, d.y }),
-                     std::max({ a.z, b.z, c.z, d.z }) };
+    Point max_pt = { std::max({ a.x(), b.x(), c.x(), d.x() }),
+                     std::max({ a.y(), b.y(), c.y(), d.y() }),
+                     std::max({ a.z(), b.z(), c.z(), d.z() }) };
 
     return { min_pt, max_pt };
 }
@@ -107,9 +111,9 @@ static double
 calculate_bbox_diagonal(const Point &min_pt, const Point &max_pt)
 {
     // Calculate the diagonal length of the bounding box
-    double diagonal =
-      std::sqrt(std::pow(max_pt.x - min_pt.x, 2) + std::pow(max_pt.y - min_pt.y, 2) +
-                std::pow(max_pt.z - min_pt.z, 2));
+    double diagonal = std::sqrt(std::pow(max_pt.x() - min_pt.x(), 2) +
+                                std::pow(max_pt.y() - min_pt.y(), 2) +
+                                std::pow(max_pt.z() - min_pt.z(), 2));
 
     return diagonal;
 }
@@ -125,8 +129,8 @@ is_point_in_tetrahedron_bounding_box(const Point &p,
     auto [min_pt, max_pt] = get_tetrahedron_bounding_box(a, b, c, d);
 
     // Check if the point is within the bounding box
-    return (p.x >= min_pt.x && p.x <= max_pt.x && p.y >= min_pt.y && p.y <= max_pt.y &&
-            p.z >= min_pt.z && p.z <= max_pt.z);
+    return (p.x() >= min_pt.x() && p.x() <= max_pt.x() && p.y() >= min_pt.y() &&
+            p.y() <= max_pt.y() && p.z() >= min_pt.z() && p.z() <= max_pt.z());
 }
 
 static bool
@@ -135,8 +139,8 @@ is_point_in_tetrahedron_bounding_box_using_minmax_pt(const Point &p,
                                                      const Point &max_pt)
 {
     // Check if the point is within the bounding box
-    return (p.x >= min_pt.x && p.x <= max_pt.x && p.y >= min_pt.y && p.y <= max_pt.y &&
-            p.z >= min_pt.z && p.z <= max_pt.z);
+    return (p.x() >= min_pt.x() && p.x() <= max_pt.x() && p.y() >= min_pt.y() &&
+            p.y() <= max_pt.y() && p.z() >= min_pt.z() && p.z() <= max_pt.z());
 }
 
 // Determines if a point is inside or on the boundary of a tetrahedron
@@ -171,9 +175,9 @@ is_point_in_tetrahedron(const Point &p,
     Point v0p = subtract(p, v0);
 
     // Matrix M = [v0v1 | v0v2 | v0v3]
-    Matrix3x3 M = { { { v0v1.x, v0v2.x, v0v3.x },
-                      { v0v1.y, v0v2.y, v0v3.y },
-                      { v0v1.z, v0v2.z, v0v3.z } } };
+    Matrix3x3 M = { { { v0v1.x(), v0v2.x(), v0v3.x() },
+                      { v0v1.y(), v0v2.y(), v0v3.y() },
+                      { v0v1.z(), v0v2.z(), v0v3.z() } } };
 
     Matrix3x3 inv_M;
     if (!invert_matrix3x3(M, inv_M)) {
@@ -182,9 +186,9 @@ is_point_in_tetrahedron(const Point &p,
 
     // Solve M * [b1, b2, b3]^T = v0p for barycentric coordinates b1, b2, b3
     Point bary_coords_123 = multiply_matrix_vector(inv_M, v0p);
-    double b1 = bary_coords_123.x;
-    double b2 = bary_coords_123.y;
-    double b3 = bary_coords_123.z;
+    double b1 = bary_coords_123.x();
+    double b2 = bary_coords_123.y();
+    double b3 = bary_coords_123.z();
     double b0 = 1.0 - b1 - b2 - b3;
 
     std::array<double, 4> b_coords = { b0, b1, b2, b3 };

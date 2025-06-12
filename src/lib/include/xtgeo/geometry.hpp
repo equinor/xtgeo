@@ -109,8 +109,8 @@ is_point_in_tetrahedron_legacy(const xyz::Point &point,
 inline double
 triangle_area(const xyz::Point &p1, const xyz::Point &p2, const xyz::Point &p3)
 {
-    return 0.5 *
-           std::abs(p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y));
+    return 0.5 * std::abs(p1.x() * (p2.y() - p3.y()) + p2.x() * (p3.y() - p1.y()) +
+                          p3.x() * (p1.y() - p2.y()));
 }
 
 /**
@@ -258,10 +258,10 @@ inline double
 hexahedron_dz(const HexahedronCorners &corners)
 {
     double dzsum = 0.0;
-    dzsum += std::abs(corners.upper_sw.z - corners.lower_sw.z);
-    dzsum += std::abs(corners.upper_se.z - corners.lower_se.z);
-    dzsum += std::abs(corners.upper_nw.z - corners.lower_nw.z);
-    dzsum += std::abs(corners.upper_ne.z - corners.lower_ne.z);
+    dzsum += std::abs(corners.upper_sw.z() - corners.lower_sw.z());
+    dzsum += std::abs(corners.upper_se.z() - corners.lower_se.z());
+    dzsum += std::abs(corners.upper_nw.z() - corners.lower_nw.z());
+    dzsum += std::abs(corners.upper_ne.z() - corners.lower_ne.z());
     return dzsum / 4.0;
 }
 

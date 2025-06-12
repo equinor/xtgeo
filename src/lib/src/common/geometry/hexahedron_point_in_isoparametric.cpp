@@ -61,22 +61,22 @@ is_point_in_hexahedron_isoparametric_internal(const Point &p_test,
 
         // Optional: Clamp local_coords to [-1,1] range if it goes too far,
         // though for well-behaved problems it should converge without this.
-        // local_coords.x = std::max(-1.0, std::min(1.0, local_coords.x));
-        // local_coords.y = std::max(-1.0, std::min(1.0, local_coords.y));
-        // local_coords.z = std::max(-1.0, std::min(1.0, local_coords.z));
+        // local_coords.x() = std::max(-1.0, std::min(1.0, local_coords.x()));
+        // local_coords.y() = std::max(-1.0, std::min(1.0, local_coords.y()));
+        // local_coords.z() = std::max(-1.0, std::min(1.0, local_coords.z()));
     }
 
     // Check if the converged local coordinates are within the parent element [-1, 1]^3
-    bool on_xi_boundary = std::abs(std::abs(local_coords.x) - 1.0) < EPSILON;
-    bool on_eta_boundary = std::abs(std::abs(local_coords.y) - 1.0) < EPSILON;
-    bool on_zeta_boundary = std::abs(std::abs(local_coords.z) - 1.0) < EPSILON;
+    bool on_xi_boundary = std::abs(std::abs(local_coords.x()) - 1.0) < EPSILON;
+    bool on_eta_boundary = std::abs(std::abs(local_coords.y()) - 1.0) < EPSILON;
+    bool on_zeta_boundary = std::abs(std::abs(local_coords.z()) - 1.0) < EPSILON;
 
     bool inside_xi =
-      local_coords.x >= -1.0 - EPSILON && local_coords.x <= 1.0 + EPSILON;
+      local_coords.x() >= -1.0 - EPSILON && local_coords.x() <= 1.0 + EPSILON;
     bool inside_eta =
-      local_coords.y >= -1.0 - EPSILON && local_coords.y <= 1.0 + EPSILON;
+      local_coords.y() >= -1.0 - EPSILON && local_coords.y() <= 1.0 + EPSILON;
     bool inside_zeta =
-      local_coords.z >= -1.0 - EPSILON && local_coords.z <= 1.0 + EPSILON;
+      local_coords.z() >= -1.0 - EPSILON && local_coords.z() <= 1.0 + EPSILON;
 
     if (inside_xi && inside_eta && inside_zeta) {
         if (on_xi_boundary || on_eta_boundary || on_zeta_boundary) {
@@ -92,9 +92,12 @@ is_point_in_hexahedron_isoparametric_internal(const Point &p_test,
                 // more robust check might be needed here, or classify as outside. For
                 // simplicity, if it's within local bounds but remapping is off,
                 // consider it outside.
-                if (local_coords.x < -1.0 + EPSILON || local_coords.x > 1.0 - EPSILON ||
-                    local_coords.y < -1.0 + EPSILON || local_coords.y > 1.0 - EPSILON ||
-                    local_coords.z < -1.0 + EPSILON || local_coords.z > 1.0 - EPSILON) {
+                if (local_coords.x() < -1.0 + EPSILON ||
+                    local_coords.x() > 1.0 - EPSILON ||
+                    local_coords.y() < -1.0 + EPSILON ||
+                    local_coords.y() > 1.0 - EPSILON ||
+                    local_coords.z() < -1.0 + EPSILON ||
+                    local_coords.z() > 1.0 - EPSILON) {
                     // It was only within bounds due to EPSILON, but not strictly
                     // inside.
                 } else {
@@ -104,9 +107,9 @@ is_point_in_hexahedron_isoparametric_internal(const Point &p_test,
             }
         }
         // Check if strictly inside (not on boundary by EPSILON)
-        if (local_coords.x > -1.0 + EPSILON && local_coords.x < 1.0 - EPSILON &&
-            local_coords.y > -1.0 + EPSILON && local_coords.y < 1.0 - EPSILON &&
-            local_coords.z > -1.0 + EPSILON && local_coords.z < 1.0 - EPSILON) {
+        if (local_coords.x() > -1.0 + EPSILON && local_coords.x() < 1.0 - EPSILON &&
+            local_coords.y() > -1.0 + EPSILON && local_coords.y() < 1.0 - EPSILON &&
+            local_coords.z() > -1.0 + EPSILON && local_coords.z() < 1.0 - EPSILON) {
             return 1;  // Inside
         }
         // If it reached here, it was within [-1,1] due to EPSILON, but not strictly

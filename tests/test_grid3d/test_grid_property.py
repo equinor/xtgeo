@@ -500,7 +500,6 @@ def test_values_in_polygon(testdata_path):
 
     xp2.dtype = np.uint8
     xp2.set_inside(poly, 44)
-    print(xp2.values)
 
     xp2.dtype = np.uint16
     xp2.set_inside(poly, 44)
@@ -508,10 +507,8 @@ def test_values_in_polygon(testdata_path):
 
     xp3 = xorig.copy()
     xp3.values *= 100
-    print(xp3.values.mean())
     xp3.dtype = np.float32
     xp3.set_inside(poly, 44)
-    print(xp3.values.mean())
 
     assert xp3.values.mean() == pytest.approx(23.40642788381048, abs=0.001)
 

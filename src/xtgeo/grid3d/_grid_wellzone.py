@@ -45,7 +45,7 @@ def report_zone_mismatch(
 
     This method was completely redesigned in version 2.8
     """
-    self._xtgformat1()
+    self._set_xtgformat1()
 
     if not isinstance(well, Well):
         raise ValueError("Input well is not a Well() instance")
