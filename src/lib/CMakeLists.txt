@@ -41,31 +41,33 @@ set(FMT_MASTER_PROJECT OFF)
 set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(fmt)
 
-# Add Eigen using FetchContent
-set(EIGEN_BUILD_DOC OFF)
-set(BUILD_TESTING OFF)
-set(EIGEN_BUILD_PKGCONFIG OFF)
-set(EIGEN_BUILD_FORTRAN
-    OFF
-    CACHE BOOL "Disable Fortran features in Eigen" FORCE)
-set(EIGEN_TEST_FORTRAN
-    OFF
-    CACHE BOOL "Disable Fortran tests in Eigen" FORCE)
-
-FetchContent_Declare(
-  eigen
-  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-  GIT_TAG 3.4.0) # or whatever version you prefer
-
-FetchContent_MakeAvailable(eigen)
+find_package(Eigen3 3.4 QUIET)
+if (Eigen3_FOUND)
+  message(STATUS "Eigen3 ${Eigen3_VERSION}    : ${Eigen3_INCLUDE_DIRS}")
+else()
+  set(EIGEN_BUILD_DOC OFF)
+  set(BUILD_TESTING OFF)
+  set(EIGEN_BUILD_PKGCONFIG OFF)
+  set(EIGEN_BUILD_FORTRAN
+      OFF
+      CACHE BOOL "Disable Fortran features in Eigen" FORCE)
+  set(EIGEN_TEST_FORTRAN
+      OFF
+      CACHE BOOL "Disable Fortran tests in Eigen" FORCE)
+  FetchContent_Declare(
+    eigen
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    GIT_TAG 3.4.0)
+  FetchContent_MakeAvailable(eigen)
+endif()
 
 # TODO: replace globbing with unique list, as globbing is bad practice
 file(GLOB SOURCES ${SRC}/*.c)
 add_library(xtgeo STATIC ${SOURCES})
 
 if(MSVC)
-  set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
-  set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
+  set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP)
+  set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP)
 else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
   set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
@@ -105,8 +107,7 @@ if(OpenMP_CXX_FOUND)
   target_compile_definitions(_internal PRIVATE XTGEO_USE_OPENMP)
 endif()
 
-target_link_libraries(_internal PRIVATE fmt::fmt)
-target_include_directories(_internal PRIVATE ${eigen_SOURCE_DIR})
+target_link_libraries(_internal PRIVATE fmt::fmt Eigen3::Eigen)
 
 message(STATUS "Compiling swig bindings")
 
