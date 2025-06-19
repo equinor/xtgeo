@@ -1,0 +1,35 @@
+name: VDS Test
+
+on:
+  push:
+    branches: [main, "version-*"]
+  pull_request:
+    branches: [main, "version-*"]
+  # release:
+  #   types:
+  #     - published
+  # schedule:
+  #   # Run nightly to check that tests are working with latest dependencies
+  #   - cron: "0 0 * * *"
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup xtgeo
+        uses: "./.github/actions/setup_xtgeo"
+        with:
+          python-version: 3.12
+
+      - name: Setup testdata
+        uses: "./.github/actions/setup_testdata"
+
+      - name: Run tests (Linux/macOS)
+        run: |
+          pip install openvds
+          pytest tests/test_dependency_integration/test_open_vds.py
