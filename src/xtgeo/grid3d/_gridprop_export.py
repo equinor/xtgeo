@@ -17,6 +17,7 @@ from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
 
+from ._grdecl_format import run_length_encoding
 from ._roff_parameter import RoffParameter
 
 if TYPE_CHECKING:
@@ -37,6 +38,7 @@ def to_file(
     append: bool = False,
     dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,
     fmt: str | None = None,
+    rle: bool = False,
 ) -> None:
     """Export the grid property to file."""
     logger.debug("Export property to file %s as %s", pfile, fformat)
@@ -62,6 +64,7 @@ def to_file(
             append=append,
             binary=binary,
             fmt=fmt,
+            rle=rle,
         )
     elif fformat == "xtgcpprop":
         _export_xtgcpprop(gridprop, xtg_file.name)
@@ -104,6 +107,7 @@ def _export_grdecl(
     append: bool = False,
     binary: bool = False,
     fmt: str | None = None,
+    rle: bool = False,
 ) -> None:
     """Export ascii or binary GRDECL"""
     vals: npt.NDArray = gridprop.values.ravel(order="F")
@@ -132,18 +136,33 @@ def _export_grdecl(
         else:
             # Always the case when not binary
             assert isinstance(fout, io.TextIOWrapper)
-            fout.write(name)
-            fout.write("\n")
-            for i, v in enumerate(vals):
-                fout.write(" ")
-                if fmt:
-                    fout.write(fmt % v)
-                elif gridprop.isdiscrete:
-                    fout.write(str(v))
-                else:
-                    fout.write(f"{v:3e}")
-                if i % 6 == 5:
-                    fout.write("\n")
+            fout.write(f"{name}\n")
+            if rle:
+                counts, unique_values = run_length_encoding(vals)
+                for i, (count, unique_value) in enumerate(zip(counts, unique_values)):
+                    fout.write(" ")
+                    if fmt:
+                        formatted_value = fmt % unique_value
+                    elif gridprop.isdiscrete:
+                        formatted_value = str(unique_value)
+                    else:
+                        formatted_value = f"{unique_value:3e}"
+                    fout.write(
+                        f"{count}*{formatted_value}" if count > 1 else formatted_value
+                    )
+                    if i % 6 == 5:
+                        fout.write("\n")
+            else:
+                for i, v in enumerate(vals):
+                    fout.write(" ")
+                    if fmt:
+                        fout.write(fmt % v)
+                    elif gridprop.isdiscrete:
+                        fout.write(str(v))
+                    else:
+                        fout.write(f"{v:3e}")
+                    if i % 6 == 5:
+                        fout.write("\n")
             fout.write(" /\n")
 
 

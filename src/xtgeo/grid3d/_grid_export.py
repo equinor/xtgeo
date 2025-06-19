@@ -49,10 +49,11 @@ def export_roff(
         )
 
 
-def export_grdecl(grid: Grid, gfile: FileLike, mode: int) -> None:
-    """Export grid to Eclipse GRDECL format (ascii, mode=1) or binary (mode=0)."""
+def export_grdecl(grid: Grid, gfile: FileLike, mode: int, rle: bool = False) -> None:
+    """Export grid to Eclipse GRDECL format (ascii, mode=1) or binary (mode=0).
+    Optionally for ASCII GRDECL, run-length encoding RLE can be applied"""
     fileformat = "grdecl" if mode == 1 else "bgrdecl"
-    GrdeclGrid.from_xtgeo_grid(grid).to_file(gfile, fileformat=fileformat)
+    GrdeclGrid.from_xtgeo_grid(grid).to_file(gfile, fileformat=fileformat, rle=rle)
 
 
 def export_egrid(grid: Grid, gfile: FileLike) -> None:
