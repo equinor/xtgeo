@@ -1,8 +1,8 @@
 name: Build Docs
 
 on:
-  # push:
-  #   branches: [main, "version-*"]
+  push:
+    branches: [foo]
   # pull_request:
   #   branches: [main, "version-*"]
 

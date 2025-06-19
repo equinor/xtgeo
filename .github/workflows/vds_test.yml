@@ -21,15 +21,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup xtgeo
-        uses: "./.github/actions/setup_xtgeo"
-        with:
-          python-version: 3.11
-
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
       - name: Run tests (Linux/macOS)
         run: |
-          pip install openvds
-          pytest tests/test_dependency_integration/test_open_vds.py -vvv -s
+          pip install openvds xtgeo
+          python vds_test.py -v

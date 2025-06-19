@@ -1,8 +1,8 @@
 name: Build & Publish
 
 on:
-  # pull_request:
-  #   branches: [main, "version-*"]
+  pull_request:
+    branches: [foo]
   # release:
   #   types: [published]
 
