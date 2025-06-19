@@ -21,6 +21,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Eigen3 via vcpkg
+        run: vcpkg install eigen3:x64-windows
+
       - uses: actions/checkout@v4
       - uses: "./.github/actions/setup_xtgeo"
         with:
@@ -32,4 +35,5 @@ jobs:
       - name: Run tests (Linux/macOS)
         run: |
           pip install openvds
+          python vds_test2.py -v
           python vds_test.py -v

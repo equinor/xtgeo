@@ -5,6 +5,7 @@ set(SRC "${CMAKE_CURRENT_LIST_DIR}/src")
 if(WIN32)
   set(Python_FIND_DEBUG FALSE)
   set(Python_FIND_RELEASE TRUE)
+  set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake)
 endif()
 
 find_package(
@@ -66,8 +67,10 @@ file(GLOB SOURCES ${SRC}/*.c)
 add_library(xtgeo STATIC ${SOURCES})
 
 if(MSVC)
-  set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP)
-  set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP)
+  set(XTGFLAGS
+      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /d2ReducedOptimizeHugeFunctions)
+  set(CXTGEOFLAGS
+      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /d2ReducedOptimizeHugeFunctions)
 else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
   set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
@@ -107,6 +110,18 @@ if(OpenMP_CXX_FOUND)
   target_compile_definitions(_internal PRIVATE XTGEO_USE_OPENMP)
 endif()
 
+if(WIN32)
+  set_target_properties(_internal PROPERTIES
+      WINDOWS_EXPORT_ALL_SYMBOLS FALSE
+      VISIBILITY_INLINES_HIDDEN ON
+  )
+
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+  endif()
+endif()
+
+target_compile_options(_internal PRIVATE ${XTGFLAGS})
 target_link_libraries(_internal PRIVATE fmt::fmt Eigen3::Eigen)
 
 message(STATUS "Compiling swig bindings")
