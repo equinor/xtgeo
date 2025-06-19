@@ -22,7 +22,7 @@ jobs:
 
       - name: Install xtgeo
         run: |
-          pip install -U pip 
+          pip install -U pip
           pip install ".[docs]"
 
       - name: Build docs
