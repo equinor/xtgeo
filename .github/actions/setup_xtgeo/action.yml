@@ -5,6 +5,10 @@ inputs:
   python-version:
     required: true
     type: string
+  os:
+    required: true
+    default: ubuntu-latest
+    type: string
 
 runs:
   using: "composite"
@@ -14,8 +18,28 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
+    - name: Install Windows dependencies
+      if: ${{ inputs.os == 'windows-latest' }}
+      shell: bash
+      run: |
+        vcpkg install eigen3 fmt
+
+    - name: Install macOS dependencies
+      if: ${{ inputs.os == 'macos-latest' || inputs.os == 'macos-13' }}
+      # HDF5 needed for pytables+Python 3.10+
+      shell: bash
+      run: |
+        brew install hdf5 eigen fmt
+        echo "HDF5_DIR=/opt/homebrew" >> $GITHUB_ENV
+
+    - name: Install Linux dependencies
+      if: ${{ inputs.os == 'ubuntu-latest' }}
+      shell: bash
+      run: |
+        sudo apt-get install libeigen3-dev libfmt-dev
+
     - name: Build and install xtgeo
       shell: bash
       run: |
         python -m pip install -U pip
-        python -m pip install ".[dev]"
+        python -m pip install ".[dev]" -v

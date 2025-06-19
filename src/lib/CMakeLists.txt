@@ -1,12 +1,6 @@
 include_directories(include)
 set(SRC "${CMAKE_CURRENT_LIST_DIR}/src")
 
-# Due to issues with WIN32 and Eigen installation, skip debug on Win32
-if(WIN32)
-  set(Python_FIND_DEBUG FALSE)
-  set(Python_FIND_RELEASE TRUE)
-endif()
-
 find_package(
   Python
   COMPONENTS Interpreter Development.Module NumPy
@@ -16,8 +10,8 @@ find_package(
   COMPONENTS
   REQUIRED)
 include(UseSWIG)
-find_package(pybind11 REQUIRED)
 
+find_package(pybind11 REQUIRED)
 find_package(OpenMP)
 
 message(STATUS "Python executable     : ${Python_EXECUTABLE}")
@@ -25,51 +19,75 @@ message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
 message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
 message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
 
-# Ensure position independent code for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# Use FetchContent for fmt library
-
 include(FetchContent)
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 9.1.0)
 
-# Configure fmt options before making it available
-set(FMT_MASTER_PROJECT OFF)
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(fmt)
+find_package(fmt CONFIG QUIET)
+if(fmt_FOUND)
+  message(STATUS "Found fmt ${fmt_VERSION}")
+else()
+  message(STATUS "fmt not found, using FetchContent")
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 11.2.0)
+  set(FMT_MASTER_PROJECT OFF)
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(fmt)
+endif()
 
-# Add Eigen using FetchContent
-set(EIGEN_BUILD_DOC OFF)
-set(BUILD_TESTING OFF)
-set(EIGEN_BUILD_PKGCONFIG OFF)
-set(EIGEN_BUILD_FORTRAN
-    OFF
-    CACHE BOOL "Disable Fortran features in Eigen" FORCE)
-set(EIGEN_TEST_FORTRAN
-    OFF
-    CACHE BOOL "Disable Fortran tests in Eigen" FORCE)
+find_package(Eigen3 3.4 CONFIG QUIET)
+if(Eigen3_FOUND)
+  message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
+else()
+  message(STATUS "Eigen3 not found, using FetchContent")
 
-FetchContent_Declare(
-  eigen
-  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-  GIT_TAG 3.4.0) # or whatever version you prefer
-
-FetchContent_MakeAvailable(eigen)
-
-# TODO: replace globbing with unique list, as globbing is bad practice
-file(GLOB SOURCES ${SRC}/*.c)
-add_library(xtgeo STATIC ${SOURCES})
+  set(EIGEN_BUILD_DOC OFF)
+  set(BUILD_TESTING OFF)
+  set(EIGEN_BUILD_PKGCONFIG OFF)
+  set(EIGEN_BUILD_FORTRAN
+      OFF
+      CACHE BOOL "Disable Fortran features in Eigen" FORCE)
+  set(EIGEN_TEST_FORTRAN
+      OFF
+      CACHE BOOL "Disable Fortran tests in Eigen" FORCE)
+  FetchContent_Declare(
+    eigen
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    GIT_TAG 3.4.0)
+  FetchContent_MakeAvailable(eigen)
+endif()
 
 if(MSVC)
-  set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
-  set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
+  set(XTGFLAGS
+      /Ox
+      /wd4996
+      /wd4267
+      /wd4244
+      /wd4305
+      /MP
+      /bigobj
+      /Zc:__cplusplus
+      /d2ReducedOptimizeHugeFunctions
+      /MT)
+  set(CXTGEOFLAGS
+      /Ox
+      /wd4996
+      /wd4267
+      /wd4244
+      /wd4305
+      /MP
+      /bigobj
+      /d2ReducedOptimizeHugeFunctions
+      /MT)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
   set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
 endif()
+
+# TODO: replace globbing with unique list, as globbing is bad practice
+file(GLOB SOURCES ${SRC}/*.c)
 
 pybind11_add_module(
   _internal
@@ -98,18 +116,18 @@ pybind11_add_module(
   "${SRC}/regsurf/utilities.cpp"
   ${SOURCES})
 target_include_directories(_internal PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
-# Link OpenMP
 
 if(OpenMP_CXX_FOUND)
   target_link_libraries(_internal PRIVATE OpenMP::OpenMP_CXX)
   target_compile_definitions(_internal PRIVATE XTGEO_USE_OPENMP)
 endif()
 
-target_link_libraries(_internal PRIVATE fmt::fmt)
-target_include_directories(_internal PRIVATE ${eigen_SOURCE_DIR})
+target_compile_options(_internal PRIVATE ${XTGFLAGS})
+target_link_libraries(_internal PRIVATE fmt::fmt-header-only Eigen3::Eigen)
 
 message(STATUS "Compiling swig bindings")
 
+add_library(xtgeo STATIC ${SOURCES})
 # This will end up set as the `_cxtgeo` module, located in `wheel.install-dir`
 # from pyproject.toml
 set(SWIG_TARGET cxtgeo)
@@ -131,6 +149,7 @@ target_link_libraries(${SWIG_TARGET} PRIVATE xtgeo ${Python_LIBRARIES}
 # scikit-build-core docs recommend this
 if(WIN32)
   set_property(TARGET ${SWIG_TARGET} PROPERTY SUFFIX ".${Python_SOABI}.pyd")
+  set_property(TARGET _internal PROPERTY SUFFIX ".${Python_SOABI}.pyd")
 else()
   set_property(TARGET ${SWIG_TARGET}
                PROPERTY SUFFIX ".${Python_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
