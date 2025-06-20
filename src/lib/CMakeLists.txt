@@ -17,8 +17,8 @@ find_package(
   COMPONENTS
   REQUIRED)
 include(UseSWIG)
-find_package(pybind11 REQUIRED)
 
+find_package(pybind11 REQUIRED)
 find_package(OpenMP)
 
 message(STATUS "Python executable     : ${Python_EXECUTABLE}")
@@ -39,7 +39,7 @@ set(FMT_MASTER_PROJECT OFF)
 set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(fmt)
 
-find_package(Eigen3 3.4 QUIET)
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 if (Eigen3_FOUND)
   message(STATUS "Eigen3 ${Eigen3_VERSION}    : ${Eigen3_INCLUDE_DIRS}")
 else()
@@ -120,9 +120,9 @@ if(WIN32)
   endif()
 endif()
 
-target_include_directories(_internal PRIVATE ${EIGEN_INCLUDE_DIR})
+include_directories(${Eigen_INCLUDE_DIRS})
 target_compile_options(_internal PRIVATE ${XTGFLAGS})
-target_link_libraries(_internal PRIVATE fmt::fmt)
+target_link_libraries(_internal PRIVATE fmt::fmt Eigen3::Eigen)
 
 message(STATUS "Compiling swig bindings")
 
