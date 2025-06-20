@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Eigen3 via vcpkg
-        run: vcpkg install eigen3:x64-windows
+        run: vcpkg install eigen3 fmt
 
       - uses: actions/checkout@v4
       - uses: "./.github/actions/setup_xtgeo"

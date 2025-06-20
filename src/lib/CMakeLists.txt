@@ -27,16 +27,19 @@ message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-include(FetchContent)
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 9.1.0)
-
-# Configure fmt options before making it available
-set(FMT_MASTER_PROJECT OFF)
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(fmt)
+find_package(fmt)
+if (fmt_FOUND)
+  message(STATUS "Found fmt ${fmt_VERSION}")
+else()
+  include(FetchContent)
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 11.2.0)
+  set(FMT_MASTER_PROJECT OFF)
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(fmt)
+endif()
 
 find_package(Eigen3 3.4 QUIET NO_MODULE)
 if (Eigen3_FOUND)
