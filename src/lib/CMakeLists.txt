@@ -114,32 +114,11 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 if(WIN32)
-  target_compile_definitions(_internal PRIVATE
-      EIGEN_NAMESPACE=xtgeo_eigen
-      EIGEN_DONT_VECTORIZE
-      EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
-      EIGEN_NO_DEBUG
-      EIGEN_DONT_PARALLELIZE
-      WIN32_LEAN_AND_MEAN
-      NOMINMAX
-  )
-  set_target_properties(_internal PROPERTIES
-      WINDOWS_EXPORT_ALL_SYMBOLS FALSE
-      CXX_VISIBILITY_PRESET hidden
-      VISIBILITY_INLINES_HIDDEN ON
-  )
-  target_link_options(_internal PRIVATE
-      /INCREMENTAL:NO
-      /OPT:REF
-      /OPT:ICF
-  )
-
   if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
   endif()
 endif()
 
-include_directories(${Eigen_INCLUDE_DIRS})
 target_compile_options(_internal PRIVATE ${XTGFLAGS})
 target_link_libraries(_internal PRIVATE fmt::fmt Eigen3::Eigen)
 
