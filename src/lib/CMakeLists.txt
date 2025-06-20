@@ -26,10 +26,7 @@ message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
 message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
 message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
 
-# Ensure position independent code for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# Use FetchContent for fmt library
 
 include(FetchContent)
 FetchContent_Declare(
@@ -68,7 +65,8 @@ add_library(xtgeo STATIC ${SOURCES})
 
 if(MSVC)
   set(XTGFLAGS
-      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /d2ReducedOptimizeHugeFunctions)
+      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /d2ReducedOptimizeHugeFunctions
+      /Zc:__cplusplus)
   set(CXTGEOFLAGS
       /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /d2ReducedOptimizeHugeFunctions)
 else()
@@ -122,8 +120,9 @@ if(WIN32)
   endif()
 endif()
 
+target_include_directories(_internal PRIVATE ${EIGEN_INCLUDE_DIR})
 target_compile_options(_internal PRIVATE ${XTGFLAGS})
-target_link_libraries(_internal PRIVATE fmt::fmt Eigen3::Eigen)
+target_link_libraries(_internal PRIVATE fmt::fmt)
 
 message(STATUS "Compiling swig bindings")
 
