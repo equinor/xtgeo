@@ -40,16 +40,7 @@ FetchContent_MakeAvailable(fmt)
 
 find_package(Eigen3 3.4 QUIET NO_MODULE)
 if (Eigen3_FOUND)
-  message(STATUS "Eigen3 ${Eigen3_VERSION}    : ${Eigen3_INCLUDE_DIRS}")
-
-  if(WIN32)
-    target_compile_definitions(_internal PRIVATE
-        EIGEN_DONT_VECTORIZE
-        EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
-        EIGEN_NO_DEBUG
-        EIGEN_DONT_PARALLELIZE
-    )
-  endif()
+  message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 else()
   message(STATUS "Eigen3 not found, using FetchContent")
 
@@ -120,6 +111,9 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 if(WIN32)
+  target_compile_definitions(_internal PRIVATE
+      EIGEN_NAMESPACE=xtgeo_eigen
+  )
   set_target_properties(_internal PROPERTIES
       WINDOWS_EXPORT_ALL_SYMBOLS FALSE
       CXX_VISIBILITY_PRESET hidden
