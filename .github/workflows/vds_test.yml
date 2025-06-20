@@ -29,6 +29,10 @@ jobs:
         with:
           python-version: 3.11
 
+      - name: Set vcpkg toolchain
+        run: |
+          echo "CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
+
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
 

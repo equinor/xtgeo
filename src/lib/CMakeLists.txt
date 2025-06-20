@@ -5,7 +5,6 @@ set(SRC "${CMAKE_CURRENT_LIST_DIR}/src")
 if(WIN32)
   set(Python_FIND_DEBUG FALSE)
   set(Python_FIND_RELEASE TRUE)
-  set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake)
 endif()
 
 find_package(
@@ -39,10 +38,21 @@ set(FMT_MASTER_PROJECT OFF)
 set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(fmt)
 
-find_package(Eigen3 3.4 REQUIRED NO_MODULE)
+find_package(Eigen3 3.4 QUIET NO_MODULE)
 if (Eigen3_FOUND)
   message(STATUS "Eigen3 ${Eigen3_VERSION}    : ${Eigen3_INCLUDE_DIRS}")
+
+  if(WIN32)
+    target_compile_definitions(_internal PRIVATE
+        EIGEN_DONT_VECTORIZE
+        EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+        EIGEN_NO_DEBUG
+        EIGEN_DONT_PARALLELIZE
+    )
+  endif()
 else()
+  message(STATUS "Eigen3 not found, using FetchContent")
+
   set(EIGEN_BUILD_DOC OFF)
   set(BUILD_TESTING OFF)
   set(EIGEN_BUILD_PKGCONFIG OFF)
@@ -65,10 +75,11 @@ add_library(xtgeo STATIC ${SOURCES})
 
 if(MSVC)
   set(XTGFLAGS
-      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /d2ReducedOptimizeHugeFunctions
-      /Zc:__cplusplus)
+      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /bigobj
+      /Zc:__cplusplus /d2ReducedOptimizeHugeFunctions)
   set(CXTGEOFLAGS
-      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /d2ReducedOptimizeHugeFunctions)
+      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /bigobj
+      /d2ReducedOptimizeHugeFunctions)
 else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
   set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
