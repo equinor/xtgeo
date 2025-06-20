@@ -113,6 +113,7 @@ endif()
 if(WIN32)
   set_target_properties(_internal PROPERTIES
       WINDOWS_EXPORT_ALL_SYMBOLS FALSE
+      CXX_VISIBILITY_PRESET hidden
       VISIBILITY_INLINES_HIDDEN ON
   )
 
