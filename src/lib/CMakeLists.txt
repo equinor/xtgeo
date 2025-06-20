@@ -16,8 +16,8 @@ find_package(
   COMPONENTS
   REQUIRED)
 include(UseSWIG)
-find_package(pybind11 REQUIRED)
 
+find_package(pybind11 REQUIRED)
 find_package(OpenMP)
 
 message(STATUS "Python executable     : ${Python_EXECUTABLE}")
@@ -25,47 +25,55 @@ message(STATUS "Python include dirs   : ${Python_INCLUDE_DIRS}")
 message(STATUS "numpy include path    : ${Python_NumPy_INCLUDE_DIRS}")
 message(STATUS "pybind11 include path : ${pybind11_INCLUDE_DIRS}")
 
-# Ensure position independent code for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Use FetchContent for fmt library
+find_package(fmt)
+if (fmt_FOUND)
+  message(STATUS "Found fmt ${fmt_VERSION}")
+else()
+  include(FetchContent)
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 11.2.0)
+  set(FMT_MASTER_PROJECT OFF)
+  set(BUILD_SHARED_LIBS OFF)
+  FetchContent_MakeAvailable(fmt)
+endif()
 
-include(FetchContent)
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 9.1.0)
+find_package(Eigen3 3.4 QUIET NO_MODULE)
+if (Eigen3_FOUND)
+  message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
+else()
+  message(STATUS "Eigen3 not found, using FetchContent")
 
-# Configure fmt options before making it available
-set(FMT_MASTER_PROJECT OFF)
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(fmt)
-
-# Add Eigen using FetchContent
-set(EIGEN_BUILD_DOC OFF)
-set(BUILD_TESTING OFF)
-set(EIGEN_BUILD_PKGCONFIG OFF)
-set(EIGEN_BUILD_FORTRAN
-    OFF
-    CACHE BOOL "Disable Fortran features in Eigen" FORCE)
-set(EIGEN_TEST_FORTRAN
-    OFF
-    CACHE BOOL "Disable Fortran tests in Eigen" FORCE)
-
-FetchContent_Declare(
-  eigen
-  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-  GIT_TAG 3.4.0) # or whatever version you prefer
-
-FetchContent_MakeAvailable(eigen)
+  set(EIGEN_BUILD_DOC OFF)
+  set(BUILD_TESTING OFF)
+  set(EIGEN_BUILD_PKGCONFIG OFF)
+  set(EIGEN_BUILD_FORTRAN
+      OFF
+      CACHE BOOL "Disable Fortran features in Eigen" FORCE)
+  set(EIGEN_TEST_FORTRAN
+      OFF
+      CACHE BOOL "Disable Fortran tests in Eigen" FORCE)
+  FetchContent_Declare(
+    eigen
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    GIT_TAG 3.4.0)
+  FetchContent_MakeAvailable(eigen)
+endif()
 
 # TODO: replace globbing with unique list, as globbing is bad practice
 file(GLOB SOURCES ${SRC}/*.c)
 add_library(xtgeo STATIC ${SOURCES})
 
 if(MSVC)
-  set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
-  set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
+  set(XTGFLAGS
+      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /bigobj
+      /Zc:__cplusplus /d2ReducedOptimizeHugeFunctions)
+  set(CXTGEOFLAGS
+      /Ox /wd4996 /wd4267 /wd4244 /wd4305 /MP /bigobj
+      /d2ReducedOptimizeHugeFunctions)
 else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
   set(CXTGEOFLAGS -Wall -Wno-unused-but-set-variable -Wno-undef -fPIC)
@@ -105,8 +113,14 @@ if(OpenMP_CXX_FOUND)
   target_compile_definitions(_internal PRIVATE XTGEO_USE_OPENMP)
 endif()
 
-target_link_libraries(_internal PRIVATE fmt::fmt)
-target_include_directories(_internal PRIVATE ${eigen_SOURCE_DIR})
+if(WIN32)
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+  endif()
+endif()
+
+target_compile_options(_internal PRIVATE ${XTGFLAGS})
+target_link_libraries(_internal PRIVATE fmt::fmt Eigen3::Eigen)
 
 message(STATUS "Compiling swig bindings")
 

@@ -2,9 +2,9 @@ name: Build & Publish
 
 on:
   pull_request:
-    branches: [main, "version-*"]
-  release:
-    types: [published]
+    branches: [foo]
+  # release:
+  #   types: [published]
 
 jobs:
   build:
