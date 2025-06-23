@@ -4,6 +4,46 @@ description: Set up the xtgeo test environment
 runs:
   using: "composite"
   steps:
-    - name: Install test data
+    - name: Get xtgeo-testdata repo info
+      id: testdata-info
       shell: bash
-      run: git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
+      run: |
+        LATEST_COMMIT=$(git ls-remote https://github.com/equinor/xtgeo-testdata.git HEAD | cut -f1)
+        echo "commit-hash=$LATEST_COMMIT" >> $GITHUB_OUTPUT
+        echo "Latest testdata commit: $LATEST_COMMIT"
+
+    - name: Set cache path
+      id: cache-path
+      shell: bash
+      run: |
+        CACHE_PATH="${{ runner.temp }}/xtgeo-testdata"
+        echo "path=$CACHE_PATH" >> $GITHUB_OUTPUT
+        echo "Cache path: $CACHE_PATH"
+
+    - name: Cache xtgeo-testdata
+      id: cache-testdata
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.cache-path.outputs.path }}
+        key: xtgeo-testdata-${{ steps.testdata-info.outputs.commit-hash }}
+        restore-keys: |
+          xtgeo-testdata-
+
+    - name: Clone xtgeo-testdata
+      if: steps.cache-testdata.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "Cache miss - cloning xtgeo-testdata"
+        git clone --depth 1 https://github.com/equinor/xtgeo-testdata \
+          "${{ steps.cache-path.outputs.path }}"
+
+    - name: Verify xtgeo-testdata exists
+      shell: bash
+      run: |
+        echo "xtgeo-testdata available"
+        ln -sf "${{ steps.cache-path.outputs.path }}" "../xtgeo-testdata"
+        if [ ! -d "../xtgeo-testdata" ]; then
+          echo "Error: xtgeo-testdata directory not found"
+          exit 1
+        fi
+        ls -alh ../xtgeo-testdata
