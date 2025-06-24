@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, "version-*"]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build_docs:
     name: Build docs

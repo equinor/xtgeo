@@ -6,6 +6,10 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     name: Python ${{ matrix.python }} on ${{ matrix.os_arch[0] }}-${{ matrix.os_arch[1] }}
