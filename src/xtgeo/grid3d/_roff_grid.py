@@ -304,7 +304,7 @@ class RoffGrid:
         result = {}
         next_ind = 1
         for i, current in enumerate(self.subgrids):
-            result[f"subgrid_{i}"] = range(next_ind, current + next_ind)
+            result[f"subgrid_{i + 1}"] = range(next_ind, current + next_ind)
             next_ind += current
         return result
 

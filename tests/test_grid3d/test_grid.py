@@ -288,9 +288,9 @@ def test_benchmark_get_xyz_cell_cornerns(benchmark, xtgformat):
 
 def test_roffbin_import_wsubgrids(testdata_path):
     assert xtgeo.grid_from_file(testdata_path / REEKFIL5).subgrids == {
-        "subgrid_0": range(1, 21),
-        "subgrid_1": range(21, 41),
-        "subgrid_2": range(41, 57),
+        "subgrid_1": range(1, 21),
+        "subgrid_2": range(21, 41),
+        "subgrid_3": range(41, 57),
     }
 
 
@@ -421,13 +421,13 @@ def test_grid_design(emerald_grid):
     assert code["design"] == "T"
     assert code["dzsimbox"] == pytest.approx(3.0000, abs=0.001)
 
-    code = emerald_grid.estimate_design("subgrid_0")
+    code = emerald_grid.estimate_design("subgrid_1")
     assert code["design"] == "P"
 
-    code = emerald_grid.estimate_design("subgrid_1")
+    code = emerald_grid.estimate_design("subgrid_2")
     assert code["design"] == "T"
 
-    code = emerald_grid.estimate_design("subgrid_2")
+    code = emerald_grid.estimate_design("subgrid_3")
     assert code is None
 
     with pytest.raises(ValueError):
@@ -778,17 +778,17 @@ def test_grid_get_dxdydz_zero_size():
 def test_grid_roff_subgrids_import_regression(tmp_path):
     grid = xtgeo.create_box_grid(dimension=(5, 5, 67))
     grid.subgrids = {
-        "subgrid_0": list(range(1, 21)),
-        "subgrid_1": list(range(21, 53)),
-        "subgrid_2": list(range(53, 68)),
+        "subgrid_1": list(range(1, 21)),
+        "subgrid_2": list(range(21, 53)),
+        "subgrid_3": list(range(53, 68)),
     }
     grid.to_file(tmp_path / "grid.roff")
 
     grid2 = xtgeo.grid_from_file(tmp_path / "grid.roff")
     assert grid2.subgrids == {
-        "subgrid_0": range(1, 21),
-        "subgrid_1": range(21, 53),
-        "subgrid_2": range(53, 68),
+        "subgrid_1": range(1, 21),
+        "subgrid_2": range(21, 53),
+        "subgrid_3": range(53, 68),
     }
 
 

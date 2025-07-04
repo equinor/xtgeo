@@ -1500,8 +1500,8 @@ class Grid(_Grid3D):
             >>> import xtgeo
             >>> grd = xtgeo.grid_from_file(emerald_dir + "/emerald_hetero_grid.roff")
             >>> print(grd.subgrids)
-            dict([('subgrid_0', range(1, 17)), ('subgrid_1', range(17, 47))])
-            >>> res = grd.estimate_design(nsub="subgrid_0")
+            dict([('subgrid_1', range(1, 17)), ('subgrid_2', range(17, 47))])
+            >>> res = grd.estimate_design(nsub="subgrid_1")
             >>> print("Subgrid design is", res["design"])
             Subgrid design is P
             >>> print("Subgrid simbox thickness is", res["dzsimbox"])
