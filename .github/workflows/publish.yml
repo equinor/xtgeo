@@ -26,6 +26,7 @@ jobs:
           - [macos-latest, macosx_arm64]  # macos-latest is always arm64 going forward
     env:
       CIBW_BUILD: ${{ matrix.python }}-${{ matrix.os_arch[1] }}
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
 
     steps:
       - uses: actions/checkout@v4
