@@ -2332,7 +2332,7 @@ class Grid(_Grid3D):
         inside: bool = True,
         force_close: bool = False,
     ) -> None:
-        """Inacativate grid inside a polygon.
+        """Inactivate grid inside a polygon.
 
         The Polygons instance may consist of several polygons. If a polygon
         is open, then the flag force_close will close any that are not open
@@ -2359,7 +2359,7 @@ class Grid(_Grid3D):
         layer_range: tuple[int, int] | None = None,
         force_close: bool = False,
     ) -> None:
-        """Inacativate grid outside a polygon."""
+        """Inactivate grid outside a polygon."""
         self.inactivate_inside(
             poly, layer_range=layer_range, inside=False, force_close=force_close
         )
