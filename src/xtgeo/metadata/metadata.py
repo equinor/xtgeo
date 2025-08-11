@@ -10,9 +10,16 @@ The metadata works through the various datatypes in XTGeo. For example::
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 import xtgeo
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.log import null_logger
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = null_logger(__name__)
 
@@ -50,10 +57,10 @@ class _OptionalMetaData:
         self._name = "A Longer Descriptive Name e.g. from SMDA"
         self._shortname = "TheShortName"
         self._datatype = None
-        self._md5sum = None
+        self._md5sum: str | None = None
         self._description = "Some description"
         self._crs = None
-        self._datetime = None
+        self._datetime: datetime | None = None
         self._deltadatetime = None
         self._visuals = {"colortable": "rainbow", "lower": None, "upper": None}
         self._domain = "depth"
@@ -68,29 +75,29 @@ class _OptionalMetaData:
         self._source = "unknown"
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
-    def name(self, newname):
+    def name(self, newname: str) -> None:
         # TODO: validation
         self._name = newname
 
     @property
-    def datetime(self):
+    def datetime(self) -> datetime | None:
         return self._datetime
 
     @datetime.setter
-    def datetime(self, newdate):
+    def datetime(self, newdate: datetime) -> None:
         # TODO: validation
         self._datetime = newdate
 
     @property
-    def shortname(self):
+    def shortname(self) -> str:
         return self._shortname
 
     @shortname.setter
-    def shortname(self, newname):
+    def shortname(self, newname: str) -> None:
         if not isinstance(newname, str):
             raise ValueError("The shortname must be a string.")
         if len(newname) >= 32:
@@ -99,11 +106,11 @@ class _OptionalMetaData:
         self._shortname = newname
 
     @property
-    def description(self):
+    def description(self) -> str:
         return self._description
 
     @description.setter
-    def description(self, newstr):
+    def description(self, newstr: str) -> None:
         if not isinstance(newstr, str):
             raise ValueError("The description must be a string.")
         if len(newstr) >= 64:
@@ -115,7 +122,7 @@ class _OptionalMetaData:
         self._description = newstr
 
     @property
-    def md5sum(self):
+    def md5sum(self) -> str | None:
         """Set or get the md5 checksum of file content.
 
         See generate_hash() method in e.g. RegularSurface.
@@ -123,11 +130,11 @@ class _OptionalMetaData:
         return self._md5sum
 
     @md5sum.setter
-    def md5sum(self, newhash):
+    def md5sum(self, newhash: str) -> None:
         # TODO: validation
         self._md5sum = newhash
 
-    def get_meta(self):
+    def get_meta(self) -> dict[str, Any]:
         """Return metadata as an dict."""
         meta = {}
         for key in self.__slots__:
