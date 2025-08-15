@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, Literal, NoReturn
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import numpy.ma as ma
@@ -1500,8 +1500,8 @@ class Grid(_Grid3D):
             >>> import xtgeo
             >>> grd = xtgeo.grid_from_file(emerald_dir + "/emerald_hetero_grid.roff")
             >>> print(grd.subgrids)
-            dict([('subgrid_0', range(1, 17)), ('subgrid_1', range(17, 47))])
-            >>> res = grd.estimate_design(nsub="subgrid_0")
+            dict([('subgrid_1', range(1, 17)), ('subgrid_2', range(17, 47))])
+            >>> res = grd.estimate_design(nsub="subgrid_1")
             >>> print("Subgrid design is", res["design"])
             Subgrid design is P
             >>> print("Subgrid simbox thickness is", res["dzsimbox"])
@@ -1577,9 +1577,30 @@ class Grid(_Grid3D):
 
         return self.get_subgrids()
 
-    def get_zoneprop_from_subgrids(self) -> NoReturn:
-        """Make a XTGeo GridProperty instance for a Zone property subgrid index."""
-        raise NotImplementedError("Not yet; todo")
+    def get_zoneprop_from_subgrids(self) -> xtgeo.GridProperty | None:
+        """
+        Create a discrete GridProperty encoding subgrid indices as zone values.
+
+        Returns:
+            A GridProperty where each layer belonging to a subgrid is assigned a unique
+            integer zone index (starting from 1). The property codes map these indices
+            to subgrid names. Returns None if no subgrids are defined.
+        """
+        if not self.subgrids:
+            return None
+
+        zoneprop = xtgeo.GridProperty(
+            ncol=self.ncol,
+            nrow=self.nrow,
+            nlay=self.nlay,
+            name="Zone",
+            discrete=True,
+            values=0,
+        )
+        for i, (name, layers) in enumerate(self.subgrids.items()):
+            zoneprop.codes[i + 1] = name
+            zoneprop.values[:, :, min(layers) - 1 : max(layers)] = i + 1
+        return zoneprop
 
     def get_boundary_polygons(
         self: Grid,

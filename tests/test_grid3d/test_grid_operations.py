@@ -150,7 +150,7 @@ def test_refine_vertically(testdata_path):
     """Do a grid refinement vertically."""
 
     emerald_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
-    assert emerald_grid.get_subgrids() == {"subgrid_0": 16, "subgrid_1": 30}
+    assert emerald_grid.get_subgrids() == {"subgrid_1": 16, "subgrid_2": 30}
 
     avg_dz1 = emerald_grid.get_dz().values.mean()
 
@@ -171,7 +171,7 @@ def test_refine_vertically(testdata_path):
 
     assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
 
-    assert emerald_grid.get_subgrids() == {"subgrid_0": 48, "subgrid_1": 90}
+    assert emerald_grid.get_subgrids() == {"subgrid_1": 48, "subgrid_2": 90}
     emerald_grid.inactivate_by_dz(0.001)
 
 
@@ -187,7 +187,7 @@ def test_refine_vertically_per_zone(testdata_path):
     assert emerald2_zone.values.min() == 1
     assert emerald2_zone.values.max() == 2
 
-    assert grd.subgrids == {"subgrid_0": range(1, 17), "subgrid_1": range(17, 47)}
+    assert grd.subgrids == {"subgrid_1": range(1, 17), "subgrid_2": range(17, 47)}
 
     refinement = {1: 4, 2: 2}
     grd.refine_vertically(refinement, zoneprop=emerald2_zone)
@@ -197,7 +197,7 @@ def test_refine_vertically_per_zone(testdata_path):
     grd = emerald2_grid.copy()
     grd.refine_vertically(refinement)  # no zoneprop
 
-    assert grd.get_subgrids() == {"subgrid_0": 64, "subgrid_1": 60}
+    assert grd.get_subgrids() == {"subgrid_1": 64, "subgrid_2": 60}
 
 
 def test_reverse_row_axis_box(tmp_path):
