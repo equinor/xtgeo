@@ -34,16 +34,20 @@ runs:
       shell: bash
       run: |
         echo "Cache miss - cloning xtgeo-testdata"
+        # Remove directory if it exists (from partial cache restore)
+        rm -rf "${{ steps.cache-path.outputs.path }}"
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata \
           "${{ steps.cache-path.outputs.path }}"
 
     - name: Verify xtgeo-testdata exists
       shell: bash
       run: |
-        echo "xtgeo-testdata available"
-        ln -sf "${{ steps.cache-path.outputs.path }}" "../xtgeo-testdata"
+        echo "xtgeo-testdata available at: ${{ steps.cache-path.outputs.path }}"
+        # Create symlink to expected location
+        ln -sf "${{ steps.cache-path.outputs.path }}" "../xtgeo-testdata"
         if [ ! -d "../xtgeo-testdata" ]; then
           echo "Error: xtgeo-testdata directory not found"
           exit 1
         fi
-        ls -alh ../xtgeo-testdata
+        echo "Directory contents:"
+        ls -alh ../xtgeo-testdata | head -10
