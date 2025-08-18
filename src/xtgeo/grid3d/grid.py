@@ -2295,7 +2295,7 @@ class Grid(_Grid3D):
         * maxangle_topbase_proj (degrees) max angle projected (bird view)
         * minangle_sides (degress) minimum angle, all side surfaces
         * maxangle_sides (degress) maximum angle, all side surfaces
-        * collapsed (int) Integer, 1 of one or more corners are collpased in Z
+        * collapsed (int) Integer, 1 of one or more corners are collapsed in Z
         * faulted (int) Integer, 1 if cell is faulted (one or more neighbours offset)
         * negative_thickness (int) Integer, 1 if cell has negative thickness
         * concave_proj (int) 1 if cell is concave seen from projected bird view
@@ -2364,9 +2364,25 @@ class Grid(_Grid3D):
             poly, layer_range=layer_range, inside=False, force_close=force_close
         )
 
-    def collapse_inactive_cells(self) -> None:
-        """Collapse inactive layers where, for I J with other active cells."""
-        _grid_etc1.collapse_inactive_cells(self)
+    def collapse_inactive_cells(self, internal: bool = True) -> None:
+        """Collapse inactive layers per I J column (~vertically).
+
+        Seen by I,J column, the inactive cells are collapsed to the first active cell in
+        the column. First transversed from top, then from bottom. If no active cells in
+        the column, the (invisible) Z coordinates are averaged to one common location.
+
+        If `internal` is True (default), then also internal inactive cells (i.e.
+        inactive "hole" surrounded by active cells) are collapsed. In this case the Z
+        coordinates of the adjacent active cells are moved to fill the gap.
+
+        The current grid instance will be updated.
+
+        Args:
+            internal: If True (default), then the internal collapse is also done.
+
+        .. versionchanged:: 4.11 Added ``internal option``, algorithm is improved
+        """
+        _grid_etc1.collapse_inactive_cells(self, internal=internal)
 
     def crop(
         self,

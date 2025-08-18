@@ -132,6 +132,10 @@ refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
 
 std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
 refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
+
+py::array_t<float>
+collapse_inactive_cells(const Grid &grid_cpp, bool collapse_internal = true);
+
 // =====================================================================================
 // PYTHON BINDINGS, IF NEEDED
 // =====================================================================================
@@ -184,8 +188,8 @@ init(py::module &m)
       .def("refine_rows", &refine_rows, "Refine per row proportionally")
       .def("get_grid_fence", &get_grid_fence,
            "Get a grid fence from a grid, fspec, property and z_vector")
-
-      ;
+      .def("collapse_inactive_cells", &collapse_inactive_cells,
+           "Collapse inactive cells in the grid.", py::arg("collapse_internal") = true);
 
     py::class_<CellCorners>(m_grid3d, "CellCorners")
       // a constructor that takes 8 xyz::Point objects

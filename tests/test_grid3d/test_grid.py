@@ -25,6 +25,7 @@ REEKFIL5 = pathlib.Path("3dgrids/reek/reek_geo2_grid_3props.roff")
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = pathlib.Path("3dgrids/bri/b.grdecl")
 BANAL6 = pathlib.Path("3dgrids/etc/banal6.roff")
+B9 = pathlib.Path("3dgrids/etc/b9.roff")
 GRIDQC1 = pathlib.Path("3dgrids/etc/gridqc1.roff")
 GRIDQC1_CELLVOL = pathlib.Path("3dgrids/etc/gridqc1_totbulk.roff")
 GRIDQC2 = pathlib.Path("3dgrids/etc/gridqc_negthick_twisted.roff")
@@ -958,3 +959,31 @@ def test_grid_cache():
     cache1_copy = grd1_copy._get_cache()
     assert id(cache1_copy) != id(cache1_updated)
     assert cache1_copy.hash == cache1_updated.hash
+
+
+def test_collapse_inactive_cells(testdata_path):
+    """Test collapsing of inactive cells."""
+    grd = xtgeo.grid_from_file(testdata_path / B9)
+    grd._actnumsv[1, 0, 0:2] = 0
+    grd._actnumsv[1, 0, 3] = 0
+    grd._actnumsv[2, 0, 4:6] = 0
+    grd._actnumsv[2, 0, 2] = 0
+    grd._actnumsv[3, 1, :] = 0
+
+    assert grd._zcornsv[1, 0, 0, 3] == pytest.approx(0.0)
+    assert grd._zcornsv[1, 0, 6, 3] == pytest.approx(3.0)
+
+    g1 = grd.copy()
+    g2 = grd.copy()
+
+    g1.collapse_inactive_cells(internal=True)
+    assert g1._zcornsv[1, 0, 0, 3] == pytest.approx(1.25)
+    assert g1._zcornsv[1, 0, 6, 3] == pytest.approx(3.0)
+    assert g1._zcornsv[1, 0, 4, 3] == pytest.approx(1.8125)
+    assert g1._zcornsv[2, 1, 4, 0] == pytest.approx(2.0)
+
+    g2.collapse_inactive_cells(internal=False)
+    assert g2._zcornsv[1, 0, 0, 3] == pytest.approx(1.25)
+    assert g2._zcornsv[1, 0, 6, 3] == pytest.approx(3.0)
+    assert g2._zcornsv[1, 0, 4, 3] == pytest.approx(2.0)
+    assert g2._zcornsv[2, 1, 4, 0] == pytest.approx(2.25)
