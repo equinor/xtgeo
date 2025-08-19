@@ -1,10 +1,6 @@
 """
 Slice a Cube with a surface, and get attributes between two horizons
 
-In this case 3 maps with constant depth are applied. The maps are refined
-for smoother result, and output is exported as Roxar binary *.gri and
-quickplots (png)
-
 JRIV
 """
 
@@ -41,7 +37,7 @@ def slice_a_cube_with_surface():
 
 
 def attribute_around_surface_symmetric():
-    """Get atttribute around a surface (symmetric)"""
+    """Get attribute around a surface (symmetric)"""
 
     cubefile = EXPATH1 / "ib_test_cube2.segy"
     surfacefile = EXPATH2 / "h1.dat"
@@ -52,10 +48,9 @@ def attribute_around_surface_symmetric():
 
     attrs = ["max", "mean"]
 
-    myattrs = mysurf.slice_cube_window(
-        mycube, attribute=attrs, sampling="trilinear", zrange=10.0
-    )
-    for attr in myattrs:
+    myattrs = mycube.compute_attributes_in_window(mysurf - 10.0, mysurf + 10.0)
+
+    for attr in attrs:
         myattrs[attr].to_file(
             TMPDIR / ("myfile_symmetric_" + attr + ".dat"), fformat="ijxyz"
         )
@@ -74,22 +69,8 @@ def attribute_around_surface_asymmetric():
 
     mysurf = xtgeo.surface_from_file(surfacefile, fformat="ijxyz", template=mycube)
 
-    # instead of using zrange, we make some tmp surfaces that
-    # reflects the assymmetric
-    sabove = mysurf.copy()
-    sbelow = mysurf.copy()
-    sabove.values -= above
-    sbelow.values += below
+    myattrs = mycube.compute_attributes_in_window(mysurf - above, mysurf + below)
 
-    if DEBUG:
-        sabove.describe()
-        sbelow.describe()
-
-    attrs = "all"
-
-    myattrs = mysurf.slice_cube_window(
-        mycube, attribute=attrs, sampling="trilinear", zsurf=sabove, other=sbelow
-    )
     for attr in myattrs:
         if DEBUG:
             myattrs[attr].describe()
@@ -104,25 +85,13 @@ def attribute_around_constant_cube_slices():
 
     cubefile = EXPATH1 / "ib_test_cube2.segy"
 
-    level1 = 1010
-    level2 = 1100
+    level1 = 1010.0
+    level2 = 1100.0
 
     mycube = xtgeo.cube_from_file(cubefile)
 
-    # instead of using zrange, we make some tmp surfaces that
-    # reflects the assymmetric; here sample slices from cube
-    sabove = xtgeo.surface_from_cube(mycube, level1)
-    sbelow = xtgeo.surface_from_cube(mycube, level2)
+    myattrs = mycube.compute_attributes_in_window(level1, level2)
 
-    if DEBUG:
-        sabove.describe()
-        sbelow.describe()
-
-    attrs = "all"
-
-    myattrs = sabove.slice_cube_window(
-        mycube, attribute=attrs, sampling="trilinear", zsurf=sabove, other=sbelow
-    )
     for attr in myattrs:
         if DEBUG:
             myattrs[attr].describe()
