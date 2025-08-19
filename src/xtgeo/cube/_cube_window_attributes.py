@@ -63,6 +63,7 @@ class CubeAttrs:
     _upper: RegularSurface | None = None  # upper surf, resampled to cube map resolution
     _lower: RegularSurface | None = None  # lower surf, resampled to cube map resolution
     _min_thickness_mask: RegularSurface | None = None  # mask for min. thickness trunc.
+    _mask_map_by_traceidcode: RegularSurface | None = None  # mask for traceidcode 2
 
     _result_attr_maps: dict = field(default_factory=dict)  # holds the resulting maps
 
@@ -94,6 +95,7 @@ class CubeAttrs:
             else self.lower_surface
         )
 
+        # the template surface is the topology that defines the resulting attribute maps
         self._template_surface = (
             upper
             if isinstance(self.upper_surface, (float, int))
@@ -184,7 +186,7 @@ class CubeAttrs:
         from xtgeo import Cube  # avoid circular import by having this here
 
         cubev = self.cube.values.copy()  # copy, so we don't change the input instance
-        cubev[self.cube.traceidcodes == 2] = np.nan  # set dead traces to nan
+        cubev[self.cube.traceidcodes == 2] = 0.0  # set traceidcode 2 to zero
 
         # Create a boolean mask based on the threshold
         mask = self._depth_array < self._outside_depth
@@ -311,13 +313,20 @@ class CubeAttrs:
         attr_map = self._upper.copy()
         attr_map.values = np.ma.masked_invalid(values)
 
+        # apply mask for the cube's dead traces (traceidcode 2)
+        attr_map.values = np.ma.masked_where(
+            self.cube.traceidcodes == 2, attr_map.values
+        )
+
         # now resample to the original input map
         attr_map_resampled = self._template_surface.copy()
         attr_map_resampled.resample(attr_map)
 
-        attr_map_resampled.values = np.ma.masked_where(
-            self.upper_surface.values.mask, attr_map_resampled.values
-        )
+        # Use template_surface consistently for masking (it's already set correctly)
+        if hasattr(self._template_surface.values, "mask"):
+            attr_map_resampled.values = np.ma.masked_where(
+                self._template_surface.values.mask, attr_map_resampled.values
+            )
 
         self._result_attr_maps[attr_name] = attr_map_resampled
 
