@@ -1,6 +1,7 @@
 import pathlib
 import warnings
 
+import numpy as np
 import pytest
 
 import xtgeo
@@ -11,6 +12,7 @@ logger = xtg.basiclogger(__name__)
 
 SFILE1 = pathlib.Path("cubes/etc/ib_synth_iainb.segy")
 SFILE2 = pathlib.Path("cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
+SFILE3 = pathlib.Path("cubes/etc/cube_w_deadtraces.segy")
 
 TOP2A = pathlib.Path("surfaces/reek/2/01_topreek_rota.gri")
 TOP2B = pathlib.Path("surfaces/reek/2/04_basereek_rota.gri")
@@ -33,6 +35,13 @@ def fixture_loadsfile2(testdata_path):
     """Fixture for loading a SFILE2"""
     logger.info("Load seismic file 2")
     return xtgeo.cube_from_file(testdata_path / SFILE2)
+
+
+@pytest.fixture(name="loadsfile3")
+def fixture_loadsfile3(testdata_path):
+    """Fixture for loading a SFILE3"""
+    logger.info("Load seismic file 3")
+    return xtgeo.cube_from_file(testdata_path / SFILE3)
 
 
 def test_single_slice_yflip_snapxy_both(loadsfile1):
@@ -517,3 +526,41 @@ def test_warn_errs_new_module_reek(loadsfile1, loadsfile2, testdata_path):
 
     with pytest.raises(ValueError, match="no valid data in the interval"):
         _ = cube2.compute_attributes_in_window(surf1, surf1, ndiv=4)  # same surface
+
+
+def test_compute_attrs_handling_of_dead_traces(loadsfile3):
+    """Test handling of dead traces in the cube."""
+    cube = loadsfile3
+
+    # Create a surface that is above the dead traces
+    surf = xtgeo.surface_from_cube(cube, 1000.0)
+
+    # Compute attributes in window
+    attrs = cube.compute_attributes_in_window(surf, surf + 10)
+
+    # Check if the result is as expected
+    assert "mean" in attrs
+    assert attrs["mean"].values.mean() == pytest.approx(239.18202, abs=1e-4)
+
+    # count number of dead traces in cube
+    dead_traces = (cube.traceidcodes == 2).sum()
+
+    # count number of masked values in map
+    masked_values = np.ma.count_masked(attrs["mean"].values)
+
+    assert dead_traces == masked_values, (
+        "Number of dead traces does not match masked values"
+    )
+
+
+def test_attribute_around_constant_cube_slices(loadsfile2):
+    """Get attribute around a constant cube slices."""
+
+    mycube = loadsfile2
+
+    level1 = 1710
+    level2 = 1730
+
+    myattrs = mycube.compute_attributes_in_window(level1, level2)
+
+    assert myattrs["mean"].values.mean() == pytest.approx(-0.00293736, abs=1e-5)
