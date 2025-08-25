@@ -25,6 +25,77 @@ _ValueList = List[List[_CoordOrValue]]
 XYValueLists = Tuple[_XYCoordList, _ValueList]
 
 
+def _validate_cast_range(values: np.ndarray, target_dtype: np.dtype) -> None:
+    """Validate that values fit in target dtype range."""
+    if np.issubdtype(target_dtype, np.integer):
+        info = np.iinfo(target_dtype)
+        min_val, max_val = info.min, info.max
+
+        # Check actual value ranges
+        actual_min = np.nanmin(values)
+        actual_max = np.nanmax(values)
+
+        if actual_min < min_val or actual_max > max_val:
+            raise ValueError(
+                f"Values [{actual_min}, {actual_max}] exceed {target_dtype} "
+                f"range [{min_val}, {max_val}]"
+            )
+    elif np.issubdtype(target_dtype, np.floating):
+        info = np.finfo(target_dtype)
+        # Check for overflow/underflow
+        if np.any(np.abs(values[np.isfinite(values)]) > info.max):
+            raise ValueError(f"Values too large for {target_dtype}")
+
+
+def discrete_to_continuous(self: GridProperty) -> None:
+    """Convert from discrete to continuous values."""
+    if not self.isdiscrete:
+        logger.debug("No need to convert, already continuous")
+        return
+
+    logger.debug("Converting to continuous ...")
+    val = self._values.copy()
+    val = val.astype(np.float64)
+    self._values = val
+    self._isdiscrete = False
+    self._codes = {}
+    self.roxar_dtype = np.float32
+
+
+def continuous_to_discrete(self) -> None:
+    """Convert from continuous to discrete values."""
+    if self.isdiscrete:
+        logger.debug("No need to convert, already discrete")
+        return
+
+    logger.debug("Converting to discrete ...")
+    val = self._values.copy()
+
+    # Validate finite values only
+    finite_vals = (
+        val[np.isfinite(val)]
+        if not isinstance(val, np.ma.MaskedArray)
+        else val.compressed()
+    )
+    if len(finite_vals) > 0:
+        _validate_cast_range(finite_vals, np.int32)
+
+    # Round and cast, suppressing the NaN warning
+    val = np.round(val)
+    with np.errstate(invalid="ignore"):
+        val = val.astype(np.int32)
+
+    self._values = val
+    self._isdiscrete = True
+
+    self._codes = {
+        v: str(v)
+        for v in np.ma.unique(val)
+        if np.isfinite(v) and not isinstance(v, np.ma.core.MaskedConstant)
+    }
+    self.roxar_dtype = np.uint16
+
+
 def get_xy_value_lists(
     self: GridProperty,
     grid: Optional[Grid | GridProperty] = None,
@@ -134,12 +205,6 @@ def operation_polygons(
 
     gl.update_values_from_carray(proxy, cvals, np.float64, delete=True)
 
-    proxyv = proxy.values.astype(np.int8)
-
-    proxytarget = 1
-    if not inside:
-        proxytarget = 0
-
     if opname == "add":
         tmp = self.values.copy() + value
     elif opname == "sub":
@@ -170,8 +235,9 @@ def operation_polygons(
     # convert tmp back to correct dtype
     tmp = tmp.astype(dtype)
 
-    self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
-    del tmp
+    mask = proxy.values == 1 if inside else proxy.values == 0
+
+    self.values[mask] = tmp[mask]
 
 
 def refine(
