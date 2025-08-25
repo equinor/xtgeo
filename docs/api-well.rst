@@ -21,6 +21,11 @@ Classes
 Wells (multiple)
 ^^^^^^^^^^^^^^^^
 
+Functions
+"""""""""
+
+.. autofunction:: xtgeo.wells_from_files
+
 Classes
 """""""
 
