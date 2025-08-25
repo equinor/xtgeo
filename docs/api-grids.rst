@@ -11,6 +11,12 @@ Functions
 
 .. autofunction:: xtgeo.grid_from_roxar
 
+.. autofunction:: xtgeo.create_box_grid
+
+.. autofunction:: xtgeo.grid_from_cube
+
+.. autofunction:: xtgeo.grid_from_surfaces
+
 Classes
 """""""
 
