@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal
+from warnings import warn
 
 import numpy as np
 from numpy import ma
@@ -135,6 +136,51 @@ def export_prop_roxapi(
     rox.safe_close()
 
 
+def _validate_dtype_in_roxar(
+    pval: np.ndarray, original_dtype: Any, dtype: Any, allow_unsafe_casting: bool = True
+) -> None:
+    """Local routine that check the range in xtgeo's parameter vs Roxar dtype"""
+    message = ""
+
+    if dtype != original_dtype:
+        message += (
+            f"Existing RMS icon has data type {original_dtype} while "
+            f"GridProperty has RMS data type {dtype}. This may cause issues in data "
+            "content while saving to RMS."
+        )
+
+    try:
+        if np.issubdtype(dtype, np.integer):
+            # Integer type
+            min_val, max_val = np.iinfo(dtype).min, np.iinfo(dtype).max
+        elif np.issubdtype(dtype, np.floating):
+            # Float type
+            min_val, max_val = np.finfo(dtype).min, np.finfo(dtype).max
+        else:
+            # Unknown type
+            raise RuntimeError("Probable bug, values array not integer or float")
+
+        if pval.min() < min_val or pval.max() > max_val:
+            message += (
+                f"Values outside {dtype} range [{min_val}, {max_val}] found. "
+                f"Range in xtgeo values are [{pval.min()}, {pval.max()}]"
+            )
+
+    except (ValueError, OverflowError):
+        # Handle edge cases gracefully
+        message += f"Could not validate range for dtype {dtype}. "
+
+    if message and allow_unsafe_casting:
+        message += (
+            "\nUnsafe casting is allowed; this means that original values may "
+            "be truncated which may give unpredictable results and/or mess "
+            "up code names and values settings."
+        )
+
+    if message:
+        warn(message, UserWarning)
+
+
 def _store_in_roxar(
     self: GridProperty,
     pname: str,
@@ -147,7 +193,36 @@ def _store_in_roxar(
 
     logger.info("Store in RMS...")
 
+    roxtype: Any = roxar  # needed for mypy
+    roxar_property_type = (
+        roxtype.GridPropertyType.discrete
+        if self.isdiscrete
+        else roxtype.GridPropertyType.continuous
+    )
+
     val3d = self.values.copy()
+
+    dtype = self._roxar_dtype
+    logger.info("DTYPE is %s for %s", dtype, pname)
+
+    if dtype not in VALID_ROXAR_DTYPES:
+        raise TypeError(
+            f"Roxar dtype is not valid: {dtype} must be in {VALID_ROXAR_DTYPES}"
+        )
+
+    properties = roxgrid.properties
+    original_dtype = dtype
+    if pname not in properties:
+        rprop = properties.create(
+            pname, property_type=roxar_property_type, data_type=dtype
+        )
+    else:
+        rprop = properties[pname]
+        original_dtype = rprop.data_type
+
+    _validate_dtype_in_roxar(val3d, original_dtype, dtype, casting == "unsafe")
+
+    val3d = val3d.astype(dtype, casting=casting)
 
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 
@@ -157,40 +232,20 @@ def _store_in_roxar(
     jind = ijk[:, 1]
     kind = ijk[:, 2]
 
-    dtype = self._roxar_dtype
-    logger.info("DTYPE is %s for %s", dtype, pname)
-
-    # casting will secure correct types
-    if dtype not in VALID_ROXAR_DTYPES:
-        raise TypeError(
-            f"Roxar dtype is not valid: {dtype} must be in {VALID_ROXAR_DTYPES}"
-        )
-
     pvalues = roxgrid.get_grid(realisation=realisation).generate_values(data_type=dtype)
 
-    roxtype: Any = roxar  # needed for mypy
-    roxar_property_type = (
-        roxtype.GridPropertyType.discrete
-        if self.isdiscrete
-        else roxtype.GridPropertyType.continuous
-    )
-
     pvalues[cellno] = val3d[iind, jind, kind]
+    rprop.set_values(pvalues, realisation=realisation)
 
-    properties = roxgrid.properties
-
-    if pname not in properties:
-        rprop = properties.create(
-            pname, property_type=roxar_property_type, data_type=dtype
-        )
-    else:
-        rprop = properties[pname]
-        dtype = rprop.data_type
-
-    rprop.set_values(pvalues.astype(dtype, casting=casting), realisation=realisation)
-
-    if self.isdiscrete:
-        rprop.code_names = _rox_compatible_codes(self.codes)
+    if self.isdiscrete and "float" not in str(original_dtype):
+        try:
+            rprop.code_names = _rox_compatible_codes(self.codes)
+        except ValueError as verr:
+            message = (
+                f"Trying to set codes in Roxar: {self.codes} for type "
+                f"{self._roxar_dtype}. {str(verr)} Consider editing the codes!"
+            )
+            raise ValueError(message)
 
 
 def _fix_codes(

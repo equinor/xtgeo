@@ -457,6 +457,47 @@ def test_rox_get_gridproperty(rms_project_path):
 
 
 @pytest.mark.requires_roxar
+def test_rox_gridproperty_dtypes(rms_project_path):
+    """Various work with a grid property using dtype."""
+    logger.info("Project is %s", rms_project_path)
+    prj = rms_project_path
+
+    grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+
+    prop = xtgeo.GridProperty(grid, discrete=False, values=999)
+    assert prop.roxar_dtype == np.float32
+    prop.to_roxar(prj, GRIDNAME1, "myprop1")
+
+    # change to discrete
+    prop.isdiscrete = True
+    assert prop.roxar_dtype == np.uint16
+    # try to overwite the continous icon after changing data
+    prop.values = 251
+    with pytest.warns(UserWarning) as warning_info:
+        prop.to_roxar(prj, GRIDNAME1, "myprop1")
+        assert "Existing RMS icon has data type" in str(warning_info[0].message)
+    # read icon again, it will still be a float
+    newprop = xtgeo.gridproperty_from_roxar(prj, GRIDNAME1, "myprop1")
+    assert newprop.roxar_dtype == np.float32
+    assert newprop.values.dtype == np.float64  # internal in xtgeo
+
+    # now try to save this as discrete
+    newprop.isdiscrete = True
+    assert newprop.roxar_dtype == np.uint16
+    assert newprop.values.dtype == np.int32  # internal in xtgeo
+
+    # store it again, should issue some warnings
+    with pytest.warns(UserWarning):
+        newprop.to_roxar(prj, GRIDNAME1, "myprop1")
+
+    newprop.to_roxar(prj, GRIDNAME1, "myprop2")  # should not give warning
+
+    newprop.isdiscrete = False
+    assert newprop.roxar_dtype == np.float32
+    assert newprop.values.dtype == np.float64
+
+
+@pytest.mark.requires_roxar
 def test_rox_get_modify_set_gridproperty(rms_project_path):
     """Get and set a grid property from a RMS project."""
     poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
