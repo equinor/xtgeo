@@ -1222,36 +1222,11 @@ class GridProperty(_Grid3D):
 
     def discrete_to_continuous(self) -> None:
         """Convert from discrete to continuous values."""
-        if not self.isdiscrete:
-            logger.debug("No need to convert, already continuous")
-            return
-
-        logger.debug("Converting to continuous ...")
-        val = self._values.copy()
-        val = val.astype("float64")
-        self._values = val
-        self._isdiscrete = False
-        self._codes = {}
-        self.roxar_dtype = np.float32
+        _gridprop_op1.discrete_to_continuous(self)
 
     def continuous_to_discrete(self) -> None:
         """Convert from continuous to discrete values."""
-        if self.isdiscrete:
-            logger.debug("No need to convert, already discrete")
-            return
-
-        logger.debug("Converting to discrete ...")
-        val = self._values.copy()
-        val = val.astype(np.int32)
-        self._values = val
-        self._isdiscrete = True
-
-        # make the code list
-        uniq = np.unique(val).tolist()
-        codes = dict(zip(uniq, uniq))
-        codes = {k: str(v) for k, v in codes.items()}  # val as strings
-        self._codes = codes
-        self.roxar_dtype = np.uint16
+        _gridprop_op1.continuous_to_discrete(self)
 
     # ==================================================================================
     # Operations restricted to inside/outside polygons
