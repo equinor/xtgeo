@@ -496,6 +496,27 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     assert newprop.roxar_dtype == np.float32
     assert newprop.values.dtype == np.float64
 
+    # establish a uint8 (1 byte) icon in RMS
+    onebyte_prop = xtgeo.GridProperty(grid, discrete=True, values=9)
+    onebyte_prop.roxar_dtype = np.uint8
+    onebyte_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+
+    # now assign it 2 byte
+    twobyte_prop = onebyte_prop.copy()
+    twobyte_prop.roxar_dtype = np.uint16
+
+    # write it to onebyte prop; should only trigger a warning
+    with pytest.warns(UserWarning, match="Existing RMS icon has data type"):
+        twobyte_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+
+    # similar when going from continuous
+    cont_prop = onebyte_prop.copy()
+    cont_prop.isdiscrete = False
+    assert cont_prop.dtype == np.float64
+    assert cont_prop.roxar_dtype == np.float32
+    with pytest.warns(UserWarning, match="Existing RMS icon has data type"):
+        cont_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+
 
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_gridproperty(rms_project_path):
