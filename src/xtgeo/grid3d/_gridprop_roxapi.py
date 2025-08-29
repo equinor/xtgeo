@@ -222,6 +222,7 @@ def _store_in_roxar(
 
     _validate_dtype_in_roxar(val3d, original_dtype, dtype, casting == "unsafe")
 
+    dtype = original_dtype
     val3d = val3d.astype(dtype, casting=casting)
 
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
