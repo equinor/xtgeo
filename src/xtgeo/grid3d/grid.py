@@ -1966,12 +1966,14 @@ class Grid(_Grid3D):
             ffl: Free fluid level e.g. FWL (or level whatever is required; a level from
                 which cells above will be shown as delta heights (positive), while
                 cells below will have 0.0 values.
-            option: How to compute values, as either "cell_center_above_ffl" or
-                "cell_corners_above_ffl". The first one looks at cell Z centerlines, and
-                compute the top, the bottom and the midpoint. The second will look at
-                cell corners, using the uppermost corner for top, and the lowermost
-                corner for bottom. In both cases, values are modified if cell is
-                intersected with the provided ffl.
+            option: How to compute values, as either "cell_center_above_ffl",
+                "cell_corners_above_ffl" or "truncated_cell_corners_above_ffl".
+                The first one looks at cell Z centerlines, and compute the top,
+                the bottom and the midpoint. The second will look at cell corners,
+                using the uppermost corner for top, and the lowermost corner for bottom.
+                The third will truncate all cell corners above ffl and compute cell Z
+                centerlines. In all cases, values are modified if cell is intersected
+                with the provided ffl.
 
         Returns:
             (htop, hbot, hmid) delta heights, as xtgeo GridProperty objects

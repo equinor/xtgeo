@@ -232,18 +232,19 @@ get_cell_centers(const Grid &grd, const bool asmasked)
 /*
  * Compute cell height above ffl (free fluid level), as input to water saturation.
  * Will return hbot, htop, hmid (bottom of cell, top of cell, midpoint), but compute
- * method depends on option: 1: cell center above ffl, 2: cell corners above ffl
+ * method depends on option: 1: cell center above ffl, 2: cell corners above ffl,
+ * 3. truncated cell corners above ffl
  *
  * @param grd Grid struct
  * @param ffl Free fluid level per cell
- * @param option 1: Use cell centers, 2 use cell corners
+ * @param option  method to compute cell height above ffl
  * @return 3 arrays, top, bot, mid; all delta heights above ffl
  */
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_height_above_ffl(const Grid &grd,
                      const py::array_t<float> &ffl,
-                     const size_t option)
+                     const HeightAboveFFLOption option)
 {
     pybind11::array_t<double> htop({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
     pybind11::array_t<double> hbot({ grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
@@ -268,14 +269,14 @@ get_height_above_ffl(const Grid &grd,
                 auto corners =
                   grd.get_cell_corners_cache()[i * grd.get_nrow() * grd.get_nlay() +
                                                j * grd.get_nlay() + k];
-                if (option == 1) {
+                if (option == HeightAboveFFLOption::CellCenter) {
                     htop_[idx] =
                       ffl_[idx] - 0.25 * (corners.upper_sw.z() + corners.upper_se.z() +
                                           corners.upper_nw.z() + corners.upper_ne.z());
                     hbot_[idx] =
                       ffl_[idx] - 0.25 * (corners.lower_sw.z() + corners.lower_se.z() +
                                           corners.lower_nw.z() + corners.lower_ne.z());
-                } else if (option == 2) {
+                } else if (option == HeightAboveFFLOption::CellCorners) {
                     double upper = corners.upper_sw.z();
                     upper = std::min(upper, corners.upper_se.z());
                     upper = std::min(upper, corners.upper_nw.z());
@@ -287,6 +288,17 @@ get_height_above_ffl(const Grid &grd,
                     lower = std::max(lower, corners.lower_nw.z());
                     lower = std::max(lower, corners.lower_ne.z());
                     hbot_[idx] = ffl_[idx] - lower;
+                } else if (option == HeightAboveFFLOption::TruncatedCellCorners) {
+                    // Get center of top and bottom, truncating points below FFL
+                    auto arr_corners = corners.arrange_corners();
+                    htop_[idx] = 0;
+                    hbot_[idx] = 0;
+                    for (auto i = 0; i < 4; i++) {
+                        htop_[idx] +=
+                          0.25 * std::max(ffl_[idx] - arr_corners[3 * i + 2], 0.0);
+                        hbot_[idx] +=
+                          0.25 * std::max(ffl_[idx] - arr_corners[3 * i + 14], 0.0);
+                    }
                 }
                 htop_[idx] = std::max(htop_[idx], 0.0);
                 hbot_[idx] = std::max(hbot_[idx], 0.0);

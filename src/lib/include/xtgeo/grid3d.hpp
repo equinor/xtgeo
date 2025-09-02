@@ -15,10 +15,19 @@ namespace py = pybind11;
 
 namespace xtgeo::grid3d {
 
+/**
+ * @brief Enumeration of option for determining cell height above FFL
+ */
+enum class HeightAboveFFLOption
+{
+    CellCenter = 1,
+    CellCorners = 2,
+    TruncatedCellCorners = 3
+};
+
 // =====================================================================================
 // OPERATIONS ON INDIVIDUAL CELLS
 // =====================================================================================
-
 CellCorners
 get_cell_corners_from_ijk(const Grid &grid_cpp,
                           const size_t i,
@@ -70,7 +79,7 @@ get_cell_centers(const Grid &grid_cpp, const bool asmasked = false);
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_height_above_ffl(const Grid &grid_cpp,
                      const py::array_t<float> &ffl,
-                     const size_t option);
+                     const HeightAboveFFLOption option);
 
 py::array_t<int8_t>
 get_gridprop_value_between_surfaces(const Grid &grd,
@@ -145,6 +154,12 @@ init(py::module &m)
 {
     auto m_grid3d =
       m.def_submodule("grid3d", "Internal functions for operations on 3d grids.");
+
+    py::enum_<HeightAboveFFLOption>(m_grid3d, "HeightAboveFFLOption")
+      .value("CellCenter", HeightAboveFFLOption::CellCenter)
+      .value("CellCorners", HeightAboveFFLOption::CellCorners)
+      .value("TruncatedCellCorners", HeightAboveFFLOption::TruncatedCellCorners);
+    //  .export_values();
 
     py::class_<Grid>(m_grid3d, "Grid")
       // constructors
