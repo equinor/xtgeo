@@ -309,23 +309,34 @@ def get_heights_above_ffl(
     grid: Grid,
     ffl: GridProperty,
     option: Literal[
-        "cell_center_above_ffl", "cell_corners_above_ffl"
+        "cell_center_above_ffl",
+        "cell_corners_above_ffl",
+        "truncated_cell_corners_above_ffl",
     ] = "cell_center_above_ffl",
 ) -> tuple[GridProperty, GridProperty, GridProperty]:
     """Compute delta heights for cell top, bottom and midpoints above a given level."""
 
-    valid_options = ("cell_center_above_ffl", "cell_corners_above_ffl")
+    valid_options = (
+        "cell_center_above_ffl",
+        "cell_corners_above_ffl",
+        "truncated_cell_corners_above_ffl",
+    )
     if option not in valid_options:
         raise ValueError(
             f"The option key <{option}> is invalid, must be one of {valid_options}"
         )
+    if option == "cell_center_above_ffl":
+        option_flag = _internal.grid3d.HeightAboveFFLOption.CellCenter
+    elif option == "cell_corners_above_ffl":
+        option_flag = _internal.grid3d.HeightAboveFFLOption.CellCorners
+    else:
+        option_flag = _internal.grid3d.HeightAboveFFLOption.TruncatedCellCorners
 
     grid._set_xtgformat2()
 
     grid_cpp = grid._get_grid_cpp()
     htop_arr, hbot_arr, hmid_arr = grid_cpp.get_height_above_ffl(
-        ffl.values.ravel(),
-        1 if option == "cell_center_above_ffl" else 2,
+        ffl.values.ravel(), option_flag
     )
 
     htop = GridProperty(

@@ -585,6 +585,14 @@ def test_cell_height_above_ffl(testdata_path):
     assert hbot.values[4, 5, 0] == pytest.approx(0.0)
     assert hmid.values[4, 5, 0] == pytest.approx(22.4055)
 
+    htop, hbot, hmid = grd.get_heights_above_ffl(
+        ffl, option="truncated_cell_corners_above_ffl"
+    )
+
+    assert htop.values[4, 5, 0] == pytest.approx(11.202758)
+    assert hbot.values[4, 5, 0] == pytest.approx(8.35742)
+    assert hmid.values[4, 5, 0] == pytest.approx(9.78009)
+
 
 @functimer(output="info")
 def test_get_property_between_surfaces(testdata_path):
