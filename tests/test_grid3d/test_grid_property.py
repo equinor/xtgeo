@@ -312,6 +312,21 @@ def test_grdecl_rle(tmp_path, testdata_path):
     gg.to_file(tmp_path / "grid_rle.grdecl", fformat="grdecl", rle=True)
     po.to_file(tmp_path / "grid_satnum_rle.grdecl", fformat="grdecl", rle=True)
 
+    # Ensure compression in grid (ACTNUM)
+    with open(tmp_path / "grid_rle.grdecl") as f:
+        fields = f.read().split()
+        assert len(fields) == 289, "Incorrect field length, fail in compression"
+        assert "*" in fields[-10]
+        assert "*" in fields[-8]
+        assert "*" in fields[-6]
+
+    # Ensure compression in grid property (SATNUM)
+    with open(tmp_path / "grid_satnum_rle.grdecl") as f:
+        content = f.read()
+        fields = content.split()
+        assert "*" in content
+        assert len(fields) == 3, "Incorrect field length, fail in compression"
+
     grid = xtgeo.grid_from_file(tmp_path / "grid_rle.grdecl")
     assert np.array_equal(grid.actnum_array, gg.actnum_array)
 

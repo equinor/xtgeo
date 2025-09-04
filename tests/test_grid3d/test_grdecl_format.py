@@ -1,8 +1,9 @@
 from unittest.mock import mock_open, patch
 
+import numpy as np
 import pytest
 
-from xtgeo.grid3d._grdecl_format import open_grdecl
+from xtgeo.grid3d._grdecl_format import open_grdecl, run_length_encoding
 
 
 @pytest.mark.parametrize(
@@ -142,3 +143,26 @@ def test_read_prop_raises_error_when_no_forwardslash(undelimited_file_data):
         pytest.raises(ValueError),
     ):
         list(kw)
+
+
+@pytest.mark.parametrize(
+    "array, count, value",
+    [
+        ([0, 0, 0], [3], [0]),
+        ([0, 0, 3, 3, 2, 2, 2, 2], [2, 2, 4], [0, 3, 2]),
+        (
+            [0, 0, 0, 1, 1, 1, 3, 1, 4, 3, 2],
+            [3, 3, 1, 1, 1, 1, 1],
+            [0, 1, 3, 1, 4, 3, 2],
+        ),
+        (
+            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 4, 1],
+            [2, 10, 1, 1, 1, 1],
+            [0, 1, 2, 0, 4, 1],
+        ),
+    ],
+)
+def test_run_length_encoding(array, count, value):
+    _count, _value = run_length_encoding(np.array(array))
+    assert np.array_equal(_count, count)
+    assert np.array_equal(_value, value)
