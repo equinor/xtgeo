@@ -311,7 +311,7 @@ class GrdeclGrid(EclGrid):
                 results[kw.lower()] = factory(values)
         return cls(**results)
 
-    def to_file(self, filename, fileformat="grdecl", rle: bool = False):
+    def to_file(self, filename, fileformat="grdecl", rle: bool = True):
         """
         write the grdeclgrid to a file.
         :param filename: path to file to write.

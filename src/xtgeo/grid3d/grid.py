@@ -994,16 +994,14 @@ class Grid(_Grid3D):
     # Create/import/export
     # ==================================================================================
 
-    def to_file(
-        self, gfile: FileLike, fformat: str = "roff", rle: bool = False
-    ) -> None:
+    def to_file(self, gfile: FileLike, fformat: str = "roff", rle: bool = True) -> None:
         """Export grid geometry to file, various vendor formats.
 
         Args:
             gfile (str): Name of output file
             fformat (str): File format; roff/roff_binary/roff_ascii/
                 grdecl/bgrdecl/egrid.
-            rle (bool): Use run-length encoding (only for grdecl file), default=False
+            rle (bool): Use run-length encoding (only for grdecl file)
 
         Raises:
             OSError: Directory does not exist

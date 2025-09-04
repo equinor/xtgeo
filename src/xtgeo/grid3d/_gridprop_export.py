@@ -38,7 +38,7 @@ def to_file(
     append: bool = False,
     dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,
     fmt: str | None = None,
-    rle: bool = False,
+    rle: bool = True,
 ) -> None:
     """Export the grid property to file."""
     logger.debug("Export property to file %s as %s", pfile, fformat)
@@ -107,7 +107,7 @@ def _export_grdecl(
     append: bool = False,
     binary: bool = False,
     fmt: str | None = None,
-    rle: bool = False,
+    rle: bool = True,
 ) -> None:
     """Export ascii or binary GRDECL"""
     vals: npt.NDArray = gridprop.values.ravel(order="F")
@@ -147,9 +147,12 @@ def _export_grdecl(
                         formatted_value = str(unique_value)
                     else:
                         formatted_value = f"{unique_value:3e}"
-                    fout.write(
-                        f"{count}*{formatted_value}" if count > 1 else formatted_value
-                    )
+                    if count > 1:
+                        # Try to preserve the alignment
+                        text_width = len(formatted_value)
+                        new_text = f"{count}*{formatted_value.lstrip()}"
+                        formatted_value = " " * (text_width - len(new_text)) + new_text
+                    fout.write(formatted_value)
                     if i % 6 == 5:
                         fout.write("\n")
             else:

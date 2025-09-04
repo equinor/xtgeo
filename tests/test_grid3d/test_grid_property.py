@@ -352,6 +352,7 @@ def test_eclinit_simple_importexport(tmp_path, testdata_path):
         dtype=np.int32,
         name="SOMEDISK",
         fmt="%12d",
+        rle=False,
     )
     with open(tmp_path / "simple_disc.grdecl") as f:
         fields = f.read().split()
