@@ -1287,6 +1287,18 @@ def test_welldf_view_vs_copy(loadwell1):
     assert id(df1) != id(df2)
 
 
+def test_welldf_lookup_logrecord(loadwell1):
+    well = loadwell1
+
+    df1 = well.get_dataframe(logrecord_lookup=False)
+    df2 = well.get_dataframe(logrecord_lookup=True)
+    assert id(df1) != id(df2)
+    assert 1 in df1["Facies"].unique()
+    assert "Channel" in df2["Facies"].unique()
+    # Check that NaN is preserved
+    assert pd.isna(df2["Facies"]).any()
+
+
 def test_well_dataframe_deprecation(loadwell1):
     well = loadwell1
 

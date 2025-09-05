@@ -112,7 +112,9 @@ class Wells:
         return None
 
     # not having this as property but a get_ .. is intended, for flexibility
-    def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
+    def get_dataframe(
+        self, filled=False, fill_value1=-999, fill_value2=-9999, logrecord_lookup=False
+    ):
         """Get a big dataframe for all wells or blocked wells in instance,
         with well name as first column
 
@@ -122,12 +124,13 @@ class Wells:
                 have missing values
             fill_value2 (int): Only applied if filled=True, when logs
                 are missing completely for that well.
+            logrecord_lookup: If True, lookup the code in log records for discrete logs.
         """
         logger.debug("Ask for big dataframe for all wells")
 
         bigdflist = []
         for well in self._wells:
-            dfr = well.get_dataframe()
+            dfr = well.get_dataframe(logrecord_lookup=logrecord_lookup)
             dfr["WELLNAME"] = well.name
             logger.debug(well.name)
             if filled:

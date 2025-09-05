@@ -919,17 +919,18 @@ class Well:
 
         return None
 
-    def get_dataframe(self, copy: bool = True):
+    def get_dataframe(self, copy: bool = True, logrecord_lookup: bool = False):
         """Get a copy (default) or a view of the dataframe.
 
         Args:
             copy: If True, return a deep copy. A view (copy=False) will be faster and
                 more memory efficient, but less "safe" for some cases when manipulating
                 dataframes.
+            logrecord_lookup: If True, lookup the code in log records for discrete logs.
 
         .. versionchanged:: 3.7 Added `copy` keyword
         """
-        return self._wdata.get_dataframe(copy=copy)
+        return self._wdata.get_dataframe(copy=copy, logrecord_lookup=logrecord_lookup)
 
     def get_filled_dataframe(self, fill_value=UNDEF, fill_value_int=UNDEF_INT):
         """Fill the Nan's in the dataframe with real UNDEF values.
