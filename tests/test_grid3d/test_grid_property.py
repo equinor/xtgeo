@@ -323,9 +323,8 @@ def test_grdecl_rle(tmp_path, testdata_path):
     # Ensure compression in grid property (SATNUM)
     with open(tmp_path / "grid_satnum_rle.grdecl") as f:
         content = f.read()
-        fields = content.split()
         assert "*" in content
-        assert len(fields) == 3, "Incorrect field length, fail in compression"
+        assert len(content.split()) == 3, "Incorrect field length, fail in compression"
 
     grid = xtgeo.grid_from_file(tmp_path / "grid_rle.grdecl")
     assert np.array_equal(grid.actnum_array, gg.actnum_array)
@@ -335,6 +334,31 @@ def test_grdecl_rle(tmp_path, testdata_path):
     )
     p1.isdiscrete = True
     assert np.array_equal(po.get_npvalues3d(), p1.get_npvalues3d())
+
+    # Check for the scenario without RLE
+    gg.to_file(tmp_path / "grid_without_rle.grdecl", fformat="grdecl", rle=False)
+    po.to_file(tmp_path / "grid_satnum_without_rle.grdecl", fformat="grdecl", rle=False)
+
+    # Ensure no compression in grid (ACTNUM)
+    with open(tmp_path / "grid_without_rle.grdecl") as f:
+        content = f.read()
+        assert len(content.split()) == 295
+        assert "*" not in content
+
+    # Ensure no compression in grid property (SATNUM)
+    with open(tmp_path / "grid_satnum_without_rle.grdecl") as f:
+        content = f.read()
+        assert "*" not in content
+        assert len(content.split()) == 17
+
+    grid2 = xtgeo.grid_from_file(tmp_path / "grid_without_rle.grdecl")
+    assert np.array_equal(grid2.actnum_array, gg.actnum_array)
+
+    p2 = xtgeo.gridproperty_from_file(
+        tmp_path / "grid_satnum_without_rle.grdecl", grid=grid2, name="SATNUM"
+    )
+    p2.isdiscrete = True
+    assert np.array_equal(po.get_npvalues3d(), p2.get_npvalues3d())
 
 
 def test_eclinit_simple_importexport(tmp_path, testdata_path):
