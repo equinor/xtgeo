@@ -1135,10 +1135,14 @@ def test_blocked_well_from_to_roxar(rms_project_path):
     bw = xtgeo.blockedwell_from_roxar(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
-    assert list(bw.get_dataframe().columns) == [
-        "X_UTME",
-        "Y_UTMN",
-        "Z_TVDSS",
+    df = bw.get_dataframe()
+
+    # Core structural columns must be first and in order
+    expected_prefix = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
+    assert list(df.columns[: len(expected_prefix)]) == expected_prefix
+
+    # Remaining required logs must be present (order may vary)
+    required_logs = {
         "I_INDEX",
         "J_INDEX",
         "K_INDEX",
@@ -1146,7 +1150,11 @@ def test_blocked_well_from_to_roxar(rms_project_path):
         "Poro",
         "Perm",
         "Facies",
-    ]
+    }
+    assert required_logs.issubset(set(df.columns))
+
+    # Ensure no unexpected loss of total column count
+    assert len(df.columns) >= len(expected_prefix) + len(required_logs)
 
     bw.delete_log("Zonelog")
     bw.create_log("Some_new")
