@@ -76,17 +76,8 @@ def tmp_data_dir(tmp_path_factory):
 @pytest.fixture(name="roxinstance", scope="module")
 def fixture_roxinstance():
     """Create roxinstance in module scope."""
-    # Imports indirectly from rmsapi also
-    from roxar import LicenseError
+    project = roxar.Project.create()
 
-    try:
-        project = roxar.Project.create()
-    except LicenseError:
-        pytest.skip(
-            "Unable to check out RMS API license. This indicates an error that "
-            "must be resolved with the RMS installation or RMS license server.",
-            allow_module_level=True,
-        )
     return xtgeo.RoxUtils(project)
 
 
