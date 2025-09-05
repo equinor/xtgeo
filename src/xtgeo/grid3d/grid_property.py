@@ -773,6 +773,7 @@ class GridProperty(_Grid3D):
         append: bool = False,
         dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,
         fmt: str | None = None,
+        rle: bool = True,
     ) -> None:
         """
         Export the grid property to file.
@@ -791,6 +792,7 @@ class GridProperty(_Grid3D):
                 Eclipse formats.
             fmt: Format for ascii grdecl format. Default is None. If specified,
                 the user is responsible for a valid format specifier, e.g. "%8.4f".
+            rle: Use run length encoding, only for grdecl format.
 
         Example::
 
@@ -815,6 +817,7 @@ class GridProperty(_Grid3D):
             append=append,
             dtype=dtype,
             fmt=fmt,
+            rle=rle,
         )
 
     @classmethod
