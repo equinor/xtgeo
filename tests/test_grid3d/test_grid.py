@@ -184,6 +184,10 @@ def test_subgrids():
     subgrids = grd.subgrids_from_zoneprop(zprop)
     assert "Upper" in subgrids
 
+    calc_zprop = grd.get_zoneprop_from_subgrids()
+    np.testing.assert_array_equal(zprop.values, calc_zprop.values)
+    assert zprop.codes == calc_zprop.codes
+
     # rename
     grd.rename_subgrids(["AAAA", "BBBB"])
     assert "AAAA" in grd.subgrids
