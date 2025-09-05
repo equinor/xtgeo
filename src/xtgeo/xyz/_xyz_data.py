@@ -466,8 +466,18 @@ class _XYZData:
 
         return dfr
 
-    def get_dataframe(self, copy=True):
-        """Get the dataframe, as view or deep copy."""
+    def get_dataframe(self, copy=True, logrecord_lookup=False):
+        """Get the dataframe, as view or deep copy.
+
+        Optionally, it is possible to lookup code from log record for discrete logs.
+        """
+        if logrecord_lookup:
+            df = self._df.copy(deep=True)
+            for name, value in self.attr_records.items():
+                if isinstance(value, dict):
+                    df[name] = df[name].map(value)
+            return df
+
         if copy:
             return self._df.copy(deep=True)
 

@@ -48,6 +48,14 @@ def test_get_dataframe_allblockedwells(testblockedwells, snapshot, helpers):
     )
 
 
+def test_get_dataframe_lookup_logrecord(testblockedwells):
+    """Test that logrecord_lookup works properly for blockedwells"""
+    df1 = testblockedwells.get_dataframe(logrecord_lookup=False)
+    df2 = testblockedwells.get_dataframe(logrecord_lookup=True)
+    assert 1 in df1["Facies"].unique()
+    assert "Channel" in df2["Facies"].unique()
+
+
 def test_quickplot_blockedwells(tmp_path, testblockedwells, generate_plot):
     """Import blockedwells from file to BlockedWells and quick plot."""
     if not generate_plot:
