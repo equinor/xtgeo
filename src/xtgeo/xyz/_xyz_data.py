@@ -470,11 +470,12 @@ class _XYZData:
         """Get the dataframe, as view or deep copy.
 
         Optionally, it is possible to lookup code from log record for discrete logs.
+        In that case, the dataframe will be returned as a copy.
         """
         if logrecord_lookup:
             df = self._df.copy(deep=True)
             for name, value in self.attr_records.items():
-                if isinstance(value, dict):
+                if name in df.columns and isinstance(value, dict):
                     df[name] = df[name].map(value)
             return df
 
