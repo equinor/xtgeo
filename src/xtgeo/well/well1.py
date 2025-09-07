@@ -926,7 +926,8 @@ class Well:
             copy: If True, return a deep copy. A view (copy=False) will be faster and
                 more memory efficient, but less "safe" for some cases when manipulating
                 dataframes.
-            logrecord_lookup: If True, lookup the code in log records for discrete logs.
+            logrecord_lookup: If True, lookup the code in log records for discrete
+                logs and return a deep copy regardless of value of copy argument.
 
         .. versionchanged:: 3.7 Added `copy` keyword
         """
