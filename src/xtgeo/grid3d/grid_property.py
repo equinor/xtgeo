@@ -773,7 +773,7 @@ class GridProperty(_Grid3D):
         append: bool = False,
         dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,
         fmt: str | None = None,
-        rle: bool = True,
+        rle: bool = False,
     ) -> None:
         """
         Export the grid property to file.

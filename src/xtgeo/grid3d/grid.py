@@ -994,7 +994,9 @@ class Grid(_Grid3D):
     # Create/import/export
     # ==================================================================================
 
-    def to_file(self, gfile: FileLike, fformat: str = "roff", rle: bool = True) -> None:
+    def to_file(
+        self, gfile: FileLike, fformat: str = "roff", rle: bool = False
+    ) -> None:
         """Export grid geometry to file, various vendor formats.
 
         Args:

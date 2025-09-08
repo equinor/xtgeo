@@ -38,7 +38,7 @@ def to_file(
     append: bool = False,
     dtype: type[np.float32] | type[np.float64] | type[np.int32] | None = None,
     fmt: str | None = None,
-    rle: bool = True,
+    rle: bool = False,
 ) -> None:
     """Export the grid property to file."""
     logger.debug("Export property to file %s as %s", pfile, fformat)
@@ -107,7 +107,7 @@ def _export_grdecl(
     append: bool = False,
     binary: bool = False,
     fmt: str | None = None,
-    rle: bool = True,
+    rle: bool = False,
 ) -> None:
     """Export ascii or binary GRDECL"""
     vals: npt.NDArray = gridprop.values.ravel(order="F")
