@@ -145,6 +145,25 @@ refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
 py::array_t<float>
 collapse_inactive_cells(const Grid &grid_cpp, bool collapse_internal = true);
 
+std::tuple<py::array_t<float>, py::array_t<int8_t>>
+convert_to_hybrid_grid(const Grid &grid_cpp,
+                       float top_level,
+                       float bottom_level,
+                       size_t ndiv,
+                       py::array_t<int> &region_prop,
+                       int use_region);
+
+// =====================================================================================
+// ZCORNSV UTILITIES
+// =====================================================================================
+
+py::array_t<float>
+zcornsv_pillar_to_cell(const py::array_t<float> &zcornsv_pillar);
+
+py::array_t<float>
+zcornsv_cell_to_pillar(const py::array_t<float> &zcornsv_cell,
+                       bool fill_boundary = true);
+
 // =====================================================================================
 // PYTHON BINDINGS, IF NEEDED
 // =====================================================================================
@@ -204,7 +223,9 @@ init(py::module &m)
       .def("get_grid_fence", &get_grid_fence,
            "Get a grid fence from a grid, fspec, property and z_vector")
       .def("collapse_inactive_cells", &collapse_inactive_cells,
-           "Collapse inactive cells in the grid.", py::arg("collapse_internal") = true);
+           "Collapse inactive cells in the grid.", py::arg("collapse_internal") = true)
+      .def("convert_to_hybrid_grid", &convert_to_hybrid_grid,
+           "Convert the grid to a hybrid grid.");
 
     py::class_<CellCorners>(m_grid3d, "CellCorners")
       // a constructor that takes 8 xyz::Point objects
@@ -246,6 +267,11 @@ init(py::module &m)
     m_grid3d.def("create_grid_from_cube", &create_grid_from_cube,
                  "Create a 3D grid from a cube specification.", py::arg("cube"),
                  py::arg("use_cell_center") = false, py::arg("flip") = 1);
+    m_grid3d.def("zcornsv_pillar_to_cell", &zcornsv_pillar_to_cell,
+                 "Convert zcornsv from pillar format to cell format.");
+    m_grid3d.def("zcornsv_cell_to_pillar", &zcornsv_cell_to_pillar,
+                 "Convert zcornsv from cell format to pillar format.",
+                 py::arg("zcornsv_cell"), py::arg("fill_boundary") = true);
 }
 
 }  // namespace xtgeo::grid3d

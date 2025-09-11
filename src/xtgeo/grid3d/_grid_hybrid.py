@@ -4,9 +4,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from xtgeo import _cxtgeo
+import xtgeo._internal as _internal  # type: ignore
 from xtgeo.common import null_logger
-from xtgeo.common.constants import UNDEF_INT
 
 logger = null_logger(__name__)
 
@@ -23,44 +22,29 @@ def make_hybridgrid(
     region_number: int | None = None,
 ) -> None:
     """Make hybrid grid."""
-    self._set_xtgformat1()
+    self._set_xtgformat2()
 
     newnlay = self.nlay * 2 + nhdiv
-    newnzcorn = self.ncol * self.nrow * (newnlay + 1) * 4
-    newnactnum = self.ncol * self.nrow * newnlay
 
-    # initialize
-    hyb_zcornsv = np.zeros(newnzcorn, dtype=np.float64)
-    hyb_actnumsv = np.zeros(newnactnum, dtype=np.int32)
-
-    if region is None:
-        region_number = -1
-        rvalues = np.ones(1, dtype=np.int32)
-    else:
-        rvalues = np.ma.filled(region.values, fill_value=UNDEF_INT)
-        rvalues = rvalues.ravel()
-
-    _cxtgeo.grd3d_convert_hybrid(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        newnlay,
-        hyb_zcornsv,
-        hyb_actnumsv,
+    grid3d_cpp = _internal.grid3d.Grid(self)
+    region_array = (
+        region.values.astype(np.int32)
+        if region
+        else np.empty((0, 0, 0), dtype=np.int32)
+    )
+    hyb_zcornsv, hyb_actnumsv = grid3d_cpp.convert_to_hybrid_grid(
         toplevel,
         bottomlevel,
         nhdiv,
-        rvalues,
-        region_number,
+        region_array,
+        int(region_number) if region_number is not None else -1,
     )
 
     # when a hybridgrid is made, the current subrid settings lose relevance, hence
     # it is forced set to None
     self.subgrids = None
 
+    # update the grid in place
     self._nlay = newnlay
     self._zcornsv = hyb_zcornsv
-    self._actnumsv = hyb_actnumsv
+    self._actnumsv = hyb_actnumsv.astype(np.int32)
