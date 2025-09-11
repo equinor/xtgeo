@@ -111,6 +111,7 @@ pybind11_add_module(
   "${SRC}/grid3d/grid_xyz_in.cpp"
   "${SRC}/grid3d/grid_reorganize.cpp"
   "${SRC}/grid3d/grid_surf_oper.cpp"
+  "${SRC}/grid3d/zcornsv_utilities.cpp"
   "${SRC}/cube/cube.cpp"
   "${SRC}/regsurf/sample_grid3d.cpp"
   "${SRC}/regsurf/utilities.cpp"

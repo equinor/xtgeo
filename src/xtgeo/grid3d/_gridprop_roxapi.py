@@ -150,12 +150,18 @@ def _validate_dtype_in_roxar(
         )
 
     try:
+        # for mypy
+        min_val: int | float
+        max_val: int | float
+
         if np.issubdtype(dtype, np.integer):
             # Integer type
-            min_val, max_val = np.iinfo(dtype).min, np.iinfo(dtype).max
+            min_val = int(np.iinfo(dtype).min)
+            max_val = int(np.iinfo(dtype).max)
         elif np.issubdtype(dtype, np.floating):
             # Float type
-            min_val, max_val = np.finfo(dtype).min, np.finfo(dtype).max
+            min_val = float(np.finfo(dtype).min)
+            max_val = float(np.finfo(dtype).max)
         else:
             # Unknown type
             raise RuntimeError("Probable bug, values array not integer or float")

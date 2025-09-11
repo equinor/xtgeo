@@ -2556,11 +2556,13 @@ class Grid(_Grid3D):
            :align: center
 
         Args:
-            nhdiv (int): Number of hybrid layers.
-            toplevel (float): Top of hybrid grid.
-            bottomlevel (float): Base of hybrid grid.
-            region (GridProperty, optional): Region property (if needed).
-            region_number (int): Which region to apply hybrid grid in if region.
+            nhdiv: Number of hybrid layers.
+            toplevel: Top of hybrid grid.
+            bottomlevel: Base of hybrid grid.
+            region: Region property (if needed). Note that the region will only be
+                applied in a lateral sense: i.e. if a column is in the region, then
+                the full column will be converted to hybrid.
+            region_number: Which region to apply hybrid grid in if region.
 
         Example:
             Create a hybridgrid from file, based on a GRDECL file (no region)::
@@ -2577,6 +2579,7 @@ class Grid(_Grid3D):
         .. _usage in the Troll field: https://doi.org/10.2118/148023-MS
 
         """
+
         _grid_hybrid.make_hybridgrid(
             self,
             nhdiv=nhdiv,

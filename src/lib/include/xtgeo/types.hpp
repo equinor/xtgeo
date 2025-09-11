@@ -1,4 +1,5 @@
 // separate header file for structs etc used in xtgeo to avoid circular dependencies
+// separate header file for structs etc used in xtgeo to avoid circular dependencies
 #ifndef XTGEO_TYPES_HPP_
 #define XTGEO_TYPES_HPP_
 
@@ -28,6 +29,24 @@
 namespace py = pybind11;
 
 namespace xtgeo {
+
+// =====================================================================================
+// Utility functions for type-safe comparisons
+// =====================================================================================
+
+// Helper function to safely compare pybind11::ssize_t with size_t
+inline bool
+shape_equals(pybind11::ssize_t shape_dim, size_t expected)
+{
+    return shape_dim >= 0 && static_cast<size_t>(shape_dim) == expected;
+}
+
+// Helper function for loop bounds checking
+inline bool
+shape_less_than(size_t index, pybind11::ssize_t shape_dim)
+{
+    return shape_dim > 0 && index < static_cast<size_t>(shape_dim);
+}
 
 // =====================================================================================
 
@@ -117,7 +136,7 @@ struct Polygon
         }
 
         auto r = array.unchecked<2>();  // Access the array without bounds checking
-        for (size_t i = 0; i < r.shape(0); ++i) {
+        for (size_t i = 0; shape_less_than(i, r.shape(0)); ++i) {
             points.emplace_back(r(i, 0), r(i, 1), r(i, 2));
         }
     }
@@ -400,8 +419,9 @@ public:
         if (m_coordsv.ndim() != 3) {
             throw std::runtime_error("m_coordsv should have 3 dimensions");
         }
-        if (m_coordsv.shape(0) != m_ncol + 1 || m_coordsv.shape(1) != m_nrow + 1 ||
-            m_coordsv.shape(2) != 6) {
+        if (!shape_equals(m_coordsv.shape(0), m_ncol + 1) ||
+            !shape_equals(m_coordsv.shape(1), m_nrow + 1) ||
+            !shape_equals(m_coordsv.shape(2), 6)) {
             throw std::runtime_error("m_coordsv should have shape (ncol+1, nrow+1, 6)");
         }
 
@@ -409,8 +429,10 @@ public:
         if (m_zcornsv.ndim() != 4) {
             throw std::runtime_error("m_zcornsv should have 4 dimensions");
         }
-        if (m_zcornsv.shape(0) != m_ncol + 1 || m_zcornsv.shape(1) != m_nrow + 1 ||
-            m_zcornsv.shape(2) != m_nlay + 1 || m_zcornsv.shape(3) != 4) {
+        if (!shape_equals(m_zcornsv.shape(0), m_ncol + 1) ||
+            !shape_equals(m_zcornsv.shape(1), m_nrow + 1) ||
+            !shape_equals(m_zcornsv.shape(2), m_nlay + 1) ||
+            !shape_equals(m_zcornsv.shape(3), 4)) {
             throw std::runtime_error(
               "m_zcornsv should have shape (ncol+1, nrow+1, nlay+1, 4)");
         }
@@ -419,8 +441,9 @@ public:
         if (m_actnumsv.ndim() != 3) {
             throw std::runtime_error("m_actnumsv should have 3 dimensions");
         }
-        if (m_actnumsv.shape(0) != m_ncol || m_actnumsv.shape(1) != m_nrow ||
-            m_actnumsv.shape(2) != m_nlay) {
+        if (!shape_equals(m_actnumsv.shape(0), m_ncol) ||
+            !shape_equals(m_actnumsv.shape(1), m_nrow) ||
+            !shape_equals(m_actnumsv.shape(2), m_nlay)) {
             throw std::runtime_error("m_actnumsv should have shape (ncol, nrow, nlay)");
         }
     }
@@ -442,8 +465,9 @@ public:
         if (m_coordsv.ndim() != 3) {
             throw std::runtime_error("m_coordsv should have 3 dimensions");
         }
-        if (m_coordsv.shape(0) != m_ncol + 1 || m_coordsv.shape(1) != m_nrow + 1 ||
-            m_coordsv.shape(2) != 6) {
+        if (!shape_equals(m_coordsv.shape(0), m_ncol + 1) ||
+            !shape_equals(m_coordsv.shape(1), m_nrow + 1) ||
+            !shape_equals(m_coordsv.shape(2), 6)) {
             throw std::runtime_error("m_coordsv should have shape (ncol+1, nrow+1, 6)");
         }
 
@@ -451,8 +475,10 @@ public:
         if (m_zcornsv.ndim() != 4) {
             throw std::runtime_error("m_zcornsv should have 4 dimensions");
         }
-        if (m_zcornsv.shape(0) != m_ncol + 1 || m_zcornsv.shape(1) != m_nrow + 1 ||
-            m_zcornsv.shape(2) != m_nlay + 1 || m_zcornsv.shape(3) != 4) {
+        if (!shape_equals(m_zcornsv.shape(0), m_ncol + 1) ||
+            !shape_equals(m_zcornsv.shape(1), m_nrow + 1) ||
+            !shape_equals(m_zcornsv.shape(2), m_nlay + 1) ||
+            !shape_equals(m_zcornsv.shape(3), 4)) {
             throw std::runtime_error(
               "m_zcornsv should have shape (ncol+1, nrow+1, nlay+1, 4)");
         }
@@ -461,8 +487,9 @@ public:
         if (m_actnumsv.ndim() != 3) {
             throw std::runtime_error("m_actnumsv should have 3 dimensions");
         }
-        if (m_actnumsv.shape(0) != m_ncol || m_actnumsv.shape(1) != m_nrow ||
-            m_actnumsv.shape(2) != m_nlay) {
+        if (!shape_equals(m_actnumsv.shape(0), m_ncol) ||
+            !shape_equals(m_actnumsv.shape(1), m_nrow) ||
+            !shape_equals(m_actnumsv.shape(2), m_nlay)) {
             throw std::runtime_error("m_actnumsv should have shape (ncol, nrow, nlay)");
         }
     }
