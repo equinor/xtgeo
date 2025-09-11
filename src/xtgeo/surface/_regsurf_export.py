@@ -15,6 +15,8 @@ from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.common.log import null_logger
 
+import surfio
+
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper
     from xtgeo.surface.regular_surface import RegularSurface
@@ -47,18 +49,26 @@ PMD_DATAUNITZ = {
 def export_irap_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
     """Export to Irap RMS ascii format."""
 
-    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPA, order="F")
-
     yinc = self.yinc * self.yflip
 
     xmax = self.xori + (self.ncol - 1) * self.xinc
     ymax = self.yori + (self.nrow - 1) * yinc
 
-    header = (
-        f"-996 {self.nrow} {self.xinc} {yinc}\n"
-        f"{self.xori} {xmax} {self.yori} {ymax}\n"
-        f"{self.ncol} {self.rotation} {self.xori} {self.yori}\n"
-        "0  0  0  0  0  0  0\n"
+    surf = surfio.IrapSurface(
+        surfio.IrapHeader(
+            nx=self.ncol,
+            ny=self.nrow,
+            xori=self.xori,
+            yori=self.yori,
+            xinc=self.xinc,
+            yinc=self.yinc,
+            xmax=xmax,
+            ymax=ymax,
+            rot=self.rotation,
+            xrot=self.xori,
+            yrot=self.yori,
+        ),
+        values=np.ma.filled(self.values, fill_value=np.nan),
     )
 
     def _optimal_shape(vals, start=9):
@@ -85,12 +95,9 @@ def export_irap_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
     buf = (header + data).encode("latin1")
 
     if mfile.memstream:
-        mfile.file.write(buf)
+        mfile.file.write(surf.export_ascii().encode("latin1"))
     else:
-        with open(mfile.name, "wb") as fout:
-            fout.write(buf)
-
-    del vals
+        surf.export_ascii_file(mfile.name)
 
 
 def export_irap_binary(self: RegularSurface, mfile: FileWrapper) -> None:
