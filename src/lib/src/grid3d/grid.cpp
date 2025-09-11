@@ -1,7 +1,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <algorithm>
+#include <array>
 #include <cstddef>
+#include <limits>
 #include <tuple>
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/geometry_basics.hpp>
@@ -747,12 +749,14 @@ collapse_inactive_cells(const Grid &grid_cpp, bool collapse_internal)
                 if (actnumsv_(i, j, k) == 1) {
 
                     if (k > 0) {
-                        // Use signed int to avoid infinite loop
-                        for (int kk = static_cast<int>(k) - 1; kk >= 0; kk--) {
-                            zcorn_out_(i, j, kk, 3) = zcorn_(i, j, k, 3);
-                            zcorn_out_(i + 1, j, kk, 2) = zcorn_(i + 1, j, k, 2);
-                            zcorn_out_(i, j + 1, kk, 1) = zcorn_(i, j + 1, k, 1);
-                            zcorn_out_(i + 1, j + 1, kk, 0) =
+                        // Use kkm1 inside to avoid infinite loop in edge cases, as
+                        // kk will be size_t and thus always >= 0
+                        for (size_t kk = k; kk > 0; --kk) {
+                            size_t kkm1 = kk - 1;
+                            zcorn_out_(i, j, kkm1, 3) = zcorn_(i, j, k, 3);
+                            zcorn_out_(i + 1, j, kkm1, 2) = zcorn_(i + 1, j, k, 2);
+                            zcorn_out_(i, j + 1, kkm1, 1) = zcorn_(i, j + 1, k, 1);
+                            zcorn_out_(i + 1, j + 1, kkm1, 0) =
                               zcorn_(i + 1, j + 1, k, 0);
                         }
                     }
@@ -823,4 +827,194 @@ collapse_inactive_cells(const Grid &grid_cpp, bool collapse_internal)
     return zcorn_new;
 }
 
-}  // namespace xtgeo::grid3d
+/** Convert a 'standard' 3D grid to a hybrid grid representation. */
+std::tuple<py::array_t<float>, py::array_t<int8_t>>
+convert_to_hybrid_grid(const Grid &grid_cpp,
+                       float top_level,
+                       float bottom_level,
+                       size_t ndiv,
+                       py::array_t<int> &region_prop,
+                       int use_region)
+{
+    auto &logger = xtgeo::logging::LoggerManager::get("convert_to_hybrid_grid");
+
+    auto actnumsv_ = grid_cpp.get_actnumsv().unchecked<3>();  // [i][j][k]
+    auto zcornsv_ = grid_cpp.get_zcornsv().unchecked<4>();    // [i][j][k][corner]
+
+    // Convert pillar format to cell format for easier processing
+    auto cellcorners = zcornsv_pillar_to_cell(grid_cpp.get_zcornsv());
+    auto cellcorners_ = cellcorners.unchecked<4>();
+
+    size_t nzhyb = 2 * grid_cpp.get_nlay() + ndiv;
+
+    // Create output arrays with correct dimensions
+    py::array_t<float> cellcorners_hyb(
+      std::vector<size_t>{ grid_cpp.get_ncol(), grid_cpp.get_nrow(), nzhyb + 1, 4 });
+    py::array_t<int8_t> actnum_hyb(
+      std::vector<size_t>{ grid_cpp.get_ncol(), grid_cpp.get_nrow(), nzhyb });
+
+    auto cellcorners_hyb_ = cellcorners_hyb.mutable_unchecked<4>();
+    auto actnum_hyb_ = actnum_hyb.mutable_unchecked<3>();
+
+    logger.debug("Converting grid to hybrid with {} layers", nzhyb);
+
+    // Process region data if provided
+    bool use_region_logic = (use_region > 0 && region_prop.size() > 0);
+
+    float dz = (bottom_level - top_level) / static_cast<float>(ndiv);
+
+    // Main conversion loop - process each column
+    for (size_t i = 0; i < grid_cpp.get_ncol(); i++) {
+        for (size_t j = 0; j < grid_cpp.get_nrow(); j++) {
+
+            bool flag_top = true;
+            bool flag_bot = true;
+            bool flag_region = false;
+            float ztop = std::numeric_limits<float>::max();
+            float zbot = std::numeric_limits<float>::lowest();
+
+            std::array<float, 4> use_top_level = { top_level, top_level, top_level,
+                                                   top_level };
+            std::array<float, 4> use_bot_level = { bottom_level, bottom_level,
+                                                   bottom_level, bottom_level };
+            float use_dz = dz;
+
+            // Check if this column intersects with the specified region
+            if (use_region_logic) {
+                flag_region = false;
+                auto region_prop_ = region_prop.unchecked<3>();
+
+                // Scan column to see if any cell is in the target region
+                for (size_t k = 0; k < grid_cpp.get_nlay(); k++) {
+                    if (region_prop_(i, j, k) == use_region) {
+                        flag_region = true;
+                        break;
+                    }
+                }
+
+                // If region is not found, collapse all cells at base layer
+                if (!flag_region) {
+                    for (size_t ic = 0; ic < 4; ic++) {
+
+                        use_top_level[ic] = cellcorners_(i, j, 0, ic);
+                        use_bot_level[ic] = use_top_level[ic];
+                    }
+                    use_dz = 0.0f;
+                }
+            }
+
+            // Phase 1: Top-down truncation - collect all layers above top_level
+            size_t khyb = 0;
+            for (size_t k = 0; k <= grid_cpp.get_nlay(); k++) {
+                float zsum = 0.0f;
+
+                for (size_t ic = 0; ic < 4; ic++) {
+                    if (cellcorners_(i, j, k, ic) > use_top_level[ic]) {
+                        cellcorners_hyb_(i, j, khyb, ic) = use_top_level[ic];
+                    } else {
+                        cellcorners_hyb_(i, j, khyb, ic) = cellcorners_(i, j, k, ic);
+                    }
+                    zsum += cellcorners_(i, j, k, ic);
+                }
+
+                // Store average depth for first active cell
+                if (k < grid_cpp.get_nlay() && actnumsv_(i, j, k) > 0 && flag_top) {
+                    ztop = 0.25f * zsum;
+                    flag_top = false;
+                }
+
+                // Copy actnum for original layers
+                if (k < grid_cpp.get_nlay()) {
+                    actnum_hyb_(i, j, khyb) = actnumsv_(i, j, k);
+                }
+                khyb++;
+            }
+
+            // Phase 2: Bottom-up truncation - collect layers below bottom_level
+            // (somewhat 'strange' loop construct with size_t to prevent underflow)
+            khyb = nzhyb;
+            for (size_t k = grid_cpp.get_nlay(); /* inclusive down to 0 */;) {
+                float zsum = 0.0f;
+
+                for (size_t ic = 0; ic < 4; ic++) {
+                    if (cellcorners_(i, j, k, ic) < use_bot_level[ic]) {
+                        cellcorners_hyb_(i, j, khyb, ic) = use_bot_level[ic];
+                    } else {
+                        cellcorners_hyb_(i, j, khyb, ic) = cellcorners_(i, j, k, ic);
+                    }
+                    zsum += cellcorners_(i, j, k, ic);
+                }
+                if (k > 0 && actnumsv_(i, j, k - 1) > 0 && flag_bot) {
+                    zbot = 0.25f * zsum;
+                    flag_bot = false;
+                }
+
+                if (k > 0 && khyb > 0) {
+                    size_t target_k = khyb - 1;
+                    if (target_k < nzhyb) {
+                        actnum_hyb_(i, j, target_k) = actnumsv_(i, j, k - 1);
+                    }
+                }
+
+                if (khyb > 0)
+                    --khyb;
+                if (k == 0)
+                    break;
+                --k;
+            }
+            // Phase 3: Fill intermediate horizontal layers
+            size_t n = 0;
+            size_t start_layer = grid_cpp.get_nlay();
+            for (size_t k = start_layer; k <= start_layer + ndiv - 1; k++) {
+
+                if (k > start_layer) {
+                    n++;
+                    for (size_t ic = 0; ic < 4; ic++) {
+                        cellcorners_hyb_(i, j, k, ic) =
+                          use_top_level[ic] + static_cast<float>(n) * use_dz;
+                    }
+                }
+                // Set actnum for intermediate layers (typically active)
+                actnum_hyb_(i, j, k) = 1;
+            }
+            // Phase 4: Volume preservation adjustments (truncate from top)
+            // Deactivate cells in the hybrid grid whose center is above the
+            // top of the first active cell in the original grid column.
+            for (size_t k = 0; k < nzhyb; k++) {
+                // Calculate cell center depth
+                float zcenter = 0.0f;
+                for (size_t ic = 0; ic < 4; ic++) {
+                    zcenter += 0.125f * (cellcorners_hyb_(i, j, k, ic) +
+                                         cellcorners_hyb_(i, j, k + 1, ic));
+                }
+
+                // If cell is active and its center is above ztop, deactivate it.
+                if (actnum_hyb_(i, j, k) == 1 && zcenter < ztop) {
+                    actnum_hyb_(i, j, k) = 0;
+                }
+            }
+
+            for (int k = static_cast<int>(nzhyb); k > 0; --k) {
+                // Calculate cell center depth for cell 'k'
+                float zcenter = 0.0f;
+                for (size_t ic = 0; ic < 4; ic++) {
+                    zcenter += 0.125f * (cellcorners_hyb_(i, j, k - 1, ic) +
+                                         cellcorners_hyb_(i, j, k, ic));
+                }
+
+                // If cell is active and its center is below zbot, deactivate it.
+                if (actnum_hyb_(i, j, k - 1) == 1 && zcenter > zbot) {
+                    actnum_hyb_(i, j, k - 1) = 0;
+                }
+            }
+        }
+    }
+
+    // Convert back to pillar format
+    auto zcorn_hyb = zcornsv_cell_to_pillar(cellcorners_hyb);
+
+    logger.debug("Hybrid grid conversion completed");
+    return std::make_tuple(zcorn_hyb, actnum_hyb);
+}
+//===================
+}  // xtgeo::grid3d

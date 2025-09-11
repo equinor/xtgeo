@@ -6,6 +6,7 @@ import pytest
 from hypothesis import given
 
 import xtgeo
+from xtgeo.common.log import functimer
 
 from .grid_generator import xtgeo_grids
 
@@ -17,6 +18,92 @@ EMEZFILE2 = pathlib.Path("3dgrids/eme/2/emerald_hetero.roff")
 
 DUAL = pathlib.Path("3dgrids/etc/dual_distorted2.grdecl")
 DUALPROPS = pathlib.Path("3dgrids/etc/DUAL")
+
+TFILE = pathlib.Path("3dgrids/etc/test_t.roff")
+
+
+def test_hybridgrid0():
+    """Test hybrid grid with and without regions"""
+    grd1 = xtgeo.create_box_grid(
+        (1, 1, 5),
+        flip=1,
+        oricenter=False,
+        origin=(10.0, 20.0, 1000.0),
+        increment=(100, 150, 5),
+    )
+    grd1.subgrids = {
+        "name1": [1],
+        "name2": [2, 3],
+        "name3": [4, 5],
+    }
+    assert grd1.subgrids is not None  # initially, prior to subgrids
+
+    grd2 = grd1.copy()
+    reg2 = xtgeo.GridProperty(grd2, name="REGION", discrete=True, values=1)
+
+    grd1.convert_to_hybrid(nhdiv=40, toplevel=1001, bottomlevel=1010)
+    grd2.convert_to_hybrid(
+        nhdiv=40,
+        toplevel=1001,
+        bottomlevel=1010,
+        region=reg2,
+        region_number=1,
+    )
+
+    assert grd1._zcornsv[0, 0, :, 3].tolist() == grd2._zcornsv[0, 0, :, 3].tolist()
+
+    assert grd1._actnumsv.tolist() == grd2._actnumsv.tolist()
+
+
+def test_hybrid_case_t(testdata_path, snapshot, helpers):
+    """Test hybridgrid on a small grid with a fault; test values manually inspected"""
+
+    grd = xtgeo.grid_from_file(testdata_path / TFILE)
+
+    # Snapshot pre-conversion state
+    snapshot.assert_match(
+        f"zcornsv_mean_before: {grd._zcornsv.mean():.3f}",
+        "hybrid_case_t_before.txt",
+    )
+
+    snapshot.assert_match(
+        helpers.df2csv(grd.get_dataframe(activeonly=False).round(3)),
+        "hybrid_case_t_grid_before.csv",
+    )
+
+    grd.convert_to_hybrid(nhdiv=2, toplevel=1500, bottomlevel=1600)
+
+    # Snapshot post-conversion state
+    snapshot.assert_match(
+        f"zcornsv_mean_after: {grd._zcornsv.mean():.3f}",
+        "hybrid_case_t_after.txt",
+    )
+
+    snapshot.assert_match(
+        helpers.df2csv(grd.get_dataframe(activeonly=False).round(3)),
+        "hybrid_case_t_grid_after.csv",
+    )
+
+    # Snapshot grid properties
+    props = {
+        "ncol": grd.ncol,
+        "nrow": grd.nrow,
+        "nlay": grd.nlay,
+        "ntotal": grd.ntotal,
+        "nactive": grd.nactive,
+    }
+    snapshot.assert_match(str(props), "hybrid_case_t_properties.txt")
+
+    # Snapshot specific array slices for detailed verification
+    snapshot.assert_match(
+        str(grd._zcornsv[0, 0, :5, 0].tolist()),
+        "hybrid_case_t_zcorn_slice.txt",
+    )
+
+    snapshot.assert_match(
+        str(grd._actnumsv[0, 0, :10].tolist()),
+        "hybrid_case_t_actnum_slice.txt",
+    )
 
 
 def test_hybridgrid1(tmp_path, snapshot, helpers):
@@ -76,6 +163,23 @@ def test_hybridgrid2(tmp_path, testdata_path):
     )
 
     grd.to_file(tmp_path / "test_hybridgrid2.roff")
+
+
+@pytest.mark.bigtest
+def test_hybridgrid_large():
+    """Hybrid for large grid, when measuring and optimizing speed in coding."""
+
+    grd1 = xtgeo.create_box_grid((400, 300, 50), increment=(100, 100, 20))
+
+    nhdiv = 40
+
+    @functimer
+    def convert_to_hybrid(grd, nhdiv, toplevel, bottomlevel):
+        grd.convert_to_hybrid(nhdiv=nhdiv, toplevel=toplevel, bottomlevel=bottomlevel)
+
+    convert_to_hybrid(grd1, nhdiv=nhdiv, toplevel=10, bottomlevel=60)
+
+    assert grd1.nlay == 50 * 2 + nhdiv
 
 
 def test_inactivate_thin_cells(tmp_path, testdata_path):
