@@ -4,10 +4,10 @@ Fccus here on hexahedron functions
 """
 
 import pytest
-from hypothesis import given, strategies as st
-
 import xtgeo._internal as _internal  # type: ignore
+from hypothesis import given, strategies as st
 from xtgeo._internal.xyz import Point  # type: ignore
+
 from xtgeo.common.log import null_logger
 
 logger = null_logger(__name__)

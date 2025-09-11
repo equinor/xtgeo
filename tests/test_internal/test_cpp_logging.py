@@ -3,9 +3,9 @@ import logging
 from contextlib import contextmanager
 
 import pytest
+import xtgeo._internal as _internal  # type: ignore # noqa
 
 import xtgeo
-import xtgeo._internal as _internal  # type: ignore # noqa
 
 
 @contextmanager

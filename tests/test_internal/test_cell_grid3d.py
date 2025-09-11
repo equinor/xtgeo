@@ -11,9 +11,9 @@ name space.
 
 import numpy as np
 import pytest
+import xtgeo._internal as _internal  # type: ignore
 
 import xtgeo
-import xtgeo._internal as _internal  # type: ignore
 from xtgeo.common.log import functimer, null_logger
 
 logger = null_logger(__name__)
