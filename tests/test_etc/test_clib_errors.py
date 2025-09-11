@@ -16,24 +16,6 @@ def test_calc_i_to_ijk(func):
         func(0, 3, 4, 5, 2)
 
 
-def test_export_grid_cornerpoint_roxapi_v1():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Errors in array lengths checks in grd3d_conv_grid_roxapi",
-    ):
-        _cxtgeo.grd3d_conv_grid_roxapi(
-            1,
-            1,
-            1,
-            np.array([0.0]),
-            np.array([1.0]),
-            np.array([1], dtype=np.int32),
-            1,
-            1,
-            1,
-        )
-
-
 def test_surf_export_petromod_exception_no_file():
     with pytest.raises(
         xtgeo.XTGeoCLibError, match="Cannot open file in: surf_export_petromod_bin"
