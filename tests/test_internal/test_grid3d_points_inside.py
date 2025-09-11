@@ -7,10 +7,10 @@ Here focus is on a Points array and the full 3D grid, not each cells
 
 import numpy as np
 import pytest
-
-import xtgeo
 import xtgeo._internal as _internal  # type: ignore
 from xtgeo._internal.geometry import PointInHexahedronMethod as M  # type: ignore
+
+import xtgeo
 from xtgeo.common.log import functimer
 
 
