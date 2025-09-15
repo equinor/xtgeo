@@ -243,7 +243,7 @@ def refine_vertically(
     # update instance:
     self._nlay = newnlay
     self._zcornsv = ref_zcornsv
-    self._actnumsv = ref_actnumsv
+    self._actnumsv = ref_actnumsv.astype(np.int32)
 
     if self.subgrids is None or len(self.subgrids) <= 1:
         self.subgrids = None
