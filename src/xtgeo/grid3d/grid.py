@@ -1818,7 +1818,9 @@ class Grid(_Grid3D):
             name (str): name of property
             flip (bool): Use False for Petrel grids were Z is negative down
                 (experimental)
-            asmasked (bool): True if only for active cells, False for all cells
+            asmasked (bool): True if only for active cells, False for all cells.
+                With `False` the inactive cells are included, but the numpy
+                array is still a MaskedArray instance.
             metric (str): One of the following metrics:
                 * "euclid": sqrt(dx^2 + dy^2 + dz^2)
                 * "horizontal": sqrt(dx^2 + dy^2)
@@ -1854,7 +1856,8 @@ class Grid(_Grid3D):
         Args:
             name (str): names of properties
             asmasked (bool). If True, make a np.ma array where inactive cells
-                are masked.
+                are masked. Otherwise the inactive cells are included, but the numpy
+                array is still a MaskedArray instance.
             metric (str): One of the following metrics:
                 * "euclid": sqrt(dx^2 + dy^2 + dz^2)
                 * "horizontal": sqrt(dx^2 + dy^2)
@@ -1884,7 +1887,8 @@ class Grid(_Grid3D):
         Args:
             name (str): names of properties
             asmasked (bool). If True, make a np.ma array where inactive cells
-                are masked.
+                are masked. Otherwise the inactive cells are included, but the numpy
+                array is still a MaskedArray instance.
             metric (str): One of the following metrics:
                 * "euclid": sqrt(dx^2 + dy^2 + dz^2)
                 * "horizontal": sqrt(dx^2 + dy^2)

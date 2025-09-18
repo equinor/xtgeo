@@ -1,7 +1,9 @@
 """Conftest functions"""
 
+import functools
 import os
 import pathlib
+import warnings
 
 import pandas as pd
 import pytest
@@ -47,7 +49,7 @@ def pytest_addoption(parser):
     )
 
 
-def _in_roxar_env():
+def in_roxar_env():
     """Helper function to check if running in Roxar/RMS environment"""
     return any(env in os.environ for env in ["ROXENV", "RMSVENV_RELEASE"])
 
@@ -62,7 +64,7 @@ def pytest_runtest_setup(item):
         pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
     # pytest.mark.requires_roxar:
-    if "requires_roxar" in markers and not _in_roxar_env():
+    if "requires_roxar" in markers and not in_roxar_env():
         pytest.skip("Skip test if outside RMSVENV_RELEASE (former ROXENV)")
 
     # pytest.mark.requires_opm:
@@ -85,14 +87,14 @@ def tmp_path_cwd(tmp_path, monkeypatch):
 @pytest.fixture(name="show_plot")
 def fixture_xtgshow():
     """For eventual plotting, to be uses in an if sence inside a test."""
-    if _in_roxar_env():
+    if in_roxar_env():
         pytest.skip("Skip plotting tests in roxar environment")
     return any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"])
 
 
 @pytest.fixture(name="generate_plot")
 def fixture_generate_plot(request):
-    if _in_roxar_env():
+    if in_roxar_env():
         pytest.skip("Skip plotting tests in roxar environment")
     return request.config.getoption("--generate-plots")
 
@@ -120,3 +122,19 @@ class Helpers:
 @pytest.fixture
 def helpers():
     return Helpers
+
+
+def suppress_xtgeo_warnings(*warning_types):
+    """Decorator to suppress specific warning types during test execution."""
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with warnings.catch_warnings():
+                for warning_type in warning_types:
+                    warnings.simplefilter("ignore", warning_type)
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
