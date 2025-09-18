@@ -1,5 +1,7 @@
 """Blocked Well input and output, private module for ROXAPI"""
 
+import warnings
+
 import numpy as np
 import numpy.ma as npma
 import pandas as pd
@@ -191,7 +193,6 @@ def _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisa
         else:
             bwlog = bwprops[lname]
             bwprop = bwlog.get_values(realisation=realisation)
-
         usedtype = bwprop.dtype
         dind = bwset.get_data_indices([self._wname], realisation=realisation)
 
@@ -199,9 +200,28 @@ def _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisa
             raise ValueError(
                 "Dataframe is of wrong size, changing numbers of rows is not possible"
             )
-        maskedvalues = np.ma.masked_invalid(
-            self.get_dataframe(copy=False)[lname].values
-        ).astype(usedtype)
+
+        # Get the values
+        values = self.get_dataframe(copy=False)[lname].values
+
+        # Create masked array first, then handle casting
+        masked_values = np.ma.masked_invalid(values)
+
+        # Handle casting based on target type
+        if np.issubdtype(usedtype, np.integer):
+            # For integer types, suppress the warning and handle invalid values
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", "invalid value encountered in cast", RuntimeWarning
+                )
+                # Fill masked values with a valid integer before casting
+                filled_values = np.ma.filled(masked_values, fill_value=0)
+                cast_values = filled_values.astype(usedtype)
+                # Recreate the masked array with the original mask
+                maskedvalues = np.ma.masked_array(cast_values, mask=masked_values.mask)
+        else:
+            # For float types, direct cast is fine
+            maskedvalues = masked_values.astype(usedtype)
 
         # there are cases where the RMS API complains on the actual value of the masked
         # array being outside range; hence remedy is to set 'data' value to a usedtype

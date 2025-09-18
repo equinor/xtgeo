@@ -95,13 +95,12 @@ def test_operations_inside_outside_polygon_minimal(oper, value, inside, expected
 
     poly = xtgeo.Polygons(SMALL_POLY + SMALL_POLY_OVERLAP)
 
-    for ver in (1, 2):
-        surf = SF1.copy()
-        surf.operation_polygons(poly, value, inside=inside, opname=oper, _version=ver)
-        if oper == "eli":
-            np.testing.assert_array_equal(surf.values.mask.ravel(), expected)
-        else:
-            np.testing.assert_array_equal(surf.values.ravel(), expected)
+    surf = SF1.copy()
+    surf.operation_polygons(poly, value, inside=inside, opname=oper)
+    if oper == "eli":
+        np.testing.assert_array_equal(surf.values.mask.ravel(), expected)
+    else:
+        np.testing.assert_array_equal(surf.values.ravel(), expected)
 
 
 @pytest.mark.parametrize(
@@ -129,12 +128,9 @@ def test_operations_inside_outside_polygon_generic(reekset, oper, inside, expect
     _surf, poly = reekset
     _surf.values = 1.0
 
-    for version in (1, 2):
-        surf = _surf.copy()
-        surf.operation_polygons(
-            poly, 100.0, inside=inside, opname=oper, _version=version
-        )
-        assert surf.values.mean() == pytest.approx(expected, abs=0.001)
+    surf = _surf.copy()
+    surf.operation_polygons(poly, 100.0, inside=inside, opname=oper)
+    assert surf.values.mean() == pytest.approx(expected, abs=0.001)
 
 
 def test_operations_inside_outside_polygon_shortforms(tmp_path, testdata_path):

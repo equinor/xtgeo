@@ -288,15 +288,17 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
         names=names,
         dtype=dtypes,
     )
+
     for col in dfr.columns[3:]:
         if col in _attrs:
-            # pandas gives a FutureWarning here due to casting what was
-            # previously a string to a float/int.
+            # avoid FutureWarning by not using .replace() for mixed dtypes
             if _attrs[col] == "float":
-                dfr[col] = dfr[col].replace("UNDEF", UNDEF).astype(float)
+                s = dfr[col].mask(dfr[col] == "UNDEF", UNDEF)
+                dfr[col] = pd.to_numeric(s, errors="coerce").astype(float)
             elif _attrs[col] == "int":
-                dfr[col] = dfr[col].replace("UNDEF", UNDEF_INT).astype(int)
-
+                s = dfr[col].mask(dfr[col] == "UNDEF", UNDEF_INT)
+                s = pd.to_numeric(s, errors="coerce").fillna(UNDEF_INT).astype(int)
+                dfr[col] = s
         # cast to numerical if possible
         with contextlib.suppress(ValueError, TypeError):
             dfr[col] = pd.to_numeric(dfr[col])
