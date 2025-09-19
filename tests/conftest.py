@@ -3,9 +3,12 @@
 import functools
 import os
 import pathlib
+import threading
+import time
 import warnings
 
 import pandas as pd
+import psutil
 import pytest
 from hypothesis import HealthCheck, settings
 from packaging.version import parse as versionparse
@@ -138,3 +141,47 @@ def suppress_xtgeo_warnings(*warning_types):
         return wrapper
 
     return decorator
+
+
+def measure_peak_memory_usage(func):
+    """
+    Decorator to measure peak memory usage of a function call.
+    Requires psutil.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        process = psutil.Process()
+        mem_before = process.memory_info().rss
+        peak_memory = mem_before
+
+        finished = threading.Event()
+
+        def measure():
+            nonlocal peak_memory
+            while not finished.is_set():
+                try:
+                    mem = process.memory_info().rss
+                    if mem > peak_memory:
+                        peak_memory = mem
+                except psutil.NoSuchProcess:
+                    break
+                time.sleep(0.01)
+
+        monitor_thread = threading.Thread(target=measure)
+        monitor_thread.start()
+
+        try:
+            result = func(*args, **kwargs)
+        finally:
+            finished.set()
+            monitor_thread.join()
+
+        peak_increase = peak_memory - mem_before
+        print(
+            f"\nPeak memory increase for {func.__name__}:"
+            f" {peak_increase / (1024 * 1024):.2f} MB"
+        )
+        return peak_increase, result
+
+    return wrapper

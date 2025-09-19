@@ -12,7 +12,15 @@ namespace py = pybind11;
 namespace xtgeo::cube {
 
 std::unordered_map<std::string, py::array_t<double>>
-cube_stats_along_z(const Cube &cube_cpp);
+cube_stats_along_z(const Cube &cube_cpp,
+                   const py::array_t<double> &upper_surface,
+                   const py::array_t<double> &lower_surface,
+                   const py::array_t<double> &depth_array,
+                   int ndiv = 1,
+                   const std::string &interpolation = "linear",
+                   double min_thickness = 0.0,
+                   int min_index = 0,
+                   int max_index = -1);
 
 inline void
 init(py::module &m)
@@ -33,9 +41,11 @@ init(py::module &m)
       .def_readonly("zinc", &Cube::zinc)
       .def_readonly("rotation", &Cube::rotation)
       .def_readonly("values", &Cube::values)
+      .def_readonly("traceidcodes", &Cube::traceidcodes)
 
       .def("cube_stats_along_z", &cube_stats_along_z,
-           "Compute various statistics for cube along the Z axis, returning maps.")
+           "Compute various statistics for cube along the Z axis, returning "
+           "maps.")
 
       ;
 }
