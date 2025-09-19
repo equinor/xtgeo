@@ -634,6 +634,7 @@ struct Cube
     double zinc;
     double rotation;
     py::array_t<float> values;
+    py::array_t<int> traceidcodes;
 
     // Default constructor (deleted)
     Cube() = delete;
@@ -654,11 +655,14 @@ struct Cube
 
         // Extract the numpy array
         values = cube.attr("values").cast<py::array_t<float>>();
+        traceidcodes = cube.attr("traceidcodes").cast<py::array_t<int>>();
 
         py::buffer_info buf_info_values = values.request();
+        py::buffer_info buf_info_traceidcodes = traceidcodes.request();
 
-        if (buf_info_values.ndim != 3) {
-            throw std::runtime_error("Cube values must be a 3D numpy array");
+        if (buf_info_values.ndim != 3 || buf_info_traceidcodes.ndim != 2) {
+            throw std::runtime_error("Cube values must be a 3D numpy array and "
+                                     "traceidcodes must be 2D array");
         }
     };
 };

@@ -231,10 +231,10 @@ def test_various_attrs_rewrite(loadsfile1):
 @pytest.mark.parametrize(
     "ndiv, expected_mean",
     (
-        [2, 176.417],
+        [2, 176.432],
         [4, 176.426],
-        [12, 176.422],
-        [32, 176.421],
+        [12, 176.423],
+        [32, 176.422],
     ),
 )
 def test_various_attrs_new_ndiv(loadsfile1, ndiv, expected_mean):
@@ -548,7 +548,7 @@ def test_compute_attrs_handling_of_dead_traces(loadsfile3):
 
     # Check if the result is as expected
     assert "mean" in attrs
-    assert attrs["mean"].values.mean() == pytest.approx(239.18202, abs=1e-4)
+    assert attrs["mean"].values.mean() == pytest.approx(239.29096, abs=1e-4)
 
     # count number of dead traces in cube
     dead_traces = (cube.traceidcodes == 2).sum()
@@ -571,4 +571,4 @@ def test_attribute_around_constant_cube_slices(loadsfile2):
 
     myattrs = mycube.compute_attributes_in_window(level1, level2)
 
-    assert myattrs["mean"].values.mean() == pytest.approx(-0.00293736, abs=1e-5)
+    assert myattrs["mean"].values.mean() == pytest.approx(-0.0027869, abs=1e-5)

@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Final
 
 import numpy as np
-from scipy.interpolate import make_interp_spline
 
 import xtgeo._internal as _internal  # type: ignore
 from xtgeo.common.log import null_logger
@@ -42,7 +41,13 @@ SUM_ATTRS: Final = [
 
 @dataclass
 class CubeAttrs:
-    """Internal class for computing attributes in window between two surfaces."""
+    """Internal class for computing attributes in window between two surfaces.
+
+    Compared with the former implementation (mid September 2025), more logic is moved
+    to the C++ routine, ensuring:
+    - Significantly smaller memory overhead (e.g. 0.1 GB vs 20 GB)
+    - Much faster execution, in particularly when using multiple processers. (5-10 x)
+    """
 
     cube: Cube
     upper_surface: RegularSurface | float | int
@@ -55,6 +60,8 @@ class CubeAttrs:
     _template_surface: RegularSurface | None = None
     _depth_array: np.ndarray | None = None
     _outside_depth: float | None = None  # detected and updated from the depth cube
+    _min_indices: int = 0  # minimum Z index for cube slicing
+    _max_indices: int = 0  # maximum Z index for cube slicing
     _reduced_cube: Cube = None
     _reduced_depth_array: np.ndarray | None = None
     _refined_cube: Cube | None = None
@@ -70,9 +77,7 @@ class CubeAttrs:
     def __post_init__(self) -> None:
         self._process_upper_lower_surface()
         self._create_depth_array()
-        self._create_reduced_cube()
-        self._refine_interpolate()
-        self._depth_mask()
+        self._determine_slice_indices()
         self._compute_statistical_attribute_surfaces()
 
     def result(self) -> dict[RegularSurface]:
@@ -83,6 +88,8 @@ class CubeAttrs:
         """Extract upper and lower surface, sampled to cube resolution."""
 
         from xtgeo import surface_from_cube  # avoid circular import by having this here
+
+        logger.debug("Process upper and lower surface...")
 
         upper = (
             surface_from_cube(self.cube, self.upper_surface)
@@ -132,6 +139,7 @@ class CubeAttrs:
                 "The minimum thickness is too large, no valid data in the interval. "
                 "Perhaps surfaces are overlapping?"
             )
+        logger.debug("Process upper and lower surface... done")
 
     def _create_depth_array(self) -> None:
         """Create a 1D array where values are cube depths; to be used as filter.
@@ -142,6 +150,7 @@ class CubeAttrs:
         Will also issue warnings or errors if the surfaces are outside the cube,
         depending on severity.
         """
+        logger.debug("Create depth array...")
 
         self._depth_array = np.array(
             [
@@ -175,18 +184,16 @@ class CubeAttrs:
             self._outside_depth,
             self._depth_array,
         )
+        logger.debug("Create depth array... done")
 
-    def _create_reduced_cube(self) -> None:
-        """Create a smaller cube based on the depth cube filter.
+    def _determine_slice_indices(self) -> None:
+        """Create parameters for cube slicing.
 
         The purpose is to limit the computation to the relevant volume, to save
         CPU time. I.e. cube values above the upper surface and below the lower are
         now excluded.
         """
-        from xtgeo import Cube  # avoid circular import by having this here
-
-        cubev = self.cube.values.copy()  # copy, so we don't change the input instance
-        cubev[self.cube.traceidcodes == 2] = 0.0  # set traceidcode 2 to zero
+        logger.debug("Determine cube slice indices...")
 
         # Create a boolean mask based on the threshold
         mask = self._depth_array < self._outside_depth
@@ -200,123 +207,20 @@ class CubeAttrs:
                 "outside the cube?"
             )
 
-        min_indices = np.min(non_zero_indices)
-        max_indices = np.max(non_zero_indices) + 1  # Add 1 to include the upper bound
+        self._min_indices = int(np.min(non_zero_indices))
+        # Add 1 to include the upper bound
+        self._max_indices = int(np.max(non_zero_indices) + 1)
 
-        # Extract the reduced cube using slicing
-        reduced = cubev[:, :, min_indices:max_indices]
-
-        zori = float(self._depth_array.min())
-
-        self._reduced_cube = Cube(
-            ncol=reduced.shape[0],
-            nrow=reduced.shape[1],
-            nlay=reduced.shape[2],
-            xinc=self.cube.xinc,
-            yinc=self.cube.yinc,
-            zinc=self.cube.zinc,
-            xori=self.cube.xori,
-            yori=self.cube.yori,
-            zori=zori,
-            rotation=self.cube.rotation,
-            yflip=self.cube.yflip,
-            values=reduced.astype(np.float32),
+        logger.debug("Determine cube slice indices... done")
+        logger.debug(
+            "Cube slice indices: %d to %d", self._min_indices, self._max_indices
         )
-
-        self._reduced_depth_array = self._depth_array[min_indices:max_indices]
-
-        logger.debug("Reduced cubes created %s", self._reduced_cube.values.shape)
-
-    def _refine_interpolate(self) -> None:
-        """Apply reduced cubes and interpolate to a finer grid vertically.
-
-        This is done to get a more accurate representation of the cube values.
-        """
-        from xtgeo import Cube
-
-        logger.debug("Refine cubes and interpolate...")
-        arr = self._reduced_cube.values
-        ndiv = self.ndiv
-
-        # Create linear interpolation function along the last axis
-        fdepth = make_interp_spline(
-            np.arange(arr.shape[2]),
-            self._reduced_depth_array,
-            axis=0,
-            k=1,
-        )
-
-        # Create interpolation function along the last axis
-        if self.interpolation not in ["cubic", "linear"]:
-            raise ValueError("Interpolation must be either 'cubic' or 'linear'")
-
-        fcube = make_interp_spline(
-            np.arange(arr.shape[2]),
-            arr,
-            axis=2,
-            k=3 if self.interpolation == "cubic" else 1,
-        )
-        # Define new sampling points along the last axis
-        new_z = np.linspace(0, arr.shape[2] - 1, arr.shape[2] * ndiv)
-
-        # Resample the cube array
-        resampled_arr = fcube(new_z)
-
-        # Resample the depth array (always linear)
-        self._refined_depth_array = new_depth = fdepth(new_z)
-        new_zinc = (new_depth.max() - new_depth.min()) / (new_depth.shape[0] - 1)
-
-        self._refined_cube = Cube(
-            ncol=resampled_arr.shape[0],
-            nrow=resampled_arr.shape[1],
-            nlay=resampled_arr.shape[2],
-            xinc=self.cube.xinc,
-            yinc=self.cube.yinc,
-            zinc=new_zinc,
-            xori=self.cube.xori,
-            yori=self.cube.yori,
-            zori=self._refined_depth_array.min(),
-            rotation=self._reduced_cube.rotation,
-            yflip=self._reduced_cube.yflip,
-            values=resampled_arr.astype(np.float32),
-        )
-
-    def _depth_mask(self) -> None:
-        """Set nan values outside the interval defined by the upper + lower surface.
-
-        In addition, set nan values where the thickness is less than the minimum.
-
-        """
-
-        darry = np.expand_dims(self._refined_depth_array, axis=(0, 1))
-        upper_exp = np.expand_dims(self._upper.values, 2)
-        lower_exp = np.expand_dims(self._lower.values, 2)
-        mask_2d_exp = np.expand_dims(self._min_thickness_mask.values, 2)
-
-        self._refined_cube.values = np.where(
-            (darry < upper_exp) | (darry > lower_exp) | (mask_2d_exp == 0),
-            np.nan,
-            self._refined_cube.values,
-        ).astype(np.float32)
-
-        # similar for reduced cubes with original resolution
-        darry = np.expand_dims(self._reduced_depth_array, axis=(0, 1))
-
-        self._reduced_cube.values = np.where(
-            (darry < upper_exp) | (darry > lower_exp) | (mask_2d_exp == 0),
-            np.nan,
-            self._reduced_cube.values,
-        ).astype(np.float32)
 
     def _add_to_attribute_map(self, attr_name: str, values: np.ndarray) -> None:
         """Compute the attribute map and add to result dictionary."""
+        logger.debug("Add to attribute map...")
         attr_map = self._upper.copy()
         attr_map.values = np.ma.masked_invalid(values)
-
-        # apply mask for the cube's dead traces (traceidcode 2)
-        attr_map.values = np.ma.masked_where(
-            self.cube.traceidcodes == 2, attr_map.values
-        )
 
         # now resample to the original input map
         attr_map_resampled = self._template_surface.copy()
@@ -329,21 +233,41 @@ class CubeAttrs:
             )
 
         self._result_attr_maps[attr_name] = attr_map_resampled
+        logger.debug("Add to attribute map... done")
 
     def _compute_statistical_attribute_surfaces(self) -> None:
         """Compute stats very fast by using internal C++ bindings."""
+        logger.debug("Compute statistical attribute surfaces...")
 
-        # compute statistics for vertically refined cube
-        cubecpp = _internal.cube.Cube(self._refined_cube)
-        all_attrs = cubecpp.cube_stats_along_z()
+        # compute statistics for vertically refined cube using original cube
+        cubecpp = _internal.cube.Cube(self.cube)
+        all_attrs = cubecpp.cube_stats_along_z(
+            self._upper.values,
+            self._lower.values,
+            self._depth_array,  # use original depth array
+            self.ndiv,
+            self.interpolation,
+            self.minimum_thickness,
+            self._min_indices,  # pass slice indices
+            self._max_indices,
+        )
 
         for attr in STAT_ATTRS:
             self._add_to_attribute_map(attr, all_attrs[attr])
 
-        # compute statistics for reduced cube (for sum attributes)
-        cubecpp = _internal.cube.Cube(self._reduced_cube)
-        all_attrs = cubecpp.cube_stats_along_z()
+        # compute statistics with ndiv=1 (for sum attributes)
+        all_attrs = cubecpp.cube_stats_along_z(
+            self._upper.values,
+            self._lower.values,
+            self._depth_array,  # use original depth array
+            1,
+            self.interpolation,
+            self.minimum_thickness,
+            self._min_indices,  # pass slice indices
+            self._max_indices,
+        )
 
-        # add sum attributes which are the last 3 in the list
         for attr in SUM_ATTRS:
             self._add_to_attribute_map(attr, all_attrs[attr])
+
+        logger.debug("Compute statistical attribute surfaces... done")

@@ -76,6 +76,7 @@ dev = [
     "hypothesis",
     "mypy",
     "pandas-stubs",
+    "psutil",
     "pydocstyle",
     "pytest",
     "pytest-benchmark",
