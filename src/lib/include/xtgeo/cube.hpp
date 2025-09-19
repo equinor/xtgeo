@@ -14,6 +14,15 @@ namespace xtgeo::cube {
 std::unordered_map<std::string, py::array_t<double>>
 cube_stats_along_z(const Cube &cube_cpp);
 
+std::unordered_map<std::string, py::array_t<double>>
+cube_stats_along_z_v2(const Cube &cube_cpp,
+                      const py::array_t<double> &upper_surface,
+                      const py::array_t<double> &lower_surface,
+                      const py::array_t<double> &depth_array,
+                      int ndiv = 1,
+                      const std::string &interpolation = "linear",
+                      double min_thickness = 0.0);
+
 inline void
 init(py::module &m)
 {
@@ -36,6 +45,10 @@ init(py::module &m)
 
       .def("cube_stats_along_z", &cube_stats_along_z,
            "Compute various statistics for cube along the Z axis, returning maps.")
+
+      .def("cube_stats_along_z_v2", &cube_stats_along_z_v2,
+           "Compute various statistics for cube along the Z axis, version 2, returning "
+           "maps.")
 
       ;
 }

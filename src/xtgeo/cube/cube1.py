@@ -664,6 +664,7 @@ class Cube:
         ndiv: int = 10,
         interpolation: Literal["cubic", "linear"] = "cubic",
         minimum_thickness: float = 0.0,
+        **kwargs,
     ) -> dict[RegularSurface]:
         """Return a cube's attributes as a set of surfaces, given two input surfaces.
 
@@ -734,7 +735,14 @@ class Cube:
         .. versionadded:: 4.1
 
         """
-        return _cube_window_attributes.CubeAttrs(
+        algorithm = kwargs.get("algorithm", 2)
+
+        if algorithm == 1:
+            return _cube_window_attributes.CubeAttrs(
+                self, upper, lower, ndiv, interpolation, minimum_thickness
+            ).result()
+
+        return _cube_window_attributes.CubeAttrsV2(
             self, upper, lower, ndiv, interpolation, minimum_thickness
         ).result()
 
