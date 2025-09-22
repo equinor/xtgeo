@@ -448,99 +448,6 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
     return fspec
 
 
-def operation_polygons(self, poly, value, opname="add", inside=True):
-    """Operations restricted to polygons"""
-
-    # keep this for a while (e.g. mid 2024), and then replace it with _v2 below.
-    if not isinstance(poly, Polygons):
-        raise ValueError("The poly input is not a Polygons instance")
-    if opname not in VALID_OPER_POLYS:
-        raise ValueError(f"Operation key opname has invalid value: {opname}")
-
-    # make a copy of the RegularSurface which is used a "filter" or "proxy"
-    # value will be 1 inside polygons, 0 outside. Undef cells are kept as is
-
-    proxy = self.copy()
-    proxy.values *= 0.0
-    vals = proxy.get_values1d(fill_value=UNDEF)
-
-    # value could be a scalar or another surface; if another surface,
-    # must ensure same topology
-
-    if isinstance(value, type(self)):
-        if not self.compare_topology(value):
-            raise ValueError("Input is RegularSurface, but not same map topology")
-        value = value.values.copy()
-    else:
-        # turn scalar value into numpy array
-        value = self.values.copy() * 0 + value
-
-    idgroups = poly.get_dataframe(copy=False).groupby(poly.pname)
-
-    for _, grp in idgroups:
-        xcor = grp[poly.xname].values
-        ycor = grp[poly.yname].values
-
-        ier = _cxtgeo.surf_setval_poly(
-            proxy.xori,
-            proxy.xinc,
-            proxy.yori,
-            proxy.yinc,
-            proxy.ncol,
-            proxy.nrow,
-            proxy.yflip,
-            proxy.rotation,
-            vals,
-            xcor,
-            ycor,
-            1.0,
-            0,
-        )
-        if ier == -9:
-            xtg.warn("Polygon is not closed")
-
-    proxy.set_values1d(vals)
-    proxyv = proxy.values.astype(np.int8)
-
-    proxytarget = 1
-    if not inside:
-        proxytarget = 0
-
-    tmp = None
-    if opname == "add":
-        tmp = self.values.copy() + value
-    elif opname == "sub":
-        tmp = self.values.copy() - value
-    elif opname == "mul":
-        tmp = self.values.copy() * value
-    elif opname == "div":
-        # Dividing a map of zero is always a hazzle; try to obtain 0.0
-        # as result in these cases
-        if 0.0 in value:
-            xtg.warn(
-                "Dividing a surface with value=0.0 or surface with zero "
-                "elements; may get unexpected results, try to "
-                "achieve zero values as result!"
-            )
-        with np.errstate(divide="ignore", invalid="ignore"):
-            this = ma.filled(self.values, fill_value=1.0)
-            that = ma.filled(value, fill_value=1.0)
-            mask = ma.getmaskarray(self.values)
-            tmp = np.true_divide(this, that)
-            tmp = np.where(np.isinf(tmp), 0, tmp)
-            tmp = np.nan_to_num(tmp)
-            tmp = ma.array(tmp, mask=mask)
-
-    elif opname == "set":
-        tmp = value
-    elif opname == "eli":
-        tmp = value * 0 + UNDEF
-        tmp = ma.masked_greater(tmp, UNDEF_LIMIT)
-
-    self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
-    del tmp
-
-
 def _proxy_map_polygons(surf, poly, inside=True):
     """Return a proxy map where on one to do operations, as 0 and 1."""
     inside_value = 1 if inside else 0
@@ -574,7 +481,7 @@ def _proxy_map_polygons(surf, poly, inside=True):
     return proxy
 
 
-def operation_polygons_v2(self, poly, value: float | Any, opname="add", inside=True):
+def operation_polygons(self, poly, value: float | Any, opname="add", inside=True):
     """Operations restricted to polygons, using matplotlib (much faster).
 
     The 'value' can be a number or another regular surface (with same design)
