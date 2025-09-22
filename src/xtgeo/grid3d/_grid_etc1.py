@@ -193,7 +193,8 @@ def get_dz(
     if not flip:
         result *= -1
 
-    result = np.ma.masked_array(result, self._actnumsv == 0 if asmasked else False)
+    if asmasked:
+        result = np.ma.masked_array(result, self._actnumsv == 0)
 
     return GridProperty(
         ncol=self._ncol,
@@ -1399,7 +1400,10 @@ def estimate_design(
     """Estimate (guess) (sub)grid design by examing DZ in median thickness column."""
     actv = self.get_actnum().values
 
-    dzv = self.get_dz(asmasked=False).values
+    dzv_raw = self.get_dz(asmasked=False).values
+    # Although asmasked is False the array values will still be a masked numpy
+    # Need to convert to an ordinary numpy to avoid warnings later
+    dzv = np.ma.filled(dzv_raw, fill_value=0.0)
 
     # treat inactive thicknesses as zero
     dzv[actv == 0] = 0.0
@@ -1415,6 +1419,11 @@ def estimate_design(
 
     # find cumulative thickness as a 2D array
     dzcum: np.ndarray = np.sum(dzv, axis=2, keepdims=False)
+
+    # Ensure dzcum is a regular numpy array to avoid warnings
+    if isinstance(dzcum, np.ma.MaskedArray):
+        dzcum = np.ma.filled(dzcum, fill_value=0.0)
+    dzcum = np.asarray(dzcum)
 
     # find the average thickness for nonzero thicknesses
     dzcum2 = dzcum.copy()

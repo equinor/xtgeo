@@ -504,6 +504,7 @@ class Points(XYZ):
             "Direct access to the dataframe property in Points class will be "
             "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._df
 
