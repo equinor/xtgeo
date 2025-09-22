@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 import xtgeo
+from tests.conftest import suppress_xtgeo_warnings
 from xtgeo.common.log import functimer
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -113,6 +114,7 @@ def test_single_slice_yflip_positive_snapxy(loadsfile1):
         print(cube1.values[0, 0, 0])
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_various_attrs_algorithm2(loadsfile1):
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 2540)
@@ -161,6 +163,7 @@ def test_various_attrs_algorithm2(loadsfile1):
     assert surfx.values.mean() == pytest.approx(529.328, abs=0.01)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning, RuntimeWarning)
 def test_various_attrs_algorithm3(loadsfile1):
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 2540)
@@ -249,6 +252,7 @@ def test_various_attrs_new_ndiv(loadsfile1, ndiv, expected_mean):
     assert result["mean"].values.mean() == pytest.approx(expected_mean, abs=0.001)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 @pytest.mark.parametrize(
     "ndiv, expected_mean",
     (
@@ -277,6 +281,7 @@ def test_various_attrs_algorithm3_ndiv(loadsfile1, ndiv, expected_mean):
     assert surfx.values.mean() == pytest.approx(expected_mean, abs=0.1)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 @pytest.mark.bigtest
 @pytest.mark.parametrize(
     "ndiv, expected_mean",
@@ -307,6 +312,7 @@ def test_various_attrs_algorithm3_ndiv_large(loadsfile2, ndiv, expected_mean):
     assert surfx.values.mean() == pytest.approx(expected_mean, abs=0.00001)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_avg_surface(loadsfile1):
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 1100.0)
@@ -394,6 +400,7 @@ def test_attribute_surfaces(loadsfile1):
         assert attributes[name] == pytest.approx(attrs[name].values.mean(), rel=0.00001)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_avg_surface2(loadsfile1):
     cube1 = loadsfile1
     surf1 = xtgeo.surface_from_cube(cube1, 2540.0)
@@ -422,6 +429,7 @@ def test_avg_surface2(loadsfile1):
         assert value == pytest.approx(attrs[name].values.mean(), abs=0.001)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning, RuntimeWarning)
 @pytest.mark.benchmark(group="cube slicing")
 @pytest.mark.parametrize(
     "algorithm", [pytest.param(1, marks=pytest.mark.bigtest), 2, 3, 99]
@@ -459,7 +467,7 @@ def test_avg_surface_large_cube_algorithmx(benchmark, algorithm):
 
 
 @pytest.mark.bigtest
-def test_attrs_reek(tmp_path, loadsfile2, testdata_path):
+def test_attrs_reek(loadsfile2, testdata_path):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         warnings.simplefilter("ignore", UserWarning)

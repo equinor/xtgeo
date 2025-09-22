@@ -396,16 +396,23 @@ def test_read_multiple_amalgamations():
 def test_coarsening_warning(egrid):
     assume(egrid.global_grid.corsnum is not None)
 
-    with pytest.warns(UserWarning, match="coarsen"):
+    with pytest.warns(UserWarning) as warning_list:
         egrid.xtgeo_coord()
+
+    # since there may be multiple UserWarnings in the case
+    warning_messages = [str(w.message) for w in warning_list]
+    assert any("coarsen" in msg for msg in warning_messages)
 
 
 @given(xtgeo_compatible_egrids())
 def test_local_coordsys_warning(egrid):
     assume(egrid.global_grid.coord_sys is not None)
-
-    with pytest.warns(UserWarning, match="coordinate definition"):
+    with pytest.warns(UserWarning) as warning_list:
         egrid.xtgeo_coord()
+
+    # since there may be multiple UserWarnings in the case
+    warning_messages = [str(w.message) for w in warning_list]
+    assert any("coordinate definition" in msg for msg in warning_messages)
 
 
 @settings(max_examples=5)
@@ -417,8 +424,10 @@ def test_local_coordsys_warning(egrid):
 def test_lgr_warning(egrid):
     assume(len(egrid.lgr_sections) > 0)
 
-    with pytest.warns(UserWarning, match="LGR"):
+    with pytest.warns(UserWarning) as warning_list:
         egrid.xtgeo_coord()
+    warning_messages = [str(w.message) for w in warning_list]
+    assert any("LGR" in msg for msg in warning_messages)
 
 
 @settings(
@@ -432,8 +441,11 @@ def test_zero_numres_backwards_compatibility(tmp_path, egrid):
 
     with pytest.warns(UserWarning):
         grid1 = xtg.grid_from_file(tmp_path / "grid1.egrid")
-    with pytest.warns(UserWarning, match="EGrid file given with numres < 1"):
+
+    with pytest.warns(UserWarning) as warning_list:
         grid2 = xtg.grid_from_file(tmp_path / "grid2.egrid")
+    warning_messages = [str(w.message) for w in warning_list]
+    assert any("EGrid file given with numres < 1" in msg for msg in warning_messages)
 
     assert grid1._coordsv.tolist() == grid2._coordsv.tolist()
     assert grid1._zcornsv.tolist() == grid2._zcornsv.tolist()

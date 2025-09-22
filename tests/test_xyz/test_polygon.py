@@ -6,6 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 import xtgeo
+from tests.conftest import suppress_xtgeo_warnings
 from xtgeo.xyz import Points, Polygons
 
 PFILE1A = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
@@ -657,6 +658,7 @@ def test_raise_special_name_name_type(name_attribute):
             setattr(pol, name_attribute, "anyname_" + name_attribute)
 
 
+@suppress_xtgeo_warnings(DeprecationWarning)
 @pytest.mark.parametrize(
     "func, where, value, expected_result",
     [
@@ -674,7 +676,10 @@ def test_raise_special_name_name_type(name_attribute):
 def test_polygons_operation_in_polygons(
     func, where, value, expected_result, shorthand, constructor
 ):
-    """Test what happens to point belonging to polygons for add_inside etc."""
+    """Test what happens to point belonging to polygons for add_inside etc.
+
+    Note this is the old Deprecated version!
+    """
 
     closed_poly = Polygons(
         pd.DataFrame(
@@ -712,6 +717,7 @@ def test_polygons_operation_in_polygons(
     assert list(pointset.get_dataframe()["Z_TVDSS"]) == expected_result
 
 
+@suppress_xtgeo_warnings(DeprecationWarning)
 @pytest.mark.parametrize(
     "functionname, expected",
     [

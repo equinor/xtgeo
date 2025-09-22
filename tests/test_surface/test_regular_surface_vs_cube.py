@@ -6,6 +6,7 @@ import numpy.ma as ma
 import pytest
 
 import xtgeo
+from tests.conftest import suppress_xtgeo_warnings
 
 logger = logging.getLogger(__name__)
 
@@ -258,6 +259,7 @@ def test_slice_various_reek(tmp_path, load_cube_rsgy1, generate_plot, testdata_p
         )
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_slice_attr_window_max(load_cube_rsgy1, testdata_path):
     """Slice a cube within a window, get max, using trilinear interpol."""
 
@@ -273,6 +275,7 @@ def test_slice_attr_window_max(load_cube_rsgy1, testdata_path):
 
     # one attribute but in a list context shall return a dict
     xs1 = xtgeo.surface_from_file(testdata_path / RTOP1)
+
     ret = xs1.slice_cube_window(
         kube, attribute=["max"], sampling="trilinear", algorithm=2
     )
@@ -281,6 +284,7 @@ def test_slice_attr_window_max(load_cube_rsgy1, testdata_path):
     assert ret["max"].values.mean() == pytest.approx(0.08619, abs=0.001)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_slice_attr_window_max_w_plotting(
     tmp_path, load_cube_rsgy1, generate_plot, testdata_path
 ):
@@ -329,6 +333,7 @@ def test_slice_attr_window_max_w_plotting(
         )
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_cube_attr_mean_two_surfaces(
     tmp_path, load_cube_rsgy1, generate_plot, testdata_path
 ):
@@ -356,6 +361,7 @@ def test_cube_attr_mean_two_surfaces(
         )
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_cube_attr_rms_two_surfaces_compare_window(load_cube_rsgy1, testdata_path):
     """Get cube attribute (rms) between two surfaces, and compare with
     window."""
@@ -378,6 +384,7 @@ def test_cube_attr_rms_two_surfaces_compare_window(load_cube_rsgy1, testdata_pat
     assert xss1.values.mean() == xss2.values.mean()
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_cube_attr_rms_two_surfaces_compare_window_show(
     tmp_path, load_cube_rsgy1, generate_plot, testdata_path
 ):
@@ -422,6 +429,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(
     assert xss1.values.mean() == xss2.values.mean()
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_cube_attr_mean_two_surfaces_with_zeroiso(
     tmp_path, load_cube_rsgy1, generate_plot, testdata_path
 ):
@@ -449,6 +457,7 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(
         )
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_cube_slice_auto4d_data(tmp_path, generate_plot, testdata_path):
     """Get cube slice aka Auto4D input, with synthetic/scrambled data"""
 
@@ -649,6 +658,7 @@ def test_cube_slice_w_dead_traces_trilinear(tmp_path, generate_plot, testdata_pa
     assert surf2.values.mean() == pytest.approx(surf1.values.mean(), abs=0.01)
 
 
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 def test_cube_attr_mean_two_surfaces_multiattr(
     tmp_path, load_cube_rsgy1, generate_plot, testdata_path
 ):

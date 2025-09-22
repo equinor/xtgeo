@@ -1883,7 +1883,7 @@ class RegularSurface:
     # Operations restricted to inside/outside polygons
     # ==================================================================================
 
-    def operation_polygons(self, poly, value, opname="add", inside=True, _version=2):
+    def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for map operations inside or outside polygon(s).
 
         Args:
@@ -1895,14 +1895,9 @@ class RegularSurface:
                 on polygons (this key will be removed in later versions and shall not
                 be applied)
         """
-        if _version == 2:
-            _regsurf_oper.operation_polygons_v2(
-                self, poly, value, opname=opname, inside=inside
-            )
-        else:
-            _regsurf_oper.operation_polygons(
-                self, poly, value, opname=opname, inside=inside
-            )
+        _regsurf_oper.operation_polygons(
+            self, poly, value, opname=opname, inside=inside
+        )
 
     # shortforms
     def add_inside(self, poly, value):

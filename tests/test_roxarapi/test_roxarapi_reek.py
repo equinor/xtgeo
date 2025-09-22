@@ -19,6 +19,7 @@ import numpy as np
 import pytest
 
 import xtgeo
+from tests.conftest import in_roxar_env
 from xtgeo.roxutils._roxar_loader import roxar, roxar_jobs, roxar_well_picks
 
 logger = logging.getLogger(__name__)
@@ -72,12 +73,13 @@ def tmp_data_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("data")
 
 
-@pytest.mark.requires_roxar
 @pytest.fixture(name="roxinstance", scope="module")
 def fixture_roxinstance():
     """Create roxinstance in module scope."""
-    project = roxar.Project.create()
+    if not in_roxar_env():
+        pytest.skip("Skip test if outside RMSVENV_RELEASE (former ROXENV)")
 
+    project = roxar.Project.create()
     return xtgeo.RoxUtils(project)
 
 
@@ -809,8 +811,8 @@ def test_get_well_picks_as_points(rms_project_path):
 
     poi_df = poi.get_dataframe()
     assert poi_df.shape[0] == 3
-    assert "My attribute" not in poi.dataframe
-    assert (poi.dataframe["Depth Uncertainty"] == xtgeo.UNDEF).all()
+    assert "My attribute" not in poi_df
+    assert (poi_df["Depth Uncertainty"] == xtgeo.UNDEF).all()
 
     # update regular well pick attribute
     poi_df["Depth Uncertainty"] = 10
