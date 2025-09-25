@@ -1057,30 +1057,6 @@ extern "C"
                                  long n_swig_np_dbl_inplace_v1,   // nzcorn
                                  double zsep);
 
-    int grd3d_translate(int nx,
-                        int ny,
-                        int nz,
-                        int xflip,
-                        int yflip,
-                        int zflip,
-                        double xshift,
-                        double yshift,
-                        double zshift,
-                        double *swig_np_dbl_inplace_v1,  // *coordsv
-                        long n_swig_np_dbl_inplace_v1,   // ncoord
-                        double *swig_np_dbl_inplace_v2,  // *zcornsv
-                        long n_swig_np_dbl_inplace_v2);  // nzcorn
-
-    int grd3d_reverse_jrows(int nx,
-                            int ny,
-                            int nz,
-                            double *swig_np_dbl_inplace_v1,  // *coordsv
-                            long n_swig_np_dbl_inplace_v1,   // ncoord
-                            double *swig_np_dbl_inplace_v2,  // *zcornsv
-                            long n_swig_np_dbl_inplace_v2,   // nzcorn
-                            int *swig_np_int_inplace_v1,     // *actnumsv
-                            long n_swig_np_int_inplace_v1);  // nact
-
     int grd3d_point_val_crange(double x,
                                double y,
                                double z,

@@ -25,6 +25,7 @@ REEKFIL5 = pathlib.Path("3dgrids/reek/reek_geo2_grid_3props.roff")
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = pathlib.Path("3dgrids/bri/b.grdecl")
 BANAL6 = pathlib.Path("3dgrids/etc/banal6.roff")
+B7 = pathlib.Path("3dgrids/etc/banal7_grid_params.roff")
 B9 = pathlib.Path("3dgrids/etc/b9.roff")
 GRIDQC1 = pathlib.Path("3dgrids/etc/gridqc1.roff")
 GRIDQC1_CELLVOL = pathlib.Path("3dgrids/etc/gridqc1_totbulk.roff")
@@ -999,3 +1000,142 @@ def test_collapse_inactive_cells(testdata_path):
     assert g2._zcornsv[1, 0, 6, 3] == pytest.approx(3.0)
     assert g2._zcornsv[1, 0, 4, 3] == pytest.approx(2.0)
     assert g2._zcornsv[2, 1, 4, 0] == pytest.approx(2.25)
+
+
+def test_more_translate_coords(testdata_path):
+    """Extended tests for translate_coordinates functionality."""
+    g = xtgeo.grid_from_file(testdata_path / B7)
+    disc = xtgeo.gridproperty_from_file(testdata_path / B7, name="DISC")
+    cont = xtgeo.gridproperty_from_file(testdata_path / B7, name="CONT")
+
+    g.props = [disc, cont]
+
+    assert g.dimensions == (4, 2, 3)
+
+    assert g.get_subgrids() == {"subgrid_0": 1, "subgrid_1": 2}
+
+    g.rename_subgrids(["link", "zelda"])
+    assert g.get_subgrids() == {"link": 1, "zelda": 2}
+
+    # Store original values for comparison
+    original_xyz = g.get_xyz()
+    original_x_mean = original_xyz[0].values.mean()
+    original_y_mean = original_xyz[1].values.mean()
+    original_z_mean = original_xyz[2].values.mean()
+    original_handedness = g.ijk_handedness
+
+    # Test 1: Simple translation
+    g1 = g.copy()
+    g1.translate_coordinates(translate=(100.0, 200.0, 50.0))
+
+    new_xyz = g1.get_xyz()
+    assert new_xyz[0].values.mean() == pytest.approx(original_x_mean + 100.0, abs=0.001)
+    assert new_xyz[1].values.mean() == pytest.approx(original_y_mean + 200.0, abs=0.001)
+    assert new_xyz[2].values.mean() == pytest.approx(original_z_mean + 50.0, abs=0.001)
+
+    # Properties should be preserved
+    assert len(g1.props) == 2
+    assert g1.props[0].name == "DISC"
+    assert g1.props[1].name == "CONT"
+
+    # Test 2: Rotation
+    g2 = g.copy()
+    g2.translate_coordinates(add_rotation=45.0)
+
+    # After rotation, coordinates should be different
+    rotated_xyz = g2.get_xyz()
+    assert not np.allclose(rotated_xyz[0].values, original_xyz[0].values)
+    assert not np.allclose(rotated_xyz[1].values, original_xyz[1].values)
+    # Z should be unchanged for rotation
+    np.testing.assert_allclose(rotated_xyz[2].values, original_xyz[2].values)
+
+    # Test 3: Flipping axes
+    g3 = g.copy()
+    g3.translate_coordinates(flip=(-1, 1, 1))  # Flip X axis
+
+    assert g3.ijk_handedness != original_handedness
+
+    # Test 4: Vertical flip
+    g4 = g.copy()
+    g4.translate_coordinates(flip=(1, 1, -1))  # Flip Z axis
+    assert g4.get_subgrids() == {"zelda": 2, "link": 1}
+    assert g4.subgrids == {"zelda": range(1, 3), "link": range(3, 4)}
+
+    vflipped_xyz = g4.get_xyz()
+    assert g4.ijk_handedness != original_handedness
+    # Z values should be different after vertical flip
+    assert not np.allclose(vflipped_xyz[2].values, original_xyz[2].values)
+
+    # Test 5: Row axis flip
+    g5 = g.copy()
+    g5.translate_coordinates(flip=(1, -1, 1))  # Flip Y axis (rows)
+
+    # Test 6: Target coordinates
+    g6 = g.copy()
+    target = (1000.0, 2000.0, 3000.0)
+    g6.translate_coordinates(target_coordinates=target)
+
+    target_xyz = g6.get_xyz()
+    assert target_xyz[0].values.mean() == pytest.approx(target[0], abs=0.001)
+    assert target_xyz[1].values.mean() == pytest.approx(target[1], abs=0.001)
+    assert target_xyz[2].values.mean() == pytest.approx(target[2], abs=0.001)
+
+    # Test 7: Combined operations (rotation + translation + flip)
+    g7 = g.copy()
+    g7.translate_coordinates(
+        add_rotation=30.0, translate=(50.0, 100.0, 25.0), flip=(1, 1, -1)
+    )
+
+    combined_xyz = g7.get_xyz()
+    # Should be significantly different from original
+    assert not np.allclose(combined_xyz[0].values, original_xyz[0].values)
+    assert not np.allclose(combined_xyz[1].values, original_xyz[1].values)
+    assert not np.allclose(combined_xyz[2].values, original_xyz[2].values)
+
+    # Test 8: Error case - both translate and target_coordinates
+    g8 = g.copy()
+    with pytest.raises(
+        ValueError, match="Using both key 'translate' and key 'target_coordinates'"
+    ):
+        g8.translate_coordinates(
+            translate=(10.0, 20.0, 30.0), target_coordinates=(100.0, 200.0, 300.0)
+        )
+
+    # Test 9: Zero translation should not change anything
+    g9 = g.copy()
+    g9.translate_coordinates(translate=(0.0, 0.0, 0.0))
+
+    unchanged_xyz = g9.get_xyz()
+    np.testing.assert_allclose(unchanged_xyz[0].values, original_xyz[0].values)
+    np.testing.assert_allclose(unchanged_xyz[1].values, original_xyz[1].values)
+    np.testing.assert_allclose(unchanged_xyz[2].values, original_xyz[2].values)
+
+    # Test 10: Rotation with custom rotation point
+    g10 = g.copy()
+    rotation_point = (original_x_mean, original_y_mean)
+    g10.translate_coordinates(add_rotation=90.0, rotation_point=rotation_point)
+
+    rotated_custom_xyz = g10.get_xyz()
+    # Should rotate around the specified point, not the default corner
+    assert not np.allclose(rotated_custom_xyz[0].values, original_xyz[0].values)
+    assert not np.allclose(rotated_custom_xyz[1].values, original_xyz[1].values)
+
+    # Test 11: Go through all double or 360 degrees --> same result
+    g11 = g.copy()
+    g11.translate_coordinates(
+        add_rotation=360.0, flip=(-1, -1, -1), translate=(10, 30, 20)
+    )
+    g11.translate_coordinates(
+        add_rotation=360.0, flip=(-1, -1, -1), translate=(-10, -30, -20)
+    )
+
+    g11_xyz = g11.get_xyz()
+    np.testing.assert_allclose(
+        g11_xyz[0].values, original_xyz[0].values, rtol=1e-5, atol=1e-6
+    )
+    np.testing.assert_allclose(
+        g11_xyz[1].values, original_xyz[1].values, rtol=1e-5, atol=1e-6
+    )
+    np.testing.assert_allclose(
+        g11_xyz[2].values, original_xyz[2].values, rtol=1e-5, atol=1e-6
+    )
