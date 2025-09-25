@@ -362,6 +362,31 @@ def test_reverse_row_axis_dualprops(testdata_path):
     assert grd.ijk_handedness == "left"
 
 
+def test_reverse_column_axis_dualprops(testdata_path):
+    """Reverse column axis for distorted but small grid with props"""
+
+    grd = xtgeo.grid_from_file(
+        testdata_path / DUALPROPS, fformat="eclipserun", initprops=["PORO", "PORV"]
+    )
+    print(grd.ncol, grd.nrow)
+    poro = grd.gridprops.props[0]
+    porowas = poro.copy()
+    assert poro.values[1, 0, 0] == pytest.approx(0.17777, abs=0.01)
+    assert grd.ijk_handedness == "left"
+
+    grd.reverse_column_axis()
+    assert poro.values[3, 0, 0] == pytest.approx(0.17777, abs=0.01)
+    assert poro.values[3, 0, 0] == porowas.values[1, 0, 0]
+
+    grd.reverse_column_axis()
+    assert poro.values[1, 0, 0] == porowas.values[1, 0, 0]
+    assert grd.ijk_handedness == "left"
+
+    grd.reverse_column_axis(ijk_handedness="left")  # ie do nothing in this case
+    assert poro.values[1, 0, 0] == porowas.values[1, 0, 0]
+    assert grd.ijk_handedness == "left"
+
+
 def test_reverse_row_axis_eme(tmp_path, testdata_path):
     """Reverse axis for emerald grid"""
 

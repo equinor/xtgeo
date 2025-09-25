@@ -28,6 +28,7 @@ from . import (
     _grid_import_ecl,
     _grid_refine,
     _grid_roxapi,
+    _grid_translate_coords,
     _grid_wellzone,
     _gridprop_lowlevel,
 )
@@ -2480,21 +2481,48 @@ class Grid(_Grid3D):
     def translate_coordinates(
         self,
         translate: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        target_coordinates: tuple[float, float, float] | None = None,
         flip: tuple[int, int, int] = (1, 1, 1),
-    ) -> None:
-        """Translate (move) and/or flip grid coordinates in 3D.
+        add_rotation: float = 0.0,
+        rotation_point: tuple[float, float] | None = None,
+    ) -> Grid | None:
+        """Translate (move), flip and rotate the 3D grid geometry.
 
-        By 'flip' here, it means that the full coordinate array are multiplied
-        with -1.
+        By 'flip' here, it means that the full coordinate arrays are inverted.
 
         Args:
-            translate (tuple): Translation distance in X, Y, Z coordinates
-            flip (tuple): Flip array. The flip values must be 1 or -1.
+            translate: Translation distance in X, Y, Z coordinates; these
+                values will be added to the current coordinates.
+            target_coordinates: Position for the centerpoint of the active grid cells.
+                Note that key ``translate`` cannot be used with this key; i.e. use
+                either ``translate`` or ``target_coordinates``
+            flip: Flip array. The flip values must be 1 or -1, meaning 1 for
+                keeping the current, and -1 for activating an axis flip.
+            add_rotation: The grid geometry will get an additional rotation by this
+                value, in degrees and counter clock wise.
+            rotation_point: Which (x, y) coordiate to be set as origin when adding
+                rotation. Default is the corner of the first cell number.
 
-        Raises:
-            RuntimeError: If translation goes wrong for unknown reasons
+        Note:
+            Grid properties attached to the grid will also be transformed
+
+        Example::
+            import xtgeo
+            grd = xtgeo.grid_from_roxar(project, "simpleb8")
+            poro = xtgeo.gridproperty_from_roxar(project, "simpleb8", "PORO")
+            grd.props = [poro]
+
+            grd.translate_coordinates(translate=(10,10, 20), flip=(1,1,-1),
+                add_rotation=30)
+
+            grd.to_roxar(project, "simpleb8_translated")
+            poro1 = grd.get_prop_by_name("PORO")
+            poro1.to_roxar(project, "simpleb8_translated", "PORO")
+
         """
-        _grid_etc1.translate_coordinates(self, translate=translate, flip=flip)
+        _grid_translate_coords.translate_coordinates(
+            self, translate, flip, add_rotation, rotation_point, target_coordinates
+        )
 
     def reverse_row_axis(
         self, ijk_handedness: Literal["left", "right"] | None = None
@@ -2502,7 +2530,7 @@ class Grid(_Grid3D):
         """Reverse the row axis (J indices).
 
         This means that IJK system will switched between a left vs right handed system.
-        It is here (by using ijk_handedness key), possible to set a wanted stated.
+        It is here (by using ijk_handedness key), possible to set a wanted handedness.
 
         Note that properties that are assosiated with the grid (through the
         :py:attr:`~gridprops` or :py:attr:`~props` attribute) will also be
@@ -2527,6 +2555,38 @@ class Grid(_Grid3D):
 
         """
         _grid_etc1.reverse_row_axis(self, ijk_handedness=ijk_handedness)
+
+    def reverse_column_axis(
+        self, ijk_handedness: Literal["left", "right"] | None = None
+    ) -> None:
+        """Reverse the column axis (I indices).
+
+        This means that IJK system will switched between a left vs right handed system.
+        It is here (by using ijk_handedness key), possible to set a wanted handedness.
+
+        Note that properties that are assosiated with the grid (through the
+        :py:attr:`~gridprops` or :py:attr:`~props` attribute) will also be
+        reversed (which is desirable).
+
+        Args:
+            ijk_handedness (str): If set to "right" or "left", do only reverse columns
+                if handedness is not already achieved.
+
+        Example::
+
+            grd = xtgeo.grid_from_file("somefile.roff")
+            prop1 = xtgeo.gridproperty_from_file("somepropfile1.roff")
+            prop2 = xtgeo.gridproperty_from_file("somepropfile2.roff")
+
+            grd.props = [prop1, prop2]
+
+            # secure that the grid geometry is IJK right-handed
+            grd.reverse_column_axis(ijk_handedness="right")
+
+        .. versionadded:: 4.14
+
+        """
+        _grid_etc1.reverse_column_axis(self, ijk_handedness=ijk_handedness)
 
     def make_zconsistent(self, zsep: float | int = 1e-5) -> None:
         """Make the 3D grid consistent in Z, by a minimal gap (zsep).

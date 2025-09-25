@@ -1259,85 +1259,86 @@ def reduce_to_one_layer(self: Grid) -> None:
     self._subgrids = None
 
 
-def translate_coordinates(
-    self: Grid,
-    translate: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    flip: tuple[int, int, int] = (1, 1, 1),
-) -> None:
-    """Translate grid coordinates."""
-    self._set_xtgformat1()
-
-    tx, ty, tz = translate
-    fx, fy, fz = flip
-
-    ier = _cxtgeo.grd3d_translate(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        fx,
-        fy,
-        fz,
-        tx,
-        ty,
-        tz,
-        self._coordsv,
-        self._zcornsv,
-    )
-    if ier != 0:
-        raise RuntimeError(f"Something went wrong in translate, code: {ier}")
-
-    logger.info("Translation of coords done")
-
-
 def reverse_row_axis(
     self: Grid, ijk_handedness: Literal["left", "right"] | None = None
 ) -> None:
-    """Reverse rows (aka flip) for geometry and assosiated properties."""
+    """Flip the row-axis for xtgformat=2 grid arrays.
+
+    This reverses the J-direction (rows) by flipping along axis 1 for both
+    coordsv and zcornsv arrays, and also handles the corner ordering within
+    each pillar to maintain proper geometry.
+    """
     if ijk_handedness == self.ijk_handedness:
         return
 
-    # update the handedness
-    if ijk_handedness is None:
-        self._ijk_handedness = estimate_handedness(self)
+    self._set_xtgformat2()
 
-    original_handedness = self._ijk_handedness
-    original_xtgformat = self._xtgformat
+    # Flip coordsv along the row axis (axis 1) and make contiguous with copy()
+    self._coordsv = np.flip(self._coordsv, axis=1).copy()
 
-    self._set_xtgformat1()
+    # For zcornsv, we need to flip along row axis and also swap corner ordering
+    # Original corner order: SW, SE, NW, NE (indices 0,1,2,3)
+    # After row flip: NW, NE, SW, SE (should become indices 0,1,2,3)
+    # So we need to rearrange: [2,3,0,1]
+    zcorns_flipped = np.flip(self._zcornsv, axis=1)  # Flip along row axis
+    self._zcornsv = zcorns_flipped[:, :, :, [2, 3, 0, 1]].copy()  # Reorder corners
 
-    ier = _cxtgeo.grd3d_reverse_jrows(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv.ravel(),
-        self._zcornsv.ravel(),
-        self._actnumsv.ravel(),
-    )
+    # Also flip actnum along row axis
+    self._actnumsv = np.flip(self._actnumsv, axis=1).copy()
 
-    if ier != 0:
-        raise RuntimeError(f"Something went wrong in jswapping, code: {ier}")
-
-    if self._props is None:
-        return
-
-    # do it for properties
-    if self._props.props:
-        for prp in self._props.props:
-            prp.values = prp.values[:, ::-1, :]
-
-    # update the handedness
-    if ijk_handedness is None:
-        self._ijk_handedness = estimate_handedness(self)
-
-    if original_handedness == "left":
+    # Update handedness
+    if self._ijk_handedness == "left":
         self._ijk_handedness = "right"
     else:
         self._ijk_handedness = "left"
 
-    if original_xtgformat == 2:
-        self._set_xtgformat2()
+    # Handle properties if they exist
+    if self._props and self._props.props:
+        for prop in self._props.props:
+            prop.values = np.flip(prop.values, axis=1).copy()
 
-    logger.info("Reversing of rows done")
+    logger.info("Reversing of row axis done")
+
+
+def reverse_column_axis(
+    self: Grid, ijk_handedness: Literal["left", "right"] | None = None
+) -> None:
+    """Flip the column-axis for xtgformat=2 grid arrays.
+
+    This reverses the I-direction (columns) by flipping along axis 0 for both
+    coordsv and zcornsv arrays, and also handles the corner ordering within
+    each pillar to maintain proper geometry.
+    """
+    if ijk_handedness == self.ijk_handedness:
+        return
+
+    self._set_xtgformat2()
+
+    # Flip coordsv along the column axis (axis 0) and make contiguous with copy()
+    self._coordsv = np.flip(self._coordsv, axis=0).copy()
+
+    # For zcornsv, we need to flip along column axis and also swap corner ordering
+    # Original corner order: SW, SE, NW, NE (indices 0,1,2,3)
+    # After column flip: SE, SW, NE, NW (should become indices 0,1,2,3)
+    # So we need to rearrange: [1,0,3,2]
+    zcorns_flipped = np.flip(self._zcornsv, axis=0)  # Flip along column axis
+    self._zcornsv = zcorns_flipped[:, :, :, [1, 0, 3, 2]].copy()  # Reorder corners
+
+    # Also flip actnum along column axis
+    self._actnumsv = np.flip(self._actnumsv, axis=0).copy()
+
+    # Update handedness
+    if self._ijk_handedness == "left":
+        self._ijk_handedness = "right"
+    else:
+        self._ijk_handedness = "left"
+
+    # Handle properties if they exist
+    if self._props and self._props.props:
+        for prop in self._props.props:
+            prop.values = np.flip(prop.values, axis=0).copy()
+
+    logger.info("Reversing of column axis done")
 
 
 def get_adjacent_cells(
