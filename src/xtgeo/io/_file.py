@@ -227,7 +227,7 @@ class FileWrapper:
             date = obj.metadata.opt.datetime  # type: ignore
             newname = short + "--" + desc
             if date:
-                newname += "--" + date
+                newname += "--" + str(date)
         else:
             # return without modifications of self._file to avoid with_suffix() issues
             # if the file name stem itself contains multiple '.'
