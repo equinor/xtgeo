@@ -1,19 +1,11 @@
 [build-system]
 requires = [
+    "numpy>=2.0.0",
     "pybind11",
     "scikit-build-core[pyproject]>=0.10",
     "swig<4.3.0",
-    "numpy>=2.0.0",
 ]
-
 build-backend = "scikit_build_core.build"
-
-[tool.scikit-build]
-cmake.version = "CMakeLists.txt"
-cmake.verbose = true
-metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = ["src/xtgeo/common/version.py"]
-wheel.install-dir = "xtgeo"
 
 [project]
 name = "xtgeo"
@@ -98,19 +90,43 @@ docs = [
     "sphinx-toolbox",
 ]
 
+[tool.scikit-build]
+cmake.version = "CMakeLists.txt"
+cmake.verbose = true
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/xtgeo/common/version.py"]
+wheel.install-dir = "xtgeo"
+
 [tool.cibuildwheel]
-manylinux-x86_64-image = "manylinux2014"
+build = "cp3{10,11,12,13}-*"
+skip = ["*-musllinux_*", "*-win32", "*-manylinux_i686"]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+before-build = "python -m pip install -U pip"
+
 test-extras = ["dev"]
-before-build = 'python -m pip install -U pip'
 before-test = [
     "pushd {package}",
-    "git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata",
-]
+    "git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata || true",
+]  # || true to prevent second wheel builds from re-cloning
 test-command = [
     "pushd {package}",
     # Ignore forking tests as they do not work well with CIBW
     'pytest -n 4 tests --disable-warnings -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"',
 ]
+
+[tool.cibuildwheel.windows]
+before-all = "vcpkg install eigen3 fmt --triplet=x64-windows"
+
+[tool.cibuildwheel.linux]
+before-all = "yum update -y && yum install -y eigen3-devel fmt-devel || (apt-get update && apt-get install -y libeigen3-dev libfmt-dev)"
+
+[tool.cibuildwheel.macos]
+before-all = [
+    "brew update",
+    "brew install hdf5 eigen c-blosc",
+]
+environment = { HDF5_DIR = "/opt/homebrew" }
 
 [tool.pydocstyle]
 convention = "google"
