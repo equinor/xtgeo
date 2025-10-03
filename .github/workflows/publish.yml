@@ -44,7 +44,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
         with:
-          name: cibw-${{ runner.os }}-${{ runner.arch }}
+          name: cibw-${{ matrix.os }}-${{ runner.arch }}-${{ matrix.python }}
           path: wheelhouse/*.whl
 
   publish:
