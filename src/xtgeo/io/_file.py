@@ -84,6 +84,7 @@ class FileFormat(Enum):
     PETROMOD = ["pmd", "petromod"]
     XTG = ["xtg", "xtgeo", "xtgf", "xtgcpprop", "xtg.*"]
     XYZ = ["xyz", "poi", "pol"]
+    TSURF = ["ts", "tsurf"]
     RMS_ATTR = ["rms_attr", "rms_attrs", "rmsattr.*"]
     CSV = ["csv", "csv.*"]
     PARQUET = ["parquet", "parquet.*", "pq"]
@@ -590,5 +591,13 @@ class FileWrapper:
         ):
             logger.debug("Signature is rmswell")
             return FileFormat.RMSWELL
+
+        tsurf_signature = b"GOCAD TSurf 1"
+        if (
+            len(buffer) >= len(tsurf_signature)
+            and buffer[: len(tsurf_signature)] == tsurf_signature
+        ):
+            logger.debug("Signature is tsurf")
+            return FileFormat.TSURF
 
         return FileFormat.UNKNOWN

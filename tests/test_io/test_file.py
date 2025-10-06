@@ -27,6 +27,7 @@ FILE_FORMATS = ChainMap(
         pathlib.Path("3dgrids/reek/reek_geo_grid.roff"): FileFormat.ROFF_BINARY,
         pathlib.Path("3dgrids/reek/reek_geogrid.roffasc"): FileFormat.ROFF_ASCII,
         pathlib.Path("wells/battle/1/WELL12.rmswell"): FileFormat.RMSWELL,
+        pathlib.Path("surfaces/drogon/3/F5.ts"): FileFormat.TSURF,
     },
 )
 
