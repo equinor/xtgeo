@@ -22,7 +22,8 @@ runs:
       if: ${{ inputs.os == 'windows-latest' }}
       shell: bash
       run: |
-        vcpkg install eigen3 fmt
+        git -C C:/vcpkg pull
+        vcpkg install --triplet x64-windows
 
     - name: Install macOS dependencies
       if: ${{ inputs.os == 'macos-latest' || inputs.os == 'macos-13' }}

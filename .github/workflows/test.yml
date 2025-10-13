@@ -39,7 +39,6 @@ jobs:
         with:
           fetch-depth: 0
 
-
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
         with:
