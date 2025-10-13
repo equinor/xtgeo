@@ -116,7 +116,10 @@ test-command = [
 ]
 
 [tool.cibuildwheel.windows]
-before-all = "vcpkg install eigen3 fmt --triplet=x64-windows"
+before-all = [
+    "git -C C:/vcpkg pull",
+    "vcpkg install --triplet x64-windows"
+]
 
 [tool.cibuildwheel.linux]
 before-all = "yum update -y && yum install -y eigen3-devel fmt-devel || (apt-get update && apt-get install -y libeigen3-dev libfmt-dev)"
