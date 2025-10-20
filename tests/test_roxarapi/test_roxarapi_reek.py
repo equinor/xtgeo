@@ -218,7 +218,7 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
     for num, name in enumerate(SURFNAMES1):
         srf = xtgeo.surface_from_file(testdata_path / SURFTOPS1[num])
         project.horizons.create(name, roxar.HorizonType.interpreted)
-        srf.to_roxar(project, name, SURFCAT1)
+        srf.to_rms(project, name, SURFCAT1)
 
     # populate with grid and props
     grd = xtgeo.grid_from_file(testdata_path / GRIDDATA1)
@@ -281,7 +281,7 @@ def wells_from_rms(rms_project_path) -> list[xtgeo.Well]:
 def rms_project(rms_project_path) -> Any:
     """Get the 'magic' project object from RMS (similar when being inside RMS).
 
-    Technical note: XTGeo functions like ``xtgeo.surface_from_roxar(xx, ...)``
+    Technical note: XTGeo functions like ``xtgeo.surface_from_rms(xx, ...)``
     can handle both that xx is a path to a project or the project object itself. If
     it is a path, then the xtgeo function will open and close the project, 'behind
     the scene'. If it is a project object, then the project is not closed, hence the
@@ -321,12 +321,12 @@ def test_rox_getset_cube_with_ilxl_jumps(rms_project_path, tmp_path):
 @pytest.mark.requires_roxar
 def test_rox_surfaces(rms_project_path):
     """Various get set on surfaces in RMS."""
-    srf = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
-    srf2 = xtgeo.surface_from_roxar(rms_project_path, "MidReek", SURFCAT1)
+    srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
+    srf2 = xtgeo.surface_from_rms(rms_project_path, "MidReek", SURFCAT1)
     assert srf.ncol == 554
     assert srf.values.mean() == pytest.approx(1698.648, abs=0.01)
 
-    srf.to_roxar(rms_project_path, "TopReek_copy", "SomeFolder", stype="clipboard")
+    srf.to_rms(rms_project_path, "TopReek_copy", "SomeFolder", stype="clipboard")
 
     # open project and do save explicit
     rox = xtgeo.RoxUtils(rms_project_path)
@@ -334,9 +334,9 @@ def test_rox_surfaces(rms_project_path):
     iso = srf2 - srf
     rox.create_zones_category("IS_isochore")
     prj.zones.create("UpperReek", prj.horizons["TopReek"], prj.horizons["MidReek"])
-    iso.to_roxar(prj, "UpperReek", "IS_isochore", stype="zones")
+    iso.to_rms(prj, "UpperReek", "IS_isochore", stype="zones")
 
-    iso2 = xtgeo.surface_from_roxar(prj, "UpperReek", "IS_isochore", stype="zones")
+    iso2 = xtgeo.surface_from_rms(prj, "UpperReek", "IS_isochore", stype="zones")
     assert iso2.values.mean() == pytest.approx(20.79, abs=0.01)
 
     prj.save()
@@ -346,13 +346,11 @@ def test_rox_surfaces(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_surfaces_dtype_switching(rms_project_path):
     """Test dtype switching for from_roxar"""
-    srf = xtgeo.surface_from_roxar(
-        rms_project_path, "TopReek", SURFCAT1, dtype="float32"
-    )
+    srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1, dtype="float32")
     assert srf.ncol == 554
     assert srf.values.mean() == pytest.approx(1698.648, abs=0.01)
     assert srf.dtype == np.float32
-    srf.to_roxar(rms_project_path, "TopReek_copy", "SomeFolder", stype="clipboard")
+    srf.to_rms(rms_project_path, "TopReek_copy", "SomeFolder", stype="clipboard")
 
     srf2 = srf.copy()
     assert srf2.dtype == np.float32
@@ -369,7 +367,7 @@ def test_rox_surfaces_alternative_open(rms_project_path):
 
     assert isinstance(rox.project, roxar.Project)
 
-    srf = xtgeo.surface_from_roxar(rox.project, "TopReek", SURFCAT1)
+    srf = xtgeo.surface_from_rms(rox.project, "TopReek", SURFCAT1)
     assert srf.ncol == 554
     assert srf.values.mean() == pytest.approx(1698.648, abs=0.01)
 
@@ -380,28 +378,17 @@ def test_rox_surfaces_alternative_open(rms_project_path):
 def test_rox_surfaces_clipboard_general2d_data(rms_project, roxinstance):
     """Set and get surfaces on clipboard and general2D data"""
 
-    surf = xtgeo.surface_from_roxar(rms_project, "TopReek", SURFCAT1)
+    surf = xtgeo.surface_from_rms(rms_project, "TopReek", SURFCAT1)
 
-    surf.to_roxar(rms_project, "mycase", "myfolder", stype="clipboard")
-    surf2 = xtgeo.surface_from_roxar(
-        rms_project, "mycase", "myfolder", stype="clipboard"
-    )
+    surf.to_rms(rms_project, "mycase", "myfolder", stype="clipboard")
+    surf2 = xtgeo.surface_from_rms(rms_project, "mycase", "myfolder", stype="clipboard")
     assert surf2.values.mean() == surf.values.mean()
 
-    # general 2D data (from xtgeo version 2.19 and roxar API >= 1.6)
-    if not roxinstance.version_required("1.6"):
-        with pytest.raises(
-            NotImplementedError, match=r"API Support for general2d_data is missing"
-        ):
-            surf.to_roxar(rms_project, "mycase", "myfolder", stype="general2d_data")
-        logger.info("This version of RMS does not support this feature")
-
-    else:
-        surf.to_roxar(rms_project, "mycase", "myfolder", stype="general2d_data")
-        surf2 = xtgeo.surface_from_roxar(
-            rms_project, "mycase", "myfolder", stype="general2d_data"
-        )
-        assert surf2.values.tolist() == surf.values.tolist()
+    surf.to_rms(rms_project, "mycase", "myfolder", stype="general2d_data")
+    surf2 = xtgeo.surface_from_rms(
+        rms_project, "mycase", "myfolder", stype="general2d_data"
+    )
+    assert surf2.values.tolist() == surf.values.tolist()
 
 
 @pytest.mark.requires_roxar
@@ -411,13 +398,12 @@ def test_rox_get_set_trend_surfaces(rms_project_path):
     Since the current RMS API does not support write to trends.surfaces, an automatic
     test cannot be made here. The functions were tested manually in RMS.
     """
-    surf = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
+    surf1 = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
+    surf1.to_rms(rms_project_path, "Any", None, stype="trends")
 
-    with pytest.raises(ValueError, match=r"Any is not within Trends"):
-        surf.to_roxar(rms_project_path, "Any", None, stype="trends")
+    surf2 = xtgeo.surface_from_rms(rms_project_path, "Any", None, stype="trends")
 
-    with pytest.raises(ValueError, match=r"Any is not within Trends"):
-        surf = xtgeo.surface_from_roxar(rms_project_path, "Any", None, stype="trends")
+    np.testing.assert_array_equal(surf2.values, surf1.values)
 
 
 @pytest.mark.requires_roxar
@@ -651,7 +637,7 @@ def test_rox_get_modify_set_points(rms_project_path):
     assert poi.get_dataframe().shape[1] == 3
 
     # snap to a surface as operation and store in RMS
-    surf = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
+    surf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
     poi.to_roxar(rms_project_path, "SNAPPED", "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1651.805261)
@@ -707,7 +693,7 @@ def test_rox_set_points_with_nonstandard_xyz_names(rms_project_path):
 
     # another indirect check using points from surface.
     # here Z name is set on initialisation
-    srf = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
+    srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi = xtgeo.points_from_surface(srf, zname="MyZ")
     assert "MyZ" in poi.get_dataframe(copy=False)
     poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
@@ -761,7 +747,7 @@ def test_rox_get_modify_set_points_with_attrs(rms_project_path):
     assert poi.get_dataframe().shape[1] == 7
 
     # snap to a surface as operation and store in RMS
-    surf = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
+    surf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
     poi.to_roxar(rms_project_path, "SNAPPED2", "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1706.1469, abs=0.01)
