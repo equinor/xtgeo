@@ -116,6 +116,7 @@ from xtgeo.surface.regular_surface import (
     surface_from_cube,
     surface_from_file,
     surface_from_grid3d,
+    surface_from_rms,
     surface_from_roxar,
 )
 from xtgeo.surface.surfaces import Surfaces
@@ -236,6 +237,7 @@ __all__ = [
     "surface_from_cube",
     "surface_from_file",
     "surface_from_grid3d",
+    "surface_from_rms",
     "surface_from_roxar",
     "version",
     "well1",

@@ -57,10 +57,10 @@ Ready to contribute? Here's how to set up XTGeo for local development.
    cd xtgeo
    git remote add upstream git@github.com:equinor/xtgeo
    git remote -v
-   # origin	git@github.com:your_name_here/xtgeo (fetch)
-   # origin	git@github.com:your_name_here/xtgeo (push)
-   # upstream	git@github.com:equinor/xtgeo (fetch)
-   # upstream	git@github.com:equinor/xtgeo (push)
+   # origin git@github.com:your_name_here/xtgeo (fetch)
+   # origin git@github.com:your_name_here/xtgeo (push)
+   # upstream git@github.com:equinor/xtgeo (fetch)
+   # upstream git@github.com:equinor/xtgeo (push)
    ```
 
 3. Install your forked copy into a local venv:
@@ -237,15 +237,13 @@ Before you submit a pull request, check that it meets these guidelines:
 ## Working with RMS python
 
 The following is a special recipe when working with RMS' Python version,
-and it is targeted to Equinor usage using bash shell in Linux:
+and it is targeted to Equinor usage using bash or tcsh shell in Linux:
 
 ```sh
-# activate RMS python, e.g. RMS version 13.1.2
-source /prog/res/roxapi/aux/roxenvbash 13.1.2
+# establish and activate RMS python in a virtual environment, e.g. RMS version 14.2.2
+rmsvenv my_rms_venv --version 14.2.2
 # Make a venv with the libraries included by RMS
-python -m venv ~/venv/py38_rms13.1.2 --system-site-packages
-source ~/venv/py38_rms13.1.2/bin/activate
-unset PYTHONPATH  # to avoid potential issues
+source my_rms_venv/enable  # bash; use enable.csh for t(csh)
 python -m pip install -U pip
 pip install -e ".[dev]"
 pytest

@@ -17,7 +17,7 @@ Note that an instance of a regular surface can be made directly with::
 
 or::
 
- mysurf = xtgeo.surface_from_roxar('some_rms_project', 'TopX', 'DepthSurface')
+ mysurf = xtgeo.surface_from_rms('some_rms_project', 'TopX', 'DepthSurface')
 
 """
 
@@ -47,6 +47,7 @@ import numpy.ma as ma
 import pandas as pd
 import scipy.ndimage
 
+import xtgeo.interfaces.rms
 from xtgeo.common.constants import (
     UNDEF,
     UNDEF_LIMIT,
@@ -70,7 +71,6 @@ from . import (
     _regsurf_gridding,
     _regsurf_import,
     _regsurf_oper,
-    _regsurf_roxapi,
     _regsurf_utils,
 )
 
@@ -148,7 +148,7 @@ def surface_from_file(
     )
 
 
-def surface_from_roxar(
+def surface_from_rms(
     project,
     name,
     category,
@@ -156,11 +156,11 @@ def surface_from_roxar(
     realisation=0,
     dtype: Union[Type[np.float64], Type[np.float32]] = np.float64,
 ):
-    """This makes an instance of a RegularSurface directly from roxar input.
+    """This makes an instance of a RegularSurface directly from RMS input.
 
     Args:
         project (str or special): Name of project (as folder) if
-            outside RMS, og just use the magic project word if within RMS.
+            outside RMS, og just use the magic ``project`` word if within RMS.
         name (str): Name of surface/map
         category (str): For horizons/zones or clipboard/general2d_data:
             for example 'DS_extracted'. For clipboard/general2d_data this can
@@ -169,13 +169,14 @@ def surface_from_roxar(
         stype (str): RMS folder type, 'horizons' (default), 'zones', 'clipboard',
             'general2d_data' or 'trends'
         realisation (int): Realisation number, default is 0
-        dtype: Requested numpy dtype for array; default is 64 bit
+        dtype: Requested numpy dtype for array; default is 64 bit float. Note that down-
+            casting may give loss of precision.
 
     Example::
 
         # inside RMS:
         import xtgeo
-        mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
+        mysurf = xtgeo.surface_from_rms(project, 'TopEtive', 'DepthSurface')
 
     Note::
 
@@ -187,8 +188,60 @@ def surface_from_roxar(
 
     """
 
-    return RegularSurface._read_roxar(
-        project, name, category, stype=stype, realisation=realisation, dtype=dtype
+    regsurf_rms = xtgeo.interfaces.rms.RegularSurfaceReader(
+        project_or_path=project,
+        name=name,
+        category=category,
+        stype=stype,
+        realisation=realisation,
+    ).load()
+
+    return RegularSurface(
+        ncol=regsurf_rms.ncol,
+        nrow=regsurf_rms.nrow,
+        xori=regsurf_rms.xori,
+        yori=regsurf_rms.yori,
+        xinc=regsurf_rms.xinc,
+        yinc=regsurf_rms.yinc,
+        rotation=regsurf_rms.rotation,
+        values=regsurf_rms.values,
+        dtype=dtype,  # handled by constructor
+    )
+
+
+def surface_from_roxar(
+    project,
+    name,
+    category,
+    stype="horizons",
+    realisation=0,
+    dtype: Union[Type[np.float64], Type[np.float32]] = np.float64,
+):
+    """This makes an instance of a RegularSurface directly from roxar (i.e. RMS) input.
+
+    .. deprecated::
+        The `surface_from_roxar` function is deprecated and will be removed in a future
+        version. Use `surface_from_rms` instead.
+
+    For parameters and usage details, see :func:`surface_from_rms`.
+
+    """
+
+    # A pending deprecation warning will not show up in RMS for normal users
+    warnings.warn(
+        "The 'surface_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'surface_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+
+    return surface_from_rms(
+        project=project,
+        name=name,
+        category=category,
+        stype=stype,
+        realisation=realisation,
+        dtype=dtype,
     )
 
 
@@ -1149,87 +1202,63 @@ class RegularSurface:
         _regsurf_export.export_hdf5_regsurf(self, mfile, compression=compression)
         return mfile.file
 
-    @classmethod
-    def _read_roxar(
-        cls,
-        project,
-        name,
-        category,
-        stype="horizons",
-        realisation=0,
-        dtype=np.float64,
-    ):  # pragma: no cover
-        """Load a surface from a Roxar RMS project.
-
-        The import from the RMS project can be done either within the project
-        or outside the project.
-
-        Note that a shortform to::
-
-          import xtgeo
-          mysurf = xtgeo.surface_from_roxar(project, 'name', 'category')
-
-        Note also that horizon/zone name and category must exists in advance,
-        otherwise an Exception will be raised.
-
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of surface/map
-            category (str): For horizons/zones or clipboard/general2d_data: for
-                example 'DS_extracted'
-            stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
-            realisation (int): Realisation number, default is 0
-            dtype: For supporting conversion to 32 bit float for the numpy; default
-                is 64 bit
-
-        """
-        kwargs = _regsurf_roxapi.import_horizon_roxapi(
-            project, name, category, stype, realisation
-        )
-        kwargs["dtype"] = dtype  # eventual dtype change will be done in __init__
-
-        return cls(**kwargs)
-
-    def to_roxar(
-        self, project, name, category, stype="horizons", realisation=0
-    ):  # pragma: no cover
-        """Store (export) a regular surface to a Roxar RMS project.
+    def to_rms(
+        self: RegularSurface,
+        project: object,
+        name: str,
+        category: str,
+        stype: Literal[
+            "horizons", "zones", "clipboard", "general2d_data", "trends"
+        ] = "horizons",
+        realisation: int = 0,
+        domain: Literal["depth", "time", "unknown"] = "depth",
+    ) -> None:  # pragma: no cover
+        """Store (export/save) a regular surface to a Roxar RMS project via the RMSAPI.
 
         The export to the RMS project can be done either within the project
-        or outside the project. The storing is done to the Horizons or the
-        Zones folder in RMS.
+        or outside the project. The storing can be done to various storage types in
+        RMS, such as 'Horizons', 'Zones', 'Clipboard', 'General2D_data' and
+        'Trends'.
 
         Note:
-            The horizon or zone name and category must exists in advance,
-            otherwise an Exception will be raised.
+            For stype = 'horizons' or 'zones', the horizon or zone name and category
+            must exists in advance, otherwise an Exception will be raised. Items on
+            'clipboard' and 'general2d_data' will be created if not already present,
+            and overwritten if they do.
 
-            When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            When project is a file path (direct access, outside RMS) then
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of surface/map
-            category (str): Required for horizons/zones: e.g. 'DS_extracted'. For
-                clipboard/general2d_data is reperesent the folder(s), where "" or None
+            project: Name of project (as a folder string) if
+                outside RMS, or just use the magic ``project`` word if within RMS.
+            name: Name of surface/map
+            category: Required for horizons/zones: e.g. 'DS_extracted'. For
+                clipboard/general2d_data represents the folder(s), where "" or None
                 means no folder, while e.g. "myfolder/subfolder" means that folders
                 myfolder/subfolder will be created if not already present. For
                 stype = 'trends', the category will not be applied
-            stype (str): RMS folder type, 'horizons' (default), 'zones', 'clipboard'
+            stype: RMS storage type, 'horizons' (default), 'zones', 'clipboard'
                 'general2d_data', 'trends'
-            realisation (int): Realisation number, default is 0
+            realisation: Realisation number, default is 0
+            domain: Default is 'depth', but 'time', 'unknown' is also possible.
+                Note that domain only applies to stypes 'clipboard' and
+                'general2d_data', since the domain for horizons/zones is defined
+                more rigidly when the horizon/zone category is created in RMS.
+                Trends are always 'unknown' domain.
 
         Raises:
             ValueError: If name or category does not exist in the project
+            RuntimeError: If Roxar RMS API cannot store the surface for various reasons
 
-        Example:
-            Here the from_roxar method is used to initiate the object
+        Example::
+
+            Here the from_rms method is used to initiate the object
             directly::
 
               import xtgeo
-              topupperreek = xtgeo.surface_from_roxar(project, 'TopUpperReek',
+              topupperreek = xtgeo.surface_from_rms(project, 'TopUpperReek',
                                                     'DS_extracted')
               topupperreek.values += 200
 
@@ -1237,23 +1266,74 @@ class RegularSurface:
               topupperreek.to_file('topupperreek.gri')
 
               # store in project
-              topupperreek.to_roxar(project, 'TopUpperReek', 'DS_something')
+              topupperreek.to_rms(project, 'TopUpperReek', 'DS_something')
 
-        Note::
-
-            When dealing with surfaces to and from ``stype="trends"``, the surface must
-            exist in advance, i.e. the Roxar API do not allow creating new surfaces.
-            Actually trends are read only, but a workaround using ``load()`` in Roxar
-            API makes it possible to overwrite existing surface trends. In addition,
-            ``realisation`` is not applied in trends.
+        Note:
+            The ``realisation`` number is not applied in trends.
 
 
         .. versionadded:: 2.1 clipboard support
         .. versionadded:: 2.19 general2d_data and trends support
+        .. versionadded:: 4.14 Add domain keyword
 
         """
-        _regsurf_roxapi.export_horizon_roxapi(
-            self, project, name, category, stype, realisation
+        use_srf = self
+        if self.yflip == -1:
+            use_srf = self.copy()
+            use_srf.make_lefthanded()
+
+        data = xtgeo.interfaces.rms.RegularSurfaceDataRms(
+            name=name,
+            xori=use_srf.xori,
+            yori=use_srf.yori,
+            ncol=use_srf.ncol,
+            nrow=use_srf.nrow,
+            xinc=use_srf.xinc,
+            yinc=use_srf.yinc,
+            rotation=use_srf.rotation,
+            values=use_srf.values,  # exporter will enforce float64 and sanitize
+        )
+
+        writer = xtgeo.interfaces.rms.RegularSurfaceWriter(
+            project_or_path=project,
+            name=name,
+            category=category,
+            stype=stype,
+            realisation=realisation,
+            domain=domain,
+        )
+        writer.save(data)
+
+    def to_roxar(
+        self: RegularSurface,
+        project: object,
+        name: str,
+        category: str,
+        stype: str = "horizons",
+        realisation: int = 0,
+        domain: Literal["depth", "time", "unknown"] = "depth",
+    ) -> None:  # pragma: no cover
+        """Deprecated: Use to_rms() instead.
+
+        .. deprecated:: 4.15
+           ``to_roxar()`` is deprecated and will be removed in a future version.
+           Use :meth:`to_rms()` instead.
+        """
+        # a PendingDeprecationWarning will not show up for RMS users, which is intended
+        # since they should not be 'disturbed' by this change at this point.
+        warnings.warn(
+            "The 'to_roxar()' method is deprecated and will be removed in a later "
+            "xtgeo version. Use 'to_rms()' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            name=name,
+            category=category,
+            stype=stype,
+            realisation=realisation,
+            domain=domain,
         )
 
     @classmethod
