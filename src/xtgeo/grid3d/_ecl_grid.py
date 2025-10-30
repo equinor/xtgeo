@@ -7,7 +7,11 @@ from typing import Any, List, Optional, Tuple, Union
 import numpy as np
 from scipy.constants import foot
 
+from xtgeo.common.log import null_logger
+
 from ._grdecl_format import match_keyword
+
+logger = null_logger(__name__)
 
 
 @unique
@@ -539,9 +543,9 @@ class EclGrid(ABC):
             has_axis_units = False
 
         if has_mapaxes and not has_axis_units:
-            warnings.warn(
+            logger.info(
                 "Axis units specification is missing in input, assuming that no "
-                "unit conversion is necessary"
+                "unit conversion is necessary."
             )
 
         if relative_to == GridRelative.MAP and not self.is_map_relative:
