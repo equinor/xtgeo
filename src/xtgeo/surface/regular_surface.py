@@ -197,6 +197,7 @@ def surface_from_rms(
     ).load()
 
     return RegularSurface(
+        name=regsurf_rms.name,
         ncol=regsurf_rms.ncol,
         nrow=regsurf_rms.nrow,
         xori=regsurf_rms.xori,

@@ -325,6 +325,8 @@ def test_rox_surfaces(rms_project_path):
     srf2 = xtgeo.surface_from_rms(rms_project_path, "MidReek", SURFCAT1)
     assert srf.ncol == 554
     assert srf.values.mean() == pytest.approx(1698.648, abs=0.01)
+    assert srf.name == "TopReek"
+    assert srf2.name == "MidReek"
 
     srf.to_rms(rms_project_path, "TopReek_copy", "SomeFolder", stype="clipboard")
 
