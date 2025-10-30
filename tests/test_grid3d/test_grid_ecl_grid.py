@@ -153,14 +153,24 @@ def test_transform_map_relative_no_double(egrid):
         assert_allclose(coord1, coord2)
 
 
-@given(xtgeo_compatible_egrids())
-def test_conversion_warning(egrid):
-    with pytest.warns(UserWarning) as warnlog:
-        egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP)
+def test_conversion_warning(caplog):
+    import logging
 
-    axis_unit_warnings = [w for w in warnlog if "Axis units" in str(w.message)]
+    @given(xtgeo_compatible_egrids())
+    def run_test(egrid):
+        caplog.clear()
+        with caplog.at_level(logging.INFO):
+            egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP)
 
-    if egrid.mapaxes is not None and egrid.map_axis_units is None:
-        assert len(axis_unit_warnings) == 1
-    else:
-        assert len(axis_unit_warnings) == 0
+        axis_unit_messages = [
+            record.message
+            for record in caplog.records
+            if "Axis units" in record.message
+        ]
+
+        if egrid.mapaxes is not None and egrid.map_axis_units is None:
+            assert len(axis_unit_messages) == 1
+        else:
+            assert len(axis_unit_messages) == 0
+
+    run_test()
