@@ -696,3 +696,19 @@ class Points(XYZ):
     @inherit_docstring(inherit_from=XYZ.get_xyz_arrays)
     def get_xyz_arrays(self):
         return super().get_xyz_arrays()
+
+    def merge_close_points(
+        self,
+        min_distance: float,
+        method: str = "average",
+    ):
+        """Merge close points based on a minimum distance.
+
+        Args:
+            min_distance (float): Minimum distance to consider points as close.
+            method (str): Merge method, one of 'average', 'median', 'first',
+                'min_z', 'max_z'.
+
+        """
+        # Implementation of the merging logic goes here
+        _xyz_oper.merge_close_points(self, min_distance, method)
