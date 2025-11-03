@@ -37,6 +37,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "deprecation",
+    "gstools",
     "h5py>=3",
     "hdf5plugin>=2.3",
     "joblib",
@@ -150,6 +151,10 @@ markers = [
     "requires_roxar: Test requires to run in RMS python",
 ]
 doctest_optionflags = "ELLIPSIS"
+filterwarnings = [
+    "ignore:Epsilon auto-calculated:UserWarning",
+    "ignore:Points are very close together:RuntimeWarning",
+]
 
 [tool.setuptools_scm]
 write_to = "src/xtgeo/common/version.py"
