@@ -189,7 +189,7 @@ cell_polygon_relation(const grid3d::CellCorners &cell,
  * plane.
  *
  * @param polygon The polygon whose vertices are used to compute the bounding box.
- * @return std::array<double, 4> with the bounds in the form { xmin, ymin, xmax, ymax }.
+ * @return std::array<double, 4> with the bounds in the form { min_x, max_x, min_y, max_y }.
  */
 std::array<double, 4>
 get_polygon_xy_bbox(const xyz::Polygon &polygon);

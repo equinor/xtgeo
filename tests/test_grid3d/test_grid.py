@@ -572,7 +572,7 @@ def test_benchmark_bulkvol(benchmark):
 
 
 def test_phasevol(testdata_path):
-    """Test cell bulk volume calculation."""
+    """Test cell phase volume calculation."""
     grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
     cellvol_rms = xtgeo.gridproperty_from_file(testdata_path / GRIDQC1_CELLVOL)
 
@@ -643,7 +643,7 @@ def test_benchmark_phase_volume(benchmark):
 
 @pytest.mark.benchmark(group="phase_volume")
 def test_benchmark_phase_volume_with_boundary(benchmark):
-    """Benchmark phase volume calculation."""
+    """Benchmark phase volume calculation with boundary."""
     grid = xtgeo.create_box_grid(
         (10, 50, 5), origin=(0, 0, 1000), increment=(100, 100, 10)
     )
