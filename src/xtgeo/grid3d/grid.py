@@ -1984,6 +1984,56 @@ class Grid(_Grid3D):
             self, name=name, precision=precision, asmasked=asmasked
         )
 
+    def get_phase_volume(
+        self,
+        woc: float | GridProperty,
+        goc: float | GridProperty,
+        boundary: Polygons | None = None,
+        asmasked: bool = True,
+        precision: Literal[1, 2, 4] = 2,
+    ) -> tuple[GridProperty, GridProperty, GridProperty]:
+        """Return the geometric phase cell volume for all cells as three GridProperty
+        object namely gas_bulkvol, oil_bulkvol, water_bulkvol.
+
+        The volume calculation is constrained to area within boundary polygon.
+
+        A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
+        entity. The volume is approximated by dividing the cell (hexahedron) into
+        6 tetrehedrons; there is however a large number of ways to do this division.
+
+        As default (precision=2) an average of two different ways to divide the cell
+        into tetrahedrons is averaged.
+
+        Args:
+            woc: Water oil contact
+            goc: Gas oil contact
+            boundary: Boundary area
+            asmasked: If True, make a np.ma array where inactive cells
+                are masked. Otherwise a numpy array will all bulk for all cells is
+                returned
+            precision (int): Not applied!
+
+        Returns:
+            Three XTGeo GridProperty objects: gas, oil and water volumes
+
+        Example::
+
+            >>> grid = xtgeo.grid_from_file("myGrid.roff")
+            >>> woc = xtgeo.GridProperty(grid, values=1700.0)
+            >>> goc = xtgeo.GridProperty(grid, values=1650.0)
+            >>> gas, oil, water = grid.get_phase_volume(woc=woc, goc=goc)
+            >>> print(f"Total gas volume: {gas.values.sum()}")
+
+        """
+        return _grid_etc1.get_phase_bulk_volume(
+            self,
+            woc=woc,
+            goc=goc,
+            boundary=boundary,
+            precision=precision,
+            asmasked=asmasked,
+        )
+
     def get_heights_above_ffl(
         self,
         ffl: GridProperty,

@@ -571,6 +571,102 @@ def test_benchmark_bulkvol(benchmark):
     benchmark(run)
 
 
+def test_phasevol(testdata_path):
+    """Test cell bulk volume calculation."""
+    grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
+    cellvol_rms = xtgeo.gridproperty_from_file(testdata_path / GRIDQC1_CELLVOL)
+
+    gasvol, oilvol, watervol = grd.get_phase_volume(woc=2000, goc=1800, boundary=None)
+
+    assert grd.dimensions == gasvol.dimensions
+    assert grd.dimensions == oilvol.dimensions
+    assert grd.dimensions == watervol.dimensions
+    bulkvol = gasvol.values + oilvol.values + watervol.values
+
+    assert np.sum(gasvol.values) == pytest.approx(297890391)
+    assert np.sum(oilvol.values) == pytest.approx(15132726)
+    assert np.sum(watervol.values) == pytest.approx(86876861)
+
+    assert np.allclose(cellvol_rms.values, bulkvol)
+
+
+def test_phase_volume_with_polygon_boundary(testdata_path):
+    """Test phase volume calculation with a polygon boundary constraint."""
+    grid = xtgeo.create_box_grid(
+        (10, 10, 5), origin=(0, 0, 1000), increment=(100, 100, 10)
+    )
+
+    # Create a simple rectangular polygon
+    polygon_coords = np.array(
+        [
+            [200, 200, 1000],
+            [800, 200, 1000],
+            [800, 800, 1000],
+            [200, 800, 1000],
+            [200, 200, 1000],  # Close the polygon
+        ]
+    )
+    poly = xtgeo.Polygons(polygon_coords)
+    goc = xtgeo.GridProperty(grid, values=1020.0)
+    woc = xtgeo.GridProperty(grid, values=1040.0)
+
+    # Calculate with boundary
+    gas_poly, oil_poly, water_poly = grid.get_phase_volume(
+        woc=woc, goc=goc, boundary=poly
+    )
+
+    # Calculate without boundary
+    gas_full, oil_full, water_full = grid.get_phase_volume(
+        woc=woc, goc=goc, boundary=None
+    )
+
+    # Volumes with boundary should be less than or equal to full volumes
+    assert np.sum(gas_poly.values) < np.sum(gas_full.values)
+    assert np.sum(oil_poly.values) < np.sum(oil_full.values)
+    assert np.sum(water_poly.values) < np.sum(water_full.values)
+
+
+@pytest.mark.benchmark(group="phase_volume")
+def test_benchmark_phase_volume(benchmark):
+    """Benchmark phase volume calculation."""
+    grid = xtgeo.create_box_grid(
+        (10, 50, 5), origin=(0, 0, 1000), increment=(100, 100, 10)
+    )
+    goc = xtgeo.GridProperty(grid, values=1030.0)
+    woc = xtgeo.GridProperty(grid, values=1060.0)
+
+    def run():
+        _ = grid.get_phase_volume(woc=woc, goc=goc, boundary=None)
+
+    benchmark(run)
+
+
+@pytest.mark.benchmark(group="phase_volume")
+def test_benchmark_phase_volume_with_boundary(benchmark):
+    """Benchmark phase volume calculation."""
+    grid = xtgeo.create_box_grid(
+        (10, 50, 5), origin=(0, 0, 1000), increment=(100, 100, 10)
+    )
+    goc = xtgeo.GridProperty(grid, values=1015.0)
+    woc = xtgeo.GridProperty(grid, values=1040.0)
+    polygon_coords = np.array(
+        [
+            [300, 1000, 1000],
+            [600, 1000, 1000],
+            [600, 3000, 1000],
+            [300, 3000, 1000],
+            [300, 1000, 1000],
+        ]
+    )
+
+    def run():
+        _ = grid.get_phase_volume(
+            woc=woc, goc=goc, boundary=xtgeo.Polygons(polygon_coords)
+        )
+
+    benchmark(run)
+
+
 def test_cell_height_above_ffl(testdata_path):
     """Test cell heights above ffl."""
     grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
