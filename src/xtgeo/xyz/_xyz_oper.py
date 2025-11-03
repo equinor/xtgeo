@@ -692,9 +692,17 @@ def merge_close_points(
     parent = list(range(len(xcv)))
 
     def find(i):
-        if parent[i] != i:
-            parent[i] = find(parent[i])
-        return parent[i]
+        """Find root with iterative path compression to avoid recursion limit."""
+        root = i
+        # Find the root
+        while parent[root] != root:
+            root = parent[root]
+        # Path compression: make all nodes on the path point directly to root
+        while parent[i] != root:
+            next_parent = parent[i]
+            parent[i] = root
+            i = next_parent
+        return root
 
     def union(i, j):
         root_i = find(i)

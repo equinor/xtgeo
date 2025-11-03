@@ -2187,8 +2187,8 @@ class RegularSurface:
 
             # Many points with extrapolation outside convex hull and merge close points
             # closer than 10% of average grid spacing
-            surf.gridding(points, method='rbf', method_options={'function': 'linear',
-            'merge_close_points': '0.1*avg_inc'})
+            surf.gridding(points, method='rbf', method_options={'function': 'linear'},
+            'merge_close_points': '0.1*avg_inc')
 
             # Sparse points or trends - use RBF for smooth result
             surf.gridding(points, method='rbf')

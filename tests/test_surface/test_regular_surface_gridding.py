@@ -6,8 +6,6 @@ import numpy as np
 import pytest
 
 import xtgeo
-from xtgeo.surface import RegularSurface
-from xtgeo.xyz import Points
 
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
 
@@ -15,7 +13,7 @@ POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
 @pytest.fixture
 def simple_surface():
     """Create a simple regular surface template for testing."""
-    return RegularSurface(
+    return xtgeo.RegularSurface(
         ncol=50,
         nrow=50,
         xinc=10.0,
@@ -36,7 +34,7 @@ def simple_points():
     # Create a tilted plane: z = 100 + 0.1*x + 0.05*y
     z = 100 + 0.1 * x + 0.05 * y + np.random.normal(0, 1, n_points)
 
-    return Points(
+    return xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -52,7 +50,7 @@ def sparse_points():
     y = [100, 150, 250, 300, 200, 350, 150]
     z = [100, 110, 105, 115, 120, 125, 130]
 
-    return Points(
+    return xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -68,7 +66,7 @@ def close_points():
     y = [100.0, 100.1, 250.0, 150.0, 350.0]  # Not on diagonal
     z = [50.0, 51.0, 60.0, 70.0, 80.0]
 
-    return Points(
+    return xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -150,7 +148,7 @@ def test_gridding_nearest_preserves_values(simple_surface):
     y = [100, 200, 300]
     z = [10.0, 20.0, 30.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -470,7 +468,6 @@ def test_gridding_not_points_instance(simple_surface):
 
 def test_gridding_from_polygons(simple_surface):
     """Test gridding from Polygons instance."""
-    import xtgeo
 
     surf = simple_surface.copy()
 
@@ -494,8 +491,6 @@ def test_gridding_from_polygons(simple_surface):
 def test_gridding_from_surface(simple_surface):
     """Test gridding from RegularSurface instance."""
     import numpy as np
-
-    import xtgeo
 
     surf = simple_surface.copy()
 
@@ -564,7 +559,7 @@ def test_gridding_preserves_point_values_nearest(simple_surface):
     y = [100, 200, 300]
     z = [50.0, 60.0, 70.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -586,7 +581,7 @@ def test_gridding_linear_interpolation_properties(simple_surface):
     y = [100, 300, 100, 300]
     z = [10.0, 20.0, 30.0, 40.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -614,7 +609,7 @@ def test_gridding_single_point(simple_surface):
     y = [250]
     z = [100.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -634,7 +629,7 @@ def test_gridding_few_points(simple_surface):
     y = [100, 400]
     z = [50.0, 150.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -659,7 +654,7 @@ def test_gridding_idw_min_points_not_met(simple_surface):
     y = [100, 400]
     z = [50.0, 150.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -685,7 +680,7 @@ def test_gridding_idw_min_points_not_met(simple_surface):
 def test_gridding_empty_points(simple_surface):
     """Test gridding with empty points object raises appropriate error."""
     # Create a Points object with zero points (but proper structure)
-    empty_points = Points(
+    empty_points = xtgeo.Points(
         values=np.empty((0, 3)),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -706,7 +701,7 @@ def test_gridding_points_outside_surface(simple_surface):
     y = [1000, 1100, 1200]
     z = [50.0, 60.0, 70.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -727,7 +722,7 @@ def test_gridding_points_at_surface_edges(simple_surface):
     y = [0, 0, 490, 490, 245]
     z = [10.0, 20.0, 30.0, 40.0, 25.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -748,7 +743,7 @@ def test_gridding_duplicate_points_no_merge(simple_surface):
     y = [100, 100, 200, 300]
     z = [50.0, 55.0, 60.0, 70.0]  # Different Z values
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -769,7 +764,7 @@ def test_gridding_duplicate_points_with_merge(simple_surface):
     y = [100, 100, 250, 150, 200]  # Non-collinear after merge
     z = [50.0, 55.0, 60.0, 70.0, 58.0]  # Different Z values
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -791,7 +786,7 @@ def test_gridding_collinear_points(simple_surface):
     coords = [(100 + i * 50, 100 + i * 50, 10.0 + i * 5) for i in range(6)]
     x, y, z = zip(*coords)
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -812,7 +807,7 @@ def test_gridding_extreme_z_values(simple_surface):
     y = [100, 250, 150, 350, 200]
     z = [1e6, -1e6, 1e-6, -1e-6, 0.0]  # Extreme values
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -839,7 +834,7 @@ def test_gridding_uniform_z_values(simple_surface):
     y = [100, 250, 150, 350, 200, 300]
     z = [100.0] * 6  # All same value
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -867,7 +862,7 @@ def test_gridding_very_dense_points(simple_surface):
     y = np.random.uniform(100, 400, n_points)
     z = 100 + 0.1 * x + 0.05 * y
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -889,7 +884,7 @@ def test_gridding_nan_values_in_points(simple_surface):
     z = [50.0, 60.0, 70.0, 80.0, 90.0, 65.0]
 
     # Points should filter out NaN values automatically
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -912,7 +907,7 @@ def test_gridding_with_coarsen_edge_cases(simple_surface):
     y = np.random.uniform(50, 450, n_points)
     z = 100 + 0.1 * x + 0.05 * y
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -955,7 +950,7 @@ def test_gridding_rbf_with_noise(simple_surface):
     # True function + significant noise
     z = 100 + 0.1 * x + 0.05 * y + np.random.normal(0, 10, n_points)
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -979,7 +974,7 @@ def test_gridding_merge_all_points_merged(simple_surface):
     y = [100, 110, 120, 130]
     z = [50.0, 60.0, 70.0, 80.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -1047,7 +1042,7 @@ def test_gridding_different_surface_sizes(simple_points):
     dimensions = [(10, 10), (100, 100), (20, 50)]
 
     for ncol, nrow in dimensions:
-        surf = RegularSurface(
+        surf = xtgeo.RegularSurface(
             ncol=ncol,
             nrow=nrow,
             xinc=10.0,
@@ -1068,7 +1063,7 @@ def test_gridding_different_increments():
     y = [100, 250, 150, 350, 200]
     z = [50.0, 60.0, 70.0, 80.0, 65.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -1076,7 +1071,7 @@ def test_gridding_different_increments():
     )
 
     # Very different xinc and yinc (anisotropic grid)
-    surf = RegularSurface(
+    surf = xtgeo.RegularSurface(
         ncol=50,
         nrow=50,
         xinc=5.0,  # Fine in X
@@ -1097,7 +1092,7 @@ def test_gridding_rotated_surface():
     y = [100, 250, 150, 350, 200]
     z = [50.0, 60.0, 70.0, 80.0, 65.0]
 
-    points = Points(
+    points = xtgeo.Points(
         values=np.column_stack([x, y, z]),
         xname="X_UTME",
         yname="Y_UTMN",
@@ -1105,7 +1100,7 @@ def test_gridding_rotated_surface():
     )
 
     # Rotated surface (30 degrees)
-    surf = RegularSurface(
+    surf = xtgeo.RegularSurface(
         ncol=50,
         nrow=50,
         xinc=10.0,

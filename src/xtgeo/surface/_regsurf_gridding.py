@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import warnings
 from typing import TYPE_CHECKING
 
@@ -57,13 +58,20 @@ def merge_close_points_preprocessing(
 
     # Calculate threshold distance
     if isinstance(merge_close_points, str):
-        # Parse expressions like "0.5*avg_inc"
+        # Parse expressions like "0.5*avg_inc" safely using regex
         avg_inc = (surface.xinc + surface.yinc) / 2.0
         if "avg_inc" in merge_close_points:
-            threshold = eval(
-                merge_close_points.replace("avg_inc", str(avg_inc)),
-                {"__builtins__": {}},
-            )
+            # Use regex to parse simple expressions like "number*avg_inc"
+            pattern = r"^\s*([\d.]+)\s*\*\s*avg_inc\s*$"
+            match = re.match(pattern, merge_close_points)
+            if match:
+                factor = float(match.group(1))
+                threshold = factor * avg_inc
+            else:
+                raise ValueError(
+                    f"Invalid merge_close_points expression: '{merge_close_points}'. "
+                    "Expected format: 'number*avg_inc' (e.g., '0.5*avg_inc')"
+                )
         else:
             threshold = float(merge_close_points)
     else:
@@ -200,10 +208,8 @@ def _filter_points_within_surface(self, points):
         (r[0].x, r[0].y, r[0].z, 0),
     ]
     boundary = Polygons(plist)
-    boundary.to_file("/tmp/regsurf_boundary.pol")
 
     p.eli_outside_polygons(boundary)
-    p.to_file("/tmp/filtered_points.xyz")
 
     logger.info("Filtered points inside surface: %d", p.nrow)
 
@@ -614,49 +620,101 @@ def points_idw_gridding(self, points, power=2.0, radius=None, min_points=1, coar
         points: Points object containing x, y, z coordinates
         power: Power parameter for IDW (default 2.0). Higher values give more
                weight to nearby points
-        radius: Search radius in map units. If None, uses all points (slower)
+        radius: Search radius in map units. If None, uses all points for small
+               datasets (< 1000 points) or auto-calculates radius for larger datasets
         min_points: Minimum number of points required for interpolation
         coarsen: Coarsening factor for input points (use every Nth point)
     """
 
     _, xcv, ycv, zcv, xiv, yiv = _points_gridding_common(self, points, coarsen=coarsen)
+
+    npoints = len(xcv)
+
+    # For large datasets without specified radius, auto-calculate one
+    # to avoid O(n*m) complexity
+    use_kdtree = radius is not None or npoints > 1000
+
+    if use_kdtree and radius is None:
+        radius = _calculate_optimal_radius(self, xcv, ycv)
+        logger.info("Auto-calculated IDW search radius for large dataset: %.2f", radius)
+
     # Flatten grid coordinates for processing
     xi_flat = xiv.ravel()
     yi_flat = yiv.ravel()
     zi_flat = np.full(xi_flat.shape, np.nan)
 
-    logger.info(f"IDW gridding {len(xcv)} points to {len(xi_flat)} grid nodes...")
+    if use_kdtree:
+        # Use KD-tree for efficient spatial search (large datasets or radius specified)
+        from scipy.spatial import cKDTree
 
-    # For each grid point, calculate IDW interpolation
-    for i in range(len(xi_flat)):
-        # Calculate distances from grid point to all data points
-        dx = xcv - xi_flat[i]
-        dy = ycv - yi_flat[i]
-        distances = np.sqrt(dx**2 + dy**2)
+        tree = cKDTree(np.column_stack([xcv, ycv]))
+        logger.info(
+            "IDW gridding %d points to %d grid nodes "
+            "(radius=%.2f, power=%.2f, using KD-tree)...",
+            npoints,
+            len(xi_flat),
+            radius,
+            power,
+        )
 
-        # Apply radius filter if specified
-        if radius is not None:
-            mask = distances <= radius
-            distances = distances[mask]
-            z_nearby = zcv[mask]
-        else:
+        # For each grid point, use KD-tree to find nearby points
+        for i in range(len(xi_flat)):
+            idx_nearby = tree.query_ball_point([xi_flat[i], yi_flat[i]], radius)
+
+            if len(idx_nearby) < min_points:
+                continue
+
+            # Get nearby points
+            x_nearby = xcv[idx_nearby]
+            y_nearby = ycv[idx_nearby]
+            z_nearby = zcv[idx_nearby]
+
+            # Calculate distances
+            dx = x_nearby - xi_flat[i]
+            dy = y_nearby - yi_flat[i]
+            distances = np.sqrt(dx**2 + dy**2)
+
+            # Handle coincident points
+            zero_dist = distances < 1e-10
+            if np.any(zero_dist):
+                zi_flat[i] = z_nearby[zero_dist][0]
+                continue
+
+            # IDW weights
+            weights = 1.0 / (distances**power)
+            zi_flat[i] = np.sum(weights * z_nearby) / np.sum(weights)
+    else:
+        # Simple vectorized approach for small datasets without radius
+        logger.info(
+            "IDW gridding %d points to %d grid nodes (power=%.2f, using all points)...",
+            npoints,
+            len(xi_flat),
+            power,
+        )
+
+        for i in range(len(xi_flat)):
+            # Calculate distances from grid point to all data points
+            dx = xcv - xi_flat[i]
+            dy = ycv - yi_flat[i]
+            distances = np.sqrt(dx**2 + dy**2)
+
             z_nearby = zcv
 
-        # Skip if not enough points
-        if len(distances) < min_points:
-            continue
+            # Skip if not enough points
+            if len(distances) < min_points:
+                continue
 
-        # Handle coincident points (distance = 0)
-        zero_dist = distances < 1e-10
-        if np.any(zero_dist):
-            zi_flat[i] = z_nearby[zero_dist][0]
-            continue
+            # Handle coincident points (distance = 0)
+            zero_dist = distances < 1e-10
+            if np.any(zero_dist):
+                zi_flat[i] = z_nearby[zero_dist][0]
+                continue
 
-        # Calculate weights: w_i = 1 / d_i^power
-        weights = 1.0 / (distances**power)
+            # Calculate weights: w_i = 1 / d_i^power
+            weights = 1.0 / (distances**power)
 
-        # Normalize weights and calculate weighted average
-        zi_flat[i] = np.sum(weights * z_nearby) / np.sum(weights)
+            # Normalize weights and calculate weighted average
+            zi_flat[i] = np.sum(weights * z_nearby) / np.sum(weights)
 
     # Reshape back to grid
     znew = zi_flat.reshape(xiv.shape)
@@ -1451,7 +1509,7 @@ def points_kriging_gridding(
 
         # Bilinear exact enforcement (more accurate than nearest node)
         surf.gridding(points, method='kriging',
-                     method_options={'exact': 'bilinear'})
+                     method_options={'exact': True})
 
         # Pure kriging without enforcing exact values
         surf.gridding(points, method='kriging',
@@ -1930,7 +1988,7 @@ def surf_fill(
                     zcv,
                     kernel="thin_plate_spline",
                     smoothing=0.0,
-                    degree=1,  # Minimum required for thin_plate_spline
+                    degree=1,
                 )
                 znew = rbf(np.column_stack([xiv.ravel(), yiv.ravel()])).reshape(
                     xiv.shape
