@@ -61,6 +61,7 @@ from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataRegularSurface
 from xtgeo.xyz.points import Points
+from xtgeo.xyz.polygons import Polygons
 
 from . import (
     _regsurf_boundary,
@@ -1873,25 +1874,39 @@ class RegularSurface:
         """
         _regsurf_utils.autocrop(self)
 
-    def fill(self, fill_value=None):
-        """Fast infilling of undefined values.
+    def fill(
+        self,
+        fill_value=None,
+        method: Literal["nearest", "linear", "cubic", "radial_basis"] = "nearest",
+    ) -> None:
+        """Infilling of undefined values.
 
-        Note that minimum and maximum values will not change.
+        Note that minimum and maximum values will not change with "linear" or "cubic".
 
-        Algorithm if `fill_value` is not set is based on a nearest node extrapolation.
-        Technically, ``scipy.ndimage.distance_transform_edt`` is applied. If fill_value
-        is set by a scalar, that (constant) value be be applied
+        Algorithm when `fill_value` is not set explicitly, is based on a nearest node
+        extrapolation.
+
 
         Args:
-            fill_value (float): If defined, fills all undefined cells with that value.
+            fill_value: If numeric, fill with this constant value
+            method: Extrapolation method if fill_value is None:
+
+                - 'nearest': Use nearest valid cell (fast, blocky)
+                - 'linear': Linear interpolation/extrapolation (smooth)
+                - 'cubic': Cubic interpolation/extrapolation (very smooth)
+                - 'radial_basis': RBF (radial basis function) defaulted with thin
+                  plate spline (smooth, best quality). See also
+                  scipy.interpolate.RBFInterpolator:
+                  https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RBFInterpolator.html
 
         Returns:
             RegularSurface instance is updated in-place
 
         .. versionadded:: 2.1
         .. versionchanged:: 2.6 Added option key `fill_value`
+        .. versionchanged:: 4.14 Added method 'radial_basis'
         """
-        _regsurf_gridding.surf_fill(self, fill_value=fill_value)
+        _regsurf_gridding.surf_fill(self, fill_value=fill_value, method=method)
 
     def smooth(
         self,
@@ -2053,35 +2068,231 @@ class RegularSurface:
     # Interacion with points
     # ==================================================================================
 
-    def gridding(self, points, method="linear", coarsen=1):
-        """Grid a surface from points.
+    def gridding(
+        self,
+        input_data: Union[Points, Polygons, "RegularSurface"],
+        method: Literal[
+            "linear",
+            "cubic",
+            "nearest",
+            "inverse_distance",
+            "idw",
+            "radial_basis",
+            "rbf",
+            "moving_average",
+            "kriging",
+        ] = "linear",
+        coarsen: int = 1,
+        merge_close_points: Optional[Union[float, str]] = None,
+        merge_method: Literal[
+            "average", "median", "first", "min_z", "max_z"
+        ] = "average",
+        method_options: Optional[Dict] = None,
+    ):
+        """Grid a surface from points, polygons, or another surface.
+
+        A variety of gridding methods are available, suitable for different
+        point distributions and desired output quality. The instance will be updated
+        in-place.
 
         Args:
-            points(Points): XTGeo Points instance.
-            method (str): Gridding method option: linear / cubic / nearest
-            coarsen (int): Coarsen factor, to speed up gridding, but will
-                give poorer result.
+            input_data: Input data - can be XTGeo Points, Polygons, or RegularSurface
+                instance.
+            method: Gridding method. Options:
 
-        Example::
+                - 'linear': Linear interpolation (fast, simple)
+                - 'cubic': Cubic interpolation (many points, smooth result)
+                  **recommended for dense data**
+                - 'nearest': Nearest neighbor (preserves exact values)
+                - 'inverse_distance': Inverse distance weighting (IDW) (local control)
+                - 'radial_basis': Radial basis function (RBF) (sparse data, very smooth)
+                  **recommended for sparse data**. But may also work well for dense
+                  data, in particular when using 'function' = linear.
+                - 'moving_average': Moving average gridding (smooth)
+                - 'kriging': Use ordinary or simple kriging, requires gstools installed.
 
-            >>> import xtgeo
-            >>> mypoints = xtgeo.Points(points_dir + '/pointset2.poi')
-            >>> mysurf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            coarsen: Coarsen factor to speed up gridding (use every Nth point)
+            merge_close_points: Minimum distance threshold for merging close points.
+                Can be a float (distance in map units) or a string like "0.5*avg_inc"
+                to use a fraction of the average grid increment. Set to None to disable
+                merging (default). Useful when points are too close and cause numerical
+                issues during gridding, in particular for methods 'kriging' and
+                'radial_basis'.
+            merge_method: Method for merging close points: 'average', 'median',
+                'first', 'min_z', 'max_z'. Default is 'average'. Only used when
+                merge_close_points is not None.
+            method_options: Dictionary with method-specific parameters:
 
-            >>> # update the surface by gridding the points
-            >>> mysurf.gridding(mypoints)
+                For methods 'linear', 'cubic', 'nearest':
+                    - Extrapolate (bool) to fill map outide point
+                      'convex-hull' area, default is False
+
+                For method='inverse_distance':
+                    - power (float): IDW power parameter, default 2.0
+                    - radius (float): Search radius, default None (use all points)
+                    - min_points (int): Minimum points required, default 1
+
+                For method='radial_basis':
+                    - function (str): Kernel type, default 'thin_plate_spline'
+                      Options: 'thin_plate_spline', 'cubic', 'quintic',
+                      'multiquadric', 'inverse_multiquadric',
+                      'inverse_quadratic', 'gaussian', 'linear'
+                      See also: scipy.interpolate.RBFInterpolator
+                      https://docs.scipy.org/doc/scipy/reference/generated/scipy.
+                      interpolate.RBFInterpolator.html
+                    - smoothing (float): Smoothing parameter, default 0.0
+                      (interpolating)
+                    - epsilon (float): Shape parameter (certain kernels), default None
+
+                For method='moving_average':
+                    - radius (float): Search radius, default is None (auto-computed)
+                    - min_points (int): Minimum points required, default 3
+
+                For method='kriging':
+                    - variogram_model (str): Model type, default 'Gaussian'
+                      Options: 'Gaussian', 'Exponential', 'Spherical', 'Matern',
+                      'Stable', 'Linear'. Note that 'Stable' is the same as
+                      'General_exponential' seen in some vendor tools.
+                    - len_scale (float or tuple): Correlation length (range),
+                      default auto-estimated
+                      Use tuple (len_x, len_y) for anisotropy.
+                    - angle (float): Rotation angle in degrees for anisotropic
+                      variograms (counter-clockwise from East, GSTools convention).
+                      Only used when len_scale is a tuple. Default None (0°).
+                      Examples: 0°=East, 90°=North, 45°=NE, -45°=SE.
+                    - range_value (float or tuple): Alternative to GsTools `len_scale`,
+                      where range_value is close to what RMS/Petrel uses. Default None
+                      (auto-estimated). If both `len_scale` and `range_value` are
+                      provided, `len_scale` takes precedence.
+                    - nugget (float): Nugget effect, default 0.0
+                    - krige_type (str): Type of kriging, 'ordinary' (default)
+                      or 'simple'
+                    - mean (float): Mean value for simple kriging, default None
+                      (auto-estimated).
+                    - variogram_parameters (dict): Additional parameters, default None
+                      Options: 'var'/'sill' (variance), 'nu' (Matern), 'alpha' (Stable)
+                    - max_points (int): Max points to use for kriging estimation
+                      per node, default 500 (for less, use all points, for more, do
+                      local kriging). Can speed up gridding significantly, doing
+                      block-kriging in stead of global.
+                    - radius (float): Search radius for kriging, default None (use all
+                      points).
+                    - exact (bool): If True, ensures points are exactly reproduced,
+                      default is False.
+
+
+        Examples::
+            # Many points that cover mapping area - use cubic (fast, good quality)
+            surf.gridding(points, method='cubic')
+
+            # Many points with extrapolation outside convex hull and merge close points
+            # closer than 10% of average grid spacing
+            surf.gridding(points, method='rbf', method_options={'function': 'linear',
+            'merge_close_points': '0.1*avg_inc'})
+
+            # Sparse points or trends - use RBF for smooth result
+            surf.gridding(points, method='rbf')
+
+            # Sparse points with custom RBF
+            surf.gridding(points, method='rbf',
+            method_options={'function': 'thin_plate', 'smooth': 0.1})
+
+            # IDW for local control
+            surf.gridding(points, method='idw',
+            method_options={'power': 2.0, 'radius': 1000.0})
+
+            # Merge close points before gridding (using absolute distance)
+            surf.gridding(points, method='linear',
+            merge_close_points=5.0, merge_method='average')
+
+            # Kriging with custom variogram
+            surf.gridding(points, method='kriging',
+            method_options={'variogram_model': 'Exponential',
+            'range_value': (500.0, 1000.0),
+            'nugget': 0.1, 'angle': 45.0,
+            'krige_type': 'ordinary'})
+
+        Returns:
+            RegularSurface instance is updated in-place.
+
+        Note:
+            While the linear method is default for historical reasons, the recommended
+            method for general use is 'radial_basis' which works well
+            both for sparse data (e.g. isochore gridding) and dense data with
+            appropriate tuning of method parameters.
 
         Raises:
-            RuntimeError: If not possible to grid for some reason
-            ValueError: If invalid input
+            ValueError: If method is invalid or required method_options are missing
+            RuntimeError: If gridding fails
 
+        .. versionchanged:: 4.14 Added many more options and methods
+        .. versionchanged:: 4.14 Accepts Points, Polygons, or RegularSurface as input
         """
-        if not isinstance(points, Points):
-            raise ValueError("Argument not a Points instance")
+        from xtgeo.xyz.points import points_from_surface
 
-        logger.info("Do gridding...")
+        # Convert input to Points if needed
+        if isinstance(input_data, Points):
+            points = input_data.copy()
+        elif isinstance(input_data, Polygons):
+            # Convert Polygons to Points by using the polygon vertices
+            df = input_data.get_dataframe(copy=True)
+            points = Points(values=df)
+        elif isinstance(input_data, RegularSurface):
+            # Convert RegularSurface to Points using active nodes only
+            points = points_from_surface(input_data)
+        else:
+            raise ValueError(
+                "Input must be a Points, Polygons, or RegularSurface instance"
+            )
 
-        _regsurf_gridding.points_gridding(self, points, coarsen=coarsen, method=method)
+        method_options = method_options or {}
+
+        # Handle point merging (common preprocessing for all methods)
+        working_points = _regsurf_gridding.merge_close_points_preprocessing(
+            self, points, merge_close_points, merge_method
+        )
+
+        logger.info("Gridding with method: %s", method)
+
+        if method in ("linear", "nearest", "cubic"):
+            # Extract extrapolate option (handled separately via fill())
+            extrapolate = method_options.pop("extrapolate", False)
+            _regsurf_gridding.points_simple_gridding(
+                self, working_points, coarsen=coarsen, method=method, **method_options
+            )
+            if extrapolate:
+                self.fill()
+
+        elif method in ("idw", "inverse_distance"):
+            _regsurf_gridding.points_idw_gridding(
+                self, working_points, coarsen=coarsen, **method_options
+            )
+
+        elif method in ("rbf", "radial_basis"):
+            _regsurf_gridding.points_rbf_gridding(
+                self, working_points, coarsen=coarsen, **method_options
+            )
+        elif method == "moving_average":
+            _regsurf_gridding.points_moving_average_gridding(
+                self, working_points, coarsen=coarsen, **method_options
+            )
+        elif method == "kriging":
+            _regsurf_gridding.points_kriging_gridding(
+                self, working_points, coarsen=coarsen, **method_options
+            )
+        else:
+            valid = [
+                "linear",
+                "nearest",
+                "cubic",
+                "inverse_distance",
+                "radial_basis",
+                "moving_average",
+                "kriging",
+            ]
+            raise ValueError(
+                f"Invalid gridding method: {method}. Valid options: {valid}"
+            )
 
     # ==================================================================================
     # Interacion with other surface
