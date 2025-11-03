@@ -611,3 +611,169 @@ def extend(self, distance, nsamples, addhlen=True):
 
     if addhlen:
         self.hlen(atindex=nsamples)
+
+
+def merge_close_points(
+    self,
+    min_distance,
+    method="average",
+):
+    """Merge points that are closer than a minimum distance threshold.
+
+    When multiple points fall within min_distance of each other, they are
+    replaced by a single point whose coordinates and z-value are computed
+    based on the specified method.
+
+    Note:
+        Any attribute columns (columns beyond X, Y, Z) will be removed during
+        merging, as averaging or combining attributes (which may be strings or
+        categorical values) is not meaningful.
+
+    Args:
+        min_distance (float): Minimum allowed distance between points. Points closer
+            than this will be merged.
+        method (str): Method for merging points. Options:
+            - 'average': Take the average of all close points (default)
+            - 'median': Take the median
+            - 'first': Keep the first point, discard others
+            - 'min_z': Keep the point with minimum z value
+            - 'max_z': Keep the point with maximum z value
+
+    Returns:
+        None (instance is updated inplace)
+
+    Example::
+
+        >>> import xtgeo
+        >>> points = xtgeo.points_from_file("mypoints.xyz")
+        >>> # Merge points closer than 5 map units
+        >>> points.merge_close_points(min_distance=5.0, method="average")
+        >>> print(f"Points after merging: {points.nrow}")
+
+    .. versionadded:: 4.0
+    """
+    from scipy.spatial import cKDTree
+
+    dfr = self.get_dataframe(copy=False)
+    xcv = dfr[self.xname].to_numpy()
+    ycv = dfr[self.yname].to_numpy()
+    zcv = dfr[self.zname].to_numpy()
+
+    if len(xcv) == 0:
+        logger.warning("No points to merge")
+        return
+
+    # Check if there are attribute columns
+    attr_cols = [
+        col for col in dfr.columns if col not in [self.xname, self.yname, self.zname]
+    ]
+    if attr_cols:
+        logger.info(
+            "Removing %d attribute column(s) during merge: %s",
+            len(attr_cols),
+            ", ".join(attr_cols),
+        )
+
+    n_original = len(xcv)
+
+    # Build KD-tree for efficient neighbor search
+    coords = np.column_stack([xcv, ycv])
+    tree = cKDTree(coords)
+
+    # Find all pairs of points within min_distance
+    pairs = tree.query_pairs(r=min_distance)
+
+    if len(pairs) == 0:
+        logger.info("No close points found (min_distance=%.2f)", min_distance)
+        return
+
+    # Build clusters of connected points using union-find
+    # Each cluster will be merged into a single point
+    parent = list(range(len(xcv)))
+
+    def find(i):
+        """Find root with iterative path compression to avoid recursion limit."""
+        root = i
+        # Find the root
+        while parent[root] != root:
+            root = parent[root]
+        # Path compression: make all nodes on the path point directly to root
+        while parent[i] != root:
+            next_parent = parent[i]
+            parent[i] = root
+            i = next_parent
+        return root
+
+    def union(i, j):
+        root_i = find(i)
+        root_j = find(j)
+        if root_i != root_j:
+            parent[root_j] = root_i
+
+    # Group points that are close to each other
+    for i, j in pairs:
+        union(i, j)
+
+    # Collect clusters
+    clusters = {}
+    for i in range(len(xcv)):
+        root = find(i)
+        if root not in clusters:
+            clusters[root] = []
+        clusters[root].append(i)
+
+    # Merge points in each cluster (only X, Y, Z - no attributes)
+    merged_data = {self.xname: [], self.yname: [], self.zname: []}
+
+    for indices in clusters.values():
+        x_cluster = xcv[indices]
+        y_cluster = ycv[indices]
+        z_cluster = zcv[indices]
+
+        if method == "average":
+            x_new = np.mean(x_cluster)
+            y_new = np.mean(y_cluster)
+            z_new = np.mean(z_cluster)
+        elif method == "median":
+            x_new = np.median(x_cluster)
+            y_new = np.median(y_cluster)
+            z_new = np.median(z_cluster)
+        elif method == "first":
+            x_new = x_cluster[0]
+            y_new = y_cluster[0]
+            z_new = z_cluster[0]
+        elif method == "min_z":
+            min_idx = np.argmin(z_cluster)
+            x_new = x_cluster[min_idx]
+            y_new = y_cluster[min_idx]
+            z_new = z_cluster[min_idx]
+        elif method == "max_z":
+            max_idx = np.argmax(z_cluster)
+            x_new = x_cluster[max_idx]
+            y_new = y_cluster[max_idx]
+            z_new = z_cluster[max_idx]
+        else:
+            raise ValueError(
+                f"Unknown merge method: {method}. "
+                "Valid options: 'average', 'median', 'first', 'min_z', 'max_z'"
+            )
+
+        merged_data[self.xname].append(x_new)
+        merged_data[self.yname].append(y_new)
+        merged_data[self.zname].append(z_new)
+
+    # Create new dataframe with merged points (only X, Y, Z columns)
+    new_df = pd.DataFrame(merged_data)
+
+    n_merged = n_original - len(new_df)
+
+    logger.info(
+        "Merged %d close points (min_distance=%.2f, method='%s'): %d -> %d points",
+        n_merged,
+        min_distance,
+        method,
+        n_original,
+        len(new_df),
+    )
+
+    self.set_dataframe(new_df)

@@ -36,10 +36,8 @@ def import_rms_ascii(
     lnum = 1
     with open(wfile.file, "r", encoding="UTF-8") as fwell:
         for line in fwell:
-            if lnum == 1:
-                _ffver = line.strip()  # noqa, file version
-            elif lnum == 2:
-                _wtype = line.strip()  # noqa, well type
+            if lnum <= 2:
+                pass
             elif lnum == 3:
                 # usually 4 fields, but last (rkb) can be missing. A
                 # complication is that first field (well name) may have spaces,
