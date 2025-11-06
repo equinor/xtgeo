@@ -75,8 +75,8 @@ get_cell_volumes(const Grid &grid_cpp,
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_phase_cell_volumes(const Grid &grid_cpp,
-                       const py::array_t<double> &woc,
-                       const py::array_t<double> &goc,
+                       const py::array_t<double> &water_contact,
+                       const py::array_t<double> &gas_contact,
                        const std::optional<xyz::Polygon> &boundary,
                        geometry::HexVolumePrecision precision,
                        const bool asmasked);

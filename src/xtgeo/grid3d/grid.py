@@ -1984,51 +1984,55 @@ class Grid(_Grid3D):
             self, name=name, precision=precision, asmasked=asmasked
         )
 
-    def get_phase_volume(
+    def get_phase_volumes(
         self,
-        woc: float | GridProperty,
-        goc: float | GridProperty,
+        water_contact: float | GridProperty,
+        gas_contact: float | GridProperty,
         boundary: Polygons | None = None,
         asmasked: bool = True,
         precision: Literal[1, 2, 4] = 2,
     ) -> tuple[GridProperty, GridProperty, GridProperty]:
-        """Return the geometric phase cell volume for all cells as three GridProperty
-        object namely gas_bulkvol, oil_bulkvol, water_bulkvol.
+        """Return the geometric phase cell volume for all cells as three
+        GridProperty objects, namely gas_bulkvol, oil_bulkvol and water_bulkvol.
 
-        The volume calculation is constrained to area within boundary polygon.
+        The volume calculation is constrained to the area within the provided
+        boundary polygon. In case of multiple polygons, only the first polygon
+        will be used.
 
-        A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
-        entity. The volume is approximated by dividing the cell (hexahedron) into
-        6 tetrehedrons; there is however a large number of ways to do this division.
+        A bulk volume of a cornerpoint cell is a non-trivial and non-unique
+        quantity. The volume is approximated by dividing the cell (hexahedron)
+        into six tetrahedrons; there are multiple ways to perform this division.
 
-        As default (precision=2) an average of two different ways to divide the cell
-        into tetrahedrons is averaged.
+        By default (precision=2) an average of two different tetrahedral
+        decompositions is used.
 
         Args:
-            woc: Water oil contact
-            goc: Gas oil contact
-            boundary: Boundary area
-            asmasked: If True, make a np.ma array where inactive cells
-                are masked. Otherwise a numpy array will all bulk for all cells is
-                returned
-            precision (int): Not applied!
+            water_contact: Water-oil contact, in most cases refers to free water level.
+            gas_contact: Gas-oil contact, in most cases refers to free gas level.
+            boundary: Boundary area. If multiple polygons are present, only the
+            first polygon is used.
+            asmasked: If True, make a numpy.ma array where inactive cells are
+            masked. Otherwise a numpy array with bulk volumes for all cells
+            is returned.
+            precision (int): An even number indicating precision level, where a
+            higher number increases precision and computing time. Currently
+            1, 2 and 4 are supported.
 
         Returns:
-            Three XTGeo GridProperty objects: gas, oil and water volumes
+            Three XTGeo GridProperty objects: gas, oil and water volumes.
 
         Example::
 
             >>> grid = xtgeo.grid_from_file("myGrid.roff")
-            >>> woc = xtgeo.GridProperty(grid, values=1700.0)
-            >>> goc = xtgeo.GridProperty(grid, values=1650.0)
-            >>> gas, oil, water = grid.get_phase_volume(woc=woc, goc=goc)
+            >>> gas, oil, water = grid.get_phase_volumes(
+            ...     water_contact=1700.0, gas_contact=1650.0
+            ... )
             >>> print(f"Total gas volume: {gas.values.sum()}")
-
         """
-        return _grid_etc1.get_phase_bulk_volume(
+        return _grid_etc1.get_phase_bulk_volumes(
             self,
-            woc=woc,
-            goc=goc,
+            water_contact=water_contact,
+            gas_contact=gas_contact,
             boundary=boundary,
             precision=precision,
             asmasked=asmasked,

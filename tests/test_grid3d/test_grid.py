@@ -576,7 +576,9 @@ def test_phasevol(testdata_path):
     grd = xtgeo.grid_from_file(testdata_path / GRIDQC1)
     cellvol_rms = xtgeo.gridproperty_from_file(testdata_path / GRIDQC1_CELLVOL)
 
-    gasvol, oilvol, watervol = grd.get_phase_volume(woc=2000, goc=1800, boundary=None)
+    gasvol, oilvol, watervol = grd.get_phase_volumes(
+        water_contact=2000, gas_contact=1800, boundary=None
+    )
 
     assert grd.dimensions == gasvol.dimensions
     assert grd.dimensions == oilvol.dimensions
@@ -607,17 +609,15 @@ def test_phase_volume_with_polygon_boundary(testdata_path):
         ]
     )
     poly = xtgeo.Polygons(polygon_coords)
-    goc = xtgeo.GridProperty(grid, values=1020.0)
-    woc = xtgeo.GridProperty(grid, values=1040.0)
 
     # Calculate with boundary
-    gas_poly, oil_poly, water_poly = grid.get_phase_volume(
-        woc=woc, goc=goc, boundary=poly
+    gas_poly, oil_poly, water_poly = grid.get_phase_volumes(
+        water_contact=1040.0, gas_contact=1020.0, boundary=poly
     )
 
     # Calculate without boundary
-    gas_full, oil_full, water_full = grid.get_phase_volume(
-        woc=woc, goc=goc, boundary=None
+    gas_full, oil_full, water_full = grid.get_phase_volumes(
+        water_contact=1040.0, gas_contact=1020.0, boundary=None
     )
 
     # Volumes with boundary should be less than or equal to full volumes
@@ -632,11 +632,11 @@ def test_benchmark_phase_volume(benchmark):
     grid = xtgeo.create_box_grid(
         (10, 50, 5), origin=(0, 0, 1000), increment=(100, 100, 10)
     )
-    goc = xtgeo.GridProperty(grid, values=1030.0)
-    woc = xtgeo.GridProperty(grid, values=1060.0)
 
     def run():
-        _ = grid.get_phase_volume(woc=woc, goc=goc, boundary=None)
+        _ = grid.get_phase_volumes(
+            water_contact=1060.0, gas_contact=1030.0, boundary=None
+        )
 
     benchmark(run)
 
@@ -647,8 +647,6 @@ def test_benchmark_phase_volume_with_boundary(benchmark):
     grid = xtgeo.create_box_grid(
         (10, 50, 5), origin=(0, 0, 1000), increment=(100, 100, 10)
     )
-    goc = xtgeo.GridProperty(grid, values=1015.0)
-    woc = xtgeo.GridProperty(grid, values=1040.0)
     polygon_coords = np.array(
         [
             [300, 1000, 1000],
@@ -660,8 +658,10 @@ def test_benchmark_phase_volume_with_boundary(benchmark):
     )
 
     def run():
-        _ = grid.get_phase_volume(
-            woc=woc, goc=goc, boundary=xtgeo.Polygons(polygon_coords)
+        _ = grid.get_phase_volumes(
+            water_contact=1040.0,
+            gas_contact=1015.0,
+            boundary=xtgeo.Polygons(polygon_coords),
         )
 
     benchmark(run)

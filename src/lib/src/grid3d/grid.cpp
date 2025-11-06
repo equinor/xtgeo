@@ -246,7 +246,7 @@ cell_refinement(const CellCorners &cell, const int rx, const int ry, const int r
             const auto v_nw = unw_xy - lnw_xy;
             const auto v_ne = une_xy - lne_xy;
 
-            for (int iz = 0; iz < rz; iz++) {
+            for (size_t iz = 0; iz < rz; iz++) {
                 const double tz1 = iz * inv_rz;
                 const double tz2 = (iz + 1) * inv_rz;
 
@@ -289,11 +289,11 @@ cell_center(const CellCorners &cell)
  * @brief Recursively compute phase volumes (gas, oil, water) inside a 3D grid cell.
  *
  * This function classifies the given cell (described by its eight corner points)
- * into gas, oil or water phases based on two contact surfaces (goc, woc) and an
- * optional 2D polygonal boundary projected in the XY plane. The returned volumes
- * are absolute volumes in the same units as cell_volume and sum (approximately)
- * to the input cell_volume when the cell lies fully or partially inside the
- * supplied boundary.
+ * into gas, oil or water phases based on two contact surfaces (gas_contact,
+ * water_contact) and an optional 2D polygonal boundary projected in the XY plane. The
+ * returned volumes are absolute volumes in the same units as cell_volume and sum
+ * (approximately) to the input cell_volume when the cell lies fully or partially inside
+ * the supplied boundary.
  *
  *
  * Behaviour and algorithm:
@@ -305,7 +305,8 @@ cell_center(const CellCorners &cell)
  * - Fast-paths:
  *     * If the cell is entirely above/below the contact levels (Inside relation),
  *       it is classified as purely gas / oil / water depending on comparisons with
- *       goc and woc and returns the full cell_volume for the corresponding phase.
+ *       gas_contact and water_contact and returns the full cell_volume for the
+ * corresponding phase.
  * - Refinement and termination:
  *     * If cell_volume is larger than threshold_cell_volume and no early fast-path
  *       applies, the cell is subdivided into RX*RY*RZ subcells (currently 3*3*2 = 18).
@@ -317,9 +318,9 @@ cell_center(const CellCorners &cell)
  *         - If a boundary is present, the center is first tested with
  *           geometry::is_xy_point_in_polygon(center.x(), center.y(), *boundary),
  *           and treated as outside (0 volume) if the test fails.
- *         - Otherwise, the center's Z is compared to goc and woc:
- *             center_z <= goc  -> gas
- *             center_z >= woc  -> water
+ *         - Otherwise, the center's Z is compared to gas_contact and water_contact:
+ *             center_z <= gas_contact  -> gas
+ *             center_z >= water_contact  -> water
  *             otherwise        -> oil
  * - This function is recursive and will stop recursing once the refinement
  *   threshold is reached or the cell is determined to be fully inside/outside a phase.
@@ -330,9 +331,9 @@ cell_center(const CellCorners &cell)
  * @param cell_volume            Volume of the input cell (absolute units).
  * @param threshold_cell_volume  Minimum cell volume at which recursion will stop and
  *                               the center-point classification is used.
- * @param woc                    Water-Oil Contact elevation (Z). Used to separate
- * oil/water.
- * @param goc                    Gas-Oil Contact elevation (Z). Used to separate
+ * @param water_contact                    Water-Oil Contact elevation (Z). Used to
+ * separate oil/water.
+ * @param gas_contact                    Gas-Oil Contact elevation (Z). Used to separate
  * gas/oil.
  * @param boundary               Optional 2D polygon (projected in XY) used to clip the
  * cell. If std::nullopt, polygon clipping is ignored.
@@ -348,8 +349,8 @@ std::tuple<double, double, double>
 cell_phase_volume(const CellCorners &corner,
                   const double cell_volume,
                   const double threshold_cell_volume,
-                  const double woc,
-                  const double goc,
+                  const double water_contact,
+                  const double gas_contact,
                   const std::optional<xyz::Polygon> &boundary,
                   const std::array<double, 4> &poly_bbox)
 {
@@ -376,13 +377,13 @@ cell_phase_volume(const CellCorners &corner,
 
     // Fast paths for cells entirely in one phase
     if (relation == geometry::CellPolygonRelation::Inside) {
-        if (cell_bottom <= goc) {
+        if (cell_bottom <= gas_contact) {
             return std::make_tuple(cell_volume, 0.0, 0.0);
         }
-        if (cell_top >= woc) {
+        if (cell_top >= water_contact) {
             return std::make_tuple(0.0, 0.0, cell_volume);
         }
-        if (cell_top >= goc && cell_bottom <= woc) {
+        if (cell_top >= gas_contact && cell_bottom <= water_contact) {
             return std::make_tuple(0.0, cell_volume, 0.0);
         }
     }
@@ -399,9 +400,9 @@ cell_phase_volume(const CellCorners &corner,
         }
 
         const double center_z = center.z();
-        if (center_z <= goc) {
+        if (center_z <= gas_contact) {
             return std::make_tuple(cell_volume, 0.0, 0.0);
-        } else if (center_z >= woc) {
+        } else if (center_z >= water_contact) {
             return std::make_tuple(0.0, 0.0, cell_volume);
         } else {
             return std::make_tuple(0.0, cell_volume, 0.0);
@@ -436,7 +437,7 @@ cell_phase_volume(const CellCorners &corner,
           corner.upper_nw + (corner.upper_ne - corner.upper_nw) * tx1;
         const xyz::Point u_n2 = u_n1 + (corner.upper_ne - corner.upper_nw) * dtx;
 
-        for (int iy = 0; iy < RY; iy++) {
+        for (size_t iy = 0; iy < RY; iy++) {
             const double ty1 = iy * inv_ry;
             const double ty2 = (iy + 1) * inv_ry;
 
@@ -454,7 +455,7 @@ cell_phase_volume(const CellCorners &corner,
             const auto v_nw = unw_xy - lnw_xy;
             const auto v_ne = une_xy - lne_xy;
 
-            for (int iz = 0; iz < RZ; iz++) {
+            for (size_t iz = 0; iz < RZ; iz++) {
                 const double tz1 = iz * inv_rz;
                 const double tz2 = (iz + 1) * inv_rz;
 
@@ -470,7 +471,7 @@ cell_phase_volume(const CellCorners &corner,
 
                 auto [gas, oil, water] =
                   cell_phase_volume(refined_cell, refined_volume, threshold_cell_volume,
-                                    woc, goc, boundary, poly_bbox);
+                                    water_contact, gas_contact, boundary, poly_bbox);
                 gas_volume += gas;
                 oil_volume += oil;
                 water_volume += water;
@@ -485,8 +486,8 @@ cell_phase_volume(const CellCorners &corner,
  * Compute phase bulk volume of cells in a grid
  *
  * @param grd Grid struct
- * @param woc Water oil contact per cell
- * @param goc Gas oil contact per cell
+ * @param water_contact Water oil contact per cell
+ * @param gas_contact Gas oil contact per cell
  * @param boundary Polygon as boundary
  * @param precision The precision to calculate the volume to
  * @param asmasked Process grid cells as masked (bool)
@@ -494,8 +495,8 @@ cell_phase_volume(const CellCorners &corner,
  */
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_phase_cell_volumes(const Grid &grd,
-                       const py::array_t<double> &woc,
-                       const py::array_t<double> &goc,
+                       const py::array_t<double> &water_contact,
+                       const py::array_t<double> &gas_contact,
                        const std::optional<xyz::Polygon> &boundary,
                        geometry::HexVolumePrecision precision,
                        const bool asmasked)
@@ -510,8 +511,8 @@ get_phase_cell_volumes(const Grid &grd,
     constexpr double threshold_divisor = 0.01;
 
     auto actnumsv_ = grd.get_actnumsv().data();
-    auto woc_ = woc.unchecked<3>();
-    auto goc_ = goc.unchecked<3>();
+    auto water_contact_ = water_contact.unchecked<3>();
+    auto gas_contact_ = gas_contact.unchecked<3>();
 
     py::array_t<double> gas_volume({ ncol, nrow, nlay });
     auto gas_volume_ = gas_volume.mutable_data();
@@ -563,9 +564,9 @@ get_phase_cell_volumes(const Grid &grd,
                 const double cell_volume = geometry::hexahedron_volume(crn, precision);
                 const double threshold = std::min(1.0, cell_volume * threshold_divisor);
 
-                auto [gas_v, oil_v, water_v] =
-                  cell_phase_volume(crn, cell_volume, threshold, woc_(i, j, k),
-                                    goc_(i, j, k), boundary, poly_bbox);
+                auto [gas_v, oil_v, water_v] = cell_phase_volume(
+                  crn, cell_volume, threshold, water_contact_(i, j, k),
+                  gas_contact_(i, j, k), boundary, poly_bbox);
 
                 gas_volume_[idx] = gas_v;
                 oil_volume_[idx] = oil_v;

@@ -306,10 +306,10 @@ def get_bulk_volume(
     )
 
 
-def get_phase_bulk_volume(
+def get_phase_bulk_volumes(
     grid: Grid,
-    woc: float | GridProperty,
-    goc: float | GridProperty,
+    water_contact: float | GridProperty,
+    gas_contact: float | GridProperty,
     boundary: Polygons | None,
     asmasked: bool = True,
     precision: Literal[1, 2, 4] = 2,
@@ -332,7 +332,7 @@ def get_phase_bulk_volume(
     polygon = None
     if boundary is not None:
         df_polygon = boundary.get_dataframe(copy=False)
-        # Extract X, Y, Z coordinates from the first polygon (POLY_ID == 1)
+        # Extract X, Y, Z coordinates from the first polygon (POLY_ID == 0)
         # assuming single polygon for now
         df_polygon = df_polygon[df_polygon["POLY_ID"] == df_polygon["POLY_ID"].iloc[0]]
         boundary_array = np.stack(
@@ -345,18 +345,18 @@ def get_phase_bulk_volume(
         )
         polygon = _internal.xyz.Polygon(boundary_array)
 
-    if isinstance(woc, (int, float)):
-        woc = GridProperty(grid, values=woc)
-    if isinstance(goc, (int, float)):
-        goc = GridProperty(grid, values=goc)
+    if isinstance(water_contact, (int, float)):
+        water_contact = GridProperty(grid, values=water_contact)
+    if isinstance(gas_contact, (int, float)):
+        gas_contact = GridProperty(grid, values=gas_contact)
 
-    assert np.all(woc.values >= goc.values), (
-        "WOC is position shallower than GOC in some cells"
+    assert np.all(water_contact.values >= gas_contact.values), (
+        "Water contact is position shallower than gas contact in some cells"
     )
 
     gas_volume, oil_volume, water_volume = grid_cpp.get_phase_cell_volumes(
-        woc.values,
-        goc.values,
+        water_contact.values,
+        gas_contact.values,
         polygon,
         prec_cpp,
         asmasked,
