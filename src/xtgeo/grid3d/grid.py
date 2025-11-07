@@ -2010,14 +2010,13 @@ class Grid(_Grid3D):
             water_contact: Water-oil contact, in most cases refers to free water level.
             gas_contact: Gas-oil contact, in most cases refers to free gas level.
             boundary: Boundary area. If multiple polygons are present, only the
-            first polygon is used.
+                first polygon is used.
             asmasked: If True, make a numpy.ma array where inactive cells are
-            masked. Otherwise a numpy array with bulk volumes for all cells
-            is returned.
+                masked. Otherwise a numpy array with bulk volumes for all cells
+                is returned.
             precision (int): An even number indicating precision level, where a
-            higher number increases precision and computing time. Currently
-            1, 2 and 4 are supported.
-
+                higher number increases precision and computing time. Currently
+                1, 2 and 4 are supported.
         Returns:
             Three XTGeo GridProperty objects: gas, oil and water volumes.
 
