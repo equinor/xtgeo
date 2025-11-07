@@ -74,6 +74,14 @@ get_cell_volumes(const Grid &grid_cpp,
                  const bool asmasked);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
+get_phase_cell_volumes(const Grid &grid_cpp,
+                       const py::array_t<double> &water_contact,
+                       const py::array_t<double> &gas_contact,
+                       const std::optional<xyz::Polygon> &boundary,
+                       geometry::HexVolumePrecision precision,
+                       const bool asmasked);
+
+std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
 get_cell_centers(const Grid &grid_cpp, const bool asmasked = false);
 
 std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
@@ -202,6 +210,8 @@ init(py::module &m)
 
       // free form functions in C++ to members in Python
       .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.")
+      .def("get_phase_cell_volumes", &get_phase_cell_volumes,
+           "Compute the phase bulk volume of cell.")
       .def("get_cell_centers", &get_cell_centers,
            "Compute the cells centers coordinates as 3 arrays")
       .def("get_gridprop_value_between_surfaces", &get_gridprop_value_between_surfaces,

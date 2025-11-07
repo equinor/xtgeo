@@ -306,6 +306,94 @@ def get_bulk_volume(
     )
 
 
+def get_phase_bulk_volumes(
+    grid: Grid,
+    water_contact: float | GridProperty,
+    gas_contact: float | GridProperty,
+    boundary: Polygons | None,
+    asmasked: bool = True,
+    precision: Literal[1, 2, 4] = 2,
+) -> tuple[GridProperty, GridProperty, GridProperty]:
+    """Return the geometric phase cell volume for all cells as three GridProperty object
+    namely gas_bulkvol, oil_bulkvol, water_bulkvol."""
+    if precision not in (1, 2, 4):
+        raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
+
+    grid._set_xtgformat2()
+
+    grid_cpp = grid._get_grid_cpp()
+
+    prec_cpp = _internal.geometry.HexVolumePrecision.P2
+    if precision == 1:
+        prec_cpp = _internal.geometry.HexVolumePrecision.P1
+    elif precision == 4:
+        prec_cpp = _internal.geometry.HexVolumePrecision.P4
+
+    polygon = None
+    if boundary is not None:
+        df_polygon = boundary.get_dataframe(copy=False)
+        # Extract X, Y, Z coordinates from the first polygon (POLY_ID == 0)
+        # assuming single polygon for now
+        df_polygon = df_polygon[df_polygon["POLY_ID"] == df_polygon["POLY_ID"].iloc[0]]
+        boundary_array = np.stack(
+            [
+                df_polygon["X_UTME"].values,
+                df_polygon["Y_UTMN"].values,
+                df_polygon["Z_TVDSS"].values,
+            ],
+            axis=1,
+        )
+        polygon = _internal.xyz.Polygon(boundary_array)
+
+    if isinstance(water_contact, (int, float)):
+        water_contact = GridProperty(grid, values=water_contact)
+    if isinstance(gas_contact, (int, float)):
+        gas_contact = GridProperty(grid, values=gas_contact)
+
+    assert np.all(water_contact.values >= gas_contact.values), (
+        "Water contact is position shallower than gas contact in some cells"
+    )
+
+    gas_volume, oil_volume, water_volume = grid_cpp.get_phase_cell_volumes(
+        water_contact.values,
+        gas_contact.values,
+        polygon,
+        prec_cpp,
+        asmasked,
+    )
+    if asmasked:
+        gas_volume = np.ma.masked_greater(gas_volume, UNDEF_LIMIT)
+        oil_volume = np.ma.masked_greater(oil_volume, UNDEF_LIMIT)
+        water_volume = np.ma.masked_greater(water_volume, UNDEF_LIMIT)
+
+    return (
+        GridProperty(
+            ncol=grid.ncol,
+            nrow=grid.nrow,
+            nlay=grid.nlay,
+            name="gas_bulkvol",
+            values=gas_volume,
+            discrete=False,
+        ),
+        GridProperty(
+            ncol=grid.ncol,
+            nrow=grid.nrow,
+            nlay=grid.nlay,
+            name="oil_bulkvol",
+            values=oil_volume,
+            discrete=False,
+        ),
+        GridProperty(
+            ncol=grid.ncol,
+            nrow=grid.nrow,
+            nlay=grid.nlay,
+            name="water_bulkvol",
+            values=water_volume,
+            discrete=False,
+        ),
+    )
+
+
 def get_heights_above_ffl(
     grid: Grid,
     ffl: GridProperty,

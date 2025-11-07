@@ -1984,6 +1984,59 @@ class Grid(_Grid3D):
             self, name=name, precision=precision, asmasked=asmasked
         )
 
+    def get_phase_volumes(
+        self,
+        water_contact: float | GridProperty,
+        gas_contact: float | GridProperty,
+        boundary: Polygons | None = None,
+        asmasked: bool = True,
+        precision: Literal[1, 2, 4] = 2,
+    ) -> tuple[GridProperty, GridProperty, GridProperty]:
+        """Return the geometric phase cell volume for all cells as three
+        GridProperty objects, namely gas_bulkvol, oil_bulkvol and water_bulkvol.
+
+        The volume calculation is constrained to the area within the provided
+        boundary polygon. In case of multiple polygons, only the first polygon
+        will be used.
+
+        A bulk volume of a cornerpoint cell is a non-trivial and non-unique
+        quantity. The volume is approximated by dividing the cell (hexahedron)
+        into six tetrahedrons; there are multiple ways to perform this division.
+
+        By default (precision=2) an average of two different tetrahedral
+        decompositions is used.
+
+        Args:
+            water_contact: Water-oil contact, in most cases refers to free water level.
+            gas_contact: Gas-oil contact, in most cases refers to free gas level.
+            boundary: Boundary area. If multiple polygons are present, only the
+                first polygon is used.
+            asmasked: If True, make a numpy.ma array where inactive cells are
+                masked. Otherwise a numpy array with bulk volumes for all cells
+                is returned.
+            precision (int): An even number indicating precision level, where a
+                higher number increases precision and computing time. Currently
+                1, 2 and 4 are supported.
+        Returns:
+            Three XTGeo GridProperty objects: gas, oil and water volumes.
+
+        Example::
+
+            >>> grid = xtgeo.grid_from_file("myGrid.roff")
+            >>> gas, oil, water = grid.get_phase_volumes(
+            ...     water_contact=1700.0, gas_contact=1650.0
+            ... )
+            >>> print(f"Total gas volume: {gas.values.sum()}")
+        """
+        return _grid_etc1.get_phase_bulk_volumes(
+            self,
+            water_contact=water_contact,
+            gas_contact=gas_contact,
+            boundary=boundary,
+            precision=precision,
+            asmasked=asmasked,
+        )
+
     def get_heights_above_ffl(
         self,
         ffl: GridProperty,

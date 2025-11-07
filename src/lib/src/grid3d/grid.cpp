@@ -11,7 +11,6 @@
 #include <xtgeo/logging.hpp>
 #include <xtgeo/numerics.hpp>
 #include <xtgeo/types.hpp>
-
 #ifdef XTGEO_USE_OPENMP
 #include <omp.h>
 #endif
@@ -183,6 +182,403 @@ get_cell_volumes(const Grid &grd,
 }
 
 /*
+ * Compute cell coordinate of refined cells
+ *
+ * @param cell CellCorners of coarse cell
+ * @param rx Refinement factor in x-direction
+ * @param ry Refinement factor in y-direction
+ * @param rz Refinement factor in z-direction
+ * @return An array containing CellCorners of all refined cells
+ */
+
+std::vector<CellCorners>
+cell_refinement(const CellCorners &cell, const int rx, const int ry, const int rz)
+{
+    std::vector<CellCorners> refined_corners;
+    refined_corners.reserve(rx * ry * rz);
+
+    const double inv_rx = 1.0 / rx;
+    const double inv_ry = 1.0 / ry;
+    const double inv_rz = 1.0 / rz;
+
+    // Loop through all refined cells
+    for (int ix = 0; ix < rx; ix++) {
+        const double tx1 = ix * inv_rx;
+        const double tx2 = (ix + 1) * inv_rx;
+        const double dtx = inv_rx;
+
+        // Pre-compute interpolated edges along x-direction at lower z level
+        // South edge (sw to se)
+        const xyz::Point l_s1 = cell.lower_sw + (cell.lower_se - cell.lower_sw) * tx1;
+        const xyz::Point l_s2 = l_s1 + (cell.lower_se - cell.lower_sw) * dtx;
+        // North edge (nw to ne)
+        const xyz::Point l_n1 = cell.lower_nw + (cell.lower_ne - cell.lower_nw) * tx1;
+        const xyz::Point l_n2 = l_n1 + (cell.lower_ne - cell.lower_nw) * dtx;
+
+        // Pre-compute interpolated edges along x-direction at upper z level
+        // South edge (sw to se)
+        const xyz::Point u_s1 = cell.upper_sw + (cell.upper_se - cell.upper_sw) * tx1;
+        const xyz::Point u_s2 = u_s1 + (cell.upper_se - cell.upper_sw) * dtx;
+        // North edge (nw to ne)
+        const xyz::Point u_n1 = cell.upper_nw + (cell.upper_ne - cell.upper_nw) * tx1;
+        const xyz::Point u_n2 = u_n1 + (cell.upper_ne - cell.upper_nw) * dtx;
+
+        for (int iy = 0; iy < ry; iy++) {
+            const double ty1 = iy * inv_ry;
+            const double ty2 = (iy + 1) * inv_ry;
+
+            // Interpolate along y-direction (west to east) for corners at this x,y
+            // position Lower level corners
+            const xyz::Point lsw_xy = l_s1 + (l_n1 - l_s1) * ty1;
+            const xyz::Point lse_xy = l_s2 + (l_n2 - l_s2) * ty1;
+            const xyz::Point lnw_xy = l_s1 + (l_n1 - l_s1) * ty2;
+            const xyz::Point lne_xy = l_s2 + (l_n2 - l_s2) * ty2;
+
+            // Upper level corners
+            const xyz::Point usw_xy = u_s1 + (u_n1 - u_s1) * ty1;
+            const xyz::Point use_xy = u_s2 + (u_n2 - u_s2) * ty1;
+            const xyz::Point unw_xy = u_s1 + (u_n1 - u_s1) * ty2;
+            const xyz::Point une_xy = u_s2 + (u_n2 - u_s2) * ty2;
+
+            // Pre-compute vertical vectors for this x,y position
+            const auto v_sw = usw_xy - lsw_xy;
+            const auto v_se = use_xy - lse_xy;
+            const auto v_nw = unw_xy - lnw_xy;
+            const auto v_ne = une_xy - lne_xy;
+
+            for (size_t iz = 0; iz < rz; iz++) {
+                const double tz1 = iz * inv_rz;
+                const double tz2 = (iz + 1) * inv_rz;
+
+                // Now interpolate in z direction for the refined cell using
+                // pre-computed vectors
+                refined_corners.emplace_back(lsw_xy + v_sw * tz2,  // upper_sw
+                                             lse_xy + v_se * tz2,  // upper_se
+                                             lnw_xy + v_nw * tz2,  // upper_nw
+                                             lne_xy + v_ne * tz2,  // upper_ne
+                                             lsw_xy + v_sw * tz1,  // lower_sw
+                                             lse_xy + v_se * tz1,  // lower_se
+                                             lnw_xy + v_nw * tz1,  // lower_nw
+                                             lne_xy + v_ne * tz1   // lower_ne
+                );
+            }
+        }
+    }
+    return refined_corners;
+}
+
+/*
+ * Compute center cell coordinate of a cell
+ *
+ * Uses vector arithmetic to compute the centroid of the 8 corners.
+ * This is more efficient and leverages Eigen's optimized operations.
+ *
+ * @param cell CellCorners of cell
+ * @return center point of the cell
+ */
+
+inline xyz::Point
+cell_center(const CellCorners &cell)
+{
+    return (cell.lower_sw + cell.lower_se + cell.lower_nw + cell.lower_ne +
+            cell.upper_sw + cell.upper_se + cell.upper_nw + cell.upper_ne) *
+           0.125;
+}
+
+/**
+ * @brief Recursively compute phase volumes (gas, oil, water) inside a 3D grid cell.
+ *
+ * This function classifies the given cell (described by its eight corner points)
+ * into gas, oil or water phases based on two contact surfaces (gas_contact,
+ * water_contact) and an optional 2D polygonal boundary projected in the XY plane. The
+ * returned volumes are absolute volumes in the same units as cell_volume and sum
+ * (approximately) to the input cell_volume when the cell lies fully or partially inside
+ * the supplied boundary.
+ *
+ *
+ * Behaviour and algorithm:
+ * - The cell top and bottom elevations are determined from the upper_* and
+ *   lower_* corner Z values (cell_top = min(upper z), cell_bottom = max(lower z)).
+ * - If a polygon boundary is supplied, the cell-polygon relation is tested via
+ *   geometry::cell_polygon_relation() (accelerated with poly_bbox). If the cell
+ *   is entirely Outside the polygon, the function returns (0,0,0).
+ * - Fast-paths:
+ *     * If the cell is entirely above/below the contact levels (Inside relation),
+ *       it is classified as purely gas / oil / water depending on comparisons with
+ *       gas_contact and water_contact and returns the full cell_volume for the
+ * corresponding phase.
+ * - Refinement and termination:
+ *     * If cell_volume is larger than threshold_cell_volume and no early fast-path
+ *       applies, the cell is subdivided into RX*RY*RZ subcells (currently 3*3*2 = 18).
+ *       Each subcell is classified by recursive calls to this function and their
+ *       volumes accumulated. The refined subcell volume passed to each recursive
+ *       call is cell_volume / (RX*RY*RZ).
+ *     * When cell_volume <= threshold_cell_volume, recursion stops and the cell
+ *       is classified by its center point:
+ *         - If a boundary is present, the center is first tested with
+ *           geometry::is_xy_point_in_polygon(center.x(), center.y(), *boundary),
+ *           and treated as outside (0 volume) if the test fails.
+ *         - Otherwise, the center's Z is compared to gas_contact and water_contact:
+ *             center_z <= gas_contact  -> gas
+ *             center_z >= water_contact  -> water
+ *             otherwise        -> oil
+ * - This function is recursive and will stop recursing once the refinement
+ *   threshold is reached or the cell is determined to be fully inside/outside a phase.
+ *
+ * Parameters:
+ * @param corner                 CellCorners describing the eight corner points of the
+ * cell (upper_sw, upper_se, upper_nw, upper_ne, lower_sw, ...).
+ * @param cell_volume            Volume of the input cell (absolute units).
+ * @param threshold_cell_volume  Minimum cell volume at which recursion will stop and
+ *                               the center-point classification is used.
+ * @param water_contact                    Water-Oil Contact elevation (Z). Used to
+ * separate oil/water.
+ * @param gas_contact                    Gas-Oil Contact elevation (Z). Used to separate
+ * gas/oil.
+ * @param boundary               Optional 2D polygon (projected in XY) used to clip the
+ * cell. If std::nullopt, polygon clipping is ignored.
+ * @param poly_bbox              Axis-aligned bounding box for the polygon, used to
+ * accelerate geometry tests (expected format: {min_x, min_y, max_x, max_y}).
+ *
+ * Returns:
+ * @return std::tuple<double, double, double> A tuple (gas_volume, oil_volume,
+ * water_volume) representing the computed absolute volumes of each phase contained
+ * within the provided cell and inside the optional polygon boundary.
+ */
+std::tuple<double, double, double>
+cell_phase_volume(const CellCorners &corner,
+                  const double cell_volume,
+                  const double threshold_cell_volume,
+                  const double water_contact,
+                  const double gas_contact,
+                  const std::optional<xyz::Polygon> &boundary,
+                  const std::array<double, 4> &poly_bbox)
+{
+    constexpr int RX = 3;
+    constexpr int RY = 3;
+    constexpr int RZ = 2;
+    constexpr double inv_refinement = 1.0 / (RX * RY * RZ);
+    const bool has_boundary = boundary.has_value();
+
+    // Find min/max z values
+    const double cell_top = std::min({ corner.upper_sw.z(), corner.upper_se.z(),
+                                       corner.upper_nw.z(), corner.upper_ne.z() });
+    const double cell_bottom = std::max({ corner.lower_sw.z(), corner.lower_se.z(),
+                                          corner.lower_nw.z(), corner.lower_ne.z() });
+
+    // Check boundary if applicable
+    geometry::CellPolygonRelation relation = geometry::CellPolygonRelation::Inside;
+    if (has_boundary) {
+        relation = geometry::cell_polygon_relation(corner, *boundary, poly_bbox);
+        if (relation == geometry::CellPolygonRelation::Outside) {
+            return std::make_tuple(0.0, 0.0, 0.0);
+        }
+    }
+
+    // Fast paths for cells entirely in one phase
+    if (relation == geometry::CellPolygonRelation::Inside) {
+        if (cell_bottom <= gas_contact) {
+            return std::make_tuple(cell_volume, 0.0, 0.0);
+        }
+        if (cell_top >= water_contact) {
+            return std::make_tuple(0.0, 0.0, cell_volume);
+        }
+        if (cell_top >= gas_contact && cell_bottom <= water_contact) {
+            return std::make_tuple(0.0, cell_volume, 0.0);
+        }
+    }
+
+    // Check if we've reached refinement threshold
+    if (cell_volume <= threshold_cell_volume) {
+        // Use cell center for classification
+        const xyz::Point center = cell_center(corner);
+
+        // Check if center is in boundary
+        if (has_boundary &&
+            !geometry::is_xy_point_in_polygon(center.x(), center.y(), *boundary)) {
+            return std::make_tuple(0.0, 0.0, 0.0);
+        }
+
+        const double center_z = center.z();
+        if (center_z <= gas_contact) {
+            return std::make_tuple(cell_volume, 0.0, 0.0);
+        } else if (center_z >= water_contact) {
+            return std::make_tuple(0.0, 0.0, cell_volume);
+        } else {
+            return std::make_tuple(0.0, cell_volume, 0.0);
+        }
+    }
+
+    // Need refinement - accumulate volumes from subcells
+    double gas_volume = 0.0;
+    double oil_volume = 0.0;
+    double water_volume = 0.0;
+    const double refined_volume = cell_volume * inv_refinement;
+
+    // Inline refinement to avoid vector allocation overhead
+    const double inv_rx = 1.0 / RX;
+    const double inv_ry = 1.0 / RY;
+    const double inv_rz = 1.0 / RZ;
+
+    for (int ix = 0; ix < RX; ix++) {
+        const double tx1 = ix * inv_rx;
+        const double dtx = inv_rx;
+
+        const xyz::Point l_s1 =
+          corner.lower_sw + (corner.lower_se - corner.lower_sw) * tx1;
+        const xyz::Point l_s2 = l_s1 + (corner.lower_se - corner.lower_sw) * dtx;
+        const xyz::Point l_n1 =
+          corner.lower_nw + (corner.lower_ne - corner.lower_nw) * tx1;
+        const xyz::Point l_n2 = l_n1 + (corner.lower_ne - corner.lower_nw) * dtx;
+        const xyz::Point u_s1 =
+          corner.upper_sw + (corner.upper_se - corner.upper_sw) * tx1;
+        const xyz::Point u_s2 = u_s1 + (corner.upper_se - corner.upper_sw) * dtx;
+        const xyz::Point u_n1 =
+          corner.upper_nw + (corner.upper_ne - corner.upper_nw) * tx1;
+        const xyz::Point u_n2 = u_n1 + (corner.upper_ne - corner.upper_nw) * dtx;
+
+        for (size_t iy = 0; iy < RY; iy++) {
+            const double ty1 = iy * inv_ry;
+            const double ty2 = (iy + 1) * inv_ry;
+
+            const xyz::Point lsw_xy = l_s1 + (l_n1 - l_s1) * ty1;
+            const xyz::Point lse_xy = l_s2 + (l_n2 - l_s2) * ty1;
+            const xyz::Point lnw_xy = l_s1 + (l_n1 - l_s1) * ty2;
+            const xyz::Point lne_xy = l_s2 + (l_n2 - l_s2) * ty2;
+            const xyz::Point usw_xy = u_s1 + (u_n1 - u_s1) * ty1;
+            const xyz::Point use_xy = u_s2 + (u_n2 - u_s2) * ty1;
+            const xyz::Point unw_xy = u_s1 + (u_n1 - u_s1) * ty2;
+            const xyz::Point une_xy = u_s2 + (u_n2 - u_s2) * ty2;
+
+            const auto v_sw = usw_xy - lsw_xy;
+            const auto v_se = use_xy - lse_xy;
+            const auto v_nw = unw_xy - lnw_xy;
+            const auto v_ne = une_xy - lne_xy;
+
+            for (size_t iz = 0; iz < RZ; iz++) {
+                const double tz1 = iz * inv_rz;
+                const double tz2 = (iz + 1) * inv_rz;
+
+                CellCorners refined_cell(lsw_xy + v_sw * tz2,  // upper_sw
+                                         lse_xy + v_se * tz2,  // upper_se
+                                         lnw_xy + v_nw * tz2,  // upper_nw
+                                         lne_xy + v_ne * tz2,  // upper_ne
+                                         lsw_xy + v_sw * tz1,  // lower_sw
+                                         lse_xy + v_se * tz1,  // lower_se
+                                         lnw_xy + v_nw * tz1,  // lower_nw
+                                         lne_xy + v_ne * tz1   // lower_ne
+                );
+
+                auto [gas, oil, water] =
+                  cell_phase_volume(refined_cell, refined_volume, threshold_cell_volume,
+                                    water_contact, gas_contact, boundary, poly_bbox);
+                gas_volume += gas;
+                oil_volume += oil;
+                water_volume += water;
+            }
+        }
+    }
+
+    return std::make_tuple(gas_volume, oil_volume, water_volume);
+}
+
+/*
+ * Compute phase bulk volume of cells in a grid
+ *
+ * @param grd Grid struct
+ * @param water_contact Water oil contact per cell
+ * @param gas_contact Gas oil contact per cell
+ * @param boundary Polygon as boundary
+ * @param precision The precision to calculate the volume to
+ * @param asmasked Process grid cells as masked (bool)
+ * @return arrays containing the volume of every cell filled with gas, oil and water
+ */
+std::tuple<py::array_t<double>, py::array_t<double>, py::array_t<double>>
+get_phase_cell_volumes(const Grid &grd,
+                       const py::array_t<double> &water_contact,
+                       const py::array_t<double> &gas_contact,
+                       const std::optional<xyz::Polygon> &boundary,
+                       geometry::HexVolumePrecision precision,
+                       const bool asmasked)
+{
+    const size_t ncol = grd.get_ncol();
+    const size_t nrow = grd.get_nrow();
+    const size_t nlay = grd.get_nlay();
+    const size_t total_cells = ncol * nrow * nlay;
+
+    const size_t row_stride = nrow * nlay;
+    const size_t layer_stride = nlay;
+    constexpr double threshold_divisor = 0.01;
+
+    auto actnumsv_ = grd.get_actnumsv().data();
+    auto water_contact_ = water_contact.unchecked<3>();
+    auto gas_contact_ = gas_contact.unchecked<3>();
+
+    py::array_t<double> gas_volume({ ncol, nrow, nlay });
+    auto gas_volume_ = gas_volume.mutable_data();
+    py::array_t<double> oil_volume({ ncol, nrow, nlay });
+    auto oil_volume_ = oil_volume.mutable_data();
+    py::array_t<double> water_volume({ ncol, nrow, nlay });
+    auto water_volume_ = water_volume.mutable_data();
+
+    auto &logger = xtgeo::logging::LoggerManager::get("get_phase_cell_volumes");
+    logger.debug("Computing phase cell volumes for grid ({}, {}, {})", ncol, nrow,
+                 nlay);
+
+    // Precompute polygon bounding box once if boundary exists
+    std::array<double, 4> poly_bbox = { 0.0, 0.0, 0.0, 0.0 };
+    if (boundary.has_value()) {
+        const auto &poly = *boundary;
+        poly_bbox = geometry::get_polygon_xy_bbox(poly);
+        logger.debug("Boundary polygon bbox: [{}, {}, {}, {}]", poly_bbox[0],
+                     poly_bbox[1], poly_bbox[2], poly_bbox[3]);
+    }
+
+    // Ensure precomputing the cache outside the OMP loop to avoid race conditions
+    const auto &cell_corners_cache = grd.get_cell_corners_cache();
+
+    logger.debug("Start loop computing phase cell volumes");
+
+    // Enable OpenMP parallelization for performance
+    // Note: collapse(3) requires perfectly nested loops, so index calculations
+    // must be done inside the innermost loop
+    // clang-format off
+#ifdef XTGEO_USE_OPENMP
+    #pragma omp parallel for collapse(3) schedule(dynamic, 64)
+#endif
+    // clang-format on
+    for (int i = 0; i < ncol; i++) {
+        for (int j = 0; j < nrow; j++) {
+            for (int k = 0; k < nlay; k++) {
+                // Calculate index - must be inside innermost loop for collapse(3)
+                const int idx = i * row_stride + j * layer_stride + k;
+
+                if (asmasked && actnumsv_[idx] == 0) {
+                    gas_volume_[idx] = numerics::UNDEF_XTGEO;
+                    oil_volume_[idx] = numerics::UNDEF_XTGEO;
+                    water_volume_[idx] = numerics::UNDEF_XTGEO;
+                    continue;
+                }
+
+                const auto &crn = cell_corners_cache[idx];
+                const double cell_volume = geometry::hexahedron_volume(crn, precision);
+                const double threshold = std::min(1.0, cell_volume * threshold_divisor);
+
+                auto [gas_v, oil_v, water_v] = cell_phase_volume(
+                  crn, cell_volume, threshold, water_contact_(i, j, k),
+                  gas_contact_(i, j, k), boundary, poly_bbox);
+
+                gas_volume_[idx] = gas_v;
+                oil_volume_[idx] = oil_v;
+                water_volume_[idx] = water_v;
+            }
+        }
+    }
+    logger.debug("Phase cell volumes computed for grid ({}, {}, {})", ncol, nrow, nlay);
+    return std::make_tuple(gas_volume, oil_volume, water_volume);
+}
+
+/*
  * Get cell centers for a grid.
  *
  * @param grd Grid struct
@@ -212,19 +608,11 @@ get_cell_centers(const Grid &grd, const bool asmasked)
                 auto crn =
                   grd.get_cell_corners_cache()[i * grd.get_nrow() * grd.get_nlay() +
                                                j * grd.get_nlay() + k];
+                xyz::Point center = cell_center(crn);
 
-                xmid_(i, j, k) =
-                  0.125 * (crn.upper_sw.x() + crn.upper_se.x() + crn.upper_nw.x() +
-                           crn.upper_ne.x() + crn.lower_sw.x() + crn.lower_se.x() +
-                           crn.lower_nw.x() + crn.lower_ne.x());
-                ymid_(i, j, k) =
-                  0.125 * (crn.upper_sw.y() + crn.upper_se.y() + crn.upper_nw.y() +
-                           crn.upper_ne.y() + crn.lower_sw.y() + crn.lower_se.y() +
-                           crn.lower_nw.y() + crn.lower_ne.y());
-                zmid_(i, j, k) =
-                  0.125 * (crn.upper_sw.z() + crn.upper_se.z() + crn.upper_nw.z() +
-                           crn.upper_ne.z() + crn.lower_sw.z() + crn.lower_se.z() +
-                           crn.lower_nw.z() + crn.lower_ne.z());
+                xmid_(i, j, k) = center.x();
+                ymid_(i, j, k) = center.y();
+                zmid_(i, j, k) = center.z();
             }
         }
     }

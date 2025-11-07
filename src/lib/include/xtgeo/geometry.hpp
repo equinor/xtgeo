@@ -34,6 +34,14 @@ enum class HexVolumePrecision
     P4 = 4
 };
 
+// Cell-Polygon relationship enum
+enum class CellPolygonRelation
+{
+    Inside,       // All cell corners are inside the polygon
+    Outside,      // All cell corners are outside the polygon
+    Intersecting  // Some corners inside, some outside
+};
+
 // =====================================================================================
 // TETRAHEDRONS
 // =====================================================================================
@@ -145,6 +153,47 @@ quadrilateral_area(const xyz::Point &p1,
  */
 bool
 is_xy_point_in_polygon(const double x, const double y, const xyz::Polygon &polygon);
+
+/**
+ * @brief Determine the relationship between a cell (defined by CellCorners) and a
+ * polygon.
+ *
+ * This function checks all 8 corners of the cell against the polygon boundary in the
+ * XY plane (bird's eye view). It returns:
+ * - Inside: All corners are inside the polygon
+ * - Outside: All corners are outside the polygon
+ * - Intersecting: Some corners are inside, some are outside (cell crosses boundary)
+ *
+ * @param cell The cell corners to check.
+ * @param polygon The polygon boundary to check against.
+ * @return CellPolygonRelation The relationship between the cell and polygon.
+ */
+CellPolygonRelation
+cell_polygon_relation(const grid3d::CellCorners &cell, const xyz::Polygon &polygon);
+
+/**
+ * @brief Overload with precomputed polygon bounding box.
+ *
+ * @param cell The cell corners to check.
+ * @param polygon The polygon boundary to check against.
+ * @param poly_bbox Precomputed polygon bounding box [min_x, max_x, min_y, max_y].
+ * @return CellPolygonRelation The relationship between the cell and polygon.
+ */
+CellPolygonRelation
+cell_polygon_relation(const grid3d::CellCorners &cell,
+                      const xyz::Polygon &polygon,
+                      const std::array<double, 4> &poly_bbox);
+
+/**
+ * @brief Compute the axis-aligned bounding box of a polygon projected onto the X–Y
+ * plane.
+ *
+ * @param polygon The polygon whose vertices are used to compute the bounding box.
+ * @return std::array<double, 4> with the bounds in the form { min_x, max_x, min_y,
+ * max_y }.
+ */
+std::array<double, 4>
+get_polygon_xy_bbox(const xyz::Polygon &polygon);
 
 /**
  * @brief Determine if a XY point is inside a quadrilateral defined by its vertices.

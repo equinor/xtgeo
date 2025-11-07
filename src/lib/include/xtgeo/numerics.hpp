@@ -19,6 +19,14 @@ lerp3d(double x1, double y1, double z1, double x2, double y2, double z2, double 
     return xyz::Point{ x1 + t * (x2 - x1), y1 + t * (y2 - y1), z1 + t * (z2 - z1) };
 }
 
+inline xyz::Point
+lerp3d(xyz::Point pt1, xyz::Point pt2, double t)
+{
+    return xyz::Point{ pt1.x() + t * (pt2.x() - pt1.x()),
+                       pt1.y() + t * (pt2.y() - pt1.y()),
+                       pt1.z() + t * (pt2.z() - pt1.z()) };
+}
+
 inline void
 init(py::module &m)
 {
