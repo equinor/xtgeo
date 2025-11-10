@@ -44,7 +44,7 @@ dependencies = [
     "numpy",
     "pandas>=1.1",
     "pyarrow",
-    "resfo>=4.0.0",
+    "resfo>=5",
     "roffio>=0.0.2",
     "scipy>=1.5",
     "segyio>1.8.0",
