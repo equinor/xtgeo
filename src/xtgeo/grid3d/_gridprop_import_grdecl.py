@@ -46,6 +46,8 @@ def import_bgrdecl_prop(pfile: FileWrapper, name: str, grid: Grid) -> dict[str, 
     for entry in resfo.lazy_read(pfile.file):
         if match_keyword(entry.read_keyword(), name):
             values = entry.read_array()
+            if isinstance(values, resfo.MessType):
+                raise ValueError(f"Unexpected MESS value in {pfile.file}")
             result["discrete"] = np.issubdtype(values.dtype, np.integer)
             if result["discrete"]:
                 uniq = np.unique(values).tolist()
