@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-import re
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 import gstools as gs
 import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
 import scipy.ndimage
+from numpy.typing import NDArray
+from scipy.spatial import cKDTree
 
 import xtgeo._internal as _internal
 from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
@@ -21,8 +22,15 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from xtgeo.surface import RegularSurface
+    from xtgeo.xyz import Points
 
 logger = null_logger(__name__)
+
+# Type aliases
+FloatArray = NDArray[np.float64]
+IntArray = NDArray[np.int32]
+BoolArray = NDArray[np.bool_]
+MaskedArray = ma.MaskedArray[Any, np.dtype[np.float64]]
 
 # Note: 'self' is an instance of RegularSurface
 
@@ -32,8 +40,10 @@ logger = null_logger(__name__)
 
 
 def merge_close_points_preprocessing(
-    surface, points, merge_close_points=None, merge_method="average"
-):
+    points: Points,
+    merge_close_points: float | None = None,
+    merge_method: Literal["average", "median", "first", "min_z", "max_z"] = "average",
+) -> Points:
     """
     Preprocess points by merging those that are too close together.
 
@@ -41,12 +51,9 @@ def merge_close_points_preprocessing(
     issues when points are very close to each other.
 
     Args:
-        surface: RegularSurface instance (for calculating avg_inc if needed)
         points: Points object to potentially merge
-        merge_close_points: Minimum distance threshold for merging close points.
-            Can be a float (distance in map units) or a string like "0.5*avg_inc"
-            to use a fraction of the average grid increment. Set to None to disable
-            merging.
+        merge_close_points: Minimum distance threshold (in map units) for merging
+            close points. Set to None to disable merging.
         merge_method: Method for merging close points ('average', 'median', 'first',
             'min_z', 'max_z'). Default is 'average'.
 
@@ -56,32 +63,13 @@ def merge_close_points_preprocessing(
     if merge_close_points is None:
         return points
 
-    # Calculate threshold distance
-    if isinstance(merge_close_points, str):
-        # Parse expressions like "0.5*avg_inc" safely using regex
-        avg_inc = (surface.xinc + surface.yinc) / 2.0
-        if "avg_inc" in merge_close_points:
-            # Use regex to parse simple expressions like "number*avg_inc"
-            pattern = r"^\s*([\d.]+)\s*\*\s*avg_inc\s*$"
-            match = re.match(pattern, merge_close_points)
-            if match:
-                factor = float(match.group(1))
-                threshold = factor * avg_inc
-            else:
-                raise ValueError(
-                    f"Invalid merge_close_points expression: '{merge_close_points}'. "
-                    "Expected format: 'number*avg_inc' (e.g., '0.5*avg_inc')"
-                )
-        else:
-            threshold = float(merge_close_points)
-    else:
-        threshold = float(merge_close_points)
+    threshold = float(merge_close_points)
 
     # Make a copy before merging to avoid modifying original
     working_points = points.copy()
     working_points.merge_close_points(min_distance=threshold, method=merge_method)
 
-    logger.info(
+    logger.debug(
         "Merged close points: %d -> %d (threshold=%.2f, method=%s)",
         points.nrow,
         working_points.nrow,
@@ -92,7 +80,9 @@ def merge_close_points_preprocessing(
     return working_points
 
 
-def _check_close_points_warning(surface, points, threshold_factor=0.1):
+def _check_close_points_warning(
+    surface: RegularSurface, points: Points, threshold_factor: float = 0.1
+) -> None:
     """
     Check if points are too close together and emit a warning.
 
@@ -110,47 +100,41 @@ def _check_close_points_warning(surface, points, threshold_factor=0.1):
     if points.nrow < 2:
         return
 
-    # Calculate threshold distance
     avg_inc = (surface.xinc + surface.yinc) / 2.0
     threshold = threshold_factor * avg_inc
 
-    # Get point coordinates
     dfra = points.get_dataframe(copy=False)
     coords = dfra[[points.xname, points.yname]].values
 
     # Use KDTree to find nearest neighbors efficiently
-    try:
-        from scipy.spatial import cKDTree
+    tree = cKDTree(coords)
+    # Query for 2 nearest neighbors (first will be the point itself)
+    distances, _ = tree.query(coords, k=2)
+    # Get minimum distance to nearest neighbor (excluding self)
+    min_distance = distances[:, 1].min()
 
-        tree = cKDTree(coords)
-        # Query for 2 nearest neighbors (first will be the point itself)
-        distances, _ = tree.query(coords, k=2)
-        # Get minimum distance to nearest neighbor (excluding self)
-        min_distance = distances[:, 1].min()
+    if min_distance < threshold:
+        import warnings
 
-        if min_distance < threshold:
-            import warnings
-
-            warnings.warn(
-                f"Points are very close together (minimum distance: {min_distance:.2f} "
-                f"< {threshold_factor}*avg_inc = {threshold:.2f}). "
-                f"This may cause numerical issues with this gridding method. "
-                f"Consider using merge_close_points parameter, e.g., "
-                f"merge_close_points='{threshold_factor}*avg_inc'",
-                RuntimeWarning,
-                stacklevel=4,
-            )
-            logger.warning(
-                "Close points detected: min_distance=%.2f, threshold=%.2f",
-                min_distance,
-                threshold,
-            )
-    except ImportError:
-        # scipy not available, skip check
-        pass
+        warnings.warn(
+            f"Points are very close together (minimum distance: {min_distance:.2f} "
+            f"< {threshold_factor}*avg_inc = {threshold:.2f}). "
+            f"This may cause numerical issues with this gridding method. "
+            f"Consider using merge_close_points parameter, "
+            f"where the distance could be e.g. 10% of the mapping increment",
+            RuntimeWarning,
+            stacklevel=4,
+        )
+        logger.warning(
+            "Close points detected: min_distance=%.2f, threshold=%.2f",
+            min_distance,
+            threshold,
+        )
 
 
-def _points_gridding_common(self, input_points, coarsen):
+def _points_gridding_common(
+    self: RegularSurface, input_points: Points, coarsen: int
+) -> tuple[Any, FloatArray, FloatArray, FloatArray, FloatArray, FloatArray]:
     """
     Do gridding from a points data set - common preprocessing.
 
@@ -181,7 +165,7 @@ def _points_gridding_common(self, input_points, coarsen):
     return dfra, xcv, ycv, zcv, xiv, yiv
 
 
-def _filter_points_within_surface(self, points):
+def _filter_points_within_surface(self: RegularSurface, points: Points) -> Points:
     """
     Filter points to only those within surface boundaries.
 
@@ -197,7 +181,7 @@ def _filter_points_within_surface(self, points):
     """
     p = points.copy()
 
-    logger.info("Number of points before filtering: %d", p.nrow)
+    logger.debug("Number of points before filtering: %d", p.nrow)
 
     r = _internal.regsurf.RegularSurface(self).get_outer_corners()
     plist = [
@@ -211,12 +195,14 @@ def _filter_points_within_surface(self, points):
 
     p.eli_outside_polygons(boundary)
 
-    logger.info("Filtered points inside surface: %d", p.nrow)
+    logger.debug("Filtered points inside surface: %d", p.nrow)
 
     return p
 
 
-def _calculate_optimal_epsilon(xcv, ycv, k_neighbors=5):
+def _calculate_optimal_epsilon(
+    xcv: FloatArray, ycv: FloatArray, k_neighbors: int = 5
+) -> float:
     """
     Calculate optimal epsilon parameter for RBF kernels based on point spacing.
 
@@ -230,7 +216,6 @@ def _calculate_optimal_epsilon(xcv, ycv, k_neighbors=5):
     Returns:
         float: Optimal epsilon value
     """
-    from scipy.spatial import cKDTree
 
     # Sample points if too many (for performance)
     n_sample = min(1000, len(xcv))
@@ -244,17 +229,15 @@ def _calculate_optimal_epsilon(xcv, ycv, k_neighbors=5):
 
     sample_coords = np.column_stack([sample_x, sample_y])
 
-    # Build KD-tree for efficient nearest neighbor search
     tree = cKDTree(sample_coords)
 
     # Find distance to k nearest neighbors (k+1 because first is the point itself)
     k_neighbors = min(k_neighbors + 1, len(sample_coords))
     distances, _ = tree.query(sample_coords, k=k_neighbors)
 
-    # Take mean of the k nearest neighbors (excluding self)
+    # Take mean of the k nearest neighbors
     mean_k_distances = distances[:, 1:].mean(axis=1)
 
-    # Use median of these means - robust to clusters
     epsilon = np.median(mean_k_distances)
 
     # Safety check: ensure minimum based on data extent
@@ -265,7 +248,7 @@ def _calculate_optimal_epsilon(xcv, ycv, k_neighbors=5):
 
     epsilon = max(epsilon, min_epsilon)
 
-    logger.info(
+    logger.debug(
         "Auto-calculated epsilon: %.2f "
         "(based on median of mean %d-neighbor distances from %d samples)",
         epsilon,
@@ -276,7 +259,9 @@ def _calculate_optimal_epsilon(xcv, ycv, k_neighbors=5):
     return epsilon
 
 
-def _calculate_optimal_radius(self, xcv, ycv):
+def _calculate_optimal_radius(
+    self: RegularSurface, xcv: FloatArray, ycv: FloatArray
+) -> float:
     """
     Calculate optimal search radius based on grid resolution and point density.
 
@@ -304,7 +289,7 @@ def _calculate_optimal_radius(self, xcv, ycv):
         # This ensures we capture enough points while respecting grid resolution
         radius = max(grid_based_radius, 1.5 * avg_point_distance)
 
-        logger.info(
+        logger.debug(
             "Auto-calculated search radius: %.2f "
             "(grid-based: %.2f, point-based: %.2f, xinc=%.2f, yinc=%.2f)",
             radius,
@@ -315,7 +300,7 @@ def _calculate_optimal_radius(self, xcv, ycv):
         )
     else:
         radius = grid_based_radius
-        logger.info(
+        logger.debug(
             "Auto-calculated search radius: %.2f (based on grid increments only)",
             radius,
         )
@@ -323,7 +308,9 @@ def _calculate_optimal_radius(self, xcv, ycv):
     return radius
 
 
-def _estimate_correlation_length(xcv, ycv, zcv):
+def _estimate_correlation_length(
+    xcv: FloatArray, ycv: FloatArray, zcv: FloatArray
+) -> float:
     """
     Estimate correlation length (range_value) from point data.
 
@@ -337,7 +324,6 @@ def _estimate_correlation_length(xcv, ycv, zcv):
     Returns:
         float: Estimated correlation length
     """
-    from scipy.spatial import cKDTree
 
     # Sample points for efficiency
     n_sample = min(500, len(xcv))
@@ -351,7 +337,6 @@ def _estimate_correlation_length(xcv, ycv, zcv):
         sample_y = ycv
         sample_z = zcv
 
-    # Build KD-tree
     coords = np.column_stack([sample_x, sample_y])
     tree = cKDTree(coords)
 
@@ -411,11 +396,11 @@ def _estimate_correlation_length(xcv, ycv, zcv):
 
 
 def points_simple_gridding(
-    self,
-    points,
-    method="linear",
-    coarsen=1,
-):
+    self: RegularSurface,
+    points: Points,
+    method: Literal["linear", "nearest", "cubic"] = "linear",
+    coarsen: int = 1,
+) -> None:
     """
     Triangulation-based gridding using scipy.interpolate.griddata.
 
@@ -440,7 +425,7 @@ def points_simple_gridding(
         )
 
     npoints = len(xcv)
-    logger.info("Gridding %d points with method '%s'...", npoints, method)
+    logger.debug("Gridding %d points with method '%s'...", npoints, method)
 
     try:
         znew = scipy.interpolate.griddata(
@@ -450,19 +435,19 @@ def points_simple_gridding(
     except ValueError as verr:
         raise RuntimeError(f"Could not do gridding: {verr}")
 
-    logger.info("Gridding point ... DONE")
+    logger.debug("Gridding point ... DONE")
 
     self._ensure_correct_values(znew)
 
 
 def points_rbf_gridding(
-    self,
-    points,
-    function="thin_plate_spline",
-    smoothing=0.0,
-    epsilon=None,
-    coarsen=1,
-):
+    self: RegularSurface,
+    points: Points,
+    function: str = "thin_plate_spline",
+    smoothing: float = 0.0,
+    epsilon: float | None = None,
+    coarsen: int = 1,
+) -> None:
     """
     Do Radial Basis Function (RBF) gridding from a points data set.
 
@@ -508,7 +493,7 @@ def points_rbf_gridding(
     if function in epsilon_required and epsilon is None:
         epsilon = _calculate_optimal_epsilon(xcv, ycv)
 
-    logger.info(
+    logger.debug(
         "RBF gridding from %d points (function=%s, smooth=%s, epsilon=%s)...",
         npoints,
         function,
@@ -529,11 +514,17 @@ def points_rbf_gridding(
     except (ValueError, TypeError) as err:
         raise RuntimeError(f"Could not do RBF gridding: {err}")
 
-    logger.info("RBF gridding ... DONE")
+    logger.debug("RBF gridding ... DONE")
     self._ensure_correct_values(znew)
 
 
-def points_moving_average_gridding(self, points, radius=None, min_points=3, coarsen=1):
+def points_moving_average_gridding(
+    self: RegularSurface,
+    points: Points,
+    radius: float | None = None,
+    min_points: int = 3,
+    coarsen: int = 1,
+) -> None:
     """
     Do moving average gridding from a points data set.
 
@@ -607,12 +598,19 @@ def points_moving_average_gridding(self, points, radius=None, min_points=3, coar
     except (ValueError, TypeError) as err:
         raise RuntimeError(f"Could not do moving average gridding: {err}")
 
-    logger.info("Moving average gridding ... DONE")
+    logger.debug("Moving average gridding ... DONE")
 
     self._ensure_correct_values(znew)
 
 
-def points_idw_gridding(self, points, power=2.0, radius=None, min_points=1, coarsen=1):
+def points_idw_gridding(
+    self: RegularSurface,
+    points: Points,
+    power: float = 2.0,
+    radius: float | None = None,
+    min_points: int = 1,
+    coarsen: int = 1,
+) -> None:
     """
     Do inverse distance weighted (IDW) gridding from a points data set.
 
@@ -636,7 +634,9 @@ def points_idw_gridding(self, points, power=2.0, radius=None, min_points=1, coar
 
     if use_kdtree and radius is None:
         radius = _calculate_optimal_radius(self, xcv, ycv)
-        logger.info("Auto-calculated IDW search radius for large dataset: %.2f", radius)
+        logger.debug(
+            "Auto-calculated IDW search radius for large dataset: %.2f", radius
+        )
 
     # Flatten grid coordinates for processing
     xi_flat = xiv.ravel()
@@ -644,11 +644,8 @@ def points_idw_gridding(self, points, power=2.0, radius=None, min_points=1, coar
     zi_flat = np.full(xi_flat.shape, np.nan)
 
     if use_kdtree:
-        # Use KD-tree for efficient spatial search (large datasets or radius specified)
-        from scipy.spatial import cKDTree
-
         tree = cKDTree(np.column_stack([xcv, ycv]))
-        logger.info(
+        logger.debug(
             "IDW gridding %d points to %d grid nodes "
             "(radius=%.2f, power=%.2f, using KD-tree)...",
             npoints,
@@ -685,7 +682,7 @@ def points_idw_gridding(self, points, power=2.0, radius=None, min_points=1, coar
             zi_flat[i] = np.sum(weights * z_nearby) / np.sum(weights)
     else:
         # Simple vectorized approach for small datasets without radius
-        logger.info(
+        logger.debug(
             "IDW gridding %d points to %d grid nodes (power=%.2f, using all points)...",
             npoints,
             len(xi_flat),
@@ -719,12 +716,16 @@ def points_idw_gridding(self, points, power=2.0, radius=None, min_points=1, coar
     # Reshape back to grid
     znew = zi_flat.reshape(xiv.shape)
 
-    logger.info("IDW gridding ... DONE")
+    logger.debug("IDW gridding ... DONE")
 
     self._ensure_correct_values(znew)
 
 
-def _range_to_len_scale(range_value, variogram_model, alpha=None):
+def _range_to_len_scale(
+    range_value: float | tuple[float, float],
+    variogram_model: str,
+    alpha: float | None = None,
+) -> float | tuple[float, float]:
     """
     For kriging. Convert RMS/Petrel-style 'range' to GSTools 'len_scale'.
 
@@ -773,8 +774,13 @@ def _range_to_len_scale(range_value, variogram_model, alpha=None):
 
 
 def _create_variogram_model(
-    variogram_model, len_scale, nugget, variance, variogram_parameters, angle=None
-):
+    variogram_model: str,
+    len_scale: float | tuple[float, float],
+    nugget: float,
+    variance: float,
+    variogram_parameters: dict[str, Any] | None,
+    angle: float | None = None,
+) -> gs.CovModel:
     """
     Create GSTools covariance model for kriging.
 
@@ -826,7 +832,9 @@ def _create_variogram_model(
     return model_class(**model_params)
 
 
-def _calculate_block_division(self, target_cells_per_block):
+def _calculate_block_division(
+    self: RegularSurface, target_cells_per_block: int
+) -> tuple[int, int]:
     """
     Calculate optimal block division respecting grid aspect ratio, for kriging.
 
@@ -861,23 +869,30 @@ def _calculate_block_division(self, target_cells_per_block):
 
 
 def _krige_single_block(
-    self,
-    i_block,
-    j_block,
-    n_blocks_x,
-    n_blocks_y,
-    xiv,
-    yiv,
-    xcv,
-    ycv,
-    zcv,
-    tree,
-    model,
-    krige_type,
-    mean,
-    max_points,
-    margin,
-):
+    self: RegularSurface,
+    i_block: int,
+    j_block: int,
+    n_blocks_x: int,
+    n_blocks_y: int,
+    xiv: FloatArray,
+    yiv: FloatArray,
+    xcv: FloatArray,
+    ycv: FloatArray,
+    zcv: FloatArray,
+    tree: cKDTree,
+    model: gs.CovModel,
+    krige_type: Literal["ordinary", "simple"],
+    mean: float | None,
+    max_points: int,
+    margin: float,
+) -> tuple[
+    FloatArray | None,
+    int,
+    int,
+    int,
+    int,
+    Literal["success", "empty", "masked", "no_valid", "fallback", "nearest_neighbor"],
+]:
     """
     Krige a single block of the grid.
 
@@ -1054,19 +1069,19 @@ def _krige_single_block(
 
 
 def _block_kriging(
-    self,
-    xcv,
-    ycv,
-    zcv,
-    xiv,
-    yiv,
-    model,
-    krige_type,
-    mean,
-    max_points,
-    len_scale,
-    radius=None,
-):
+    self: RegularSurface,
+    xcv: FloatArray,
+    ycv: FloatArray,
+    zcv: FloatArray,
+    xiv: FloatArray,
+    yiv: FloatArray,
+    model: gs.CovModel,
+    krige_type: Literal["ordinary", "simple"],
+    mean: float | None,
+    max_points: int,
+    len_scale: float | tuple[float, float],
+    radius: float | None = None,
+) -> FloatArray | MaskedArray:
     """
     Perform block-based kriging for large datasets.
 
@@ -1084,11 +1099,9 @@ def _block_kriging(
     Returns:
         numpy array: Kriged surface values
     """
-    from scipy.spatial import cKDTree
-
     npoints = len(xcv)
 
-    logger.info(
+    logger.debug(
         "Using block-based kriging with max %d points per block (total: %d points)...",
         max_points,
         npoints,
@@ -1102,7 +1115,7 @@ def _block_kriging(
     target_cells_per_block = max(100, total_cells // 100)
 
     n_blocks_x, n_blocks_y = _calculate_block_division(self, target_cells_per_block)
-    logger.info("Dividing grid into %d x %d blocks...", n_blocks_x, n_blocks_y)
+    logger.debug("Dividing grid into %d x %d blocks...", n_blocks_x, n_blocks_y)
 
     # Initialize result array - preserve masking if input has it
     if np.ma.is_masked(xiv):
@@ -1117,13 +1130,13 @@ def _block_kriging(
     # Use provided radius or auto-calculate from correlation length
     if radius is not None:
         margin = radius
-        logger.info("Using provided search radius: %.1f", margin)
+        logger.debug("Using provided search radius: %.1f", margin)
     else:
         if isinstance(len_scale, float):
             margin = 2.0 * len_scale
         else:
             margin = 2.0 * np.max(len_scale)
-        logger.info("Auto-calculated search radius: %.1f (2 * len_scale)", margin)
+        logger.debug("Auto-calculated search radius: %.1f (2 * len_scale)", margin)
 
     # Process each block
     block_count = 0
@@ -1164,7 +1177,7 @@ def _block_kriging(
                     block_count += 1
 
     total_blocks = n_blocks_x * n_blocks_y
-    logger.info(
+    logger.debug(
         "Block kriging completed: %d/%d blocks processed "
         "(skipped: %d empty, %d masked, %d no valid cells)",
         block_count,
@@ -1182,7 +1195,7 @@ def _block_kriging(
         n_valid = znew.size
         n_nan = np.isnan(znew).sum()
 
-    logger.info(
+    logger.debug(
         "Surface coverage: %d valid cells, %d NaN cells (%.1f%% coverage)",
         n_valid - n_nan,
         n_nan,
@@ -1192,7 +1205,17 @@ def _block_kriging(
     return znew
 
 
-def _global_kriging(self, xcv, ycv, zcv, xiv, yiv, model, krige_type, mean):
+def _global_kriging(
+    self: RegularSurface,
+    xcv: FloatArray,
+    ycv: FloatArray,
+    zcv: FloatArray,
+    xiv: FloatArray,
+    yiv: FloatArray,
+    model: gs.CovModel,
+    krige_type: Literal["ordinary", "simple"],
+    mean: float | None,
+) -> FloatArray:
     """
     Perform global kriging using all points.
 
@@ -1229,7 +1252,13 @@ def _global_kriging(self, xcv, ycv, zcv, xiv, yiv, model, krige_type, mean):
     return znew_flat.reshape(xiv.shape)
 
 
-def _enforce_exact_bilinear(self, xcv, ycv, zcv, znew):
+def _enforce_exact_bilinear(
+    self: RegularSurface,
+    xcv: FloatArray,
+    ycv: FloatArray,
+    zcv: FloatArray,
+    znew: FloatArray,
+) -> int:
     """
     Enforce exact values using bilinear interpolation adjustment.
 
@@ -1253,10 +1282,6 @@ def _enforce_exact_bilinear(self, xcv, ycv, zcv, znew):
     """
     # Get grid coordinate arrays - needed to find cells for rotated surfaces
     xiv, yiv = self.get_xy_values()
-
-    # For rotated surfaces, we can't use simple index calculation
-    # Instead, we need to search for the cell containing each point
-    from scipy.spatial import cKDTree
 
     # Build KD-tree of all grid nodes for fast nearest-neighbor search
     # Flatten arrays to 1D: array is (ncol, nrow), so ravel gives ncol*nrow points
@@ -1421,7 +1446,7 @@ def _enforce_exact_bilinear(self, xcv, ycv, zcv, znew):
         if not found_cell:
             n_outside += 1
 
-    logger.info(
+    logger.debug(
         "Enforced exact values for %d/%d points using bilinear adjustment "
         "(%d points outside grid)",
         n_enforced,
@@ -1432,21 +1457,21 @@ def _enforce_exact_bilinear(self, xcv, ycv, zcv, znew):
 
 
 def points_kriging_gridding(
-    self,
-    points,
-    variogram_model="Gaussian",
-    variogram_parameters=None,
-    len_scale=None,
-    range_value=None,
-    nugget=0.0,
-    krige_type="ordinary",
-    mean=None,
-    coarsen=1,
-    max_points=500,
-    radius=None,
-    exact=False,
-    angle=None,
-):
+    self: RegularSurface,
+    points: Points,
+    variogram_model: str = "Gaussian",
+    variogram_parameters: dict[str, Any] | None = None,
+    len_scale: float | tuple[float, float] | None = None,
+    range_value: float | tuple[float, float] | None = None,
+    nugget: float = 0.0,
+    krige_type: Literal["ordinary", "simple"] = "ordinary",
+    mean: float | None = None,
+    coarsen: int = 1,
+    max_points: int = 500,
+    radius: float | None = None,
+    exact: bool = False,
+    angle: float | None = None,
+) -> None:
     """
     Do kriging gridding from a points data set using GSTools.
 
@@ -1550,9 +1575,9 @@ def points_kriging_gridding(
     if krige_type == "simple":
         if mean is None:
             mean = np.mean(zcv)
-            logger.info("Auto-estimated mean for simple kriging: %.2f", mean)
+            logger.debug("Auto-estimated mean for simple kriging: %.2f", mean)
         else:
-            logger.info("Using provided mean for simple kriging: %.2f", mean)
+            logger.debug("Using provided mean for simple kriging: %.2f", mean)
 
     # Handle range_value vs len_scale
     if range_value is not None and len_scale is None:
@@ -1564,7 +1589,7 @@ def points_kriging_gridding(
         len_scale = _range_to_len_scale(range_value, variogram_model, alpha=alpha)
 
         if isinstance(len_scale, tuple):
-            logger.info(
+            logger.debug(
                 "Converted RMS range=(%s, %s) to GSTools len_scale=(%s, %s) "
                 "for %s model%s",
                 range_value[0],
@@ -1575,7 +1600,7 @@ def points_kriging_gridding(
                 f" (alpha={alpha})" if alpha is not None else "",
             )
         else:
-            logger.info(
+            logger.debug(
                 "Converted RMS range=%.1f to GSTools len_scale=%.1f for %s model%s",
                 range_value,
                 len_scale,
@@ -1586,7 +1611,7 @@ def points_kriging_gridding(
     # Auto-estimate len_scale if not provided
     if len_scale is None:
         len_scale = _estimate_correlation_length(xcv, ycv, zcv)
-        logger.info("Auto-estimated correlation length: %.2f", len_scale)
+        logger.debug("Auto-estimated correlation length: %.2f", len_scale)
 
     # Prepare variogram parameters
     vario_params = variogram_parameters or {}
@@ -1597,7 +1622,7 @@ def points_kriging_gridding(
     # Auto-estimate variance if not provided
     if variance is None:
         variance = np.var(zcv)
-        logger.info("Auto-estimated variance: %.2f", variance)
+        logger.debug("Auto-estimated variance: %.2f", variance)
 
     # Create covariance model
     model = _create_variogram_model(
@@ -1628,7 +1653,7 @@ def points_kriging_gridding(
         )
     else:
         # Global kriging - use all points (fast for small datasets)
-        logger.info(
+        logger.debug(
             "Global kriging from %d points (type=%s, model=%s, len_scale=%s, "
             "nugget=%.2f, var=%.2f)...",
             npoints,
@@ -1642,16 +1667,16 @@ def points_kriging_gridding(
 
     # Enforce exact values at data points
     if exact:
-        logger.info("Enforcing exact data values...")
+        logger.debug("Enforcing exact data values...")
         n_enforced = _enforce_exact_bilinear(self, xcv, ycv, zcv, znew)
         if n_enforced > 0:
-            logger.info(
+            logger.debug(
                 "Enforced exact values at %d locations using '%s' method",
                 n_enforced,
                 exact,
             )
 
-    logger.info("Kriging gridding ... DONE")
+    logger.debug("Kriging gridding ... DONE")
     self._ensure_correct_values(znew)
 
 
@@ -1661,19 +1686,19 @@ def points_kriging_gridding(
 
 
 def avgsum_from_3dprops_gridding(
-    self,
-    summing=False,
-    xprop=None,
-    yprop=None,
-    mprop=None,
-    dzprop=None,
-    truncate_le=None,
-    zoneprop=None,
-    zone_minmax=None,
-    coarsen=1,
-    zone_avg=False,
-    mask_outside=False,
-):
+    self: RegularSurface,
+    summing: bool = False,
+    xprop: Any = None,
+    yprop: Any = None,
+    mprop: Any = None,
+    dzprop: Any = None,
+    truncate_le: Any = None,
+    zoneprop: Any = None,
+    zone_minmax: tuple[int, int] | None = None,
+    coarsen: int = 1,
+    zone_avg: bool = False,
+    mask_outside: bool = False,
+) -> None:
     """Get surface average from a 3D grid prop."""
     # NOTE:
     # This do _either_ averaging _or_ sum gridding (if summing is True)
@@ -1681,7 +1706,7 @@ def avgsum_from_3dprops_gridding(
     # - Xprop and yprop must be made for all cells
     # - Also dzprop for all cells, and dzprop = 0 for inactive cells!
 
-    logger.info("Avgsum calculation %s", __name__)
+    logger.debug("Avgsum calculation %s", __name__)
 
     if zone_minmax is None:
         raise ValueError("zone_minmax is required")
@@ -1744,12 +1769,12 @@ def avgsum_from_3dprops_gridding(
         if summing:
             propsum = mprop[:, :, klay0].sum()
             if abs(propsum) < 1e-12:
-                logger.info("Too little HC, skip layer K = %s", k1lay)
+                logger.debug("Too little HC, skip layer K = %s", k1lay)
                 qmcompute = False
             else:
                 logger.debug("Z property sum is %s", propsum)
 
-        logger.info("Mapping for layer or zone %s ....", k1lay)
+        logger.debug("Mapping for layer or zone %s ....", k1lay)
 
         xcv = xprop[::, ::, klay0].ravel(order="C")
         ycv = yprop[::, ::, klay0].ravel(order="C")
@@ -1804,14 +1829,22 @@ def avgsum_from_3dprops_gridding(
         vvz = ma.masked_less(vvz, truncate_le)
 
     self.values = vvz
-    logger.info("Avgsum calculation done! %s", __name__)
+    logger.debug("Avgsum calculation done! %s", __name__)
 
     return True
 
 
 def _zone_averaging(
-    xprop, yprop, zoneprop, zone_minmax, coarsen, zone_avg, dzprop, mprop, summing=False
-):
+    xprop: Any,
+    yprop: Any,
+    zoneprop: Any,
+    zone_minmax: tuple[int, int] | None,
+    coarsen: int,
+    zone_avg: bool,
+    dzprop: Any,
+    mprop: Any,
+    summing: bool = False,
+) -> tuple[FloatArray, FloatArray, FloatArray]:
     # General preprocessing, and...
     # Change the 3D numpy array so they get layers by
     # averaging across zones. This may speed up a lot,
@@ -1852,7 +1885,7 @@ def _zone_averaging(
         newd = []
 
         for izv in range(zmin, zmax + 1):
-            logger.info("Averaging for zone %s ...", izv)
+            logger.debug("Averaging for zone %s ...", izv)
             xpr2 = ma.masked_where(zpr != izv, xpr)
             ypr2 = ma.masked_where(zpr != izv, ypr)
             zpr2 = ma.masked_where(zpr != izv, zpr)
@@ -1906,7 +1939,7 @@ def _zone_averaging(
 
 def surf_fill(
     self: RegularSurface, fill_value: float | None = None, method: str = "nearest"
-):
+) -> None:
     """Replace the value of invalid 'data' cells (indicated by 'invalid')
     by the value of the nearest valid data cell, a constant, or smooth extrapolation.
 
@@ -1924,7 +1957,7 @@ def surf_fill(
     .. versionadded:: 2.1
     .. versionchanged:: 2.6 Added fill_value
     """
-    logger.info(
+    logger.debug(
         "Do fill with method '%s'...", method if fill_value is None else "constant"
     )
 
@@ -1975,7 +2008,7 @@ def surf_fill(
                 max_points = 5000
 
                 if len(xcv) > max_points:
-                    logger.info(
+                    logger.debug(
                         "Sampling %d points from %d for RBF fill", max_points, len(xcv)
                     )
                     step = max(1, len(xcv) // max_points)
@@ -2001,12 +2034,12 @@ def surf_fill(
                 "Valid options: 'nearest', 'linear', 'cubic', 'radial_basis'"
             )
 
-    logger.info("Do fill... DONE")
+    logger.debug("Do fill... DONE")
 
 
 def _smooth(
     self: RegularSurface,
-    window_function: Callable[[np.ndarray], np.ndarray],
+    window_function: Callable[[NDArray[np.float64]], NDArray[np.float64]],
     iterations: int = 1,
 ) -> None:
     """

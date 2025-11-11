@@ -2070,7 +2070,7 @@ class RegularSurface:
 
     def gridding(
         self,
-        input_data: Union[Points, Polygons, "RegularSurface"],
+        input_data: Points | Polygons | "RegularSurface",
         method: Literal[
             "linear",
             "cubic",
@@ -2083,11 +2083,11 @@ class RegularSurface:
             "kriging",
         ] = "linear",
         coarsen: int = 1,
-        merge_close_points: Optional[Union[float, str]] = None,
+        merge_close_points: float | None = None,
         merge_method: Literal[
             "average", "median", "first", "min_z", "max_z"
         ] = "average",
-        method_options: Optional[Dict] = None,
+        method_options: dict | None = None,
     ):
         """Grid a surface from points, polygons, or another surface.
 
@@ -2112,12 +2112,10 @@ class RegularSurface:
                 - 'kriging': Use ordinary or simple kriging, requires gstools installed.
 
             coarsen: Coarsen factor to speed up gridding (use every Nth point)
-            merge_close_points: Minimum distance threshold for merging close points.
-                Can be a float (distance in map units) or a string like "0.5*avg_inc"
-                to use a fraction of the average grid increment. Set to None to disable
-                merging (default). Useful when points are too close and cause numerical
-                issues during gridding, in particular for methods 'kriging' and
-                'radial_basis'.
+            merge_close_points: Minimum horizontal distance threshold (in map units)
+                for merging close points. Set to None to disable merging (default).
+                Useful when points are too close and cause numerical issues during
+                gridding, in particular for methods 'kriging' and 'radial_basis'.
             merge_method: Method for merging close points: 'average', 'median',
                 'first', 'min_z', 'max_z'. Default is 'average'. Only used when
                 merge_close_points is not None.
@@ -2185,10 +2183,8 @@ class RegularSurface:
             # Many points that cover mapping area - use cubic (fast, good quality)
             surf.gridding(points, method='cubic')
 
-            # Many points with extrapolation outside convex hull and merge close points
-            # closer than 10% of average grid spacing
-            surf.gridding(points, method='rbf', method_options={'function': 'linear'},
-            'merge_close_points': '0.1*avg_inc')
+            # Many points with extrapolation outside convex hull
+            surf.gridding(points, method='rbf', method_options={'function': 'linear'})
 
             # Sparse points or trends - use RBF for smooth result
             surf.gridding(points, method='rbf')
@@ -2225,8 +2221,8 @@ class RegularSurface:
             ValueError: If method is invalid or required method_options are missing
             RuntimeError: If gridding fails
 
-        .. versionchanged:: 4.14 Added many more options and methods
-        .. versionchanged:: 4.14 Accepts Points, Polygons, or RegularSurface as input
+        .. versionchanged:: 4.15 Added many more options and methods
+        .. versionchanged:: 4.15 Accepts Points, Polygons, or RegularSurface as input
         """
         from xtgeo.xyz.points import points_from_surface
 
@@ -2249,7 +2245,7 @@ class RegularSurface:
 
         # Handle point merging (common preprocessing for all methods)
         working_points = _regsurf_gridding.merge_close_points_preprocessing(
-            self, points, merge_close_points, merge_method
+            points, merge_close_points, merge_method
         )
 
         logger.info("Gridding with method: %s", method)

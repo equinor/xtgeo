@@ -395,10 +395,11 @@ def test_gridding_merge_close_points_absolute(simple_surface, close_points):
 
 
 def test_gridding_merge_close_points_expression(simple_surface, close_points):
-    """Test merging close points with expression (avg_inc)."""
+    """Test merging close points with numeric threshold."""
     surf = simple_surface.copy()
 
-    surf.gridding(close_points, method="linear", merge_close_points="0.5*avg_inc")
+    # Using 5.0 (equivalent to 0.5*avg_inc where avg_inc=10.0)
+    surf.gridding(close_points, method="linear", merge_close_points=5.0)
 
     assert not np.all(np.isnan(surf.values))
 
@@ -536,11 +537,12 @@ def test_gridding_rbf_with_merge(simple_surface, close_points):
     """Test RBF gridding with close points merging."""
     surf = simple_surface.copy()
 
+    # Using 5.0 (equivalent to 0.5*avg_inc where avg_inc=10.0)
     # This should work without errors
     surf.gridding(
         close_points,
         method="radial_basis",
-        merge_close_points="0.5*avg_inc",
+        merge_close_points=5.0,
         merge_method="average",
     )
 
