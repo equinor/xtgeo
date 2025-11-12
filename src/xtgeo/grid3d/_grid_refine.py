@@ -31,6 +31,28 @@ def refine(
     self._set_xtgformat1()
     self.make_zconsistent()
 
+    max_refine = np.iinfo(np.uint16).max
+
+    # Validate refinement factors are within valid range
+    for name, factor in [
+        ("refine_col", refine_col),
+        ("refine_row", refine_row),
+        ("refine_layer", refine_layer),
+    ]:
+        if isinstance(factor, int):
+            if not 0 <= factor <= max_refine:
+                raise ValueError(
+                    f"{name}={factor} is out of valid range [0, {max_refine}]"
+                )
+        elif isinstance(factor, dict):
+            for key, value in factor.items():
+                if not isinstance(value, int) or not 0 <= value <= max_refine:
+                    raise ValueError(
+                        f"{name}[{key}]={value} is out of valid range [0, {max_refine}]"
+                    )
+        else:
+            raise TypeError(f"{name} must be int or dict[int, int], got {type(factor)}")
+
     if isinstance(refine_col, int):
         refine_factor_column = [refine_col] * self.dimensions[0]
     else:
@@ -121,9 +143,9 @@ def refine(
 
     self._set_xtgformat2()
 
-    refine_factor_column = np.array(refine_factor_column, dtype=np.int8)
-    refine_factor_row = np.array(refine_factor_row, dtype=np.int8)
-    refine_factor_layer = np.array(refine_factor_layer, dtype=np.int8)
+    refine_factor_column = np.array(refine_factor_column, dtype=np.uint16)
+    refine_factor_row = np.array(refine_factor_row, dtype=np.uint16)
+    refine_factor_layer = np.array(refine_factor_layer, dtype=np.uint16)
 
     if refine_factor_column.sum() > self.dimensions[0]:
         grid_cpp = _internal.grid3d.Grid(self)
@@ -175,6 +197,23 @@ def refine_vertically(
     """
     self._set_xtgformat1()
     self.make_zconsistent()
+
+    max_refine = np.iinfo(np.uint16).max
+
+    # Validate refinement factor is within valid range
+    if isinstance(rfactor, int):
+        if not 0 <= rfactor <= max_refine:
+            raise ValueError(
+                f"rfactor={rfactor} is out of valid range [0, {max_refine}]"
+            )
+    elif isinstance(rfactor, dict):
+        for key, value in rfactor.items():
+            if not isinstance(value, int) or not 0 <= value <= max_refine:
+                raise ValueError(
+                    f"rfactor[{key}]={value} is out of valid range [0, {max_refine}]"
+                )
+    else:
+        raise TypeError(f"rfactor must be int or dict[int, int], got {type(rfactor)}")
 
     rfactord = {}
 
@@ -237,7 +276,7 @@ def refine_vertically(
 
     self._set_xtgformat2()
     grid_cpp = _internal.grid3d.Grid(self)
-    refine_factors = np.array(refine_factors, dtype=np.int8)
+    refine_factors = np.array(refine_factors, dtype=np.uint16)
     ref_zcornsv, ref_actnumsv = grid_cpp.refine_vertically(refine_factors)
 
     # update instance:

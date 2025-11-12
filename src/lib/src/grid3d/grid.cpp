@@ -789,7 +789,7 @@ create_grid_from_cube(const cube::Cube &cube,
 }
 
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
-refine_vertically(const Grid &grd, const py::array_t<uint8_t> refinement_per_layer)
+refine_vertically(const Grid &grd, const py::array_t<uint16_t> refinement_per_layer)
 {
     auto actnumsv_ = grd.get_actnumsv().unchecked<3>();
     auto zcornsv_ = grd.get_zcornsv().unchecked<4>();
@@ -851,7 +851,7 @@ refine_vertically(const Grid &grd, const py::array_t<uint8_t> refinement_per_lay
 }
 
 std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
-refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
+refine_columns(const Grid &grid_cpp, const py::array_t<uint16_t> refinement)
 {
     auto &logger = xtgeo::logging::LoggerManager::get("refine_columns");
     auto actnumsv_ = grid_cpp.get_actnumsv().unchecked<3>();
@@ -960,7 +960,7 @@ refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
 }
 
 std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
-refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement)
+refine_rows(const Grid &grid_cpp, const py::array_t<uint16_t> refinement)
 {
     auto &logger = xtgeo::logging::LoggerManager::get("refine_rows");
     auto actnumsv_ = grid_cpp.get_actnumsv().unchecked<3>();

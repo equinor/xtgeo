@@ -2740,6 +2740,9 @@ class Grid(_Grid3D):
             ValueError: if..
             RuntimeError: if mismatch in dimensions for refine_layer and zoneprop
 
+        Note:
+            Maximum refinement value for e.g. ``refine_layer`` is 65535 per zone.
+
         """
         _grid_refine.refine(
             self, refine_col, refine_row, refine_layer, zoneprop=zoneprop
@@ -2795,6 +2798,9 @@ class Grid(_Grid3D):
             # in the dictionary rfactor and the zone property must be aligned.
 
             grd.refine_vertically({1: 3, 2: 4, 4: 0}, zoneprop=myzone)
+
+        Note:
+            Maximum value for ``rfactor`` is 65535, per zone.
 
         """
         _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
