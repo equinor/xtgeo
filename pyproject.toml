@@ -37,6 +37,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "deprecation",
+    "gstools",
     "h5py>=3",
     "hdf5plugin>=2.3",
     "joblib",
