@@ -114,7 +114,7 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
                                     const double tolerance = numerics::TOLERANCE);
 
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
-refine_vertically(const Grid &grid_cpp, const py::array_t<uint8_t> refine_layer);
+refine_vertically(const Grid &grid_cpp, const py::array_t<uint16_t> refine_layer);
 
 std::tuple<py::array_t<int>, py::array_t<int>, py::array_t<int>>
 get_indices_from_pointset(const Grid &grid,
@@ -145,10 +145,10 @@ get_grid_fence(const Grid &grd,
                const double threshold_magic);
 
 std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
-refine_columns(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
+refine_columns(const Grid &grid_cpp, const py::array_t<uint16_t> refinement);
 
 std::tuple<py::array_t<double>, py::array_t<float>, py::array_t<int8_t>>
-refine_rows(const Grid &grid_cpp, const py::array_t<uint8_t> refinement);
+refine_rows(const Grid &grid_cpp, const py::array_t<uint16_t> refinement);
 
 py::array_t<float>
 collapse_inactive_cells(const Grid &grid_cpp, bool collapse_internal = true);
