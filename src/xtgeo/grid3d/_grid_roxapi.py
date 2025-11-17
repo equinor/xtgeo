@@ -173,7 +173,6 @@ def save_grid_to_rms(
     projectname: str,
     gname: str,
     realisation: int,
-    info: bool = False,
     method: str | Literal["cpg", "roff"] = "cpg",
 ) -> None:
     """Save (i.e. store in RMS) via RMSAPI (former ROXAPI) spec.
@@ -191,7 +190,7 @@ def save_grid_to_rms(
 
     if method == "cpg":
         self._set_xtgformat2()
-        _save_grid_to_rms_cornerpoint(self, rox, gname, realisation, info)
+        _save_grid_to_rms_cornerpoint(self, rox, gname, realisation)
 
     else:
         _save_grid_to_rms_viaroff(self, rox, gname, realisation)
@@ -203,7 +202,7 @@ def save_grid_to_rms(
 
 
 def _save_grid_to_rms_cornerpoint(
-    self: Grid, rox: RoxUtils, gname: str, realisation: int, info: bool
+    self: Grid, rox: RoxUtils, gname: str, realisation: int
 ) -> None:
     """Convert xtgeo geometry to pillar spec in ROXAPI and store _xtgformat=2."""
 

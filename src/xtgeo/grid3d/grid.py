@@ -47,6 +47,7 @@ if TYPE_CHECKING:
         RegularSurface as RegularSurfaceCPP,
     )
     from xtgeo.common.types import FileLike
+    from xtgeo.interfaces.rms._rmsapi_package import RmsProjectOrPathType
     from xtgeo.xyz.points import Points
 
     from ._ecl_grid import Units
@@ -191,7 +192,7 @@ def grid_from_file(
 
 
 def grid_from_roxar(
-    project: str,
+    project: RmsProjectOrPathType,
     gname: str,
     realisation: int = 0,
     info: bool = False,
@@ -199,15 +200,11 @@ def grid_from_roxar(
     """Read a 3D grid inside a RMS project and return a Grid() instance.
 
     Args:
-        project (str or special): The RMS project or the project variable
+        project: The RMS project as path or the project variable
             from inside RMS.
-        gname (str): Name of Grid Model in RMS.
-        realisation (int): Realisation number.
-        dimensions_only (bool): If True, only the ncol, nrow, nlay will
-            read. The actual grid geometry will remain empty (None). This will
-            be much faster of only grid size info is needed, e.g.
-            for initalising a grid property.
-        info (bool): If true, only grid info
+        gname: Name of Grid Model in RMS.
+        realisation: Realisation number.
+        info: If true, only grid info
 
     Example::
 
@@ -1119,10 +1116,9 @@ class Grid(_Grid3D):
 
     def to_roxar(
         self,
-        project: str,
+        project: RmsProjectOrPathType,
         gname: str,
         realisation: int = 0,
-        info: bool = False,
         method: Literal["cpg", "roff"] = "cpg",
     ) -> None:
         """Export (upload) a grid from XTGeo to RMS via Roxar API.
@@ -1133,12 +1129,11 @@ class Grid(_Grid3D):
             will not be saved until the user do an explicit project save action.
 
         Args:
-            project (str or roxar._project): Inside RMS use the magic 'project',
+            project: Inside RMS use the magic 'project',
                 else use path to RMS project, or a project reference
-            gname (str): Name of grid in RMS
-            realisation (int): Realisation umber, default 0
-            info (bool): TBD
-            method (str): Save approach, the default is 'cpg' which applied the internal
+            gname: Name of grid in RMS
+            realisation: Realisation number, default 0
+            method: Save approach, the default is 'cpg' which applies the internal
                 RMS API, while 'roff' will do a save to a temporary area, and then load
                 into RMS. For strange reasons, the 'roff' method is per RMS version
                 14.2 a faster method (strange since file i/o is way more costly than
@@ -1147,13 +1142,11 @@ class Grid(_Grid3D):
         Note:
             When storing grids that needs manipulation of inactive cells, .e.g.
             ``activate_all()`` method, using method='roff' is recommended. The reason
-            is that saving cells using 'cpg' method will force zero depth values on
+            is that saving cells using the 'cpg' method will force zero depth values in
             inactive cells.
 
         """
-        _grid_roxapi.save_grid_to_rms(
-            self, project, gname, realisation, info=info, method=method
-        )
+        _grid_roxapi.save_grid_to_rms(self, project, gname, realisation, method=method)
 
     def convert_units(self, units: Units) -> None:
         """
