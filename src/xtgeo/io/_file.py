@@ -435,34 +435,60 @@ class FileWrapper:
         )
         return True
 
-    def fileformat(self, fileformat: str | None = None) -> FileFormat:
+    def fileformat(
+        self,
+        fileformat: str | None = None,
+        strict: bool = False,
+    ) -> FileFormat:
         """
-        Try to deduce format from looking at file suffix or contents.
-
-        The file signature may be the initial part of the binary file/stream but if
-        that fails, the file extension is used.
+        Identify file format from looking at file suffix or contents.
+        First, the 'fileformat' argument is validated against the formats supported
+        by XTGeo.
+        Next, the file format is detected from the file suffix and compared to the
+        'fileformat' argument.
+        If that fails or 'strict' is true, then the file format is detected from
+        the file signature (the first few bytes/lines in the file) and
+        compared to the 'fileformat' argument.
 
         Args:
-            fileformat (str, None): An optional user-provided string indicating what
-              kind of file this is.
+            fileformat (str, None): An optional user-provided string indicating
+                the expected file format.
+            strict (bool): if True, the file signature is validated against
+                the format specified in the input argument, also if the suffix
+                indicates a known format.
 
         Raises:
-            A ValueError if an invalid or unsupported format is encountered.
+            InvalidFileFormatError: If the file format is unknown or unsupported.
+            ValueError: If the indicated file format does not match the detected format.
 
         Returns:
-            A FileFormat.
+            A FileFormat supported by XTGeo.
         """
+
         if fileformat:
             fileformat = fileformat.lower()
+
+        # check if format indicated by user is supported by XTGeo
         self._validate_fileformat(fileformat)
 
-        fmt = self._format_from_suffix(fileformat)
-        if fmt == FileFormat.UNKNOWN:
-            fmt = self._format_from_contents()
+        fmt_suffix = self._format_from_suffix(fileformat)
+        if strict or fmt_suffix == FileFormat.UNKNOWN:
+            fmt_contents = self._format_from_contents()
+            if fmt_suffix != FileFormat.UNKNOWN and fmt_suffix != fmt_contents:
+                raise ValueError(
+                    f"File format indicated by suffix {fmt_suffix} does not match "
+                    f"format detected from file contents {fmt_contents} when "
+                    f"input parameter 'strict'={strict} is used.",
+                )
+            fmt = fmt_contents
+        else:
+            fmt = fmt_suffix
+
         if fmt == FileFormat.UNKNOWN:
             raise InvalidFileFormatError(
                 f"File format {fileformat} is unknown or unsupported"
             )
+
         return fmt
 
     def _validate_fileformat(self, fileformat: str | None) -> None:
@@ -505,6 +531,11 @@ class FileWrapper:
         return FileFormat.UNKNOWN
 
     def _format_from_contents(self) -> FileFormat:
+        """
+        Detect file format by looking at file contents/signature.
+        Detection is shallow and only looks at the first bytes/lines in file.
+        """
+
         BUFFER_SIZE = 128
         buffer = bytearray(BUFFER_SIZE)
 
@@ -522,6 +553,12 @@ class FileWrapper:
                 raise FileNotFoundError(f"File {self.name} does not exist")
             with open(self.file, "rb") as fhandle:
                 fhandle.readinto(buffer)
+
+        # Check if file content matches signatures of file formats
+        # that are handled by XTGeo.
+        # Only the buffer is checked, so only the first bytes/lines of the file.
+        # If the buffer is empty or contain only whitespace, none of the formats
+        # will match.
 
         # HDF format, different variants
         if len(buffer) >= 4:
@@ -579,25 +616,33 @@ class FileWrapper:
         # The signature here is one float in first line with values 1.0; one string
         # in second line; and 3 or 4 items in the next (sometimes RKB is missing)
         try:
-            xbuf = buffer.decode().split("\n")
+            # Use splitlines() to handle \n (Unix) and \r\n (Windows) endings
+            # Use 'replace' to handle any encoding errors gracefully
+            xbuf = buffer.decode(encoding="utf-8", errors="replace").splitlines()
         except UnicodeDecodeError:
             return FileFormat.UNKNOWN
 
         if (
             len(xbuf) >= 3
-            and xbuf[0] == "1.0"
-            and len(xbuf[1]) >= 1
-            and len(xbuf[2]) >= 10
+            and xbuf[0].strip() == "1.0"
+            and len(xbuf[1].strip()) >= 1
+            and len(xbuf[2].strip()) >= 10
         ):
             logger.debug("Signature is rmswell")
             return FileFormat.RMSWELL
 
-        tsurf_signature = b"GOCAD TSurf 1"
-        if (
-            len(buffer) >= len(tsurf_signature)
-            and buffer[: len(tsurf_signature)] == tsurf_signature
-        ):
-            logger.debug("Signature is tsurf")
-            return FileFormat.TSURF
+        # TSurf format by GOCAD
+        # Uses list[str] to handle case with extra spaces
+        tsurf_signature = ["GOCAD", "TSurf", "1"]
+        for line in xbuf:
+            words = line.strip().split()
+            if (
+                words
+                and not words[0].startswith("#")  # skip comment lines
+                and len(words) >= len(tsurf_signature)
+                and words[:3] == tsurf_signature[:3]
+            ):
+                logger.debug("Signature is tsurf")
+                return FileFormat.TSURF
 
         return FileFormat.UNKNOWN
