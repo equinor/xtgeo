@@ -37,17 +37,19 @@ def fixture_reek_grid_path(testdata_path):
     return pathlib.Path(testdata_path) / "3dgrids/reek"
 
 
-def test_fileformat_unknown_empty_memstream():
+@pytest.mark.parametrize("strict", [False, True])
+def test_fileformat_unknown_empty_memstream(strict):
     with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
-        FileWrapper(io.StringIO()).fileformat()
+        FileWrapper(io.StringIO()).fileformat(strict=strict)
     with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
-        FileWrapper(io.BytesIO()).fileformat()
+        FileWrapper(io.BytesIO()).fileformat(strict=strict)
 
 
+@pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("length", [0, 4, 8, 24, 9])
-def test_fileformat_unknown_zeroed_memstream_with_varied_length(length):
+def test_fileformat_unknown_zeroed_memstream_with_varied_length(length, strict):
     with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
-        FileWrapper(io.BytesIO(b"\00" * length)).fileformat()
+        FileWrapper(io.BytesIO(b"\00" * length)).fileformat(strict=strict)
 
 
 @pytest.mark.parametrize("filename", FILE_FORMATS.keys())
@@ -188,8 +190,9 @@ def test_file_c_handle(testdata_path, filename):
 
 
 @pytest.mark.bigtest
+@pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_surface_file_roundtrip_stream(testdata_path, filename):
+def test_surface_file_roundtrip_stream(testdata_path, filename, strict):
     stream = io.BytesIO()
     surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_file(stream)
@@ -197,18 +200,22 @@ def test_surface_file_roundtrip_stream(testdata_path, filename):
     stream_file = FileWrapper(stream)
 
     assert stream_file.memstream is True
-    assert stream_file.fileformat() == FileFormat.IRAP_BINARY
+    assert stream_file.fileformat(strict=strict) == FileFormat.IRAP_BINARY
 
 
+@pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
-def test_fileformat_infers_from_suffix(testdata_path, filename, expected_format):
+def test_fileformat_infers_from_suffix(
+    testdata_path, filename, expected_format, strict
+):
     xtgeo_file = FileWrapper(testdata_path / filename)
-    assert xtgeo_file.fileformat() == expected_format
+    assert xtgeo_file.fileformat(strict=strict) == expected_format
 
 
+@pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
 def test_fileformat_infers_from_stream_contents(
-    testdata_path, filename, expected_format
+    testdata_path, filename, expected_format, strict
 ):
     if expected_format in (FileFormat.RMSWELL, FileFormat.ROFF_ASCII):
         with open(testdata_path / filename) as f:
@@ -217,38 +224,52 @@ def test_fileformat_infers_from_stream_contents(
         with open(testdata_path / filename, "rb") as f:
             stream = io.BytesIO(f.read())
     xtgeo_file = FileWrapper(stream)
-    assert xtgeo_file.fileformat() == expected_format
+    assert xtgeo_file.fileformat(strict=strict) == expected_format
 
 
+@pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
-def test_fileformat_provided(testdata_path, filename, expected_format):
+def test_fileformat_provided(testdata_path, filename, expected_format, strict):
     xtgeo_file = FileWrapper(testdata_path / filename)
     name = expected_format.name
-    assert xtgeo_file.fileformat(fileformat=name) == expected_format
-    assert xtgeo_file.fileformat(fileformat=name.lower()) == expected_format
+    assert xtgeo_file.fileformat(fileformat=name, strict=strict) == expected_format
+    assert (
+        xtgeo_file.fileformat(fileformat=name.lower(), strict=strict) == expected_format
+    )
 
 
 @pytest.mark.parametrize("filename, expected_format", SURFACE_FILE_FORMATS.items())
 def test_fileformat_provided_prefer_given(testdata_path, filename, expected_format):
+    # For later reference; this test pertains to the case where the user
+    # explicitly chooses to provide a fileformat that is different from the actual
+    # fileformat.  Although inconsistent it should be allowed,
+    # but only if 'strict' is False. If 'strict' is True it should raise an error
+    # so that the user can fix the inconsistency.
     xtgeo_file = FileWrapper(testdata_path / filename)
-    assert xtgeo_file.fileformat(fileformat="segy") == FileFormat.SEGY
+    assert xtgeo_file.fileformat(fileformat="segy", strict=False) == FileFormat.SEGY
+    with pytest.raises(
+        ValueError, match="does not match format detected from file contents"
+    ):
+        xtgeo_file.fileformat(fileformat="segy", strict=True) == FileFormat.SEGY
 
 
+@pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_fileformat_hdf_stream(testdata_path, filename):
+def test_fileformat_hdf_stream(testdata_path, filename, strict):
     stream = io.BytesIO()
     surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_hdf(stream)
     stream.seek(0)
     sfile = FileWrapper(stream)
     assert sfile.memstream is True
-    assert sfile.fileformat() == FileFormat.HDF
+    assert sfile.fileformat(strict=strict) == FileFormat.HDF
 
 
+@pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_fileformat_hdf_to_file(tmp_path, testdata_path, filename):
+def test_fileformat_hdf_to_file(tmp_path, testdata_path, filename, strict):
     newfile = tmp_path / "hdf_surf.hdf"
     surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_hdf(newfile)
     sfile = FileWrapper(newfile)
-    assert sfile.fileformat() == FileFormat.HDF
+    assert sfile.fileformat(strict=strict) == FileFormat.HDF
