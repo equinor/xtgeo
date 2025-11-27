@@ -21,6 +21,13 @@ from .egrid_generator import (
 from .grdecl_grid_generator import grdecl_grids, units
 from .grid_generator import xtgeo_grids
 
+# avoid that the hypothesis tests emit numerous warnings on special cases not supported
+# by xtgeo
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:egrid file given with coarsening.*:UserWarning",
+    "ignore:egrid file given with coordinate definition.*:UserWarning",
+)
+
 
 def test_unit_conversion_factors():
     metres = ggrid.Units.METRES
