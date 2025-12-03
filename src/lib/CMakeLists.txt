@@ -30,7 +30,7 @@ else()
   FetchContent_Declare(
     fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 11.2.0)
+    GIT_TAG 12.1.0)
   set(FMT_MASTER_PROJECT OFF)
   set(BUILD_SHARED_LIBS OFF)
   FetchContent_MakeAvailable(fmt)
