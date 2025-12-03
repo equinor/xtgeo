@@ -1,6 +1,10 @@
-import concurrent.futures
 import io
 import logging
+import multiprocessing
+import sys
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from pathlib import Path
+from typing import Callable
 
 import xtgeo
 
@@ -8,88 +12,63 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-TESTFILE = "../../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
+TESTFILE = (
+    Path(__file__).parent.parent.parent
+    / "xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
+)
 NTHREAD = 20
 
 
-def _get_files_as_regularsurfaces_thread(option=1):
-    surfs = []
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=NTHREAD) as executor:
-        if option == 1:
-            futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
-        else:
-            futures = {executor.submit(_get_regsurfi, i): i for i in range(NTHREAD)}
-
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                surf = future.result()
-            except Exception as exc:
-                logger.error("Error: %s", exc)
-            else:
-                surfs.append(surf)
-
-        return xtgeo.Surfaces(surfs)
-
-
-def _get_files_as_regularsurfaces_multiprocess(option=1):
-    surfs = []
-
-    with concurrent.futures.ProcessPoolExecutor(max_workers=NTHREAD) as executor:
-        if option == 1:
-            futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
-        else:
-            futures = {executor.submit(_get_regsurfi, i): i for i in range(NTHREAD)}
-
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                surf = future.result()
-            except Exception as exc:
-                logger.error("Error: %s", exc)
-            else:
-                surfs.append(surf)
-
-        return xtgeo.Surfaces(surfs)
-
-
-def _get_regsurff(i):
-    logger.info("Start %s", i)
-
-    sfile = TESTFILE
-
-    logger.info("File is %s", sfile)
-    rf = xtgeo.surface_from_file(sfile, fformat="irap_binary")
-    logger.info("End %s", i)
+def _get_regsurf_from_file(n: int) -> xtgeo.RegularSurface:
+    logger.info("Start %s", n)
+    rf = xtgeo.surface_from_file(TESTFILE, fformat="irap_binary")
+    logger.info("End %s", n)
     return rf
 
 
-def _get_regsurfi(i):
-    logger.info("Start %s", i)
-
-    sfile = TESTFILE
-    with open(sfile, "rb") as fin:
+def _get_regsurf_from_stream(n: int) -> xtgeo.RegularSurface:
+    logger.info("Start %s", n)
+    with open(TESTFILE, "rb") as fin:
         stream = io.BytesIO(fin.read())
-
-    logger.info("File is %s", sfile)
     rf = xtgeo.surface_from_file(stream, fformat="irap_binary")
-    logger.info("End %s", i)
-
+    logger.info("End %s", n)
     return rf
+
+
+def run_test(
+    executor_class: type[ProcessPoolExecutor] | type[ThreadPoolExecutor],
+    loader_func: Callable[[int], xtgeo.RegularSurface],
+    name: str,
+) -> bool:
+    """Generic test runner."""
+    surfs = []
+    with executor_class(max_workers=NTHREAD) as executor:
+        futures = {executor.submit(loader_func, n): n for n in range(NTHREAD)}
+
+        for future in as_completed(futures):
+            surf = future.result()
+            surfs.append(surf)
+
+    surfaces = xtgeo.Surfaces(surfs)
+    for srf in surfaces.surfaces:
+        logger.info("%s: %s", name, srf.values.mean())
+
+    return len(surfs) == NTHREAD
+
+
+def main() -> int:
+    """Main entry point."""
+
+    if sys.platform == "darwin":
+        multiprocessing.set_start_method("spawn", force=True)
+
+    success = True
+    success &= run_test(ThreadPoolExecutor, _get_regsurf_from_file, "thread-file")
+    success &= run_test(ThreadPoolExecutor, _get_regsurf_from_stream, "thread-stream")
+    success &= run_test(ProcessPoolExecutor, _get_regsurf_from_file, "process-file")
+    success &= run_test(ProcessPoolExecutor, _get_regsurf_from_stream, "process-stream")
+    return 0 if success else 1
 
 
 if __name__ == "__main__":
-    SURFS1 = _get_files_as_regularsurfaces_thread(option=1)
-    for srf in SURFS1.surfaces:
-        logger.info("1 %s", srf.values.mean())
-
-    SURFS2 = _get_files_as_regularsurfaces_thread(option=2)
-    for srf in SURFS2.surfaces:
-        logger.info("2 %s", srf.values.mean())
-
-    SURFS3 = _get_files_as_regularsurfaces_multiprocess(option=1)
-    for srf in SURFS3.surfaces:
-        logger.info("3 %s", srf.values.mean())
-
-    SURFS4 = _get_files_as_regularsurfaces_multiprocess(option=2)
-    for srf in SURFS4.surfaces:
-        logger.info("4 %s", srf.values.mean())
+    sys.exit(main())
