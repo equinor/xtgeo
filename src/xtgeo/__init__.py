@@ -79,11 +79,12 @@ from xtgeo.well.blocked_well import (
 )
 from xtgeo.well.blocked_wells import (
     BlockedWells,
+    blockedwells_from_stacked_file,
     blockedwells_from_files,
     blockedwells_from_roxar,
 )
 from xtgeo.well.well1 import Well, well_from_file, well_from_roxar
-from xtgeo.well.wells import Wells, wells_from_files
+from xtgeo.well.wells import Wells, wells_from_stacked_file, wells_from_files
 from xtgeo.xyz.points import (
     points_from_file,
     points_from_roxar,
@@ -200,7 +201,7 @@ __all__ = [
     "blocked_wells",
     "blockedwell_from_file",
     "blockedwell_from_roxar",
-    "blockedwells_from_file",
+    "blockedwells_from_stacked_file",
     "blockedwells_from_files",
     "blockedwells_from_roxar",
     "create_box_grid",
@@ -244,5 +245,6 @@ __all__ = [
     "well_from_file",
     "well_from_roxar",
     "wells",
+    "wells_from_stacked_file",
     "wells_from_files",
 ]
