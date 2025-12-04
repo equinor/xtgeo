@@ -12,10 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-TESTFILE = (
-    Path(__file__).parent.parent.parent
-    / "xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
-)
+TESTFILE = Path("../../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri")
 NTHREAD = 20
 
 
