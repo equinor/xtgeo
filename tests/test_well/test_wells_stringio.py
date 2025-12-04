@@ -36,11 +36,9 @@ def test_wells_to_stacked_rms_ascii_stringio(testdata_path):
 
     wells = xtgeo.Wells([well1, well2])
 
-    # Export to StringIO
     sio = StringIO()
     wells.to_stacked_file(sio, fformat="rms_ascii_stacked")
 
-    # Read back and verify
     sio.seek(0)
     wells_loaded = xtgeo.wells_from_stacked_file(sio, fformat="rms_ascii_stacked")
 

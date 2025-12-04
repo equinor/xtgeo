@@ -20,7 +20,7 @@ from xtgeo.metadata.metadata import MetaDataWell
 from xtgeo.xyz import _xyz_data
 from xtgeo.xyz.polygons import Polygons
 
-from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
+from . import _well_aux, _well_oper, _well_roxapi, _wellmarkers
 
 if TYPE_CHECKING:
     import io
@@ -29,6 +29,13 @@ if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
 
 logger = null_logger(__name__)
+
+# Mapping from FileFormat enum to format string used by WellData
+_FORMAT_MAPPING = {
+    FileFormat.RMSWELL: "rms_ascii",
+    FileFormat.HDF: "hdf5",
+    FileFormat.CSV: "csv",
+}
 
 # ======================================================================================
 # Functions, as wrappers to class methods
@@ -170,7 +177,7 @@ class Well:
     quasi computed/estimated (Q_xx). The Quasi may be incorrect for
     all uses, but sufficient for some computations.
 
-    Similar for ``M_INCL``, ``Q_INCL``, ``M_AZI``, ``Q_ASI``.
+    Similar for ``M_INCL``, ``Q_INCL``, ``M_AZI``, ``Q_AZI``.
 
     All Pandas values (yes, discrete also!) are currently stored as float64
     format, and undefined values are Nan. Integers are stored as Float due
@@ -520,7 +527,7 @@ class Well:
         wfile: FileLike,
         fformat: str | None = "rms_ascii",
         **kwargs,
-    ):
+    ) -> "Well":
         """Internal reader (class method), see `well_from_file(...)`.
 
         Args:
@@ -542,13 +549,16 @@ class Well:
 
         wfile = FileWrapper(wfile)
         fmt = wfile.fileformat(fformat)
+        fmt_str = _FORMAT_MAPPING.get(fmt)
 
-        fmt_mapping = {
-            FileFormat.RMSWELL: "rms_ascii",
-            FileFormat.HDF: "hdf5",
-            FileFormat.CSV: "csv",
-        }
-        fmt_str = fmt_mapping.get(fmt, str(fmt).lower())
+        if fmt_str is None:
+            extensions = FileFormat.extensions_string(
+                [FileFormat.RMSWELL, FileFormat.HDF, FileFormat.CSV]
+            )
+            raise InvalidFileFormatError(
+                f"File format {fformat} is invalid for a well type. "
+                f"Supported formats are {extensions}."
+            )
 
         welldata_kwargs = {}
         converter_kwargs = {}
@@ -571,7 +581,7 @@ class Well:
 
     def to_file(
         self,
-        wfile: str | Path | io.BytesIO,
+        wfile: FileLike,
         fformat: str | None = "rms_ascii",
         **kwargs: Any,
     ) -> str | Path | io.BytesIO:
@@ -585,7 +595,7 @@ class Well:
 
         Example::
 
-            >>> xwell = Well(well_dir + '/OP_1.w')
+            >>> xwell = xtgeo.well_from_file(well_dir + '/OP_1.w')
             >>> dfr = xwell.get_dataframe()
             >>> dfr['Poro'] += 0.1
             >>> xwell.set_dataframe(dfr)
@@ -599,13 +609,7 @@ class Well:
         self._ensure_consistency()
 
         fmt = wfile_obj.fileformat(fformat)
-
-        fmt_mapping = {
-            FileFormat.RMSWELL: "rms_ascii",
-            FileFormat.HDF: "hdf5",
-            FileFormat.CSV: "csv",
-        }
-        fmt_str = fmt_mapping.get(fmt)
+        fmt_str = _FORMAT_MAPPING.get(fmt)
 
         if fmt_str is None:
             extensions = FileFormat.extensions_string(
@@ -625,28 +629,29 @@ class Well:
         self,
         wfile: str | Path,
         compression: str | None = "lzf",
-    ) -> Path:
+    ) -> str | Path:
         """Export well to HDF based file.
 
-        Warning:
-            This implementation is currently experimental and only recommended
-            for testing.
+        .. deprecated:: 4.15
+            Use :meth:`to_file` with ``fformat='hdf'`` instead.
+            This method will be removed in xtgeo version 5.0.
 
         Args:
             wfile: HDF File name to write to export to.
+            compression: Compression type (not used, kept for backward compatibility).
 
         Returns:
             A Path instance to actual file applied.
 
         .. versionadded:: 2.14
         """
-        wfile = FileWrapper(wfile, mode="wb", obj=self)
-
-        wfile.check_folder(raiseerror=OSError)
-
-        _well_io.export_hdf5_well(self, wfile, compression=compression)
-
-        return wfile.file
+        warnings.warn(
+            "The 'to_hdf' method is deprecated and will be removed in xtgeo 5.0. "
+            "Use 'to_file(wfile, fformat=\"hdf\")' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.to_file(wfile, fformat="hdf", compression=compression)
 
     @classmethod
     def _read_roxar(

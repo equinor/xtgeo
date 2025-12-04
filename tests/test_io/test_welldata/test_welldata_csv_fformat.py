@@ -515,3 +515,57 @@ def test_blockedwell_csv_to_stringio():
     assert well2.n_records == 3
     np.testing.assert_array_equal(well2.i_index, i_index)
     np.testing.assert_array_equal(well2.k_index, k_index)
+
+
+def test_welldata_csv_missing_required_columns(tmp_path):
+    """Test that reading CSV with missing required columns raises ValueError."""
+    csv_content = """WELLNAME,X_UTME,PHIT
+WELL-1,100.0,0.25
+WELL-1,101.0,0.26
+"""
+    csv_file = tmp_path / "missing_cols.csv"
+    csv_file.write_text(csv_content)
+
+    with pytest.raises(ValueError, match="Missing required columns"):
+        WellData.from_csv(csv_file, wellname="WELL-1")
+
+
+def test_welldata_csv_empty_wellname_column(tmp_path):
+    """Test that reading CSV with no wells in wellname column raises ValueError."""
+    csv_content = """WELLNAME,X_UTME,Y_UTMN,Z_TVDSS,PHIT
+"""
+    csv_file = tmp_path / "empty_wells.csv"
+    csv_file.write_text(csv_content)
+
+    with pytest.raises(ValueError, match="No wells found in CSV file"):
+        WellData.from_csv(csv_file)
+
+
+def test_welldata_csv_well_not_found(tmp_path):
+    """Test that reading CSV for non-existent well raises ValueError."""
+    csv_content = """WELLNAME,X_UTME,Y_UTMN,Z_TVDSS,PHIT
+WELL-1,100.0,200.0,1000.0,0.25
+WELL-2,101.0,201.0,1001.0,0.26
+"""
+    csv_file = tmp_path / "no_match.csv"
+    csv_file.write_text(csv_content)
+
+    with pytest.raises(ValueError, match="Well 'WELL-3' not found in CSV file"):
+        WellData.from_csv(csv_file, wellname="WELL-3")
+
+
+def test_welldata_csv_auto_select_first_well(tmp_path):
+    """Test that when wellname=None, the first well is automatically selected."""
+    csv_content = """WELLNAME,X_UTME,Y_UTMN,Z_TVDSS,PHIT
+WELL-1,100.0,200.0,1000.0,0.25
+WELL-1,101.0,201.0,1001.0,0.26
+WELL-2,102.0,202.0,1002.0,0.27
+"""
+    csv_file = tmp_path / "multi_well.csv"
+    csv_file.write_text(csv_content)
+
+    # Should automatically select WELL-1
+    well = WellData.from_csv(csv_file, wellname=None)
+
+    assert well.name == "WELL-1"
+    assert well.n_records == 2

@@ -5,11 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from xtgeo.common._xyz_enum import _AttrType
-from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
-from xtgeo.io._file import FileFormat
-
-from . import _well_io
 
 if TYPE_CHECKING:
     from xtgeo.io.welldata._well_io import WellData

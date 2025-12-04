@@ -135,6 +135,7 @@ def test_wells_to_stacked_csv_file(tmp_path, sample_wells):
 
     # Export to CSV
     result = wells_collection.to_stacked_file(output_file, fformat="csv")
+    print(output_file)
 
     # Verify file was created
     assert output_file.exists()

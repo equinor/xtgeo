@@ -320,3 +320,31 @@ def test_blockedwell_immutability():
 
     with pytest.raises(Exception):
         well.i_index = np.array([1.0, 2.0, 3.0])
+
+
+def test_blockedwell_to_file_unsupported_format(tmp_path):
+    """Test that to_file raises ValueError for unsupported format."""
+    n = 3
+    survey_x = np.linspace(0, 100, n)
+    survey_y = np.linspace(0, 200, n)
+    survey_z = np.linspace(-50, -150, n)
+    i_index = np.array([10.0, 11.0, 12.0])
+    j_index = np.array([20.0, 21.0, 22.0])
+    k_index = np.array([1.0, 2.0, 3.0])
+
+    well = BlockedWellData(
+        name="TestWell",
+        xpos=0.0,
+        ypos=0.0,
+        zpos=0.0,
+        survey_x=survey_x,
+        survey_y=survey_y,
+        survey_z=survey_z,
+        i_index=i_index,
+        j_index=j_index,
+        k_index=k_index,
+    )
+
+    output_file = tmp_path / "test.xyz"
+    with pytest.raises(ValueError, match="Unsupported file format"):
+        well.to_file(filepath=output_file, fformat="xyz")
