@@ -30,15 +30,15 @@ jobs:
           python-version: 3.12
 
       - name: List dependencies
-        run: pip freeze
+        run: uv pip freeze
 
       - name: Ruff check
         if: ${{ always() }}
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Ruff format
         if: ${{ always() }}
-        run: ruff format . --check
+        run: uv run ruff format . --check
 
       - name: cmake-format
         if: ${{ always() }}

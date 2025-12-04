@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: List dependencies
-        run: pip freeze
+        run: uv pip freeze
 
       - name: Run mypy
-        run: mypy .
+        run: uv run mypy .
