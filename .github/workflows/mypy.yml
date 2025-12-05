@@ -23,7 +23,7 @@ jobs:
         python-version: ["3.10", "3.13"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: List dependencies
-        run: pip freeze
+        run: uv pip freeze
 
       - name: Run mypy
-        run: mypy .
+        run: uv run mypy .
