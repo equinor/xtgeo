@@ -1,1 +1,1 @@
-"""XTGeo io module"""
+"""XTGeo io package"""

@@ -184,3 +184,18 @@ select = [
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_also = [
+    # Exclude TYPE_CHECKING blocks
+    "if TYPE_CHECKING:",
+    # Exclude logging statements
+    "logger\\.debug\\(",
+    "logger\\.info\\(",
+    "logger\\.warning\\(",
+    "logger\\.error\\(",
+    "logger\\.critical\\(",
+]

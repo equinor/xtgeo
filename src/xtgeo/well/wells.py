@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
+from xtgeo.io._file import FileFormat, FileWrapper
 
-from . import _wells_utils
+from . import _well_collection_io, _wells_utils
 from .well1 import Well, well_from_file
+
+if TYPE_CHECKING:
+    from xtgeo.common.types import FileLike
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -32,6 +38,72 @@ def wells_from_files(filelist, *args, **kwargs):
             ... )
     """
     return Wells([well_from_file(wfile, *args, **kwargs) for wfile in filelist])
+
+
+def wells_from_stacked_file(
+    wfile: FileLike,
+    fformat: str = "rms_ascii_stacked",
+    **kwargs,
+) -> Wells:
+    """Import multiple wells from a single stacked file.
+
+    This function reads a file containing multiple wells in a stacked format,
+    where each well's data follows one after another in the same file.
+
+    Args:
+        wfile: Path to file or StringIO object containing multiple wells
+        fformat: File format. Supported formats:
+            - "rms_ascii_stacked": RMS ASCII well format with multiple wells stacked
+            - "csv": CSV file with a well name column identifying each well
+        **kwargs: Format-specific parameters.
+
+            CSV format parameters:
+
+            - xname (str): Column name for X coordinates (default: "X_UTME")
+            - yname (str): Column name for Y coordinates (default: "Y_UTMN")
+            - zname (str): Column name for Z coordinates (default: "Z_TVDSS")
+            - wellname_col (str): Column name containing well names
+              (default: "WELLNAME")
+
+    Returns:
+        Wells instance containing all wells from the file
+
+    Example::
+
+        >>> import xtgeo
+        >>> mywells = xtgeo.wells_from_stacked_file("stacked_wells.rmswell")
+        >>> print(f"Loaded {len(mywells.wells)} wells")
+
+        For CSV files with custom column names::
+
+        >>> mywells = xtgeo.wells_from_stacked_file(
+        ...     "wells.csv",
+        ...     fformat="csv",
+        ...     xname="EASTING",
+        ...     yname="NORTHING"
+        ... )
+
+    .. versionadded:: 4.15
+    """
+    wfile_obj = FileWrapper(wfile, mode="r")
+    fmt = wfile_obj.fileformat(fformat)
+
+    if fmt == FileFormat.RMSWELL_STACKED:
+        well_list = _well_collection_io.import_stacked_rms_ascii(
+            wfile, well_class_name="Well"
+        )
+        return Wells(well_list)
+
+    if fmt == FileFormat.CSV:
+        well_list = _well_collection_io.import_csv_wells(
+            wfile, well_class_name="Well", **kwargs
+        )
+        return Wells(well_list)
+
+    raise ValueError(
+        f"Unsupported format: {fformat}. "
+        f"Only 'rms_ascii_stacked' and 'csv' are supported."
+    )
 
 
 class Wells:
@@ -209,3 +281,74 @@ class Wells:
         return _wells_utils.wellintersections(
             self, wfilter=wfilter, showprogress=showprogress
         )
+
+    def to_stacked_file(
+        self,
+        wfile: FileLike,
+        fformat: str = "rms_ascii_stacked",
+        **kwargs,
+    ) -> str | Path | StringIO:
+        """Export multiple wells to a single stacked file.
+
+        This method writes all wells in the collection to a single file where
+        each well's data follows one after another.
+
+        Args:
+            wfile: Path to the output file or StringIO object
+            fformat: File format. Supported formats:
+                - "rms_ascii_stacked": RMS ASCII well format with multiple wells stacked
+                - "csv": CSV file with a well name column identifying each well
+            **kwargs: Format-specific parameters.
+
+                CSV format parameters:
+
+                - xname (str): Column name for X coordinates (default: "X_UTME")
+                - yname (str): Column name for Y coordinates (default: "Y_UTMN")
+                - zname (str): Column name for Z coordinates (default: "Z_TVDSS")
+                - wellname_col (str): Column name containing well names
+                  (default: "WELLNAME")
+                - Additional keyword arguments are passed to pandas.DataFrame.to_csv()
+
+        Returns:
+            Path to the output file
+
+        Raises:
+            ValueError: If wells list is empty or unsupported format is specified
+
+        Example::
+
+            >>> import xtgeo
+            >>> wells = xtgeo.wells_from_files([
+            ...     'well1.w', 'well2.w', 'well3.w'
+            ... ])
+            >>> wells.to_stacked_file('stacked_wells.rmswell')
+
+            For CSV format with custom column names::
+
+            >>> wells.to_stacked_file(
+            ...     'wells.csv',
+            ...     fformat='csv',
+            ...     xname='EASTING',
+            ...     yname='NORTHING',
+            ...     wellname_col='WELL_NAME'
+            ... )
+
+        .. versionadded:: 4.15
+        """
+        if not self._wells:
+            raise ValueError("Cannot export empty wells list")
+
+        wfile_obj = FileWrapper(wfile, mode="w")
+        fmt = wfile_obj.fileformat(fformat)
+
+        if fmt == FileFormat.RMSWELL_STACKED:
+            _well_collection_io.export_stacked_rms_ascii(self._wells, wfile_obj.file)
+        elif fmt == FileFormat.CSV:
+            _well_collection_io.export_csv_wells(self._wells, wfile_obj.file, **kwargs)
+        else:
+            raise ValueError(
+                f"Unsupported format: {fformat}. "
+                f"Only 'rms_ascii_stacked' and 'csv' are supported."
+            )
+
+        return wfile_obj.file
