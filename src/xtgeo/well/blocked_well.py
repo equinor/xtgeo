@@ -198,10 +198,20 @@ class BlockedWell(Well):
             raise ValueError("Input name is not a string.")
 
     def copy(self):
-        newbw = super().copy()
-
+        """Copy a BlockedWell instance to a new unique BlockedWell instance."""
+        newbw = BlockedWell(
+            self.rkb,
+            self.xpos,
+            self.ypos,
+            self.wname,
+            self._wdata.data.copy(),
+            self.mdlogname,
+            self.zonelogname,
+            self.wlogtypes,
+            self.wlogrecords,
+            self._filesrc,
+        )
         newbw._gridname = self._gridname
-
         return newbw
 
     def to_roxar(
