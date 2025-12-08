@@ -9,7 +9,7 @@ from xtgeo.common.log import null_logger
 
 from ._ecl_output_file import Phases, Simulator, TypeOfGrid, UnitSystem
 
-_logger = null_logger(__name__)
+logger = null_logger(__name__)
 
 
 class InteHead:
@@ -138,7 +138,7 @@ class InteHead:
             return Simulator(s_code)
         except ValueError:
             # changed from a UserWarning to a logging message
-            _logger.warning("Unknown simulator code %s", s_code)
+            logger.warning("Unknown simulator code %s", s_code)
             return s_code
 
     @property
