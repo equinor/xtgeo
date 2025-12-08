@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -12,6 +12,9 @@ from xtgeo.common.log import null_logger
 from . import _blockedwell_roxapi
 from .well1 import Well
 
+if TYPE_CHECKING:
+    from xtgeo.common.types import FileLike
+
 logger = null_logger(__name__)
 
 
@@ -20,21 +23,51 @@ logger = null_logger(__name__)
 
 
 def blockedwell_from_file(
-    bwfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=False
+    bwfile: FileLike,
+    fformat: str = "rms_ascii",
+    mdlogname: str | None = None,
+    zonelogname: str | None = None,
+    strict: bool = False,
+    **kwargs,
 ):
     """Make an instance of a BlockedWell directly from file import.
 
     Args:
-        bmfile (str): Name of file
+        bwfile (str): Name of file (string or pathlib.Path) or file-like
+            object (StringIO/BytesIO)
         fformat (str): See :meth:`Well.from_file`
         mdlogname (str): See :meth:`Well.from_file`
         zonelogname (str): See :meth:`Well.from_file`
         strict (bool): See :meth:`Well.from_file`
+        **kwargs: Format-specific parameters.
+
+            CSV format parameters:
+
+            - wellname (str): Name of well to extract from CSV file. If not
+              provided, uses the first well found in the file.
+            - xname (str): Column name for X coordinates (default: "X_UTME")
+            - yname (str): Column name for Y coordinates (default: "Y_UTMN")
+            - zname (str): Column name for Z coordinates (default: "Z_TVDSS")
+            - i_indexname (str): Column name for I-indices (default: "I_INDEX")
+            - j_indexname (str): Column name for J-indices (default: "J_INDEX")
+            - k_indexname (str): Column name for K-indices (default: "K_INDEX")
+            - wellname_col (str): Column name containing well names
+              (default: "WELLNAME")
 
     Example::
 
         >>> import xtgeo
         >>> well3 = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
+
+        For CSV files::
+
+        >>> bwell = xtgeo.blockedwell_from_file(
+        ...     'blocked_wells.csv',
+        ...     fformat='csv',
+        ...     wellname='WELL-1'
+        ... )
+
+    .. versionchanged:: 4.15 Added CSV format support
     """
 
     return BlockedWell._read_file(
@@ -43,9 +76,8 @@ def blockedwell_from_file(
         mdlogname=mdlogname,
         zonelogname=zonelogname,
         strict=strict,
+        **kwargs,
     )
-
-    # return obj
 
 
 def blockedwell_from_roxar(
@@ -166,10 +198,20 @@ class BlockedWell(Well):
             raise ValueError("Input name is not a string.")
 
     def copy(self):
-        newbw = super().copy()
-
+        """Copy a BlockedWell instance to a new unique BlockedWell instance."""
+        newbw = BlockedWell(
+            self.rkb,
+            self.xpos,
+            self.ypos,
+            self.wname,
+            self._wdata.data.copy(),
+            self.mdlogname,
+            self.zonelogname,
+            self.wlogtypes,
+            self.wlogrecords,
+            self._filesrc,
+        )
         newbw._gridname = self._gridname
-
         return newbw
 
     def to_roxar(

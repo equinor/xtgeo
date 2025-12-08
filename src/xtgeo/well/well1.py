@@ -20,38 +20,58 @@ from xtgeo.metadata.metadata import MetaDataWell
 from xtgeo.xyz import _xyz_data
 from xtgeo.xyz.polygons import Polygons
 
-from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
+from . import _well_aux, _well_oper, _well_roxapi, _wellmarkers
 
 if TYPE_CHECKING:
     import io
     from pathlib import Path
 
+    from xtgeo.common.types import FileLike
+
 logger = null_logger(__name__)
+
+_FORMAT_MAPPING = {
+    FileFormat.RMSWELL: "rms_ascii",
+    FileFormat.HDF: "hdf5",
+    FileFormat.CSV: "csv",
+}
 
 # ======================================================================================
 # Functions, as wrappers to class methods
 
 
 def well_from_file(
-    wfile: str | Path,
+    wfile: FileLike,
     fformat: str | None = "rms_ascii",
     mdlogname: str | None = None,
     zonelogname: str | None = None,
     lognames: str | list[str] | None = "all",
     lognames_strict: bool | None = False,
     strict: bool | None = False,
+    **kwargs,
 ) -> Well:
     """Make an instance of a Well directly from file import.
 
     Args:
-        wfile: File path for well, either a string or a pathlib.Path instance
-        fformat: "rms_ascii" or "hdf5"
+        wfile: File path (string or pathlib.Path) or file-like object (StringIO/BytesIO)
+        fformat: "rms_ascii", "hdf5", or "csv"
         mdlogname: Name of Measured Depth log, if any
         zonelogname: Name of Zonelog, if any
         lognames: Name or list of lognames to import, default is "all"
         lognames_strict: If True, all lognames must be present.
         strict: If True, then import will fail if zonelogname or mdlogname are asked
             for but those names are not present in wells.
+        **kwargs: Format-specific parameters, currently for CSV only.
+
+            CSV format parameters:
+
+            - wellname (str): Name of well to extract from CSV file. If not
+              provided, uses the first well found in the file.
+            - xname (str): Column name for X coordinates (default: "X_UTME")
+            - yname (str): Column name for Y coordinates (default: "Y_UTMN")
+            - zname (str): Column name for Z coordinates (default: "Z_TVDSS")
+            - wellname_col (str): Column name containing well names
+              (default: "WELLNAME")
 
     Example::
 
@@ -60,8 +80,20 @@ def well_from_file(
         >>> welldir = pathlib.Path("../foo")
         >>> mywell = xtgeo.well_from_file(welldir / "OP_1.w")
 
+        For CSV files with custom column names::
+
+        >>> mywell = xtgeo.well_from_file(
+        ...     'wells.csv',
+        ...     fformat='csv',
+        ...     wellname='WELL-1',
+        ...     xname='EASTING',
+        ...     yname='NORTHING',
+        ...     zname='DEPTH'
+        ... )
+
     .. versionchanged:: 2.1 Added ``lognames`` and ``lognames_strict``
     .. versionchanged:: 2.1 ``strict`` now defaults to False
+    .. versionchanged:: 4.15 Added CSV format support
     """
     return Well._read_file(
         wfile,
@@ -71,6 +103,7 @@ def well_from_file(
         strict=strict,
         lognames=lognames,
         lognames_strict=lognames_strict,
+        **kwargs,
     )
 
 
@@ -143,7 +176,7 @@ class Well:
     quasi computed/estimated (Q_xx). The Quasi may be incorrect for
     all uses, but sufficient for some computations.
 
-    Similar for ``M_INCL``, ``Q_INCL``, ``M_AZI``, ``Q_ASI``.
+    Similar for ``M_INCL``, ``Q_INCL``, ``M_AZI``, ``Q_AZI``.
 
     All Pandas values (yes, discrete also!) are currently stored as float64
     format, and undefined values are Nan. Integers are stored as Float due
@@ -490,120 +523,163 @@ class Well:
     @classmethod
     def _read_file(
         cls,
-        wfile: str | Path,
+        wfile: FileLike,
         fformat: str | None = "rms_ascii",
         **kwargs,
-    ):
-        """Import well from file.
+    ) -> "Well":
+        """Internal reader (class method), see `well_from_file(...)`.
 
         Args:
-            wfile (str): Name of file as string or pathlib.Path
-            fformat (str): File format, rms_ascii (rms well) is
-                currently supported and default format.
-            mdlogname (str): Name of measured depth log, if any
-            zonelogname (str): Name of zonation log, if any
-            strict (bool): If True, then import will fail if
-                zonelogname or mdlogname are asked for but not present
-                in wells. If False, and e.g. zonelogname is not present, the
-                attribute ``zonelogname`` will be set to None.
-            lognames (str or list): Name or list of lognames to import, default is "all"
-            lognames_strict (bool): Flag to require all logs in lognames (unless "all")
-                or to just accept that subset that is present. Default is `False`.
+            wfile: Name of file (string or pathlib.Path) or file-like
+                object (StringIO/BytesIO)
+            fformat: File format, rms_ascii (rms well) is default.
+                Supported formats: 'rms_ascii'/'rmswell', 'hdf/hdf5/h5', 'csv'
+            **kwargs: Additional keyword arguments.
 
+                CSV format:
 
-        Returns:
-            Object instance (optionally)
+                - wellname (str): Name of the well to extract from CSV file.
+                  If None, uses the first well found.
+                - xname (str): Column name for X coordinates (default: "X_UTME")
+                - yname (str): Column name for Y coordinates (default: "Y_UTMN")
+                - zname (str): Column name for Z coordinates (default: "Z_TVDSS")
+                - wellname_col (str): Column name for well name (default: "WELLNAME")
 
-        Example:
-            Here the from_file method is used to initiate the object
-            directly::
+                CSV format (BlockedWell only):
 
-            >>> mywell = Well().from_file(well_dir + '/OP_1.w')
+                - i_indexname (str): Column name for I-indices (default: "I_INDEX")
+                - j_indexname (str): Column name for J-indices (default: "J_INDEX")
+                - k_indexname (str): Column name for K-indices (default: "K_INDEX")
 
-        .. versionchanged:: 2.1 ``lognames`` and ``lognames_strict`` added
-        .. versionchanged:: 2.1 ``strict`` now defaults to False
+                All formats:
+
+                - mdlogname (str): Name of measured depth log, if any
+                - zonelogname (str): Name of zonation log, if any
+                - strict (bool): If True, import will fail if zonelogname or mdlogname
+                  are requested but not present. Default: False
+                - lognames (str or list): Name or list of lognames to import,
+                  default is "all"
+                - lognames_strict (bool): If True, require all logs in lognames.
+                  Default: False
         """
+        from xtgeo.io.welldata._well_io import WellData
 
         wfile = FileWrapper(wfile)
         fmt = wfile.fileformat(fformat)
+        fmt_str = _FORMAT_MAPPING.get(fmt)
 
-        kwargs = _well_aux._data_reader_factory(fmt)(wfile, **kwargs)
-        return cls(**kwargs)
+        if fmt_str is None:
+            extensions = FileFormat.extensions_string(
+                [FileFormat.RMSWELL, FileFormat.HDF, FileFormat.CSV]
+            )
+            raise InvalidFileFormatError(
+                f"File format {fformat} is invalid for a well type. "
+                f"Supported formats are {extensions}."
+            )
+
+        welldata_kwargs = {}
+        converter_kwargs = {}
+
+        # Parameters for WellData.from_file, CSV-specific
+        csv_params = {"wellname", "xname", "yname", "zname", "wellname_col"}
+
+        for key, value in kwargs.items():
+            if key in csv_params:
+                welldata_kwargs[key] = value
+            else:
+                converter_kwargs[key] = value
+
+        welldata = WellData.from_file(wfile.file, fformat=fmt_str, **welldata_kwargs)
+
+        well_kwargs = _well_aux.welldata_to_well_dict(welldata, **converter_kwargs)
+        well_kwargs["filesrc"] = wfile.file
+
+        return cls(**well_kwargs)
 
     def to_file(
         self,
-        wfile: str | Path | io.BytesIO,
+        wfile: FileLike,
         fformat: str | None = "rms_ascii",
-    ):
+        **kwargs: Any,
+    ) -> str | Path | io.BytesIO:
         """Export well to file or memory stream.
 
         Args:
             wfile: File name or stream.
-            fformat: File format ('rms_ascii'/'rmswell', 'hdf/hdf5/h5').
+            fformat: File format ('rms_ascii'/'rmswell', 'hdf/hdf5/h5', 'csv').
+            **kwargs: Additional keyword arguments for specific formats.
+
+                CSV format:
+
+                - xname (str): Column name for X coordinates (default: "X_UTME")
+                - yname (str): Column name for Y coordinates (default: "Y_UTMN")
+                - zname (str): Column name for Z coordinates (default: "Z_TVDSS")
+                - wellname_col (str): Column name for well name (default: "WELLNAME")
+                - include_header (bool): Include column headers (default: True)
+
+                RMS ASCII format:
+
+                - precision (int): Number of decimal places for floats (default: 4)
 
         Example::
 
-            >>> xwell = Well(well_dir + '/OP_1.w')
+            >>> xwell = xtgeo.well_from_file(well_dir + '/OP_1.w')
             >>> dfr = xwell.get_dataframe()
             >>> dfr['Poro'] += 0.1
             >>> xwell.set_dataframe(dfr)
             >>> filename = xwell.to_file(outdir + "/somefile_copy.rmswell")
 
         """
-        wfile = FileWrapper(wfile, mode="wb", obj=self)
 
-        wfile.check_folder(raiseerror=OSError)
+        wfile_obj = FileWrapper(wfile, mode="wb", obj=self)
+        wfile_obj.check_folder(raiseerror=OSError)
 
         self._ensure_consistency()
 
-        if not fformat or fformat in (
-            None,
-            "rms_ascii",
-            "rms_asc",
-            "rmsasc",
-            "rmswell",
-        ):
-            _well_io.export_rms_ascii(self, wfile.name)
+        fmt = wfile_obj.fileformat(fformat)
+        fmt_str = _FORMAT_MAPPING.get(fmt)
 
-        elif fformat in FileFormat.HD5.value:
-            self.to_hdf(wfile)
-
-        else:
-            extensions = FileFormat.extensions_string([FileFormat.HDF])
+        if fmt_str is None:
+            extensions = FileFormat.extensions_string(
+                [FileFormat.RMSWELL, FileFormat.HDF, FileFormat.CSV]
+            )
             raise InvalidFileFormatError(
                 f"File format {fformat} is invalid for a well type. "
-                f"Supported formats are {extensions}, 'rms_ascii', 'rms_asc', "
-                "'rmsasc', 'rmswell'."
+                f"Supported formats are {extensions}."
             )
 
-        return wfile.file
+        welldata = _well_aux.well_to_welldata(self)
+        welldata.to_file(wfile_obj.file, fformat=fmt_str, **kwargs)
+
+        return wfile_obj.file
 
     def to_hdf(
         self,
         wfile: str | Path,
         compression: str | None = "lzf",
-    ) -> Path:
+    ) -> str | Path:
         """Export well to HDF based file.
 
-        Warning:
-            This implementation is currently experimental and only recommended
-            for testing.
+        .. deprecated:: 4.15
+            Use :meth:`to_file` with ``fformat='hdf'`` instead.
+            This method will be removed in xtgeo version 5.0.
 
         Args:
             wfile: HDF File name to write to export to.
+            compression: Compression type (not used, kept for backward compatibility).
 
         Returns:
             A Path instance to actual file applied.
 
         .. versionadded:: 2.14
         """
-        wfile = FileWrapper(wfile, mode="wb", obj=self)
-
-        wfile.check_folder(raiseerror=OSError)
-
-        _well_io.export_hdf5_well(self, wfile, compression=compression)
-
-        return wfile.file
+        warnings.warn(
+            "The 'to_hdf' method is deprecated and will be removed in xtgeo 5.0. "
+            "Use 'to_file(wfile, fformat=\"hdf\")' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.to_file(wfile, fformat="hdf", compression=compression)
 
     @classmethod
     def _read_roxar(
