@@ -10,7 +10,7 @@ import numpy.typing as npt
 
 from xtgeo.common.log import null_logger
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     import pandas as pd
 
 
