@@ -23,20 +23,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - uses: Set up Python
-        run: uv python install 3.11
-      
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-
-      - uses: Set up Python
+      - name: Set up Python
         run: uv python install 3.11
 
       - name: Install xtgeo
         run: |
+          uv venv
           uv pip install -U pip
           uv pip install ".[docs]"
 
       - name: Build docs
-        run: uv run sphinx-build -W -b html docs build/docs/html
         run: uv run sphinx-build -W -b html docs build/docs/html
