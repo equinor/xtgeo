@@ -53,39 +53,40 @@ class XYZ(ABC):
         self._xname = xname
         self._yname = yname
         self._zname = zname
+        self._attrs: list[str] = []
 
     @property
-    def xyztype(self):
+    def xyztype(self) -> _XYZType:
         """Read only, returns the type of XYZ data (POINTS, POLYGONS, ...)"""
         return self._xyztype
 
     @property
-    def xname(self):
+    def xname(self) -> str:
         """Returns or set the name of the X column."""
         return self._xname
 
     @xname.setter
-    def xname(self, newname):
+    def xname(self, newname: str) -> None:
         self._df_column_rename(newname, self._xname)
         self._xname = newname
 
     @property
-    def yname(self):
+    def yname(self) -> str:
         """Returns or set the name of the Y column."""
         return self._yname
 
     @yname.setter
-    def yname(self, newname):
+    def yname(self, newname: str) -> None:
         self._df_column_rename(newname, self._yname)
         self._yname = newname
 
     @property
-    def zname(self):
+    def zname(self) -> str:
         """Returns or set the name of the Z column."""
         return self._zname
 
     @zname.setter
-    def zname(self, newname):
+    def zname(self, newname: str) -> None:
         self._df_column_rename(newname, self._zname)
         self._zname = newname
 
@@ -96,13 +97,13 @@ class XYZ(ABC):
         ...
 
     @property
-    def nrow(self):
+    def nrow(self) -> int:
         """Returns the Pandas dataframe object number of rows."""
         if self.get_dataframe(copy=False) is None:
             return 0
         return len(self.get_dataframe(copy=False).index)
 
-    def _dataframe_consistency_check(self):
+    def _dataframe_consistency_check(self) -> None:
         dataframe = self.get_dataframe(copy=False)
         if self.xname not in dataframe:
             raise ValueError(
@@ -116,7 +117,11 @@ class XYZ(ABC):
             raise ValueError(
                 f"zname={self.zname} is not a column of dataframe {dataframe.columns}"
             )
-        if self._xyztype == _XYZType.POLYGONS.value and self.pname not in dataframe:
+        if (
+            self._xyztype == _XYZType.POLYGONS
+            and hasattr(self, "pname")
+            and self.pname not in dataframe
+        ):
             raise ValueError(
                 f"pname={self.pname} is not a column of dataframe {dataframe.columns}"
             )
@@ -126,7 +131,7 @@ class XYZ(ABC):
                     f"Attribute {attr} is not a column of dataframe {dataframe.columns}"
                 )
 
-    def _df_column_rename(self, newname, oldname):
+    def _df_column_rename(self, newname: str, oldname: str) -> None:
         if isinstance(newname, str):
             if oldname and self.get_dataframe(copy=False) is not None:
                 dataframe = self.get_dataframe()
@@ -135,7 +140,7 @@ class XYZ(ABC):
         else:
             raise ValueError(f"Wrong type of input to {newname}; must be string")
 
-    def _check_name_and_replace(self, oldname, newname):
+    def _check_name_and_replace(self, oldname: str, newname: str) -> None:
         """Replace name of a column, doing some checks."""
         if not isinstance(newname, str):
             raise ValueError(
@@ -161,11 +166,11 @@ class XYZ(ABC):
         self.set_dataframe(df)
 
     @abstractmethod
-    def copy(self):
+    def copy(self) -> XYZ:
         """Returns a deep copy of an instance"""
         ...
 
-    def describe(self, flush=True):
+    def describe(self, flush: bool = True) -> str | None:
         """Describe an instance by printing to stdout"""
 
         dsc = XTGDescription()
@@ -180,7 +185,7 @@ class XYZ(ABC):
         return dsc.astext()
 
     @abstractmethod
-    def get_dataframe(self, copy=True) -> pd.DataFrame:
+    def get_dataframe(self, copy: bool = True) -> pd.DataFrame:
         """Return the Pandas dataframe object."""
         ...
 
@@ -189,7 +194,7 @@ class XYZ(ABC):
         """Set the Pandas dataframe object."""
         ...
 
-    def get_xyz_arrays(self):
+    def get_xyz_arrays(self) -> np.ndarray | None:
         """Get the X, Y, Z arrays from the dataframe as a numpy (n, 3) vector.
 
         Returns:
@@ -206,7 +211,7 @@ class XYZ(ABC):
 
         return np.array([xarr, yarr, zarr]).T
 
-    def protected_columns(self):
+    def protected_columns(self) -> list[str]:
         """
         Returns:
             Columns not deleted by :meth:`delete_columns`, for
@@ -214,14 +219,20 @@ class XYZ(ABC):
         """
         return [self.xname, self.yname, self.zname]
 
-    def geometry_columns(self):
+    def geometry_columns(self) -> list[str | None]:
         """
         Returns:
             Columns can be deleted silently by :meth:`delete_columns`
         """
-        return [self.hname, self.dhname, self.tname, self.dtname]
+        result: list[str | None] = [
+            getattr(self, "hname", None),
+            getattr(self, "dhname", None),
+            getattr(self, "tname", None),
+            getattr(self, "dtname", None),
+        ]
+        return result
 
-    def delete_columns(self, clist, strict=False):
+    def delete_columns(self, clist: list[str], strict: bool = False) -> None:
         """Delete one or more columns by name.
 
         Note that the columns returned by :meth:`protected_columns(self)` (for
@@ -230,8 +241,8 @@ class XYZ(ABC):
         Args:
             self (obj): Points or Polygons
             clist (list): Name of columns
-            strict (bool): I False, will not trigger exception if a column is not
-                found. Otherways a ValueError will be raised.
+            strict (bool): If False, will not trigger exception if a column is
+                not found. Otherwise a ValueError will be raised.
 
         Raises:
             ValueError: If strict is True and columnname not present
@@ -265,7 +276,7 @@ class XYZ(ABC):
                 dataframe.drop(cname, axis=1, inplace=True)
                 self.set_dataframe(dataframe)
 
-    def get_nwells(self, well_name_column: str = "WellName"):
+    def get_nwells(self, well_name_column: str = "WellName") -> int:
         """Get number of unique wells in the instance.
 
         Args:
@@ -278,7 +289,7 @@ class XYZ(ABC):
             return 0
         return len(self.get_dataframe(copy=False)[well_name_column].unique())
 
-    def get_boundary(self):
+    def get_boundary(self) -> tuple[float, float, float, float, float, float]:
         """Get the square XYZ window (boundaries) of the instance.
 
         Returns:
@@ -288,12 +299,13 @@ class XYZ(ABC):
             The class method :func:`Polygons.boundary_from_points()`
 
         """
-        xmin = np.nanmin(self.get_dataframe(copy=False)[self.xname].values)
-        xmax = np.nanmax(self.get_dataframe(copy=False)[self.xname].values)
-        ymin = np.nanmin(self.get_dataframe(copy=False)[self.yname].values)
-        ymax = np.nanmax(self.get_dataframe(copy=False)[self.yname].values)
-        zmin = np.nanmin(self.get_dataframe(copy=False)[self.zname].values)
-        zmax = np.nanmax(self.get_dataframe(copy=False)[self.zname].values)
+        df = self.get_dataframe(copy=False)
+        xmin = np.nanmin(np.asarray(df[self.xname].values))
+        xmax = np.nanmax(np.asarray(df[self.xname].values))
+        ymin = np.nanmin(np.asarray(df[self.yname].values))
+        ymax = np.nanmax(np.asarray(df[self.yname].values))
+        zmin = np.nanmin(np.asarray(df[self.zname].values))
+        zmax = np.nanmax(np.asarray(df[self.zname].values))
 
         return (xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -303,14 +315,15 @@ class XYZ(ABC):
         name: str = "pstatus",
         inside_value: int = 1,
         outside_value: int = 0,
-    ):
+    ) -> None:
         """Add a column that assign values if points are inside or outside polygons.
 
-        This is a generic function that adds a column in the points dataframe with
-        a flag for values being inside or outside polygons in a Polygons instance.
+        This is a generic function that adds a column in the points dataframe
+        with a flag for values being inside or outside polygons in a Polygons
+        instance.
 
         Args:
-            poly: One single xtgeo Polgons instance, or a list of Polygons instances.
+            poly: One single xtgeo Polygons instance, or a list of Polygons instances
             name: Name of column that flags inside or outside status
             inside_value: Flag value for being inside polygons
             outside_value: Flag value for being outside polygons
@@ -326,7 +339,7 @@ class XYZ(ABC):
         opname: str = "add",
         inside: bool = True,
         version: int = 1,
-    ):
+    ) -> None:
         """A generic function for operations restricted to inside or outside polygon(s).
 
         The operations are performed on the Z values, while the 'inside' or 'outside'
@@ -395,7 +408,7 @@ class XYZ(ABC):
                     DeprecationWarning,
                 )
 
-    def add_inside(self, poly, value):
+    def add_inside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Add a value (scalar) to points inside polygons (old behaviour).
 
         Args:
@@ -411,7 +424,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Add a value (scalar) to points inside polygons (new behaviour).
 
         This is an improved implementation than :meth:`add_inside()`, and is now the
@@ -426,7 +439,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="add", inside=True, version=2)
 
-    def add_outside(self, poly, value):
+    def add_outside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Add a value (scalar) to points outside polygons (old behaviour).
 
         Args:
@@ -442,7 +455,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Add a value (scalar) to points outside polygons (new behaviour).
 
         This is an improved implementation than :meth:`add_outside()`, and is now the
@@ -457,7 +470,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="add", inside=False, version=2)
 
-    def sub_inside(self, poly, value):
+    def sub_inside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Subtract a value (scalar) to points inside polygons.
 
         Args:
@@ -473,7 +486,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Subtract a value (scalar) for points inside polygons (new behaviour).
 
         This is an improved implementation than :meth:`sub_inside()`, and is now the
@@ -488,7 +501,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="sub", inside=True, version=2)
 
-    def sub_outside(self, poly, value):
+    def sub_outside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Subtract a value (scalar) to points outside polygons.
 
         Args:
@@ -504,7 +517,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Subtract a value (scalar) for points outside polygons (new behaviour).
 
         This is an improved implementation than :meth:`sub_outside()`, and is now the
@@ -519,7 +532,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="sub", inside=False, version=2)
 
-    def mul_inside(self, poly, value):
+    def mul_inside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Multiply a value (scalar) to points inside polygons.
 
         Args:
@@ -535,7 +548,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Multiply a value (scalar) for points inside polygons (new behaviour).
 
         This is an improved implementation than :meth:`mul_inside()`, and is now the
@@ -550,7 +563,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="mul", inside=True, version=2)
 
-    def mul_outside(self, poly, value):
+    def mul_outside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Multiply a value (scalar) to points outside polygons.
 
         Args:
@@ -566,7 +579,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Multiply a value (scalar) for points outside polygons (new behaviour).
 
         This is an improved implementation than :meth:`mul_outside()`, and is now the
@@ -581,7 +594,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="mul", inside=False, version=2)
 
-    def div_inside(self, poly, value):
+    def div_inside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Divide a value (scalar) to points inside polygons.
 
         Args:
@@ -597,7 +610,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Divide a value (scalar) for points inside polygons (new behaviour).
 
         This is an improved implementation than :meth:`div_inside()`, and is now the
@@ -612,7 +625,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="div", inside=True, version=2)
 
-    def div_outside(self, poly, value):
+    def div_outside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Divide a value (scalar) outside polygons (value 0.0 will give result 0).
 
         Args:
@@ -628,7 +641,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Divide a value (scalar) for points outside polygons (new behaviour).
 
         Note if input value is 0.0 (division on zero), the result will be 0.0.
@@ -645,7 +658,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="div", inside=False, version=2)
 
-    def set_inside(self, poly, value):
+    def set_inside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Set a value (scalar) to points inside polygons.
 
         Args:
@@ -661,7 +674,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Set a value (scalar) for points inside polygons (new behaviour).
 
         This is an improved implementation than :meth:`set_inside()`, and is now the
@@ -676,7 +689,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="set", inside=True, version=2)
 
-    def set_outside(self, poly, value):
+    def set_outside(self, poly: Polygons | list[Polygons], value: float) -> None:
         """Set a value (scalar) to points outside polygons.
 
         Args:
@@ -692,7 +705,7 @@ class XYZ(ABC):
         self,
         poly: Polygons | list[Polygons],
         value: float,  # noqa: F821
-    ):
+    ) -> None:
         """Set a value (scalar) for points outside polygons (new behaviour).
 
         This is an improved implementation than :meth:`set_outside()`, and is now the
@@ -707,7 +720,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, value, opname="set", inside=False, version=2)
 
-    def eli_inside(self, poly):
+    def eli_inside(self, poly: Polygons | list[Polygons]) -> None:
         """Eliminate current points inside polygons (old implentation).
 
         Args:
@@ -718,7 +731,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, 0, opname="eli", inside=True, version=0)
 
-    def eli_inside_polygons(self, poly: Polygons | list[Polygons]):  # noqa: F821
+    def eli_inside_polygons(self, poly: Polygons | list[Polygons]) -> None:  # noqa: F821
         """Remove points inside polygons.
 
         This is an improved implementation than :meth:`eli_inside()`, and is now the
@@ -732,7 +745,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, 0, opname="eli", inside=True, version=2)
 
-    def eli_outside(self, poly):
+    def eli_outside(self, poly: Polygons | list[Polygons]) -> None:
         """Eliminate current points outside polygons (old implentation).
 
         Args:
@@ -743,7 +756,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, 0, opname="eli", inside=False, version=0)
 
-    def eli_outside_polygons(self, poly: Polygons | list[Polygons]):  # noqa: F821
+    def eli_outside_polygons(self, poly: Polygons | list[Polygons]) -> None:  # noqa: F821
         """Remove points outside polygons.
 
         This is an improved implementation than :meth:`eli_outside()`, and is now the
