@@ -70,7 +70,7 @@ def _import_table(pfile, xyztype, file_format="csv"):
     ncol = len(columns)
 
     if ncol == 3:
-        if xyztype == _XYZType.POLYGONS.value:
+        if xyztype == _XYZType.POLYGONS:
             # If the file is a polygon file, add a POLY_ID column
             dataframe["POLY_ID"] = 0
             return {
@@ -88,7 +88,7 @@ def _import_table(pfile, xyztype, file_format="csv"):
             "zname": columns[2],
             "values": dataframe,
         }
-    if xyztype == _XYZType.POLYGONS.value and ncol == 4:
+    if xyztype == _XYZType.POLYGONS and ncol == 4:
         return {
             "xname": columns[0],
             "yname": columns[1],
@@ -96,7 +96,7 @@ def _import_table(pfile, xyztype, file_format="csv"):
             "pname": columns[3],
             "values": dataframe,
         }
-    if xyztype == _XYZType.POLYGONS.value and ncol > 4:
+    if xyztype == _XYZType.POLYGONS and ncol > 4:
         # need to infer the attrs from column 5...
         attr_names = columns[4:]
         attrs = {}
@@ -119,7 +119,7 @@ def _import_table(pfile, xyztype, file_format="csv"):
             "attributes": attrs,
             "values": dataframe,
         }
-    if xyztype == _XYZType.POINTS.value and ncol > 3:
+    if xyztype == _XYZType.POINTS and ncol > 3:
         # need to infer the attrs from column 5...
         attr_names = columns[3:]
         attrs = {}
@@ -146,19 +146,19 @@ def _import_table(pfile, xyztype, file_format="csv"):
 
 
 def import_csv_polygons(pfile):
-    return _import_table(pfile, _XYZType.POLYGONS.value, file_format="csv")
+    return _import_table(pfile, _XYZType.POLYGONS, file_format="csv")
 
 
 def import_csv_points(pfile):
-    return _import_table(pfile, _XYZType.POINTS.value, file_format="csv")
+    return _import_table(pfile, _XYZType.POINTS, file_format="csv")
 
 
 def import_parquet_polygons(pfile):
-    return _import_table(pfile, _XYZType.POLYGONS.value, file_format="parquet")
+    return _import_table(pfile, _XYZType.POLYGONS, file_format="parquet")
 
 
 def import_parquet_points(pfile):
-    return _import_table(pfile, _XYZType.POINTS.value, file_format="parquet")
+    return _import_table(pfile, _XYZType.POINTS, file_format="parquet")
 
 
 def import_zmap(pfile, zname=_AttrName.ZNAME.value):
@@ -446,7 +446,7 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
                     f"Valid keys are {df.columns}"
                 )
 
-    if self._xyztype == _XYZType.POLYGONS.value:  # a bit weird: TODO fixup
+    if self._xyztype == _XYZType.POLYGONS:  # a bit weird: TODO fixup
         if not attributes and self._pname in df.columns:
             # need to convert the dataframe
             df = _convert_idbased_xyz(self, df)
@@ -514,7 +514,7 @@ def export_table(self, pfile, file_format="csv", attributes=False, pfilter=None)
         df = df.fillna(value=999.0)
 
     # Apply filter if any (Points only)
-    if self._xyztype == _XYZType.POINTS.value and pfilter:
+    if self._xyztype == _XYZType.POINTS and pfilter:
         for key, val in pfilter.items():
             if key in df.columns:
                 df = df.loc[df[key].isin(val)]
@@ -525,9 +525,9 @@ def export_table(self, pfile, file_format="csv", attributes=False, pfilter=None)
                 )
 
     # Select columns based on type and attributes
-    if self._xyztype == _XYZType.POLYGONS.value and not attributes:
+    if self._xyztype == _XYZType.POLYGONS and not attributes:
         df = df.iloc[:, 0:4]
-    elif self._xyztype == _XYZType.POINTS.value and not attributes:
+    elif self._xyztype == _XYZType.POINTS and not attributes:
         df = df.iloc[:, 0:3]
     elif attributes:
         if isinstance(attributes, bool):
@@ -559,7 +559,7 @@ def export_table(self, pfile, file_format="csv", attributes=False, pfilter=None)
                 f"Attributes must be a bool or a list, not {type(attributes)}"
             )
 
-        if self._xyztype == _XYZType.POLYGONS.value:
+        if self._xyztype == _XYZType.POLYGONS:
             # Ensure POLY_ID is included
             if self._pname not in df.columns:
                 df[self._pname] = 0
@@ -707,11 +707,11 @@ def _from_list_like(plist, zname, attrs, xyztype) -> pd.DataFrame:
         if totnum == 3 + lenattrs:
             dfr = pd.DataFrame(plist[:, :3], columns=["X_UTME", "Y_UTMN", zname])
             dfr = dfr.astype(float)
-            if xyztype == _XYZType.POLYGONS.value:
+            if xyztype == _XYZType.POLYGONS:
                 # pname column is missing but assign 0 as ID
                 dfr["POLY_ID"] = 0
 
-        elif totnum == 4 + lenattrs and xyztype == _XYZType.POLYGONS.value:
+        elif totnum == 4 + lenattrs and xyztype == _XYZType.POLYGONS:
             dfr = pd.DataFrame(
                 plist[:, :4],
                 columns=["X_UTME", "Y_UTMN", zname, "POLY_ID"],
@@ -723,7 +723,7 @@ def _from_list_like(plist, zname, attrs, xyztype) -> pd.DataFrame:
             )
         dfr.dropna()
         dfr = dfr.astype(np.float64)
-        if xyztype == _XYZType.POLYGONS.value:
+        if xyztype == _XYZType.POLYGONS:
             dfr[_AttrName.PNAME.value] = dfr[_AttrName.PNAME.value].astype(np.int32)
 
         if lenattrs > 0:

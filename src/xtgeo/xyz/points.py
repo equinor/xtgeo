@@ -97,7 +97,7 @@ def _roxar_importer(
     attributes: bool | list[str] = False,
 ):
     return _xyz_roxapi.load_xyz_from_rms(
-        project, name, category, stype, realisation, attributes, _XYZType.POINTS.value
+        project, name, category, stype, realisation, attributes, _XYZType.POINTS
     )
 
 
@@ -451,7 +451,7 @@ class Points(XYZ):
         filesrc: str = None,
     ):
         """Initialisation of Points()."""
-        self._xyztype = _XYZType.POINTS.value
+        self._xyztype = _XYZType.POINTS
 
         super().__init__(self._xyztype, xname, yname, zname)
 

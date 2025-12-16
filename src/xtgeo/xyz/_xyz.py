@@ -53,7 +53,7 @@ class XYZ(ABC):
         self._xname = xname
         self._yname = yname
         self._zname = zname
-        self._attrs: list[str] = []
+        self._attrs: dict[str, str] = {}
 
     @property
     def xyztype(self) -> _XYZType:

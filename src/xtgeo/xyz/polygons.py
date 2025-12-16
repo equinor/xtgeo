@@ -80,7 +80,7 @@ def _roxar_importer(
     attributes: bool | list[str] = False,
 ):  # pragma: no cover
     kwargs = _xyz_roxapi.load_xyz_from_rms(
-        project, name, category, stype, realisation, attributes, _XYZType.POLYGONS.value
+        project, name, category, stype, realisation, attributes, _XYZType.POLYGONS
     )
 
     kwargs["name"] = name if name else "poly"
@@ -299,7 +299,7 @@ class Polygons(XYZ):
         fformat: str = "guess",
         filesrc: str = None,
     ):
-        self._xyztype: str = _XYZType.POLYGONS.value
+        self._xyztype: _XYZType = _XYZType.POLYGONS
 
         super().__init__(self._xyztype, xname, yname, zname)
         self._pname = pname
