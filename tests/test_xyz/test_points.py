@@ -96,7 +96,7 @@ def test_points_read_write_csv(testdata_path, tmp_path):
 def test_points_io_with_attrs(points_with_attrs, tmp_path):
     """Test roundtrip of polygons with attributes from file and back.
 
-    Note that some formats does not store attributes.
+    Note that some formats do not store attributes.
     """
 
     plist, attrs = points_with_attrs

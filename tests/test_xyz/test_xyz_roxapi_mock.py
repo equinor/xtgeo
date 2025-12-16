@@ -145,7 +145,7 @@ def test_roxar_polygon_importer():
             stype,
             realisation,
             attributes,
-            _XYZType.POLYGONS.value,
+            _XYZType.POLYGONS,
         )
 
         # Check the result
@@ -194,7 +194,7 @@ def test_roxar_polygon_importer_attrs():
             stype,
             realisation,
             attributes,
-            _XYZType.POLYGONS.value,
+            _XYZType.POLYGONS,
         )
 
         # Check the result
