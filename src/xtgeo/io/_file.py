@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from xtgeo.cube import Cube
     from xtgeo.grid3d import Grid, GridProperties, GridProperty
     from xtgeo.surface import RegularSurface, Surfaces
-    from xtgeo.wells import BlockedWell, BlockedWells, Well, Wells
+    from xtgeo.well import BlockedWell, BlockedWells, Well, Wells
     from xtgeo.xyz import Points, Polygons
 
     XTGeoObject = Union[
@@ -50,7 +50,7 @@ VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]
 
 
 class FileFormat(Enum):
-    RMSWELL = ["rmswell", "rmsw", "w", "bw"]
+    RMSWELL = ["rms_ascii", "rms_asc", "rmsasc", "rmswell", "rmsw", "w", "bw"]
     ROFF_BINARY = ["roff_binary", "roff", "roff_bin", "roff-bin", "roffbin", "roff.*"]
     ROFF_ASCII = ["roff_ascii", "roff_asc", "roff-asc", "roffasc", "asc"]
     EGRID = ["egrid", "eclipserun"]
@@ -123,7 +123,7 @@ class FileWrapper:
         self,
         filelike: FileLike,
         mode: Literal["r", "w", "rb", "wb"] = "rb",
-        obj: XTGeoObject = None,
+        obj: XTGeoObject | None = None,
     ) -> None:
         logger.debug("Init ran for FileWrapper")
 
