@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
 
 from xtgeo.common.log import null_logger
-from xtgeo.io._welldata._well_io import WellData
+from xtgeo.io._welldata._well_io import WellData, WellFileFormat
+
+if TYPE_CHECKING:  # pragma: no cover
+    from xtgeo.common.types import FileLike
 
 logger = null_logger(__name__)
 
@@ -106,3 +110,51 @@ class BlockedWellData(WellData):
                 f"Index {index} out of bounds for well with {self.n_records} records"
             )
         return (self.i_index[index], self.j_index[index], self.k_index[index])
+
+    @classmethod
+    def from_file(
+        cls,
+        filepath: FileLike,
+        fformat: WellFileFormat = WellFileFormat.RMS_ASCII,
+        **kwargs: Any,
+    ) -> BlockedWellData:
+        """Read blocked well data from file with format selection."""
+        if fformat == WellFileFormat.RMS_ASCII:
+            return cls.from_rms_ascii(filepath, **kwargs)
+
+        raise NotImplementedError(f"File format {fformat} not supported yet.")
+
+    def to_file(
+        self,
+        filepath: FileLike,
+        fformat: WellFileFormat = WellFileFormat.RMS_ASCII,
+        **kwargs: Any,
+    ) -> None:
+        """Write blocked well data to file with format selection."""
+        if fformat == WellFileFormat.RMS_ASCII:
+            self.to_rms_ascii(filepath, **kwargs)
+            return
+
+        raise NotImplementedError(f"File format {fformat} not supported yet.")
+
+    @classmethod
+    def from_rms_ascii(cls, filepath: FileLike) -> BlockedWellData:
+        """Read blocked well data from RMS ASCII file."""
+        from xtgeo.io._welldata._fformats._rms_ascii import read_rms_ascii_blockedwell
+
+        return read_rms_ascii_blockedwell(filepath=filepath)
+
+    def to_rms_ascii(
+        self,
+        filepath: FileLike,
+        *,
+        precision: int = 4,
+    ) -> None:
+        """Write blocked well data to RMS ASCII file."""
+        from xtgeo.io._welldata._fformats._rms_ascii import write_rms_ascii_blockedwell
+
+        write_rms_ascii_blockedwell(
+            blocked_well=self,
+            filepath=filepath,
+            precision=precision,
+        )
