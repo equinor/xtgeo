@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from enum import Enum
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -13,8 +14,27 @@ from xtgeo.common.log import null_logger
 if TYPE_CHECKING:  # pragma: no cover
     import pandas as pd
 
+    from xtgeo.common.types import FileLike
+
 
 logger = null_logger(__name__)
+
+
+class WellFileFormat(Enum):
+    """Supported file formats for well data I/O.
+
+    Used for both regular WellData and BlockedWellData.
+
+    Attributes:
+        RMS_ASCII: RMS ASCII well format
+        CSV: CSV format (not yet implemented)
+        HDF5: HDF5 format (not yet implemented)
+
+    """
+
+    RMS_ASCII = "rms_ascii"
+    CSV = "csv"
+    HDF5 = "hdf5"
 
 
 @dataclass(frozen=True)
@@ -188,3 +208,66 @@ class WellData:
                 data[logname] = found_log.values
 
         return pd.DataFrame(data)
+
+    @classmethod
+    def from_file(
+        cls,
+        filepath: FileLike,
+        fformat: WellFileFormat = WellFileFormat.RMS_ASCII,
+        **kwargs: Any,
+    ) -> WellData:
+        """Read well data from file with format selection.
+
+        Args:
+            filepath: Path to input file
+            fformat: File format (WellFileFormat enum)
+            **kwargs: Format-specific keyword arguments
+
+        Returns:
+            WellData object
+        """
+        if fformat == WellFileFormat.RMS_ASCII:
+            return cls.from_rms_ascii(filepath, **kwargs)
+
+        raise NotImplementedError(f"File format {fformat} is not supported")
+
+    def to_file(
+        self,
+        filepath: FileLike,
+        fformat: WellFileFormat = WellFileFormat.RMS_ASCII,
+        **kwargs: Any,
+    ) -> None:
+        """Write well data to file with format selection.
+
+        Args:
+            filepath: Path to output file
+            fformat: File format (WellFileFormat enum)
+            **kwargs: Format-specific keyword arguments
+        """
+        if fformat == WellFileFormat.RMS_ASCII:
+            self.to_rms_ascii(filepath, **kwargs)
+            return
+
+        raise NotImplementedError(f"File format {fformat} is not supported.")
+
+    @classmethod
+    def from_rms_ascii(cls, filepath: FileLike) -> WellData:
+        """Read well data from RMS ASCII file."""
+        from xtgeo.io._welldata._fformats._rms_ascii import read_rms_ascii_well
+
+        return read_rms_ascii_well(filepath=filepath)
+
+    def to_rms_ascii(
+        self,
+        filepath: FileLike,
+        *,
+        precision: int = 4,
+    ) -> None:
+        """Write well data to RMS ASCII file."""
+        from xtgeo.io._welldata._fformats._rms_ascii import write_rms_ascii_well
+
+        write_rms_ascii_well(
+            well=self,
+            filepath=filepath,
+            precision=precision,
+        )
