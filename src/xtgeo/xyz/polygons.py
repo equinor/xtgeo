@@ -271,6 +271,13 @@ def _generate_docstring_polygons(
 
 
 class Polygons(XYZ):
+    _pname: str
+    _hname: str
+    _dhname: str
+    _tname: str
+    _dtname: str
+    _name: str
+
     __doc__ = _generate_docstring_polygons(
         _AttrName.XNAME.value,
         _AttrName.YNAME.value,
