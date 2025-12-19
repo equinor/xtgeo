@@ -41,6 +41,14 @@ class XYZ(ABC):
         :class:`Polygons` classes!
     """
 
+    _xyztype: _XYZType
+    _xname: str
+    _yname: str
+    _zname: str
+    _attrs: dict[str, str]
+    _df: pd.DataFrame
+    _filesrc: str | None
+
     def __init__(
         self,
         xyztype: _XYZType,
