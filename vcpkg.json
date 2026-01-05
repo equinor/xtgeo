@@ -1,6 +1,13 @@
 {
-    "dependencies": [
-        "eigen3",
-        "fmt"
-    ]
+  "builtin-baseline": "11bbc873e00e9e58d4e9dffb30b7a5493a030e0b",
+  "dependencies": [
+      "eigen3",
+      "fmt"
+  ],
+  "overrides": [
+    {
+      "name": "eigen3",
+      "version": "3.4.1#1"
+    }
+  ]
 }
