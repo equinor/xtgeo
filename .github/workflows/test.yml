@@ -50,19 +50,19 @@ jobs:
 
       - name: Run tests (Linux/macOS)
         if: ${{ matrix.os != 'windows-latest' }}
-        run: pytest -n 4 tests --disable-warnings --generate-plots
+        run: uv run pytest -n 4 tests --disable-warnings --generate-plots
 
       - name: Run tests (Windows, skip plotting due to random TCL/TK issues)
         if: ${{ matrix.os == 'windows-latest' }}
-        run: pytest -n 4 tests --disable-warnings
+        run: uv run pytest -n 4 tests --disable-warnings
 
       - name: Test dependency integration
         if: ${{ matrix.os != 'macos-latest'
           && matrix.python-version != '3.12'
           && matrix.python-version != '3.13' }}
         run: |
-          pip install openvds  # Does not build macOS wheels or 3.12+ (yet)
-          pytest tests/test_dependency_integration.py
+          uv pip install openvds  # Does not build macOS wheels or 3.12+ (yet)
+          uv run pytest tests/test_dependency_integration.py
 
   hypothesis:
     runs-on: ubuntu-latest
@@ -85,7 +85,7 @@ jobs:
         uses: "./.github/actions/setup_testdata"
 
       - name: Run just hypothesis tests with more examples
-        run: pytest -n 4 tests --disable-warnings -m hypothesis --generate-plots
+        run: uv run pytest -n 4 tests --disable-warnings -m hypothesis --generate-plots
 
   rms:
     name: ${{ matrix.config.name }}
@@ -112,14 +112,15 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.config.python }}
+        run: uv python install ${{ matrix.config.python }}
 
       - name: Install Linux dependencies
         run: |
@@ -127,9 +128,10 @@ jobs:
 
       - name: Build and install xtgeo
         run: |
-          pip install pip==${{ matrix.config.pip }}
-          pip install ".[dev]"
-          pip install \
+          uv venv
+          uv pip install pip==${{ matrix.config.pip }}
+          uv pip install ".[dev]"
+          uv pip install \
             wheel==${{ matrix.config.wheel }} \
             setuptools==${{ matrix.config.setuptools }} \
             matplotlib==${{ matrix.config.matplotlib }} \
@@ -138,10 +140,10 @@ jobs:
             scipy==${{ matrix.config.scipy }}
 
       - name: List dependencies
-        run: pip freeze
+        run: uv pip freeze
 
       - name: Run tests
-        run: pytest -n 4 tests --disable-warnings --generate-plots
+        run: uv run pytest -n 4 tests --disable-warnings --generate-plots
 
   big:
     runs-on: ubuntu-latest
@@ -160,7 +162,7 @@ jobs:
         uses: "./.github/actions/setup_testdata"
 
       - name: Run just tests marked big
-        run: XTG_BIGTEST=1 pytest -n 4 tests --disable-warnings -m bigtest --generate-plots
+        run: XTG_BIGTEST=1 uv run pytest -n 4 tests --disable-warnings -m bigtest --generate-plots
 
   codecov:
     runs-on: ubuntu-latest
@@ -179,10 +181,10 @@ jobs:
         uses: "./.github/actions/setup_testdata"
 
       - name: Generate coverage report
-        run: pytest -n 4 tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
+        run: uv run pytest -n 4 tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: xtgeocoverage.xml
 
@@ -194,7 +196,7 @@ jobs:
 
       - uses: "./.github/actions/setup_xtgeo"
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
@@ -205,4 +207,4 @@ jobs:
           sudo apt-add-repository ppa:opm/ppa &&
           sudo apt install mpi-default-bin libopm-simulators-bin
       - name: Integration test
-        run: HAS_OPM=1 python -m pytest -m requires_opm --disable-warnings
+        run: HAS_OPM=1 uv run pytest -m requires_opm --disable-warnings
