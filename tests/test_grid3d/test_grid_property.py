@@ -309,22 +309,41 @@ def test_grdecl_rle(tmp_path, testdata_path):
         testdata_path / TESTFILE13B, name="SATNUM", grid=gg
     )
 
+    def _section_tokens(tokens, keyword):
+        try:
+            start = tokens.index(keyword) + 1
+            end = tokens.index("/", start)
+        except ValueError as exc:
+            pytest.fail(f"{keyword} section missing or unterminated: {exc}")
+        return tokens[start:end]
+
     gg.to_file(tmp_path / "grid_rle.grdecl", fformat="grdecl", rle=True)
     po.to_file(tmp_path / "grid_satnum_rle.grdecl", fformat="grdecl", rle=True)
 
-    # Ensure compression in grid (ACTNUM)
+    # Ensure compression in grid (ZCORN and ACTNUM)
     with open(tmp_path / "grid_rle.grdecl") as f:
-        fields = f.read().split()
-        assert len(fields) == 289, "Incorrect field length, fail in compression"
-        assert "*" in fields[-10]
-        assert "*" in fields[-8]
-        assert "*" in fields[-6]
+        tokens = f.read().split()
+        assert len(tokens) == 171, "Expected 171 fields with compression enabled"
+
+        zcorn_tokens = _section_tokens(tokens, "ZCORN")
+        actnum_tokens = _section_tokens(tokens, "ACTNUM")
+
+        assert any("*" in token for token in zcorn_tokens), (
+            "expected compression marker in ZCORN section"
+        )
+        assert any("*" in token for token in actnum_tokens), (
+            "expected compression marker in ACTNUM section"
+        )
 
     # Ensure compression in grid property (SATNUM)
     with open(tmp_path / "grid_satnum_rle.grdecl") as f:
-        content = f.read()
-        assert "*" in content
-        assert len(content.split()) == 3, "Incorrect field length, fail in compression"
+        tokens = f.read().split()
+        satnum_tokens = _section_tokens(tokens, "SATNUM")
+
+        assert len(tokens) == 3, "Expected 3 fields with compression enabled"
+        assert any("*" in token for token in satnum_tokens), (
+            "expected compression marker in SATNUM section"
+        )
 
     grid = xtgeo.grid_from_file(tmp_path / "grid_rle.grdecl")
     assert np.array_equal(grid.actnum_array, gg.actnum_array)

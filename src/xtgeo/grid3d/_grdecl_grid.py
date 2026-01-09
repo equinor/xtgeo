@@ -342,7 +342,7 @@ class GrdeclGrid(EclGrid):
                 if values is None:
                     continue
                 filestream.write(f"{kw}\n")
-                if rle and (kw == "ACTNUM"):
+                if rle and (kw in ["ACTNUM", "ZCORN"]):
                     counts, unique_values = run_length_encoding(values)
                     for i, (count, unique_value) in enumerate(
                         zip(counts, unique_values)
