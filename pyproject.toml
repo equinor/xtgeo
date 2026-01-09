@@ -87,7 +87,7 @@ docs = [
     "sphinx",
     "sphinx-autodoc-typehints",
     "sphinx-rtd-theme",
-    "sphinx-tabs<3.4.5",  # 3.4.5 breaks doc parsing
+    "sphinx-tabs<3.4.8",  # 3.4.5 breaks doc parsing
     "sphinx-toolbox",
 ]
 
