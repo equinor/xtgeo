@@ -483,25 +483,22 @@ class Points(XYZ):
 
     def __str__(self) -> str:
         """User friendly print."""
-        desc = self.describe(flush=False)
-        if desc:
-            return desc
-        return f"{self.__class__.__name__} with {len(self._df)} points."
+        return self.describe(flush=False) or ""
 
-    def __eq__(self, value: Points) -> bool:
+    def __eq__(self, value):
         """Magic method for ==."""
         return self.get_dataframe(copy=False)[self.zname] == value
 
-    def __gt__(self, value: Points) -> bool:
+    def __gt__(self, value):
         return self.get_dataframe(copy=False)[self.zname] > value
 
-    def __ge__(self, value: Points) -> bool:
+    def __ge__(self, value):
         return self.get_dataframe(copy=False)[self.zname] >= value
 
-    def __lt__(self, value: Points) -> bool:
+    def __lt__(self, value):
         return self.get_dataframe(copy=False)[self.zname] < value
 
-    def __le__(self, value: Points) -> bool:
+    def __le__(self, value):
         return self.get_dataframe(copy=False)[self.zname] <= value
 
     # ----------------------------------------------------------------------------------
