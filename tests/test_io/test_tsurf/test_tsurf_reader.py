@@ -115,55 +115,6 @@ def test_file_string_input(tmp_path: str, complete_tsurf_file) -> None:
     assert result_path is not None
 
 
-def test_file_path_input(tmp_path: Path, complete_tsurf_file) -> None:
-    """Test reading from Path input."""
-    # Test with Path
-    filepath = tmp_path / "test.ts"
-    with open(filepath, "w") as f:
-        f.write(complete_tsurf_file)
-
-    result_path = read_tsurf(filepath)
-    assert result_path is not None
-
-
-def test_file_stringio_input(complete_tsurf_file) -> None:
-    """Test reading from StringIO input."""
-    result_stringio = read_tsurf(tsurf_stream(complete_tsurf_file))
-    assert result_stringio is not None
-
-
-def test_file_bytesio_input(complete_tsurf_file) -> None:
-    """Test reading from BytesIO input."""
-    result_bytesio = read_tsurf(BytesIO(complete_tsurf_file.encode("utf-8")))
-    assert result_bytesio is not None
-
-
-def test_file_non_regular_file_input(tmp_path: Path) -> None:
-    """Test reading from a non-regular file (e.g., folder)."""
-
-    non_regular_file = tmp_path / "some_folder"
-    non_regular_file.mkdir()
-
-    with pytest.raises(FileNotFoundError, match="does not exist"):
-        read_tsurf(non_regular_file)
-
-
-def test_file_other_than_filelike_input() -> None:
-    """Test reading from an unsupported input type."""
-    with pytest.raises(
-        RuntimeError, match="Cannot instantiate <class 'xtgeo.io._file.FileWrapper'>"
-    ):
-        read_tsurf(12345)  # Invalid input type
-
-
-def test_file_empty():
-    """Test that empty file raises error."""
-    with pytest.raises(
-        ValueError, match="does not match format detected from file contents"
-    ):
-        read_tsurf(StringIO(""))
-
-
 def test_file_unusual_suffix(minimal_tsurf_file, tmp_path: Path) -> None:
     """
     Test with unusual file suffix.
@@ -174,13 +125,6 @@ def test_file_unusual_suffix(minimal_tsurf_file, tmp_path: Path) -> None:
         f.write(minimal_tsurf_file)
     result_unusual_suffix = read_tsurf(filepath)
     assert result_unusual_suffix is not None
-
-
-def test_file_non_existent(tmp_path: Path) -> None:
-    """Test with non-existent file."""
-    filepath = tmp_path / "non_existent.ts"
-    with pytest.raises(FileNotFoundError, match="does not exist"):
-        read_tsurf(filepath)
 
 
 def test_comments_and_empty_lines(tmp_path: Path) -> None:

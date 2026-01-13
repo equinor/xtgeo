@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import contextlib
 from copy import deepcopy
-from io import BytesIO, StringIO, TextIOWrapper
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, Iterable, Literal, TextIO, TypeGuard
+from io import StringIO
+from typing import TYPE_CHECKING, Any, Iterable, Literal, TypeGuard
 
 import numpy as np
 import pandas as pd
@@ -252,34 +251,6 @@ def import_zmap(
     return {"xname": xname, "yname": yname, "zname": zname, "values": df}
 
 
-@contextlib.contextmanager
-def _get_text_stream(
-    wrapped_file: FileWrapper, encoding: str = "utf-8"
-) -> Generator[TextIO, None, None]:
-    """Context manager to handle both file paths and file-like objects for reading."""
-
-    # TODO: consider moving method to xtgeo.io._file: FileWrapper
-    # Ensure that the method appropriately handles the different
-    # configurations/file types of the FileWrapper.
-
-    if not wrapped_file or not wrapped_file.check_file():
-        raise FileNotFoundError(
-            f"\nFile {wrapped_file.name}:\nThe file does not exist."
-        )
-
-    if isinstance(wrapped_file.file, Path):
-        with open(wrapped_file.file, "r", encoding=encoding) as stream:
-            yield stream
-    elif isinstance(wrapped_file.file, BytesIO):
-        with TextIOWrapper(wrapped_file.file, encoding=encoding) as text_wrapper:
-            text_wrapper.seek(0)
-            yield text_wrapper
-    else:
-        # StringIO is already a text stream
-        wrapped_file.file.seek(0)
-        yield wrapped_file.file
-
-
 def import_rms_attr(pfile: FileWrapper, zname: str = "Z_TVDSS") -> dict[str, Any]:
     """The RMS ascii file Points format with attributes.
 
@@ -323,7 +294,7 @@ def import_rms_attr(pfile: FileWrapper, zname: str = "Z_TVDSS") -> dict[str, Any
     # parse header
     skiprows = 0
 
-    with _get_text_stream(pfile) as rmsfile:
+    with pfile.get_text_stream() as rmsfile:
         for iline in range(20):
             fields = rmsfile.readline().split()
             if len(fields) != 2:

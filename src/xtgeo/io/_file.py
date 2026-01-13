@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import io
 import os
 import pathlib
@@ -12,7 +13,9 @@ import uuid
 from enum import Enum
 from os.path import join
 from tempfile import mkstemp
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING, Generator, Literal, TextIO, Union
+
+from typing_extensions import Self
 
 import xtgeo._cxtgeo
 from xtgeo.common.exceptions import InvalidFileFormatError
@@ -646,3 +649,29 @@ class FileWrapper:
                 return FileFormat.TSURF
 
         return FileFormat.UNKNOWN
+
+
+    @contextlib.contextmanager
+    def get_text_stream(self: Self) -> Generator[TextIO, None, None]:
+        """
+        Context manager to handle both file paths and file-like objects for reading.
+        Yields:
+            A text stream (TextIO) for reading.
+        Raises:
+            FileNotFoundError: If the file does not exist.
+        """
+
+        if not self.check_file():
+            raise FileNotFoundError(f"\nFile {self.name}:\nThe file does not exist.")
+
+        if isinstance(self.file, pathlib.Path):
+            with open(self.file, "r") as stream:
+                yield stream
+        elif isinstance(self.file, io.BytesIO):
+            with io.TextIOWrapper(self.file) as text_wrapper:
+                text_wrapper.seek(0)
+                yield text_wrapper
+        else:
+            # StringIO is already a text stream
+            self.file.seek(0)
+            yield self.file
