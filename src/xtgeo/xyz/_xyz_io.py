@@ -6,7 +6,7 @@ import contextlib
 from copy import deepcopy
 from io import BytesIO, StringIO, TextIOWrapper
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, Literal, TextIO, TypeGuard
+from typing import TYPE_CHECKING, Any, Generator, Iterable, Literal, TextIO, TypeGuard
 
 import numpy as np
 import pandas as pd
@@ -27,21 +27,21 @@ logger = null_logger(__name__)
 
 def _is_polygons(xyz: Points | Polygons) -> TypeGuard[Polygons]:
     """Type guard to check if xyz is a Polygons instance."""
-    return _is_polygons_type(xyz._xyztype)
-
-
-def _is_polygons_type(xyztype: _XYZType) -> TypeGuard[Polygons]:
-    """Type guard to check if type is Polygons."""
-    return xyztype == _XYZType.POLYGONS
+    return _refers_to_polygons(xyz._xyztype)
 
 
 def _is_points(xyz: Points | Polygons) -> TypeGuard[Points]:
     """Type guard to check if xyz is a Points instance."""
-    return _is_points_type(xyz._xyztype)
+    return _refers_to_points(xyz._xyztype)
 
 
-def _is_points_type(xyztype: _XYZType) -> TypeGuard[Points]:
-    """Type guard to check if type is Points."""
+def _refers_to_polygons(xyztype: _XYZType) -> bool:
+    """Check if type is Polygons."""
+    return xyztype == _XYZType.POLYGONS
+
+
+def _refers_to_points(xyztype: _XYZType) -> bool:
+    """Check if type is Points."""
     return xyztype == _XYZType.POINTS
 
 
@@ -94,8 +94,6 @@ def _import_table(
             raise IOError(f"File is not a valid Parquet file: {verr}")
     else:
         try:
-            if isinstance(pfile.file, BytesIO):
-                pfile.file.seek(0)
             dataframe = pd.read_csv(pfile.file, comment="#")
         except ValueError as verr:
             raise IOError(f"File is not a valid CSV file: {verr}")
@@ -108,7 +106,7 @@ def _import_table(
     ncol = len(columns)
 
     if ncol == 3:
-        if _is_polygons_type(xyztype):
+        if _refers_to_polygons(xyztype):
             # If the file is a polygon file, add a POLY_ID column
             dataframe["POLY_ID"] = 0
             return {
@@ -126,7 +124,7 @@ def _import_table(
             "zname": columns[2],
             "values": dataframe,
         }
-    if _is_polygons_type(xyztype) and ncol == 4:
+    if _refers_to_polygons(xyztype) and ncol == 4:
         return {
             "xname": columns[0],
             "yname": columns[1],
@@ -134,7 +132,7 @@ def _import_table(
             "pname": columns[3],
             "values": dataframe,
         }
-    if _is_polygons_type(xyztype) and ncol > 4:
+    if _refers_to_polygons(xyztype) and ncol > 4:
         # need to infer the attrs from column 5...
         attr_names = columns[4:]
         attrs = {}
@@ -157,7 +155,7 @@ def _import_table(
             "attributes": attrs,
             "values": dataframe,
         }
-    if _is_points_type(xyztype) and ncol > 3:
+    if _refers_to_points(xyztype) and ncol > 3:
         # need to infer the attrs from column 5...
         attr_names = columns[3:]
         attrs = {}
@@ -744,7 +742,7 @@ def export_rms_wpicks(
 
 
 def _from_list_like(
-    plist: list[Any] | np.ndarray | pd.DataFrame,
+    plist: list[Iterable[int | float]] | np.ndarray | pd.DataFrame,
     zname: str,
     attrs: dict[str, str] | None,
     xyztype: _XYZType,
@@ -805,11 +803,11 @@ def _from_list_like(
         if totnum == 3 + lenattrs:
             dfr = pd.DataFrame(plist[:, :3], columns=["X_UTME", "Y_UTMN", zname])
             dfr = dfr.astype(float)
-            if _is_polygons_type(xyztype):
+            if _refers_to_polygons(xyztype):
                 # pname column is missing but assign 0 as ID
                 dfr["POLY_ID"] = 0
 
-        elif totnum == 4 + lenattrs and _is_polygons_type(xyztype):
+        elif totnum == 4 + lenattrs and _refers_to_polygons(xyztype):
             dfr = pd.DataFrame(
                 plist[:, :4],
                 columns=["X_UTME", "Y_UTMN", zname, "POLY_ID"],
@@ -821,7 +819,7 @@ def _from_list_like(
             )
         dfr.dropna()
         dfr = dfr.astype(np.float64)
-        if _is_polygons_type(xyztype):
+        if _refers_to_polygons(xyztype):
             dfr[_AttrName.PNAME.value] = dfr[_AttrName.PNAME.value].astype(np.int32)
 
         if attrs is not None and len(attrs) > 0:
