@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -20,12 +20,15 @@ if TYPE_CHECKING:
     import io
     import pathlib
 
+    from xtgeo.surface.regular_surface import RegularSurface
     from xtgeo.well import Well
 
 logger = null_logger(__name__)
 
 
-def _data_reader_factory(file_format: FileFormat):
+def _data_reader_factory(
+    file_format: FileFormat,
+) -> Callable[[FileWrapper], dict[str, Any] | None]:
     if file_format == FileFormat.XYZ:
         return _xyz_io.import_xyz
     if file_format == FileFormat.ZMAP_ASCII:
@@ -55,7 +58,7 @@ def _data_reader_factory(file_format: FileFormat):
 def _file_importer(
     points_file: str | pathlib.Path | io.BytesIO,
     fformat: str | None = None,
-):
+) -> dict[str, Any]:
     """General function for points_from_file"""
     pfile = FileWrapper(points_file)
     fmt = pfile.fileformat(fformat)
@@ -65,7 +68,9 @@ def _file_importer(
     return kwargs
 
 
-def _surface_importer(surf, zname=_AttrName.ZNAME.value):
+def _surface_importer(
+    surf: RegularSurface, zname: str = _AttrName.ZNAME.value
+) -> dict[str, Any]:
     """General function for _read_surface()"""
     val = surf.values
     xc, yc = surf.get_xy_values()
@@ -89,13 +94,13 @@ def _surface_importer(surf, zname=_AttrName.ZNAME.value):
 
 
 def _roxar_importer(
-    project,
+    project: Any,
     name: str,
     category: str,
     stype: str = "horizons",
     realisation: int = 0,
     attributes: bool | list[str] = False,
-):
+) -> dict[str, Any]:
     return _xyz_roxapi.load_xyz_from_rms(
         project, name, category, stype, realisation, attributes, _XYZType.POINTS
     )
@@ -108,7 +113,7 @@ def _wells_importer(
     top_prefix: str = "Top",
     zonelist: list | None = None,
     use_undef: bool = False,
-) -> dict:
+) -> dict[str, Any]:
     """General function importing from wells"""
     dflist = []
     for well in wells:
@@ -149,9 +154,9 @@ def _wells_dfrac_importer(
     dcodes: list[int],
     incl_limit: float = 90,
     count_limit: int = 3,
-    zonelist: list = None,
-    zonelogname: str = None,
-) -> dict:
+    zonelist: list[Any] | None = None,
+    zonelogname: str | None = None,
+) -> dict[str, Any]:
     """General function, get fraction of discrete code(s) e.g. facies per zone."""
 
     dflist = []
@@ -187,7 +192,9 @@ def _wells_dfrac_importer(
     }
 
 
-def points_from_file(pfile: str | pathlib.Path, fformat: str | None = "guess"):
+def points_from_file(
+    pfile: str | pathlib.Path, fformat: str | None = "guess"
+) -> Points:
     """Make an instance of a Points object directly from file import.
 
     Supported formats are:
@@ -214,13 +221,13 @@ def points_from_file(pfile: str | pathlib.Path, fformat: str | None = "guess"):
 
 
 def points_from_roxar(
-    project,
+    project: Any,
     name: str,
     category: str,
     stype: str = "horizons",
     realisation: int = 0,
     attributes: bool | list[str] = False,
-):
+) -> Points:
     """Load a Points instance from Roxar RMS project.
 
     The import from the RMS project can be done either within the project
@@ -265,9 +272,9 @@ def points_from_roxar(
 
 
 def points_from_surface(
-    regular_surface,
+    regular_surface: RegularSurface,
     zname: str = _AttrName.ZNAME.value,
-):
+) -> Points:
     """This makes an instance of a Points directly from a RegularSurface object.
 
     Each surface node will be stored as a X Y Z point.
@@ -288,9 +295,9 @@ def points_from_wells(
     tops: bool = True,
     incl_limit: float | None = None,
     top_prefix: str = "Top",
-    zonelist: list | None = None,
+    zonelist: list[Any] | None = None,
     use_undef: bool = False,
-):
+) -> Points:
     """Get tops or zone points data from a list of wells.
 
     Args:
@@ -323,9 +330,9 @@ def points_from_wells_dfrac(
     dcodes: list[int],
     incl_limit: float = 90,
     count_limit: int = 3,
-    zonelist: list | None = None,
+    zonelist: list[Any] | None = None,
     zonelogname: str | None = None,
-):
+) -> Points:
     """Get fraction of discrete code(s) e.g. facies per zone.
 
     Args:
@@ -359,7 +366,7 @@ def points_from_wells_dfrac(
     )
 
 
-def _generate_docstring_points(xname, yname, zname):
+def _generate_docstring_points(xname: str, yname: str, zname: str) -> str:
     """In order to have dynamic naming of xname, yname, etc"""
     return f"""
     Class for Points data in XTGeo.
@@ -443,12 +450,12 @@ class Points(XYZ):
 
     def __init__(
         self,
-        values: list | np.ndarray | pd.DataFrame = None,
+        values: list[Any] | np.ndarray | pd.DataFrame | None = None,
         xname: str = _AttrName.XNAME.value,
         yname: str = _AttrName.YNAME.value,
         zname: str = _AttrName.ZNAME.value,
-        attributes: dict | None = None,
-        filesrc: str = None,
+        attributes: dict[str, str] | None = None,
+        filesrc: str | None = None,
     ):
         """Initialisation of Points()."""
         self._xyztype = _XYZType.POINTS
@@ -461,21 +468,22 @@ class Points(XYZ):
         self._attrs = attributes if attributes is not None else {}
         self._filesrc = filesrc
 
+        self._df: pd.DataFrame
         if not isinstance(values, pd.DataFrame):
             self._df = _xyz_io._from_list_like(
                 values, self._zname, attributes, self._xyztype
             )
         else:
-            self._df: pd.DataFrame = values
+            self._df = values
             self._dataframe_consistency_check()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # should be able to newobject = eval(repr(thisobject))
         return f"{self.__class__.__name__} (filesrc={self._filesrc!r}, ID={id(self)})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """User friendly print."""
-        return self.describe(flush=False)
+        return self.describe(flush=False) or ""
 
     def __eq__(self, value):
         """Magic method for ==."""
@@ -552,12 +560,12 @@ class Points(XYZ):
         pfile,
         fformat="xyz",
         attributes: bool | list[str] = True,
-        pfilter=None,
-        wcolumn=None,
-        hcolumn=None,
+        pfilter: dict[str, list[str]] | None = None,
+        wcolumn: str = "",
+        hcolumn: str = "",
         mdcolumn="M_MDEPTH",
         **kwargs,
-    ):
+    ) -> int:
         """Export Points to file.
 
         Args:
