@@ -711,6 +711,7 @@ class GridProperty(_Grid3D):
             else None
         )
 
+        values: np.ma.MaskedArray
         if isinstance(invalues, (int, float)):
             vals = np.ma.zeros((ncol, nrow, nlay), order="C", dtype=self.dtype)
             vals = np.ma.array(vals, mask=currentmask)
@@ -741,10 +742,10 @@ class GridProperty(_Grid3D):
 
         # the self._isdiscrete property shall win over numpy dtype
         if "int" in str(values.dtype) and not self._isdiscrete:
-            values = values.astype(np.float64)
+            values = np.ma.array(values.astype(np.float64), copy=False)
 
         if "float" in str(values.dtype) and self._isdiscrete:
-            values = values.astype(np.int32)
+            values = np.ma.array(values.astype(np.int32), copy=False)
 
         return values
 
@@ -842,7 +843,7 @@ class GridProperty(_Grid3D):
         propertyname: str,
         realisation: int = 0,
         casting: (
-            Literal["no", "equiv", "safe", "same_kind", "unsafe"] | None
+            Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"] | None
         ) = "unsafe",
     ) -> None:
         """
@@ -1014,7 +1015,7 @@ class GridProperty(_Grid3D):
 
         return act
 
-    def get_active_npvalues1d(self) -> np.ma.MaskedArray:
+    def get_active_npvalues1d(self) -> np.ndarray:
         """
         Get the active cells as a 1D numpy masked array.
 
@@ -1027,9 +1028,9 @@ class GridProperty(_Grid3D):
     def get_npvalues1d(
         self,
         activeonly: bool = False,
-        fill_value: npt.ArrayLike = np.nan,
+        fill_value: float | int | str | bytes | complex | np.generic | None = np.nan,
         order: Literal["C", "F"] = "C",
-    ) -> np.ma.MaskedArray:
+    ) -> np.ndarray:
         """
         Return the grid property as a 1D numpy array (copy) for active or all
         cells, but inactive have a fill value.
@@ -1047,10 +1048,12 @@ class GridProperty(_Grid3D):
         .. versionchanged:: 2.8 Added `fill_value` and `order`
 
         """
-        vact = self.values1d.copy()
+        vact: np.ma.MaskedArray = np.ma.array(self.values1d, copy=True)
 
         if order == "F":
-            vact = _gridprop_lowlevel.c2f_order(self, vact)
+            data_f = _gridprop_lowlevel.c2f_order(self, vact.data)
+            mask_f = _gridprop_lowlevel.c2f_order(self, np.ma.getmaskarray(vact))
+            vact = np.ma.MaskedArray(data_f, mask=mask_f, copy=False)
 
         if activeonly:
             return vact.compressed()  # safer than vact[~vact.mask] if no masked

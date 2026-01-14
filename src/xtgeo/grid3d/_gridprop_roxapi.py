@@ -118,7 +118,8 @@ def export_prop_roxapi(
     gname: str,
     pname: str,
     realisation: int = 0,
-    casting: Literal["no", "equiv", "safe", "same_kind", "unsafe"] | None = "unsafe",
+    casting: Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"]
+    | None = "unsafe",
 ) -> None:
     """Export (i.e. store or save) to a Property icon in RMS via ROXAR API spec."""
     rox = RoxUtils(project, readonly=False)
@@ -192,7 +193,7 @@ def _store_in_roxar(
     pname: str,
     roxgrid: RoxarGrid3DType,
     realisation: int,
-    casting: Literal["no", "equiv", "safe", "same_kind", "unsafe"] | None,
+    casting: Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"] | None,
 ) -> None:
     """Store property in RMS."""
     indexer = roxgrid.get_grid(realisation=realisation).grid_indexer
@@ -206,7 +207,7 @@ def _store_in_roxar(
         else roxtype.GridPropertyType.continuous
     )
 
-    val3d = self.values.copy()
+    val3d: np.ma.MaskedArray = np.ma.array(self.values, copy=True)
 
     dtype = self._roxar_dtype
     logger.info("DTYPE is %s for %s", dtype, pname)
@@ -229,7 +230,9 @@ def _store_in_roxar(
     _validate_dtype_in_roxar(val3d, original_dtype, dtype, casting == "unsafe")
 
     dtype = original_dtype
-    val3d = val3d.astype(dtype, casting=casting)
+    cast_mode: Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"]
+    cast_mode = casting if casting is not None else "unsafe"
+    val3d = np.ma.array(val3d.astype(dtype, casting=cast_mode), copy=False)
 
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 
