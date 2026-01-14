@@ -1121,6 +1121,20 @@ def test_fill(testdata_path):
     assert srf.values.mean() == pytest.approx(1342.10498, abs=0.001)
 
 
+def test_fill_methods():
+    """Fill the undefined values for the surface, various methods"""
+
+    values = np.arange(120)
+    srf = xtgeo.RegularSurface(ncol=12, nrow=10, xinc=10, yinc=10, values=values)
+    srf.values = np.ma.masked_where(srf.values > 110, srf.values)
+
+    for method in ["linear", "cubic", "radial_basis"]:
+        surface = srf.copy()
+        surface.fill(method=method)
+        assert isinstance(surface._values, np.ma.MaskedArray)
+        assert surface.values.mean() == pytest.approx(59, abs=1)
+
+
 def test_smoothing(testdata_path):
     """Smooth the surface using median/gaussian filter"""
 

@@ -2000,7 +2000,7 @@ def surf_fill(
             ind = scipy.ndimage.distance_transform_edt(
                 invalid, return_distances=False, return_indices=True
             )
-            self._values = self._values[tuple(ind)]
+            self._ensure_correct_values(self._values[tuple(ind)])
 
         elif method in ("linear", "cubic", "radial_basis"):
             # Get valid data points
@@ -2051,7 +2051,7 @@ def surf_fill(
                 znew = rbf(np.column_stack([xiv.ravel(), yiv.ravel()])).reshape(
                     xiv.shape
                 )
-            self._values = znew
+            self._ensure_correct_values(znew)
 
         else:
             raise ValueError(
