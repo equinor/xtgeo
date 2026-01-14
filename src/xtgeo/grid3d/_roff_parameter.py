@@ -153,27 +153,29 @@ class RoffParameter:
             code_values = np.array(list(gridproperty.codes.keys()), dtype=np.int32)
 
         if not np.ma.isMaskedArray(gridproperty.values):
-            values = np.ma.masked_greater(
+            values: np.ma.MaskedArray = np.ma.masked_greater(
                 gridproperty.values,
                 UNDEF_INT_LIMIT if gridproperty.isdiscrete else UNDEF_LIMIT,
             )
         else:
-            values = gridproperty.values
+            values = np.ma.array(gridproperty.values, copy=False)
 
         if gridproperty.isdiscrete:
-            values = values.astype(np.int32).filled(-999)
+            values = np.ma.array(values.astype(np.int32), copy=False)
+            filled_values = values.filled(-999)
         else:
             # Although the roff format can contain double,
             # double typed parameters are not read by RMS so we
             # need to convert to float32 here
-            values = values.astype(np.float32).filled(-999.0)
+            values = np.ma.array(values.astype(np.float32), copy=False)
+            filled_values = values.filled(-999.0)
 
         return RoffParameter(
             nx=gridproperty.ncol,
             ny=gridproperty.nrow,
             nz=gridproperty.nlay,
             name=gridproperty.name or "",
-            values=np.asarray(np.flip(values, -1).ravel()),
+            values=np.asarray(np.flip(filled_values, -1).ravel()),
             code_names=code_names,
             code_values=code_values,
         )

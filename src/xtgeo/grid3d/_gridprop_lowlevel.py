@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import numpy.ma as ma
@@ -79,7 +79,7 @@ def update_carray(
     self: GridProperty,
     undef: int | float | None = None,
     discrete: bool | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     order: Literal["C", "F", "A", "K"] = "F",
 ) -> cArray:
     """Copy (update) values from numpy to SWIG, 1D array, returns a pointer
@@ -101,20 +101,21 @@ def update_carray(
 
     logger.debug("Entering conversion from numpy to C array ...")
 
-    values = self.values.copy()
+    values_masked: ma.MaskedArray[Any] = ma.array(self.values, copy=True)
 
-    if not dtype:
-        values = values.astype(np.int32) if dstatus else values.astype(np.float64)
+    if dtype is None:
+        target_dtype: DTypeLike = np.int32 if dstatus else np.float64
+        values_masked = ma.array(values_masked.astype(target_dtype), copy=False)
     else:
-        values = values.astype(dtype)
+        values_masked = ma.array(values_masked.astype(dtype), copy=False)
 
-    values = ma.filled(values, undef)
-    values = np.asfortranarray(values)
+    values_filled = ma.filled(values_masked, undef)
+    values_filled = np.asfortranarray(values_filled)
 
     if order == "F":
-        values = np.asfortranarray(values)
+        values_filled = np.asfortranarray(values_filled)
 
-    values1d = np.ravel(values, order=order)
+    values1d = np.ravel(values_filled, order=order)
 
     if values1d.dtype == "float64" and dstatus and not dtype:
         values1d = values1d.astype("int32")
