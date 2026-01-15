@@ -1,8 +1,5 @@
 import warnings
-from contextlib import contextmanager
 from dataclasses import dataclass
-from io import BytesIO, TextIOWrapper
-from pathlib import Path
 from typing import Any, Generator, TextIO
 
 import numpy as np
@@ -681,34 +678,8 @@ def _parse_tsurf(stream: TextIO, filepath_errmsg: str) -> TSurfData:
     return tsurf_data
 
 
-@contextmanager
-def _get_text_stream(
-    wrapped_file: FileWrapper,
-    encoding: str = "utf-8",
-) -> Generator[TextIO, None, None]:
-    """Context manager that yields a text stream."""
-
-    if not wrapped_file or not wrapped_file.check_file():
-        raise FileNotFoundError(
-            f"\nIn file {wrapped_file.name}:\nThe file does not exist."
-        )
-
-    wrapped_file.fileformat(FileFormat.TSURF.value[0], strict=True)
-
-    if isinstance(wrapped_file.file, Path):
-        with open(wrapped_file.file, encoding=encoding) as stream:
-            yield stream
-    elif isinstance(wrapped_file.file, BytesIO):
-        with TextIOWrapper(wrapped_file.file, encoding=encoding) as text_wrapper:
-            yield text_wrapper
-    else:
-        # StringIO is already a text stream
-        yield wrapped_file.file
-
-
 def read_tsurf(
     file: FileLike,
-    encoding: str = "utf-8",
 ) -> TSurfData:
     """
     Read a file on the TSURF format and parse its triangulated surface data.
@@ -742,5 +713,11 @@ def read_tsurf(
 
     wrapped_file = FileWrapper(file)
 
-    with _get_text_stream(wrapped_file, encoding) as stream:
-        return _parse_tsurf(stream, str(wrapped_file.name))
+    if not wrapped_file.check_file():
+        raise FileNotFoundError(
+            f"\nIn file {wrapped_file.name}:\nThe file does not exist."
+        )
+    wrapped_file.fileformat(FileFormat.TSURF.value[0], strict=True)
+
+    with wrapped_file.get_text_stream() as stream:
+        return _parse_tsurf(stream, filepath_errmsg=str(wrapped_file.name))
