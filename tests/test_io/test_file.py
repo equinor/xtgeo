@@ -253,6 +253,59 @@ def test_fileformat_provided_prefer_given(testdata_path, filename, expected_form
         xtgeo_file.fileformat(fileformat="segy", strict=True) == FileFormat.SEGY
 
 
+def test_get_text_stream(testdata_path: str) -> None:
+    """Test getting a text stream from a file."""
+    file_path = pathlib.Path(testdata_path) / "surfaces/drogon/3/F5.ts"
+    xtgeo_file = FileWrapper(file_path)
+    with xtgeo_file.get_text_stream() as stream:
+        assert isinstance(stream, io.TextIOWrapper)
+        assert stream.readline().startswith("GOCAD TSurf 1")
+
+
+@pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
+def test_get_text_stream_file_does_not_exist(
+    reek_grid_path: pathlib.Path, filename: str
+) -> None:
+    """Test getting a text stream from a non-existing file."""
+    xtgeo_file = FileWrapper(reek_grid_path / filename)
+    with pytest.raises(FileNotFoundError, match="file does not exist"):
+        # Use __enter__ (not 'pass') to ensure proper test coverage
+        xtgeo_file.get_text_stream().__enter__()
+
+
+def test_get_text_stream_from_binary_file(testdata_path: str) -> None:
+    """Test getting a text stream from a binary file."""
+    file_path = pathlib.Path(testdata_path) / "3dgrids/reek/REEK.EGRID"
+    xtgeo_file = FileWrapper(file_path)
+
+    # Document expected behavior:
+    # UnicodeDecodeError raised when trying to read binary file as text
+    with pytest.raises(UnicodeDecodeError), xtgeo_file.get_text_stream() as stream:
+        stream.readlines()
+
+
+def test_get_text_stream_empty_file(testdata_path: str) -> None:
+    """Test getting a text stream from an empty text file."""
+    empty_file_path = pathlib.Path(testdata_path) / "empty_file.txt"
+    empty_file_path.touch()
+    xtgeo_file = FileWrapper(empty_file_path)
+    with xtgeo_file.get_text_stream() as stream:
+        assert len(stream.readlines()) == 0
+
+
+def test_get_text_stream_from_memstream() -> None:
+    """Test getting a text stream from an in-memory stream."""
+    dummy_text = "Line 1\nLine 2\nLine 3\n"
+    with FileWrapper(io.StringIO()).get_text_stream() as stream:
+        assert len(stream.readlines()) == 0
+    with FileWrapper(io.BytesIO()).get_text_stream() as stream:
+        assert len(stream.readlines()) == 0
+    with FileWrapper(io.StringIO(dummy_text)).get_text_stream() as stream:
+        assert len(stream.readlines()) == 3
+    with FileWrapper(io.BytesIO(dummy_text.encode())).get_text_stream() as stream:
+        assert len(stream.readlines()) == 3
+
+
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
 def test_fileformat_hdf_stream(testdata_path, filename, strict):
