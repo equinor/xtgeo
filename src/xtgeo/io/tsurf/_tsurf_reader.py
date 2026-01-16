@@ -8,12 +8,9 @@ from typing_extensions import Self
 
 from xtgeo.common.types import FileLike
 from xtgeo.io._file import FileFormat, FileWrapper
-from xtgeo.io.protocols.grid_data_io_protocol import GridDataIOProtocol
-from xtgeo.io.protocols.grid_file_io_protocol import GridFileIOProtocol
-from xtgeo.io.protocols.validate_protocol import ValidateProtocol
 
 
-class ValidatorCoordSys(ValidateProtocol):
+class ValidatorCoordSys:
     """
     Validator for the coordinate system in the TSurf file format.
     For each keyword there are multiple possible values.
@@ -46,7 +43,7 @@ class ValidatorCoordSys(ValidateProtocol):
     """
 
     @classmethod
-    def pre_validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
+    def validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
         """Validate coordinate system data that has been read from a file.
 
         Args:
@@ -191,11 +188,11 @@ class ValidatorCoordSys(ValidateProtocol):
 
 
 @dataclass(frozen=True)
-class TSurfHeader(ValidateProtocol):
+class TSurfHeader:
     name: str
 
     @classmethod
-    def pre_validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
+    def validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
         """
         Validate header data that has been read from a file.
 
@@ -216,14 +213,14 @@ class TSurfHeader(ValidateProtocol):
 
 
 @dataclass(frozen=True)
-class TSurfCoordSys(ValidateProtocol):
+class TSurfCoordSys:
     name: str
     axis_name: list[str]
     axis_unit: list[str]
     zpositive: str
 
     @classmethod
-    def pre_validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
+    def validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
         """
         Validate coordinate system data that has been read from a file.
 
@@ -234,14 +231,11 @@ class TSurfCoordSys(ValidateProtocol):
         Raises:
             ValueError: If coordinate system data is invalid
         """
-        ValidatorCoordSys.pre_validate(data, fileref_errmsg)
+        ValidatorCoordSys.validate(data, fileref_errmsg)
 
 
 @dataclass(frozen=True)
-class TSurfData(
-    GridDataIOProtocol,
-    GridFileIOProtocol,
-):
+class TSurfData:
     """
     Internal data class for TSurf triangulated surface data.
     Immutable to ensure data integrity during I/O operations.
@@ -578,13 +572,14 @@ class TSurfData(
                 "triangulation data."
             )
 
-    @staticmethod
+    @classmethod
     def _create_tsurf_data(
+        cls,
         header_name: str,
         coord_sys_data: dict[str, Any],
         vertices: list[list[float]],
         triangles: list[list[int]],
-    ) -> "TSurfData":
+    ) -> Self:
         """
         Create TSurfData object from parsed components.
 
@@ -612,15 +607,15 @@ class TSurfData(
         vertices_array = np.array(vertices, dtype=np.float64)
         triangles_array = np.array(triangles, dtype=np.int64)
 
-        return TSurfData(
+        return cls(
             header=header,
             coord_sys=coord_sys,
             vertices=vertices_array,
             triangles=triangles_array,
         )
 
-    @staticmethod
-    def _parse_tsurf(stream: TextIO, fileref_errmsg: str) -> "TSurfData":
+    @classmethod
+    def _parse_tsurf(cls, stream: TextIO, fileref_errmsg: str) -> Self:
         """
         Parse a TSurf file from a file stream.
 
@@ -667,7 +662,7 @@ class TSurfData(
 
                 header_name = TSurfData._parse_header_section(stream, fileref_errmsg)
                 header_dict = {"name": header_name}
-                TSurfHeader.pre_validate(header_dict, fileref_errmsg)
+                TSurfHeader.validate(header_dict, fileref_errmsg)
                 continue
 
             if TSurfData._is_coordinate_system_section_first_line(line):
@@ -683,7 +678,7 @@ class TSurfData(
                 coord_sys_data = TSurfData._parse_coordinate_system_section(
                     stream, fileref_errmsg
                 )
-                TSurfCoordSys.pre_validate(coord_sys_data, fileref_errmsg)
+                TSurfCoordSys.validate(coord_sys_data, fileref_errmsg)
                 continue
 
             if TSurfData._is_tface_section_first_line(line):
@@ -728,27 +723,25 @@ class TSurfData(
                 f"\nIn file {fileref_errmsg}:\nMissing mandatory 'TFACE' section.\n"
             )
 
-        tsurf_data = TSurfData._create_tsurf_data(
+        tsurf_data = cls._create_tsurf_data(
             header_name, coord_sys_data, vertices, triangles
         )
-        TSurfData._validate_triangulation_data(
-            tsurf_data.vertices, tsurf_data.triangles
-        )
+        cls._validate_triangulation_data(tsurf_data.vertices, tsurf_data.triangles)
         return tsurf_data
 
-
-def read_tsurf(
-    file: FileLike,
-) -> TSurfData:
-    """
-    Read a file on the TSURF format and parse its triangulated surface data.
-    Note that only a subset of the TSurf format is currently supported,
-    more types of sections and keywords exist in the format specification.
+    @classmethod
+    def from_file(
+        cls,
+        file: FileLike,
+    ) -> Self:
+        """
+        Read a file on the TSURF format and parse its triangulated surface data.
+        Note that only a subset of the TSurf format is currently supported,
+        more types of sections and keywords exist in the format specification.
 
         Args:
             file: Path to TSurf file (str or Path) or
                 a file-like object (BytesIO or StringIO).
-            encoding: Text encoding for reading the file
 
         Returns:
             TSurfData: Parsed surface data containing header, coordinate system,
@@ -772,11 +765,29 @@ def read_tsurf(
 
         wrapped_file = FileWrapper(file)
 
-    if not wrapped_file.check_file():
-        raise FileNotFoundError(
-            f"\nIn file {wrapped_file.name}:\nThe file does not exist."
-        )
-    wrapped_file.fileformat(FileFormat.TSURF.value[0], strict=True)
+        if not wrapped_file.check_file():
+            raise FileNotFoundError(
+                f"\nIn file {wrapped_file.name}:\nThe file does not exist."
+            )
+        wrapped_file.fileformat(FileFormat.TSURF.value[0], strict=True)
 
-    with wrapped_file.get_text_stream() as stream:
-        return _parse_tsurf(stream, filepath_errmsg=str(wrapped_file.name))
+        with wrapped_file.get_text_stream() as stream:
+            return cls._parse_tsurf(stream, fileref_errmsg=str(wrapped_file.name))
+
+    def to_file(
+        self: Self,
+        file: FileLike,
+    ) -> None:
+        """
+        Write TSurfData to a file stream in the TSurf format.
+
+        Args:
+            data: TSurfData object containing triangulated surface data
+            file: Path to output TSurf file (str or Path) or
+                a file-like object (BytesIO or StringIO).
+
+        Raises:
+            FileNotFoundError: If file path doesn't exist or isn't a regular file
+        """
+
+        raise NotImplementedError("TSurfData.to_file() is not yet implemented.")

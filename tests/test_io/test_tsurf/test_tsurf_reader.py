@@ -1,3 +1,4 @@
+from dataclasses import FrozenInstanceError
 from io import StringIO
 from pathlib import Path
 
@@ -116,60 +117,7 @@ def test_file_string_input(tmp_path: str, complete_tsurf_file: str) -> None:
     assert result_path is not None
 
 
-<<<<<<< HEAD
-def test_file_unusual_suffix(minimal_tsurf_file, tmp_path: Path) -> None:
-=======
-def test_file_path_input(tmp_path: Path, complete_tsurf_file: str) -> None:
-    """Test reading from Path input."""
-    # Test with Path
-    filepath = tmp_path / "test.ts"
-    with open(filepath, "w") as f:
-        f.write(complete_tsurf_file)
-
-    result_path = TSurfData.from_file(filepath)
-    assert result_path is not None
-
-
-def test_file_stringio_input(complete_tsurf_file: str) -> None:
-    """Test reading from StringIO input."""
-    result_stringio = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
-    assert result_stringio is not None
-
-
-def test_file_bytesio_input(complete_tsurf_file: str) -> None:
-    """Test reading from BytesIO input."""
-    result_bytesio = TSurfData.from_file(BytesIO(complete_tsurf_file.encode("utf-8")))
-    assert result_bytesio is not None
-
-
-def test_file_non_regular_file_input(tmp_path: Path) -> None:
-    """Test reading from a non-regular file (e.g., folder)."""
-
-    non_regular_file = tmp_path / "some_folder"
-    non_regular_file.mkdir()
-
-    with pytest.raises(FileNotFoundError, match="does not exist"):
-        TSurfData.from_file(non_regular_file)
-
-
-def test_file_other_than_filelike_input() -> None:
-    """Test reading from an unsupported input type."""
-    with pytest.raises(
-        RuntimeError, match="Cannot instantiate <class 'xtgeo.io._file.FileWrapper'>"
-    ):
-        TSurfData.from_file(12345)  # Invalid input type
-
-
-def test_file_empty() -> None:
-    """Test that empty file raises error."""
-    with pytest.raises(
-        ValueError, match="does not match format detected from file contents"
-    ):
-        TSurfData.from_file(StringIO(""))
-
-
 def test_file_unusual_suffix(minimal_tsurf_file: str, tmp_path: Path) -> None:
->>>>>>> cc925186 (ENH: re-design TSurfData to class)
     """
     Test with unusual file suffix.
     Normally TSurf files have .ts extension, but this is not enforced by the reader.
@@ -181,16 +129,6 @@ def test_file_unusual_suffix(minimal_tsurf_file: str, tmp_path: Path) -> None:
     assert result_unusual_suffix is not None
 
 
-<<<<<<< HEAD
-=======
-def test_file_non_existent(tmp_path: Path) -> None:
-    """Test with non-existent file."""
-    filepath = tmp_path / "non_existent.ts"
-    with pytest.raises(FileNotFoundError, match="does not exist"):
-        TSurfData.from_file(filepath)
-
-
->>>>>>> cc925186 (ENH: re-design TSurfData to class)
 def test_comments_and_empty_lines(tmp_path: Path) -> None:
     """Test handling of comments and empty lines in files."""
     content_lines = [
@@ -466,15 +404,15 @@ def test_header_immutability_cannot_delete_attribute() -> None:
     """Test that attributes cannot be deleted from frozen dataclass."""
     header = TSurfHeader(name="TestSurface")
 
-    with pytest.raises(Exception):  # dataclasses.FrozenInstanceError or AttributeError
-        del header.name  # type: ignore
+    with pytest.raises(FrozenInstanceError):
+        del header.name
 
 
 def test_header_validator_none_name_value() -> None:
     """Test that None name value raises ValueError."""
     data = {"name": None}
     with pytest.raises(ValueError, match="Missing or invalid name"):
-        TSurfHeader.pre_validate(data, "test_file.ts")
+        TSurfHeader.validate(data, "test_file.ts")
 
 
 def test_coordinate_system_incomplete_eof(
@@ -606,7 +544,7 @@ def test_coordinate_system_axis_units() -> None:
     # Valid units
     ValidatorCoordSys._validate_axis_units(("m", "m", "m"), "test_file")
 
-    # Invalid number
+    # Invalid number of units
     with pytest.raises(ValueError, match="exactly three values"):
         ValidatorCoordSys._validate_axis_units(("m", "m"), "test_file")
 
@@ -630,20 +568,20 @@ def test_coordinate_system_zpositive() -> None:
 def test_coordinate_system_axis_elements_empty_string() -> None:
     """Test that empty strings in axis elements raise ValueError."""
 
-    # Test empty string in axis names - caught by first validation
+    # Test empty string in axis names
     with pytest.raises(ValueError, match="must have exactly three values"):
         ValidatorCoordSys._validate_axis_elements(
-            ("X", "", "Z"),
+            ("X", "", "Z"),  # Empty string in axis names
             ValidatorCoordSys.common_axis_names,
             "AXIS_NAME",
             "test_file",
             check_uniqueness=True,
         )
 
-    # Test empty string in axis units - caught by first validation
+    # Test empty string in axis units
     with pytest.raises(ValueError, match="must have exactly three values"):
         ValidatorCoordSys._validate_axis_elements(
-            ("m", "", "m"),
+            ("m", "", "m"),  # empty string in axis units
             ValidatorCoordSys.common_axis_units,
             "AXIS_UNIT",
             "test_file",
@@ -659,7 +597,7 @@ def test_coordinate_system_validator_missing_field_delegated() -> None:
         # Missing axis_unit and zpositive
     }
     with pytest.raises(ValueError, match="missing fields"):
-        TSurfCoordSys.pre_validate(data, "test_file.ts")
+        TSurfCoordSys.validate(data, "test_file.ts")
 
 
 def test_coordinate_system_immutability_cannot_delete_attribute() -> None:
@@ -671,8 +609,8 @@ def test_coordinate_system_immutability_cannot_delete_attribute() -> None:
         zpositive="Depth",
     )
 
-    with pytest.raises(Exception):  # dataclasses.FrozenInstanceError or AttributeError
-        del coord_sys.name  # type: ignore
+    with pytest.raises(FrozenInstanceError):
+        del coord_sys.name
 
 
 def test_axis_elements_uniqueness_validation() -> None:
@@ -1011,8 +949,8 @@ def test_tsurfdata_immutability_cannot_modify_header_attribute() -> None:
     )
 
     new_header = TSurfHeader(name="ModifiedSurface")
-    with pytest.raises(Exception):  # dataclasses.FrozenInstanceError or AttributeError
-        data.header = new_header  # type: ignore
+    with pytest.raises(FrozenInstanceError):
+        data.header = new_header
 
 
 def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None:
@@ -1044,7 +982,7 @@ def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None
     assert data.vertices[0, 0] != original_value
 
 
-def test_tsurfdata_griddata_io_protocol_get_vertices_returns_correct_array() -> None:
+def test_tsurfdata_get_vertices_return_correct_array() -> None:
     """Test that get_vertices returns the correct numpy array."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
@@ -1065,7 +1003,7 @@ def test_tsurfdata_griddata_io_protocol_get_vertices_returns_correct_array() -> 
     assert result.dtype == np.float64
 
 
-def test_tsurfdata_griddata_io_protocol_get_cells_returns_correct_array() -> None:
+def test_tsurfdata_get_cells_return_correct_array() -> None:
     """Test that get_cells returns the correct numpy array."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
@@ -1086,7 +1024,7 @@ def test_tsurfdata_griddata_io_protocol_get_cells_returns_correct_array() -> Non
     assert result.dtype == np.int64
 
 
-def test_tsurfdata_griddata_io_protocol_get_vertices_returns_same_reference() -> None:
+def test_tsurfdata_get_vertices_return_same_reference() -> None:
     """Test that get_vertices returns the same array reference."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
