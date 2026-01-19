@@ -790,4 +790,51 @@ class TSurfData:
             FileNotFoundError: If file path doesn't exist or isn't a regular file
         """
 
-        raise NotImplementedError("TSurfData.to_file() is not yet implemented.")
+        wrapped_file = FileWrapper(file)
+        wrapped_file.check_folder(raiseerror=OSError)
+
+        lines = []
+
+        # TSurf signature line
+        lines.append("GOCAD TSurf 1\n")
+
+        lines.append("HEADER {\n")
+        lines.append(f"name: {self.header.name}\n")
+        lines.append("}\n")
+
+        # Optional: coordinate system
+        if self.coord_sys:
+            lines.append("GOCAD_ORIGINAL_COORDINATE_SYSTEM\n")
+            lines.append(f"NAME {self.coord_sys.name}\n")
+
+            axis_name_str = " ".join([f'"{name}"' for name in self.coord_sys.axis_name])
+            lines.append(f"AXIS_NAME {axis_name_str}\n")
+
+            axis_unit_str = " ".join([f'"{unit}"' for unit in self.coord_sys.axis_unit])
+            lines.append(f"AXIS_UNIT {axis_unit_str}\n")
+
+            lines.append(f"ZPOSITIVE {self.coord_sys.zpositive}\n")
+            lines.append("END_ORIGINAL_COORDINATE_SYSTEM\n")
+
+        # TFACE section with vertices and triangles
+        lines.append("TFACE\n")
+        for i, vertex in enumerate(self.vertices, start=1):
+            lines.append(f"VRTX {i} {vertex[0]} {vertex[1]} {vertex[2]} CNXYZ\n")
+        for triangle in self.triangles:
+            lines.append(f"TRGL {triangle[0]} {triangle[1]} {triangle[2]}\n")
+        lines.append("END\n")
+
+        with wrapped_file.get_text_stream_write() as stream:
+            stream.writelines(lines)
+
+        # TODO: remove this
+        # Alternative way of writing:
+        # if isinstance(wrapped_file.file, pathlib.Path):
+        #     with open(str(wrapped_file.name), "w", encoding=encoding) as f_out:
+        #         f_out.writelines(lines)
+        # else:
+        #     wrapped_file.file.seek(0)
+        #     if isinstance(wrapped_file.file, BytesIO):
+        #         wrapped_file.file.write("".join(lines).encode(encoding))
+        #     else:  # isinstance(wrapped_file.file, StringIO):
+        #         wrapped_file.file.write("".join(lines))

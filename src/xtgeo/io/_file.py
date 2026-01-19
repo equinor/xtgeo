@@ -13,7 +13,13 @@ import uuid
 from enum import Enum
 from os.path import join
 from tempfile import mkstemp
-from typing import TYPE_CHECKING, Generator, Literal, TextIO, Union
+from typing import (
+    TYPE_CHECKING,
+    Generator,
+    Literal,
+    TextIO,
+    Union,
+)
 
 from typing_extensions import Self
 

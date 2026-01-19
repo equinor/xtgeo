@@ -1,5 +1,5 @@
 from dataclasses import FrozenInstanceError
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 
 import numpy as np
@@ -113,8 +113,8 @@ def test_file_string_input(tmp_path: str, complete_tsurf_file: str) -> None:
     with open(filepath, "w") as f:
         f.write(complete_tsurf_file)
 
-    result_path = TSurfData.from_file(filepath)
-    assert result_path is not None
+    result = TSurfData.from_file(filepath)
+    assert result is not None
 
 
 def test_file_unusual_suffix(minimal_tsurf_file: str, tmp_path: Path) -> None:
@@ -1041,3 +1041,64 @@ def test_tsurfdata_get_vertices_return_same_reference() -> None:
     )
 
     assert data.get_vertices is data.vertices
+
+
+def test_tsurf_data_roundtrip_write_to_file(
+    complete_tsurf_file: str, tmp_path: Path
+) -> None:
+    """Test writing TSurfData."""
+    result = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    assert result is not None
+
+    output_filepath = tmp_path / "output.ts"
+    result.to_file(output_filepath)
+
+    result_written = TSurfData.from_file(output_filepath)
+    assert result_written is not None
+
+    assert result.header == result_written.header
+    assert result.coord_sys == result_written.coord_sys
+    assert np.array_equal(result.vertices, result_written.vertices)
+    assert np.array_equal(result.triangles, result_written.triangles)
+
+
+def test_tsurf_data_roundtrip_string_io(complete_tsurf_file: str) -> None:
+    """Test writing and reading TSurfData using StringIO."""
+    result = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    assert result is not None
+
+    output_stream = StringIO()
+    result.to_file(output_stream)
+
+    output_stream.seek(0)
+    result_written = TSurfData.from_file(output_stream)
+    assert result_written is not None
+
+    assert result.header == result_written.header
+    assert result.coord_sys == result_written.coord_sys
+    assert np.array_equal(result.vertices, result_written.vertices)
+    assert np.array_equal(result.triangles, result_written.triangles)
+
+
+def test_tsurf_data_roundtrip_bytes_io(complete_tsurf_file: str) -> None:
+    """Test writing and reading TSurfData using BytesIO."""
+    result = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    assert result is not None
+
+    output_stream = BytesIO()
+    result.to_file(output_stream)
+
+    output_stream.seek(0)
+    result_written = TSurfData.from_file(output_stream)
+    assert result_written is not None
+
+    assert result.header == result_written.header
+    assert result.coord_sys == result_written.coord_sys
+    assert np.array_equal(result.vertices, result_written.vertices)
+    assert np.array_equal(result.triangles, result_written.triangles)
+
+    # TODO: see dataio writer tests
+    # TODO: test with invalid filepaths/streams, non-existing folders, etc.
+    # TODO: test with a couple of different encodings
+    # TODO: write erroneous files and check errors
+    # TODO: dataio: test_tsurf_reader_invalid_lines()
