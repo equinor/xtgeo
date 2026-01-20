@@ -1,29 +1,23 @@
 """Export Cube data via SegyIO library or XTGeo CLIB."""
 
-from __future__ import annotations
-
 import json
 import shutil
 import struct
-from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import segyio
 
+import xtgeo
 from xtgeo import _cxtgeo
 from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog, null_logger
-
-if TYPE_CHECKING:
-    from xtgeo.cube.cube1 import Cube
-
 
 logger = null_logger(__name__)
 xtg = XTGeoDialog()
 
 
 def export_segy(
-    cube: "Cube",
+    cube: xtgeo.Cube,
     sfile: str,
     template: str | None = None,
     pristine: bool = False,
@@ -33,11 +27,11 @@ def export_segy(
 
     Args:
         cube (:class:`xtgeo.cube.Cube`): The instance
-        sfile (str): File name to export to.
-        template (str): Use an existing file a template.
-        pristine (bool): Make SEGY from scrtach if True; otherwise use an
+        sfile : File name to export to.
+        template : Use an existing file a template.
+        pristine : Make SEGY from scrtach if True; otherwise use an
             existing SEGY file.
-        engine (str): Use 'xtgeo' or (later?) 'segyio'
+        engine : Use 'xtgeo' or (later?) 'segyio'
     """
     if engine == "segyio":
         _export_segy_segyio(cube, sfile, template=template, pristine=pristine)
@@ -46,7 +40,7 @@ def export_segy(
 
 
 def _export_segy_segyio(
-    cube: "Cube",
+    cube: xtgeo.Cube,
     sfile: str,
     template: str | None = None,
     pristine: bool = False,
@@ -55,9 +49,9 @@ def _export_segy_segyio(
 
     Args:
         cube (:class:`xtgeo.cube.Cube`): The instance
-        sfile (str): File name to export to.
-        template (str): Use an existing file a template.
-        pristine (bool): Make SEGY from scrtach if True; otherwise use an
+        sfile : File name to export to.
+        template : Use an existing file a template.
+        pristine : Make SEGY from scrtach if True; otherwise use an
             existing SEGY file.
     """
     logger.debug("Export segy format using segyio...")
@@ -132,7 +126,7 @@ def _export_segy_segyio(
             #     }
 
 
-def _export_segy_xtgeo(cube: "Cube", sfile: str) -> None:
+def _export_segy_xtgeo(cube: xtgeo.Cube, sfile: str) -> None:
     """Export SEGY via XTGeo internal C routine."""
 
     values1d = cube.values.reshape(-1)
@@ -177,7 +171,7 @@ def _export_segy_xtgeo(cube: "Cube", sfile: str) -> None:
     _cxtgeo.delete_intarray(xlinesp)
 
 
-def export_rmsreg(cube: "Cube", sfile: str) -> None:
+def export_rmsreg(cube: xtgeo.Cube, sfile: str) -> None:
     """Export on RMS regular format."""
 
     logger.debug("Export to RMS regular format...")
@@ -203,7 +197,7 @@ def export_rmsreg(cube: "Cube", sfile: str) -> None:
         raise RuntimeError("Error when exporting to RMS regular")
 
 
-def export_xtgregcube(cube: "Cube", mfile: Any) -> None:
+def export_xtgregcube(cube: xtgeo.Cube, mfile: str) -> None:
     """Export to experimental xtgregcube format, python version."""
     logger.info("Export as xtgregcube...")
     cube.metadata.required = cube
