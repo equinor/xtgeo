@@ -24,22 +24,25 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
+        run: uv python install 3.12
 
       - name: Install cibuildwheel
-        run: python -m pip install -U pip wheel cibuildwheel twine
+        run: |
+         uv venv
+         uv pip install -U pip cibuildwheel twine
 
       - name: Build wheels
-        run: cibuildwheel --output-dir wheelhouse
+        run: uv run cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: ${{ matrix.python }}-*
 
       - name: Check metadata
-        run: twine check wheelhouse/*
+        run: uv run twine check wheelhouse/*
 
       - uses: actions/upload-artifact@v6
         if: ${{ github.event_name == 'release' && github.event.action == 'published' }}

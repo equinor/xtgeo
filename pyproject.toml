@@ -88,7 +88,7 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-rtd-theme",
     "sphinx-tabs<3.4.5",  # 3.4.5 breaks doc parsing
-    "sphinx-toolbox",
+    "sphinx-toolbox>=3.5.0",
 ]
 
 [tool.scikit-build]
