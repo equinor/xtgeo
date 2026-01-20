@@ -1,12 +1,15 @@
 # coding: utf-8
 """Various operations on XYZ data"""
 
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 from scipy.interpolate import UnivariateSpline
 
 import xtgeo
+import xtgeo.xyz  # needed for type hinting of Polygons
 from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.log import null_logger
@@ -336,8 +339,14 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
 
 
 def get_fence(
-    self, distance=20, atleast=5, nextend=2, name=None, asnumpy=True, polyid=None
-):
+    self: xtgeo.xyz.Polygons,
+    distance: float = 20.0,
+    atleast: int = 5,
+    nextend: int = 2,
+    name: str = "",
+    asnumpy: bool = True,
+    polyid: int | None = None,
+) -> np.ndarray | bool | xtgeo.xyz.Polygons:
     """Get a fence suitable for plotting xsections, either as a numpy or as a
     new Polygons instance.
 
@@ -356,7 +365,7 @@ def get_fence(
     orig_extend = nextend * distance
     orig_distance = distance
 
-    fence = self.copy()
+    fence: xtgeo.Polygons = self.copy()
 
     fence.hlen()
 
@@ -542,7 +551,7 @@ def _generic_length(
         self._dtname = dgname
 
 
-def extend(self, distance, nsamples, addhlen=True):
+def extend(self, distance: float, nsamples: int, addhlen: bool = True) -> None:
     """Extend polygon by distance, nsamples times.
 
     It is default to recompute HLEN from nsamples.

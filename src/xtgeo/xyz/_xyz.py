@@ -148,7 +148,7 @@ class XYZ(ABC):
         else:
             raise ValueError(f"Wrong type of input to {newname}; must be string")
 
-    def _check_name_and_replace(self, oldname: str, newname: str) -> None:
+    def _check_name_and_replace(self, oldname: str | None, newname: str) -> None:
         """Replace name of a column, doing some checks."""
         if not isinstance(newname, str):
             raise ValueError(
@@ -202,7 +202,7 @@ class XYZ(ABC):
         """Set the Pandas dataframe object."""
         ...
 
-    def get_xyz_arrays(self) -> np.ndarray | None:
+    def get_xyz_arrays(self) -> np.ndarray:
         """Get the X, Y, Z arrays from the dataframe as a numpy (n, 3) vector.
 
         Returns:
@@ -212,7 +212,8 @@ class XYZ(ABC):
         """
         dataframe = self.get_dataframe(copy=False)
         if dataframe is None:
-            return None
+            # TODO: simplifies return type by raising error if dataframe is None
+            raise ValueError("Dataframe is 'None', cannot get XYZ arrays.")
         xarr = dataframe[self.xname].to_numpy()
         yarr = dataframe[self.yname].to_numpy()
         zarr = dataframe[self.zname].to_numpy()

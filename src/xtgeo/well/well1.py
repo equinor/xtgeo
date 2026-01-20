@@ -1130,8 +1130,14 @@ class Well:
 
         return poly
 
-    def get_fence_polyline(self, sampling=20, nextend=2, tvdmin=None, asnumpy=True):
-        """Return a fence polyline as a numpy array or a Polygons object.
+    def get_fence_polyline(
+        self,
+        sampling: float = 20,
+        nextend: int = 2,
+        tvdmin: float | None = None,
+        asnumpy: bool = True,
+    ) -> np.ndarray | Polygons | bool:
+        """Return a fence polyline as a numpy array, a Polygons object or a bool.
 
         The result will aim for a regular sampling interval, useful for extracting
         fence plots (cross-sections).

@@ -329,7 +329,7 @@ def save_xyz_to_rms(
     name: str,
     category: str | list[str] | None,
     stype: str,
-    pfilter: dict[str, list],
+    pfilter: dict[str, list] | None,
     realisation: int,
     attributes: bool = False,
 ) -> None:
