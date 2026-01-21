@@ -62,10 +62,8 @@ PORO CONT lin
 101.0 201.0 1001.0 0.30
 """
     stream = io.BytesIO(rms_content)
-    # Convert to TextIOWrapper for text reading
-    text_stream = io.TextIOWrapper(stream, encoding="utf-8")
 
-    well = WellData.from_rms_ascii(filepath=text_stream)
+    well = WellData.from_rms_ascii(filepath=stream)
 
     assert well.name == "TestWell"
     assert well.n_records == 2

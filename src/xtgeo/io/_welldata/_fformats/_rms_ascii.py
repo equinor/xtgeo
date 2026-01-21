@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import io
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, TextIO
 
 import numpy as np
 import pandas as pd
 
 from xtgeo.common.log import null_logger
+from xtgeo.io._file import FileWrapper
 from xtgeo.io._welldata._blockedwell_io import BlockedWellData
 from xtgeo.io._welldata._well_io import WellData, WellLog
 
@@ -19,6 +18,114 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = null_logger(__name__)
 
 RMS_ASCII_UNDEF: Final[float] = -999.0
+
+
+def _read_rms_ascii_header(
+    fwell: TextIO,
+) -> tuple[
+    str,
+    float,
+    float,
+    float,
+    list[str],
+    dict[str, str],
+    dict[str, dict[int, str] | tuple[Any, ...]],
+]:
+    """Read RMS ASCII header from open file handle.
+
+    Reads header lines and log definitions, positioning the file at the start of data.
+
+    Args:
+        fwell: Open file handle positioned at the start
+
+    Returns:
+        Tuple of (wname, xpos, ypos, rkb, lognames, wlogtype, wlogrecords)
+
+    """
+    wlogtype: dict[str, str] = {}
+    wlogrecords: dict[str, dict[int, str] | tuple[Any, ...]] = {}
+    lognames: list[str] = []
+
+    wname: str | None = None
+    xpos: float | None = None
+    ypos: float | None = None
+    rkb: float | None = None
+
+    lnum = 1
+
+    for line in fwell:
+        if lnum <= 2:
+            pass  # Skip first two lines (version and description)
+        elif lnum == 3:
+            # Well header: name xpos ypos [rkb]
+            # Well name can contain spaces, so parse from right to left
+            # rkb is optional, typically 0.0 or small value (Kelly Bushing height)
+            row = line.strip().split()
+
+            if len(row) < 3:
+                raise ValueError(f"Invalid well header format: {line}")
+
+            # Try parsing with RKB (last 3 values are xpos, ypos, rkb)
+            try:
+                rkb = float(row[-1])
+                ypos = float(row[-2])
+                xpos = float(row[-3])
+                # well name may have spaces
+                wname = " ".join(row[:-3])
+            except (ValueError, IndexError):
+                # No RKB, parse as name xpos ypos (last 2 values are xpos, ypos)
+                try:
+                    ypos = float(row[-1])
+                    xpos = float(row[-2])
+                    wname = " ".join(row[:-2])
+                    rkb = 0.0
+                except (ValueError, IndexError):
+                    raise ValueError(f"Invalid well header format: {line}")
+
+        elif lnum == 4:
+            nlogs = int(line)
+            nlogread = 0
+            logger.debug("Number of logs: %s", nlogs)
+            if nlogs == 0:
+                break
+
+        else:
+            row = line.strip().split()
+            lname_raw = str(row[0])
+            ltype = row[1].upper()
+
+            if "_index" in lname_raw.lower():
+                lname: str = lname_raw.upper()
+            else:
+                lname = lname_raw
+
+            lognames.append(lname)
+            wlogtype[lname] = ltype
+
+            logger.debug("Reading log name %s of type %s", lname, ltype)
+
+            if ltype == "DISC":
+                # Discrete log: pairs of code and name
+                rxv = row[2:]
+                xdict: dict[int, str] = {
+                    int(rxv[i]): str(rxv[i + 1]) for i in range(0, len(rxv), 2)
+                }
+                wlogrecords[lname] = xdict
+            else:
+                # Continuous log: store tuple of metadata (CONT, UNK, lin, etc.)
+                wlogrecords[lname] = tuple(row[1:])
+
+            nlogread += 1
+
+            if nlogread >= nlogs:
+                break
+
+        lnum += 1
+
+    if wname is None or xpos is None or ypos is None or rkb is None:
+        raise ValueError("Invalid RMS ASCII header: missing well header line")
+
+    return wname, xpos, ypos, rkb, lognames, wlogtype, wlogrecords
 
 
 def read_rms_ascii_well(filepath: FileLike) -> WellData:
@@ -31,107 +138,17 @@ def read_rms_ascii_well(filepath: FileLike) -> WellData:
         WellData object
 
     """
-    is_stream = isinstance(filepath, (io.StringIO, io.BytesIO, io.TextIOBase))
+    wrapper = FileWrapper(filepath, mode="r")
 
-    path_obj: Path | None = None
-    if not is_stream:
-        assert isinstance(filepath, (str, Path))
-        path_obj = Path(filepath)
+    logger.debug("Reading well data from RMS ASCII: %s", wrapper.name)
 
-        if not path_obj.exists():
-            raise FileNotFoundError(f"File not found: {path_obj}")
-        logger.debug("Reading well data from RMS ASCII: %s", path_obj)
-    else:
-        logger.debug("Reading well data from RMS ASCII stream")
+    with wrapper.get_text_stream() as fwell:
+        # Read header and get metadata
+        wname, xpos, ypos, rkb, lognames, wlogtype, wlogrecords = (
+            _read_rms_ascii_header(fwell)
+        )
 
-    wlogtype: dict[str, str] = {}
-    wlogrecords: dict[str, dict[int, str] | tuple[Any, ...]] = {}
-    lognames: list[str] = []
-
-    lnum = 1
-
-    fwell: TextIO
-    if is_stream:
-        fwell = filepath  # type: ignore[assignment]
-        should_close = False
-    else:
-        assert path_obj is not None
-        fwell = open(path_obj, "r", encoding="UTF-8")  # noqa: SIM115
-        should_close = True
-
-    try:
-        for line in fwell:
-            if lnum <= 2:
-                pass  # Skip first two lines (version and description)
-            elif lnum == 3:
-                # Well header: name xpos ypos [rkb]
-                # Well name can contain spaces, so parse from right to left
-                # rkb is optional, typically 0.0 or small value (Kelly Bushing height)
-                row = line.strip().split()
-
-                if len(row) < 3:
-                    raise ValueError(f"Invalid well header format: {line}")
-
-                # Try parsing with RKB (last 3 values are xpos, ypos, rkb)
-                try:
-                    rkb = float(row[-1])
-                    ypos = float(row[-2])
-                    xpos = float(row[-3])
-                    # Everything before the last 3 values is the well name
-                    wname: str = " ".join(row[:-3])
-                except (ValueError, IndexError):
-                    # No RKB, parse as name xpos ypos (last 2 values are xpos, ypos)
-                    try:
-                        ypos = float(row[-1])
-                        xpos = float(row[-2])
-                        # Everything before the last 2 values is the well name
-                        wname = " ".join(row[:-2])
-                        rkb = 0.0
-                    except (ValueError, IndexError):
-                        raise ValueError(f"Invalid well header format: {line}")
-
-            elif lnum == 4:
-                nlogs = int(line)
-                nlogread = 0
-                logger.debug("Number of logs: %s", nlogs)
-                if nlogs == 0:
-                    break
-
-            else:
-                row = line.strip().split()
-                lname_raw = str(row[0])
-                ltype = row[1].upper()
-
-                if "_index" in lname_raw.lower():
-                    lname: str = lname_raw.upper()
-                else:
-                    lname = lname_raw
-
-                lognames.append(lname)
-                wlogtype[lname] = ltype
-
-                logger.debug("Reading log name %s of type %s", lname, ltype)
-
-                if ltype == "DISC":
-                    # Discrete log: pairs of code and name
-                    rxv = row[2:]
-                    xdict: dict[int, str] = {
-                        int(rxv[i]): str(rxv[i + 1]) for i in range(0, len(rxv), 2)
-                    }
-                    wlogrecords[lname] = xdict
-                else:
-                    # Continuous log: store tuple of metadata (CONT, UNK, lin, etc.)
-                    wlogrecords[lname] = tuple(row[1:])
-
-                nlogread += 1
-
-                if nlogread >= nlogs:
-                    break
-
-            lnum += 1
-
-        # Read the data section
-        # The stream is already positioned right after the header, so read directly
+        # Data: stream is already positioned right after the header, so read directly
         column_names = ["X_UTME", "Y_UTMN", "Z_TVDSS"] + lognames
 
         dfr = pd.read_csv(  # type: ignore[call-overload]
@@ -142,11 +159,7 @@ def read_rms_ascii_well(filepath: FileLike) -> WellData:
             dtype=np.float64,
             na_values=RMS_ASCII_UNDEF,
         )
-    finally:
-        if should_close:
-            fwell.close()
 
-    # Extract coordinates
     survey_x = dfr["X_UTME"].to_numpy(dtype=np.float64)
     survey_y = dfr["Y_UTMN"].to_numpy(dtype=np.float64)
     survey_z = dfr["Z_TVDSS"].to_numpy(dtype=np.float64)
@@ -155,7 +168,6 @@ def read_rms_ascii_well(filepath: FileLike) -> WellData:
     for log_name in lognames:
         values = dfr[log_name].to_numpy(dtype=np.float64)
         is_discrete = wlogtype[log_name] == "DISC"
-        # Store metadata for both discrete and continuous logs
         code_names = wlogrecords.get(log_name)
 
         log = WellLog(
@@ -184,6 +196,50 @@ def read_rms_ascii_well(filepath: FileLike) -> WellData:
     return well
 
 
+def _write_rms_ascii_header(
+    fwell_write: TextIO,
+    well: WellData,
+) -> None:
+    """Write RMS ASCII header to open file handle.
+
+    Args:
+        fwell_write: Open file handle in write mode
+        well: WellData object
+
+    """
+    # Line 1: Version
+    print("1.0", file=fwell_write)
+    # Line 2: Description
+    print("Unknown", file=fwell_write)
+    # Line 3: Well header
+    if well.zpos is None or well.zpos == 0.0:
+        print(f"{well.name} {well.xpos} {well.ypos}", file=fwell_write)
+    else:
+        print(f"{well.name} {well.xpos} {well.ypos} {well.zpos}", file=fwell_write)
+    # Line 4: Number of logs (not including X, Y, Z coordinates)
+    print(f"{len(well.logs)}", file=fwell_write)
+
+    for log in well.logs:
+        if log.is_discrete:
+            log_type = "DISC"
+            wrec = "lin"
+            if log.code_names and isinstance(log.code_names, dict):
+                code_parts: list[str] = []
+                for code, name in sorted(log.code_names.items()):
+                    code_parts.extend([str(code), name])
+                wrec = " ".join(code_parts)
+        else:
+            # Continuous log: try to restore metadata from code_names tuple
+            if isinstance(log.code_names, tuple) and len(log.code_names) >= 2:
+                log_type = str(log.code_names[0])
+                wrec = " ".join(str(x) for x in log.code_names[1:])
+            else:
+                log_type = "UNK"
+                wrec = "lin"
+
+        print(f"{log.name} {log_type} {wrec}", file=fwell_write)
+
+
 def write_rms_ascii_well(
     well: WellData,
     filepath: FileLike,
@@ -197,57 +253,36 @@ def write_rms_ascii_well(
         precision: Number of decimal places for floats (default: 4)
 
     """
-    # Handle file paths vs streams
-    is_stream = isinstance(filepath, (io.StringIO, io.BytesIO, io.TextIOBase))
+    wrapper = FileWrapper(filepath, mode="w")
 
-    if not is_stream:
-        assert isinstance(filepath, (str, Path))
-        path_obj = Path(filepath)
-        logger.debug("Writing well data to RMS ASCII: %s", path_obj)
-        fwell_write: TextIO = open(path_obj, "w", encoding="utf-8")  # noqa: SIM115
-        should_close = True
-    else:
-        logger.debug("Writing well data to RMS ASCII stream")
-        fwell_write = filepath  # type: ignore[assignment]
-        should_close = False
+    logger.debug("Writing well data to RMS ASCII: %s", wrapper.name)
 
-    try:
-        # Line 1: Version
-        print("1.0", file=fwell_write)
-        # Line 2: Description
-        print("Unknown", file=fwell_write)
-        # Line 3: Well header
-        if well.zpos is None or well.zpos == 0.0:
-            print(f"{well.name} {well.xpos} {well.ypos}", file=fwell_write)
-        else:
-            print(f"{well.name} {well.xpos} {well.ypos} {well.zpos}", file=fwell_write)
-        # Line 4: Number of logs (not including X, Y, Z coordinates)
-        print(f"{len(well.logs)}", file=fwell_write)
+    with wrapper.get_text_stream_write() as fwell_write:
+        _write_rms_ascii_header(fwell_write, well)
+        _write_rms_ascii_data(fwell_write, well, precision)
 
-        # Log definitions (only for actual logs, not coordinates)
-        for log in well.logs:
-            if log.is_discrete:
-                log_type = "DISC"
-                wrec = "lin"
-                if log.code_names and isinstance(log.code_names, dict):
-                    code_parts: list[str] = []
-                    for code, name in sorted(log.code_names.items()):
-                        code_parts.extend([str(code), name])
-                    wrec = " ".join(code_parts)
-            else:
-                # Continuous log: try to restore metadata from code_names tuple
-                if isinstance(log.code_names, tuple) and len(log.code_names) >= 2:
-                    log_type = str(log.code_names[0])
-                    wrec = " ".join(str(x) for x in log.code_names[1:])
-                else:
-                    log_type = "UNK"
-                    wrec = "lin"
+    logger.debug(
+        "Successfully wrote well '%s' with %d records to %s",
+        well.name,
+        well.n_records,
+        wrapper.name,
+    )
 
-            print(f"{log.name} {log_type} {wrec}", file=fwell_write)
-    finally:
-        if should_close:
-            fwell_write.close()
 
+def _write_rms_ascii_data(
+    fwell_write: TextIO,
+    well: WellData,
+    precision: int = 4,
+) -> None:
+    """Write RMS ASCII data section to open file handle.
+
+    Args:
+        fwell_write: Open file handle in write mode
+        well: WellData object
+        precision: Number of decimal places for floats
+
+    """
+    # Build data section
     data = {
         "X_UTME": well.survey_x,
         "Y_UTMN": well.survey_y,
@@ -259,40 +294,19 @@ def write_rms_ascii_well(
 
     tmpdf = pd.DataFrame(data).fillna(value=RMS_ASCII_UNDEF)
 
-    # Convert discrete logs to integers
     for log in well.logs:
         if log.is_discrete:
             tmpdf[[log.name]] = tmpdf[[log.name]].fillna(RMS_ASCII_UNDEF).astype(int)
 
     cformat = f"%.{precision}f"
 
-    # For streams, append directly; for files, use append mode
-    # (append: preparing for writing multiple wells to one file)
-    if is_stream:
-        tmpdf.to_csv(
-            filepath,
-            sep=" ",
-            header=False,
-            index=False,
-            float_format=cformat,
-            escapechar="\\",
-        )
-    else:
-        tmpdf.to_csv(
-            path_obj,
-            sep=" ",
-            header=False,
-            index=False,
-            float_format=cformat,
-            escapechar="\\",
-            mode="a",
-        )
-
-    logger.debug(
-        "Successfully wrote well '%s' with %d records to %s",
-        well.name,
-        well.n_records,
-        filepath,
+    tmpdf.to_csv(
+        fwell_write,
+        sep=" ",
+        header=False,
+        index=False,
+        float_format=cformat,
+        escapechar="\\",
     )
 
 
