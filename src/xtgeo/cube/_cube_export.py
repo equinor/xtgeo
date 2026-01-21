@@ -7,6 +7,7 @@ import struct
 import numpy as np
 import segyio
 
+import xtgeo
 from xtgeo import _cxtgeo
 from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog, null_logger
@@ -15,49 +16,60 @@ logger = null_logger(__name__)
 xtg = XTGeoDialog()
 
 
-def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):
+def export_segy(
+    cube: xtgeo.Cube,
+    sfile: str,
+    template: str | None = None,
+    pristine: bool = False,
+    engine: str = "xtgeo",
+) -> None:
     """Export on SEGY using segyio library.
 
     Args:
-        self (:class:`xtgeo.cube.Cube`): The instance
-        sfile (str): File name to export to.
-        template (str): Use an existing file a template.
-        pristine (bool): Make SEGY from scrtach if True; otherwise use an
+        cube (:class:`xtgeo.cube.Cube`): The instance
+        sfile : File name to export to.
+        template : Use an existing file a template.
+        pristine : Make SEGY from scrtach if True; otherwise use an
             existing SEGY file.
-        engine (str): Use 'xtgeo' or (later?) 'segyio'
+        engine : Use 'xtgeo' or (later?) 'segyio'
     """
     if engine == "segyio":
-        _export_segy_segyio(self, sfile, template=template, pristine=pristine)
+        _export_segy_segyio(cube, sfile, template=template, pristine=pristine)
     else:
-        _export_segy_xtgeo(self, sfile)
+        _export_segy_xtgeo(cube, sfile)
 
 
-def _export_segy_segyio(self, sfile, template=None, pristine=False):
+def _export_segy_segyio(
+    cube: xtgeo.Cube,
+    sfile: str,
+    template: str | None = None,
+    pristine: bool = False,
+) -> None:
     """Export on SEGY using segyio library.
 
     Args:
-        self (:class:`xtgeo.cube.Cube`): The instance
-        sfile (str): File name to export to.
-        template (str): Use an existing file a template.
-        pristine (bool): Make SEGY from scrtach if True; otherwise use an
+        cube (:class:`xtgeo.cube.Cube`): The instance
+        sfile : File name to export to.
+        template : Use an existing file a template.
+        pristine : Make SEGY from scrtach if True; otherwise use an
             existing SEGY file.
     """
     logger.debug("Export segy format using segyio...")
 
-    if template is None and self._segyfile is None:
+    if template is None and cube._segyfile is None:
         raise NotImplementedError("Error, template=None is not yet made!")
 
     # There is an existing _segyfile attribute, in this case the current SEGY
     # headers etc are applied for the new data. Requires that shapes etc are
     # equal.
-    if template is None and self._segyfile is not None:
-        template = self._segyfile
+    if template is None and cube._segyfile is not None:
+        template = cube._segyfile
 
-    cvalues = self.values
+    cvalues = cube.values
 
     if template is not None and not pristine:
         try:
-            shutil.copyfile(self._segyfile, sfile)
+            shutil.copyfile(cube._segyfile, sfile)
         except Exception as errormsg:
             xtg.warn(f"Error message: {errormsg}")
             raise
@@ -91,9 +103,9 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         spec.sorting = 2
         spec.format = 1
 
-        spec.samples = np.arange(self.nlay)
-        spec.ilines = np.arange(self.ncol)
-        spec.xlines = np.arange(self.nrow)
+        spec.samples = np.arange(cube.nlay)
+        spec.ilines = np.arange(cube.ncol)
+        spec.xlines = np.arange(cube.nrow)
 
         with segyio.create(sfile, spec) as fseg:
             # write the line itself to the file and the inline number
@@ -114,18 +126,18 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
             #     }
 
 
-def _export_segy_xtgeo(self, sfile):
+def _export_segy_xtgeo(cube: xtgeo.Cube, sfile: str) -> None:
     """Export SEGY via XTGeo internal C routine."""
 
-    values1d = self.values.reshape(-1)
+    values1d = cube.values.reshape(-1)
 
-    ilinesp = _cxtgeo.new_intarray(len(self._ilines))
-    xlinesp = _cxtgeo.new_intarray(len(self._xlines))
-    tracidp = _cxtgeo.new_intarray(self.ncol * self.nrow)
+    ilinesp = _cxtgeo.new_intarray(len(cube._ilines))
+    xlinesp = _cxtgeo.new_intarray(len(cube._xlines))
+    tracidp = _cxtgeo.new_intarray(cube.ncol * cube.nrow)
 
-    ilns = self._ilines.astype(np.int32)
-    xlns = self._xlines.astype(np.int32)
-    trid = self._traceidcodes.flatten().astype(np.int32)
+    ilns = cube._ilines.astype(np.int32)
+    xlns = cube._xlines.astype(np.int32)
+    trid = cube._traceidcodes.flatten().astype(np.int32)
 
     _cxtgeo.swig_numpy_to_carr_i1d(ilns, ilinesp)
     _cxtgeo.swig_numpy_to_carr_i1d(xlns, xlinesp)
@@ -133,18 +145,18 @@ def _export_segy_xtgeo(self, sfile):
 
     status = _cxtgeo.cube_export_segy(
         sfile,
-        self.ncol,
-        self.nrow,
-        self.nlay,
+        cube.ncol,
+        cube.nrow,
+        cube.nlay,
         values1d,
-        self.xori,
-        self.xinc,
-        self.yori,
-        self.yinc,
-        self.zori,
-        self.zinc,
-        self.rotation,
-        self.yflip,
+        cube.xori,
+        cube.xinc,
+        cube.yori,
+        cube.yinc,
+        cube.zori,
+        cube.zinc,
+        cube.rotation,
+        cube.yflip,
         1,
         ilinesp,
         xlinesp,
@@ -159,24 +171,24 @@ def _export_segy_xtgeo(self, sfile):
     _cxtgeo.delete_intarray(xlinesp)
 
 
-def export_rmsreg(self, sfile):
+def export_rmsreg(cube: xtgeo.Cube, sfile: str) -> None:
     """Export on RMS regular format."""
 
     logger.debug("Export to RMS regular format...")
-    values1d = self.values.reshape(-1)
+    values1d = cube.values.reshape(-1)
 
     status = _cxtgeo.cube_export_rmsregular(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self.xori,
-        self.yori,
-        self.zori,
-        self.xinc,
-        self.yinc * self.yflip,
-        self.zinc,
-        self.rotation,
-        self.yflip,
+        cube.ncol,
+        cube.nrow,
+        cube.nlay,
+        cube.xori,
+        cube.yori,
+        cube.zori,
+        cube.xinc,
+        cube.yinc * cube.yflip,
+        cube.zinc,
+        cube.rotation,
+        cube.yflip,
         values1d,
         sfile,
     )
@@ -185,16 +197,16 @@ def export_rmsreg(self, sfile):
         raise RuntimeError("Error when exporting to RMS regular")
 
 
-def export_xtgregcube(self, mfile):
+def export_xtgregcube(cube: xtgeo.Cube, mfile: str) -> None:
     """Export to experimental xtgregcube format, python version."""
     logger.info("Export as xtgregcube...")
-    self.metadata.required = self
+    cube.metadata.required = cube
 
-    prevalues = (1, 1201, 4, self.ncol, self.nrow, self.nlay)
+    prevalues = (1, 1201, 4, cube.ncol, cube.nrow, cube.nlay)
     mystruct = struct.Struct("= i i i q q q")
     pre = mystruct.pack(*prevalues)
 
-    meta = self.metadata.get_metadata()
+    meta = cube.metadata.get_metadata()
 
     jmeta = json.dumps(meta).encode()
 
@@ -203,7 +215,7 @@ def export_xtgregcube(self, mfile):
 
     with open(mfile, "ab") as fout:
         # TODO. Treat dead traces as undef
-        self.values.tofile(fout)
+        cube.values.tofile(fout)
 
     with open(mfile, "ab") as fout:
         fout.write("\nXTGMETA.v01\n".encode())

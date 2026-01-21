@@ -62,7 +62,7 @@ class CubeAttrs:
     _outside_depth: float | None = None  # detected and updated from the depth cube
     _min_indices: int = 0  # minimum Z index for cube slicing
     _max_indices: int = 0  # maximum Z index for cube slicing
-    _reduced_cube: Cube = None
+    _reduced_cube: Cube | None = None
     _reduced_depth_array: np.ndarray | None = None
     _refined_cube: Cube | None = None
     _refined_depth_array: np.ndarray | None = None
@@ -80,7 +80,7 @@ class CubeAttrs:
         self._determine_slice_indices()
         self._compute_statistical_attribute_surfaces()
 
-    def result(self) -> dict[RegularSurface]:
+    def result(self) -> dict[RegularSurface, str]:
         # return the resulting attribute maps
         return self._result_attr_maps
 
