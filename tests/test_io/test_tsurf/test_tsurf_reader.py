@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from xtgeo.io.tsurf._tsurf_reader import (
+from xtgeo.io.tsurf._tsurf_io import (
     TSurfCoordSys,
     TSurfData,
     TSurfHeader,
@@ -127,6 +127,12 @@ def test_file_unusual_suffix(minimal_tsurf_file: str, tmp_path: Path) -> None:
         f.write(minimal_tsurf_file)
     result_unusual_suffix = TSurfData.from_file(filepath)
     assert result_unusual_suffix is not None
+
+
+def test_nonexistent_file() -> None:
+    """Test handling of non-existing file path."""
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        TSurfData.from_file("nonexistent_file.ts")
 
 
 def test_comments_and_empty_lines(tmp_path: Path) -> None:
@@ -1096,9 +1102,3 @@ def test_tsurf_data_roundtrip_bytes_io(complete_tsurf_file: str) -> None:
     assert result.coord_sys == result_written.coord_sys
     assert np.array_equal(result.vertices, result_written.vertices)
     assert np.array_equal(result.triangles, result_written.triangles)
-
-    # TODO: see dataio writer tests
-    # TODO: test with invalid filepaths/streams, non-existing folders, etc.
-    # TODO: test with a couple of different encodings
-    # TODO: write erroneous files and check errors
-    # TODO: dataio: test_tsurf_reader_invalid_lines()

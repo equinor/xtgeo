@@ -657,7 +657,9 @@ class FileWrapper:
         return FileFormat.UNKNOWN
 
     @contextlib.contextmanager
-    def get_text_stream(self: Self) -> Generator[TextIO, None, None]:
+    def get_text_stream_read(
+        self: Self, encoding: str = "utf-8"
+    ) -> Generator[TextIO, None, None]:
         """
         Context manager to handle both file paths and file-like objects for reading.
         Yields:
@@ -670,10 +672,10 @@ class FileWrapper:
             raise FileNotFoundError(f"\nFile {self.name}:\nThe file does not exist.")
 
         if isinstance(self.file, pathlib.Path):
-            with open(self.file, "r") as stream:
+            with open(file=self.file, mode="r", encoding=encoding) as stream:
                 yield stream
         elif isinstance(self.file, io.BytesIO):
-            with io.TextIOWrapper(self.file) as text_wrapper:
+            with io.TextIOWrapper(buffer=self.file, encoding=encoding) as text_wrapper:
                 text_wrapper.seek(0)
                 yield text_wrapper
         else:
@@ -682,7 +684,9 @@ class FileWrapper:
             yield self.file
 
     @contextlib.contextmanager
-    def get_text_stream_write(self: Self) -> Generator[TextIO, None, None]:
+    def get_text_stream_write(
+        self: Self, encoding: str = "utf-8"
+    ) -> Generator[TextIO, None, None]:
         """
         Context manager to handle both file paths and file-like objects for writing.
 
@@ -694,23 +698,16 @@ class FileWrapper:
 
         Raises:
             OSError: If the parent folder does not exist or is not writable.
-
-        Example::
-            >>> wrapper = FileWrapper("output.txt", mode="w")
-            >>> with wrapper.get_text_stream_for_writing() as stream:
-            ...     stream.write("Hello, world!\\n")
         """
-
-        encoding: str = "utf-8"
 
         if isinstance(self.file, pathlib.Path):
             self.check_folder(raiseerror=OSError)
-            with open(self.file, "w", encoding=encoding) as stream:
+            with open(file=self.file, mode="w", encoding=encoding) as stream:
                 yield stream
         elif isinstance(self.file, io.BytesIO):
             # Wrap BytesIO in TextIOWrapper for text writing
             text_wrapper = io.TextIOWrapper(
-                self.file, encoding=encoding, write_through=True
+                buffer=self.file, encoding=encoding, write_through=True
             )
             try:
                 yield text_wrapper

@@ -733,6 +733,7 @@ class TSurfData:
     def from_file(
         cls,
         file: FileLike,
+        encoding: str = "utf-8",
     ) -> Self:
         """
         Read a file on the TSURF format and parse its triangulated surface data.
@@ -742,6 +743,7 @@ class TSurfData:
         Args:
             file: Path to TSurf file (str or Path) or
                 a file-like object (BytesIO or StringIO).
+            encoding: Text encoding for the input file (default: 'utf-8')
 
         Returns:
             TSurfData: Parsed surface data containing header, coordinate system,
@@ -771,12 +773,13 @@ class TSurfData:
             )
         wrapped_file.fileformat(FileFormat.TSURF.value[0], strict=True)
 
-        with wrapped_file.get_text_stream() as stream:
+        with wrapped_file.get_text_stream_read(encoding=encoding) as stream:
             return cls._parse_tsurf(stream, fileref_errmsg=str(wrapped_file.name))
 
     def to_file(
         self: Self,
         file: FileLike,
+        encoding: str = "utf-8",
     ) -> None:
         """
         Write TSurfData to a file stream in the TSurf format.
@@ -785,56 +788,45 @@ class TSurfData:
             data: TSurfData object containing triangulated surface data
             file: Path to output TSurf file (str or Path) or
                 a file-like object (BytesIO or StringIO).
+            encoding: Text encoding for the output file (default: 'utf-8')
 
         Raises:
             FileNotFoundError: If file path doesn't exist or isn't a regular file
         """
 
         wrapped_file = FileWrapper(file)
-        wrapped_file.check_folder(raiseerror=OSError)
 
-        lines = []
+        with wrapped_file.get_text_stream_write(encoding=encoding) as stream:
+            # TSurf signature line
+            stream.write("GOCAD TSurf 1\n")
 
-        # TSurf signature line
-        lines.append("GOCAD TSurf 1\n")
+            # HEADER section
+            stream.write("HEADER {\n")
+            stream.write(f"name: {self.header.name}\n")
+            stream.write("}\n")
 
-        lines.append("HEADER {\n")
-        lines.append(f"name: {self.header.name}\n")
-        lines.append("}\n")
+            # Optional: coordinate system
+            if self.coord_sys:
+                stream.write("GOCAD_ORIGINAL_COORDINATE_SYSTEM\n")
+                stream.write(f"NAME {self.coord_sys.name}\n")
 
-        # Optional: coordinate system
-        if self.coord_sys:
-            lines.append("GOCAD_ORIGINAL_COORDINATE_SYSTEM\n")
-            lines.append(f"NAME {self.coord_sys.name}\n")
+                axis_name_str = " ".join(
+                    [f'"{name}"' for name in self.coord_sys.axis_name]
+                )
+                stream.write(f"AXIS_NAME {axis_name_str}\n")
 
-            axis_name_str = " ".join([f'"{name}"' for name in self.coord_sys.axis_name])
-            lines.append(f"AXIS_NAME {axis_name_str}\n")
+                axis_unit_str = " ".join(
+                    [f'"{unit}"' for unit in self.coord_sys.axis_unit]
+                )
+                stream.write(f"AXIS_UNIT {axis_unit_str}\n")
 
-            axis_unit_str = " ".join([f'"{unit}"' for unit in self.coord_sys.axis_unit])
-            lines.append(f"AXIS_UNIT {axis_unit_str}\n")
+                stream.write(f"ZPOSITIVE {self.coord_sys.zpositive}\n")
+                stream.write("END_ORIGINAL_COORDINATE_SYSTEM\n")
 
-            lines.append(f"ZPOSITIVE {self.coord_sys.zpositive}\n")
-            lines.append("END_ORIGINAL_COORDINATE_SYSTEM\n")
-
-        # TFACE section with vertices and triangles
-        lines.append("TFACE\n")
-        for i, vertex in enumerate(self.vertices, start=1):
-            lines.append(f"VRTX {i} {vertex[0]} {vertex[1]} {vertex[2]} CNXYZ\n")
-        for triangle in self.triangles:
-            lines.append(f"TRGL {triangle[0]} {triangle[1]} {triangle[2]}\n")
-        lines.append("END\n")
-
-        with wrapped_file.get_text_stream_write() as stream:
-            stream.writelines(lines)
-
-        # TODO: remove this
-        # Alternative way of writing:
-        # if isinstance(wrapped_file.file, pathlib.Path):
-        #     with open(str(wrapped_file.name), "w", encoding=encoding) as f_out:
-        #         f_out.writelines(lines)
-        # else:
-        #     wrapped_file.file.seek(0)
-        #     if isinstance(wrapped_file.file, BytesIO):
-        #         wrapped_file.file.write("".join(lines).encode(encoding))
-        #     else:  # isinstance(wrapped_file.file, StringIO):
-        #         wrapped_file.file.write("".join(lines))
+            # TFACE section with vertices and triangles
+            stream.write("TFACE\n")
+            for i, vertex in enumerate(self.vertices, start=1):
+                stream.write(f"VRTX {i} {vertex[0]} {vertex[1]} {vertex[2]} CNXYZ\n")
+            for triangle in self.triangles:
+                stream.write(f"TRGL {triangle[0]} {triangle[1]} {triangle[2]}\n")
+            stream.write("END\n")
