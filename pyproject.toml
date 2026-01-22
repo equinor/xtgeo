@@ -43,7 +43,7 @@ dependencies = [
     "joblib",
     "matplotlib>=3.3",
     "numpy",
-    "pandas>=1.1",
+    "pandas>=1.1,<3.0.0",
     "pyarrow",
     "resfo>=5",
     "roffio>=0.0.2",
