@@ -27,7 +27,7 @@ class WellFileFormat(Enum):
 
     Attributes:
         RMS_ASCII: RMS ASCII well format
-        CSV: CSV format (not yet implemented)
+        CSV: CSV format
         HDF5: HDF5 format (not yet implemented)
 
     """
@@ -165,6 +165,7 @@ class WellData:
         xname: str = "X_UTME",
         yname: str = "Y_UTMN",
         zname: str = "Z_TVDSS",
+        wellname_col: str | None = None,
     ) -> "pd.DataFrame":
         """Return survey and selected logs as a pandas DataFrame.
 
@@ -173,6 +174,8 @@ class WellData:
             xname: Column name for X coordinates (default: "X_UTME")
             yname: Column name for Y coordinates (default: "Y_UTMN")
             zname: Column name for Z coordinates (default: "Z_TVDSS")
+            wellname_col: Column name for well name. If provided, adds wellname column
+                (default: None)
 
         Returns:
             pandas.DataFrame with survey coordinates and selected logs
@@ -183,14 +186,18 @@ class WellData:
         Example:
             >>> df = well.to_dataframe(lognames=["GR", "PHIT"])
             >>> df = well.to_dataframe()  # All logs
+            >>> df = well.to_dataframe(wellname_col="WELLNAME")  # Include wellname
         """
         import pandas as pd
 
-        data = {
+        data: dict[str, Any] = {
             xname: self.survey_x,
             yname: self.survey_y,
             zname: self.survey_z,
         }
+
+        if wellname_col is not None:
+            data[wellname_col] = [self.name] * self.n_records
 
         if lognames is None:
             # Include all logs
@@ -229,6 +236,9 @@ class WellData:
         if fformat == WellFileFormat.RMS_ASCII:
             return cls.from_rms_ascii(filepath, **kwargs)
 
+        if fformat == WellFileFormat.CSV:
+            return cls.from_csv(filepath, **kwargs)
+
         raise NotImplementedError(f"File format {fformat} is not supported")
 
     def to_file(
@@ -246,6 +256,10 @@ class WellData:
         """
         if fformat == WellFileFormat.RMS_ASCII:
             self.to_rms_ascii(filepath, **kwargs)
+            return
+
+        if fformat == WellFileFormat.CSV:
+            self.to_csv(filepath, **kwargs)
             return
 
         raise NotImplementedError(f"File format {fformat} is not supported.")
@@ -266,8 +280,21 @@ class WellData:
         """Write well data to RMS ASCII file."""
         from xtgeo.io._welldata._fformats._rms_ascii import write_rms_ascii_well
 
-        write_rms_ascii_well(
-            well=self,
-            filepath=filepath,
-            precision=precision,
-        )
+        write_rms_ascii_well(well=self, filepath=filepath, precision=precision)
+
+    @classmethod
+    def from_csv(cls, filepath: FileLike, **kwargs: Any) -> WellData:
+        """Read well data from CSV table file."""
+        from xtgeo.io._welldata._fformats._csv_table import read_csv_well
+
+        return read_csv_well(filepath=filepath, **kwargs)
+
+    def to_csv(
+        self,
+        filepath: FileLike,
+        **kwargs: Any,
+    ) -> None:
+        """Write well data to CSV file."""
+        from xtgeo.io._welldata._fformats._csv_table import write_csv_well
+
+        write_csv_well(well=self, filepath=filepath, **kwargs)
