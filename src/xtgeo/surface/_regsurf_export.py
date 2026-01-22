@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import io
 import json
 import struct
 from typing import TYPE_CHECKING
@@ -10,6 +9,7 @@ from typing import TYPE_CHECKING
 import h5py
 import hdf5plugin
 import numpy as np
+import surfio
 
 from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
@@ -47,113 +47,65 @@ PMD_DATAUNITZ = {
 def export_irap_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
     """Export to Irap RMS ascii format."""
 
-    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPA, order="F")
+    vals = np.ma.filled(self.values, fill_value=UNDEF_MAP_IRAPA)
 
     yinc = self.yinc * self.yflip
 
     xmax = self.xori + (self.ncol - 1) * self.xinc
     ymax = self.yori + (self.nrow - 1) * yinc
 
-    header = (
-        f"-996 {self.nrow} {self.xinc} {yinc}\n"
-        f"{self.xori} {xmax} {self.yori} {ymax}\n"
-        f"{self.ncol} {self.rotation} {self.xori} {self.yori}\n"
-        "0  0  0  0  0  0  0\n"
+    surf = surfio.IrapSurface(
+        surfio.IrapHeader(
+            ncol=self.ncol,
+            nrow=self.nrow,
+            xori=self.xori,
+            yori=self.yori,
+            xinc=self.xinc,
+            yinc=yinc,
+            xmax=xmax,
+            ymax=ymax,
+            rot=self.rotation,
+            xrot=self.xori,
+            yrot=self.yori,
+        ),
+        values=vals,
     )
 
-    def _optimal_shape(vals, start=9):
-        """Optimal shape for the data.
-
-        It seems by reverse engineering that RMS accepts only 9 or less items per line
-        """
-        # Check if divisible by a number
-        size = len(vals)
-        # Find the nearest factorization
-        for i in range(start, 1, -1):
-            if size % i == 0:
-                return (int(size // i), int(i))  # Ensure integers are returned
-
-        # If we can't find a perfect divisor, return a valid shape
-        return (int(size), 1)
-
-    buffer = io.StringIO()
-
-    np.savetxt(buffer, vals.reshape(_optimal_shape(vals)), fmt="%f", delimiter=" ")
-    data = buffer.getvalue()
-
-    # Combine header and data
-    buf = (header + data).encode("latin1")
-
     if mfile.memstream:
-        mfile.file.write(buf)
+        mfile.file.write(surf.to_ascii_string().encode("latin1"))
     else:
-        with open(mfile.name, "wb") as fout:
-            fout.write(buf)
-
-    del vals
+        surf.to_ascii_file(mfile.name)
 
 
 def export_irap_binary(self: RegularSurface, mfile: FileWrapper) -> None:
     """Export to Irap RMS binary format."""
 
-    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
+    vals = np.ma.filled(self.values, fill_value=UNDEF_MAP_IRAPB)
 
     yinc = self.yinc * self.yflip
+    xmax = self.xori + (self.ncol - 1) * self.xinc
+    ymax = self.yori + (self.nrow - 1) * yinc
 
-    header = struct.pack(
-        ">3i6f3i3f10i",  # > means big endian storage
-        32,
-        -996,
-        self.nrow,
-        self.xori,
-        self.xori + self.xinc * (self.ncol - 1),
-        self.yori,
-        self.yori + yinc * (self.nrow - 1),
-        self.xinc,
-        yinc,
-        32,
-        16,
-        self.ncol,
-        self.rotation,
-        self.xori,
-        self.yori,
-        16,
-        28,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        28,
+    surf = surfio.IrapSurface(
+        surfio.IrapHeader(
+            ncol=self.ncol,
+            nrow=self.nrow,
+            xori=self.xori,
+            yori=self.yori,
+            xinc=self.xinc,
+            yinc=yinc,
+            xmax=xmax,
+            ymax=ymax,
+            rot=self.rotation,
+            xrot=self.xori,
+            yrot=self.yori,
+        ),
+        values=vals,
     )
-    inum = self.nrow * self.ncol
-
-    # export to Irap binary in ncol chunks (the only chunk size accepted by RMS)
-    nchunk = self.ncol
-    chunks = [nchunk] * (inum // nchunk)
-    if (inum % nchunk) > 0:
-        chunks.append(inum % nchunk)
-    start = 0
-    data = bytearray(header)
-    chunk_size = nchunk * 4
-
-    # Precompute the struct.pack format for chunk size
-    chunk_size_pack = struct.pack(">i", chunk_size)
-
-    for chunk in chunks:
-        chunk_data = np.array(vals[start : start + chunk], dtype=">f4").tobytes()
-        data.extend(chunk_size_pack)
-        data.extend(chunk_data)
-        data.extend(chunk_size_pack)
-        start += chunk
-
     if mfile.memstream:
-        mfile.file.write(data)
+        mfile.file.write(surf.to_binary_buffer())
     else:
-        with open(mfile.name, "wb") as fout:
-            fout.write(data)
+        surf.to_binary_file(mfile.file)
 
 
 def export_ijxyz_ascii(self: RegularSurface, mfile: FileWrapper) -> None:

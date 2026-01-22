@@ -11,7 +11,7 @@ build-backend = "scikit_build_core.build"
 name = "xtgeo"
 description = "XTGeo is a Python library for 3D grids, surfaces, wells, etc"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "LGPL-3.0" }
 authors = [{ name = "Equinor", email = "fg_fmu-atlas@equinor.com" }]
 keywords = ["grids", "surfaces", "wells", "cubes"]
@@ -25,7 +25,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -50,6 +49,7 @@ dependencies = [
     "scipy>=1.5",
     "segyio>1.8.0",
     "shapely>=1.6.2",
+    "surfio",
     "tables",
     "typing_extensions",
     "xtgeoviz",
@@ -99,7 +99,7 @@ sdist.include = ["src/xtgeo/common/version.py"]
 wheel.install-dir = "xtgeo"
 
 [tool.cibuildwheel]
-build = "cp3{10,11,12,13}-*"
+build = "cp3{11,12,13}-*"
 skip = ["*-musllinux_*", "*-win32", "*-manylinux_i686"]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"

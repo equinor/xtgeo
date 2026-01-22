@@ -22,15 +22,15 @@ jobs:
     timeout-minutes: 25
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
         os: [ubuntu-latest]
         include:
           - os: macos-latest
-            python-version: "3.10"
+            python-version: "3.11"
           - os: macos-latest
             python-version: "3.13"
           - os: windows-latest
-            python-version: "3.10"
+            python-version: "3.11"
           - os: windows-latest
             python-version: "3.13"
 
@@ -79,7 +79,7 @@ jobs:
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
@@ -156,7 +156,7 @@ jobs:
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
@@ -175,7 +175,7 @@ jobs:
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"

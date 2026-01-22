@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import json
-import mmap
 from struct import unpack
 from typing import TYPE_CHECKING
 
 import h5py
 import numpy as np
+import surfio
 
 import xtgeo.common.sys as xsys
 from xtgeo import _cxtgeo
@@ -50,31 +50,20 @@ def import_irap_binary(mfile: FileWrapper, values: bool = True, **_):
     if mfile.memstream:
         mfile.file.seek(0)
         buf = mfile.file.read()
+        surf = surfio.IrapSurface.from_binary_buffer(buf)
     else:
-        with open(mfile.file, "rb") as fhandle:
-            buf = mmap.mmap(fhandle.fileno(), 0, access=mmap.ACCESS_READ)
+        surf = surfio.IrapSurface.from_binary_file(mfile.file)
 
-    # Ensure buffer is large enough for header
-    header_size = 100
-    if len(buf) < header_size:
-        raise ValueError("Buffer size is too small for header")
-
-    # unpack header with big-endian format string (cf. docstring info)
-    hed = np.frombuffer(
-        buf[:header_size],
-        dtype=">i4,>i4,>i4,>f4,>f4,>f4,>f4,>f4,>f4,>i4,"  # <32> IDFLAG NY XORI ... <32>
-        + ">i4,>i4,>f4,>f4,>f4,>i4,"  # <16> NX ROT X0ORI Y0ORI<16>
-        + ">i4,>i4,>i4,>i4,>i4,>i4,>i4,>i4,>i4",  # <28> 0 0 0 0 0 0 0 <28>
-    )
+    header = surf.header
 
     args = {}
-    args["nrow"] = int(hed[0][2])
-    args["xori"] = float(hed[0][3])
-    args["yori"] = float(hed[0][5])
-    args["xinc"] = float(hed[0][7])
-    args["yinc"] = float(hed[0][8])
-    args["ncol"] = int(hed[0][11])
-    args["rotation"] = float(hed[0][12])
+    args["nrow"] = header.nrow
+    args["xori"] = header.xori
+    args["yori"] = header.yori
+    args["xinc"] = header.xinc
+    args["yinc"] = header.yinc
+    args["ncol"] = header.ncol
+    args["rotation"] = header.rot
 
     args["yflip"] = 1
     if args["yinc"] < 0.0:
@@ -84,32 +73,16 @@ def import_irap_binary(mfile: FileWrapper, values: bool = True, **_):
     if not values:
         return args
 
-    # Values: traverse through data blocks
-    stv = header_size  # Starting byte
-    datav = []
-
-    while stv < len(buf):
-        # start block integer - number of bytes of floats in following block
-        blockv = np.frombuffer(buf[stv : stv + 4], dtype=">i4")[0]
-        stv += 4
-        # floats
-        datav.append(np.frombuffer(buf[stv : stv + blockv], dtype=">f4"))
-        stv += blockv
-        # end block integer not needed really
-        stv += 4
-
-    values = np.hstack(datav)
-    values = np.reshape(values, (args["ncol"], args["nrow"]), order="F")
-    values = np.array(values, order="C")
+    values = np.ascontiguousarray(surf.values)
+    np.nan_to_num(values, copy=False, nan=UNDEF_MAP_IRAPB)
     values = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPB)
     args["values"] = np.ma.masked_invalid(values)
 
-    del buf
     return args
 
 
 def import_irap_ascii(mfile: FileWrapper, **_):
-    """Import Irap in pure python code, suitable for memstreams, and now efficient.
+    """Import Irap ascii which has the following format:
     -996  2010      5.000000      5.000000
     461587.553724   467902.553724  5927061.430176  5937106.430176
     1264       30.000011   461587.553724  5927061.430176
@@ -124,33 +97,31 @@ def import_irap_ascii(mfile: FileWrapper, **_):
     if mfile.memstream:
         mfile.file.seek(0)
         buf = mfile.file.read().decode()
+        surface = surfio.IrapSurface.from_ascii_string(buf)
+        del buf
     else:
-        with open(mfile.file) as fhandle:
-            buf = fhandle.read()
+        surface = surfio.IrapSurface.from_ascii_file(str(mfile.file))
 
-    buf = buf.split(maxsplit=19)
-    args = {}
-    args["nrow"] = int(buf[1])
-    args["xinc"] = float(buf[2])
-    args["yinc"] = float(buf[3])
-    args["xori"] = float(buf[4])
-    args["yori"] = float(buf[6])
-    args["ncol"] = int(buf[8])
-    args["rotation"] = float(buf[9])
-
-    nvalues = args["nrow"] * args["ncol"]
-    values = np.fromstring(buf[19], dtype=np.double, count=nvalues, sep=" ")
-
-    values = np.reshape(values, (args["ncol"], args["nrow"]), order="F")
-    values = np.array(values, order="C")
-    args["values"] = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPA)
+    values = np.ascontiguousarray(surface.values)
+    np.nan_to_num(values, copy=False, nan=UNDEF_MAP_IRAPA)
+    values = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPA)
+    values = np.ma.masked_invalid(values)
+    args = {
+        "nrow": surface.header.nrow,
+        "xinc": surface.header.xinc,
+        "yinc": surface.header.yinc,
+        "xori": surface.header.xori,
+        "yori": surface.header.yori,
+        "ncol": surface.header.ncol,
+        "rotation": surface.header.rot,
+        "values": values,
+    }
 
     args["yflip"] = 1
     if args["yinc"] < 0.0:
         args["yinc"] *= -1
         args["yflip"] = -1
 
-    del buf
     return args
 
 
