@@ -142,7 +142,7 @@ def read_rms_ascii_well(filepath: FileLike) -> WellData:
 
     logger.debug("Reading well data from RMS ASCII: %s", wrapper.name)
 
-    with wrapper.get_text_stream() as fwell:
+    with wrapper.get_text_stream_read() as fwell:
         # Read header and get metadata
         wname, xpos, ypos, rkb, lognames, wlogtype, wlogrecords = (
             _read_rms_ascii_header(fwell)

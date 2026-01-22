@@ -294,7 +294,7 @@ def import_rms_attr(pfile: FileWrapper, zname: str = "Z_TVDSS") -> dict[str, Any
     # parse header
     skiprows = 0
 
-    with pfile.get_text_stream() as rmsfile:
+    with pfile.get_text_stream_read() as rmsfile:
         for iline in range(20):
             fields = rmsfile.readline().split()
             if len(fields) != 2:

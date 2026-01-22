@@ -33,12 +33,12 @@ FILE_FORMATS = ChainMap(
 
 
 @pytest.fixture(name="reek_grid_path")
-def fixture_reek_grid_path(testdata_path):
+def fixture_reek_grid_path(testdata_path: str) -> pathlib.Path:
     return pathlib.Path(testdata_path) / "3dgrids/reek"
 
 
 @pytest.mark.parametrize("strict", [False, True])
-def test_fileformat_unknown_empty_memstream(strict):
+def test_fileformat_unknown_empty_memstream(strict: bool) -> None:
     with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
         FileWrapper(io.StringIO()).fileformat(strict=strict)
     with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
@@ -47,13 +47,15 @@ def test_fileformat_unknown_empty_memstream(strict):
 
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("length", [0, 4, 8, 24, 9])
-def test_fileformat_unknown_zeroed_memstream_with_varied_length(length, strict):
+def test_fileformat_unknown_zeroed_memstream_with_varied_length(
+    length: int, strict: bool
+) -> None:
     with pytest.raises(InvalidFileFormatError, match="unknown or unsupported"):
         FileWrapper(io.BytesIO(b"\00" * length)).fileformat(strict=strict)
 
 
 @pytest.mark.parametrize("filename", FILE_FORMATS.keys())
-def test_properties_file(testdata_path, filename):
+def test_properties_file(testdata_path: str, filename: pathlib.Path) -> None:
     gfile = FileWrapper(testdata_path / filename)
     assert isinstance(gfile._file, pathlib.Path)
 
@@ -72,7 +74,7 @@ def test_properties_file(testdata_path, filename):
         (io.StringIO(), io.StringIO, "r"),
     ],
 )
-def test_properties_stream(stream, instance, mode):
+def test_properties_stream(stream: io.IOBase, instance: type, mode: str) -> None:
     sfile = FileWrapper(stream)
     assert isinstance(sfile._file, instance)
     assert sfile.memstream is True
@@ -82,7 +84,7 @@ def test_properties_stream(stream, instance, mode):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Path delimiter issue")
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_resolve_alias(testdata_path, filename):
+def test_resolve_alias(testdata_path: str, filename: pathlib.Path) -> None:
     """Testing resolving file alias function."""
     surf = xtgeo.surface_from_file(testdata_path / filename)
     md5hash = surf.generate_hash("md5")
@@ -105,13 +107,13 @@ def test_resolve_alias(testdata_path, filename):
 
 
 @pytest.mark.parametrize("filename", ["REEK.EGRID", "."])
-def test_file_does_exist(reek_grid_path, filename):
+def test_file_does_exist(reek_grid_path: pathlib.Path, filename: str) -> None:
     xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.exists() is True
 
 
 @pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
-def test_file_does_not_exist(reek_grid_path, filename):
+def test_file_does_not_exist(reek_grid_path: pathlib.Path, filename: str) -> None:
     xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.exists() is False
 
@@ -125,50 +127,52 @@ def test_file_does_not_exist(reek_grid_path, filename):
         ("NOSUCH/NOSUCH.EGRID", False),
     ],
 )
-def test_check_file(reek_grid_path, filename, expected):
+def test_check_file(
+    reek_grid_path: pathlib.Path, filename: str, expected: bool
+) -> None:
     xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.check_file() is expected
 
 
 @pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
-def test_check_file_raises(reek_grid_path, filename):
+def test_check_file_raises(reek_grid_path: pathlib.Path, filename: str) -> None:
     xtgeo_file = FileWrapper(reek_grid_path / filename)
     assert xtgeo_file.check_file() is False
     with pytest.raises(OSError):
         xtgeo_file.check_file(raiseerror=OSError)
 
 
-def test_cannot_reinstance_filewrapper(tmp_path):
+def test_cannot_reinstance_filewrapper(tmp_path: pathlib.Path) -> None:
     gfile = FileWrapper(tmp_path / "test.txt")
     with pytest.raises(RuntimeError, match="Cannot instantiate"):
         FileWrapper(gfile)
 
 
-def test_invalid_file_primitive_raises():
+def test_invalid_file_primitive_raises() -> None:
     with pytest.raises(RuntimeError, match="Cannot instantiate"):
         FileWrapper(1.0)
 
 
-def test_resolve_alias_on_stream_doesnt_modify_or_raise():
+def test_resolve_alias_on_stream_doesnt_modify_or_raise() -> None:
     stream = io.BytesIO()
     xtg_file = FileWrapper(stream)
     xtg_file.resolve_alias(xtgeo.create_box_grid((1, 1, 1)))
     assert stream == xtg_file.file
 
 
-def test_bad_alias_raises(tmp_path):
+def test_bad_alias_raises(tmp_path: pathlib.Path) -> None:
     with pytest.raises(ValueError, match="not a valid alias"):
         FileWrapper(tmp_path / "$NO_ALIAS").resolve_alias(
             xtgeo.create_box_grid((1, 1, 1))
         )
 
 
-def test_memstream_check_file():
+def test_memstream_check_file() -> None:
     assert FileWrapper(io.StringIO()).check_file()
 
 
 @pytest.mark.parametrize("filename", FILE_FORMATS.keys())
-def test_file_c_handle(testdata_path, filename):
+def test_file_c_handle(testdata_path: str, filename: pathlib.Path) -> None:
     any_xtgeo_file = FileWrapper(testdata_path / filename)
 
     handle_count = any_xtgeo_file._cfhandlecount
@@ -192,7 +196,9 @@ def test_file_c_handle(testdata_path, filename):
 @pytest.mark.bigtest
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_surface_file_roundtrip_stream(testdata_path, filename, strict):
+def test_surface_file_roundtrip_stream(
+    testdata_path: str, filename: pathlib.Path, strict: bool
+) -> None:
     stream = io.BytesIO()
     surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_file(stream)
@@ -206,8 +212,11 @@ def test_surface_file_roundtrip_stream(testdata_path, filename, strict):
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
 def test_fileformat_infers_from_suffix(
-    testdata_path, filename, expected_format, strict
-):
+    testdata_path: str,
+    filename: pathlib.Path,
+    expected_format: FileFormat,
+    strict: bool,
+) -> None:
     xtgeo_file = FileWrapper(testdata_path / filename)
     assert xtgeo_file.fileformat(strict=strict) == expected_format
 
@@ -215,8 +224,12 @@ def test_fileformat_infers_from_suffix(
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
 def test_fileformat_infers_from_stream_contents(
-    testdata_path, filename, expected_format, strict
-):
+    testdata_path: str,
+    filename: pathlib.Path,
+    expected_format: FileFormat,
+    strict: bool,
+) -> None:
+    stream: io.StringIO | io.BytesIO
     if expected_format in (FileFormat.RMSWELL, FileFormat.ROFF_ASCII):
         with open(testdata_path / filename) as f:
             stream = io.StringIO(f.read())
@@ -229,7 +242,12 @@ def test_fileformat_infers_from_stream_contents(
 
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename, expected_format", FILE_FORMATS.items())
-def test_fileformat_provided(testdata_path, filename, expected_format, strict):
+def test_fileformat_provided(
+    testdata_path: str,
+    filename: pathlib.Path,
+    expected_format: FileFormat,
+    strict: bool,
+) -> None:
     xtgeo_file = FileWrapper(testdata_path / filename)
     name = expected_format.name
     assert xtgeo_file.fileformat(fileformat=name, strict=strict) == expected_format
@@ -239,7 +257,9 @@ def test_fileformat_provided(testdata_path, filename, expected_format, strict):
 
 
 @pytest.mark.parametrize("filename, expected_format", SURFACE_FILE_FORMATS.items())
-def test_fileformat_provided_prefer_given(testdata_path, filename, expected_format):
+def test_fileformat_provided_prefer_given(
+    testdata_path: str, filename: pathlib.Path, expected_format: FileFormat
+) -> None:
     # For later reference; this test pertains to the case where the user
     # explicitly chooses to provide a fileformat that is different from the actual
     # fileformat.  Although inconsistent it should be allowed,
@@ -253,62 +273,125 @@ def test_fileformat_provided_prefer_given(testdata_path, filename, expected_form
         xtgeo_file.fileformat(fileformat="segy", strict=True) == FileFormat.SEGY
 
 
-def test_get_text_stream(testdata_path: str) -> None:
+def test_get_text_stream_read(testdata_path: str) -> None:
     """Test getting a text stream from a file."""
     file_path = pathlib.Path(testdata_path) / "surfaces/drogon/3/F5.ts"
     xtgeo_file = FileWrapper(file_path)
-    with xtgeo_file.get_text_stream() as stream:
+    with xtgeo_file.get_text_stream_read() as stream:
         assert isinstance(stream, io.TextIOWrapper)
         assert stream.readline().startswith("GOCAD TSurf 1")
 
 
+def test_get_text_stream_write(testdata_path: str) -> None:
+    """Test getting a text stream for writing to a file."""
+    file_path = pathlib.Path(testdata_path) / "test_write.txt"
+    xtgeo_file = FileWrapper(file_path)
+    test_str = "LA8PV"
+    with xtgeo_file.get_text_stream_write() as stream:
+        assert isinstance(stream, io.TextIOWrapper)
+        stream.write(test_str)
+    with open(file_path, "r") as f:
+        content = f.read()
+        assert content == test_str
+
+
 @pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
-def test_get_text_stream_file_does_not_exist(
+def test_get_text_stream_read_file_does_not_exist(
     reek_grid_path: pathlib.Path, filename: str
 ) -> None:
     """Test getting a text stream from a non-existing file."""
     xtgeo_file = FileWrapper(reek_grid_path / filename)
     with pytest.raises(FileNotFoundError, match="file does not exist"):
         # Use __enter__ (not 'pass') to ensure proper test coverage
-        xtgeo_file.get_text_stream().__enter__()
+        xtgeo_file.get_text_stream_read().__enter__()
 
 
-def test_get_text_stream_from_binary_file(testdata_path: str) -> None:
+def test_get_text_stream_read_from_binary_file(testdata_path: str) -> None:
     """Test getting a text stream from a binary file."""
     file_path = pathlib.Path(testdata_path) / "3dgrids/reek/REEK.EGRID"
     xtgeo_file = FileWrapper(file_path)
 
-    # Document expected behavior:
-    # UnicodeDecodeError raised when trying to read binary file as text
-    with pytest.raises(UnicodeDecodeError), xtgeo_file.get_text_stream() as stream:
+    with pytest.raises(UnicodeDecodeError), xtgeo_file.get_text_stream_read() as stream:
         stream.readlines()
 
 
-def test_get_text_stream_empty_file(testdata_path: str) -> None:
+def test_get_text_stream_read_empty_file(testdata_path: str) -> None:
     """Test getting a text stream from an empty text file."""
     empty_file_path = pathlib.Path(testdata_path) / "empty_file.txt"
     empty_file_path.touch()
     xtgeo_file = FileWrapper(empty_file_path)
-    with xtgeo_file.get_text_stream() as stream:
+    with xtgeo_file.get_text_stream_read() as stream:
         assert len(stream.readlines()) == 0
 
 
-def test_get_text_stream_from_memstream() -> None:
+def test_get_text_stream_write_to_nonexistent_file(testdata_path: str) -> None:
+    """Test getting a text stream for writing to a non-existing file."""
+    file_path = pathlib.Path(testdata_path) / "nonexistent_dir/test_write.txt"
+    xtgeo_file = FileWrapper(file_path)
+    with pytest.raises(OSError, match="does not exist or cannot be accessed"):
+        # Use __enter__ (not 'pass') to ensure proper test coverage
+        xtgeo_file.get_text_stream_write().__enter__()
+
+
+def test_get_text_stream_read_from_memstream() -> None:
     """Test getting a text stream from an in-memory stream."""
     dummy_text = "Line 1\nLine 2\nLine 3\n"
-    with FileWrapper(io.StringIO()).get_text_stream() as stream:
+    with FileWrapper(io.StringIO()).get_text_stream_read() as stream:
         assert len(stream.readlines()) == 0
-    with FileWrapper(io.BytesIO()).get_text_stream() as stream:
+    with FileWrapper(io.BytesIO()).get_text_stream_read() as stream:
         assert len(stream.readlines()) == 0
-    with FileWrapper(io.StringIO(dummy_text)).get_text_stream() as stream:
+    with FileWrapper(io.StringIO(dummy_text)).get_text_stream_read() as stream:
         assert len(stream.readlines()) == 3
-    with FileWrapper(io.BytesIO(dummy_text.encode())).get_text_stream() as stream:
+    with FileWrapper(io.BytesIO(dummy_text.encode())).get_text_stream_read() as stream:
         assert len(stream.readlines()) == 3
+
+
+def test_get_text_stream_write_to_memstream() -> None:
+    """Test getting a text stream for writing to an in-memory stream."""
+    test_text = "LA8PV"
+    with FileWrapper(io.StringIO()).get_text_stream_write() as stream:
+        assert isinstance(stream, io.StringIO)
+        stream.write(test_text)
+        stream.seek(0)
+        content = stream.read()
+        assert content == test_text
+    with FileWrapper(io.BytesIO()).get_text_stream_write() as stream:
+        assert isinstance(stream, io.TextIOWrapper)
+        stream.write(test_text)
+        stream.flush()
+        stream.buffer.seek(0)
+        content = stream.buffer.read().decode()
+        assert content == test_text
+
+
+def test_get_text_stream_roundtrip_different_encodings() -> None:
+    """Test reading and writing text streams with different encodings."""
+    test_text = "This is a test with ünicode characters.\n"
+    encodings = ["utf-8", "utf-16", "latin-1"]
+
+    for encoding in encodings:
+        # Write to BytesIO with specified encoding
+        byte_stream = io.BytesIO()
+        with FileWrapper(byte_stream).get_text_stream_write(
+            encoding=encoding
+        ) as write_stream:
+            write_stream.write(test_text)
+            write_stream.flush()
+
+        # Read back from BytesIO with the same encoding
+        byte_stream.seek(0)
+        with FileWrapper(byte_stream).get_text_stream_read(
+            encoding=encoding
+        ) as read_stream:
+            content = read_stream.read()
+            assert content == test_text
 
 
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_fileformat_hdf_stream(testdata_path, filename, strict):
+def test_fileformat_hdf_stream(
+    testdata_path: str, filename: pathlib.Path, strict: bool
+) -> None:
     stream = io.BytesIO()
     surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_hdf(stream)
@@ -320,7 +403,9 @@ def test_fileformat_hdf_stream(testdata_path, filename, strict):
 
 @pytest.mark.parametrize("strict", [False, True])
 @pytest.mark.parametrize("filename", SURFACE_FILE_FORMATS.keys())
-def test_fileformat_hdf_to_file(tmp_path, testdata_path, filename, strict):
+def test_fileformat_hdf_to_file(
+    tmp_path: pathlib.Path, testdata_path: str, filename: pathlib.Path, strict: bool
+) -> None:
     newfile = tmp_path / "hdf_surf.hdf"
     surf = xtgeo.surface_from_file(testdata_path / filename)
     surf.to_hdf(newfile)
