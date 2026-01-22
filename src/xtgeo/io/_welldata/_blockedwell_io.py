@@ -122,6 +122,9 @@ class BlockedWellData(WellData):
         if fformat == WellFileFormat.RMS_ASCII:
             return cls.from_rms_ascii(filepath, **kwargs)
 
+        if fformat == WellFileFormat.CSV:
+            return cls.from_csv(filepath, **kwargs)
+
         raise NotImplementedError(f"File format {fformat} not supported yet.")
 
     def to_file(
@@ -133,6 +136,10 @@ class BlockedWellData(WellData):
         """Write blocked well data to file with format selection."""
         if fformat == WellFileFormat.RMS_ASCII:
             self.to_rms_ascii(filepath, **kwargs)
+            return
+
+        if fformat == WellFileFormat.CSV:
+            self.to_csv(filepath, **kwargs)
             return
 
         raise NotImplementedError(f"File format {fformat} not supported yet.")
@@ -157,4 +164,25 @@ class BlockedWellData(WellData):
             blocked_well=self,
             filepath=filepath,
             precision=precision,
+        )
+
+    @classmethod
+    def from_csv(cls, filepath: FileLike, **kwargs: Any) -> BlockedWellData:
+        """Read blocked well data from CSV file."""
+        from xtgeo.io._welldata._fformats._csv_table import read_csv_blockedwell
+
+        return read_csv_blockedwell(filepath=filepath, **kwargs)
+
+    def to_csv(
+        self,
+        filepath: FileLike,
+        **kwargs: Any,
+    ) -> None:
+        """Write blocked well data to CSV file."""
+        from xtgeo.io._welldata._fformats._csv_table import write_csv_blockedwell
+
+        write_csv_blockedwell(
+            blocked_well=self,
+            filepath=filepath,
+            **kwargs,
         )
