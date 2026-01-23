@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 import pandas as pd
@@ -25,6 +25,8 @@ from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
 if TYPE_CHECKING:
     import io
     from pathlib import Path
+
+    from xtgeo.xyz._xyz_data import AttrRecordType
 
 logger = null_logger(__name__)
 
@@ -892,20 +894,21 @@ class Well:
             return self._wdata.attr_types[lname].name
         return None
 
-    def set_logtype(self, lname, ltype):
+    def set_logtype(self, lname: str, ltype) -> None:
         """Sets the type of a give log (e.g. DISC or CONT)."""
         self._wdata.set_attr_type(lname, ltype)
 
-    def get_logrecord(self, lname):
+    def get_logrecord(self, lname: str) -> AttrRecordType:
         """Returns the record (dict) of a given log name, None if not exists."""
-
         return self._wdata.get_attr_record(lname)
 
-    def set_logrecord(self, lname, newdict):
+    def set_logrecord(
+        self, lname: str, newdict: dict[int, str] | Sequence[str]
+    ) -> None:
         """Sets the record (dict) of a given discrete log."""
         self._wdata.set_attr_record(lname, newdict)
 
-    def get_logrecord_codename(self, lname, key):
+    def get_logrecord_codename(self, lname: str, key: int) -> str | None:
         """Returns the name entry of a log record, for a given key.
 
         Example::
@@ -913,8 +916,8 @@ class Well:
             # get the name for zonelog entry no 4:
             zname = well.get_logrecord_codename('ZONELOG', 4)
         """
-        zlogdict = self.get_logrecord(lname)
-        if key in zlogdict:
+        zlogdict: AttrRecordType = self.get_logrecord(lname)
+        if zlogdict is not None and key in zlogdict:
             return zlogdict[key]
 
         return None

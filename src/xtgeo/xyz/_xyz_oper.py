@@ -3,23 +3,43 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, SupportsFloat, cast
+
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 from scipy.interpolate import UnivariateSpline
 
-import xtgeo
 from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
+if TYPE_CHECKING:
+    from xtgeo.surface.regular_surface import RegularSurface as RegularSurfaceType
+    from xtgeo.xyz._xyz import XYZ as XYZType
+
+    # Separate imports only needed for type checking to avoid circular imports.
+    # Named as xxxType to avoid confusion with actual classes xxx imported at runtime.
+    from xtgeo.xyz.points import Points
+    from xtgeo.xyz.polygons import Polygons
+
+
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
+def mark_in_polygons_mpl(
+    self: XYZType,
+    poly: Polygons | list[Polygons],
+    name: str,
+    inside_value: int,
+    outside_value: int,
+) -> None:
     """Make column to mark if XYZ df is inside/outside polygons, using matplotlib."""
+
+    from xtgeo.xyz.polygons import Polygons
+
     points = np.array(
         [
             self.get_dataframe(copy=False)[self.xname].values,
@@ -28,14 +48,12 @@ def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
     ).T
 
     if name in self.protected_columns():
-        raise ValueError("The proposed name: {name}, is protected and cannot be used")
+        raise ValueError(f"The proposed name: {name}, is protected and cannot be used")
 
     # allow a single Polygons instance or a list of Polygons instances
-    if isinstance(poly, xtgeo.Polygons):
+    if isinstance(poly, Polygons):
         usepolys = [poly]
-    elif isinstance(poly, list) and all(
-        isinstance(pol, xtgeo.Polygons) for pol in poly
-    ):
+    elif isinstance(poly, list) and all(isinstance(pol, Polygons) for pol in poly):
         usepolys = poly
     else:
         raise ValueError("The poly values is not a Polygons or a list of Polygons")
@@ -56,7 +74,14 @@ def mark_in_polygons_mpl(self, poly, name, inside_value, outside_value):
     self.set_dataframe(dataframe)
 
 
-def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=True):
+def operation_polygons_v1(
+    self: XYZType,
+    poly: Polygons,
+    value: float | str | Polygons,
+    opname: str = "add",
+    inside: bool = True,
+    where: bool = True,
+) -> None:
     """
     Operations re restricted to closed polygons, for points or polyline points.
 
@@ -70,6 +95,9 @@ def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=Tr
 
     This is now the legacy version, which will be deprecated later.
     """
+
+    from xtgeo.xyz.polygons import Polygons
+
     logger.warning("Where is not implemented: %s", where)
 
     oper = {"set": 1, "add": 2, "sub": 3, "mul": 4, "div": 5, "eli": 11}
@@ -79,14 +107,14 @@ def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=Tr
         insidevalue = 1
 
     logger.info("Operations of points inside polygon(s)...")
-    if not isinstance(poly, xtgeo.xyz.Polygons):
+    if not isinstance(poly, Polygons):
         raise ValueError("The poly input is not a single Polygons instance")
 
     idgroups = poly.get_dataframe(copy=False).groupby(poly.pname)
 
-    xcor = self.get_dataframe(copy=False)[self.xname].values
-    ycor = self.get_dataframe(copy=False)[self.yname].values
-    zcor = self.get_dataframe(copy=False)[self.zname].values
+    xcor = self.get_dataframe(copy=False)[self.xname].to_numpy(dtype=float, copy=False)
+    ycor = self.get_dataframe(copy=False)[self.yname].to_numpy(dtype=float, copy=False)
+    zcor = self.get_dataframe(copy=False)[self.zname].to_numpy(dtype=float, copy=False)
 
     usepoly = False
     if isinstance(value, str) and value == "poly":
@@ -96,7 +124,11 @@ def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=Tr
         pxcor = grp[poly.xname].values
         pycor = grp[poly.yname].values
         pvalue = value
-        pvalue = grp[poly.zname].values.mean() if usepoly else value
+        pvalue = (
+            grp[poly.zname].to_numpy(dtype=float, copy=False).mean()
+            if usepoly
+            else value
+        )
 
         logger.info("C function for polygon %s...", id_)
 
@@ -118,7 +150,14 @@ def operation_polygons_v1(self, poly, value, opname="add", inside=True, where=Tr
     logger.info("Operations of points inside polygon(s)... done")
 
 
-def operation_polygons_v2(self, poly, value, opname="add", inside=True, where=True):
+def operation_polygons_v2(
+    self: XYZType,
+    poly: Polygons | list[Polygons],
+    value: float,
+    opname: str = "add",
+    inside: bool = True,
+    where: bool = True,
+) -> None:
     """
     Operations re restricted to closed polygons, for points or polyline points.
 
@@ -132,15 +171,18 @@ def operation_polygons_v2(self, poly, value, opname="add", inside=True, where=Tr
 
     The version v2 uses mark_in_polygons_mpl(), and should be much faster.
     """
+
+    from xtgeo.xyz.polygons import Polygons
+
     logger.info("Operations of points inside polygon(s), version 2")
 
     allowed_opname = ("set", "add", "sub", "mul", "div", "eli")
 
     logger.warning("Where is not implemented: %s", where)
-    if not isinstance(poly, xtgeo.xyz.Polygons):
+    if not isinstance(poly, Polygons):
         raise ValueError("The poly input is not a Polygons instance")
 
-    tmp = self.copy()
+    tmp: XYZType = self.copy()
     ivalue = 1 if inside else 0
     ovalue = 0 if inside else 1
     mark_in_polygons_mpl(tmp, poly, "_TMP", inside_value=ivalue, outside_value=ovalue)
@@ -172,7 +214,13 @@ def operation_polygons_v2(self, poly, value, opname="add", inside=True, where=Tr
     logger.info("Operations of points inside polygon(s)... done")
 
 
-def rescale_polygons(self, distance=10, addlen=False, kind="simple", mode2d=False):
+def rescale_polygons(
+    self: Polygons,
+    distance: float = 10,
+    addlen: bool = False,
+    kind: str | None = "simple",
+    mode2d: bool = False,
+) -> None:
     """Rescale (resample) a polygons segment
     Default settings will make it backwards compatible with 2.0
     New options were added in 2.1:
@@ -196,7 +244,12 @@ def rescale_polygons(self, distance=10, addlen=False, kind="simple", mode2d=Fals
         _rescale_v1(self, distance, addlen, mode2d=mode2d)
 
 
-def _rescale_v1(self, distance, addlen, mode2d):
+def _rescale_v1(
+    self: Polygons,
+    distance: float,
+    addlen: bool,
+    mode2d: bool,
+) -> None:
     # version 1, simple approach, will rescale in 2D since Shapely use 2D lengths
     if not mode2d:
         raise KeyError("Cannot combine 'simple' with mode2d False")
@@ -209,9 +262,9 @@ def _rescale_v1(self, distance, addlen, mode2d):
             logger.warning("Cannot rescale polygons with less than two points. Skip")
             continue
 
-        pxcor = grp[self.xname].values
-        pycor = grp[self.yname].values
-        pzcor = grp[self.zname].values
+        pxcor = grp[self.xname].to_numpy()
+        pycor = grp[self.yname].to_numpy()
+        pzcor = grp[self.zname].to_numpy()
         spoly = sg.LineString(np.stack([pxcor, pycor, pzcor], axis=1))
 
         new_spoly = _redistribute_vertices(spoly, distance)
@@ -230,7 +283,10 @@ def _rescale_v1(self, distance, addlen, mode2d):
         self.tlen()
 
 
-def _redistribute_vertices(geom, distance):
+def _redistribute_vertices(
+    geom: sg.LineString | sg.MultiLineString,
+    distance: float,
+) -> sg.LineString | sg.MultiLineString:
     """Local function to interpolate in a polyline using Shapely"""
     if geom.geom_type == "LineString":
         num_vert = int(round(geom.length / distance))
@@ -250,7 +306,7 @@ def _redistribute_vertices(geom, distance):
     raise ValueError(f"Unhandled geometry {geom.geom_type}")
 
 
-def _handle_vertical_input(self, inframe):
+def _handle_vertical_input(self: Polygons, inframe: pd.DataFrame) -> pd.DataFrame:
     """Treat the special vertical case.
 
     A special case occurs for e.g. a 100% vertical well. Here the trick is distort
@@ -266,8 +322,12 @@ def _handle_vertical_input(self, inframe):
     pseudo = self.copy()
 
     if inframe[self.dhname].max() < tolerance:
-        result.at[0, self.xname] -= edit
-        result.at[result.index[-1], self.xname] += edit
+        result.at[0, self.xname] = (
+            float(cast("SupportsFloat", result.at[0, self.xname])) - edit
+        )
+        result.at[result.index[-1], self.xname] = (
+            float(cast("SupportsFloat", result.at[result.index[-1], self.xname])) + edit
+        )
         pseudo.set_dataframe(result)
         pseudo.hlen()
         pseudo.tlen()
@@ -276,7 +336,13 @@ def _handle_vertical_input(self, inframe):
     return result
 
 
-def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
+def _rescale_v2(
+    self: Polygons,
+    distance: float,
+    addlen: bool,
+    kind: str = "slinear",
+    mode2d: bool = True,
+) -> None:
     # Rescaling to constant increment is perhaps impossible, but this is
     # perhaps quite close
 
@@ -334,18 +400,21 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
         self.tlen()
         self.hlen()
     else:
-        self.delete_columns([self.hname, self.dhname, self.tname, self.dtname])
+        columns_to_delete = [
+            col for col in (self.hname, self.dhname, self.tname, self.dtname) if col
+        ]
+        self.delete_columns(columns_to_delete)
 
 
 def get_fence(
-    self: xtgeo.xyz.Polygons,
+    self: Polygons,
     distance: float = 20.0,
     atleast: int = 5,
     nextend: int = 2,
     name: str = "",
     asnumpy: bool = True,
     polyid: int | None = None,
-) -> np.ndarray | bool | xtgeo.xyz.Polygons:
+) -> np.ndarray | bool | Polygons:
     """Get a fence suitable for plotting xsections, either as a numpy or as a
     new Polygons instance.
 
@@ -364,7 +433,7 @@ def get_fence(
     orig_extend = nextend * distance
     orig_distance = distance
 
-    fence: xtgeo.Polygons = self.copy()
+    fence: Polygons = self.copy()
 
     fence.hlen()
 
@@ -414,11 +483,11 @@ def get_fence(
     if asnumpy is True:
         rval = np.concatenate(
             (
-                df[fence.xname].values,
-                df[fence.yname].values,
-                df[fence.zname].values,
-                df[fence.hname].values,
-                df[fence.dhname].values,
+                df[fence.xname].to_numpy(dtype=float, copy=False),
+                df[fence.yname].to_numpy(dtype=float, copy=False),
+                df[fence.zname].to_numpy(dtype=float, copy=False),
+                df[fence.hname].to_numpy(dtype=float, copy=False),
+                df[fence.dhname].to_numpy(dtype=float, copy=False),
             ),
             axis=0,
         )
@@ -427,18 +496,23 @@ def get_fence(
     return fence
 
 
-def snap_surface(self, surf, activeonly=True):
+def snap_surface(
+    self: XYZType, surf: RegularSurfaceType, activeonly: bool = True
+) -> None:
     """Snap (or transfer) operation.
 
     Points that falls outside the surface will be UNDEF, and they will be removed
     if activeonly. Otherwise, the old values will be kept.
     """
 
-    if not isinstance(surf, xtgeo.RegularSurface):
+    from xtgeo.common.constants import UNDEF_LIMIT
+    from xtgeo.surface.regular_surface import RegularSurface
+
+    if not isinstance(surf, RegularSurface):
         raise ValueError("Input object of wrong data type, must be RegularSurface")
 
     dataframe = self.get_dataframe()
-    zval = dataframe[self.zname].values
+    zval = dataframe[self.zname].to_numpy(dtype=float, copy=False)
 
     ier = _cxtgeo.surf_get_zv_from_xyv(
         dataframe[self.xname].values,
@@ -460,32 +534,47 @@ def snap_surface(self, surf, activeonly=True):
         raise RuntimeError(f"Error code from C routine surf_get_zv_from_xyv is {ier}")
     if activeonly:
         dataframe[self.zname] = zval
-        dataframe = dataframe[dataframe[self.zname] < xtgeo.UNDEF_LIMIT]
+        dataframe = dataframe[dataframe[self.zname] < UNDEF_LIMIT]
         dataframe.reset_index(inplace=True, drop=True)
     else:
-        out = np.where(
-            zval < xtgeo.UNDEF_LIMIT, zval, self.get_dataframe()[self.zname].values
+        old_z = np.asarray(
+            self.get_dataframe()[self.zname].to_numpy(dtype=float, copy=False)
         )
+        out = np.where(zval < UNDEF_LIMIT, zval, old_z)
         dataframe[self.zname] = out
 
     self.set_dataframe(dataframe)
 
 
-def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
+def hlen(
+    self: Polygons,
+    hname: str = "H_CUMLEN",
+    dhname: str = "H_DELTALEN",
+    atindex: int = 0,
+) -> None:
     """Get the horizontal distance (cumulative and delta) between points in polygons."""
 
     _generic_length(self, gname=hname, dgname=dhname, atindex=atindex, mode2d=True)
 
 
-def tlen(self, tname="T_CUMLEN", dtname="T_DELTALEN", atindex=0):
+def tlen(
+    self: Polygons,
+    tname: str = "T_CUMLEN",
+    dtname: str = "T_DELTALEN",
+    atindex: int = 0,
+) -> None:
     """Get the true 3D distance (cumulative and delta) between points in polygons."""
 
     _generic_length(self, gname=tname, dgname=dtname, atindex=atindex, mode2d=False)
 
 
 def _generic_length(
-    self, gname="G_CUMLEN", dgname="G_DELTALEN", atindex=0, mode2d=True
-):
+    self: Polygons,
+    gname: str = "G_CUMLEN",
+    dgname: str = "G_DELTALEN",
+    atindex: int = 0,
+    mode2d: bool = True,
+) -> None:
     """Get the true or horizontal distance (cum/delta) between points in polygons.
 
     The properties gname and ghname will be updated.
@@ -496,7 +585,9 @@ def _generic_length(
     # Potential todo: Add an option that dH never gets 0.0 to avoid numerical trouble
     # for e.g. rescale?
 
-    if not isinstance(self, xtgeo.Polygons):
+    from xtgeo.xyz.polygons import Polygons
+
+    if not isinstance(self, Polygons):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
     # delete existing self.hname and self.dhname columns
@@ -550,13 +641,17 @@ def _generic_length(
         self._dtname = dgname
 
 
-def extend(self, distance: float, nsamples: int, addhlen: bool = True) -> None:
+def extend(
+    self: Polygons, distance: float, nsamples: int, addhlen: bool = True
+) -> None:
     """Extend polygon by distance, nsamples times.
 
     It is default to recompute HLEN from nsamples.
     """
 
-    if not isinstance(self, xtgeo.Polygons):
+    from xtgeo.xyz.polygons import Polygons
+
+    if not isinstance(self, Polygons):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
     dataframe = self.get_dataframe()
@@ -622,10 +717,10 @@ def extend(self, distance: float, nsamples: int, addhlen: bool = True) -> None:
 
 
 def merge_close_points(
-    self,
-    min_distance,
-    method="average",
-):
+    self: Points,
+    min_distance: float,
+    method: str = "average",
+) -> None:
     """Merge points that are closer than a minimum distance threshold.
 
     When multiple points fall within min_distance of each other, they are
@@ -699,7 +794,7 @@ def merge_close_points(
     # Each cluster will be merged into a single point
     parent = list(range(len(xcv)))
 
-    def find(i):
+    def find(i: int) -> int:
         """Find root with iterative path compression to avoid recursion limit."""
         root = i
         # Find the root
@@ -712,7 +807,7 @@ def merge_close_points(
             i = next_parent
         return root
 
-    def union(i, j):
+    def union(i: int, j: int) -> None:
         root_i = find(i)
         root_j = find(j)
         if root_i != root_j:
@@ -723,7 +818,7 @@ def merge_close_points(
         union(i, j)
 
     # Collect clusters
-    clusters = {}
+    clusters: dict[int, list[int]] = {}
     for i in range(len(xcv)):
         root = find(i)
         if root not in clusters:
@@ -731,7 +826,11 @@ def merge_close_points(
         clusters[root].append(i)
 
     # Merge points in each cluster (only X, Y, Z - no attributes)
-    merged_data = {self.xname: [], self.yname: [], self.zname: []}
+    merged_data: dict[str, list[float]] = {
+        self.xname: [],
+        self.yname: [],
+        self.zname: [],
+    }
 
     for indices in clusters.values():
         x_cluster = xcv[indices]

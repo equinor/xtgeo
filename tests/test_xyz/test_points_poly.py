@@ -524,3 +524,12 @@ def test_boundary_from_points_more_data_convex_alpha0(testdata_path):
     points = xtgeo.points_from_file(testdata_path / POINTSET2)
     with pytest.raises(ValueError, match="The alpha value must be greater than 0.0"):
         xtgeo.Polygons.boundary_from_points(points, alpha=0)
+
+
+def test_boundary_from_points_alpha_factor_none(testdata_path):
+    """Test deriving a boundary around points, with alpha_factor None."""
+
+    points = xtgeo.points_from_file(testdata_path / POINTSET2)
+    with pytest.warns(UserWarning, match="The alpha_factor is None"):
+        boundary = xtgeo.Polygons.boundary_from_points(points, alpha_factor=None)
+        assert len(boundary.get_dataframe()) == 15

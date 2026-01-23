@@ -34,8 +34,9 @@ corresponding entries in attr_types and attr_records will be deleted.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from copy import deepcopy
-from typing import TYPE_CHECKING, Literal
+from typing import Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -48,8 +49,8 @@ from xtgeo.common.constants import UNDEF_CONT, UNDEF_DISC
 from xtgeo.common.log import null_logger
 from xtgeo.common.sys import _convert_carr_double_np, _get_carray
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
+AttrRecordType = dict[int, str] | Sequence[str] | None
+AttrRecordsType = dict[str, AttrRecordType]
 
 
 logger = null_logger(__name__)
@@ -79,12 +80,12 @@ class _XYZData:
         self,
         dataframe: pd.DataFrame,
         attr_types: dict[str, str] | None = None,
-        attr_records: dict[str, dict[int, str] | Sequence[str]] | None = None,
+        attr_records: AttrRecordsType | None = None,
         xname: str = _AttrName.XNAME.value,
         yname: str = _AttrName.YNAME.value,
         zname: str = _AttrName.ZNAME.value,
         idname: str | None = None,  # Well, Polygon, ...
-        undef: float | Sequence[float, float] = -999.0,
+        undef: float | Sequence[float] = -999.0,
         xyztype: Literal["well", "points", "polygons"] = "well",
         floatbits: Literal["float32", "float64"] = "float64",
     ):
@@ -97,7 +98,9 @@ class _XYZData:
                 use_atype = "DISC" if atype.upper() in ("DISC", "INT") else "CONT"
                 self._attr_types[name] = _AttrType[use_atype]
 
-        self._attr_records = attr_records if attr_records is not None else {}
+        self._attr_records: AttrRecordsType = (
+            attr_records if attr_records is not None else {}
+        )
         self._xname = xname
         self._yname = yname
         self._zname = zname
@@ -128,53 +131,53 @@ class _XYZData:
         )
 
     @property
-    def dataframe(self):
+    def dataframe(self) -> pd.DataFrame:
         return self._df
 
     data = dataframe  # alias
 
     @property
-    def attr_types(self):
+    def attr_types(self) -> dict[str, _AttrType]:
         return self._attr_types
 
     @property
-    def attr_records(self):
+    def attr_records(self) -> AttrRecordsType:
         return self._attr_records
 
     @property
-    def xname(self):
+    def xname(self) -> str:
         return self._xname
 
     @xname.setter
-    def xname(self, name: str):
+    def xname(self, name: str) -> None:
         if isinstance(name, str):
             self._xname = name
         else:
             raise ValueError(f"Input name is not a string: {name}")
 
     @property
-    def yname(self):
+    def yname(self) -> str:
         return self._yname
 
     @yname.setter
-    def yname(self, name: str):
+    def yname(self, name: str) -> None:
         if isinstance(name, str):
             self._yname = name
         else:
             raise ValueError(f"Input name is not a string: {name}")
 
     @property
-    def zname(self):
+    def zname(self) -> str:
         return self._zname
 
     @zname.setter
-    def zname(self, name: str):
+    def zname(self, name: str) -> None:
         if isinstance(name, str):
             self._zname = name
         else:
             raise ValueError(f"Input name is not a string: {name}")
 
-    def _infer_attr_dtypes(self):
+    def _infer_attr_dtypes(self) -> None:
         """Return as dict on form {"X_UTME": _AttrType.CONT, "FACIES": _AttrType.DISC}.
 
         There are some important restrictions:
@@ -215,7 +218,7 @@ class _XYZData:
         self._attr_types = datatypes
         logger.debug("Processed attr_type: %s", self._attr_types)
 
-    def _ensure_consistency_attr_types(self):
+    def _ensure_consistency_attr_types(self) -> None:
         """Ensure that dataframe and attr_types are consistent.
 
         attr_types are on form {"GR": "CONT", "ZONES": "DISC", ...}
@@ -232,7 +235,7 @@ class _XYZData:
 
         self._infer_attr_dtypes()
 
-    def _infer_automatic_record(self, attr_name: str):
+    def _infer_automatic_record(self, attr_name: str) -> None:
         """Establish automatic record from name, type and values as first attempt."""
         if self._attr_types[attr_name] == _AttrType.CONT:
             self._attr_records[attr_name] = CONT_DEFAULT_RECORD
@@ -262,7 +265,7 @@ class _XYZData:
 
             self._attr_records[attr_name] = codes
 
-    def _ensure_consistency_attr_records(self):
+    def _ensure_consistency_attr_records(self) -> None:
         """Ensure that data and attr_records are consistent; cf attr_types.
 
         Important that input attr_types are correct; i.e. run
@@ -284,7 +287,7 @@ class _XYZData:
             ):
                 self._attr_records[attr_name] = CONT_DEFAULT_RECORD
 
-    def _ensure_consistency_df_dtypes(self):
+    def _ensure_consistency_df_dtypes(self) -> None:
         """Ensure that dataframe float32/64 for all logs, except for XYZ -> float64.
 
         Whether it is float32 or float64 is set by self._floatbits. Float32 will save
@@ -297,12 +300,13 @@ class _XYZData:
         coords_dtypes = [str(entry) for entry in self._df[col[0:3]].dtypes]
 
         if not all("float64" in entry for entry in coords_dtypes):
-            self._df[col[0:3]] = self._df.iloc[:, 0:3].astype("float64")
+            self._df.iloc[:, 0:3] = self._df.iloc[:, 0:3].astype("float64")
 
-        attr_dtypes = [str(entry) for entry in self._df[col[3:]].dtypes]
+        attr_cols = self._df.columns[3:]
+        attr_dtypes = [str(entry) for entry in self._df[attr_cols].dtypes]
 
         if not all(self._floatbits in entry for entry in attr_dtypes):
-            self._df[col[3:]] = self._df.iloc[:, 3:].astype(self._floatbits)
+            self._df = self._df.astype(dict.fromkeys(attr_cols, self._floatbits))
 
         for name, attr_type in self._attr_types.items():
             if attr_type == _AttrType.CONT:
@@ -415,11 +419,11 @@ class _XYZData:
 
         self.ensure_consistency()
 
-    def get_attr_record(self, name: str):
+    def get_attr_record(self, name: str) -> AttrRecordType:
         """Get a record for a named attribute."""
         return self._attr_records[name]
 
-    def set_attr_record(self, name: str, record: dict | None) -> None:
+    def set_attr_record(self, name: str, record: AttrRecordType | None) -> None:
         """Set a record for a named log."""
 
         if name not in self._attr_types:
@@ -457,10 +461,10 @@ class _XYZData:
     def get_dataframe_copy(
         self,
         infer_dtype: bool = False,
-        filled=False,
-        fill_value=UNDEF_CONT,
-        fill_value_int=UNDEF_DISC,
-    ):
+        filled: bool = False,
+        fill_value: float = UNDEF_CONT,
+        fill_value_int: int = UNDEF_DISC,
+    ) -> pd.DataFrame:
         """Get a deep copy of the dataframe, with options.
 
         If infer_dtype is True, then DISC columns will be of "int32" type, but
@@ -475,25 +479,26 @@ class _XYZData:
                     dfr[name] = dfr[name].astype("int32")
 
         if filled:
-            dfill = {}
+            dfill: dict[str, float | int] = {}
             for attrname in self._df:
-                if self._attr_types[attrname] == _AttrType.DISC:
-                    dfill[attrname] = fill_value_int
+                name_str = cast("str", attrname)
+                if self._attr_types[name_str] == _AttrType.DISC:
+                    dfill[name_str] = fill_value_int
                 else:
-                    dfill[attrname] = fill_value
+                    dfill[name_str] = fill_value
 
             dfr = dfr.fillna(dfill)
 
         return dfr
 
-    def get_dataframe(self, copy=True):
+    def get_dataframe(self, copy: bool = True) -> pd.DataFrame:
         """Get the dataframe, as view or deep copy."""
         if copy:
             return self._df.copy(deep=True)
 
         return self._df
 
-    def set_dataframe(self, dfr: pd.DataFrame):
+    def set_dataframe(self, dfr: pd.DataFrame) -> None:
         """Set the dataframe in a controlled manner, shall be used"""
         # TODO: more checks, and possibly acceptance of lists, dicts?
         if isinstance(dfr, pd.DataFrame):
@@ -502,7 +507,7 @@ class _XYZData:
             raise ValueError("Input dfr is not a pandas dataframe")
         self.ensure_consistency()
 
-    def rename_attr(self, attrname: str, newname: str):
+    def rename_attr(self, attrname: str, newname: str) -> None:
         """Rename a attribute, e.g. Poro to PORO."""
 
         if attrname not in list(self._df):
@@ -526,7 +531,7 @@ class _XYZData:
             _AttrType.CONT.value,  # type: ignore
             _AttrType.DISC.value,  # type: ignore
         ],
-        attr_record: dict | None = None,
+        attr_record: AttrRecordType | None = None,
         value: float = 0.0,
         force: bool = True,
         force_reserved: bool = False,
@@ -543,6 +548,8 @@ class _XYZData:
                 f"Note that the follwoing names are reserved: {_AttrName.list()}"
             )
 
+        if attr_type not in _AttrType.__members__:
+            raise ValueError(f"Invalid attr_type: {attr_type}")
         self._attr_types[attrname] = _AttrType[attr_type]
         self._attr_records[attrname] = attr_record
 
@@ -586,7 +593,7 @@ class _XYZData:
 
         return lcount
 
-    def create_relative_hlen(self):
+    def create_relative_hlen(self) -> None:
         """Make a relative length of e.g. a well, as a attribute (log)."""
         # extract numpies from XYZ trajectory logs
         xv = self._df[self._xname].values
@@ -603,7 +610,7 @@ class _XYZData:
         )
         self.ensure_consistency()
 
-    def geometrics(self):
+    def geometrics(self) -> bool:
         """Compute geometrical arrays MD, INCL, AZI, as attributes (logs) (~well data).
 
         These are kind of quasi measurements hence the attributes (logs) will named
@@ -625,7 +632,7 @@ class _XYZData:
                 f"trajectory points (need >3, have: {self._df.shape[0]})"
             )
 
-        # extract numpies from XYZ trajetory logs
+        # extract numpies from XYZ trajectory logs
         ptr_xv = _get_carray(self._df, self._attr_types, self._xname)
         ptr_yv = _get_carray(self._df, self._attr_types, self._yname)
         ptr_zv = _get_carray(self._df, self._attr_types, self._zname)
