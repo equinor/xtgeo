@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 from warnings import warn
 
 import numpy as np
@@ -17,11 +17,11 @@ from . import _xyz_oper
 if TYPE_CHECKING:
     import pandas as pd
 
+    from xtgeo.xyz.polygons import Polygons
+
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
-
-Polygons = TypeVar("Polygons")
 
 
 class XYZ(ABC):
@@ -319,7 +319,7 @@ class XYZ(ABC):
 
     def mark_in_polygons(
         self,
-        poly: Polygons | list[Polygons],  # noqa: F821
+        poly: Polygons | list[Polygons],
         name: str = "pstatus",
         inside_value: int = 1,
         outside_value: int = 0,
@@ -342,7 +342,7 @@ class XYZ(ABC):
 
     def operation_polygons(
         self,
-        poly: Polygons | list[Polygons],  # noqa: F821
+        poly: Polygons | list[Polygons],
         value: float,
         opname: str = "add",
         inside: bool = True,
@@ -401,8 +401,16 @@ class XYZ(ABC):
                 self, poly, value, opname=opname, inside=inside
             )
         else:
+            if isinstance(poly, list):
+                raise ValueError(
+                    "poly must be a single Polygons instance for version 1"
+                )
             _xyz_oper.operation_polygons_v1(
-                self, poly, value, opname=opname, inside=inside
+                self,
+                poly,
+                value,
+                opname=opname,
+                inside=inside,
             )
             if version == 0:
                 # using version 0 INTERNALLY to mark that "add_inside" etc has been
@@ -431,7 +439,7 @@ class XYZ(ABC):
     def add_inside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Add a value (scalar) to points inside polygons (new behaviour).
 
@@ -462,7 +470,7 @@ class XYZ(ABC):
     def add_outside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Add a value (scalar) to points outside polygons (new behaviour).
 
@@ -493,7 +501,7 @@ class XYZ(ABC):
     def sub_inside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Subtract a value (scalar) for points inside polygons (new behaviour).
 
@@ -524,7 +532,7 @@ class XYZ(ABC):
     def sub_outside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Subtract a value (scalar) for points outside polygons (new behaviour).
 
@@ -555,7 +563,7 @@ class XYZ(ABC):
     def mul_inside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Multiply a value (scalar) for points inside polygons (new behaviour).
 
@@ -586,7 +594,7 @@ class XYZ(ABC):
     def mul_outside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Multiply a value (scalar) for points outside polygons (new behaviour).
 
@@ -617,7 +625,7 @@ class XYZ(ABC):
     def div_inside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Divide a value (scalar) for points inside polygons (new behaviour).
 
@@ -648,7 +656,7 @@ class XYZ(ABC):
     def div_outside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Divide a value (scalar) for points outside polygons (new behaviour).
 
@@ -681,7 +689,7 @@ class XYZ(ABC):
     def set_inside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Set a value (scalar) for points inside polygons (new behaviour).
 
@@ -712,7 +720,7 @@ class XYZ(ABC):
     def set_outside_polygons(
         self,
         poly: Polygons | list[Polygons],
-        value: float,  # noqa: F821
+        value: float,
     ) -> None:
         """Set a value (scalar) for points outside polygons (new behaviour).
 
@@ -739,7 +747,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, 0, opname="eli", inside=True, version=0)
 
-    def eli_inside_polygons(self, poly: Polygons | list[Polygons]) -> None:  # noqa: F821
+    def eli_inside_polygons(self, poly: Polygons | list[Polygons]) -> None:
         """Remove points inside polygons.
 
         This is an improved implementation than :meth:`eli_inside()`, and is now the
@@ -764,7 +772,7 @@ class XYZ(ABC):
         """
         self.operation_polygons(poly, 0, opname="eli", inside=False, version=0)
 
-    def eli_outside_polygons(self, poly: Polygons | list[Polygons]) -> None:  # noqa: F821
+    def eli_outside_polygons(self, poly: Polygons | list[Polygons]) -> None:
         """Remove points outside polygons.
 
         This is an improved implementation than :meth:`eli_outside()`, and is now the

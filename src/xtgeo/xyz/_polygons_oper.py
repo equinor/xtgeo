@@ -12,6 +12,7 @@ Functions starting with '_' are local helper functions
 from __future__ import annotations
 
 from math import ceil
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -20,8 +21,15 @@ import shapely.geometry as sg
 from scipy.spatial import Delaunay, cKDTree
 from shapely.ops import polygonize
 
-import xtgeo
 from xtgeo.common.log import null_logger
+
+if TYPE_CHECKING:
+    from xtgeo.xyz.points import Points
+    from xtgeo.xyz.polygons import Polygons
+
+
+EdgesType = set[tuple[int, int]]
+
 
 logger = null_logger(__name__)
 MINIMUM_NUMBER_POINTS = 4
@@ -31,9 +39,16 @@ class BoundaryError(ValueError):
     """Get error on not able to create a boundary."""
 
 
-def boundary_from_points(points, alpha_factor=1.0, alpha=None, concave=False):
+def boundary_from_points(
+    points: Points,
+    alpha_factor: float = 1.0,
+    alpha: float | None = None,
+    concave: bool = False,
+) -> list[list[float | int]] | None:
     """From a Point instance, make boundary polygons (generic)."""
-    if not isinstance(points, xtgeo.Points):
+    from xtgeo.xyz.points import Points
+
+    if not isinstance(points, Points):
         raise ValueError("The input points is not an instance of xtgeo.Points")
 
     if points.nrow < MINIMUM_NUMBER_POINTS:
@@ -55,9 +70,9 @@ def boundary_from_points(points, alpha_factor=1.0, alpha=None, concave=False):
 
     usepoints = points.copy()  # make a copy since points may be filtered
 
-    xvec = usepoints.get_dataframe(copy=False)[usepoints.xname].values
-    yvec = usepoints.get_dataframe(copy=False)[usepoints.yname].values
-    zvec = usepoints.get_dataframe(copy=False)[usepoints.zname].values
+    xvec = np.asarray(usepoints.get_dataframe(copy=False)[usepoints.xname].values)
+    yvec = np.asarray(usepoints.get_dataframe(copy=False)[usepoints.yname].values)
+    zvec = np.asarray(usepoints.get_dataframe(copy=False)[usepoints.zname].values)
 
     if alpha is None:
         # use scipy to detect average distance; 30 points should be sufficient
@@ -95,7 +110,13 @@ def boundary_from_points(points, alpha_factor=1.0, alpha=None, concave=False):
     return return_values
 
 
-def _propose_new_alpha(xvec, yvec, zvec, alpha_factor, alpha):
+def _propose_new_alpha(
+    xvec: np.ndarray,
+    yvec: np.ndarray,
+    zvec: np.ndarray,
+    alpha_factor: float,
+    alpha: float,
+) -> int:
     """The current combination of alpha_factor and alpha did not get produce a result.
 
     Do an iteration here and propose a new alpha_value, given that the user insists
@@ -111,7 +132,6 @@ def _propose_new_alpha(xvec, yvec, zvec, alpha_factor, alpha):
         logger.info("Proposed alpha is %s in trial %s", proposed_alpha, trials)
         try:
             _create_boundary_polygon(xvec, yvec, zvec, proposed_alpha * alpha_factor)
-            print("Trial number:", trials)
             return ceil(proposed_alpha)
         except BoundaryError:
             proposed_alpha *= multiplier
@@ -154,7 +174,7 @@ def _create_boundary_polygon(
     return data
 
 
-def _alpha_shape(points: np.ndarray, alpha: float) -> set[tuple[int, int]]:
+def _alpha_shape(points: np.ndarray, alpha: float) -> EdgesType:
     """Compute the alpha shape (concave hull) of a set of points.
 
     Args:
@@ -165,7 +185,7 @@ def _alpha_shape(points: np.ndarray, alpha: float) -> set[tuple[int, int]]:
             the indices in the points array.
     """
 
-    def add_edge(edges: set[tuple[int, int]], icv: int, jcv: int) -> None:
+    def add_edge(edges: EdgesType, icv: int, jcv: int) -> None:
         """Add an edge between the i-th and j-th points, if not in the list already."""
         if (icv, jcv) in edges or (jcv, icv) in edges:
             # if both neighboring triangles are in shape, it is not a boundary edge
@@ -175,7 +195,7 @@ def _alpha_shape(points: np.ndarray, alpha: float) -> set[tuple[int, int]]:
 
     tri = Delaunay(points)
 
-    edges = set()
+    edges: EdgesType = set()
 
     # Loop over triangles: ia, ib, ic = indices of corner points of the triangle
     for ia, ib, ic in tri.simplices:
@@ -207,7 +227,7 @@ def _alpha_shape(points: np.ndarray, alpha: float) -> set[tuple[int, int]]:
 
 
 def _get_polygon_coords_from_edges_shapely(
-    coords: np.ndarray, edges: set[tuple[int, int]]
+    coords: np.ndarray, edges: EdgesType
 ) -> list[shapely.coords.CoordinateSequence]:
     """Split and connect edges into shapely polygons"""
     logger.info("Getting polygon coordinates using shapely")
@@ -219,20 +239,19 @@ def _get_polygon_coords_from_edges_shapely(
     return [pol.exterior.coords for pol in polygons]
 
 
-def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
+def simplify_polygons(
+    self: Polygons, tolerance: float, preserve_topology: bool
+) -> bool:
     """Use Shapely's 'simplify' method to reduce points.
 
     Note that attributes are not yet supported (perhaps impossible?)
 
     For Args, see Shapely
     """
-    try:
-        if self.attributes:
-            raise UserWarning(
-                "Attributes are present, but they will be lost when simplifying"
-            )
-    except AttributeError:
-        pass
+    if hasattr(self, "attributes") and self.attributes:
+        raise UserWarning(
+            "Attributes are present, but they will be lost when simplifying"
+        )
 
     recompute_hlen = self.hname in self.get_dataframe(copy=False)
     recompute_tlen = self.tname in self.get_dataframe(copy=False)
@@ -246,9 +265,9 @@ def simplify_polygons(self, tolerance: float, preserve_topology: bool) -> bool:
             logger.warning("Cannot simplify polygons with less than two points. Skip")
             continue
 
-        pxcor = grp[self.xname].values
-        pycor = grp[self.yname].values
-        pzcor = grp[self.zname].values
+        pxcor = np.asarray(grp[self.xname].values)
+        pycor = np.asarray(grp[self.yname].values)
+        pzcor = np.asarray(grp[self.zname].values)
         spoly = sg.LineString(np.stack([pxcor, pycor, pzcor], axis=1))
 
         new_spoly = spoly.simplify(tolerance, preserve_topology=preserve_topology)

@@ -144,7 +144,7 @@ def _convert_carr_double_np(
 
 
 def _get_carray(
-    dataframe: pd.DataFrame, attributes: _AttrType, attrname: str
+    dataframe: pd.DataFrame, attributes: dict[str, _AttrType], attrname: str
 ) -> np.ndarray | None:
     """
     Returns the C array pointer (via SWIG) for a given attr.

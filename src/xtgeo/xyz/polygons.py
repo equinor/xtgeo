@@ -499,8 +499,20 @@ class Polygons(XYZ):
         .. versionadded: 3.1.0
         """
 
+        if alpha_factor is None:
+            warnings.warn(
+                "The alpha_factor is None, which means that the default value of 1.0 "
+                "will be used. "
+                "This may not be optimal for your data, and it is recommended to tune "
+                "the alpha_factor for better results.",
+                UserWarning,
+            )
+
+        safe_alpha_factor = 1.0 if alpha_factor is None else alpha_factor
         return cls(
-            _polygons_oper.boundary_from_points(points, alpha_factor, alpha, convex)
+            _polygons_oper.boundary_from_points(
+                points, safe_alpha_factor, alpha, convex
+            )
         )
 
     # ----------------------------------------------------------------------------------
