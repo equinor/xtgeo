@@ -202,7 +202,7 @@ class XYZ(ABC):
         """Set the Pandas dataframe object."""
         ...
 
-    def get_xyz_arrays(self) -> np.ndarray:
+    def get_xyz_arrays(self) -> np.ndarray | None:
         """Get the X, Y, Z arrays from the dataframe as a numpy (n, 3) vector.
 
         Returns:
@@ -212,8 +212,7 @@ class XYZ(ABC):
         """
         dataframe = self.get_dataframe(copy=False)
         if dataframe is None:
-            # TODO: simplifies return type by raising error if dataframe is None
-            raise ValueError("Dataframe is 'None', cannot get XYZ arrays.")
+            return None
         xarr = dataframe[self.xname].to_numpy()
         yarr = dataframe[self.yname].to_numpy()
         zarr = dataframe[self.zname].to_numpy()

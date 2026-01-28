@@ -144,7 +144,6 @@ def _get_randomline_fence(
     )
     logger.debug("Getting fence from a Polygons instance... DONE")
 
-    # isinstance check for type checking
     if not isinstance(fspec, np.ndarray):
         raise ValueError(
             "Expected a numpy array from polygons.get_fence(),"

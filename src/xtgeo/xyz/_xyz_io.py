@@ -176,13 +176,6 @@ def _import_table(
             "attributes": attrs,
             "values": dataframe,
         }
-    # TODO: @ecs: removed "return None" here to satisfy mypy type checking
-    # in polygons.py::_file_importer() and polygons.py::_file_importer(),
-    # because 'kwargs' could be None.
-    # Alternatively, could check "if kwargs is not None" before 'kwargs' is used in
-    # those two functions.
-    # TODO: @ecs: OBS the following error message is AI-generated,
-    # could most likely be improved
     raise ValueError(
         f"The file '{pfile.name}' has {ncol} columns which is not compatible with "
         f"{'Polygons' if _refers_to_polygons(xyztype) else 'Points'} type."

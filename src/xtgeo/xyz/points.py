@@ -487,20 +487,20 @@ class Points(XYZ):
         """User friendly print."""
         return self.describe(flush=False) or ""
 
-    def __eq__(self: Self, value):
+    def __eq__(self, value):
         """Magic method for ==."""
         return self.get_dataframe(copy=False)[self.zname] == value
 
-    def __gt__(self: Self, value):
+    def __gt__(self, value):
         return self.get_dataframe(copy=False)[self.zname] > value
 
-    def __ge__(self: Self, value):
+    def __ge__(self, value):
         return self.get_dataframe(copy=False)[self.zname] >= value
 
-    def __lt__(self: Self, value):
+    def __lt__(self, value):
         return self.get_dataframe(copy=False)[self.zname] < value
 
-    def __le__(self: Self, value):
+    def __le__(self, value):
         return self.get_dataframe(copy=False)[self.zname] <= value
 
     # ----------------------------------------------------------------------------------
@@ -508,7 +508,7 @@ class Points(XYZ):
     # ----------------------------------------------------------------------------------
 
     @property
-    def dataframe(self: Self) -> pd.DataFrame:
+    def dataframe(self) -> pd.DataFrame:
         """Returns or set the Pandas dataframe object."""
         warnings.warn(
             "Direct access to the dataframe property in Points class will be "
@@ -519,7 +519,7 @@ class Points(XYZ):
         return self._df
 
     @dataframe.setter
-    def dataframe(self: Self, df: pd.DataFrame) -> None:
+    def dataframe(self, df: pd.DataFrame) -> None:
         warnings.warn(
             "Direct access to the dataframe property in Points class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe(df)` instead.",
@@ -527,7 +527,7 @@ class Points(XYZ):
         )
         self.set_dataframe(df)
 
-    def get_dataframe(self: Self, copy: bool = True) -> pd.DataFrame:
+    def get_dataframe(self, copy: bool = True) -> pd.DataFrame:
         """Returns the Pandas dataframe object.
 
         Args:
@@ -539,10 +539,10 @@ class Points(XYZ):
         """
         return self._df.copy() if copy else self._df
 
-    def set_dataframe(self: Self, df: pd.DataFrame) -> None:
+    def set_dataframe(self, df: pd.DataFrame) -> None:
         self._df = df.apply(deepcopy)
 
-    def _random(self: Self, nrandom: int = 10) -> None:
+    def _random(self, nrandom: int = 10) -> None:
         """Generate nrandom random points within the range 0..1
 
         Args:
@@ -558,7 +558,7 @@ class Points(XYZ):
         )
 
     def to_file(
-        self: Self,
+        self,
         pfile: FileLike,
         fformat: str = "xyz",
         attributes: bool | list[str] = True,
@@ -610,7 +610,7 @@ class Points(XYZ):
         )
 
     def to_roxar(
-        self: Self,
+        self,
         project: Any,
         name: str,
         category: str,
@@ -665,7 +665,7 @@ class Points(XYZ):
             attributes,
         )
 
-    def copy(self: Self) -> Self:
+    def copy(self) -> Self:
         """Returns a deep copy of an instance."""
         mycopy = self.__class__()
         mycopy._xyztype = self._xyztype
@@ -679,7 +679,7 @@ class Points(XYZ):
 
         return mycopy
 
-    def snap_surface(self: Self, surf: RegularSurface, activeonly: bool = True) -> None:
+    def snap_surface(self, surf: RegularSurface, activeonly: bool = True) -> None:
         """Snap (transfer) the points Z values to a RegularSurface
 
         Args:
@@ -700,15 +700,15 @@ class Points(XYZ):
         _xyz_oper.snap_surface(self, surf, activeonly=activeonly)
 
     @inherit_docstring(inherit_from=XYZ.get_boundary)
-    def get_boundary(self: Self) -> tuple[float, float, float, float, float, float]:
+    def get_boundary(self) -> tuple[float, float, float, float, float, float]:
         return super().get_boundary()
 
     @inherit_docstring(inherit_from=XYZ.get_xyz_arrays)
-    def get_xyz_arrays(self: Self) -> np.ndarray:
+    def get_xyz_arrays(self) -> np.ndarray | None:
         return super().get_xyz_arrays()
 
     def merge_close_points(
-        self: Self,
+        self,
         min_distance: float,
         method: str = "average",
     ) -> None:

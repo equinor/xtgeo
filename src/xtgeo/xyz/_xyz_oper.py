@@ -9,7 +9,6 @@ import shapely.geometry as sg
 from scipy.interpolate import UnivariateSpline
 
 import xtgeo
-import xtgeo.xyz  # needed for type hinting of Polygons
 from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.log import null_logger

@@ -66,6 +66,7 @@ def test_points_inside_small_grid(small_grid):
     points = xtgeo.Points(points_input)
 
     arr = points.get_xyz_arrays()
+    assert arr is not None
 
     grid, grid_cpp = small_grid
     cache = grid._get_cache()
@@ -162,6 +163,7 @@ def test_many_points_inside_large_grid(large_grid):
     assert len(poly.get_dataframe()) == 69297
 
     arr = poly.get_xyz_arrays()
+    assert arr is not None
 
     points_cpp = _internal.xyz.PointSet(arr)
 

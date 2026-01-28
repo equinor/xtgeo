@@ -1132,7 +1132,7 @@ class Well:
 
     def get_fence_polyline(
         self,
-        sampling: float = 20,
+        sampling: float = 20.0,
         nextend: int = 2,
         tvdmin: float | None = None,
         asnumpy: bool = True,

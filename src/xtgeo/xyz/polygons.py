@@ -28,6 +28,7 @@ from ._xyz_io import _convert_idbased_xyz
 if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
     from xtgeo.well.well1 import Well
+    from xtgeo.xyz.points import Points
 
 logger = null_logger(__name__)
 
@@ -341,25 +342,25 @@ class Polygons(XYZ):
             self._dataframe_consistency_check()
 
     @property
-    def name(self: Self) -> str:
+    def name(self) -> str:
         """Returns or sets the name of the instance."""
         return self._name
 
     @name.setter
-    def name(self: Self, newname: str) -> None:
+    def name(self, newname: str) -> None:
         self._name = newname
 
     @property
-    def pname(self: Self) -> str:
+    def pname(self) -> str:
         return self._pname
 
     @pname.setter
-    def pname(self: Self, name: str) -> None:
+    def pname(self, name: str) -> None:
         super()._check_name_and_replace(self._pname, name)
         self._pname = name
 
     @property
-    def hname(self: Self) -> str | None:
+    def hname(self) -> str | None:
         """Returns or set the name of the cumulative horizontal length.
 
         If the column does not exist, None is returned. Default name is H_CUMLEN.
@@ -369,12 +370,12 @@ class Polygons(XYZ):
         return self._hname
 
     @hname.setter
-    def hname(self: Self, name: str) -> None:
+    def hname(self, name: str) -> None:
         super()._check_name_and_replace(self._hname, name)
         self._hname = name
 
     @property
-    def dhname(self: Self) -> str | None:
+    def dhname(self) -> str | None:
         """Returns or set the name of the delta horizontal length column if it exists.
 
         If the column does not exist, None is returned. Default name is H_DELTALEN.
@@ -384,12 +385,12 @@ class Polygons(XYZ):
         return self._dhname
 
     @dhname.setter
-    def dhname(self: Self, name: str) -> None:
+    def dhname(self, name: str) -> None:
         super()._check_name_and_replace(self._dhname, name)
         self._dhname = name
 
     @property
-    def tname(self: Self) -> str | None:
+    def tname(self) -> str | None:
         """Returns or set the name of the cumulative total length column if it exists.
 
         .. versionadded:: 2.1
@@ -397,12 +398,12 @@ class Polygons(XYZ):
         return self._tname
 
     @tname.setter
-    def tname(self: Self, name: str) -> None:
+    def tname(self, name: str) -> None:
         super()._check_name_and_replace(self._tname, name)
         self._tname = name
 
     @property
-    def dtname(self: Self) -> str | None:
+    def dtname(self) -> str | None:
         """Returns or set the name of the delta total length column if it exists.
 
         .. versionadded:: 2.1
@@ -410,12 +411,12 @@ class Polygons(XYZ):
         return self._dtname
 
     @dtname.setter
-    def dtname(self: Self, name: str) -> None:
+    def dtname(self, name: str) -> None:
         super()._check_name_and_replace(self._dtname, name)
         self._dtname = name
 
     @property
-    def dataframe(self: Self) -> pd.DataFrame:
+    def dataframe(self) -> pd.DataFrame:
         """Returns or set the Pandas dataframe object."""
         warnings.warn(
             "Direct access to the dataframe property in Polygons class will be "
@@ -425,7 +426,7 @@ class Polygons(XYZ):
         return self._df
 
     @dataframe.setter
-    def dataframe(self: Self, df: pd.DataFrame) -> None:
+    def dataframe(self, df: pd.DataFrame) -> None:
         warnings.warn(
             "Direct access to the dataframe property in Polygons class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe()` instead.",
@@ -433,7 +434,7 @@ class Polygons(XYZ):
         )
         self.set_dataframe(df)
 
-    def get_dataframe(self: Self, copy: bool = True) -> pd.DataFrame:
+    def get_dataframe(self, copy: bool = True) -> pd.DataFrame:
         """Returns the Pandas dataframe object.
 
         Args:
@@ -444,11 +445,11 @@ class Polygons(XYZ):
         """
         return self._df.copy() if copy else self._df
 
-    def set_dataframe(self: Self, df: pd.DataFrame) -> None:
+    def set_dataframe(self, df: pd.DataFrame) -> None:
         self._df = df.apply(deepcopy)
         self._name_to_none_if_missing()
 
-    def _name_to_none_if_missing(self: Self) -> None:
+    def _name_to_none_if_missing(self) -> None:
         if self._dtname not in self._df.columns:
             self._dtname = None
         if self._dhname not in self._df.columns:
@@ -465,7 +466,7 @@ class Polygons(XYZ):
     @classmethod
     def boundary_from_points(
         cls,
-        points: XYZ,
+        points: Points,
         alpha_factor: float | None = 1.0,
         alpha: float | None = None,
         convex: bool = False,
@@ -506,11 +507,11 @@ class Polygons(XYZ):
     # Instance methods
     # ----------------------------------------------------------------------------------
     @inherit_docstring(inherit_from=XYZ.protected_columns)
-    def protected_columns(self: Self) -> list[str]:
+    def protected_columns(self) -> list[str]:
         return super().protected_columns() + [self.pname]
 
     def to_file(
-        self: Self,
+        self,
         pfile: FileLike,
         fformat: str = "xyz",
         attributes: bool | list[str] = False,
@@ -531,7 +532,7 @@ class Polygons(XYZ):
         return _xyz_io.to_file(self, pfile, fformat=fformat, attributes=attributes)
 
     def to_roxar(
-        self: Self,
+        self,
         project: str | Any,
         name: str,
         category: str,
@@ -585,7 +586,7 @@ class Polygons(XYZ):
             attributes,
         )
 
-    def copy(self: Self) -> Self:
+    def copy(self) -> Self:
         """Returns a deep copy of this instance"""
         mycopy = self.__class__()
         mycopy._xyztype = self._xyztype
@@ -604,7 +605,7 @@ class Polygons(XYZ):
 
         return mycopy
 
-    def get_xyz_dataframe(self: Self) -> pd.DataFrame:
+    def get_xyz_dataframe(self) -> pd.DataFrame:
         """Get a dataframe copy from the Polygons points with no ID column.
 
         Convert from POLY_ID based to XYZ, where a new polygon is marked with a 999
@@ -612,7 +613,7 @@ class Polygons(XYZ):
         """
         return _convert_idbased_xyz(self, self.get_dataframe())
 
-    def get_shapely_objects(self: Self) -> list[sg.LineString]:
+    def get_shapely_objects(self) -> list[sg.LineString]:
         """Returns a list of Shapely LineString objects, one per POLY_ID.
 
         .. versionadded:: 2.1
@@ -630,16 +631,14 @@ class Polygons(XYZ):
         return spolys
 
     @inherit_docstring(inherit_from=XYZ.get_boundary)
-    def get_boundary(self: Self) -> tuple[float, float, float, float, float, float]:
+    def get_boundary(self) -> tuple[float, float, float, float, float, float]:
         return super().get_boundary()
 
     @inherit_docstring(inherit_from=XYZ.get_xyz_arrays)
-    def get_xyz_arrays(self: Self) -> np.ndarray:
+    def get_xyz_arrays(self) -> np.ndarray | None:
         return super().get_xyz_arrays()
 
-    def simplify(
-        self: Self, tolerance: float = 0.1, preserve_topology: bool = True
-    ) -> bool:
+    def simplify(self, tolerance: float = 0.1, preserve_topology: bool = True) -> bool:
         """Simply a polygon, i.e. remove unneccesary points.
 
         This is based on `Shapely's simplify() method
@@ -660,7 +659,7 @@ class Polygons(XYZ):
 
         return _polygons_oper.simplify_polygons(self, tolerance, preserve_topology)
 
-    def filter_byid(self: Self, polyid: int | list[int] | None = None) -> None:
+    def filter_byid(self, polyid: int | list[int] | None = None) -> None:
         """Remove all line segments not in polyid.
 
         The instance is updated in-place.
@@ -690,7 +689,7 @@ class Polygons(XYZ):
         self.set_dataframe(dataframe)
 
     def tlen(
-        self: Self,
+        self,
         tname: str = "T_CUMLEN",
         dtname: str = "T_DELTALEN",
         atindex: int = 0,
@@ -709,7 +708,7 @@ class Polygons(XYZ):
         _xyz_oper.tlen(self, tname=tname, dtname=dtname, atindex=atindex)
 
     def hlen(
-        self: Self,
+        self,
         hname: str = "H_CUMLEN",
         dhname: str = "H_DELTALEN",
         atindex: int = 0,
@@ -727,9 +726,7 @@ class Polygons(XYZ):
         """
         _xyz_oper.hlen(self, hname=hname, dhname=dhname, atindex=atindex)
 
-    def extend(
-        self: Self, distance: float, nsamples: int = 1, mode2d: bool = True
-    ) -> None:
+    def extend(self, distance: float, nsamples: int = 1, mode2d: bool = True) -> None:
         """Extend polyline by `distance` at both ends, nsmaples times.
 
         The instance is updated in-place.
@@ -744,7 +741,7 @@ class Polygons(XYZ):
         _xyz_oper.extend(self, distance, nsamples, mode2d)
 
     def rescale(
-        self: Self,
+        self,
         distance: float,
         addlen: bool = False,
         kind: str = "simple",
@@ -778,7 +775,7 @@ class Polygons(XYZ):
         )
 
     def get_fence(
-        self: Self,
+        self,
         distance: float = 20.0,
         atleast: int = 5,
         nextend: int = 2,
@@ -827,7 +824,7 @@ class Polygons(XYZ):
     # ==================================================================================
 
     def quickplot(
-        self: Self,
+        self,
         filename: str | None = None,
         others: list[Polygons] | None = None,
         title: str = "QuickPlot for Polygons",
