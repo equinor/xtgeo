@@ -1578,6 +1578,10 @@ class Grid(_Grid3D):
         """
         Create a discrete GridProperty encoding subgrid indices as zone values.
 
+        The returned GridProperty is automatically appended to the grid's property list
+        and has its geometry linked to the grid, ensuring proper handling of inactive
+        cells.
+
         Returns:
             A GridProperty where each layer belonging to a subgrid is assigned a unique
             integer zone index (starting from 1). The property codes map these indices
@@ -1586,18 +1590,23 @@ class Grid(_Grid3D):
         if not self.subgrids:
             return None
 
-        zoneprop = xtgeo.GridProperty(
-            ncol=self.ncol,
-            nrow=self.nrow,
-            nlay=self.nlay,
+        # Create the zone values array before creating the GridProperty
+        # so that the mask is applied correctly
+
+        zone_values = np.zeros((self.ncol, self.nrow, self.nlay), dtype=np.int32)
+        codes = {}
+        for i, (name, layers) in enumerate(self.subgrids.items()):
+            codes[i + 1] = name
+            zone_values[:, :, min(layers) - 1 : max(layers)] = i + 1
+
+        return xtgeo.GridProperty(
+            self,
             name="Zone",
             discrete=True,
-            values=0,
+            values=zone_values,
+            codes=codes,
+            linkgeometry=True,  # this is default, will append to Grid's properties
         )
-        for i, (name, layers) in enumerate(self.subgrids.items()):
-            zoneprop.codes[i + 1] = name
-            zoneprop.values[:, :, min(layers) - 1 : max(layers)] = i + 1
-        return zoneprop
 
     def get_boundary_polygons(
         self: Grid,
