@@ -148,7 +148,7 @@ class XYZ(ABC):
         else:
             raise ValueError(f"Wrong type of input to {newname}; must be string")
 
-    def _check_name_and_replace(self, oldname: str, newname: str) -> None:
+    def _check_name_and_replace(self, oldname: str | None, newname: str) -> None:
         """Replace name of a column, doing some checks."""
         if not isinstance(newname, str):
             raise ValueError(

@@ -2138,6 +2138,9 @@ class Grid(_Grid3D):
             fmt (str): Format of IJK arrays (int/float). Default is "int"
             undef (int or float): Value to assign to undefined (outside) entries.
 
+        Raises:
+            ValueError: If the Points object has no XYZ data available.
+
         .. versionadded:: 2.6
         .. versionchanged:: 2.8 Added keywords `columnnames`, `fmt`, `undef`
         """

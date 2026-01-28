@@ -67,7 +67,7 @@ def import_xyz(
 
 def _import_table(
     pfile: FileWrapper, xyztype: _XYZType, file_format: str = "csv"
-) -> dict[str, Any] | None:
+) -> dict[str, Any]:
     """Simple CSV or Parquet file. Generic reader for Points and Polygons.
 
     Table files (CSV, ...) can have some variants, e.g.:
@@ -176,23 +176,26 @@ def _import_table(
             "attributes": attrs,
             "values": dataframe,
         }
-    return None
+    raise ValueError(
+        f"The file '{pfile.name}' has {ncol} columns which is not compatible with "
+        f"{'Polygons' if _refers_to_polygons(xyztype) else 'Points'} type."
+    )
     # More than 4 columns, assume that the first three are X Y Z
 
 
-def import_csv_polygons(pfile: FileWrapper) -> dict[str, Any] | None:
+def import_csv_polygons(pfile: FileWrapper) -> dict[str, Any]:
     return _import_table(pfile, _XYZType.POLYGONS, file_format="csv")
 
 
-def import_csv_points(pfile: FileWrapper) -> dict[str, Any] | None:
+def import_csv_points(pfile: FileWrapper) -> dict[str, Any]:
     return _import_table(pfile, _XYZType.POINTS, file_format="csv")
 
 
-def import_parquet_polygons(pfile: FileWrapper) -> dict[str, Any] | None:
+def import_parquet_polygons(pfile: FileWrapper) -> dict[str, Any]:
     return _import_table(pfile, _XYZType.POLYGONS, file_format="parquet")
 
 
-def import_parquet_points(pfile: FileWrapper) -> dict[str, Any] | None:
+def import_parquet_points(pfile: FileWrapper) -> dict[str, Any]:
     return _import_table(pfile, _XYZType.POINTS, file_format="parquet")
 
 

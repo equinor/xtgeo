@@ -591,6 +591,8 @@ def get_ijk_from_points(
     points_df = points.get_dataframe(copy=False)
 
     p_array = points.get_xyz_arrays()
+    if p_array is None:
+        raise ValueError("Points object has no XYZ data available")
 
     iarr, jarr, karr = self._get_grid_cpp().get_indices_from_pointset(
         _internal.xyz.PointSet(p_array),
