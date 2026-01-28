@@ -198,6 +198,211 @@ def test_subgrids():
     assert grd._subgrids is None
 
 
+def test_subgrids_emerald(emerald_grid):
+    """Test get_zoneprop_from_subgrids on Emerald grid."""
+    grid = emerald_grid
+
+    zone_prop = grid.get_zoneprop_from_subgrids()
+    assert zone_prop is not None
+    assert zone_prop.name == "Zone"
+    assert zone_prop.ncol == grid.ncol
+    assert zone_prop.nrow == grid.nrow
+    assert zone_prop.nlay == grid.nlay
+
+    # Check that zone property has correct dimensions
+    assert zone_prop.values.shape == (grid.ncol, grid.nrow, grid.nlay)
+
+    # Verify it was auto-appended and can be retrieved
+    retrieved_prop = grid.get_prop_by_name("Zone")
+    assert retrieved_prop is not None
+    np.testing.assert_array_equal(zone_prop.values, retrieved_prop.values)
+
+    # Test dataframe with zone property included
+    df = grid.get_dataframe(activeonly=True)
+    assert "Zone" in df.columns
+    assert len(df) == grid.nactive
+
+
+def test_subgrids_from_zoneprop_inactive_cells():
+    """Test subgrids_from_zoneprop with inactive cells."""
+    grd = xtgeo.create_box_grid((5, 5, 10))
+
+    # Make some cells inactive
+    grd._actnumsv[0, 0, :] = 0
+    grd._actnumsv[1, 1, 3:7] = 0
+
+    # Create zone property with zones
+    _i_index, _j_index, k_index = grd.get_ijk()
+    zprop = k_index.copy()
+    zprop.values[k_index.values <= 3] = 1
+    zprop.values[(k_index.values > 3) & (k_index.values <= 7)] = 2
+    zprop.values[k_index.values > 7] = 3
+    zprop.codes = {1: "Top", 2: "Middle", 3: "Bottom"}
+
+    subgrids = grd.subgrids_from_zoneprop(zprop)
+    assert subgrids is not None
+    assert "Top" in subgrids
+    assert "Middle" in subgrids
+    assert "Bottom" in subgrids
+
+    # Verify that subgrids can be converted back to zone property
+    calc_zprop = grd.get_zoneprop_from_subgrids()
+    assert calc_zprop is not None
+
+    # Check values match where cells are active
+    active_mask = grd.get_actnum().values == 1
+    np.testing.assert_array_equal(
+        zprop.values[active_mask], calc_zprop.values[active_mask]
+    )
+
+
+def test_subgrids_roundtrip():
+    """Test that subgrids can be converted to zoneprop and back."""
+    grd = xtgeo.create_box_grid((8, 8, 20))
+
+    # Set up subgrids
+    original_subgrids = {
+        "Upper": 5,
+        "Middle": 10,
+        "Lower": 5,
+    }
+    grd.set_subgrids(original_subgrids)
+
+    # Convert to zone property
+    zprop = grd.get_zoneprop_from_subgrids()
+    assert zprop is not None
+    assert zprop.codes == {1: "Upper", 2: "Middle", 3: "Lower"}
+
+    # Clear subgrids and recreate from zone property
+    grd.subgrids = None
+    assert grd.subgrids is None
+
+    recreated_subgrids = grd.subgrids_from_zoneprop(zprop)
+    assert recreated_subgrids == original_subgrids
+
+
+def test_subgrids_empty_grid():
+    """Test subgrids behavior with empty grid."""
+    grd = xtgeo.create_box_grid((0, 0, 0))
+
+    assert grd.get_subgrids() is None
+
+    grd.set_subgrids({})
+    # Empty dict results in no subgrids, so get_subgrids() returns None
+    assert grd.get_subgrids() is None
+
+    zprop = grd.get_zoneprop_from_subgrids()
+    assert zprop is None
+
+
+def test_subgrids_single_layer():
+    """Test subgrids with single layer grid."""
+    grd = xtgeo.create_box_grid((10, 10, 1))
+
+    subgrids = {"OnlyLayer": 1}
+    grd.set_subgrids(subgrids)
+
+    zprop = grd.get_zoneprop_from_subgrids()
+    assert zprop is not None
+    assert np.all(zprop.values == 1)
+    assert zprop.codes == {1: "OnlyLayer"}
+
+
+def test_subgrids_all_inactive():
+    """Test get_zoneprop_from_subgrids when all cells are inactive."""
+    grd = xtgeo.create_box_grid((3, 3, 6))
+
+    # Make all cells inactive
+    grd._actnumsv[:, :, :] = 0
+
+    subgrids = {"Zone1": 3, "Zone2": 3}
+    grd.set_subgrids(subgrids)
+
+    zprop = grd.get_zoneprop_from_subgrids()
+    assert zprop is not None
+
+    # When all cells are inactive, all values should be masked
+    assert np.all(zprop.values.mask)
+
+    # But the underlying data should still be populated correctly
+    assert np.any(zprop.values.data == 1)
+    assert np.any(zprop.values.data == 2)
+
+    # Verify no active cells
+    assert len(zprop.get_active_npvalues1d()) == 0
+
+
+def test_subgrids_preserve_codes_order():
+    """Test that subgrid names are preserved in correct order."""
+    grd = xtgeo.create_box_grid((5, 5, 15))
+
+    subgrids = {
+        "First": 5,
+        "Second": 7,
+        "Third": 3,
+    }
+    grd.set_subgrids(subgrids)
+
+    zprop = grd.get_zoneprop_from_subgrids()
+
+    # Check that codes are assigned in order
+    assert zprop.codes == {1: "First", 2: "Second", 3: "Third"}
+
+    # Check layer ranges
+    assert np.all(zprop.values[:, :, 0:5] == 1)
+    assert np.all(zprop.values[:, :, 5:12] == 2)
+    assert np.all(zprop.values[:, :, 12:15] == 3)
+
+
+def test_subgrids_dataframe_integration():
+    """Test that subgrids work correctly with dataframe operations."""
+    grd = xtgeo.create_box_grid((4, 4, 12))
+
+    subgrids = {"A": 4, "B": 4, "C": 4}
+    grd.set_subgrids(subgrids)
+
+    zprop = grd.get_zoneprop_from_subgrids()
+    grd.append_prop(zprop)
+
+    df = grd.get_dataframe(activeonly=True)
+    assert "Zone" in df.columns
+    assert len(df) == grd.nactive
+    assert df["Zone"].nunique() == 3
+    assert set(df["Zone"].unique()) == {1, 2, 3}
+
+    # Check counts per zone
+    zone_counts = df["Zone"].value_counts().sort_index()
+    assert zone_counts[1] == 4 * 4 * 4  # ncol * nrow * nlayers_in_subgrid
+
+
+def test_get_zoneprop_from_subgrids_none():
+    """Test get_zoneprop_from_subgrids returns None when no subgrids."""
+    grd = xtgeo.create_box_grid((5, 5, 5))
+
+    assert grd.subgrids is None
+    zprop = grd.get_zoneprop_from_subgrids()
+    assert zprop is None
+
+
+def test_subgrids_rename_affects_zoneprop():
+    """Test that renaming subgrids affects subsequent zone property generation."""
+    grd = xtgeo.create_box_grid((3, 3, 9))
+
+    subgrids = {"Zone1": 3, "Zone2": 3, "Zone3": 3}
+    grd.set_subgrids(subgrids)
+
+    zprop1 = grd.get_zoneprop_from_subgrids()
+    assert zprop1.codes == {1: "Zone1", 2: "Zone2", 3: "Zone3"}
+
+    grd.rename_subgrids(["Alpha", "Beta", "Gamma"])
+
+    zprop2 = grd.get_zoneprop_from_subgrids()
+    assert zprop2.codes == {1: "Alpha", 2: "Beta", 3: "Gamma"}
+
+    # Values should be the same
+    np.testing.assert_array_equal(zprop1.values, zprop2.values)
+
+
 @functimer(output="info", comment="Roff binary import using new API, run 100 times")
 def test_roffbin_import_v2stress(testdata_path):
     """Test roff binary import ROFF using new API, compare timing etc."""
