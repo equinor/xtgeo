@@ -4,7 +4,26 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    allow:
+      - dependency-type: "all"
+    groups:
+      all-deps:
+        patterns:
+          - "*"
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
+    allow:
+      - dependency-type: "all"
+    groups:
+      all-deps:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "pandas"
+        versions: [">=3.0.0"]
+      - dependency-name: "sphinx-tabs"
+        versions: [">=3.4.5"]
+      - dependency-name: "swig"
+        versions: [">=4.3.0"]
