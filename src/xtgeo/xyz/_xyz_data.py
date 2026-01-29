@@ -91,7 +91,7 @@ class _XYZData:
         logger.info("Running init for: %s", __name__)
         self._df = dataframe
 
-        self._attr_types = {}
+        self._attr_types: dict[str, _AttrType] = {}
         if isinstance(attr_types, dict):
             for name, atype in attr_types.items():
                 use_atype = "DISC" if atype.upper() in ("DISC", "INT") else "CONT"
@@ -234,22 +234,29 @@ class _XYZData:
 
     def _infer_automatic_record(self, attr_name: str):
         """Establish automatic record from name, type and values as first attempt."""
-        if self.get_attr_type(attr_name) == _AttrType.CONT.value:
+        if self._attr_types[attr_name] == _AttrType.CONT:
             self._attr_records[attr_name] = CONT_DEFAULT_RECORD
         else:
             # it is a discrete log with missing record; try to find
             # a default one based on current values...
-            lvalues = self._df[attr_name].to_numpy().round(decimals=0)
-            lvalues = lvalues[~np.isnan(lvalues)]  # remove Nans
+            # Filter out NaN, original undefined value, and any transformed undef values
+            lvalues = self._df[attr_name].dropna().to_numpy()
+            # Remove values that are undefined (both original and sentinel)
+            mask_undef = ~np.isnan(lvalues)
+            for undef_val in [
+                self._undef_disc,
+                UNDEF_DISC,
+                float(UNDEF_DISC),
+                UNDEF_CONT,
+            ]:
+                mask_undef = mask_undef & (lvalues != undef_val)
+            lvalues = lvalues[mask_undef]
+            lvalues = lvalues.round(decimals=0)
 
             if len(lvalues) > 0:
-                lvalues = lvalues.astype("int")
+                lvalues = lvalues.astype("int32")
                 unique = np.unique(lvalues).tolist()
                 codes = {value: str(value) for value in unique}
-                if self._undef_disc in codes:
-                    del codes[self._undef_disc]
-                if UNDEF_DISC in codes:
-                    del codes[UNDEF_DISC]
             else:
                 codes = None
 
@@ -298,17 +305,30 @@ class _XYZData:
             self._df[col[3:]] = self._df.iloc[:, 3:].astype(self._floatbits)
 
         for name, attr_type in self._attr_types.items():
-            if attr_type == _AttrType.CONT.value:
+            if attr_type == _AttrType.CONT:
                 logger.debug("Replacing CONT undef...")
+                # Replace both the original undefined value and
+                # any previous DISC sentinel
                 self._df.loc[:, name] = self._df[name].replace(
                     self._undef_cont,
                     np.float64(UNDEF_CONT).astype(self._floatbits),
                 )
-            else:
-                logger.debug("Replacing INT undef...")
                 self._df.loc[:, name] = self._df[name].replace(
-                    self._undef_disc, np.int32(UNDEF_DISC)
+                    float(UNDEF_DISC),
+                    np.float64(UNDEF_CONT).astype(self._floatbits),
                 )
+            elif attr_type == _AttrType.DISC:
+                logger.debug("Replacing INT undef...")
+                # Replace both the original undefined value and
+                # any previous CONT sentinel
+                self._df.loc[:, name] = self._df[name].replace(
+                    self._undef_disc, float(UNDEF_DISC)
+                )
+                self._df.loc[:, name] = self._df[name].replace(
+                    UNDEF_CONT, float(UNDEF_DISC)
+                )
+            else:
+                raise RuntimeError(f"Unknown attr_type for column {name}: {attr_type}")
         logger.info("Processed dataframe: %s", list(self._df.dtypes))
 
     def ensure_consistency(self) -> bool:
