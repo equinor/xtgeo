@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.exceptions import InvalidFileFormatError
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     import io
     import pathlib
 
+    from xtgeo.common.types import FileLike
     from xtgeo.surface.regular_surface import RegularSurface
     from xtgeo.well import Well
 
@@ -28,7 +30,7 @@ logger = null_logger(__name__)
 
 def _data_reader_factory(
     file_format: FileFormat,
-) -> Callable[[FileWrapper], dict[str, Any] | None]:
+) -> Callable[[FileWrapper], dict[str, Any]]:
     if file_format == FileFormat.XYZ:
         return _xyz_io.import_xyz
     if file_format == FileFormat.ZMAP_ASCII:
@@ -517,7 +519,7 @@ class Points(XYZ):
         return self._df
 
     @dataframe.setter
-    def dataframe(self, df):
+    def dataframe(self, df: pd.DataFrame) -> None:
         warnings.warn(
             "Direct access to the dataframe property in Points class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe(df)` instead.",
@@ -537,10 +539,10 @@ class Points(XYZ):
         """
         return self._df.copy() if copy else self._df
 
-    def set_dataframe(self, df):
+    def set_dataframe(self, df: pd.DataFrame) -> None:
         self._df = df.apply(deepcopy)
 
-    def _random(self, nrandom=10):
+    def _random(self, nrandom: int = 10) -> None:
         """Generate nrandom random points within the range 0..1
 
         Args:
@@ -557,14 +559,14 @@ class Points(XYZ):
 
     def to_file(
         self,
-        pfile,
-        fformat="xyz",
+        pfile: FileLike,
+        fformat: str = "xyz",
         attributes: bool | list[str] = True,
         pfilter: dict[str, list[str]] | None = None,
         wcolumn: str = "",
         hcolumn: str = "",
-        mdcolumn="M_MDEPTH",
-        **kwargs,
+        mdcolumn: str = "M_MDEPTH",
+        **kwargs: dict[str, Any],
     ) -> int:
         """Export Points to file.
 
@@ -609,14 +611,14 @@ class Points(XYZ):
 
     def to_roxar(
         self,
-        project,
-        name,
-        category,
-        stype="horizons",
-        pfilter=None,
-        realisation=0,
-        attributes=False,
-    ):  # pragma: no cover
+        project: Any,
+        name: str,
+        category: str,
+        stype: str = "horizons",
+        pfilter: dict[str, list[str]] | None = None,
+        realisation: int = 0,
+        attributes: bool = False,
+    ) -> None:  # pragma: no cover
         """Export (store) a Points item to a Roxar RMS project.
 
         The export to the RMS project can be done either within the project
@@ -663,7 +665,7 @@ class Points(XYZ):
             attributes,
         )
 
-    def copy(self):
+    def copy(self) -> Self:
         """Returns a deep copy of an instance."""
         mycopy = self.__class__()
         mycopy._xyztype = self._xyztype
@@ -677,7 +679,7 @@ class Points(XYZ):
 
         return mycopy
 
-    def snap_surface(self, surf, activeonly=True):
+    def snap_surface(self, surf: RegularSurface, activeonly: bool = True) -> None:
         """Snap (transfer) the points Z values to a RegularSurface
 
         Args:
@@ -698,18 +700,18 @@ class Points(XYZ):
         _xyz_oper.snap_surface(self, surf, activeonly=activeonly)
 
     @inherit_docstring(inherit_from=XYZ.get_boundary)
-    def get_boundary(self):
+    def get_boundary(self) -> tuple[float, float, float, float, float, float]:
         return super().get_boundary()
 
     @inherit_docstring(inherit_from=XYZ.get_xyz_arrays)
-    def get_xyz_arrays(self):
+    def get_xyz_arrays(self) -> np.ndarray | None:
         return super().get_xyz_arrays()
 
     def merge_close_points(
         self,
         min_distance: float,
         method: str = "average",
-    ):
+    ) -> None:
         """Merge close points based on a minimum distance.
 
         Args:

@@ -138,10 +138,18 @@ def _get_randomline_fence(
         logger.debug("Estimate fence distance from grid resolution... DONE")
 
     logger.debug("Getting fence from a Polygons instance...")
+
     fspec = polygon.get_fence(
         distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
     )
     logger.debug("Getting fence from a Polygons instance... DONE")
+
+    if not isinstance(fspec, np.ndarray):
+        raise ValueError(
+            "Expected a numpy array from polygons.get_fence(),"
+            f"but got type {type(fspec)}."
+        )
+
     return fspec
 
 
