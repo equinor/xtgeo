@@ -43,6 +43,7 @@ def test_well_xyzdata_ensure_attr(generate_data: pd.DataFrame):
     assert instance.get_attr_type("FACIES") == "CONT"
     assert instance.get_attr_record("FACIES") == ("", "")
 
+    # Change FACIES attribute type from CONT to DISC
     instance.set_attr_type("FACIES", "DISC")
     assert instance.get_attr_record("FACIES") == {1: "1", 3: "3", 4: "4"}
 
