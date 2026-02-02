@@ -63,6 +63,7 @@ from xtgeo.metadata.metadata import (
     MetaDataCPProperty,
     MetaDataRegularCube,
     MetaDataRegularSurface,
+    MetaDataTriangulatedSurface,
     MetaDataWell,
 )
 
@@ -120,6 +121,10 @@ from xtgeo.surface.regular_surface import (
     surface_from_rms,
     surface_from_roxar,
     create_synthetic_surface,
+)
+from xtgeo.surface.triangulated_surface import (
+    TriangulatedSurface,
+    triangulated_surface_from_file,
 )
 from xtgeo.surface.surfaces import Surfaces
 
@@ -181,10 +186,12 @@ __all__ = [
     "MetaDataCPProperty",
     "MetaDataRegularCube",
     "MetaDataRegularSurface",
+    "MetaDataTriangulatedSurface",
     "MetaDataWell",
     "Points",
     "Polygons",
     "RegularSurface",
+    "TriangulatedSurface",
     "RoxUtils",
     "Surfaces",
     "UNDEF",
@@ -245,6 +252,7 @@ __all__ = [
     "surface_from_grid3d",
     "surface_from_rms",
     "surface_from_roxar",
+    "triangulated_surface_from_file",
     "version",
     "well1",
     "well_from_file",
