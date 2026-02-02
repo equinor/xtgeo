@@ -70,7 +70,7 @@ class _OptionalMetaData:
         self._deltadatetime = None
         self._visuals = {"colortable": "rainbow", "lower": None, "upper": None}
         self._domain = "depth"
-        self._units = "metric"
+        self._units: str = "metric"  # TODO: Could be an enum to pick from
         self._mean = None
         self._stddev = None
         self._percentiles = None
@@ -140,8 +140,19 @@ class _OptionalMetaData:
         # TODO: validation
         self._md5sum = newhash
 
+    @property
+    def units(self) -> str:
+        return self._units
+
+    @units.setter
+    def units(self, newunits: str) -> None:
+        if not isinstance(newunits, str):
+            raise ValueError("Units must be a string.")
+        # TODO: could be an enum to pick from
+        self._units = newunits
+
     def get_meta(self) -> dict[str, Any]:
-        """Return metadata as an dict."""
+        """Return metadata as a dict."""
         meta = {}
         for key in self.__slots__:
             newkey = key[1:]
@@ -154,12 +165,22 @@ class MetaData:
     """Generic metadata class, not intended to be used directly."""
 
     def __init__(self) -> None:
-        """Generic metadata class __init__, not be used directly."""
+        """Generic metadata class __init__, not to be used directly."""
         self._required: dict[str, Any] = {}
         self._optional = _OptionalMetaData()
         self._freeform = {}
 
         self._freeform = {"smda": "whatever"}
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two MetaData instances are equal."""
+        if not isinstance(other, MetaData):
+            return NotImplemented
+
+        if self is other:
+            return True
+
+        return self.get_metadata() == other.get_metadata()
 
     def get_metadata(self) -> dict[str, Any]:
         """Get all metadata that are present."""
@@ -361,6 +382,124 @@ class MetaDataCPGeometry(MetaData):
         self._required["yscale"] = 1.0
         self._required["zscale"] = 1.0
         self._required["subgrids"] = obj.get_subgrids()
+
+
+class MetaDataTriangulatedSurface(MetaData):
+    """
+    Metadata for TriangulatedSurface() objects.
+    """
+
+    # Required to contain exactly this set of keys
+    REQUIRED: dict[str, int] = {
+        "num_vertices": -1,
+        "num_triangles": -1,
+    }
+
+    def __init__(self) -> None:
+        """Docstring."""
+        super().__init__()
+        self._required = self.REQUIRED.copy()
+        self._optional._datatype = "Triangulated Surface"
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two MetaDataTriangulatedSurface instances are equal."""
+        if not isinstance(other, MetaDataTriangulatedSurface):
+            return NotImplemented
+
+        return super().__eq__(other)
+
+    @property
+    def required(self) -> dict[str, int]:
+        """Get set of required metadata."""
+        return self._required
+
+    @required.setter
+    def required(self, value: dict[str, int]) -> None:
+        """
+        Update required metadata from a dictionary.
+        The rest of the metadata (optional and freeform) remains unchanged.
+
+        Args:
+            value: Dict with keys matching MetaDataTriangulatedSurface.REQUIRED.
+
+        Raises:
+            ValueError: If required keys are missing.
+        """
+        MetaDataTriangulatedSurface.validate_required(
+            required_metadata=value, metadata=self, equal_values=False
+        )
+        self._required = value.copy()
+
+    @staticmethod
+    def validate_required(
+        required_metadata: dict[str, int],
+        metadata: MetaDataTriangulatedSurface,
+        equal_values: bool = False,
+    ) -> None:
+        """
+        Verify the REQUIRED metadata keys and values for a TriangulatedSurface.
+        Keys must match exactly.
+        Optional and freeform metadata are not checked.
+
+        Args:
+            required_metadata: Dict with keys matching
+                MetaDataTriangulatedSurface.REQUIRED, and their real values set from
+                the TriangulatedSurface instance.
+            metadata: The metadata instance to validate.
+            equal_values:
+                If True, check that the values in required_metadata equal
+                    the values in metadata._required.
+                If False, only basic tests are performed
+
+        Returns:
+            True if all required fields match.
+        """
+
+        if not isinstance(required_metadata, dict):
+            raise TypeError("required metadata must be a dict")
+
+        if not isinstance(metadata, MetaDataTriangulatedSurface):
+            raise TypeError("metadata is not a MetaDataTriangulatedSurface()")
+
+        # Verify that the set of keys in required_metadata is exactly the same as
+        # the set of keys in metadata.REQUIRED
+        if set(required_metadata.keys()) != set(metadata.REQUIRED.keys()):
+            raise ValueError(
+                f"'required_metadata' keys do not match expected keys. "
+                f"Expected keys {set(metadata.REQUIRED.keys())}, "
+                f"received {set(required_metadata.keys())}"
+            )
+
+        # Verify that the set of keys in current metadata is exactly the same as
+        # the set of keys in metadata.REQUIRED
+
+        if set(metadata._required.keys()) != set(metadata.REQUIRED.keys()):
+            raise ValueError(
+                f"'metadata' keys (current metadata) do not match expected keys. "
+                f"Expected keys {set(metadata.REQUIRED.keys())}, "
+                f"received {set(metadata._required.keys())}"
+            )
+
+        if not all(
+            isinstance(required_metadata[key], int) for key in required_metadata
+        ):
+            raise ValueError("All required metadata values must be integers.")
+
+        if equal_values:
+            if not all(
+                required_metadata[key] == metadata._required[key]
+                for key in required_metadata
+            ):
+                raise ValueError(
+                    "Required metadata values must be equal to "
+                    "the values in the metadata."
+                )
+        else:
+            # Basic tests
+            if not all(required_metadata[key] > 0 for key in required_metadata):
+                raise ValueError(
+                    "All required metadata values must be positive integers."
+                )
 
 
 class MetaDataCPProperty(MetaData):
