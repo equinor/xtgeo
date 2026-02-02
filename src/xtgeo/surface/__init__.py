@@ -9,6 +9,7 @@ from .regular_surface import (
     surface_from_roxar,
 )
 from .surfaces import Surfaces, surfaces_from_grid
+from .triangulated_surface import TriangulatedSurface, triangulated_surface_from_file
 
 __all__ = [
     "RegularSurface",
@@ -19,4 +20,6 @@ __all__ = [
     "Surfaces",
     "surfaces_from_grid",
     "create_synthetic_surface",
+    "TriangulatedSurface",
+    "triangulated_surface_from_file",
 ]
