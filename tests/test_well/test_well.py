@@ -259,31 +259,6 @@ def test_shortwellname(create_well):
     assert short == "A-142H"
 
 
-# @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
-# def test_hdf_io_single(tmp_path):
-#     """Test HDF io, single well."""
-#     mywell = xtgeo.well_from_file(WELL1)
-
-#     wname = (tmp_path / "hdfwell").with_suffix(".hdf")
-#     mywell.to_hdf(wname)
-#     mywell2 = xtgeo.well_from_file(wname, fformat="hdf")
-#     assert mywell2.nrow == mywell.nrow
-
-
-# @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No pytables on macOS")
-# def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
-#     """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
-#     t0 = xtg.timer()
-#     wname = (tmp_path / "$random").with_suffix(".hdf")
-#     wuse = simple_well.to_hdf(wname, compression=None)
-#     print("Time for save HDF: ", xtg.timer(t0))
-
-#     t0 = xtg.timer()
-#     result = xtgeo.well_from_file(wuse, fformat="hdf5")
-#     assert result.get_dataframe().equals(simple_well.get_dataframe())
-#     print("Time for load HDF: ", xtg.timer(t0))
-
-
 def test_import_export_rmsasc(tmp_path, simple_well):
     wname = (tmp_path / "$random").with_suffix(".rmsasc")
     wuse = simple_well.to_file(wname)
