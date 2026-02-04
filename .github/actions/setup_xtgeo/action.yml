@@ -29,7 +29,7 @@ runs:
 
     - name: Install macOS dependencies
       if: ${{ inputs.os == 'macos-latest' || inputs.os == 'macos-13' }}
-      # HDF5 needed for pytables+Python 3.10+
+      # HDF5 needed for h5py+Python 3.10+
       shell: bash
       run: |
         brew install hdf5 eigen fmt

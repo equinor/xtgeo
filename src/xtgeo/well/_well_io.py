@@ -3,6 +3,8 @@
 import json
 from copy import deepcopy
 
+import h5py
+import hdf5plugin
 import numpy as np
 import pandas as pd
 
@@ -245,21 +247,40 @@ def export_hdf5_well(self, wfile, compression="lzf"):
     self.metadata.required = self
 
     meta = self.metadata.get_metadata()
-    jmeta = json.dumps(meta)
+    jmeta = json.dumps(meta).encode()
 
-    complib = "zlib"  # same as default lzf
-    complevel = 5
     if compression and compression == "blosc":
-        complib = "blosc"
-    else:
-        complevel = 0
+        compression = hdf5plugin.Blosc(
+            cname="blosclz", clevel=9, shuffle=hdf5plugin.Blosc.SHUFFLE
+        )
 
-    with pd.HDFStore(wfile.file, "w", complevel=complevel, complib=complib) as store:
+    with h5py.File(wfile.name, "w") as fh5:
         logger.debug("export to HDF5 %s", wfile.name)
-        store.put("Well", self._wdata.data)
-        store.get_storer("Well").attrs["metadata"] = jmeta
-        store.get_storer("Well").attrs["provider"] = "xtgeo"
-        store.get_storer("Well").attrs["format_idcode"] = 1401
+        grp = fh5.create_group("Well")
+
+        # Store dataframe columns and index
+        df = self._wdata.data
+        grp.create_dataset(
+            "index",
+            data=df.index.values,
+            compression=compression,
+            chunks=True,
+        )
+
+        # Store each column as a separate dataset
+        for col in df.columns:
+            grp.create_dataset(
+                f"column/{col}",
+                data=df[col].values,
+                compression=compression,
+                chunks=True,
+            )
+
+        # Store column names as an attribute
+        grp.attrs["columns"] = np.array(df.columns.tolist(), dtype="S")
+        grp.attrs["metadata"] = jmeta
+        grp.attrs["provider"] = "xtgeo"
+        grp.attrs["format_idcode"] = 1401
 
     logger.debug("Export to hdf5 format... done!")
 
@@ -310,12 +331,22 @@ def import_hdf5_well(wfile, **kwargs):
     logger.debug("The kwargs may be unused: %s", kwargs)
     reqattrs = MetaDataWell.REQUIRED
 
-    with pd.HDFStore(wfile.file, "r") as store:
-        data = store.get("Well")
-        wstore = store.get_storer("Well")
-        jmeta = wstore.attrs["metadata"]
-        # provider = wstore.attrs["provider"]
-        # format_idcode = wstore.attrs["format_idcode"]
+    with h5py.File(wfile.file, "r") as fh5:
+        grp = fh5["Well"]
+        jmeta = grp.attrs["metadata"]
+
+        # Reconstruct the dataframe and read each column
+        index = grp["index"][:]
+        columns = [
+            col.decode() if isinstance(col, bytes) else col
+            for col in grp.attrs["columns"]
+        ]
+
+        data_dict = {}
+        for col in columns:
+            data_dict[col] = grp[f"column/{col}"][:]
+
+        data = pd.DataFrame(data_dict, index=index)
 
     if isinstance(jmeta, bytes):
         jmeta = jmeta.decode()
