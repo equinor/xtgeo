@@ -264,14 +264,14 @@ def export_hdf5_well(self, wfile, compression="lzf"):
     logger.debug("Export to hdf5 format... done!")
 
 
-def import_wlogs(wlogs: dict):
+def _import_wlogs_hdf5(wlogs: dict):
     """
     This converts joined wlogtypes/wlogrecords such as found in
     the hdf5 format to the format used in the Well object.
 
-    >>> import_wlogs(dict())
+    >>> _import_wlogs_hdf5(dict())
     {'wlogtypes': {}, 'wlogrecords': {}}
-    >>> import_wlogs(dict([("X_UTME", ("CONT", None))]))
+    >>> _import_wlogs_hdf5(dict([("X_UTME", ("CONT", None))]))
     {'wlogtypes': {'X_UTME': 'CONT'}, 'wlogrecords': {'X_UTME': None}}
 
     Returns:
@@ -288,8 +288,18 @@ def import_wlogs(wlogs: dict):
         else:
             raise ValueError(f"Invalid log type found in input: {typ}")
 
-        if rec is None or isinstance(rec, dict):
-            wlogrecords[key] = deepcopy(rec)
+        if rec is None:
+            wlogrecords[key] = None
+        elif isinstance(rec, dict):
+            # For DISC logs, convert string keys back to integers
+            # (JSON serialization converts int keys to strings)
+            if typ == _AttrType.DISC.value:
+                wlogrecords[key] = {int(k): v for k, v in rec.items()}
+            else:
+                wlogrecords[key] = deepcopy(rec)
+        elif isinstance(rec, (list, tuple)):
+            # For CONT logs, records are (unit, scale) tuples/lists
+            wlogrecords[key] = tuple(rec)
         else:
             raise ValueError(f"Invalid log record found in input: {rec}")
     return {"wlogtypes": wlogtypes, "wlogrecords": wlogrecords}
@@ -315,7 +325,7 @@ def import_hdf5_well(wfile, **kwargs):
     result = {}
     for myattr in reqattrs:
         if myattr == "wlogs":
-            result.update(import_wlogs(req[myattr]))
+            result.update(_import_wlogs_hdf5(req[myattr]))
         elif myattr == "name":
             result["wname"] = req[myattr]
         else:
