@@ -147,10 +147,8 @@ def test_hdf_io_with_nan_values(tmp_path, loadwell1):
     original_df = loadwell1.get_dataframe()
     result_df = result.get_dataframe()
 
-    # Compare shapes
     assert result_df.shape == original_df.shape
 
-    # Compare values including NaN handling
     pd.testing.assert_frame_equal(result_df, original_df)
 
 
@@ -168,7 +166,6 @@ def test_hdf_io_roundtrip_consistency(tmp_path, testdata_path):
     well1.to_hdf(wname2)
     well2 = xtgeo.well_from_file(wname2, fformat="hdf5")
 
-    # Both should be identical
     pd.testing.assert_frame_equal(well1.get_dataframe(), well2.get_dataframe())
     assert well1.wname == well2.wname
 
