@@ -1404,5 +1404,110 @@ convert_to_hybrid_grid(const Grid &grid_cpp,
     logger.debug("Hybrid grid conversion completed");
     return std::make_tuple(zcorn_hyb, actnum_hyb);
 }
+
+// Fix zero in Z value pillars to avoid tolerance violations and assure "verticality".
+void
+Grid::fix_zero_pillars() const
+{
+    auto &logger = xtgeo::logging::LoggerManager::get("Grid::fix_zero_pillars");
+    logger.debug("Fixing zero pillars for grid ({}, {}, {})", m_ncol, m_nrow, m_nlay);
+
+    constexpr double MIN_Z_SEPARATION = 1e-5;  // Must be > TOLERANCE (1e-6)
+
+    // Get mutable access to the coordinate arrays
+    auto coordsv_mut =
+      const_cast<py::array_t<double> &>(m_coordsv).mutable_unchecked<3>();
+    auto zcornsv_mut =
+      const_cast<py::array_t<float> &>(m_zcornsv).mutable_unchecked<4>();
+
+    // First pass: count zero pillars and compute average X,Y,Z from non-zero pillars
+    size_t zero_count = 0;
+    double sum_x = 0.0;
+    double sum_y = 0.0;
+    double sum_z_top = 0.0;
+    double sum_z_bot = 0.0;
+    size_t non_zero_count = 0;
+
+    for (size_t i = 0; i <= m_ncol; i++) {
+        for (size_t j = 0; j <= m_nrow; j++) {
+            bool is_zero = true;
+            for (size_t coord = 0; coord < 6; coord++) {
+                if (std::abs(coordsv_mut(i, j, coord)) > numerics::EPSILON) {
+                    is_zero = false;
+                    break;
+                }
+            }
+
+            if (is_zero) {
+                zero_count++;
+            } else {
+                // Accumulate X,Y,Z from non-zero pillars
+                sum_x += coordsv_mut(i, j, 0);      // x_top
+                sum_y += coordsv_mut(i, j, 1);      // y_top
+                sum_z_top += coordsv_mut(i, j, 2);  // z_top
+                sum_z_bot += coordsv_mut(i, j, 5);  // z_bot
+                non_zero_count++;
+            }
+        }
+    }
+
+    if (zero_count == 0) {
+        return;  // No zero pillars to fix
+    }
+
+    // Compute average X,Y,Z from non-zero pillars
+    double avg_x = (non_zero_count > 0) ? (sum_x / non_zero_count) : 0.0;
+    double avg_y = (non_zero_count > 0) ? (sum_y / non_zero_count) : 0.0;
+    double avg_z_top = (non_zero_count > 0) ? (sum_z_top / non_zero_count) : 0.0;
+    double avg_z_bot =
+      (non_zero_count > 0) ? (sum_z_bot / non_zero_count) : MIN_Z_SEPARATION;
+
+    // Ensure minimum separation between top and bottom
+    if (std::abs(avg_z_bot - avg_z_top) < MIN_Z_SEPARATION) {
+        avg_z_bot = avg_z_top + MIN_Z_SEPARATION;
+    }
+
+    logger.debug(
+      "Found {} zero pillars, avg coordinates from grid: ({}, {}, z_top={}, z_bot={})",
+      zero_count, avg_x, avg_y, avg_z_top, avg_z_bot);
+
+    // Second pass: fix zero pillars with average X,Y and proper Z separation
+    for (size_t i = 0; i <= m_ncol; i++) {
+        for (size_t j = 0; j <= m_nrow; j++) {
+            // Check if pillar is all zeros
+            bool is_zero = true;
+            for (size_t coord = 0; coord < 6; coord++) {
+                if (std::abs(coordsv_mut(i, j, coord)) > numerics::EPSILON) {
+                    is_zero = false;
+                    break;
+                }
+            }
+
+            if (is_zero) {
+                // Fix coordsv: set average X,Y,Z with proper separation
+                coordsv_mut(i, j, 0) = avg_x;      // x_top
+                coordsv_mut(i, j, 1) = avg_y;      // y_top
+                coordsv_mut(i, j, 2) = avg_z_top;  // z_top
+                coordsv_mut(i, j, 3) = avg_x;      // x_bot (vertical pillar)
+                coordsv_mut(i, j, 4) = avg_y;      // y_bot (vertical pillar)
+                coordsv_mut(i, j, 5) = avg_z_bot;  // z_bot
+
+                // Fix zcornsv: set progressive depth for each layer
+                // Use linear interpolation between avg_z_top and avg_z_bot
+                double layer_thickness =
+                  (avg_z_bot - avg_z_top) / static_cast<double>(m_nlay);
+                for (size_t k = 0; k <= m_nlay; k++) {
+                    float depth = static_cast<float>(avg_z_top + k * layer_thickness);
+                    for (size_t corner = 0; corner < 4; corner++) {
+                        zcornsv_mut(i, j, k, corner) = depth;
+                    }
+                }
+            }
+        }
+    }
+
+    logger.debug("Fixed {} zero pillars with average coordinates", zero_count);
+}
+
 //===================
 }  // xtgeo::grid3d

@@ -207,6 +207,7 @@ init(py::module &m)
       .def("extract_onelayer_grid", &Grid::extract_onelayer_grid,
            "Get a one-layer grid - returns coordv, zcornsv, and actnumsv arrays ")
       .def("get_bounding_box", &Grid::get_bounding_box, "Get bounding box of full grid")
+      .def("fix_zero_pillars", &Grid::fix_zero_pillars, "Fix zero pillars in the grid.")
 
       // free form functions in C++ to members in Python
       .def("get_cell_volumes", &get_cell_volumes, "Compute the bulk volume of cell.")
