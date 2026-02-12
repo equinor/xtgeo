@@ -534,6 +534,9 @@ public:
         return { m_min_point, m_max_point };
     }
 
+    // Fix zero pillars to ensure proper Z separation
+    void fix_zero_pillars() const;
+
 private:
     const size_t m_ncol;
     const size_t m_nrow;
