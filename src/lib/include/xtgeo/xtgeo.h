@@ -684,26 +684,6 @@ extern "C"
                                 char *file,
                                 int *ierr);
 
-    int cube_export_segy(char *sfile,
-                         int nx,
-                         int ny,
-                         int nz,
-                         float *swig_np_flt_in_v1,  // cube_v
-                         long n_swig_np_flt_in_v1,  // n total nx*ny*nz
-                         double xori,
-                         double xinc,
-                         double yori,
-                         double yinc,
-                         double zori,
-                         double zinc,
-                         double rotation,
-                         int yflip,
-                         int zflip,
-                         int *ilinesp,
-                         int *xlinesp,
-                         int *tracidp,
-                         int option);
-
     int cube_export_rmsregular(int nx,
                                int ny,
                                int nz,
