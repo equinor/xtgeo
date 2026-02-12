@@ -1,162 +1,83 @@
 """Export Cube data via SegyIO library or XTGeo CLIB."""
 
+from __future__ import annotations
+
 import json
-import shutil
+import math
 import struct
+from typing import TYPE_CHECKING
 
 import numpy as np
 import segyio
 
 from xtgeo import _cxtgeo
-from xtgeo._cxtgeo import XTGeoCLibError
 from xtgeo.common import XTGeoDialog, null_logger
 
 logger = null_logger(__name__)
 xtg = XTGeoDialog()
 
+if TYPE_CHECKING:
+    from xtgeo import Cube
 
-def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):
+
+def export_segy(cube: Cube, sfile: str) -> None:
     """Export on SEGY using segyio library.
 
     Args:
-        self (:class:`xtgeo.cube.Cube`): The instance
+        cube (:class:`xtgeo.cube.Cube`): The instance
         sfile (str): File name to export to.
-        template (str): Use an existing file a template.
-        pristine (bool): Make SEGY from scrtach if True; otherwise use an
-            existing SEGY file.
-        engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
-    if engine == "segyio":
-        _export_segy_segyio(self, sfile, template=template, pristine=pristine)
-    else:
-        _export_segy_xtgeo(self, sfile)
+    logger.debug("Exporting segy format using segyio")
+    cvalues = cube.values
 
+    spec = segyio.spec()
+    spec.sorting = 2  # inline
+    spec.format = 5  # ieee floats
+    spec.samples = np.arange(cube.nlay) * cube.zinc + cube.zori
+    spec.ilines = np.array(cube._ilines)
+    spec.xlines = np.array(cube._xlines)
 
-def _export_segy_segyio(self, sfile, template=None, pristine=False):
-    """Export on SEGY using segyio library.
+    dt_us = int(round(cube.zinc * 1000))
+    delrt = int(round(cube.zori))
 
-    Args:
-        self (:class:`xtgeo.cube.Cube`): The instance
-        sfile (str): File name to export to.
-        template (str): Use an existing file a template.
-        pristine (bool): Make SEGY from scrtach if True; otherwise use an
-            existing SEGY file.
-    """
-    logger.debug("Export segy format using segyio...")
+    rotation_rad = math.radians(cube.rotation)
+    cos_rot = math.cos(rotation_rad)
+    sin_rot = math.sin(rotation_rad)
 
-    if template is None and self._segyfile is None:
-        raise NotImplementedError("Error, template=None is not yet made!")
+    coord_scalar = -100  # divide stored values by 100 to get real value
 
-    # There is an existing _segyfile attribute, in this case the current SEGY
-    # headers etc are applied for the new data. Requires that shapes etc are
-    # equal.
-    if template is None and self._segyfile is not None:
-        template = self._segyfile
+    with segyio.create(sfile, spec) as f:
+        tr = 0
+        for il_idx, il in enumerate(spec.ilines):
+            for xl_idx, xl in enumerate(spec.xlines):
+                dx = il_idx * cube.xinc
+                dy = xl_idx * cube.yinc * cube.yflip
 
-    cvalues = self.values
+                # ij to xy
+                x = cube.xori + dx * cos_rot - dy * sin_rot
+                y = cube.yori + dx * sin_rot + dy * cos_rot
 
-    if template is not None and not pristine:
-        try:
-            shutil.copyfile(self._segyfile, sfile)
-        except Exception as errormsg:
-            xtg.warn(f"Error message: {errormsg}")
-            raise
+                f.header[tr] = {
+                    segyio.TraceField.INLINE_3D: int(il),
+                    segyio.TraceField.CROSSLINE_3D: int(xl),
+                    segyio.TraceField.CDP_X: int(round(x * 100)),
+                    segyio.TraceField.CDP_Y: int(round(y * 100)),
+                    segyio.TraceField.SourceGroupScalar: coord_scalar,
+                    segyio.TraceField.TRACE_SAMPLE_INTERVAL: dt_us,
+                    segyio.TraceField.TRACE_SAMPLE_COUNT: cube.nlay,
+                    segyio.TraceField.DelayRecordingTime: delrt,
+                    segyio.TraceField.TraceIdentificationCode: int(
+                        cube._traceidcodes[il_idx, xl_idx]
+                    ),
+                }
+                f.trace[tr] = cvalues[il_idx, xl_idx, :]
+                tr += 1
 
-        logger.debug("Input segy file copied ...")
-
-        with segyio.open(sfile, "r+") as segyfile:
-            logger.debug("Output segy file is now open...")
-
-            if segyfile.sorting == 1:
-                logger.info("xline sorting")
-                for xll, xline in enumerate(segyfile.xlines):
-                    segyfile.xline[xline] = cvalues[xll]  # broadcasting
-            else:
-                logger.info("iline sorting")
-                ixv, jyv, kzv = cvalues.shape
-                for ill, iline in enumerate(segyfile.ilines):
-                    if ixv != jyv != kzv or ixv != kzv != jyv:
-                        segyfile.iline[iline] = cvalues[ill]  # broadcasting
-                    else:
-                        # safer but a bit slower than broadcasting
-                        segyfile.iline[iline] = cvalues[ill, :, :]
-
-    else:
-        # NOT FINISHED!
-        logger.debug("Input segy file from scratch ...")
-
-        # sintv = int(self.zinc * 1000)
-        spec = segyio.spec()
-
-        spec.sorting = 2
-        spec.format = 1
-
-        spec.samples = np.arange(self.nlay)
-        spec.ilines = np.arange(self.ncol)
-        spec.xlines = np.arange(self.nrow)
-
-        with segyio.create(sfile, spec) as fseg:
-            # write the line itself to the file and the inline number
-            # in all this line's headers
-            for ill, ilno in enumerate(spec.ilines):
-                fseg.iline[ilno] = cvalues[ill]
-                # f.header.iline[ilno] = {
-                #     segyio.TraceField.INLINE_3D: ilno,
-                #     segyio.TraceField.offset: 0,
-                #     segyio.TraceField.TRACE_SAMPLE_INTERVAL: sintv
-                # }
-
-            # # then do the same for xlines
-            # for xlno in spec.xlines:
-            #     f.header.xline[xlno] = {
-            #         segyio.TraceField.CROSSLINE_3D: xlno,
-            #         segyio.TraceField.TRACE_SAMPLE_INTERVAL: sintv
-            #     }
-
-
-def _export_segy_xtgeo(self, sfile):
-    """Export SEGY via XTGeo internal C routine."""
-
-    values1d = self.values.reshape(-1)
-
-    ilinesp = _cxtgeo.new_intarray(len(self._ilines))
-    xlinesp = _cxtgeo.new_intarray(len(self._xlines))
-    tracidp = _cxtgeo.new_intarray(self.ncol * self.nrow)
-
-    ilns = self._ilines.astype(np.int32)
-    xlns = self._xlines.astype(np.int32)
-    trid = self._traceidcodes.flatten().astype(np.int32)
-
-    _cxtgeo.swig_numpy_to_carr_i1d(ilns, ilinesp)
-    _cxtgeo.swig_numpy_to_carr_i1d(xlns, xlinesp)
-    _cxtgeo.swig_numpy_to_carr_i1d(trid, tracidp)
-
-    status = _cxtgeo.cube_export_segy(
-        sfile,
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        values1d,
-        self.xori,
-        self.xinc,
-        self.yori,
-        self.yinc,
-        self.zori,
-        self.zinc,
-        self.rotation,
-        self.yflip,
-        1,
-        ilinesp,
-        xlinesp,
-        tracidp,
-        0,
-    )
-
-    if status != 0:
-        raise XTGeoCLibError("Error when exporting to SEGY (xtgeo engine)")
-
-    _cxtgeo.delete_intarray(ilinesp)
-    _cxtgeo.delete_intarray(xlinesp)
+        f.bin[segyio.BinField.Interval] = dt_us
+        f.bin[segyio.BinField.Samples] = cube.nlay
+        f.bin[segyio.BinField.SortingCode] = 4  # trace sorting from C: needed?
+        # TODO: Make this read from cube._measurement (or something)
+        f.bin[segyio.BinField.MeasurementSystem] = 1
 
 
 def export_rmsreg(self, sfile):

@@ -881,7 +881,7 @@ class Cube:
             )
 
         if fformat in FileFormat.SEGY.value:
-            _cube_export.export_segy(self, fobj.name, pristine=pristine)
+            _cube_export.export_segy(self, fobj.name)
         elif fformat == "rms_regular":
             _cube_export.export_rmsreg(self, fobj.name)
         elif fformat == "xtgregcube":
