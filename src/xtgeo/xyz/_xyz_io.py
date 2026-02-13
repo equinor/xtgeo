@@ -637,7 +637,7 @@ def export_table(
 
 
 def _convert_idbased_xyz(
-    xyz: Polygons,
+    polygons: Polygons,
     df: pd.DataFrame,
 ) -> pd.DataFrame:
     """Conversion of format from ID column to 999 flag."""
@@ -646,15 +646,23 @@ def _convert_idbased_xyz(
     # to replaced by adding 999 line instead (for polygons)
     # prior to XYZ export or when interactions in CXTGEO
 
-    idgroups = df.groupby(xyz._pname)
+    idgroups = df.groupby(polygons._pname)
 
-    newdf = pd.DataFrame(columns=[xyz._xname, xyz._yname, xyz._zname], dtype="float64")
+    newdf = pd.DataFrame(
+        columns=[polygons._xname, polygons._yname, polygons._zname],
+        dtype="float64",
+    )
     udef = pd.DataFrame(
-        [[999.0, 999.0, 999.0]], columns=[xyz._xname, xyz._yname, xyz._zname]
+        [[999.0, 999.0, 999.0]],
+        columns=[
+            polygons._xname,
+            polygons._yname,
+            polygons._zname,
+        ],
     )
 
     for _id, gr in idgroups:
-        dfx = gr.drop(xyz._pname, axis=1)
+        dfx = gr.drop(polygons._pname, axis=1)
         newdf = pd.concat([newdf, dfx, udef], ignore_index=True)
 
     return newdf
