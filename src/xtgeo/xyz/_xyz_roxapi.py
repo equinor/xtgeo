@@ -324,7 +324,7 @@ def _add_attributes_to_dataframe(
 
 
 def save_xyz_to_rms(
-    self: points.Points | polygons.Polygons,
+    xyz: points.Points | polygons.Polygons,
     project: RoxarProjectType,
     name: str,
     category: str | list[str] | None,
@@ -339,17 +339,17 @@ def save_xyz_to_rms(
     stype = STYPE(stype.lower())
 
     _check_input_and_version_requirement(
-        rox, stype, category, attributes, self._xyztype, mode="set"
+        rox, stype, category, attributes, xyz._xyztype, mode="set"
     )
     _check_presence_in_project(rox, name, category, stype, realisation, mode="set")
 
     if stype == STYPE.WELL_PICKS:
-        assert isinstance(self, points.Points)
+        assert isinstance(xyz, points.Points)
         category = cast("Literal['fault', 'horizon']", category)
-        _save_well_picks_to_rms(self, rox, name, category, attributes, pfilter)
+        _save_well_picks_to_rms(xyz, rox, name, category, attributes, pfilter)
     else:
         _save_xyz_to_rms(
-            self, rox, name, category, stype, pfilter, realisation, attributes
+            xyz, rox, name, category, stype, pfilter, realisation, attributes
         )
 
     if rox._roxexternal:
@@ -359,7 +359,7 @@ def save_xyz_to_rms(
 
 
 def _save_xyz_to_rms(
-    self: points.Points | polygons.Polygons,
+    xyz: points.Points | polygons.Polygons,
     rox: RoxUtils,
     name: str,
     category: str | list[str] | None,
@@ -370,12 +370,12 @@ def _save_xyz_to_rms(
 ) -> None:
     logger.warning("Realisation %s not in use", realisation)
 
-    df = self.get_dataframe()
+    df = xyz.get_dataframe()
     if df is None or df.empty:
         logger.warning("Empty dataframe! Skipping object update...")
         return
 
-    xyz_columns = [self.xname, self.yname, self.zname]
+    xyz_columns = [xyz.xname, xyz.yname, xyz.zname]
     if not set(xyz_columns).issubset(df.columns):
         raise ValueError(
             f"One or all {xyz_columns=} are missing in the dataframe, "
@@ -390,7 +390,7 @@ def _save_xyz_to_rms(
         category,
         stype,
         mode="set",
-        xyztype=self._xyztype,
+        xyztype=xyz._xyztype,
     )
 
     df = _apply_pfilter_to_dataframe(df, pfilter)
@@ -398,10 +398,10 @@ def _save_xyz_to_rms(
         logger.warning("Empty dataframe after filtering! Skipping object update...")
         return
 
-    if self._xyztype == _XYZType.POLYGONS:
-        assert isinstance(self, polygons.Polygons)  # for mypy, only polygons have pname
+    if xyz._xyztype == _XYZType.POLYGONS:
+        assert isinstance(xyz, polygons.Polygons)  # for mypy, only polygons have pname
         arrxyz_polygons = [
-            polydf[xyz_columns].to_numpy() for _, polydf in df.groupby(self.pname)
+            polydf[xyz_columns].to_numpy() for _, polydf in df.groupby(xyz.pname)
         ]
         roxxyz.set_values(arrxyz_polygons)
     else:
@@ -409,17 +409,17 @@ def _save_xyz_to_rms(
         roxxyz.set_values(arrxyz_points)
 
     if attributes:
-        if self._xyztype == _XYZType.POINTS:
+        if xyz._xyztype == _XYZType.POINTS:
             for attr in _get_attribute_names_from_dataframe(df, xyz_columns):
                 values = _replace_undefined_values(
                     values=df[attr].values,  # type: ignore[arg-type]
-                    dtype=self._attrs.get(attr),
+                    dtype=xyz._attrs.get(attr),
                     asmasked=True,
                 )
 
                 logger.info("Store Point attribute %s to Roxar API", name)
                 roxxyz.set_attribute_values(attr, values)
-        elif self._xyztype == _XYZType.POLYGONS:
+        elif xyz._xyztype == _XYZType.POLYGONS:
             raise NotImplementedError(
                 "Setting attributes for Polygons is not implemented in RMS API"
             )
@@ -624,7 +624,7 @@ def _create_dataframe_from_wellpicks(
 
 
 def _save_well_picks_to_rms(
-    self: points.Points,
+    points: points.Points,
     rox: RoxUtils,
     well_pick_set: str,
     wp_category: Literal["horizon", "fault"],
@@ -635,7 +635,7 @@ def _save_well_picks_to_rms(
     Export/store as RMS well picks; this is only valid if points belong to wells
     """
 
-    df = self.get_dataframe()
+    df = points.get_dataframe()
     if df is None or df.empty:
         logger.warning("Empty dataframe! Skipping object update...")
         return
@@ -656,13 +656,13 @@ def _save_well_picks_to_rms(
             raise ValueError(f"The required {column=} contains undefined values.")
 
     if attributes:
-        attr_types = self._attrs
+        attr_types = points._attrs
 
         attr_types = {}
         for attr in _get_attribute_names_from_dataframe(df):
             if attr not in required_columns:
-                if attr in self._attrs:
-                    attr_types[attr] = self._attrs[attr]
+                if attr in points._attrs:
+                    attr_types[attr] = points._attrs[attr]
                 else:
                     attr_types[attr] = _get_attribute_type_from_values(
                         df[attr].to_numpy()
