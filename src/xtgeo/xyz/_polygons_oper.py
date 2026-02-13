@@ -240,7 +240,7 @@ def _get_polygon_coords_from_edges_shapely(
 
 
 def simplify_polygons(
-    self: Polygons, tolerance: float, preserve_topology: bool
+    polygons: Polygons, tolerance: float, preserve_topology: bool
 ) -> bool:
     """Use Shapely's 'simplify' method to reduce points.
 
@@ -248,44 +248,45 @@ def simplify_polygons(
 
     For Args, see Shapely
     """
-    if hasattr(self, "attributes") and self.attributes:
+    if hasattr(polygons, "attributes") and polygons.attributes:
         raise UserWarning(
             "Attributes are present, but they will be lost when simplifying"
         )
 
-    recompute_hlen = self.hname in self.get_dataframe(copy=False)
-    recompute_tlen = self.tname in self.get_dataframe(copy=False)
+    recompute_hlen = polygons.hname in polygons.get_dataframe(copy=False)
+    recompute_tlen = polygons.tname in polygons.get_dataframe(copy=False)
 
-    orig_len = len(self.get_dataframe(copy=False))
+    orig_len = len(polygons.get_dataframe(copy=False))
 
-    idgroups = self.get_dataframe(copy=False).groupby(self.pname)
+    idgroups = polygons.get_dataframe(copy=False).groupby(polygons.pname)
     dfrlist = []
     for idx, grp in idgroups:
         if len(grp.index) < 2:
             logger.warning("Cannot simplify polygons with less than two points. Skip")
             continue
 
-        pxcor = np.asarray(grp[self.xname].values)
-        pycor = np.asarray(grp[self.yname].values)
-        pzcor = np.asarray(grp[self.zname].values)
+        pxcor = np.asarray(grp[polygons.xname].values)
+        pycor = np.asarray(grp[polygons.yname].values)
+        pzcor = np.asarray(grp[polygons.zname].values)
         spoly = sg.LineString(np.stack([pxcor, pycor, pzcor], axis=1))
 
         new_spoly = spoly.simplify(tolerance, preserve_topology=preserve_topology)
         dfr = pd.DataFrame(
-            np.array(new_spoly.coords), columns=[self.xname, self.yname, self.zname]
+            np.array(new_spoly.coords),
+            columns=[polygons.xname, polygons.yname, polygons.zname],
         )
 
-        dfr[self.pname] = idx
+        dfr[polygons.pname] = idx
         dfrlist.append(dfr)
 
     dfr = pd.concat(dfrlist)
-    self.set_dataframe(dfr.reset_index(drop=True))
+    polygons.set_dataframe(dfr.reset_index(drop=True))
 
     if recompute_hlen:
-        self.hlen()
+        polygons.hlen()
     if recompute_tlen:
-        self.tlen()
+        polygons.tlen()
 
-    new_len = len(self.get_dataframe(copy=False))
+    new_len = len(polygons.get_dataframe(copy=False))
 
     return new_len < orig_len
