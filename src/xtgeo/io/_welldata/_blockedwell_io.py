@@ -125,6 +125,9 @@ class BlockedWellData(WellData):
         if fformat == WellFileFormat.CSV:
             return cls.from_csv(filepath, **kwargs)
 
+        if fformat == WellFileFormat.HDF5:
+            return cls.from_hdf5(filepath, **kwargs)
+
         raise NotImplementedError(f"File format {fformat} not supported yet.")
 
     def to_file(
@@ -140,6 +143,10 @@ class BlockedWellData(WellData):
 
         if fformat == WellFileFormat.CSV:
             self.to_csv(filepath, **kwargs)
+            return
+
+        if fformat == WellFileFormat.HDF5:
+            self.to_hdf5(filepath, **kwargs)
             return
 
         raise NotImplementedError(f"File format {fformat} not supported yet.")
@@ -185,4 +192,31 @@ class BlockedWellData(WellData):
             blocked_well=self,
             filepath=filepath,
             **kwargs,
+        )
+
+    @classmethod
+    def from_hdf5(cls, filepath: FileLike, **kwargs: Any) -> BlockedWellData:
+        """Read blocked well data from HDF5 file."""
+        from xtgeo.io._welldata._fformats._hdf5_xtgeo import read_hdf5_blockedwell
+
+        return read_hdf5_blockedwell(filepath=filepath)
+
+    def to_hdf5(
+        self,
+        filepath: FileLike,
+        *,
+        compression: str = "lzf",
+    ) -> None:
+        """Write blocked well data to HDF5 file.
+
+        Args:
+            filepath: Output HDF5 file path
+            compression: Compression method ("lzf", "blosc", or None)
+        """
+        from xtgeo.io._welldata._fformats._hdf5_xtgeo import write_hdf5_blockedwell
+
+        write_hdf5_blockedwell(
+            blocked_well=self,
+            filepath=filepath,
+            compression=compression,
         )

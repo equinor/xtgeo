@@ -28,7 +28,7 @@ class WellFileFormat(Enum):
     Attributes:
         RMS_ASCII: RMS ASCII well format
         CSV: CSV format
-        HDF5: HDF5 format (not yet implemented)
+        HDF5: HDF5 format using xtgeo variant
 
     """
 
@@ -239,6 +239,9 @@ class WellData:
         if fformat == WellFileFormat.CSV:
             return cls.from_csv(filepath, **kwargs)
 
+        if fformat == WellFileFormat.HDF5:
+            return cls.from_hdf5(filepath, **kwargs)
+
         raise NotImplementedError(f"File format {fformat} is not supported")
 
     def to_file(
@@ -260,6 +263,10 @@ class WellData:
 
         if fformat == WellFileFormat.CSV:
             self.to_csv(filepath, **kwargs)
+            return
+
+        if fformat == WellFileFormat.HDF5:
+            self.to_hdf5(filepath, **kwargs)
             return
 
         raise NotImplementedError(f"File format {fformat} is not supported.")
@@ -298,3 +305,26 @@ class WellData:
         from xtgeo.io._welldata._fformats._csv_table import write_csv_well
 
         write_csv_well(well=self, filepath=filepath, **kwargs)
+
+    @classmethod
+    def from_hdf5(cls, filepath: FileLike, **kwargs: Any) -> WellData:
+        """Read well data from HDF5 file."""
+        from xtgeo.io._welldata._fformats._hdf5_xtgeo import read_hdf5_well
+
+        return read_hdf5_well(filepath=filepath)
+
+    def to_hdf5(
+        self,
+        filepath: FileLike,
+        *,
+        compression: str = "lzf",
+    ) -> None:
+        """Write well data to HDF5 file.
+
+        Args:
+            filepath: Output HDF5 file path
+            compression: Compression method ("lzf", "blosc", or None)
+        """
+        from xtgeo.io._welldata._fformats._hdf5_xtgeo import write_hdf5_well
+
+        write_hdf5_well(well=self, filepath=filepath, compression=compression)
