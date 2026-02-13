@@ -144,6 +144,7 @@ from xtgeo.grid3d.grid import (
     grid_from_file,
     grid_from_roxar,
     grid_from_surfaces,
+    grid_merge,
 )
 from xtgeo.xyz.polygons import (
     polygons_from_file,
@@ -213,6 +214,7 @@ __all__ = [
     "grid_from_file",
     "grid_from_roxar",
     "grid_from_surfaces",
+    "grid_merge",
     "grid_properties",
     "grid_properties",
     "grid_property",

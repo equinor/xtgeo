@@ -26,6 +26,7 @@ from . import (
     _grid_hybrid,
     _grid_import,
     _grid_import_ecl,
+    _grid_merge,
     _grid_refine,
     _grid_roxapi,
     _grid_translate_coords,
@@ -341,6 +342,68 @@ def grid_from_surfaces(
     return _grid_etc1.create_grid_from_surfaces(
         surfaces, ij_dimension, ij_origin, ij_increment, rotation, tolerance
     )
+
+
+def grid_merge(
+    grid1: Grid,
+    grid2: Grid,
+) -> Grid:
+    """Merge two areally-separated grids into a single grid instance.
+
+    This function creates a new grid large enough to contain both input grids,
+    with inactive cells filling the gaps. Grid1 is placed at position (0, 0)
+    and grid2 is placed adjacent to it with a 1-cell gap in the column direction.
+
+    If the grids have different numbers of layers, the result grid will have
+    the maximum number of layers. The grid with fewer layers will have its
+    bottom layer geometry extended vertically with inactive cells for the
+    additional layers.
+
+    If the grids have different IJK handedness (left vs right), grid2 will be
+    automatically adjusted to match grid1's handedness before merging.
+
+    Grid properties attached to the grids are automatically transferred from both
+    input grids:
+
+    - Properties unique to one grid are copied directly
+    - Continuous properties with the same name are merged
+    - Discrete properties with matching codes are merged
+    - Discrete properties with different codes are renamed (e.g., FACIES_2)
+    - Properties with type conflicts (continuous vs discrete) are renamed
+
+    The resulting grid dimensions will be:
+    - ncol: grid1.ncol + 1 + grid2.ncol
+    - nrow: max(grid1.nrow, grid2.nrow)
+    - nlay: max(grid1.nlay, grid2.nlay)
+
+    Args:
+        grid1: First grid instance
+        grid2: Second grid instance
+
+    Returns:
+        A new Grid instance containing both input grids with inactive cells in gaps.
+
+    Example::
+
+        import xtgeo
+
+        # Create two separate box grids with same layers
+        g1 = xtgeo.create_box_grid((3, 2, 2))
+        g2 = xtgeo.create_box_grid((4, 5, 2))
+
+        # Merge with default placement (g2 placed with 1 column gap)
+        merged = xtgeo.grid_merge(g1, g2)
+        print(merged.dimensions)  # (8, 5, 2)
+
+        # Merge grids with different layer counts
+        g3 = xtgeo.create_box_grid((10, 7, 3))
+        g4 = xtgeo.create_box_grid((2, 2, 6))
+        merged2 = xtgeo.grid_merge(g3, g4)
+        print(merged2.dimensions)  # (13, 7, 6) - uses max layers
+
+    .. versionadded:: 4.18.0
+    """
+    return _grid_merge.merge_grids(grid1, grid2)
 
 
 class _GridCache:
