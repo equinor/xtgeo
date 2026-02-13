@@ -36,7 +36,7 @@ def get_zonation_points(
     if scopy.zonelogname is not None:
         if use_undef:
             dataframe.dropna(subset=[scopy.zonelogname], inplace=True)
-        zlog = dataframe[scopy.zonelogname].values
+        zlog = dataframe[scopy.zonelogname].to_numpy(copy=True)
         zlog[np.isnan(zlog)] = UNDEF_DISC
         zlog = np.rint(zlog).astype(int)
     else:

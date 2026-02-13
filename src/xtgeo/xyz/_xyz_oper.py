@@ -114,7 +114,7 @@ def operation_polygons_v1(
 
     xcor = self.get_dataframe(copy=False)[self.xname].to_numpy(dtype=float, copy=False)
     ycor = self.get_dataframe(copy=False)[self.yname].to_numpy(dtype=float, copy=False)
-    zcor = self.get_dataframe(copy=False)[self.zname].to_numpy(dtype=float, copy=False)
+    zcor = self.get_dataframe(copy=False)[self.zname].to_numpy(dtype=float, copy=True)
 
     usepoly = False
     if isinstance(value, str) and value == "poly":
