@@ -27,6 +27,9 @@ def export_segy(cube: Cube, sfile: str) -> None:
     Args:
         cube (:class:`xtgeo.cube.Cube`): The instance
         sfile (str): File name to export to.
+
+    Raises:
+        TypeError: If ``sfile`` is an in-memory stream (e.g. ``BytesIO``).
     """
     if isinstance(sfile, (io.StringIO, io.BytesIO)):
         raise TypeError(
