@@ -157,6 +157,7 @@ filterwarnings = [
 
 [tool.setuptools_scm]
 write_to = "src/xtgeo/common/version.py"
+local_scheme = "no-local-version"
 
 [tool.ruff]
 line-length = 88
