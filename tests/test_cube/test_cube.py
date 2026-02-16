@@ -1,3 +1,4 @@
+import io
 import logging
 import pathlib
 
@@ -229,6 +230,16 @@ def test_segyio_import_export(tmp_path, pristine, smallcube):
     read_cube = xtgeo.cube_from_file(tmp_path / "reek_cube.segy")
     assert input_cube.dimensions == read_cube.dimensions
     assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
+
+
+def test_segy_export_to_bytesio_raises():
+    """SEGY cube export to BytesIO is not supported."""
+    cube = xtgeo.Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
+    cube.values = list(range(30))
+
+    stream = io.BytesIO()
+    with pytest.raises(TypeError, match="filesystem path"):
+        cube.to_file(stream, fformat="segy")
 
 
 def test_cube_resampling(loadsfile1):
