@@ -405,20 +405,17 @@ def to_file(
         # NB! reuse export_rms_attr function, but no attributes
         # are possible
         ncount = export_rms_attr(
-            xyz, str(wrapped_file.name), attributes=False, pfilter=pfilter
+            xyz, wrapped_file.name, attributes=False, pfilter=pfilter
         )
 
     elif fformat in FileFormat.RMS_ATTR.value:
         ncount = export_rms_attr(
-            xyz,
-            str(wrapped_file.name),
-            attributes=attributes,
-            pfilter=pfilter,
+            xyz, wrapped_file.name, attributes=attributes, pfilter=pfilter
         )
     elif fformat in FileFormat.CSV.value:
         ncount = export_table(
             xyz,
-            str(wrapped_file.name),
+            wrapped_file.name,
             attributes=attributes,
             pfilter=pfilter,
             file_format="csv",
@@ -426,14 +423,14 @@ def to_file(
     elif fformat in FileFormat.PARQUET.value:
         ncount = export_table(
             xyz,
-            str(wrapped_file.name),
+            wrapped_file.name,
             attributes=attributes,
             pfilter=pfilter,
             file_format="parquet",
         )
     elif fformat == "rms_wellpicks":
         ncount = export_rms_wpicks(
-            xyz, str(wrapped_file.name), hcolumn, wcolumn, mdcolumn=mdcolumn
+            xyz, wrapped_file.name, hcolumn, wcolumn, mdcolumn=mdcolumn
         )
     else:
         extensions = FileFormat.extensions_string(
