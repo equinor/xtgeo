@@ -8,12 +8,11 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 
 from xtgeo.common.log import null_logger
 
 if TYPE_CHECKING:  # pragma: no cover
-    import pandas as pd
-
     from xtgeo.common.types import FileLike
 
 
@@ -28,7 +27,7 @@ class WellFileFormat(Enum):
     Attributes:
         RMS_ASCII: RMS ASCII well format
         CSV: CSV format
-        HDF5: HDF5 format (not yet implemented)
+        HDF5: HDF5 format using xtgeo variant
 
     """
 
@@ -188,7 +187,6 @@ class WellData:
             >>> df = well.to_dataframe()  # All logs
             >>> df = well.to_dataframe(wellname_col="WELLNAME")  # Include wellname
         """
-        import pandas as pd
 
         data: dict[str, Any] = {
             xname: self.survey_x,
@@ -239,6 +237,14 @@ class WellData:
         if fformat == WellFileFormat.CSV:
             return cls.from_csv(filepath, **kwargs)
 
+        if fformat == WellFileFormat.HDF5:
+            if kwargs:
+                raise TypeError(
+                    f"from_hdf5() does not accept keyword arguments, "
+                    f"got: {', '.join(kwargs.keys())}"
+                )
+            return cls.from_hdf5(filepath)
+
         raise NotImplementedError(f"File format {fformat} is not supported")
 
     def to_file(
@@ -262,6 +268,10 @@ class WellData:
             self.to_csv(filepath, **kwargs)
             return
 
+        if fformat == WellFileFormat.HDF5:
+            self.to_hdf5(filepath, **kwargs)
+            return
+
         raise NotImplementedError(f"File format {fformat} is not supported.")
 
     @classmethod
@@ -274,7 +284,6 @@ class WellData:
     def to_rms_ascii(
         self,
         filepath: FileLike,
-        *,
         precision: int = 4,
     ) -> None:
         """Write well data to RMS ASCII file."""
@@ -298,3 +307,32 @@ class WellData:
         from xtgeo.io._welldata._fformats._csv_table import write_csv_well
 
         write_csv_well(well=self, filepath=filepath, **kwargs)
+
+    @classmethod
+    def from_hdf5(cls, filepath: FileLike) -> WellData:
+        """Read well data from HDF5 file.
+
+        Args:
+            filepath: Path to HDF5 file
+
+        Returns:
+            WellData object
+        """
+        from xtgeo.io._welldata._fformats._hdf5_xtgeo import read_hdf5_well
+
+        return read_hdf5_well(filepath=filepath)
+
+    def to_hdf5(
+        self,
+        filepath: FileLike,
+        compression: str | None = "lzf",
+    ) -> None:
+        """Write well data to HDF5 file.
+
+        Args:
+            filepath: Output HDF5 file path
+            compression: Compression method ("lzf", "blosc", or None)
+        """
+        from xtgeo.io._welldata._fformats._hdf5_xtgeo import write_hdf5_well
+
+        write_hdf5_well(well=self, filepath=filepath, compression=compression)

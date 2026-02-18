@@ -242,6 +242,13 @@ def export_hdf5_well(self, wfile, compression="lzf"):
     """Save to HDF5 format."""
     logger.debug("Export to hdf5 format...")
 
+    # HDF5 format requires real file paths, not in-memory streams
+    if hasattr(wfile, "memstream") and wfile.memstream:
+        raise TypeError(
+            "HDF5 format does not support in-memory streams (BytesIO/StringIO). "
+            "Please provide a file path instead."
+        )
+
     self._ensure_consistency()
 
     self.metadata.required = self
@@ -329,6 +336,14 @@ def _import_wlogs_hdf5(wlogs: dict):
 def import_hdf5_well(wfile, **kwargs):
     """Load from HDF5 format."""
     logger.debug("The kwargs may be unused: %s", kwargs)
+
+    # HDF5 format requires real file paths, not in-memory streams
+    if hasattr(wfile, "memstream") and wfile.memstream:
+        raise TypeError(
+            "HDF5 format does not support in-memory streams (BytesIO/StringIO). "
+            "Please provide a file path instead."
+        )
+
     reqattrs = MetaDataWell.REQUIRED
 
     with h5py.File(wfile.file, "r") as fh5:
