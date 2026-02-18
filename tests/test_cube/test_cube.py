@@ -242,6 +242,26 @@ def test_segy_export_to_bytesio_raises():
         cube.to_file(stream, fformat="segy")
 
 
+def test_segy_export_sanitizes_unassigned_binary_header_bytes(
+    tmp_path: pathlib.Path,
+) -> None:
+    """Binary header unassigned bytes are deterministic after export."""
+    cube = xtgeo.Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
+    cube.values = list(range(30))
+    outfile = tmp_path / "cube_header_sanitized.segy"
+
+    cube.to_file(outfile, fformat="segy")
+    raw = outfile.read_bytes()
+    binary_header = raw[3200:3600]
+
+    assert binary_header[60:300] == b"\x00" * 240
+    assert binary_header[306:400] == b"\x00" * 94
+
+    with segyio.open(outfile, "r") as seg:
+        assert seg.bin[segyio.BinField.Interval] == 1000
+        assert seg.bin[segyio.BinField.Samples] == 5
+
+
 def test_cube_resampling(loadsfile1):
     """Import a cube, then make a smaller and resample, then export the new"""
 

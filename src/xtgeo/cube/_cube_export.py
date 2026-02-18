@@ -89,6 +89,16 @@ def export_segy(cube: Cube, sfile: str) -> None:
         # TODO: Make this read from cube._measurement (or something)
         f.bin[segyio.BinField.MeasurementSystem] = 1
 
+    with open(sfile, "r+b") as stream:
+        stream.seek(3200)
+        header = bytearray(stream.read(400))
+        if len(header) == 400:
+            # SEG-Y rev1 unassigned ranges in binary header.
+            header[60:300] = b"\x00" * 240
+            header[306:400] = b"\x00" * 94
+            stream.seek(3200)
+            stream.write(header)
+
 
 def export_rmsreg(self, sfile):
     """Export on RMS regular format."""
