@@ -88,16 +88,9 @@ def export_segy(cube: Cube, sfile: str) -> None:
         f.bin[segyio.BinField.SortingCode] = 4  # trace sorting from C: needed?
         # TODO: Make this read from cube._measurement (or something)
         f.bin[segyio.BinField.MeasurementSystem] = 1
-
-    with open(sfile, "r+b") as stream:
-        stream.seek(3200)
-        header = bytearray(stream.read(400))
-        if len(header) == 400:
-            # SEG-Y rev1 unassigned ranges in binary header.
-            header[60:300] = b"\x00" * 240
-            header[306:400] = b"\x00" * 94
-            stream.seek(3200)
-            stream.write(header)
+        text_header = bytearray(f.text[0])
+        text_header[-1] = 0x20  # ASCII space
+        f.text[0] = bytes(text_header)
 
 
 def export_rmsreg(self, sfile):
