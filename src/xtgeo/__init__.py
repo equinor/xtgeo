@@ -104,6 +104,7 @@ from xtgeo.grid3d.grid_properties import (
 )
 from xtgeo.grid3d.grid_property import (
     GridProperty,
+    gridproperty_from_cube,
     gridproperty_from_file,
     gridproperty_from_roxar,
 )
@@ -221,6 +222,7 @@ __all__ = [
     "grid_property",
     "gridproperties_dataframe",
     "gridproperties_from_file",
+    "gridproperty_from_cube",
     "gridproperty_from_file",
     "gridproperty_from_roxar",
     "list_gridproperties",
