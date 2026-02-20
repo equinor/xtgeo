@@ -124,30 +124,32 @@ class Cube:
       filesrc: String: Source file if any
       yflip: Normally 1; if -1 Y axis is flipped --> from left-handed (1) to
                      right handed (-1). Right handed cubes are common.
-
+      measurement: System of measurement, "m" for meters and "ft" for feet.
+        Default "m".
     """
 
     def __init__(
         self,
-        ncol,
-        nrow,
-        nlay,
-        xinc,
-        yinc,
-        zinc,
-        xori=0.0,
-        yori=0.0,
-        zori=0.0,
-        yflip=1,
-        values=0.0,
-        rotation=0.0,
-        zflip=1,
-        ilines=None,
-        xlines=None,
-        traceidcodes=None,
-        segyfile=None,
-        filesrc=None,
-    ):
+        ncol: int,
+        nrow: int,
+        nlay: int,
+        xinc: float,
+        yinc: float,
+        zinc: float,
+        xori: float = 0.0,
+        yori: float = 0.0,
+        zori: float = 0.0,
+        yflip: Literal[1, -1] = 1,
+        values: float = 0.0,
+        rotation: float = 0.0,
+        zflip: Literal[1, -1] = 1,
+        ilines: np.ndarray | None = None,
+        xlines: np.ndarray | None = None,
+        traceidcodes: np.ndarray | None = None,
+        segyfile: str | None = None,
+        filesrc: str | None = None,
+        measurement: Literal["m", "ft"] = "m",
+    ) -> None:
         """Initiate a Cube instance."""
 
         self._filesrc = filesrc
@@ -163,6 +165,12 @@ class Cube:
         self._yflip = yflip
         self._zflip = zflip  # currently not in use
         self._rotation = rotation
+
+        if measurement not in ("m", "ft"):
+            raise ValueError(
+                'Unknown measurement system. Must be "m" for meters or "ft" for feet.'
+            )
+        self._measurement = measurement
 
         # input values can be "list-like" or scalar
         self._values = self._ensure_correct_values(values)
@@ -185,7 +193,7 @@ class Cube:
         self._metadata = MetaDataRegularCube()
         self._metadata.required = self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The __repr__ method."""
         avg = self.values.mean()
         return (
@@ -194,17 +202,17 @@ class Cube:
             f"average {avg}, ID=<{id(self)}>"
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """The __str__ method for pretty print."""
         return self.describe(flush=False)
 
     @property
-    def metadata(self):
+    def metadata(self) -> MetaDataRegularCube:
         """Return metadata object instance of type MetaDataRegularSurface."""
         return self._metadata
 
     @metadata.setter
-    def metadata(self, obj):
+    def metadata(self, obj: MetaDataRegularCube) -> None:
         # The current metadata object can be replaced. This is a bit dangerous so
         # further check must be done to validate. TODO.
         if not isinstance(obj, MetaDataRegularCube):
@@ -213,92 +221,92 @@ class Cube:
         self._metadata = obj  # checking is currently missing! TODO
 
     @property
-    def ncol(self):
+    def ncol(self) -> int:
         """The NCOL (NX or I dir) number (read-only)."""
         return self._ncol
 
     @property
-    def nrow(self):
+    def nrow(self) -> int:
         """The NROW (NY or J dir) number (read-only)."""
         return self._nrow
 
     @property
-    def nlay(self):
+    def nlay(self) -> int:
         """The NLAY (or NZ or K dir) number (read-only)."""
         return self._nlay
 
     @property
-    def dimensions(self):
+    def dimensions(self) -> Dimensions:
         """NamedTuple: The cube dimensions with 3 integers (read only)."""
         return Dimensions(self._ncol, self._nrow, self._nlay)
 
     @property
-    def xori(self):
+    def xori(self) -> float:
         """The XORI (origin corner) coordinate."""
         return self._xori
 
     @xori.setter
-    def xori(self, val):
+    def xori(self, val: float) -> None:
         logger.warning("Changing xori is risky!")
         self._xori = val
 
     @property
-    def yori(self):
+    def yori(self) -> float:
         """The YORI (origin corner) coordinate."""
         return self._yori
 
     @yori.setter
-    def yori(self, val):
+    def yori(self, val: float) -> float:
         logger.warning("Changing yori is risky!")
         self._yori = val
 
     @property
-    def zori(self):
+    def zori(self) -> float:
         """The ZORI (origin corner) coordinate."""
         return self._zori
 
     @zori.setter
-    def zori(self, val):
+    def zori(self, val: float) -> float:
         logger.warning("Changing zori is risky!")
         self._zori = val
 
     @property
-    def xinc(self):
+    def xinc(self) -> float:
         """The XINC (increment X) as property."""
         return self._xinc
 
     @xinc.setter
-    def xinc(self, val):
+    def xinc(self, val: float) -> None:
         logger.warning("Changing xinc is risky!")
         self._xinc = val
 
     @property
-    def yinc(self):
+    def yinc(self) -> float:
         """The YINC (increment Y)."""
         return self._yinc
 
     @yinc.setter
-    def yinc(self, val):
+    def yinc(self, val: float) -> None:
         logger.warning("Changing yinc is risky!")
         self._yinc = val
 
     @property
-    def zinc(self):
+    def zinc(self) -> float:
         """The ZINC (increment Z)."""
         return self._zinc
 
     @zinc.setter
-    def zinc(self, val):
+    def zinc(self, val: float) -> None:
         logger.warning("Changing zinc is risky!")
         self._zinc = val
 
     @property
-    def rotation(self):
+    def rotation(self) -> float:
         """The rotation, anticlock from X axis in degrees."""
         return self._rotation
 
     @rotation.setter
-    def rotation(self, val):
+    def rotation(self, val: float) -> float:
         logger.warning("Changing rotation is risky!")
         self._rotation = val
 
@@ -321,17 +329,17 @@ class Cube:
         self._xlines = values
 
     @property
-    def zslices(self):
+    def zslices(self) -> np.ndarray:
         """Return the time/depth slices as an int array (read only)."""
         return np.array(range(self.nlay))  # This is a derived property
 
     @property
-    def traceidcodes(self):
+    def traceidcodes(self) -> np.ndarray:
         """The trace identifaction codes array (ncol, nrow)."""
         return self._traceidcodes
 
     @traceidcodes.setter
-    def traceidcodes(self, values):
+    def traceidcodes(self, values: int | str | list | np.ndarray) -> None:
         if isinstance(values, (int, str)):
             self._traceidcodes = np.full((self.ncol, self.nrow), values, dtype=np.int32)
         else:
@@ -340,7 +348,7 @@ class Cube:
             self._traceidcodes = values.reshape(self.ncol, self.nrow)
 
     @property
-    def yflip(self):
+    def yflip(self) -> Literal[1, -1]:
         """The YFLIP indicator, 1 is normal, -1 means Y flipped.
 
         YFLIP = 1 means a LEFT HANDED coordinate system with Z axis
@@ -350,7 +358,7 @@ class Cube:
         return self._yflip
 
     @property
-    def zflip(self):
+    def zflip(self) -> Literal[1, -1]:
         """The ZFLIP indicator, 1 is normal, -1 means Z flipped.
 
         ZFLIP = 1 and YFLIP = 1 means a LEFT HANDED coordinate system with Z axis
@@ -374,13 +382,25 @@ class Cube:
         self._filesrc = name
 
     @property
-    def values(self):
+    def values(self) -> np.ndarray:
         """The values, as a 3D numpy (ncol, nrow, nlay), 4 byte float."""
         return self._values
 
     @values.setter
-    def values(self, values):
+    def values(self, values: np.ndarray) -> None:
         self._values = self._ensure_correct_values(values)
+
+    @property
+    def measurement(self) -> Literal["m", "ft"]:
+        return self._measurement
+
+    @measurement.setter
+    def measurement(self, val: Literal["m", "ft"]) -> None:
+        if val not in ("m", "ft"):
+            raise ValueError(
+                'Unknown measurement system. Must be "m" for meters or "ft" for feet.'
+            )
+        self._measurement = val
 
     # =========================================================================
     # Describe
