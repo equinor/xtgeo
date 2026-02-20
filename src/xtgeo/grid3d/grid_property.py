@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from xtgeo.common.types import FileLike
+    from xtgeo.cube.cube1 import Cube
     from xtgeo.xyz.polygons import Polygons
 
     from ._gridprop_op1 import XYValueLists
@@ -191,6 +192,67 @@ def gridproperty_from_roxar(
         pname,
         realisation=realisation,
         faciescodes=faciescodes,
+    )
+
+
+def gridproperty_from_cube(
+    grid: Grid,
+    cube: Cube,
+    name: str = "sampled_cube",
+    interpolation: Literal["nearest", "trilinear", "cubic", "catmull-rom"] = "nearest",
+    outside_value: float = 0.0,
+) -> GridProperty:
+    """Sample cube values at grid cell centers and return as a GridProperty.
+
+    This function samples values from a seismic cube at the (x, y, z)
+    coordinates of each grid cell center. Grid cells that fall outside
+    the cube extent are assigned ``outside_value``.
+
+    Args:
+        grid: The 3D grid whose cell centers define the sampling locations.
+        cube: The seismic cube to sample values from.
+        name: Name of the resulting grid property.
+        interpolation: Interpolation method:
+
+            - ``"nearest"``: nearest-neighbor (fastest, no smoothing, default)
+            - ``"trilinear"``: trilinear interpolation using 8 surrounding nodes;
+              smoother than `nearest` but still fast
+            - ``"cubic"``: tricubic B-spline interpolation using 64 surrounding nodes;
+              smoother than `trilinear` but somewhat slower
+            - ``"catmull-rom"``: Catmull-Rom cardinal spline using 64 surrounding
+              nodes; passes exactly through data points and is commonly used
+              in seismic interpretation tools. This is a variant of cubic interpolation,
+              and is somewhat slower than `cubic`.
+        outside_value: Value assigned to active grid cells that are
+            outside the cube extent. Default is 0.0.
+
+    Returns:
+        A GridProperty instance with the sampled cube values.
+
+    Example::
+
+        import xtgeo
+
+        grid = xtgeo.grid_from_file("my_grid.roff")
+        cube = xtgeo.cube_from_file("my_seismic.segy")
+        seisprop = xtgeo.gridproperty_from_cube(grid, cube, name="seismic")
+
+    .. versionadded:: 4.19.0
+    """
+    from ._gridprop_from_cube import sample_cube_to_grid
+
+    result = sample_cube_to_grid(
+        grid, cube, interpolation=interpolation, outside_value=outside_value
+    )
+
+    return GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        values=result,
+        name=name,
+        grid=grid,
+        discrete=False,
     )
 
 
