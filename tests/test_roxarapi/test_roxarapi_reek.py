@@ -300,6 +300,7 @@ def test_rox_getset_cube(rms_project_path):
     """Get a cube from a RMS project, do some stuff and store/save."""
     cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME1)
     assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
+    assert cube.measurement == "m"
     cube.values += 100
     assert cube.values.mean() == pytest.approx(100.000718, abs=0.001)
     cube.to_roxar(rms_project_path, CUBENAME1 + "_copy1")
