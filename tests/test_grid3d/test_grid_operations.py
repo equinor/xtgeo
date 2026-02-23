@@ -55,6 +55,47 @@ def test_hybridgrid0():
     assert grd1._actnumsv.tolist() == grd2._actnumsv.tolist()
 
 
+def test_hybridgrid_outside_region_collapses_at_base():
+    """Columns outside the hybrid region must collapse at base, not at top."""
+    nlay = 5
+    z_origin = 1000.0
+    z_inc = 5.0
+
+    grd = xtgeo.create_box_grid(
+        (2, 1, nlay),
+        flip=1,
+        oricenter=False,
+        origin=(10.0, 20.0, z_origin),
+        increment=(100, 150, z_inc),
+    )
+
+    # 1-based column i=1 (zero-based i=0) is in region; i=2 (zero-based i=1) is not
+    reg = xtgeo.GridProperty(grd, name="REGION", discrete=True, values=0)
+    reg.values[0, 0, :] = 1
+
+    nhdiv = 10
+    nlay_new = nlay * 2 + nhdiv  # 20
+    grd.convert_to_hybrid(
+        nhdiv=nhdiv,
+        toplevel=1010,
+        bottomlevel=1020,
+        region=reg,
+        region_number=1,
+    )
+    assert grd.nlay == nlay_new
+
+    dzv = grd.get_dz(asmasked=False)
+    dz_outside = dzv.values[1, 0, :]  # outside-region column (zero-based i=1)
+
+    assert dz_outside[:nlay].mean() == pytest.approx(z_inc, abs=0.01), (
+        "First nlay cells of outside-region column should preserve original dz. "
+    )
+
+    assert dz_outside[nlay:].max() == pytest.approx(0.0, abs=0.01), (
+        "Cells from index nlay onward in outside-region column should be collapsed. "
+    )
+
+
 def test_hybrid_case_t(testdata_path, snapshot, helpers):
     """Test hybridgrid on a small grid with a fault; test values manually inspected"""
 

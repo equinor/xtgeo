@@ -1284,7 +1284,7 @@ convert_to_hybrid_grid(const Grid &grid_cpp,
                 if (!flag_region) {
                     for (size_t ic = 0; ic < 4; ic++) {
 
-                        use_top_level[ic] = cellcorners_(i, j, 0, ic);
+                        use_top_level[ic] = cellcorners_(i, j, grid_cpp.get_nlay(), ic);
                         use_bot_level[ic] = use_top_level[ic];
                     }
                     use_dz = 0.0f;
