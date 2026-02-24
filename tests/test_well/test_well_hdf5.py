@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 import xtgeo
-from xtgeo.well._well_io import _import_wlogs_hdf5
 
 WELL1 = pathlib.Path("wells/battle/1/WELL09.rmswell")
 
@@ -37,33 +36,12 @@ Facies DISC 0 Background 1 Channel 2 Crevasse
     yield well
 
 
-@pytest.mark.parametrize(
-    "wlogs, expected_output",
-    [
-        ({}, {"wlogtypes": {}, "wlogrecords": {}}),
-        (
-            {"X_UTME": ("CONT", None)},
-            {"wlogtypes": {"X_UTME": "CONT"}, "wlogrecords": {"X_UTME": None}},
-        ),
-        (
-            {"ZONELOG": ("DISC", {"0": "ZONE00"})},
-            {
-                "wlogtypes": {"ZONELOG": "DISC"},
-                "wlogrecords": {"ZONELOG": {0: "ZONE00"}},
-            },
-        ),
-    ],
-)
-def test_import_wlogs_hdf5(wlogs, expected_output):
-    assert _import_wlogs_hdf5(wlogs) == expected_output
-
-
 def test_hdf_io_single(tmp_path, testdata_path):
     """Test HDF io, single well."""
     mywell = xtgeo.well_from_file(testdata_path / WELL1)
 
     wname = (tmp_path / "hdfwell").with_suffix(".hdf")
-    mywell.to_hdf(wname)
+    mywell.to_file(wname, fformat="hdf5")
     mywell2 = xtgeo.well_from_file(wname, fformat="hdf")
     assert mywell2.nrow == mywell.nrow
 
@@ -71,7 +49,7 @@ def test_hdf_io_single(tmp_path, testdata_path):
 def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
     """Import RMS and export as HDF5 and compare results."""
     wname = (tmp_path / "$random").with_suffix(".hdf")
-    wuse = simple_well.to_hdf(wname, compression=None)
+    wuse = simple_well.to_file(wname, fformat="hdf5", compression=None)
 
     result = xtgeo.well_from_file(wuse, fformat="hdf5")
     assert result.get_dataframe().equals(simple_well.get_dataframe())
@@ -80,7 +58,7 @@ def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
 def test_hdf_io_compression_blosc(tmp_path, simple_well):
     """Test HDF5 export/import with blosc compression."""
     wname = (tmp_path / "well_blosc").with_suffix(".hdf")
-    simple_well.to_hdf(wname, compression="blosc")
+    simple_well.to_file(wname, fformat="hdf5", compression="blosc")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
     assert result.get_dataframe().equals(simple_well.get_dataframe())
@@ -90,7 +68,7 @@ def test_hdf_io_compression_blosc(tmp_path, simple_well):
 def test_hdf_io_compression_lzf(tmp_path, simple_well):
     """Test HDF5 export/import with lzf compression (default)."""
     wname = (tmp_path / "well_lzf").with_suffix(".hdf")
-    simple_well.to_hdf(wname, compression="lzf")
+    simple_well.to_file(wname, fformat="hdf5", compression="lzf")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
     assert result.get_dataframe().equals(simple_well.get_dataframe())
@@ -99,7 +77,7 @@ def test_hdf_io_compression_lzf(tmp_path, simple_well):
 def test_hdf_io_metadata_preservation(tmp_path, loadwell1):
     """Test that well metadata is preserved through HDF5 export/import."""
     wname = (tmp_path / "well_metadata").with_suffix(".hdf")
-    loadwell1.to_hdf(wname)
+    loadwell1.to_file(wname, fformat="hdf5")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
 
@@ -115,7 +93,7 @@ def test_hdf_io_metadata_preservation(tmp_path, loadwell1):
 def test_hdf_io_log_types_preservation(tmp_path, simple_well):
     """Test that log types (CONT/DISC) are preserved through HDF5 export/import."""
     wname = (tmp_path / "well_logtypes").with_suffix(".hdf")
-    simple_well.to_hdf(wname)
+    simple_well.to_file(wname, fformat="hdf5")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
 
@@ -126,7 +104,7 @@ def test_hdf_io_log_types_preservation(tmp_path, simple_well):
 def test_hdf_io_log_records_preservation(tmp_path, simple_well):
     """Test that log records (units, codes) are preserved through HDF5 export/import."""
     wname = (tmp_path / "well_logrecords").with_suffix(".hdf")
-    simple_well.to_hdf(wname)
+    simple_well.to_file(wname, fformat="hdf5")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
 
@@ -139,7 +117,7 @@ def test_hdf_io_log_records_preservation(tmp_path, simple_well):
 def test_hdf_io_with_nan_values(tmp_path, loadwell1):
     """Test HDF5 export/import with wells containing NaN values."""
     wname = (tmp_path / "well_nan").with_suffix(".hdf")
-    loadwell1.to_hdf(wname)
+    loadwell1.to_file(wname, fformat="hdf5")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
 
@@ -158,12 +136,12 @@ def test_hdf_io_roundtrip_consistency(tmp_path, testdata_path):
 
     # First round-trip
     wname1 = (tmp_path / "well_rt1").with_suffix(".hdf")
-    mywell.to_hdf(wname1)
+    mywell.to_file(wname1, fformat="hdf5")
     well1 = xtgeo.well_from_file(wname1, fformat="hdf5")
 
     # Second round-trip
     wname2 = (tmp_path / "well_rt2").with_suffix(".hdf")
-    well1.to_hdf(wname2)
+    well1.to_file(wname2, fformat="hdf5")
     well2 = xtgeo.well_from_file(wname2, fformat="hdf5")
 
     pd.testing.assert_frame_equal(well1.get_dataframe(), well2.get_dataframe())
@@ -173,7 +151,7 @@ def test_hdf_io_roundtrip_consistency(tmp_path, testdata_path):
 def test_hdf_io_discrete_logs(tmp_path, simple_well):
     """Test HDF5 export/import specifically for discrete logs with code mappings."""
     wname = (tmp_path / "well_discrete").with_suffix(".hdf")
-    simple_well.to_hdf(wname)
+    simple_well.to_file(wname, fformat="hdf5")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
 
@@ -191,7 +169,7 @@ def test_hdf_io_discrete_logs(tmp_path, simple_well):
 def test_hdf_io_continuous_logs(tmp_path, simple_well):
     """Test HDF5 export/import specifically for continuous logs with unit/scale."""
     wname = (tmp_path / "well_continuous").with_suffix(".hdf")
-    simple_well.to_hdf(wname)
+    simple_well.to_file(wname, fformat="hdf5")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
 
@@ -206,9 +184,33 @@ def test_hdf_io_continuous_logs(tmp_path, simple_well):
 def test_hdf_io_all_log_names(tmp_path, loadwell1):
     """Test that all log names are preserved through HDF5 export/import."""
     wname = (tmp_path / "well_lognames").with_suffix(".hdf")
-    loadwell1.to_hdf(wname)
+    loadwell1.to_file(wname, fformat="hdf5")
 
     result = xtgeo.well_from_file(wname, fformat="hdf5")
 
     assert result.lognames == loadwell1.lognames
     assert result.lognames_all == loadwell1.lognames_all
+
+
+def test_hdf_io_import_selected_logs(tmp_path, simple_well):
+    """Test import from HDF5 with lognames filter and strict mode."""
+    wname = (tmp_path / "well_log_filter").with_suffix(".hdf")
+    simple_well.to_file(wname, fformat="hdf5")
+
+    result = xtgeo.well_from_file(wname, fformat="hdf5", lognames="Poro")
+    assert "Poro" in result.get_dataframe()
+    assert "Perm" not in result.get_dataframe()
+    assert "Facies" not in result.get_dataframe()
+
+    result = xtgeo.well_from_file(wname, fformat="hdf5", lognames=["DUMMY"])
+    assert "Poro" not in result.get_dataframe()
+    assert "Perm" not in result.get_dataframe()
+    assert "Facies" not in result.get_dataframe()
+
+    with pytest.raises(ValueError):
+        xtgeo.well_from_file(
+            wname,
+            fformat="hdf5",
+            lognames=["DUMMY"],
+            lognames_strict=True,
+        )
