@@ -1,13 +1,43 @@
 import warnings
-from dataclasses import dataclass
-from typing import Any, Generator, TextIO
+from dataclasses import asdict, dataclass
+from typing import Any, Generator, NotRequired, TextIO, TypedDict, TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
+try:
+    from typing import closed  # type: ignore[attr-defined]
+except ImportError:
+    _T = TypeVar("_T")
+
+    def closed(cls: _T) -> _T:  # no-op fallback
+        return cls
+
+
 from xtgeo.common.types import FileLike
 from xtgeo.io._file import FileFormat, FileWrapper
+
+
+@closed
+class TSurfHeaderDict(TypedDict):
+    name: str
+
+
+@closed
+class TSurfCoordinateSystemDict(TypedDict):
+    name: str
+    axis_name: list[str]
+    axis_unit: list[str]
+    zpositive: str
+
+
+@closed
+class TSurfDict(TypedDict):
+    header: TSurfHeaderDict
+    coord_sys: NotRequired[TSurfCoordinateSystemDict]
+    vertices: npt.NDArray[np.float64]
+    triangles: npt.NDArray[np.int_]
 
 
 class ValidatorCoordSys:
@@ -254,6 +284,16 @@ class TSurfData:
     coord_sys: TSurfCoordSys | None
     vertices: npt.NDArray[np.float64]
     triangles: npt.NDArray[np.int_]
+
+    @property
+    def num_vertices(self) -> int:
+        """Return the number of vertices in the triangulated surface."""
+        return self.vertices.shape[0]
+
+    @property
+    def num_triangles(self) -> int:
+        """Return the number of triangles in the triangulated surface."""
+        return self.triangles.shape[0]
 
     @property
     def get_vertices(self) -> npt.NDArray[np.float64]:
@@ -728,6 +768,26 @@ class TSurfData:
         )
         cls._validate_triangulation_data(tsurf_data.vertices, tsurf_data.triangles)
         return tsurf_data
+
+    def asdict(self) -> TSurfDict:
+        """
+        Returns a deep, recursive copy of the TSurfData as a dictionary.
+
+        COORDINATE_SYSTEM is optional in the TSurf file specification,
+        thus 'coord_sys' is not required and is only included in the output dictionary
+        if it was present in the original TSurf data/file.
+        """
+
+        data = asdict(self)
+
+        result = TSurfDict(
+            header=data["header"],
+            vertices=data["vertices"],
+            triangles=data["triangles"],
+        )
+        if data.get("coord_sys") is not None:
+            result["coord_sys"] = cast("TSurfCoordinateSystemDict", data["coord_sys"])
+        return result
 
     @classmethod
     def from_file(

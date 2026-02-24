@@ -1102,3 +1102,48 @@ def test_tsurf_data_roundtrip_bytes_io(complete_tsurf_file: str) -> None:
     assert result.coord_sys == result_written.coord_sys
     assert np.array_equal(result.vertices, result_written.vertices)
     assert np.array_equal(result.triangles, result_written.triangles)
+
+
+def test_get_as_dict_with_coord_sys(complete_tsurf_file: str) -> None:
+    """Test get_as_dict returns correct keys and values with coordinate system."""
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    result = data.asdict()
+
+    assert isinstance(result, dict)
+    assert set(result.keys()) == {"header", "coord_sys", "vertices", "triangles"}
+
+    assert result["header"] == {"name": "test_surface"}
+    assert np.array_equal(result["vertices"], data.vertices)
+    assert np.array_equal(result["triangles"], data.triangles)
+
+    coord_sys = result["coord_sys"]
+    assert coord_sys is not None
+    assert coord_sys["name"] == "Default"
+    assert coord_sys["axis_name"] == ["X", "Y", "Z"]
+    assert coord_sys["axis_unit"] == ["m", "m", "m"]
+    assert coord_sys["zpositive"] == "Depth"
+
+
+def test_get_as_dict_without_coord_sys(minimal_tsurf_file: str) -> None:
+    """Test get_as_dict does not contain coord_sys data when section is absent."""
+    data = TSurfData.from_file(tsurf_stream(minimal_tsurf_file))
+    result = data.asdict()
+
+    assert result["header"] == {"name": "test_surface"}
+    assert "coord_sys" not in result
+    assert np.array_equal(result["vertices"], data.vertices)
+    assert np.array_equal(result["triangles"], data.triangles)
+
+
+def test_num_vertices(complete_tsurf_file: str) -> None:
+    """Test num_vertices returns the correct vertex count."""
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    assert data.num_vertices == 3
+    assert data.num_vertices == data.vertices.shape[0]
+
+
+def test_num_triangles(complete_tsurf_file: str) -> None:
+    """Test num_triangles returns the correct triangle count."""
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    assert data.num_triangles == 1
+    assert data.num_triangles == data.triangles.shape[0]
