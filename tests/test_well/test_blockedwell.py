@@ -34,3 +34,25 @@ def test_import_blockedwell(loadwell1):
     }
 
     assert mywell.get_dataframe()["Poro"][4] == pytest.approx(0.224485, abs=0.0001)
+
+
+def test_blockedwell_hdf5_import_selected_logs(tmp_path, loadwell1):
+    """Import blocked well from HDF5 with lognames filter and strict mode."""
+    wname = (tmp_path / "blockedwell_log_filter").with_suffix(".hdf")
+    loadwell1.to_file(wname, fformat="hdf5")
+
+    result = xtgeo.blockedwell_from_file(wname, fformat="hdf5", lognames="Poro")
+    assert "Poro" in result.get_dataframe()
+    assert "Facies" not in result.get_dataframe()
+
+    result = xtgeo.blockedwell_from_file(wname, fformat="hdf5", lognames=["DUMMY"])
+    assert "Poro" not in result.get_dataframe()
+    assert "Facies" not in result.get_dataframe()
+
+    with pytest.raises(ValueError):
+        xtgeo.blockedwell_from_file(
+            wname,
+            fformat="hdf5",
+            lognames=["DUMMY"],
+            lognames_strict=True,
+        )
