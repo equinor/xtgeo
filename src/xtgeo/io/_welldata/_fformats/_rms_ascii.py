@@ -91,8 +91,14 @@ def _read_rms_ascii_header(
 
         else:
             row = line.strip().split()
+            if len(row) < 3:
+                raise ValueError(
+                    f"Malformed log definition at line {lnum}: '{line.strip()}'. "
+                    "Expected format: 'LOGNAME TYPE [metadata...]', got only "
+                    f"{len(row)} token(s)"
+                )
             lname_raw = str(row[0])
-            ltype = row[1].upper()
+            ltype = row[1].upper()  # typically "DISC" or "UNK"/"CONT"/...
 
             if "_index" in lname_raw.lower():
                 lname: str = lname_raw.upper()
@@ -231,8 +237,11 @@ def _write_rms_ascii_header(
         else:
             # Continuous log: try to restore metadata from code_names tuple
             if isinstance(log.code_names, tuple) and len(log.code_names) >= 2:
-                log_type = str(log.code_names[0])
-                wrec = " ".join(str(x) for x in log.code_names[1:])
+                log_type = str(log.code_names[0]).strip() or "UNK"
+                wrec_parts = [
+                    str(x).strip() for x in log.code_names[1:] if str(x).strip()
+                ]
+                wrec = " ".join(wrec_parts) if wrec_parts else "lin"
             else:
                 log_type = "UNK"
                 wrec = "lin"
@@ -378,9 +387,24 @@ def write_rms_ascii_blockedwell(
         precision: Number of decimal places for floats (default: 4)
 
     """
-    i_log = WellLog(name="I_INDEX", values=blocked_well.i_index, is_discrete=False)
-    j_log = WellLog(name="J_INDEX", values=blocked_well.j_index, is_discrete=False)
-    k_log = WellLog(name="K_INDEX", values=blocked_well.k_index, is_discrete=False)
+    i_log = WellLog(
+        name="I_INDEX",
+        values=blocked_well.i_index,
+        is_discrete=False,
+        code_names=("UNK", "lin"),
+    )
+    j_log = WellLog(
+        name="J_INDEX",
+        values=blocked_well.j_index,
+        is_discrete=False,
+        code_names=("UNK", "lin"),
+    )
+    k_log = WellLog(
+        name="K_INDEX",
+        values=blocked_well.k_index,
+        is_discrete=False,
+        code_names=("UNK", "lin"),
+    )
 
     temp_logs = blocked_well.logs + (i_log, j_log, k_log)
 
