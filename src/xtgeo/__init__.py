@@ -119,6 +119,7 @@ from xtgeo.surface.regular_surface import (
     surface_from_grid3d,
     surface_from_rms,
     surface_from_roxar,
+    create_synthetic_surface,
 )
 from xtgeo.surface.surfaces import Surfaces
 
@@ -206,6 +207,7 @@ __all__ = [
     "blockedwells_from_files",
     "blockedwells_from_roxar",
     "create_box_grid",
+    "create_synthetic_surface",
     "cube1",
     "cube_from_file",
     "cube_from_roxar",

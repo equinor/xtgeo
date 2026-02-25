@@ -16,6 +16,8 @@ Functions
 
 .. autofunction:: xtgeo.surface_from_roxar
 
+.. autofunction:: xtgeo.create_synthetic_surface
+
 Classes
 """""""
 
