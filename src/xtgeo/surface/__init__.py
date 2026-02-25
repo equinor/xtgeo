@@ -2,6 +2,7 @@
 
 from .regular_surface import (
     RegularSurface,
+    create_synthetic_surface,
     surface_from_file,
     surface_from_grid3d,
     surface_from_rms,
@@ -17,4 +18,5 @@ __all__ = [
     "surface_from_grid3d",
     "Surfaces",
     "surfaces_from_grid",
+    "create_synthetic_surface",
 ]
