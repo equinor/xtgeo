@@ -1,5 +1,3 @@
-"""Tests for create_synthetic_surface."""
-
 import numpy as np
 
 from xtgeo import create_synthetic_surface
@@ -92,7 +90,8 @@ def test_create_synthetic_surface_with_curvature_and_centroid():
     """Test ellipsoidal curvature with non-default centroid.
 
     Creates a 5x5 surface with ellipsoidal curvature (rx=10, ry=10, rz=5)
-    and centroid at (0.5, 0.5), which places the center at (2.5, 2.5).
+    and centroid at (0.5, 0.5), which for a node-based 5x5 grid with
+    xinc=yinc=1.0 places the center at (2.0, 2.0) in local coordinates.
     The surface forms a downward-facing bowl (ellipsoid cap).
     """
     surface = create_synthetic_surface(
@@ -162,63 +161,89 @@ def test_create_synthetic_surface_with_curvature_and_offset_centroid():
     assert surface.values[2, 2] == np.max(surface.values)
 
 
-def test_rotation_affects_azimuth_dipping():
-    """Test that rotation correctly adjusts azimuth direction.
+def test_azimuth_is_global_independent_of_rotation():
+    """Test that azimuth is interpreted in global coordinates.
 
-    With rotation, the azimuth should be measured in the rotated coordinate system.
-    Without rotation, azimuth=0 means dip towards North (+Y).
-    With 90° rotation, azimuth=0 should mean dip towards East (+X) in the global frame,
-    because in the rotated frame, the original Y direction is now along the X axis.
+    For azimuth=0 (global North), moving northward in global coordinates should
+    increase depth, while moving eastward should keep approximately the same depth,
+    regardless of map rotation.
     """
-    # Create surface without rotation: azimuth=0 dips towards +Y
-    surf_no_rot = create_synthetic_surface(
-        ncol=5,
-        nrow=5,
+    for rotation in (0.0, 45.0, 90.0):
+        surface = create_synthetic_surface(
+            ncol=101,
+            nrow=101,
+            xinc=1.0,
+            yinc=1.0,
+            rotation=rotation,
+            rx=0.0,
+            ry=0.0,
+            rz=0.0,
+            dipping=10.0,
+            top_depth=100.0,
+            centroid=(0.5, 0.5),
+            azimuth=0.0,
+        )
+
+        rot_rad = np.radians(rotation)
+        cos_r = np.cos(rot_rad)
+        sin_r = np.sin(rot_rad)
+        dx = 0.5 * (surface.ncol - 1) * surface.xinc
+        dy = 0.5 * (surface.nrow - 1) * surface.yinc
+        x_center = surface.xori + dx * cos_r - dy * sin_r
+        y_center = surface.yori + dx * sin_r + dy * cos_r
+
+        center = surface.get_value_from_xy((x_center, y_center))
+        north = surface.get_value_from_xy((x_center, y_center + 10.0))
+        east = surface.get_value_from_xy((x_center + 10.0, y_center))
+
+        assert north > center
+        assert np.isclose(east, center, atol=1e-6)
+
+
+def test_curvature_with_dipping_and_azimuth():
+    """Test ellipsoidal curvature combined with dipping in azimuth direction.
+
+    Creates a surface with both curvature (ellipsoid bowl) and dipping.
+    Verifies that moving in the azimuth direction increases depth more than
+    moving perpendicular to it.
+    """
+    # Create surface with curvature and dipping towards East (azimuth=90)
+    surface = create_synthetic_surface(
+        ncol=51,
+        nrow=51,
         xinc=1.0,
         yinc=1.0,
         rotation=0.0,
-        rx=0.0,
-        ry=0.0,
-        rz=0.0,
-        dipping=10.0,
-        top_depth=100.0,
-        centroid=(0.0, 0.0),
-        azimuth=0.0,
+        rx=50.0,
+        ry=50.0,
+        rz=10.0,
+        dipping=5.0,
+        top_depth=1000.0,
+        centroid=(0.5, 0.5),
+        azimuth=90.0,
     )
 
-    # Create surface with 90° rotation: azimuth=0 should dip towards +X
-    surf_rot90 = create_synthetic_surface(
-        ncol=5,
-        nrow=5,
-        xinc=1.0,
-        yinc=1.0,
-        rotation=90.0,
-        rx=0.0,
-        ry=0.0,
-        rz=0.0,
-        dipping=10.0,
-        top_depth=100.0,
-        centroid=(0.0, 0.0),
-        azimuth=0.0,
+    # Get center point in world coordinates
+    dx = 0.5 * (surface.ncol - 1) * surface.xinc
+    dy = 0.5 * (surface.nrow - 1) * surface.yinc
+    x_center = surface.xori + dx
+    y_center = surface.yori + dy
+
+    center = surface.get_value_from_xy((x_center, y_center))
+
+    # Move 10 units East (azimuth direction): should increase depth significantly
+    east = surface.get_value_from_xy((x_center + 10.0, y_center))
+    east_delta = east - center
+
+    # Move 10 units North (perpendicular): should increase depth only from curvature
+    north = surface.get_value_from_xy((x_center, y_center + 10.0))
+    north_delta = north - center
+
+    # Dipping gradient (5°) should dominate in azimuth direction
+    assert east_delta > north_delta, (
+        f"Dipping in azimuth=90 (East) should increase depth more than North: "
+        f"east_delta={east_delta:.4f}, north_delta={north_delta:.4f}"
     )
-
-    # In the unrotated surface, values increase along Y direction (row index)
-    # Compare corner (0,0) vs (0,4): values should increase along Y
-    no_rot_y_increase = surf_no_rot.values[0, 4] > surf_no_rot.values[0, 0]
-    assert no_rot_y_increase, "Without rotation, dip should increase along Y"
-
-    # In the rotated surface, values should increase along X direction (col index)
-    # Compare corner (0,0) vs (4,0): values should increase along X
-    rot_x_increase = surf_rot90.values[4, 0] > surf_rot90.values[0, 0]
-    assert rot_x_increase, "With 90° rotation, dip should increase along X"
-
-    # The dipping gradient should be approximately equal
-    # For unrotated: gradient along Y axis
-    y_gradient = (surf_no_rot.values[0, 4] - surf_no_rot.values[0, 0]) / 4.0
-    # For rotated: gradient along X axis
-    x_gradient = (surf_rot90.values[4, 0] - surf_rot90.values[0, 0]) / 4.0
-
-    assert np.isclose(y_gradient, x_gradient, rtol=1e-4), (
-        f"Dipping gradients should be equal: y_gradient={y_gradient}, "
-        f"x_gradient={x_gradient}"
-    )
+    # Sanity check: both should be positive (curvature and/or dipping)
+    assert east_delta > 0.0
+    assert north_delta > 0.0

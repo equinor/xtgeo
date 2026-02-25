@@ -385,17 +385,17 @@ def create_synthetic_surface(
         rotation (float, optional): Rotation angle of the surface in degrees.
             Default is 0.0.
         rx (float, optional): Radius of curvature in X direction. Default is 0.0.
-            If 0, return a tilted plane.
+            If 0, return a planar surface with optional tilt.
         ry (float, optional): Radius of curvature in Y direction. Default is 0.0.
-            If 0, return a tilted plane.
+            If 0, return a planar surface with optional tilt.
         rz (float, optional): Radius of curvature in Z direction. Default is 0.0.
-            If 0, return a tilted plane.
+            If 0, return a planar surface with optional tilt.
         top_depth (float, optional): Top depth (Z value) of the surface after
             normalization. Default is 0.0.
         dipping (float, optional): Dip angle of the surface in degrees. Default is 0.0.
         azimuth (float, optional): Azimuth direction of dip in degrees,
-            clockwise from North (+Y) in the rotated surface's coordinate system.
-            Default is 0.0.
+            clockwise from global North (+Y). This is independent of the
+            surface ``rotation``. Default is 0.0.
         centroid (tuple[float, float], optional): Centroid position as
             (x_fraction, y_fraction) relative to grid dimensions. Default is (0.5, 0.5).
 
@@ -413,10 +413,27 @@ def create_synthetic_surface(
     Note::
         If rx, ry, and rz are all non-zero, the surface will have ellipsoidal curvature.
         Otherwise, the surface will be a tilted plane (slab).
-        The dip direction is controlled by azimuth, measured in the rotated surface's
-        coordinate system, where 0 = North (+Y) and 90 = East (+X).
+        The dip direction is controlled by azimuth, measured in the global
+        coordinate system, where 0 = North (+Y) and 90 = East (+X),
+        independent of ``rotation``.
         The Z values are normalized so that the minimum value equals top_depth.
     """
+    if ncol <= 0 or nrow <= 0:
+        raise ValueError("ncol and nrow must be positive integers.")
+    if xinc <= 0.0 or yinc <= 0.0:
+        raise ValueError("xinc and yinc must be positive values.")
+    if rx < 0.0 or ry < 0.0 or rz < 0.0:
+        raise ValueError("rx, ry, and rz must be non-negative values.")
+    if dipping < 0.0 or dipping > 90.0:
+        raise ValueError("dipping must be between 0 and 90 degrees.")
+    if not (0.0 <= azimuth < 360.0):
+        raise ValueError("azimuth must be between 0 and 360 degrees.")
+    if not (0.0 <= centroid[0] <= 1.0) or not (0.0 <= centroid[1] <= 1.0):
+        raise ValueError("centroid values must be between 0 and 1.")
+    if rotation < 0.0 or rotation >= 360.0:
+        raise ValueError("rotation must be between 0 and 360 degrees.")
+    if xori < 0.0 or yori < 0.0:
+        raise ValueError("xori and yori must be non-negative values.")
     # Build grid in local (unrotated) i/j space and rotate to match surface rotation.
     ix = np.arange(ncol, dtype=float) * xinc
     iy = np.arange(nrow, dtype=float) * yinc
@@ -436,12 +453,10 @@ def create_synthetic_surface(
     yo = yori + cx * sin_r + cy * cos_r
 
     # Generalized tilt direction.
-    # Azimuth is defined here as degrees clockwise from North (+Y) in the
-    # rotated surface's coordinate system. The trigonometric functions assume
-    # angles measured counter-clockwise from the East (+X) axis, so we convert
-    # using 90° - azimuth.
-    adjusted_azimuth = azimuth
-    theta = math.radians(90.0 - adjusted_azimuth)
+    # Azimuth is defined as degrees clockwise from global North (+Y), independent
+    # of surface rotation. The trigonometric functions assume angles measured
+    # counter-clockwise from the East (+X) axis, so we convert using 90° - azimuth.
+    theta = math.radians(90.0 - azimuth)
     tilt_component = (xv - xo) * math.cos(theta) + (yv - yo) * math.sin(theta)
 
     if math.isclose(rx, 0.0) or math.isclose(ry, 0.0) or math.isclose(rz, 0.0):
