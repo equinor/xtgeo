@@ -497,18 +497,6 @@ class RegularSurface:
         self._masked = masked  # TODO: check usecase
         self._metadata.required = self
 
-    @classmethod
-    def _read_zmap_ascii(cls, mfile, values):
-        mfile = FileWrapper(mfile)
-        args = _data_reader_factory(FileFormat.ZMAP_ASCII)(mfile, values=values)
-        return cls(**args)
-
-    @classmethod
-    def _read_ijxyz(cls, mfile: FileWrapper, template: RegularSurface | Cube | None):
-        mfile = FileWrapper(mfile)
-        args = _data_reader_factory(FileFormat.IJXYZ)(mfile, template=template)
-        return cls(**args)
-
     def __repr__(self):
         """Magic method __repr__."""
         return (
