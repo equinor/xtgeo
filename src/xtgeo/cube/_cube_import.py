@@ -161,6 +161,11 @@ def _segy_all_traces_attributes(
         (point_x1 - xori, point_y1 - yori, 0), (point_x2 - xori, point_y2 - yori, 0)
     )
 
+    measurement_system = segyfile.bin[segyio.BinField.MeasurementSystem]
+    measurement = "m"
+    if measurement_system and measurement_system == 2:
+        measurement = "ft"
+
     return {
         "ncol": ncol,
         "nrow": nrow,
@@ -174,6 +179,7 @@ def _segy_all_traces_attributes(
         "rotation": rotation,
         "yflip": yflip,
         "traceidcodes": traceidcodes,
+        "measurement": measurement,
     }
 
 
@@ -240,6 +246,11 @@ def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> dict:
         xspacing,
     )
 
+    measurement_system = segyfile.bin[segyio.BinField.MeasurementSystem]
+    measurement = "m"
+    if measurement_system and measurement_system == 2:
+        measurement = "ft"
+
     attrs["ncol"] = ncol
     attrs["nrow"] = nrow
     attrs["nlay"] = nlay
@@ -247,6 +258,7 @@ def _import_segy_incomplete_traces(segyfile: segyio.segy.SegyFile) -> dict:
     attrs["xlines"] = xlines
     attrs["values"] = values
     attrs["traceidcodes"] = traceidcodes
+    attrs["measurement"] = measurement
     return attrs
 
 

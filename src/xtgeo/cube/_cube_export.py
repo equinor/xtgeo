@@ -86,8 +86,7 @@ def export_segy(cube: Cube, sfile: str) -> None:
         f.bin[segyio.BinField.Interval] = dt_us
         f.bin[segyio.BinField.Samples] = cube.nlay
         f.bin[segyio.BinField.SortingCode] = 4  # trace sorting from C: needed?
-        # TODO: Make this read from cube._measurement (or something)
-        f.bin[segyio.BinField.MeasurementSystem] = 1
+        f.bin[segyio.BinField.MeasurementSystem] = 2 if cube.measurement == "ft" else 1
         text_header = bytearray(f.text[0])
         text_header[-1] = 0x20  # ASCII space
         f.text[0] = bytes(text_header)

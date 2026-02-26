@@ -14,6 +14,8 @@ Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering
 
 """
 
+from typing import Literal
+
 import numpy as np
 
 from xtgeo.common import XTGeoDialog, null_logger
@@ -56,13 +58,13 @@ def _roxapi_import_cube(self, rox, proj, name, folder):  # pragma: no cover
         raise ValueError(f"Path {path} is not within RMS Seismic Cube container")
     try:
         rcube = proj.seismic.data[path]
-        _roxapi_cube_to_xtgeo(self, rox, rcube)
+        _roxapi_cube_to_xtgeo(self, proj, rcube)
     except KeyError as emsg:
         logger.error(emsg)
         raise
 
 
-def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
+def _roxapi_cube_to_xtgeo(self, proj, rcube):  # pragma: no cover
     """Tranforming cube from ROXAPI to XTGeo object."""
     logger.info("Cube from roxapi to xtgeo...")
 
@@ -87,6 +89,18 @@ def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
     self._yflip = 1
     if roxhandedness == "right":
         self._yflip = -1
+
+    measurement: Literal["m", "ft"] = "m"
+    # Probable 'feet' measurement systems. Note that RMS has a 'mmft' mixed system which
+    # cannot be supported by the current implementation.
+    if proj.project_units in (
+        roxar.UnitSystem.field,
+        roxar.UnitSystem.field_cmg,
+        roxar.UnitSystem.field_us,
+        roxar.UnitSystem.field_nexus,
+    ):
+        measurement = "ft"
+    self.measurement = measurement
 
     il_start = rcube.get_inline(0)
     xl_start = rcube.get_crossline(0)
