@@ -356,6 +356,120 @@ def surface_from_grid3d(
     )
 
 
+def create_synthetic_surface(
+    ncol: int,
+    nrow: int,
+    xinc: float,
+    yinc: float,
+    xori: float = 0.0,
+    yori: float = 0.0,
+    rotation: float = 0.0,
+    rx: float = 0.0,
+    ry: float = 0.0,
+    rz: float = 0.0,
+    top_depth: float = 0.0,
+    dipping: float = 0.0,
+    azimuth: float = 0.0,
+    centroid: tuple[float, float] = (0.5, 0.5),
+) -> RegularSurface:
+    """
+    Create a synthetic regular surface with optional curvature and tilt.
+
+    Args:
+        ncol (int): Number of columns in the surface grid.
+        nrow (int): Number of rows in the surface grid.
+        xinc (float): X-axis increment (spacing between columns).
+        yinc (float): Y-axis increment (spacing between rows).
+        xori (float, optional): X-axis origin. Default is 0.0.
+        yori (float, optional): Y-axis origin. Default is 0.0.
+        rotation (float, optional): Rotation angle of the surface in degrees.
+            Default is 0.0.
+        rx (float, optional): Radius of curvature in X direction. Default is 0.0.
+            If 0, return a tilted plane.
+        ry (float, optional): Radius of curvature in Y direction. Default is 0.0.
+            If 0, return a tilted plane.
+        rz (float, optional): Radius of curvature in Z direction. Default is 0.0.
+            If 0, return a tilted plane.
+        top_depth (float, optional): Top depth (Z value) of the surface after
+            normalization. Default is 0.0.
+        dipping (float, optional): Dip angle of the surface in degrees. Default is 0.0.
+        azimuth (float, optional): Azimuth direction of dip in degrees,
+            clockwise from North (+Y) in the rotated surface's coordinate system.
+            Default is 0.0.
+        centroid (tuple[float, float], optional): Centroid position as
+            (x_fraction, y_fraction) relative to grid dimensions. Default is (0.5, 0.5).
+
+    Returns:
+        RegularSurface: The created synthetic regular surface.
+
+    Example::
+
+        surf = xtgeo.create_synthetic_surface(
+            ncol=100, nrow=100, xinc=25.0, yinc=25.0, rotation=0.0,
+            rx=1000.0, ry=1000.0, rz=500.0, dipping=5.0, top_depth=1000.0,
+            centroid=(0.5, 0.5), azimuth=45.0
+        )
+
+    Note::
+        If rx, ry, and rz are all non-zero, the surface will have ellipsoidal curvature.
+        Otherwise, the surface will be a tilted plane (slab).
+        The dip direction is controlled by azimuth, measured in the rotated surface's
+        coordinate system, where 0 = North (+Y) and 90 = East (+X).
+        The Z values are normalized so that the minimum value equals top_depth.
+    """
+    # Build grid in local (unrotated) i/j space and rotate to match surface rotation.
+    ix = np.arange(ncol, dtype=float) * xinc
+    iy = np.arange(nrow, dtype=float) * yinc
+    dxv, dyv = np.meshgrid(ix, iy, indexing="ij")
+    rot_rad = math.radians(rotation)
+    cos_r = math.cos(rot_rad)
+    sin_r = math.sin(rot_rad)
+
+    # Apply rotation about the origin (xori, yori) to get world-space coordinates.
+    xv = xori + dxv * cos_r - dyv * sin_r
+    yv = yori + dxv * sin_r + dyv * cos_r
+
+    # Centroid in local i/j space, then rotated and translated to world coordinates.
+    cx = centroid[0] * (ncol - 1) * xinc
+    cy = centroid[1] * (nrow - 1) * yinc
+    xo = xori + cx * cos_r - cy * sin_r
+    yo = yori + cx * sin_r + cy * cos_r
+
+    # Generalized tilt direction.
+    # Azimuth is defined here as degrees clockwise from North (+Y) in the
+    # rotated surface's coordinate system. The trigonometric functions assume
+    # angles measured counter-clockwise from the East (+X) axis, so we convert
+    # using 90° - azimuth.
+    adjusted_azimuth = azimuth
+    theta = math.radians(90.0 - adjusted_azimuth)
+    tilt_component = (xv - xo) * math.cos(theta) + (yv - yo) * math.sin(theta)
+
+    if math.isclose(rx, 0.0) or math.isclose(ry, 0.0) or math.isclose(rz, 0.0):
+        # Slab
+        zv = tilt_component * math.tan(math.radians(dipping))
+    else:
+        # Curvature
+        zv = -rz * np.sqrt(
+            np.clip(
+                1.0 - (xv - xo) ** 2 / rx**2 - (yv - yo) ** 2 / ry**2,
+                0,
+                None,
+            )
+        ) + tilt_component * math.tan(math.radians(dipping))
+
+    zv += top_depth - np.min(zv)
+    return RegularSurface(
+        ncol=ncol,
+        nrow=nrow,
+        xinc=xinc,
+        yinc=yinc,
+        xori=xori,
+        yori=yori,
+        rotation=rotation,
+        values=zv,
+    )
+
+
 def _data_reader_factory(file_format: FileFormat):
     if file_format == FileFormat.IRAP_BINARY:
         return _regsurf_import.import_irap_binary
