@@ -512,7 +512,11 @@ class GridProperty(_Grid3D):
 
     @property
     def geometry(self) -> Grid | None:
-        """Get or set the linked geometry, i.e. the Grid instance."""
+        """Get or set the linked geometry, i.e. the Grid instance.
+
+        When setting geometry to a Grid, the property is automatically attached
+        to the grid's property list (consistent with constructor behavior).
+        """
         return self._geometry
 
     @geometry.setter
@@ -521,6 +525,9 @@ class GridProperty(_Grid3D):
             self._geometry = None
         elif isinstance(grid, xtgeo.grid3d.Grid) and grid.dimensions == self.dimensions:
             self._geometry = grid
+            # Auto-append to grid (consistent with constructor behavior)
+            # This is idempotent, so safe if already appended
+            grid.append_prop(self)
         else:
             raise ValueError("Could not set geometry; wrong type or size")
 
