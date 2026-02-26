@@ -147,6 +147,13 @@ def refine(
     refine_factor_row = np.array(refine_factor_row, dtype=np.uint16)
     refine_factor_layer = np.array(refine_factor_layer, dtype=np.uint16)
 
+    # Copy properties BEFORE refining the grid, while dimensions still match
+    properties_to_refine = []
+    if self._props and self._props.props and len(self._props.props) > 0:
+        for prop in self._props.props:
+            properties_to_refine.append(prop.copy())
+
+    # Now refine the grid
     if refine_factor_column.sum() > self.dimensions[0]:
         grid_cpp = _internal.grid3d.Grid(self)
         ref_coordsv, ref_zcornsv, ref_actnumsv = grid_cpp.refine_columns(
@@ -176,12 +183,17 @@ def refine(
         else:
             self.set_subgrids(newsubgrids)
 
-    # Check if grid has any properties
-    if self._props and self._props.props and len(self._props.props) > 0:
-        for prop in self._props.props:
+    # Refine the copied properties and update the grid with them
+    if properties_to_refine:
+        refined_props = []
+        for newprop in properties_to_refine:
+            newprop.geometry = None
             _gridprop_op1.refine(
-                prop, refine_factor_column, refine_factor_row, refine_factor_layer
+                newprop, refine_factor_column, refine_factor_row, refine_factor_layer
             )
+            newprop.geometry = self
+            refined_props.append(newprop)
+        self._props.props = refined_props
 
     return self
 
@@ -275,6 +287,13 @@ def refine_vertically(
             refine_factors.append(rfi)
 
     self._set_xtgformat2()
+
+    # Copy properties BEFORE refining the grid, while dimensions still match
+    properties_to_refine = []
+    if self._props and self._props.props and len(self._props.props) > 0:
+        for prop in self._props.props:
+            properties_to_refine.append(prop.copy())
+
     grid_cpp = _internal.grid3d.Grid(self)
     refine_factors = np.array(refine_factors, dtype=np.uint16)
     ref_zcornsv, ref_actnumsv = grid_cpp.refine_vertically(refine_factors)
@@ -289,9 +308,14 @@ def refine_vertically(
     else:
         self.set_subgrids(newsubgrids)
 
-    # Check if grid has any properties
-    if self._props and self._props.props and len(self._props.props) > 0:
-        for prop in self._props.props:
-            _gridprop_op1.refine(prop, 1, 1, refine_factors)
+    # Refine the copied properties and update the grid with them
+    if properties_to_refine:
+        refined_props = []
+        for newprop in properties_to_refine:
+            newprop.geometry = None
+            _gridprop_op1.refine(newprop, 1, 1, refine_factors)
+            newprop.geometry = self
+            refined_props.append(newprop)
+        self._props.props = refined_props
 
     return self

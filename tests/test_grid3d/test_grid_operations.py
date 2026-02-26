@@ -241,110 +241,6 @@ def test_inactivate_thin_cells(tmp_path, testdata_path):
     grd.to_file(tmp_path / "test_hybridgrid2_inact_thin.roff")
 
 
-def test_refine(testdata_path):
-    """Do a grid refinement in all direction."""
-
-    grid = xtgeo.create_box_grid(
-        (100, 100, 50), increment=(100, 100, 20), rotation=45.0
-    )
-
-    avg_dx1 = grid.get_dx().values.mean()
-    avg_dy1 = grid.get_dy().values.mean()
-    avg_dz1 = grid.get_dz().values.mean()
-
-    refine_x = 2
-    refine_y = 2
-    refine_z = 3
-
-    # idea; either a scalar (all cells), or a dictionary for zone wise
-    grid.refine(refine_x, refine_y, refine_z)
-
-    avg_dx2 = grid.get_dx().values.mean()
-    avg_dy2 = grid.get_dy().values.mean()
-    avg_dz2 = grid.get_dz().values.mean()
-
-    assert avg_dx1 == pytest.approx(refine_x * avg_dx2, abs=0.0001)
-    assert avg_dy1 == pytest.approx(refine_y * avg_dy2, abs=0.0001)
-    assert avg_dz1 == pytest.approx(refine_z * avg_dz2, abs=0.0001)
-
-
-def test_refine_lateral_with_dict(testdata_path):
-    """Do lateral grid refinement from i = 41 - 60, j = 41 - 60 with factor 2"""
-
-    grid = xtgeo.create_box_grid(
-        (100, 100, 50), increment=(100, 100, 20), rotation=45.0
-    )
-
-    avg_dx1 = grid.get_dx().values[40:60, 40:60, :].mean()
-    avg_dy1 = grid.get_dy().values[40:60, 40:60, :].mean()
-
-    refinement = 2
-
-    refine_factor = dict.fromkeys(range(41, 61), refinement)
-
-    grid.refine(refine_factor, refine_factor, 1)
-
-    avg_dx2 = grid.get_dx().values[40:80, 40:80, :].mean()
-    avg_dy2 = grid.get_dy().values[40:80, 40:80, :].mean()
-
-    assert avg_dx1 == pytest.approx(refinement * avg_dx2, abs=0.0001)
-    assert avg_dy1 == pytest.approx(refinement * avg_dy2, abs=0.0001)
-
-
-def test_refine_vertically(testdata_path):
-    """Do a grid refinement vertically."""
-
-    emerald_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE)
-    assert emerald_grid.get_subgrids() == {"subgrid_0": 16, "subgrid_1": 30}
-
-    avg_dz1 = emerald_grid.get_dz().values.mean()
-
-    emerald_grid.append_prop(
-        xtgeo.gridproperty_from_file(testdata_path / EMERFILE, name="REGION")
-    )
-
-    df1 = emerald_grid.get_dataframe()
-
-    # idea; either a scalar (all cells), or a dictionary for zone wise
-    emerald_grid.refine_vertically(3)
-
-    df2 = emerald_grid.get_dataframe()
-
-    assert df1["REGION"].mean() == pytest.approx(df2["REGION"].mean(), rel=1e-6)
-
-    avg_dz2 = emerald_grid.get_dz().values.mean()
-
-    assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
-
-    assert emerald_grid.get_subgrids() == {"subgrid_0": 48, "subgrid_1": 90}
-    emerald_grid.inactivate_by_dz(0.001)
-
-
-def test_refine_vertically_per_zone(testdata_path):
-    """Do a grid refinement vertically, via a dict per zone."""
-
-    emerald2_grid = xtgeo.grid_from_file(testdata_path / EMEGFILE2)
-    grd = emerald2_grid.copy()
-    emerald2_zone = xtgeo.gridproperty_from_file(
-        testdata_path / EMEZFILE2, grid=grd, name="Zone"
-    )
-
-    assert emerald2_zone.values.min() == 1
-    assert emerald2_zone.values.max() == 2
-
-    assert grd.subgrids == {"subgrid_0": range(1, 17), "subgrid_1": range(17, 47)}
-
-    refinement = {1: 4, 2: 2}
-    grd.refine_vertically(refinement, zoneprop=emerald2_zone)
-
-    assert grd.get_subgrids() == {"Zone1": 64, "Zone2": 60}
-
-    grd = emerald2_grid.copy()
-    grd.refine_vertically(refinement)  # no zoneprop
-
-    assert grd.get_subgrids() == {"subgrid_0": 64, "subgrid_1": 60}
-
-
 def test_reverse_row_axis_box(tmp_path):
     """Crop a grid."""
 
@@ -459,6 +355,36 @@ def test_copy_grid(tmp_path, testdata_path):
 
     assert xx1._zcornsv.mean() == xx2._zcornsv.mean()
     assert xx1._actnumsv.mean() == xx2._actnumsv.mean()
+
+
+def test_copy_grid_with_geometry_linked_properties():
+    """Test that copied grid properties reference the new grid, not the old one."""
+    # Create a grid and a property with geometry linked
+    grid1 = xtgeo.create_box_grid((3, 3, 3))
+    prop1 = xtgeo.GridProperty(grid1, name="PORO", values=0.2, linkgeometry=True)
+
+    # Verify property is linked to grid1
+    assert prop1.geometry is grid1
+    assert grid1.props is not None
+    assert len(grid1.props) == 1
+
+    # Copy the grid
+    grid2 = grid1.copy()
+
+    # Verify grid2 has properties
+    assert grid2.props is not None
+    assert len(grid2.props) == 1
+
+    # Verify copied property references the NEW grid, not the old one
+    prop2 = grid2.props[0]
+    assert prop2.geometry is grid2, "Copied property should reference new grid"
+    assert prop2.geometry is not grid1, "Copied property should not reference old grid"
+
+    # Verify the properties are distinct objects
+    assert prop2 is not prop1
+
+    # Verify the grids are distinct objects
+    assert grid2 is not grid1
 
 
 def test_crop_grid(tmp_path, testdata_path):

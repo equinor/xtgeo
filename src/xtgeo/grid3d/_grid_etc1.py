@@ -1183,7 +1183,7 @@ def copy(self: Grid) -> Grid:
     if filesrc is not None and copy_tag not in filesrc:
         filesrc += copy_tag
 
-    return self.__class__(
+    new_grid = self.__class__(
         coordsv=self._coordsv.copy(),
         zcornsv=self._zcornsv.copy(),
         actnumsv=self._actnumsv.copy(),
@@ -1196,6 +1196,14 @@ def copy(self: Grid) -> Grid:
         props=self._props.copy() if self._props else None,
         filesrc=filesrc,
     )
+
+    # Update geometry references in copied properties to point to the new grid
+    if new_grid._props and new_grid._props.props:
+        for prop in new_grid._props.props:
+            if prop._geometry is not None:
+                prop.geometry = new_grid
+
+    return new_grid
 
 
 @no_type_check  # due to some hard-to-solve issues with mypy

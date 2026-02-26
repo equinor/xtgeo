@@ -270,3 +270,6 @@ def refine(
         values = np.repeat(values, val, axis=i)
         mask = np.repeat(mask, val, axis=i)
     self._values = np.ma.array(values, mask=mask)
+
+    # Update dimensions to match the refined values
+    self._ncol, self._nrow, self._nlay = self._values.shape
