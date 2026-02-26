@@ -20,7 +20,7 @@ from xtgeo.metadata.metadata import MetaDataWell
 from xtgeo.xyz import _xyz_data
 from xtgeo.xyz.polygons import Polygons
 
-from . import _well_aux, _well_io, _well_oper, _well_roxapi, _wellmarkers
+from . import _well_io_factory, _well_oper, _well_roxapi, _wellmarkers
 
 if TYPE_CHECKING:
     import io
@@ -36,7 +36,7 @@ logger = null_logger(__name__)
 
 def well_from_file(
     wfile: str | Path,
-    fformat: str | None = "rms_ascii",
+    fformat: str | None = None,
     mdlogname: str | None = None,
     zonelogname: str | None = None,
     lognames: str | list[str] | None = "all",
@@ -47,7 +47,8 @@ def well_from_file(
 
     Args:
         wfile: File path for well, either a string or a pathlib.Path instance
-        fformat: "rms_ascii" or "hdf5"
+        fformat: "rms_ascii", "csv", or "hdf5". If None (default), auto-detect from
+            file extension or file signature.
         mdlogname: Name of Measured Depth log, if any
         zonelogname: Name of Zonelog, if any
         lognames: Name or list of lognames to import, default is "all"
@@ -493,15 +494,15 @@ class Well:
     def _read_file(
         cls,
         wfile: str | Path,
-        fformat: str | None = "rms_ascii",
+        fformat: str | None = None,
         **kwargs,
     ):
         """Import well from file.
 
         Args:
             wfile (str): Name of file as string or pathlib.Path
-            fformat (str): File format, rms_ascii (rms well) is
-                currently supported and default format.
+            fformat (str): File format: rms_ascii, csv, hdf5.
+                If None (default), auto-detect from file extension or file signature.
             mdlogname (str): Name of measured depth log, if any
             zonelogname (str): Name of zonation log, if any
             strict (bool): If True, then import will fail if
@@ -529,19 +530,21 @@ class Well:
         wfile = FileWrapper(wfile)
         fmt = wfile.fileformat(fformat)
 
-        kwargs = _well_aux._data_reader_factory(fmt)(wfile, **kwargs)
+        kwargs = _well_io_factory._data_reader_factory(fmt)(wfile, **kwargs)
         return cls(**kwargs)
 
     def to_file(
         self,
         wfile: str | Path | io.BytesIO,
         fformat: str | None = "rms_ascii",
+        compression: str | None = "lzf",
     ):
         """Export well to file or memory stream.
 
         Args:
             wfile: File name or stream.
-            fformat: File format ('rms_ascii'/'rmswell', 'hdf/hdf5/h5').
+            fformat: File format ('rms_ascii'/'rmswell', 'csv', 'hdf/hdf5/h5').
+            compression: Compression for HDF5 format only. Default is 'lzf'.
 
         Example::
 
@@ -558,24 +561,37 @@ class Well:
 
         self._ensure_consistency()
 
-        if not fformat or fformat in (
-            None,
+        if fformat is None or fformat in (
             "rms_ascii",
             "rms_asc",
             "rmsasc",
             "rmswell",
         ):
-            _well_io.export_rms_ascii(self, wfile.name)
+            from xtgeo.io._welldata import WellFileFormat
 
-        elif fformat in FileFormat.HD5.value:
-            self.to_hdf(wfile)
+            welldata = _well_io_factory._well_to_welldata(self)
+            welldata.to_file(wfile.name, fformat=WellFileFormat.RMS_ASCII)
+
+        elif fformat == "csv":
+            from xtgeo.io._welldata import WellFileFormat
+
+            welldata = _well_io_factory._well_to_welldata(self)
+            welldata.to_file(wfile.name, fformat=WellFileFormat.CSV)
+
+        elif fformat in FileFormat.HDF.value:
+            from xtgeo.io._welldata import WellFileFormat
+
+            welldata = _well_io_factory._well_to_welldata(self)
+            welldata.to_file(
+                wfile.name, fformat=WellFileFormat.HDF5, compression=compression
+            )
 
         else:
-            extensions = FileFormat.extensions_string([FileFormat.HDF])
+            extensions = FileFormat.extensions_string([FileFormat.HDF, FileFormat.CSV])
             raise InvalidFileFormatError(
                 f"File format {fformat} is invalid for a well type. "
                 f"Supported formats are {extensions}, 'rms_ascii', 'rms_asc', "
-                "'rmsasc', 'rmswell'."
+                "'rmsasc', 'rmswell', 'csv'."
             )
 
         return wfile.file
@@ -587,25 +603,31 @@ class Well:
     ) -> Path:
         """Export well to HDF based file.
 
+        .. deprecated:: 4.19 (approx)
+            Use :meth:`to_file` with ``fformat='hdf5'`` instead. This method is
+            redundant and will be removed in version 5.0.
+
         Warning:
             This implementation is currently experimental and only recommended
             for testing.
 
         Args:
             wfile: HDF File name to write to export to.
+            compression: Compression type (default 'lzf').
 
         Returns:
             A Path instance to actual file applied.
 
         .. versionadded:: 2.14
         """
-        wfile = FileWrapper(wfile, mode="wb", obj=self)
+        warnings.warn(
+            "to_hdf() is deprecated and will be removed in version 5.0. "
+            "Use to_file() with fformat='hdf5' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
-        wfile.check_folder(raiseerror=OSError)
-
-        _well_io.export_hdf5_well(self, wfile, compression=compression)
-
-        return wfile.file
+        return self.to_file(wfile, fformat="hdf5", compression=compression)
 
     @classmethod
     def _read_roxar(

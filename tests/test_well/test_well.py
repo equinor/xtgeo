@@ -267,6 +267,14 @@ def test_import_export_rmsasc(tmp_path, simple_well):
     assert result.get_dataframe().equals(result.get_dataframe())
 
 
+def test_import_export_csv(tmp_path, simple_well):
+    wname = (tmp_path / "$random").with_suffix(".csv")
+    wuse = simple_well.to_file(wname, fformat="csv")
+
+    result = xtgeo.well_from_file(wuse)
+    assert result.get_dataframe().equals(simple_well.get_dataframe())
+
+
 def test_create_and_delete_logs(loadwell3):
     """Test create and delete logs, using explicit create_log() and delete_log()."""
     mywell = loadwell3

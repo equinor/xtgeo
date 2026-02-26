@@ -20,16 +20,25 @@ logger = null_logger(__name__)
 
 
 def blockedwell_from_file(
-    bwfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=False
+    bwfile,
+    fformat=None,
+    mdlogname=None,
+    zonelogname=None,
+    strict=False,
+    lognames="all",
+    lognames_strict=False,
 ):
     """Make an instance of a BlockedWell directly from file import.
 
     Args:
-        bmfile (str): Name of file
-        fformat (str): See :meth:`Well.from_file`
+        bwfile (str): Name of file
+        fformat (str): File format: rms_ascii, csv, hdf5.
+            If None (default), auto-detect from file extension or file signature.
         mdlogname (str): See :meth:`Well.from_file`
         zonelogname (str): See :meth:`Well.from_file`
         strict (bool): See :meth:`Well.from_file`
+        lognames: Name or list of lognames to import, default is "all"
+        lognames_strict: If True, require all logs in lognames to be present
 
     Example::
 
@@ -43,9 +52,9 @@ def blockedwell_from_file(
         mdlogname=mdlogname,
         zonelogname=zonelogname,
         strict=strict,
+        lognames=lognames,
+        lognames_strict=lognames_strict,
     )
-
-    # return obj
 
 
 def blockedwell_from_roxar(
@@ -151,6 +160,108 @@ class BlockedWell(Well):
         super().__init__(*args, **kwargs)
 
         self._gridname = None
+
+    @classmethod
+    def _read_file(
+        cls,
+        wfile,
+        fformat=None,
+        **kwargs,
+    ):
+        """Import blocked well from file (internal method).
+
+        Uses BlockedWellData instead of WellData for proper grid index handling.
+
+        Args:
+            wfile: Name of file as string or pathlib.Path
+            fformat: File format. If None, auto-detect.
+            **kwargs: Additional arguments passed to import functions
+
+        Returns:
+            BlockedWell instance
+        """
+        from xtgeo.io._file import FileWrapper
+
+        from . import _blockedwell_io_factory
+
+        wfile = FileWrapper(wfile)
+        fmt = wfile.fileformat(fformat)
+
+        kwargs = _blockedwell_io_factory._blocked_data_reader_factory(fmt)(
+            wfile, **kwargs
+        )
+        return cls(**kwargs)
+
+    def to_file(
+        self,
+        bwfile,
+        fformat=None,
+        compression: str | None = "lzf",
+    ):
+        """Export BlockedWell to file.
+
+        Args:
+            bwfile: File name or pathlib.Path or stream
+            fformat: File format ('rms_ascii'/'rmswell', 'csv', 'hdf'/'hdf5'/'h5').
+                If None (default), uses 'rms_ascii'.
+            compression: Compression for HDF5 format only. Default is 'lzf'.
+
+        Returns:
+            Path to file (or file object if stream was provided)
+
+        Example::
+
+            >>> mybw = xtgeo.blockedwell_from_file(well_dir + '/OP_1.bw')
+            >>> mybw.to_file(outdir + '/OP_1_copy.bw')
+
+        .. versionchanged:: 4.0 Added explicit to_file method for BlockedWell
+        """
+        from xtgeo.common.exceptions import InvalidFileFormatError
+        from xtgeo.io._file import FileFormat, FileWrapper
+        from xtgeo.io._welldata import WellFileFormat
+
+        from . import _blockedwell_io_factory
+
+        bwfile = FileWrapper(bwfile, mode="wb", obj=self)
+        bwfile.check_folder(raiseerror=OSError)
+
+        self._ensure_consistency()
+
+        if fformat is None or fformat in (
+            "rms_ascii",
+            "rms_asc",
+            "rmsasc",
+            "rmswell",
+        ):
+            blockedwelldata = _blockedwell_io_factory._blockedwell_to_blockedwelldata(
+                self
+            )
+            blockedwelldata.to_file(bwfile.name, fformat=WellFileFormat.RMS_ASCII)
+
+        elif fformat == "csv":
+            blockedwelldata = _blockedwell_io_factory._blockedwell_to_blockedwelldata(
+                self
+            )
+            blockedwelldata.to_file(bwfile.name, fformat=WellFileFormat.CSV)
+
+        elif fformat in FileFormat.HDF.value:
+            blockedwelldata = _blockedwell_io_factory._blockedwell_to_blockedwelldata(
+                self
+            )
+            blockedwelldata.to_file(
+                bwfile.name, fformat=WellFileFormat.HDF5, compression=compression
+            )
+
+        else:
+            extensions = FileFormat.extensions_string(
+                [FileFormat.RMSWELL, FileFormat.CSV, FileFormat.HDF]
+            )
+            raise InvalidFileFormatError(
+                f"File format {fformat} is invalid for BlockedWell. "
+                f"Supported formats are {extensions}."
+            )
+
+        return bwfile.file
 
     @property
     def gridname(self):
