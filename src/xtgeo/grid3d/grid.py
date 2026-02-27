@@ -1453,7 +1453,10 @@ class Grid(_Grid3D):
         return _grid_etc1.get_vtk_geometries(self)
 
     def append_prop(self, prop: GridProperty) -> None:
-        """Append a single property to the grid."""
+        """Append a single GridProperty object to the grid.
+
+        If object already is appended, it will ignore this silently to avoid duplicates.
+        """
         if prop.dimensions != self.dimensions:
             raise ValueError(
                 f"Dimensions does not match, got: {prop.dimensions} "

@@ -683,3 +683,93 @@ def test_grid_merge_emerald(testdata_path):
         max(g1.nrow, g2.nrow),
         max(g1.nlay, g2.nlay),
     )
+
+
+def test_merge_with_properties_crop_and_refine():
+    """Test merging with a grid that has properties, then crop and refine."""
+    # Create original grid with properties
+    g1 = xtgeo.create_box_grid(
+        (10, 8, 4), origin=(0, 0, 1000), increment=(100, 100, 10)
+    )
+
+    # Add continuous property
+    poro1 = xtgeo.GridProperty(
+        g1,
+        name="PORO",
+        values=np.full(g1.dimensions, 0.25),
+    )
+    g1.append_prop(poro1)
+    print(g1._props.props)
+
+    # Add discrete property
+    zone1 = xtgeo.GridProperty(
+        g1,
+        name="ZONE",
+        discrete=True,
+        values=np.full(g1.dimensions, 1, dtype=np.int32),
+        codes={1: "Upper", 2: "Middle", 3: "Lower"},
+    )
+    g1.append_prop(zone1)
+
+    # Make a copy, crop, and refine
+    g2 = g1.copy()
+    g2.crop(colcrop=(3, 5), rowcrop=(2, 4), laycrop=(1, 2), props="all")
+    g2.refine(2, 2, 2)
+
+    # Verify g2 has the expected dimensions after crop and refine
+    # After crop: (3-3+1)*(2-2+1)*(2-1+1) = 3*3*2
+    # After refine by 2,2,2: 6*6*4
+    assert g2.ncol == 6, f"Expected g2.ncol=6, got {g2.ncol}"
+    assert g2.nrow == 6, f"Expected g2.nrow=6, got {g2.nrow}"
+    assert g2.nlay == 4, f"Expected g2.nlay=4, got {g2.nlay}"
+
+    # Verify properties exist in g2
+    assert g2.get_prop_by_name("PORO") is not None
+    assert g2.get_prop_by_name("ZONE") is not None
+
+    # Merge the original grid with the refined cropped grid
+    merged = xtgeo.grid_merge(g1, g2)
+
+    # Verify merged dimensions
+    expected_ncol = g1.ncol + g2.ncol + 1  # 10 + 6 + 1 = 17
+    expected_nrow = max(g1.nrow, g2.nrow)  # max(8, 6) = 8
+    expected_nlay = max(g1.nlay, g2.nlay)  # max(4, 4) = 4
+
+    assert merged.ncol == expected_ncol, (
+        f"Expected ncol={expected_ncol}, got {merged.ncol}"
+    )
+    assert merged.nrow == expected_nrow, (
+        f"Expected nrow={expected_nrow}, got {merged.nrow}"
+    )
+    assert merged.nlay == expected_nlay, (
+        f"Expected nlay={expected_nlay}, got {merged.nlay}"
+    )
+
+    # Verify properties exist in merged grid
+    assert merged.get_prop_by_name("PORO") is not None, "PORO missing"
+    assert merged.get_prop_by_name("ZONE") is not None, "ZONE missing"
+
+    merged_poro = merged.get_prop_by_name("PORO")
+    merged_zone = merged.get_prop_by_name("ZONE")
+
+    # Verify property types
+    assert merged_poro.isdiscrete is False
+    assert merged_zone.isdiscrete is True
+    assert merged_zone.codes == {1: "Upper", 2: "Middle", 3: "Lower"}
+
+    # Verify property values in g1 region (original grid area)
+    assert np.allclose(merged_poro.values[0 : g1.ncol, 0 : g1.nrow, :], 0.25)
+    assert np.all(merged_zone.values[0 : g1.ncol, 0 : g1.nrow, :] == 1)
+
+    # Verify property values in g2 region (refined cropped grid area)
+    # g2 starts at column g1.ncol + 1 (after the gap)
+    g2_col_start = g1.ncol + 1
+    g2_col_end = g2_col_start + g2.ncol
+    g2_values = merged_poro.values[g2_col_start:g2_col_end, 0 : g2.nrow, :]
+    assert np.allclose(g2_values, 0.25), "PORO values in g2 region should be 0.25"
+
+    # Verify active cell count
+    expected_active = g1.nactive + g2.nactive
+    assert merged.nactive == expected_active, (
+        f"Expected {expected_active} active cells, got {merged.nactive}"
+    )
