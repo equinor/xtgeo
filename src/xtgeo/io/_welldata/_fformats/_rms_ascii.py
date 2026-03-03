@@ -29,7 +29,7 @@ def _read_rms_ascii_header(
     float,
     list[str],
     dict[str, str],
-    dict[str, dict[int, str] | tuple[Any, ...]],
+    dict[str, dict[int, str] | tuple[Any, ...] | None],
 ]:
     """Read RMS ASCII header from open file handle.
 
@@ -43,7 +43,7 @@ def _read_rms_ascii_header(
 
     """
     wlogtype: dict[str, str] = {}
-    wlogrecords: dict[str, dict[int, str] | tuple[Any, ...]] = {}
+    wlogrecords: dict[str, dict[int, str] | tuple[Any, ...] | None] = {}
     lognames: list[str] = []
 
     wname: str | None = None
@@ -91,14 +91,31 @@ def _read_rms_ascii_header(
 
         else:
             row = line.strip().split()
-            if len(row) < 3:
+            if len(row) < 1:
                 raise ValueError(
                     f"Malformed log definition at line {lnum}: '{line.strip()}'. "
-                    "Expected format: 'LOGNAME TYPE [metadata...]', got only "
-                    f"{len(row)} token(s)"
+                    "Expected format: 'LOGNAME [TYPE] [metadata...]', got empty line"
                 )
+
             lname_raw = str(row[0])
-            ltype = row[1].upper()  # typically "DISC" or "UNK"/"CONT"/...
+
+            # If only log name provided, default to UNK type with lin metadata
+            if len(row) == 1:
+                ltype = "UNK"
+                row = [lname_raw, ltype, "lin"]
+                logger.debug(
+                    "Log %s has no type specified, defaulting to UNK lin", lname_raw
+                )
+            else:
+                ltype = row[1].upper()  # typically "DISC" or "UNK"/"CONT"/...
+                # If continuous log has type but no metadata, default to "lin"
+                if len(row) == 2 and ltype != "DISC":
+                    row.append("lin")
+                    logger.debug(
+                        "Log %s type %s has no metadata, defaulting to lin",
+                        lname_raw,
+                        ltype,
+                    )
 
             if "_index" in lname_raw.lower():
                 lname: str = lname_raw.upper()
@@ -113,10 +130,25 @@ def _read_rms_ascii_header(
             if ltype == "DISC":
                 # Discrete log: pairs of code and name
                 rxv = row[2:]
-                xdict: dict[int, str] = {
-                    int(rxv[i]): str(rxv[i + 1]) for i in range(0, len(rxv), 2)
-                }
-                wlogrecords[lname] = xdict
+                if len(rxv) > 0:
+                    # Codes provided in header - must be code/name pairs
+                    if len(rxv) % 2 != 0:
+                        raise ValueError(
+                            f"Malformed discrete log definition at line {lnum}: "
+                            f"'{line.strip()}'. Discrete log codes must be in "
+                            f"pairs (code name), but got {len(rxv)} token(s): {rxv}"
+                        )
+                    xdict: dict[int, str] = {
+                        int(rxv[i]): str(rxv[i + 1]) for i in range(0, len(rxv), 2)
+                    }
+                    wlogrecords[lname] = xdict
+                else:
+                    # No codes provided, will be inferred from data
+                    wlogrecords[lname] = None
+                    logger.debug(
+                        "No codes specified for discrete log %s, will infer from data",
+                        lname,
+                    )
             else:
                 # Continuous log: store tuple of metadata (CONT, UNK, lin, etc.)
                 wlogrecords[lname] = tuple(row[1:])
@@ -175,6 +207,37 @@ def read_rms_ascii_well(filepath: FileLike) -> WellData:
         values = dfr[log_name].to_numpy(dtype=np.float64)
         is_discrete = wlogtype[log_name] == "DISC"
         code_names = wlogrecords.get(log_name)
+
+        # If discrete log with no codes specified, infer from data
+        if is_discrete and code_names is None:
+            # Get unique values from data (excluding NaN which represents undefined)
+            unique_codes = np.unique(values[~np.isnan(values)])
+
+            # Validate that all codes are integer-valued (within tolerance)
+            # Allow small floating-point errors but reject truly non-integer values
+            tolerance = 1e-9
+            rounded_codes = np.round(unique_codes)
+            if not np.allclose(unique_codes, rounded_codes, atol=tolerance):
+                non_integer_codes = unique_codes[
+                    ~np.isclose(unique_codes, rounded_codes, atol=tolerance)
+                ]
+                raise ValueError(
+                    f"Discrete log '{log_name}' has non-integer codes in data: "
+                    f"{non_integer_codes.tolist()}. Discrete logs must have "
+                    f"integer-valued codes."
+                )
+
+            # Create code_names dict with codes as both keys and values
+            # Use rounded values to handle floating-point representation issues
+            code_names = {
+                int(round(code)): str(int(round(code))) for code in unique_codes
+            }
+            logger.debug(
+                "Inferred %d codes for discrete log %s: %s",
+                len(code_names),
+                log_name,
+                code_names,
+            )
 
         log = WellLog(
             name=log_name, values=values, is_discrete=is_discrete, code_names=code_names
