@@ -26,6 +26,8 @@ Functions
 
 .. autofunction:: xtgeo.wells_from_files
 
+.. autofunction:: xtgeo.wells_from_stacked_file
+
 Classes
 """""""
 
@@ -55,6 +57,10 @@ Blocked wells (multiple)
 
 Functions
 """""""""
+
+.. autofunction:: xtgeo.blockedwells_from_files
+
+.. autofunction:: xtgeo.blockedwells_from_stacked_file
 
 .. autofunction:: xtgeo.blockedwells_from_roxar
 

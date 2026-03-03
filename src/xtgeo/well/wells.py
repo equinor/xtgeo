@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
+from xtgeo.io._file import FileWrapper
 
-from . import _wells_utils
+from . import _wells_io_factory, _wells_utils
 from .well1 import Well, well_from_file
+
+if TYPE_CHECKING:
+    import io
+    from pathlib import Path
+
+    from xtgeo.common.types import FileLike
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -32,6 +41,41 @@ def wells_from_files(filelist, *args, **kwargs):
             ... )
     """
     return Wells([well_from_file(wfile, *args, **kwargs) for wfile in filelist])
+
+
+def wells_from_stacked_file(
+    wfile: FileLike,
+    fformat: str | None = None,
+) -> Wells:
+    """Import multiple wells from a single concatenated (stacked) file.
+
+    This function reads files that contain multiple wells in a single file,
+    as created by :meth:`Wells.to_stacked_file`.
+
+    For CSV format, expects a WELLNAME column to identify each well.
+    For RMS ASCII format, reads multiple well entries, each with its own header.
+
+    Args:
+        wfile: File name or stream.
+        fformat: File format ('rmswell' or 'csv'). If None, auto-detect
+            from file extension or signature.
+
+    Returns:
+        Wells instance containing all wells from the file.
+
+    Example::
+
+        >>> wells = xtgeo.wells_from_stacked_file("all_wells.csv", fformat="csv")
+        >>> wells = xtgeo.wells_from_stacked_file("all_wells.rmswell")
+
+    .. versionadded:: 4.19 (approximate)
+    """
+    wfile_wrapper = FileWrapper(wfile, mode="rb")
+    wfile_wrapper.check_file(raiseerror=OSError)
+
+    well_list = _wells_io_factory.wells_from_file(wfile_wrapper, fformat)
+
+    return Wells(well_list)
 
 
 class Wells:
@@ -146,6 +190,45 @@ class Wells:
             self._wells[0].zname,
         ]
         return dfr[spec_order + [col for col in dfr if col not in spec_order]]
+
+    def to_stacked_file(
+        self,
+        wfile: FileLike,
+        fformat: str | None = "rms_ascii",
+    ) -> Path | io.BytesIO | io.StringIO:
+        """Export multiple wells to a single concatenated (stacked) file.
+
+        For CSV format, all wells are combined into a single table with a WELLNAME
+        column to identify each well.
+
+        For RMS ASCII format, each well is written sequentially in the standard
+        RMS well format (with its own header and data section).
+
+        Args:
+            wfile: File name or stream.
+            fformat: File format ('rms_ascii'/'rmswell' or 'csv'). HDF5 format
+                is not supported for multiple wells.
+
+        Returns:
+            Path to the file that was written.
+
+        Example::
+
+            >>> wells = Wells([well1, well2, well3])
+            >>> wells.to_stacked_file("all_wells.csv", fformat="csv")
+            >>> wells.to_stacked_file("all_wells.rmswell", fformat="rms_ascii")
+
+        .. versionadded:: 4.19 (approximate)
+        """
+        if not self._wells:
+            raise ValueError("No wells to export")
+
+        wfile_wrapper = FileWrapper(wfile, mode="wb", obj=self)
+        wfile_wrapper.check_folder(raiseerror=OSError)
+
+        _wells_io_factory.wells_to_file(self, wfile_wrapper, fformat)
+
+        return wfile_wrapper.file
 
     def quickplot(self, filename=None, title="QuickPlot"):
         """Fast plot of wells using matplotlib.
