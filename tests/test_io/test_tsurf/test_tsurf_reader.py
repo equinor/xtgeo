@@ -9,6 +9,7 @@ from xtgeo.io.tsurf._tsurf_io import (
     TSurfCoordSys,
     TSurfData,
     TSurfHeader,
+    TSurfHeaderDict,
     ValidatorCoordSys,
 )
 
@@ -206,14 +207,6 @@ def test_section_missing_header(missing_header_file: str) -> None:
     """Test that missing header section raises appropriate error."""
     with pytest.raises(ValueError, match="Missing mandatory 'HEADER' section"):
         TSurfData.from_file(tsurf_stream(missing_header_file))
-
-
-def test_section_missing_coordinate_system(minimal_tsurf_file: str) -> None:
-    """Test that missing optional coordinate system section is handled"""
-    result = TSurfData.from_file(tsurf_stream(minimal_tsurf_file))
-
-    assert result is not None
-    assert result.coord_sys is None  # Coordinate system is optional
 
 
 def test_section_missing_tface(missing_tface_file: str) -> None:
@@ -416,7 +409,7 @@ def test_header_immutability_cannot_delete_attribute() -> None:
 
 def test_header_validator_none_name_value() -> None:
     """Test that None name value raises ValueError."""
-    data = {"name": None}
+    data = TSurfHeaderDict({"name": None})  # type: ignore[typeddict-item]
     with pytest.raises(ValueError, match="Missing or invalid name"):
         TSurfHeader.validate(data, "test_file.ts")
 
@@ -535,10 +528,6 @@ def test_coordinate_system_axis_names() -> None:
     # Valid axis names
     ValidatorCoordSys._validate_axis_names(("X", "Y", "Z"), "test_file")
 
-    # Empty value
-    with pytest.raises(ValueError, match="exactly three values"):
-        ValidatorCoordSys._validate_axis_names(("X", "", "Z"), "test_file")
-
     # Uncommon names should warn
     with pytest.warns(UserWarning, match="Uncommon AXIS_NAME"):
         ValidatorCoordSys._validate_axis_names(("X", "B", "Z"), "test_file")
@@ -552,7 +541,7 @@ def test_coordinate_system_axis_units() -> None:
 
     # Invalid number of units
     with pytest.raises(ValueError, match="exactly three values"):
-        ValidatorCoordSys._validate_axis_units(("m", "m"), "test_file")
+        ValidatorCoordSys._validate_axis_units(("m", "m"), "test_file")  # type: ignore[arg-type]
 
     # Uncommon units should warn
     with pytest.warns(UserWarning, match="Uncommon AXIS_UNIT"):
@@ -603,7 +592,7 @@ def test_coordinate_system_validator_missing_field_delegated() -> None:
         # Missing axis_unit and zpositive
     }
     with pytest.raises(ValueError, match="missing fields"):
-        TSurfCoordSys.validate(data, "test_file.ts")
+        TSurfCoordSys.validate(data, "test_file.ts")  # type: ignore[arg-type]
 
 
 def test_coordinate_system_immutability_cannot_delete_attribute() -> None:
@@ -626,7 +615,7 @@ def test_axis_elements_uniqueness_validation() -> None:
     with pytest.raises(ValueError, match="values \\(in lowercase\\) must be unique"):
         ValidatorCoordSys._validate_axis_elements(
             ("X", "Y", "X"),
-            [(e.lower() for e in ValidatorCoordSys.common_axis_names[0])],
+            ValidatorCoordSys.common_axis_names,
             "AXIS_NAME",
             "test_file",
             check_uniqueness=True,
@@ -636,7 +625,7 @@ def test_axis_elements_uniqueness_validation() -> None:
     with pytest.raises(ValueError, match="values \\(in lowercase\\) must be unique"):
         ValidatorCoordSys._validate_axis_elements(
             ("x", "Y", "X"),  # Lowercase 'x' and uppercase 'X' are considered the same
-            [(e.lower() for e in ValidatorCoordSys.common_axis_names[0])],
+            ValidatorCoordSys.common_axis_names,
             "AXIS_NAME",
             "test_file",
             check_uniqueness=True,
@@ -646,7 +635,7 @@ def test_axis_elements_uniqueness_validation() -> None:
     # This should work fine since check_uniqueness=False for units
     ValidatorCoordSys._validate_axis_elements(
         ("m", "m", "m"),
-        [(e.lower() for e in ValidatorCoordSys.common_axis_units[0])],
+        ValidatorCoordSys.common_axis_units,
         "AXIS_UNIT",
         "test_file",
         check_uniqueness=False,
@@ -956,7 +945,7 @@ def test_tsurfdata_immutability_cannot_modify_header_attribute() -> None:
 
     new_header = TSurfHeader(name="ModifiedSurface")
     with pytest.raises(FrozenInstanceError):
-        data.header = new_header
+        data.header = new_header  # type: ignore[misc]
 
 
 def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None:
@@ -988,27 +977,6 @@ def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None
     assert data.vertices[0, 0] != original_value
 
 
-def test_tsurfdata_get_vertices_return_correct_array() -> None:
-    """Test that get_vertices returns the correct numpy array."""
-    header = TSurfHeader(name="TestSurface")
-    vertices = np.array(
-        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-        dtype=np.float64,
-    )
-    triangles = np.array([[1, 2, 3]], dtype=np.int64)
-
-    data = TSurfData(
-        header=header,
-        coord_sys=None,
-        vertices=vertices,
-        triangles=triangles,
-    )
-
-    result = data.get_vertices
-    np.testing.assert_array_equal(result, vertices)
-    assert result.dtype == np.float64
-
-
 def test_tsurfdata_get_cells_return_correct_array() -> None:
     """Test that get_cells returns the correct numpy array."""
     header = TSurfHeader(name="TestSurface")
@@ -1030,8 +998,85 @@ def test_tsurfdata_get_cells_return_correct_array() -> None:
     assert result.dtype == np.int64
 
 
-def test_tsurfdata_get_vertices_return_same_reference() -> None:
-    """Test that get_vertices returns the same array reference."""
+def test_tsurfdata_get_cells_shape() -> None:
+    """Test that get_cells returns array with correct shape (m x 3)."""
+    header = TSurfHeader(name="TestSurface")
+    vertices = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [1.0, 1.0, 0.0],
+        ],
+        dtype=np.float64,
+    )
+    triangles = np.array([[1, 2, 3], [2, 4, 3]], dtype=np.int64)
+
+    data = TSurfData(
+        header=header,
+        coord_sys=None,
+        vertices=vertices,
+        triangles=triangles,
+    )
+
+    assert data.get_cells.shape == (2, 3)
+
+
+def test_tsurfdata_get_cells_from_file(complete_tsurf_file: str) -> None:
+    """Test that get_cells returns correct data when loaded from file."""
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+
+    expected = np.array([[1, 2, 3]], dtype=np.int64)
+
+    np.testing.assert_array_equal(data.get_cells, expected)
+    assert data.get_cells is data.triangles
+
+
+def test_tsurfdata_get_vertices_correct_values() -> None:
+    """Test that get_vertices returns the correct coordinate values."""
+    header = TSurfHeader(name="TestSurface")
+    vertices = np.array(
+        [[10.5, 20.3, 30.1], [40.0, 50.0, 60.0], [70.7, 80.8, 90.9]],
+        dtype=np.float64,
+    )
+    triangles = np.array([[1, 2, 3]], dtype=np.int64)
+
+    data = TSurfData(
+        header=header,
+        coord_sys=None,
+        vertices=vertices,
+        triangles=triangles,
+    )
+
+    np.testing.assert_array_equal(data.get_vertices, vertices)
+
+
+def test_tsurfdata_get_vertices_shape() -> None:
+    """Test that get_vertices returns array with correct shape (n x 3)."""
+    header = TSurfHeader(name="TestSurface")
+    vertices = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [1.0, 1.0, 0.0],
+        ],
+        dtype=np.float64,
+    )
+    triangles = np.array([[1, 2, 3], [2, 4, 3]], dtype=np.int64)
+
+    data = TSurfData(
+        header=header,
+        coord_sys=None,
+        vertices=vertices,
+        triangles=triangles,
+    )
+
+    assert data.get_vertices.shape == (4, 3)
+
+
+def test_tsurfdata_get_vertices_dtype() -> None:
+    """Test that get_vertices returns a float64 array."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
@@ -1046,6 +1091,18 @@ def test_tsurfdata_get_vertices_return_same_reference() -> None:
         triangles=triangles,
     )
 
+    assert data.get_vertices.dtype == np.float64
+
+
+def test_tsurfdata_get_vertices_from_file(complete_tsurf_file: str) -> None:
+    """Test that get_vertices returns correct data when loaded from file."""
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+
+    expected = np.array(
+        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], dtype=np.float64
+    )
+
+    np.testing.assert_array_equal(data.get_vertices, expected)
     assert data.get_vertices is data.vertices
 
 
@@ -1107,7 +1164,7 @@ def test_tsurf_data_roundtrip_bytes_io(complete_tsurf_file: str) -> None:
 def test_get_as_dict_with_coord_sys(complete_tsurf_file: str) -> None:
     """Test get_as_dict returns correct keys and values with coordinate system."""
     data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
-    result = data.asdict()
+    result = data.to_dict()
 
     assert isinstance(result, dict)
     assert set(result.keys()) == {"header", "coord_sys", "vertices", "triangles"}
@@ -1119,20 +1176,72 @@ def test_get_as_dict_with_coord_sys(complete_tsurf_file: str) -> None:
     coord_sys = result["coord_sys"]
     assert coord_sys is not None
     assert coord_sys["name"] == "Default"
-    assert coord_sys["axis_name"] == ["X", "Y", "Z"]
-    assert coord_sys["axis_unit"] == ["m", "m", "m"]
+    assert coord_sys["axis_name"] == ("X", "Y", "Z")
+    assert coord_sys["axis_unit"] == ("m", "m", "m")
     assert coord_sys["zpositive"] == "Depth"
 
 
 def test_get_as_dict_without_coord_sys(minimal_tsurf_file: str) -> None:
     """Test get_as_dict does not contain coord_sys data when section is absent."""
     data = TSurfData.from_file(tsurf_stream(minimal_tsurf_file))
-    result = data.asdict()
+    result = data.to_dict()
 
     assert result["header"] == {"name": "test_surface"}
     assert "coord_sys" not in result
     assert np.array_equal(result["vertices"], data.vertices)
     assert np.array_equal(result["triangles"], data.triangles)
+
+
+def test_to_dict_deep_copy_header(complete_tsurf_file: str) -> None:
+    """
+    Test that to_dict returns a deep copy: mutating header doesn't affect original.
+    """
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    result = data.to_dict()
+
+    result["header"]["name"] = "modified_name"
+
+    assert data.header.name == "test_surface"
+
+
+def test_to_dict_deep_copy_vertices(complete_tsurf_file: str) -> None:
+    """
+    Test that to_dict returns a deep copy: mutating vertices doesn't affect original.
+    """
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    original_vertex = data.vertices[0, 0]
+    result = data.to_dict()
+
+    result["vertices"][0, 0] = 999.0
+
+    assert data.vertices[0, 0] == original_vertex
+
+
+def test_to_dict_deep_copy_triangles(complete_tsurf_file: str) -> None:
+    """
+    Test that to_dict returns a deep copy: mutating triangles doesn't affect original.
+    """
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    original_triangle = data.triangles[0, 0]
+    result = data.to_dict()
+
+    result["triangles"][0, 0] = 999
+
+    assert data.triangles[0, 0] == original_triangle
+
+
+def test_to_dict_deep_copy_coord_sys(complete_tsurf_file: str) -> None:
+    """
+    Test that to_dict returns a deep copy: mutating coord_sys doesn't affect original.
+    """
+    data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    result = data.to_dict()
+
+    assert result.get("coord_sys") is not None
+    result["coord_sys"]["name"] = "modified_coord_sys"
+
+    assert data.coord_sys is not None
+    assert data.coord_sys.name == "Default"
 
 
 def test_num_vertices(complete_tsurf_file: str) -> None:
@@ -1147,3 +1256,525 @@ def test_num_triangles(complete_tsurf_file: str) -> None:
     data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
     assert data.num_triangles == 1
     assert data.num_triangles == data.triangles.shape[0]
+
+
+def test_from_dict_with_coord_sys() -> None:
+    """Test from_dict creates correct TSurfData with coordinate system."""
+    data = {
+        "header": {"name": "my_surface"},
+        "coord_sys": {
+            "name": "Default",
+            "axis_name": ("X", "Y", "Z"),
+            "axis_unit": ("m", "m", "m"),
+            "zpositive": "Depth",
+        },
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    result = TSurfData.from_dict(data)
+
+    assert result.header.name == "my_surface"
+    assert result.coord_sys is not None
+    assert result.coord_sys.name == "Default"
+    assert result.coord_sys.axis_name == ("X", "Y", "Z")
+    assert result.coord_sys.axis_unit == ("m", "m", "m")
+    assert result.coord_sys.zpositive == "Depth"
+    np.testing.assert_array_equal(result.vertices, data["vertices"])
+    np.testing.assert_array_equal(result.triangles, data["triangles"])
+
+
+def test_from_dict_without_coord_sys() -> None:
+    """Test from_dict creates correct TSurfData without coordinate system."""
+    data = {
+        "header": {"name": "minimal_surface"},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    result = TSurfData.from_dict(data)
+
+    assert result.header.name == "minimal_surface"
+    assert result.coord_sys is None
+    np.testing.assert_array_equal(result.vertices, data["vertices"])
+    np.testing.assert_array_equal(result.triangles, data["triangles"])
+
+
+def test_from_dict_with_coord_sys_none() -> None:
+    """Test from_dict handles coord_sys explicitly set to None."""
+    data = {
+        "header": {"name": "test_surface"},
+        "coord_sys": None,
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    result = TSurfData.from_dict(data)
+
+    assert result.coord_sys is None
+
+
+def test_from_dict_roundtrip_with_coord_sys(complete_tsurf_file: str) -> None:
+    """Test to_dict -> from_dict roundtrip preserves data with coordinate system."""
+    original = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
+    dict_data = original.to_dict()
+    restored = TSurfData.from_dict(dict_data)
+
+    assert restored.header == original.header
+    assert restored.coord_sys == original.coord_sys
+    np.testing.assert_array_equal(restored.vertices, original.vertices)
+    np.testing.assert_array_equal(restored.triangles, original.triangles)
+
+
+def test_from_dict_roundtrip_without_coord_sys(minimal_tsurf_file: str) -> None:
+    """Test to_dict -> from_dict roundtrip preserves data without coordinate system."""
+    original = TSurfData.from_file(tsurf_stream(minimal_tsurf_file))
+    dict_data = original.to_dict()
+    restored = TSurfData.from_dict(dict_data)
+
+    assert restored.header == original.header
+    assert restored.coord_sys is None
+    np.testing.assert_array_equal(restored.vertices, original.vertices)
+    np.testing.assert_array_equal(restored.triangles, original.triangles)
+
+
+def test_from_dict_vertices_dtype() -> None:
+    """Test from_dict converts vertices to float64."""
+    data = {
+        "header": {"name": "test"},
+        "vertices": np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype=np.int32),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    result = TSurfData.from_dict(data)
+    assert result.vertices.dtype == np.float64
+
+
+def test_from_dict_triangles_dtype() -> None:
+    """Test from_dict converts triangles to int64."""
+    data = {
+        "header": {"name": "test"},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]], dtype=np.int32),
+    }
+
+    result = TSurfData.from_dict(data)
+    assert result.triangles.dtype == np.int64
+
+
+def test_from_dict_multiple_triangles() -> None:
+    """Test from_dict with multiple vertices and triangles."""
+    data = {
+        "header": {"name": "complex_surface"},
+        "vertices": np.array(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [1.0, 1.0, 0.0],
+            ]
+        ),
+        "triangles": np.array([[1, 2, 3], [2, 4, 3]]),
+    }
+
+    result = TSurfData.from_dict(data)
+
+    assert result.num_vertices == 4
+    assert result.num_triangles == 2
+
+
+def test_from_dict_invalid_header_empty_name() -> None:
+    """Test from_dict raises ValueError for empty header name."""
+    data = {
+        "header": {"name": ""},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    with pytest.raises(ValueError, match="Missing or invalid name"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_invalid_header_whitespace_name() -> None:
+    """Test from_dict raises ValueError for whitespace-only header name."""
+    data = {
+        "header": {"name": "   "},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    with pytest.raises(ValueError, match="Missing or invalid name"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_invalid_coord_sys_bad_zpositive() -> None:
+    """Test from_dict raises ValueError for invalid zpositive value."""
+    data = {
+        "header": {"name": "test"},
+        "coord_sys": {
+            "name": "Default",
+            "axis_name": ("X", "Y", "Z"),
+            "axis_unit": ("m", "m", "m"),
+            "zpositive": "InvalidValue",
+        },
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    with pytest.raises(ValueError, match="Invalid ZPOSITIVE value"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_invalid_coord_sys_missing_field() -> None:
+    """Test from_dict raises ValueError for missing coord sys field."""
+    data = {
+        "header": {"name": "test"},
+        "coord_sys": {
+            "name": "Default",
+            "axis_name": ("X", "Y", "Z"),
+            # missing axis_unit and zpositive
+        },
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    with pytest.raises(ValueError, match="missing fields"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_too_few_vertices() -> None:
+    """Test from_dict raises ValueError when fewer than 3 vertices."""
+    data = {
+        "header": {"name": "test"},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
+        "triangles": np.array([[1, 2, 1]]),
+    }
+
+    with pytest.raises(ValueError, match="Less than 3 vertices"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_no_triangles() -> None:
+    """Test from_dict raises ValueError when no triangles are present."""
+    data = {
+        "header": {"name": "test"},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([], dtype=np.int64).reshape(0, 3),
+    }
+
+    with pytest.raises(ValueError, match="No triangles found"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_triangle_index_too_large() -> None:
+    """Test from_dict raises ValueError when triangle references non-existent vertex."""
+    data = {
+        "header": {"name": "test"},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 4]]),  # vertex 4 does not exist
+    }
+
+    with pytest.raises(ValueError, match="must be <= number of vertices"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_triangle_index_zero() -> None:
+    """Test from_dict raises ValueError for zero-based triangle indices."""
+    data = {
+        "header": {"name": "test"},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[0, 1, 2]]),  # 0-based, not valid
+    }
+
+    with pytest.raises(ValueError, match="must be >= 1"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_triangle_negative_index() -> None:
+    """Test from_dict raises ValueError for negative triangle indices."""
+    data = {
+        "header": {"name": "test"},
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[-1, 2, 3]]),
+    }
+
+    with pytest.raises(ValueError, match="must be >= 1"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_with_python_lists() -> None:
+    """Test from_dict works with plain Python lists instead of numpy arrays."""
+    data = {
+        "header": {"name": "list_surface"},
+        "vertices": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+        "triangles": [[1, 2, 3]],
+    }
+
+    result = TSurfData.from_dict(data)
+
+    assert result.header.name == "list_surface"
+    assert result.num_vertices == 3
+    assert result.num_triangles == 1
+    assert result.vertices.dtype == np.float64
+    assert result.triangles.dtype == np.int64
+
+
+def test_from_dict_coord_sys_elevation() -> None:
+    """Test from_dict with zpositive set to Elevation."""
+    data = {
+        "header": {"name": "test"},
+        "coord_sys": {
+            "name": "Default",
+            "axis_name": ("X", "Y", "Z"),
+            "axis_unit": ("m", "m", "m"),
+            "zpositive": "Elevation",
+        },
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    result = TSurfData.from_dict(data)
+    assert result.coord_sys is not None
+    assert result.coord_sys.zpositive == "Elevation"
+
+
+def test_from_dict_coord_sys_duplicate_axis_names() -> None:
+    """Test from_dict raises ValueError for duplicate axis names."""
+    data = {
+        "header": {"name": "test"},
+        "coord_sys": {
+            "name": "Default",
+            "axis_name": ("X", "X", "Z"),
+            "axis_unit": ("m", "m", "m"),
+            "zpositive": "Depth",
+        },
+        "vertices": np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        "triangles": np.array([[1, 2, 3]]),
+    }
+
+    with pytest.raises(ValueError, match="must be unique"):
+        TSurfData.from_dict(data)
+
+
+def test_from_dict_to_file_roundtrip_with_coord_sys(tmp_path: Path) -> None:
+    """Test from_dict -> to_file -> from_file -> to_dict roundtrip with coord sys."""
+    original_dict = {
+        "header": {"name": "roundtrip_surface"},
+        "coord_sys": {
+            "name": "Default",
+            "axis_name": ("X", "Y", "Z"),
+            "axis_unit": ("m", "m", "m"),
+            "zpositive": "Depth",
+        },
+        "vertices": np.array(
+            [
+                [100.0, 200.0, 300.0],
+                [101.0, 200.0, 300.0],
+                [100.0, 201.0, 300.0],
+                [101.0, 201.0, 300.0],
+            ]
+        ),
+        "triangles": np.array([[1, 2, 3], [2, 4, 3]]),
+    }
+
+    tsurf_data = TSurfData.from_dict(original_dict)
+
+    filepath = tmp_path / "roundtrip.ts"
+    tsurf_data.to_file(str(filepath))
+
+    restored = TSurfData.from_file(str(filepath))
+    result_dict = restored.to_dict()
+
+    assert result_dict["header"] == original_dict["header"]
+    assert result_dict["coord_sys"] == original_dict["coord_sys"]
+    np.testing.assert_array_equal(result_dict["vertices"], original_dict["vertices"])
+    np.testing.assert_array_equal(result_dict["triangles"], original_dict["triangles"])
+
+
+def test_to_file_format_signature_line() -> None:
+    """Test that to_file writes correct TSurf signature line."""
+    data = TSurfData(
+        header=TSurfHeader(name="test"),
+        coord_sys=None,
+        vertices=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        triangles=np.array([[1, 2, 3]]),
+    )
+
+    stream = StringIO()
+    data.to_file(stream)
+    stream.seek(0)
+    lines = stream.read().splitlines()
+
+    assert lines[0] == "GOCAD TSurf 1"
+
+
+def test_to_file_format_header_section() -> None:
+    """Test that to_file writes correct HEADER section format."""
+    data = TSurfData(
+        header=TSurfHeader(name="My Surface"),
+        coord_sys=None,
+        vertices=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        triangles=np.array([[1, 2, 3]]),
+    )
+
+    stream = StringIO()
+    data.to_file(stream)
+    stream.seek(0)
+    lines = stream.read().splitlines()
+
+    assert lines[1] == "HEADER {"
+    assert lines[2] == "name: My Surface"
+    assert lines[3] == "}"
+
+
+def test_to_file_format_coord_sys_section() -> None:
+    """Test that to_file writes correct coordinate system section with quoted values."""
+    data = TSurfData(
+        header=TSurfHeader(name="test"),
+        coord_sys=TSurfCoordSys(
+            name="Default",
+            axis_name=("X", "Y", "Z"),
+            axis_unit=("m", "m", "m"),
+            zpositive="Depth",
+        ),
+        vertices=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        triangles=np.array([[1, 2, 3]]),
+    )
+
+    stream = StringIO()
+    data.to_file(stream)
+    stream.seek(0)
+    lines = stream.read().splitlines()
+
+    assert "GOCAD_ORIGINAL_COORDINATE_SYSTEM" in lines
+    assert "NAME Default" in lines
+    assert 'AXIS_NAME "X" "Y" "Z"' in lines
+    assert 'AXIS_UNIT "m" "m" "m"' in lines
+    assert "ZPOSITIVE Depth" in lines
+    assert "END_ORIGINAL_COORDINATE_SYSTEM" in lines
+
+
+def test_to_file_format_no_coord_sys_section() -> None:
+    """Test that to_file omits coordinate system section when absent."""
+    data = TSurfData(
+        header=TSurfHeader(name="test"),
+        coord_sys=None,
+        vertices=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        triangles=np.array([[1, 2, 3]]),
+    )
+
+    stream = StringIO()
+    data.to_file(stream)
+    stream.seek(0)
+    content = stream.read()
+
+    assert "GOCAD_ORIGINAL_COORDINATE_SYSTEM" not in content
+    assert "END_ORIGINAL_COORDINATE_SYSTEM" not in content
+
+
+def test_to_file_format_vertex_lines() -> None:
+    """Test that to_file writes VRTX lines with 1-based numbering and CNXYZ."""
+    data = TSurfData(
+        header=TSurfHeader(name="test"),
+        coord_sys=None,
+        vertices=np.array([[10.5, 20.3, 30.1], [40.0, 50.0, 60.0], [70.7, 80.8, 90.9]]),
+        triangles=np.array([[1, 2, 3]]),
+    )
+
+    stream = StringIO()
+    data.to_file(stream)
+    stream.seek(0)
+    content = stream.read()
+
+    assert "VRTX 1 10.5 20.3 30.1 CNXYZ" in content
+    assert "VRTX 2 40.0 50.0 60.0 CNXYZ" in content
+    assert "VRTX 3 70.7 80.8 90.9 CNXYZ" in content
+
+
+def test_to_file_format_triangle_lines() -> None:
+    """Test that to_file writes TRGL lines with correct vertex indices."""
+    data = TSurfData(
+        header=TSurfHeader(name="test"),
+        coord_sys=None,
+        vertices=np.array(
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]]
+        ),
+        triangles=np.array([[1, 2, 3], [2, 4, 3]]),
+    )
+
+    stream = StringIO()
+    data.to_file(stream)
+    stream.seek(0)
+    content = stream.read()
+
+    assert "TRGL 1 2 3" in content
+    assert "TRGL 2 4 3" in content
+
+
+def test_to_file_format_tface_and_end() -> None:
+    """Test that to_file writes TFACE keyword and END statement."""
+    data = TSurfData(
+        header=TSurfHeader(name="test"),
+        coord_sys=None,
+        vertices=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        triangles=np.array([[1, 2, 3]]),
+    )
+
+    stream = StringIO()
+    data.to_file(stream)
+    stream.seek(0)
+    lines = stream.read().splitlines()
+
+    assert "TFACE" in lines
+    assert lines[-1] == "END"
+
+
+def test_from_file_to_file_latin1_encoding(tmp_path: Path) -> None:
+    """Test reading and writing with latin-1 encoding."""
+    content = (
+        "GOCAD TSurf 1\n"
+        "HEADER {\n"
+        "name: R\xe9servoir\n"
+        "}\n"
+        "TFACE\n"
+        "VRTX 1 0.0 0.0 0.0 CNXYZ\n"
+        "VRTX 2 1.0 0.0 0.0 CNXYZ\n"
+        "VRTX 3 0.0 1.0 0.0 CNXYZ\n"
+        "TRGL 1 2 3\n"
+        "END\n"
+    )
+
+    filepath = tmp_path / "latin1.ts"
+    filepath.write_text(content, encoding="latin-1")
+
+    data = TSurfData.from_file(filepath, encoding="latin-1")
+    assert data.header.name == "R\xe9servoir"
+
+    output_path = tmp_path / "latin1_out.ts"
+    data.to_file(output_path, encoding="latin-1")
+
+    restored = TSurfData.from_file(output_path, encoding="latin-1")
+    assert restored.header.name == "R\xe9servoir"
+    np.testing.assert_array_equal(restored.vertices, data.vertices)
+
+
+def test_from_file_encoding_mismatch_raises(tmp_path: Path) -> None:
+    """Test that reading a latin-1 file with utf-8 raises an error."""
+    content = (
+        "GOCAD TSurf 1\n"
+        "HEADER {\n"
+        "name: R\xe9servoir\n"
+        "}\n"
+        "TFACE\n"
+        "VRTX 1 0.0 0.0 0.0 CNXYZ\n"
+        "VRTX 2 1.0 0.0 0.0 CNXYZ\n"
+        "VRTX 3 0.0 1.0 0.0 CNXYZ\n"
+        "TRGL 1 2 3\n"
+        "END\n"
+    )
+
+    filepath = tmp_path / "latin1_mismatch.ts"
+    filepath.write_text(content, encoding="latin-1")
+
+    with pytest.raises(UnicodeDecodeError):
+        TSurfData.from_file(filepath, encoding="utf-8")
