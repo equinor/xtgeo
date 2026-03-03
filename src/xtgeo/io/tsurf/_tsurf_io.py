@@ -27,8 +27,8 @@ class TSurfHeaderDict(TypedDict):
 @closed
 class TSurfCoordinateSystemDict(TypedDict):
     name: str
-    axis_name: list[str]
-    axis_unit: list[str]
+    axis_name: tuple[str, str, str]
+    axis_unit: tuple[str, str, str]
     zpositive: str
 
 
@@ -73,7 +73,7 @@ class ValidatorCoordSys:
     """
 
     @classmethod
-    def validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
+    def validate(cls, data: TSurfCoordinateSystemDict, fileref_errmsg: str) -> None:
         """Validate coordinate system data that has been read from a file.
 
         Args:
@@ -93,8 +93,8 @@ class ValidatorCoordSys:
             )
 
         # Validate coordinate system data
-        cls._validate_axis_names(tuple(data["axis_name"]), fileref_errmsg)
-        cls._validate_axis_units(tuple(data["axis_unit"]), fileref_errmsg)
+        cls._validate_axis_names(data["axis_name"], fileref_errmsg)
+        cls._validate_axis_units(data["axis_unit"], fileref_errmsg)
         cls._validate_zpositive(data["zpositive"], fileref_errmsg)
 
     @classmethod
@@ -222,7 +222,7 @@ class TSurfHeader:
     name: str
 
     @classmethod
-    def validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
+    def validate(cls, data: TSurfHeaderDict, fileref_errmsg: str) -> None:
         """
         Validate header data that has been read from a file.
 
@@ -245,12 +245,12 @@ class TSurfHeader:
 @dataclass(frozen=True)
 class TSurfCoordSys:
     name: str
-    axis_name: list[str]
-    axis_unit: list[str]
+    axis_name: tuple[str, str, str]
+    axis_unit: tuple[str, str, str]
     zpositive: str
 
     @classmethod
-    def validate(cls, data: dict[str, Any], fileref_errmsg: str) -> None:
+    def validate(cls, data: TSurfCoordinateSystemDict, fileref_errmsg: str) -> None:
         """
         Validate coordinate system data that has been read from a file.
 
@@ -422,7 +422,7 @@ class TSurfData:
     @staticmethod
     def _parse_coordinate_system_section(
         stream: TextIO, fileref_errmsg: str
-    ) -> dict[str, Any]:
+    ) -> TSurfCoordinateSystemDict:
         """Parse the coordinate system section.
 
         Args:
@@ -430,7 +430,7 @@ class TSurfData:
             fileref_errmsg: Error context for meaningful error messages
 
         Returns:
-            dict: Coordinate system data with keys:
+            TSurfCoordinateSystemDict: Coordinate system data with keys:
             name, axis_name, axis_unit, zpositive
 
         Raises:
@@ -466,10 +466,10 @@ class TSurfData:
                 coord_sys_data["name"] = " ".join(line[1:])
             elif line[0] == "AXIS_NAME":
                 # Extract axis names and remove quotes
-                coord_sys_data["axis_name"] = [y.strip('"') for y in line[1:4]]
+                coord_sys_data["axis_name"] = tuple(y.strip('"') for y in line[1:4])
             elif line[0] == "AXIS_UNIT":
                 # Extract axis units and remove quotes
-                coord_sys_data["axis_unit"] = [y.strip('"') for y in line[1:4]]
+                coord_sys_data["axis_unit"] = tuple(y.strip('"') for y in line[1:4])
             elif line[0] == "ZPOSITIVE":
                 # Extract zpositive value
                 coord_sys_data["zpositive"] = line[1]
@@ -484,7 +484,16 @@ class TSurfData:
             err_msg += "Missing 'END_ORIGINAL_COORDINATE_SYSTEM' statement"
             raise ValueError(err_msg)
 
-        return coord_sys_data
+        ValidatorCoordSys.validate(
+            cast("TSurfCoordinateSystemDict", coord_sys_data), fileref_errmsg
+        )
+
+        return TSurfCoordinateSystemDict(
+            name=coord_sys_data["name"],
+            axis_name=coord_sys_data["axis_name"],
+            axis_unit=coord_sys_data["axis_unit"],
+            zpositive=coord_sys_data["zpositive"],
+        )
 
     @staticmethod
     def _parse_tface_section(
@@ -616,7 +625,7 @@ class TSurfData:
     def _create_tsurf_data(
         cls,
         header_name: str,
-        coord_sys_data: dict[str, Any],
+        coord_sys_data: TSurfCoordinateSystemDict | None,
         vertices: list[list[float]],
         triangles: list[list[int]],
     ) -> Self:
@@ -636,7 +645,7 @@ class TSurfData:
         header = TSurfHeader(name=header_name)
 
         coord_sys = None
-        if coord_sys_data:
+        if coord_sys_data is not None:
             coord_sys = TSurfCoordSys(
                 name=coord_sys_data["name"],
                 axis_name=coord_sys_data["axis_name"],
@@ -674,7 +683,7 @@ class TSurfData:
         """
 
         header_name: str = ""
-        coord_sys_data: dict[str, Any] = {}
+        coord_sys_data: TSurfCoordinateSystemDict | None = None
         vertices: list[list[float]] = []
         triangles: list[list[int]] = []
 
@@ -701,7 +710,7 @@ class TSurfData:
                 header_section_completed = True
 
                 header_name = TSurfData._parse_header_section(stream, fileref_errmsg)
-                header_dict = {"name": header_name}
+                header_dict = TSurfHeaderDict({"name": header_name})
                 TSurfHeader.validate(header_dict, fileref_errmsg)
                 continue
 
@@ -718,7 +727,6 @@ class TSurfData:
                 coord_sys_data = TSurfData._parse_coordinate_system_section(
                     stream, fileref_errmsg
                 )
-                TSurfCoordSys.validate(coord_sys_data, fileref_errmsg)
                 continue
 
             if TSurfData._is_tface_section_first_line(line):
@@ -769,7 +777,7 @@ class TSurfData:
         cls._validate_triangulation_data(tsurf_data.vertices, tsurf_data.triangles)
         return tsurf_data
 
-    def asdict(self) -> TSurfDict:
+    def to_dict(self) -> TSurfDict:
         """
         Returns a deep, recursive copy of the TSurfData as a dictionary.
 
@@ -788,6 +796,44 @@ class TSurfData:
         if data.get("coord_sys") is not None:
             result["coord_sys"] = cast("TSurfCoordinateSystemDict", data["coord_sys"])
         return result
+
+    @classmethod
+    def from_dict(cls, data: TSurfDict) -> Self:
+        """
+        Create a TSurfData object from a TSurfDict dictionary.
+
+        Args:
+            data: TSurfDict dictionary containing triangulated surface data
+        Returns:
+            TSurfData: TSurfData object created from the input dictionary
+        """
+
+        header_dict = data["header"]
+        TSurfHeader.validate(header_dict, fileref_errmsg="input dictionary")
+        header = TSurfHeader(name=header_dict["name"])
+
+        coord_sys = None
+        if "coord_sys" in data and data["coord_sys"] is not None:
+            coord_sys_dict = data["coord_sys"]
+            TSurfCoordSys.validate(coord_sys_dict, fileref_errmsg="input dictionary")
+            coord_sys = TSurfCoordSys(
+                name=coord_sys_dict["name"],
+                axis_name=coord_sys_dict["axis_name"],
+                axis_unit=coord_sys_dict["axis_unit"],
+                zpositive=coord_sys_dict["zpositive"],
+            )
+
+        vertices_array = np.array(data["vertices"], dtype=np.float64)
+        triangles_array = np.array(data["triangles"], dtype=np.int64)
+
+        cls._validate_triangulation_data(vertices_array, triangles_array)
+
+        return cls(
+            header=header,
+            coord_sys=coord_sys,
+            vertices=vertices_array,
+            triangles=triangles_array,
+        )
 
     @classmethod
     def from_file(
