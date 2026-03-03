@@ -768,3 +768,175 @@ def test_blockedwell_from_file_partial_indices(tmp_path):
         match="File does not contain I_INDEX, J_INDEX, and K_INDEX logs",
     ):
         BlockedWellData.from_file(filepath=filepath, fformat=WellFileFormat.RMS_ASCII)
+
+
+def test_welldata_discrete_log_without_code_names():
+    """Test reading WellData with discrete log without code-name pairs in header."""
+    rms_content = """1.0
+Test well with discrete log without codes
+TestWell 100.0 200.0 0.0
+1
+NET_FLAG_disc DISC
+100.0 200.0 1000.0 1.0
+101.0 201.0 1001.0 0.0
+102.0 202.0 1002.0 1.0
+"""
+    stream = io.StringIO(rms_content)
+    well = WellData.from_rms_ascii(filepath=stream)
+
+    assert well.name == "TestWell"
+    assert well.n_records == 3
+    assert len(well.logs) == 1
+
+    net_flag = well.get_log("NET_FLAG_disc")
+    assert net_flag is not None
+    assert net_flag.is_discrete
+    # Code names are inferred from data when not provided in header
+    assert net_flag.code_names == {0: "0", 1: "1"}
+    np.testing.assert_array_equal(net_flag.values, [1.0, 0.0, 1.0])
+
+
+def test_welldata_log_name_only():
+    """Test reading WellData with log defined by name only (defaults to UNK lin)."""
+    rms_content = """1.0
+Test well with log name only
+TestWell 100.0 200.0 0.0
+2
+PHIT
+GR CONT lin
+100.0 200.0 1000.0 0.25 75.5
+101.0 201.0 1001.0 0.30 80.2
+"""
+    stream = io.StringIO(rms_content)
+    well = WellData.from_rms_ascii(filepath=stream)
+
+    assert well.name == "TestWell"
+    assert well.n_records == 2
+    assert len(well.logs) == 2
+
+    # PHIT should default to UNK type with lin metadata
+    phit = well.get_log("PHIT")
+    assert phit is not None
+    assert not phit.is_discrete
+    assert phit.code_names == ("UNK", "lin")
+    np.testing.assert_array_almost_equal(phit.values, [0.25, 0.30])
+
+    # GR should be normal CONT
+    gr = well.get_log("GR")
+    assert gr is not None
+    assert not gr.is_discrete
+    assert gr.code_names == ("CONT", "lin")
+    np.testing.assert_array_almost_equal(gr.values, [75.5, 80.2])
+
+
+def test_welldata_log_name_and_type_only():
+    """Test reading WellData with log defined by name and type only.
+
+    Defaults metadata to lin.
+    """
+    rms_content = """1.0
+Test well with log name and type only
+TestWell 100.0 200.0 0.0
+3
+PHIT UNK
+PORO CONT
+GR CONT lin
+100.0 200.0 1000.0 0.25 0.30 75.5
+101.0 201.0 1001.0 0.28 0.32 80.2
+"""
+    stream = io.StringIO(rms_content)
+    well = WellData.from_rms_ascii(filepath=stream)
+
+    assert well.name == "TestWell"
+    assert well.n_records == 2
+    assert len(well.logs) == 3
+
+    # PHIT UNK (missing metadata) should default to ("UNK", "lin")
+    phit = well.get_log("PHIT")
+    assert phit is not None
+    assert not phit.is_discrete
+    assert phit.code_names == ("UNK", "lin")
+    np.testing.assert_array_almost_equal(phit.values, [0.25, 0.28])
+
+    # PORO CONT (missing metadata) should default to ("CONT", "lin")
+    poro = well.get_log("PORO")
+    assert poro is not None
+    assert not poro.is_discrete
+    assert poro.code_names == ("CONT", "lin")
+    np.testing.assert_array_almost_equal(poro.values, [0.30, 0.32])
+
+    # GR should be normal CONT with full metadata
+    gr = well.get_log("GR")
+    assert gr is not None
+    assert not gr.is_discrete
+    assert gr.code_names == ("CONT", "lin")
+    np.testing.assert_array_almost_equal(gr.values, [75.5, 80.2])
+
+
+def test_welldata_discrete_log_invalid_odd_codes():
+    """Test that malformed discrete log with odd number of codes raises clear error."""
+    rms_content = """1.0
+Test well with malformed discrete log
+TestWell 100.0 200.0 0.0
+1
+FACIES DISC 1 SAND 2
+100.0 200.0 1000.0 1.0
+"""
+    stream = io.StringIO(rms_content)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"Malformed discrete log definition.*"
+            r"Discrete log codes must be in pairs.*got 3 token"
+        ),
+    ):
+        WellData.from_rms_ascii(filepath=stream)
+
+
+def test_welldata_discrete_log_with_integer_valued_floats():
+    """Test that discrete log with integer-valued floats (1.0, 2.0) works correctly."""
+    rms_content = """1.0
+Test well with integer-valued float codes
+TestWell 100.0 200.0 0.0
+1
+FACIES DISC
+100.0 200.0 1000.0 1.0
+101.0 201.0 1001.0 2.0
+102.0 202.0 1002.0 1.0
+"""
+    stream = io.StringIO(rms_content)
+    well = WellData.from_rms_ascii(filepath=stream)
+
+    assert well.name == "TestWell"
+    assert well.n_records == 3
+
+    facies = well.get_log("FACIES")
+    assert facies is not None
+    assert facies.is_discrete
+    # Should infer integer codes correctly from float values
+    assert facies.code_names == {1: "1", 2: "2"}
+    np.testing.assert_array_equal(facies.values, [1.0, 2.0, 1.0])
+
+
+def test_welldata_discrete_log_with_non_integer_codes():
+    """Test that discrete log with non-integer codes raises clear error."""
+    rms_content = """1.0
+Test well with non-integer codes
+TestWell 100.0 200.0 0.0
+1
+FACIES DISC
+100.0 200.0 1000.0 1.5
+101.0 201.0 1001.0 2.3
+102.0 202.0 1002.0 1.5
+"""
+    stream = io.StringIO(rms_content)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"Discrete log 'FACIES' has non-integer codes in data.*"
+            r"Discrete logs must have integer-valued codes"
+        ),
+    ):
+        WellData.from_rms_ascii(filepath=stream)
