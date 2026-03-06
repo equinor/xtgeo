@@ -5,6 +5,7 @@ from .metadata import (
     MetaDataCPProperty,
     MetaDataRegularCube,
     MetaDataRegularSurface,
+    MetaDataTriangulatedSurface,
     MetaDataWell,
 )
 
@@ -12,6 +13,7 @@ __all__ = [
     "MetaDataRegularCube",
     "MetaDataRegularSurface",
     "MetaDataCPGeometry",
+    "MetaDataTriangulatedSurface",
     "MetaDataCPProperty",
     "MetaDataWell",
 ]

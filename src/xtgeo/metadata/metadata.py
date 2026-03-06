@@ -141,7 +141,7 @@ class _OptionalMetaData:
         self._md5sum = newhash
 
     def get_meta(self) -> dict[str, Any]:
-        """Return metadata as an dict."""
+        """Return metadata as a dict."""
         meta = {}
         for key in self.__slots__:
             newkey = key[1:]
@@ -154,7 +154,7 @@ class MetaData:
     """Generic metadata class, not intended to be used directly."""
 
     def __init__(self) -> None:
-        """Generic metadata class __init__, not be used directly."""
+        """Generic metadata class __init__, not to be used directly."""
         self._required: dict[str, Any] = {}
         self._optional = _OptionalMetaData()
         self._freeform = {}
@@ -361,6 +361,82 @@ class MetaDataCPGeometry(MetaData):
         self._required["yscale"] = 1.0
         self._required["zscale"] = 1.0
         self._required["subgrids"] = obj.get_subgrids()
+
+
+class MetaDataTriangulatedSurface(MetaData):
+    """Metadata for TriangulatedSurface() objects"""
+
+    REQUIRED: dict[str, Any] = {
+        "num_vertices": -1,
+        "num_triangles": -1,
+    }
+
+    def __init__(self) -> None:
+        """Docstring."""
+        super().__init__()
+        self._required = self.REQUIRED.copy()
+        self._optional._datatype = "Triangulated Surface"
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two MetaDataTriangulatedSurface instances are equal."""
+        if not isinstance(other, MetaDataTriangulatedSurface):
+            return NotImplemented
+
+        if self is other:
+            return True
+
+        return self.get_metadata() == other.get_metadata()
+
+    @property
+    def required(self) -> dict[str, Any]:
+        """Get set of required metadata."""
+        return self._required
+
+    @required.setter
+    def required(self, value: dict[str, Any]) -> None:
+        """Set required metadata from a dictionary."""
+        if not isinstance(value, dict):
+            raise TypeError("required must be a dict")
+        if value.keys() != self.REQUIRED.keys():
+            raise ValueError(
+                f"Expected keys {set(self.REQUIRED.keys())}, got {set(value.keys())}"
+            )
+        self._required = value
+
+    def update_from(self, values: dict[str, Any]) -> None:
+        """Update required metadata from a dictionary.
+
+        Args:
+            values: Dict with keys matching REQUIRED.
+
+        Raises:
+            ValueError: If required keys are missing.
+        """
+        missing = self.REQUIRED.keys() - values.keys()
+        if missing:
+            raise ValueError(f"Missing required metadata keys: {missing}")
+        for key in self.REQUIRED:
+            self._required[key] = values[key]
+
+    @staticmethod
+    def is_valid_for(
+        values: dict[str, Any], metadata: MetaDataTriangulatedSurface
+    ) -> bool:
+        """Check if the metadata contain the required fields.
+
+        Args:
+            values: Dict with keys matching REQUIRED.
+            metadata: The metadata instance to validate.
+
+        Returns:
+            True if all required fields match.
+        """
+        if not isinstance(metadata, MetaDataTriangulatedSurface):
+            raise TypeError("metadata is not a MetaDataTriangulatedSurface()")
+        return all(
+            metadata._required[key] == values[key]
+            for key in MetaDataTriangulatedSurface.REQUIRED
+        )
 
 
 class MetaDataCPProperty(MetaData):

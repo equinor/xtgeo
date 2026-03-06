@@ -1,11 +1,17 @@
-"""Import RegularSurface data."""
+"""
+Import functions for regular surfaces on various formats.
+
+For each format a corresponding reader function is called, and its output
+is reshaped into a dictionary with the keywords representing geometric data
+needed to create a RegularSurface instance.
+"""
 
 from __future__ import annotations
 
 import json
 import mmap
 from struct import unpack
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import h5py
 import numpy as np
@@ -30,7 +36,9 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-def import_irap_binary(mfile: FileWrapper, values: bool = True, **_):
+def import_irap_binary(
+    mfile: FileWrapper, values: bool = True, **_: Any
+) -> dict[str, Any]:
     """Using pure python from version 4.X.
 
     Reverse engineering says that the BINARY header is
@@ -108,7 +116,7 @@ def import_irap_binary(mfile: FileWrapper, values: bool = True, **_):
     return args
 
 
-def import_irap_ascii(mfile: FileWrapper, **_):
+def import_irap_ascii(mfile: FileWrapper, **_: Any) -> dict[str, Any]:
     """Import Irap in pure python code, suitable for memstreams, and now efficient.
     -996  2010      5.000000      5.000000
     461587.553724   467902.553724  5927061.430176  5937106.430176
@@ -157,8 +165,8 @@ def import_irap_ascii(mfile: FileWrapper, **_):
 def import_ijxyz(
     mfile: FileWrapper,
     template: RegularSurface | Cube | None = None,
-    **_,
-) -> dict:
+    **_: Any,
+) -> dict[str, Any]:
     """Import OW/DSG IJXYZ ascii format."""
     ijxyz_data = parse_ijxyz(mfile, template)
 
@@ -177,7 +185,7 @@ def import_ijxyz(
     }
 
 
-def import_petromod(mfile: FileWrapper, **_):
+def import_petromod(mfile: FileWrapper, **_: Any) -> dict[str, Any]:
     """Import Petromod binary format."""
 
     cfhandle = mfile.get_cfhandle()
@@ -235,7 +243,9 @@ def import_petromod(mfile: FileWrapper, **_):
     return args
 
 
-def import_zmap_ascii(mfile: FileWrapper, values: bool = True, **_):
+def import_zmap_ascii(
+    mfile: FileWrapper, values: bool = True, **_: Any
+) -> dict[str, Any]:
     """Importing ZMAP + ascii files, in pure python only.
 
     Some sources
@@ -269,7 +279,9 @@ def import_zmap_ascii(mfile: FileWrapper, values: bool = True, **_):
     return args
 
 
-def import_xtg(mfile, values=True, **kwargs):
+def import_xtg(
+    mfile: FileWrapper, values: bool = True, **kwargs: Any
+) -> dict[str, Any]:
     """Using pure python for experimental XTGEO import."""
     logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
@@ -314,7 +326,9 @@ def import_xtg(mfile, values=True, **kwargs):
     return args
 
 
-def import_hdf5_regsurf(mfile: FileWrapper, values=True, **_):
+def import_hdf5_regsurf(
+    mfile: FileWrapper, values: bool = True, **_: Any
+) -> dict[str, Any]:
     """Importing h5/hdf5 storage."""
     reqattrs = MetaDataRegularSurface.REQUIRED
 

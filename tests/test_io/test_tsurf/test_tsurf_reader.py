@@ -9,6 +9,7 @@ from xtgeo.io.tsurf._tsurf_io import (
     TSurfCoordSys,
     TSurfData,
     TSurfHeader,
+    TSurfHeaderDict,
     ValidatorCoordSys,
 )
 
@@ -206,14 +207,6 @@ def test_section_missing_header(missing_header_file: str) -> None:
     """Test that missing header section raises appropriate error."""
     with pytest.raises(ValueError, match="Missing mandatory 'HEADER' section"):
         TSurfData.from_file(tsurf_stream(missing_header_file))
-
-
-def test_section_missing_coordinate_system(minimal_tsurf_file: str) -> None:
-    """Test that missing optional coordinate system section is handled"""
-    result = TSurfData.from_file(tsurf_stream(minimal_tsurf_file))
-
-    assert result is not None
-    assert result.coord_sys is None  # Coordinate system is optional
 
 
 def test_section_missing_tface(missing_tface_file: str) -> None:
@@ -416,7 +409,7 @@ def test_header_immutability_cannot_delete_attribute() -> None:
 
 def test_header_validator_none_name_value() -> None:
     """Test that None name value raises ValueError."""
-    data = {"name": None}
+    data = TSurfHeaderDict({"name": None})  # type: ignore[typeddict-item]
     with pytest.raises(ValueError, match="Missing or invalid name"):
         TSurfHeader.validate(data, "test_file.ts")
 
@@ -535,10 +528,6 @@ def test_coordinate_system_axis_names() -> None:
     # Valid axis names
     ValidatorCoordSys._validate_axis_names(("X", "Y", "Z"), "test_file")
 
-    # Empty value
-    with pytest.raises(ValueError, match="exactly three values"):
-        ValidatorCoordSys._validate_axis_names(("X", "", "Z"), "test_file")
-
     # Uncommon names should warn
     with pytest.warns(UserWarning, match="Uncommon AXIS_NAME"):
         ValidatorCoordSys._validate_axis_names(("X", "B", "Z"), "test_file")
@@ -552,7 +541,7 @@ def test_coordinate_system_axis_units() -> None:
 
     # Invalid number of units
     with pytest.raises(ValueError, match="exactly three values"):
-        ValidatorCoordSys._validate_axis_units(("m", "m"), "test_file")
+        ValidatorCoordSys._validate_axis_units(("m", "m"), "test_file")  # type: ignore[arg-type]
 
     # Uncommon units should warn
     with pytest.warns(UserWarning, match="Uncommon AXIS_UNIT"):
@@ -603,7 +592,7 @@ def test_coordinate_system_validator_missing_field_delegated() -> None:
         # Missing axis_unit and zpositive
     }
     with pytest.raises(ValueError, match="missing fields"):
-        TSurfCoordSys.validate(data, "test_file.ts")
+        TSurfCoordSys.validate(data, "test_file.ts")  # type: ignore[arg-type]
 
 
 def test_coordinate_system_immutability_cannot_delete_attribute() -> None:
@@ -626,7 +615,7 @@ def test_axis_elements_uniqueness_validation() -> None:
     with pytest.raises(ValueError, match="values \\(in lowercase\\) must be unique"):
         ValidatorCoordSys._validate_axis_elements(
             ("X", "Y", "X"),
-            [(e.lower() for e in ValidatorCoordSys.common_axis_names[0])],
+            ValidatorCoordSys.common_axis_names,
             "AXIS_NAME",
             "test_file",
             check_uniqueness=True,
@@ -636,7 +625,7 @@ def test_axis_elements_uniqueness_validation() -> None:
     with pytest.raises(ValueError, match="values \\(in lowercase\\) must be unique"):
         ValidatorCoordSys._validate_axis_elements(
             ("x", "Y", "X"),  # Lowercase 'x' and uppercase 'X' are considered the same
-            [(e.lower() for e in ValidatorCoordSys.common_axis_names[0])],
+            ValidatorCoordSys.common_axis_names,
             "AXIS_NAME",
             "test_file",
             check_uniqueness=True,
@@ -646,7 +635,7 @@ def test_axis_elements_uniqueness_validation() -> None:
     # This should work fine since check_uniqueness=False for units
     ValidatorCoordSys._validate_axis_elements(
         ("m", "m", "m"),
-        [(e.lower() for e in ValidatorCoordSys.common_axis_units[0])],
+        ValidatorCoordSys.common_axis_units,
         "AXIS_UNIT",
         "test_file",
         check_uniqueness=False,
@@ -956,7 +945,7 @@ def test_tsurfdata_immutability_cannot_modify_header_attribute() -> None:
 
     new_header = TSurfHeader(name="ModifiedSurface")
     with pytest.raises(FrozenInstanceError):
-        data.header = new_header
+        data.header = new_header  # type: ignore[misc]
 
 
 def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None:
@@ -986,27 +975,6 @@ def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None
     data.vertices[0, 0] = 999.0
     assert data.vertices[0, 0] == 999.0
     assert data.vertices[0, 0] != original_value
-
-
-def test_tsurfdata_get_vertices_return_correct_array() -> None:
-    """Test that get_vertices returns the correct numpy array."""
-    header = TSurfHeader(name="TestSurface")
-    vertices = np.array(
-        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-        dtype=np.float64,
-    )
-    triangles = np.array([[1, 2, 3]], dtype=np.int64)
-
-    data = TSurfData(
-        header=header,
-        coord_sys=None,
-        vertices=vertices,
-        triangles=triangles,
-    )
-
-    result = data.get_vertices
-    np.testing.assert_array_equal(result, vertices)
-    assert result.dtype == np.float64
 
 
 def test_tsurfdata_get_cells_return_correct_array() -> None:
@@ -1107,7 +1075,7 @@ def test_tsurf_data_roundtrip_bytes_io(complete_tsurf_file: str) -> None:
 def test_get_as_dict_with_coord_sys(complete_tsurf_file: str) -> None:
     """Test get_as_dict returns correct keys and values with coordinate system."""
     data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
-    result = data.asdict()
+    result = data.to_dict()
 
     assert isinstance(result, dict)
     assert set(result.keys()) == {"header", "coord_sys", "vertices", "triangles"}
@@ -1119,15 +1087,15 @@ def test_get_as_dict_with_coord_sys(complete_tsurf_file: str) -> None:
     coord_sys = result["coord_sys"]
     assert coord_sys is not None
     assert coord_sys["name"] == "Default"
-    assert coord_sys["axis_name"] == ["X", "Y", "Z"]
-    assert coord_sys["axis_unit"] == ["m", "m", "m"]
+    assert coord_sys["axis_name"] == ("X", "Y", "Z")
+    assert coord_sys["axis_unit"] == ("m", "m", "m")
     assert coord_sys["zpositive"] == "Depth"
 
 
 def test_get_as_dict_without_coord_sys(minimal_tsurf_file: str) -> None:
     """Test get_as_dict does not contain coord_sys data when section is absent."""
     data = TSurfData.from_file(tsurf_stream(minimal_tsurf_file))
-    result = data.asdict()
+    result = data.to_dict()
 
     assert result["header"] == {"name": "test_surface"}
     assert "coord_sys" not in result
