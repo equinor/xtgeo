@@ -1,6 +1,7 @@
 import io
 import logging
 import pathlib
+from pathlib import Path
 
 import hypothesis.strategies as st
 import numpy as np
@@ -525,3 +526,109 @@ def test_swapaxis_xinc_yinc():
     cube.swapaxes()
 
     assert (cube.xinc, cube.yinc) == (2, 1)
+
+
+def test_measurement_default_is_meters(smallcube: Cube) -> None:
+    cube = Cube(
+        xori=0.0,
+        yori=0.0,
+        zori=0.0,
+        ncol=2,
+        nrow=3,
+        nlay=2,
+        xinc=1.0,
+        yinc=2.0,
+        zinc=1.0,
+    )
+    assert cube.measurement == "m"
+
+
+@pytest.mark.parametrize("system", ["m", "ft"])
+def test_measurement_initialized(system: str) -> None:
+    cube = Cube(
+        xori=0.0,
+        yori=0.0,
+        zori=0.0,
+        ncol=2,
+        nrow=3,
+        nlay=2,
+        xinc=1.0,
+        yinc=2.0,
+        zinc=1.0,
+        measurement=system,
+    )
+    assert cube.measurement == system
+
+
+@pytest.mark.parametrize("system", ["m", "ft"])
+def test_measurement_setter(system: str) -> None:
+    opposite = "m" if system == "ft" else "ft"
+    cube = Cube(
+        xori=0.0,
+        yori=0.0,
+        zori=0.0,
+        ncol=2,
+        nrow=3,
+        nlay=2,
+        xinc=1.0,
+        yinc=2.0,
+        zinc=1.0,
+        measurement=opposite,
+    )
+    assert system != opposite
+    assert cube.measurement == opposite
+    cube.measurement = system
+    assert cube.measurement == system
+
+
+def test_measurement_raises_on_invalid_system() -> None:
+    with pytest.raises(ValueError, match="Unknown measurement system"):
+        cube = Cube(
+            xori=0.0,
+            yori=0.0,
+            zori=0.0,
+            ncol=2,
+            nrow=3,
+            nlay=2,
+            xinc=1.0,
+            yinc=2.0,
+            zinc=1.0,
+            measurement="ms",
+        )
+    cube = Cube(
+        xori=0.0,
+        yori=0.0,
+        zori=0.0,
+        ncol=2,
+        nrow=3,
+        nlay=2,
+        xinc=1.0,
+        yinc=2.0,
+        zinc=1.0,
+        measurement="m",
+    )
+    with pytest.raises(ValueError, match="Unknown measurement system"):
+        cube.measurement = "cm"
+
+
+def test_cube_measurement_system_from_segy(loadsfile1: Cube) -> None:
+    assert loadsfile1.measurement == "m"
+
+
+@pytest.mark.parametrize("system", ["m", "ft"])
+def test_cube_to_segy_measurement_roundtrip(system: str, tmp_path: Path) -> None:
+    cube = Cube(
+        xori=0.0,
+        yori=0.0,
+        zori=0.0,
+        ncol=2,
+        nrow=3,
+        nlay=2,
+        xinc=1.0,
+        yinc=2.0,
+        zinc=1.0,
+        measurement=system,
+    )
+    cube.to_file("cube.segy", fformat="segy")
+    in_cube = xtgeo.cube_from_file("cube.segy")
+    assert in_cube.measurement == system
