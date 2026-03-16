@@ -9,6 +9,7 @@ import pandas as pd
 
 from xtgeo.common.log import null_logger
 from xtgeo.io._file import FileFormat, FileWrapper
+from xtgeo.io._exceptions import InvalidFileFormatError
 
 from . import _well_io_factory
 
@@ -87,7 +88,7 @@ def wells_to_file(
 
     Raises:
         NotImplementedError: For HDF5 format
-        ValueError: For unsupported formats
+        InvalidFileFormatError: For unsupported formats
     """
     # Detect format
     fmt = wfile_wrapper.fileformat(fformat)
@@ -102,9 +103,12 @@ def wells_to_file(
             "Export individual wells using Well.to_file() instead."
         )
     else:
-        raise ValueError(
+        supported = FileFormat.extensions_string(
+            [FileFormat.RMSWELL, FileFormat.CSV]
+        )
+        raise InvalidFileFormatError(
             f"File format {fformat} is not supported for Wells.to_file(). "
-            "Supported formats: 'rms_ascii', 'csv'"
+            f"Supported formats: {supported}"
         )
 
 
