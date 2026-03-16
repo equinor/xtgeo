@@ -302,7 +302,9 @@ def _import_csv_wells(wfile_wrapper: FileWrapper) -> list[Well]:
                 )
 
         if zname not in well_df.columns:
-            possible_z = [c for c in well_df.columns if "Z" in c.upper() or "TVD" in c]
+            possible_z = [
+                c for c in well_df.columns if "Z" in c.upper() or "TVD" in c.upper()
+            ]
             if possible_z:
                 zname = possible_z[0]
         if zname not in well_df.columns:
