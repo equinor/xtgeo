@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.io._file import FileWrapper
 
 from . import _blockedwells_roxapi
 from .blocked_well import blockedwell_from_file
 from .wells import Wells
+
+if TYPE_CHECKING:  # pragma: no cover - import for typing only
+    import io
+    from pathlib import Path
+
+    from xtgeo.common.types import FileLike
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -52,6 +59,54 @@ def blockedwells_from_files(
             for wfile in filelist
         ]
     )
+
+
+def blockedwells_from_stacked_file(
+    bwfile: FileLike,
+    fformat: str | None = None,
+    mdlogname: str | None = None,
+    zonelogname: str | None = None,
+    strict: bool = False,
+) -> BlockedWells:
+    """Import multiple blocked wells from a single concatenated (stacked) file.
+
+    This function reads files that contain multiple blocked wells in a single file,
+    as created by :meth:`BlockedWells.to_stacked_file`.
+
+    For CSV format, expects a WELLNAME column to identify each blocked well.
+    For RMS ASCII format, reads multiple blocked well entries, each with its own
+    header.
+
+    Args:
+        bwfile: File name or stream.
+        fformat: File format ('rms_ascii'/'rmswell' or 'csv'). If None, auto-detect
+            from file extension or signature.
+        mdlogname: Name of measured depth log to use
+        zonelogname: Name of zone log to use
+        strict: If True, raise error if mdlogname/zonelogname not found
+
+    Returns:
+        BlockedWells instance containing all blocked wells from the file.
+
+    Example::
+
+        >>> bwells = xtgeo.blockedwells_from_stacked_file(
+        ...     "all_bwells.csv", fformat="csv"
+        ... )
+        >>> bwells = xtgeo.blockedwells_from_stacked_file("all_bwells.rmswell")
+
+    .. versionadded:: 4.19 (approximate)
+    """
+    from . import _blockedwells_io_factory
+
+    bwfile_wrapper = FileWrapper(bwfile, mode="rb")
+    bwfile_wrapper.check_file(raiseerror=OSError)
+
+    blockedwell_list = _blockedwells_io_factory.blockedwells_from_stacked_file(
+        bwfile_wrapper, fformat, mdlogname, zonelogname, strict
+    )
+
+    return BlockedWells(blockedwell_list)
 
 
 def blockedwells_from_roxar(
@@ -97,6 +152,51 @@ class BlockedWells(Wells):
         """Get a BlockedWell() instance by name, or None"""
         logger.debug("Calling super...")
         return super().get_well(name)
+
+    def to_stacked_file(
+        self,
+        bwfile: FileLike,
+        fformat: str | None = "rms_ascii",
+        compression: str | None = "lzf",
+    ) -> Path | io.BytesIO | io.StringIO:
+        """Export multiple blocked wells to a single concatenated (stacked) file.
+
+        For CSV format, all blocked wells are combined into a single table with a
+        WELLNAME column to identify each blocked well.
+
+        For RMS ASCII format, each blocked well is written sequentially in the
+        standard RMS well format (with its own header and data section).
+
+        Args:
+            bwfile: File name or stream.
+            fformat: File format ('rms_ascii'/'rmswell' or 'csv').
+                Default is 'rms_ascii'. HDF5 is not supported.
+            compression: Not used, kept for API compatibility.
+
+        Returns:
+            Path to the file that was written.
+
+        Example::
+
+            >>> bwells = BlockedWells([bwell1, bwell2, bwell3])
+            >>> bwells.to_stacked_file("all_bwells.csv", fformat="csv")
+            >>> bwells.to_stacked_file("all_bwells.rmswell", fformat="rms_ascii")
+
+        .. versionadded:: 4.19 (approximate)
+        """
+        from . import _blockedwells_io_factory
+
+        if not self._wells:
+            raise ValueError("No blocked wells to export")
+
+        bwfile_wrapper = FileWrapper(bwfile, mode="wb", obj=self)
+        bwfile_wrapper.check_folder(raiseerror=OSError)
+
+        _blockedwells_io_factory.blockedwells_to_stacked_file(
+            self, bwfile_wrapper, fformat, compression
+        )
+
+        return bwfile_wrapper.file
 
     def _from_roxar(
         self,
