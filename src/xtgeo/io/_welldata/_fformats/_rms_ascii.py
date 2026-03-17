@@ -379,6 +379,7 @@ def _write_rms_ascii_data(
         index=False,
         float_format=cformat,
         escapechar="\\",
+        lineterminator="\n",
     )
 
 
