@@ -64,7 +64,7 @@ def check_folder(
 
 
 def generic_hash(
-    gid: str, hashmethod: Literal["md5", "sha256", "blake2d"] | Callable = "md5"
+    gid: str, hashmethod: Literal["md5", "sha256", "blake2b"] | Callable = "md5"
 ) -> str:
     """Return a unique hash ID for current instance.
 
