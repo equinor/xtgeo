@@ -196,4 +196,135 @@ is_cell_distorted(const CellCorners &corners)
     return geometry::is_hexahedron_severely_distorted(corners.to_hexahedron_corners());
 }  // is_cell_distorted
 
+/*
+ * Extract one of the six faces of a cell as an ordered array of 4 corners.
+ *
+ * Corners are ordered CCW when viewed from outside the cell (outward-facing normal),
+ * which is what quadrilateral_face_overlap_area expects.
+ */
+std::array<xyz::Point, 4>
+get_cell_face(const CellCorners &cell, CellFaceLabel face)
+{
+    switch (face) {
+        case CellFaceLabel::Top:
+            return { cell.upper_sw, cell.upper_se, cell.upper_ne, cell.upper_nw };
+        case CellFaceLabel::Bottom:
+            return { cell.lower_sw, cell.lower_se, cell.lower_ne, cell.lower_nw };
+        case CellFaceLabel::East:
+            return { cell.upper_se, cell.upper_ne, cell.lower_ne, cell.lower_se };
+        case CellFaceLabel::West:
+            return { cell.upper_sw, cell.upper_nw, cell.lower_nw, cell.lower_sw };
+        case CellFaceLabel::North:
+            return { cell.upper_nw, cell.upper_ne, cell.lower_ne, cell.lower_nw };
+        case CellFaceLabel::South:
+            return { cell.upper_sw, cell.upper_se, cell.lower_se, cell.lower_sw };
+    }
+    throw std::invalid_argument("Invalid CellFaceLabel");
+}  // get_cell_face
+
+/*
+ * Compute the overlap area between any two cell faces identified by explicit face
+ * labels.  This is the canonical implementation; it works for IJK-neighbours and for
+ * non-IJK-neighbours alike (e.g. nested hybrid grids).
+ */
+double
+adjacent_cells_overlap_area(const CellCorners &cell1,
+                            CellFaceLabel face1,
+                            const CellCorners &cell2,
+                            CellFaceLabel face2,
+                            double max_normal_gap)
+{
+    return geometry::quadrilateral_face_overlap_area(
+      get_cell_face(cell1, face1), get_cell_face(cell2, face2), max_normal_gap);
+}  // adjacent_cells_overlap_area (face-label overload)
+
+/*
+ * Convenience overload for the common case where cell2 is one IJK step away from
+ * cell1.  Translates the direction into the appropriate face-label pair and delegates
+ * to the face-label overload.
+ *
+ * For nested hybrid grids where touching cells are NOT IJK-neighbours, the caller
+ * must use the face-label overload directly.
+ */
+double
+adjacent_cells_overlap_area(const CellCorners &cell1,
+                            const CellCorners &cell2,
+                            FaceDirection direction,
+                            double max_normal_gap)
+{
+    switch (direction) {
+        case FaceDirection::I:
+            return adjacent_cells_overlap_area(cell1, CellFaceLabel::East, cell2,
+                                               CellFaceLabel::West, max_normal_gap);
+        case FaceDirection::J:
+            return adjacent_cells_overlap_area(cell1, CellFaceLabel::North, cell2,
+                                               CellFaceLabel::South, max_normal_gap);
+        case FaceDirection::K:
+            return adjacent_cells_overlap_area(cell1, CellFaceLabel::Bottom, cell2,
+                                               CellFaceLabel::Top, max_normal_gap);
+    }
+    throw std::invalid_argument("Invalid FaceDirection");
+}  // adjacent_cells_overlap_area (direction overload)
+
+/*
+ * Compute the geometric center of a cell: simple average of its 8 corners.
+ * This is the canonical implementation used throughout the codebase.
+ */
+xyz::Point
+cell_center(const CellCorners &c)
+{
+    return (c.upper_sw + c.upper_se + c.upper_nw + c.upper_ne + c.lower_sw +
+            c.lower_se + c.lower_nw + c.lower_ne) *
+           0.125;
+}
+
+/*
+ * Compute overlap area, face normal, and TPFA half-distances for two cell faces.
+ */
+FaceOverlapResult
+face_overlap_result(const CellCorners &cell1,
+                    CellFaceLabel face1,
+                    const CellCorners &cell2,
+                    CellFaceLabel face2,
+                    double max_normal_gap,
+                    int coord_axis)
+{
+    auto f1 = get_cell_face(cell1, face1);
+    auto f2 = get_cell_face(cell2, face2);
+
+    auto qr = geometry::quadrilateral_face_overlap_result(f1, f2, max_normal_gap);
+
+    if (qr.area == 0.0)
+        return { 0.0, qr.normal, 0.0, 0.0 };
+
+    auto face_centroid = [](const std::array<xyz::Point, 4> &f) -> Eigen::Vector3d {
+        return (f[0].data() + f[1].data() + f[2].data() + f[3].data()) * 0.25;
+    };
+
+    Eigen::Vector3d fc1 = face_centroid(f1);
+    Eigen::Vector3d fc2 = face_centroid(f2);
+    Eigen::Vector3d cc1 = cell_center(cell1).data();
+    Eigen::Vector3d cc2 = cell_center(cell2).data();
+
+    double d1, d2;
+    if (coord_axis >= 0 && coord_axis <= 2) {
+        d1 = std::abs((fc1 - cc1)[coord_axis]);
+        d2 = std::abs((fc2 - cc2)[coord_axis]);
+    } else {
+        // OPM-compatible TPFA half-distances: d_i = |fc_i - cc_i|² / |n · (fc_i -
+        // cc_i)|. Equivalent to the OPM formula  T_½ = K * A * (n · d_vec) / (d_vec ·
+        // d_vec) which correctly down-weights faces whose normal is misaligned with the
+        // cell-centre-to-face-centroid direction (e.g. heavily tilted/faulted cells).
+        Eigen::Vector3d n = qr.normal.data();
+        auto v1 = fc1 - cc1;
+        auto v2 = fc2 - cc2;
+        double nd1 = std::abs(n.dot(v1));
+        double nd2 = std::abs(n.dot(v2));
+        d1 = (nd1 > 0.0) ? v1.squaredNorm() / nd1 : v1.norm();
+        d2 = (nd2 > 0.0) ? v2.squaredNorm() / nd2 : v2.norm();
+    }
+
+    return { qr.area, qr.normal, d1, d2 };
+}  // face_overlap_result
+
 }  // namespace xtgeo::grid3d
