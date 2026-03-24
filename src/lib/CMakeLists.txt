@@ -105,6 +105,7 @@ pybind11_add_module(
   "${SRC}/common/geometry/volumes.cpp"
   "${SRC}/common/logging/logging.cpp"
   "${SRC}/grid3d/cell.cpp"
+  "${SRC}/grid3d/transmissibility.cpp"
   "${SRC}/grid3d/cell_xyz.cpp"
   "${SRC}/grid3d/grid.cpp"
   "${SRC}/grid3d/grid_fence_extract.cpp"

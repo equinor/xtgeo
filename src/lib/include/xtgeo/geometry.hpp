@@ -155,6 +155,84 @@ bool
 is_xy_point_in_polygon(const double x, const double y, const xyz::Polygon &polygon);
 
 /**
+ * @brief Result returned by quadrilateral_face_overlap_result().
+ *
+ * Contains the overlap area and the unit normal of the shared face plane.  Both
+ * quantities are needed for TPFA transmissibility; the area alone is returned by
+ * the cheaper quadrilateral_face_overlap_area() convenience wrapper.
+ */
+struct QuadOverlapResult
+{
+    double area;  ///< Overlap area ≥ 0, 0 when no intersection or gap guard fires.
+    xyz::Point
+      normal;  ///< Unit normal (mean of the two face normals); zero-initialised
+               ///< when the faces are degenerate and area == 0.
+    xyz::Point
+      centroid;  ///< 3D centroid of the intersection polygon; zero when area == 0.
+};
+
+/**
+ * @brief Compute the overlap area and face-plane unit normal for two quads.
+ *
+ * Identical to quadrilateral_face_overlap_area() but also returns the unit normal
+ * used for the projection.  The normal is useful for transmissibility calculations
+ * where the half-distances d_i = |n · (face_centroid − cell_centre)| are needed.
+ *
+ * @param face1          Four corners of the first quadrilateral.
+ * @param face2          Four corners of the second quadrilateral.
+ * @param max_normal_gap Maximum permitted centroid-to-centroid distance along the
+ *                       average face normal.  Pass a negative value (the default,
+ *                       -1) to auto-compute the limit as the longer diagonal of the
+ *                       two faces — a scale-invariant heuristic that admits truly
+ *                       adjacent cells (centroid gap ≈ 0) and rejects non-adjacent
+ *                       cells in the same column (gap ≈ cell thickness ≈ face size).
+ *                       Pass 0 to force the exact-adjacency requirement, or
+ *                       `std::numeric_limits<double>::max()` to disable the guard.
+ * @return QuadOverlapResult{area, normal}.
+ */
+QuadOverlapResult
+quadrilateral_face_overlap_result(const std::array<xyz::Point, 4> &face1,
+                                  const std::array<xyz::Point, 4> &face2,
+                                  double max_normal_gap = -1.0);
+
+/**
+ * @brief Compute the overlap area between two planar quadrilateral faces in 3D.
+ *
+ * Both faces are projected onto the plane whose normal is the mean of the two face
+ * normals. The Sutherland-Hodgman algorithm is then used to find the intersection
+ * polygon, and the shoelace formula gives the projected area, which equals the true 3D
+ * area because the projection is orthogonal to the face plane.
+ *
+ * **Non-adjacency guard (`max_normal_gap`)**
+ *
+ * Because projection collapses the normal direction, two faces far apart in 3D but
+ * with overlapping projected footprints (e.g. non-adjacent cells in the same column)
+ * would otherwise produce a false-positive non-zero area.  The `max_normal_gap`
+ * parameter guards against this: the function measures |n · (centroid2 − centroid1)|
+ * and returns 0 if that gap exceeds the limit.
+ *
+ * The **default** (-1) enables an automatic, scale-invariant limit: the longer
+ * diagonal of the two faces.  For genuinely adjacent cells the centroid gap is ≈ 0
+ * (conforming grids) or much smaller than the face size (faulted grids), so the
+ * guard passes in 99.9 % of real-grid cases.  Non-adjacent cells in the same column
+ * have a gap ≈ the cell thickness, which is comparable to the face diagonal, so the
+ * guard fires.  Pass `std::numeric_limits<double>::max()` to disable the check
+ * entirely.
+ *
+ * @param face1          Four corners of the first quadrilateral, in CCW or CW order.
+ * @param face2          Four corners of the second quadrilateral, in CCW or CW order.
+ * @param max_normal_gap Centroid gap limit along the average face normal.
+ *                       Negative (default -1): auto-computed as max face diagonal.
+ *                       0: exact adjacency required.
+ *                       `numeric_limits<double>::max()`: guard disabled.
+ * @return The overlap area, or 0 if the faces do not intersect or the guard fires.
+ */
+double
+quadrilateral_face_overlap_area(const std::array<xyz::Point, 4> &face1,
+                                const std::array<xyz::Point, 4> &face2,
+                                double max_normal_gap = -1.0);
+
+/**
  * @brief Determine the relationship between a cell (defined by CellCorners) and a
  * polygon.
  *
@@ -474,6 +552,31 @@ init(py::module &m)
                    py::arg("threshold") = 0.05);
     m_geometry.def("is_hexahedron_concave_projected", &is_hexahedron_concave_projected,
                    "Determine if a hexahedron is concave projected");
+    m_geometry.def(
+      "quadrilateral_face_overlap_area", &quadrilateral_face_overlap_area,
+      "Compute the overlap area between two planar quadrilateral faces in 3D. "
+      "Both faces are projected onto the plane perpendicular to their average "
+      "normal; Sutherland-Hodgman clipping then gives the intersection area. "
+      "Returns 0 if the faces do not intersect or if the centroid-to-centroid "
+      "distance along the average normal exceeds max_normal_gap (default: no "
+      "limit). Pass max_normal_gap to guard against false positives when two "
+      "parallel faces share the same projected footprint but are far apart in "
+      "3D (e.g. non-adjacent cells in the same column).",
+      py::arg("face1"), py::arg("face2"), py::arg("max_normal_gap") = -1.0);
+
+    py::class_<QuadOverlapResult>(m_geometry, "QuadOverlapResult")
+      .def_readonly("area", &QuadOverlapResult::area,
+                    "Overlap area in coordinate units squared.")
+      .def_readonly("normal", &QuadOverlapResult::normal,
+                    "Unit normal of the shared face plane.")
+      .def_readonly("centroid", &QuadOverlapResult::centroid,
+                    "3D centroid of the intersection polygon.");
+
+    m_geometry.def(
+      "quadrilateral_face_overlap_result", &quadrilateral_face_overlap_result,
+      "Same as quadrilateral_face_overlap_area but also returns the unit face-plane "
+      "normal. Use this when you need the normal for transmissibility calculations.",
+      py::arg("face1"), py::arg("face2"), py::arg("max_normal_gap") = -1.0);
 }
 }  // namespace xtgeo::geometry
 

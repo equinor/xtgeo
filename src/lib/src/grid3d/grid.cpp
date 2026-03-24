@@ -267,24 +267,6 @@ cell_refinement(const CellCorners &cell, const int rx, const int ry, const int r
     return refined_corners;
 }
 
-/*
- * Compute center cell coordinate of a cell
- *
- * Uses vector arithmetic to compute the centroid of the 8 corners.
- * This is more efficient and leverages Eigen's optimized operations.
- *
- * @param cell CellCorners of cell
- * @return center point of the cell
- */
-
-inline xyz::Point
-cell_center(const CellCorners &cell)
-{
-    return (cell.lower_sw + cell.lower_se + cell.lower_nw + cell.lower_ne +
-            cell.upper_sw + cell.upper_se + cell.upper_nw + cell.upper_ne) *
-           0.125;
-}
-
 /**
  * @brief Recursively compute phase volumes (gas, oil, water) inside a 3D grid cell.
  *

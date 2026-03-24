@@ -30,6 +30,7 @@ from . import (
     _grid_refine,
     _grid_roxapi,
     _grid_translate_coords,
+    _grid_transmissibilities,
     _grid_wellzone,
     _gridprop_lowlevel,
 )
@@ -2169,6 +2170,160 @@ class Grid(_Grid3D):
             boundary=boundary,
             precision=precision,
             asmasked=asmasked,
+        )
+
+    def get_transmissibilities(
+        self,
+        permx: GridProperty | float,
+        permy: GridProperty | float,
+        permz: GridProperty | float,
+        ntg: GridProperty | float | None = 1.0,
+        min_dz_pinchout: float = 1e-4,
+        min_fault_throw: float = 0.01,
+        nnc_table: pd.DataFrame | None = None,
+        nnc_table_only: bool = False,
+    ) -> tuple[
+        GridProperty,
+        GridProperty,
+        GridProperty,
+        pd.DataFrame,
+        pd.DataFrame | None,
+        GridProperty | None,
+    ]:
+        """Compute TPFA transmissibilities between all cell pairs.
+
+        Uses the two-point flux approximation (TPFA) formula:
+
+        .. math::
+
+            T = \\frac{HT_1 \\cdot HT_2}{HT_1 + HT_2}, \\quad
+            HT_i = \\frac{k_i \\cdot A}{d_i}
+
+        where *A* is the shared face area (computed by the Sutherland–Hodgman
+        polygon-clipping algorithm for faulted faces), *d* is the distance from
+        the cell centre to the face, and *k* is the effective permeability
+        (``perm * ntg`` in the horizontal directions; ``permz`` alone in the
+        vertical direction).
+
+        Three types of cell connections are considered:
+
+        - **I-direction**: neighbouring cells in the column direction.
+        - **J-direction**: neighbouring cells in the row direction.
+        - **K-direction**: neighbouring cells in the layer direction.
+        - **Fault NNCs**: I/J neighbours whose shared faces only partly overlap
+          (faulted geometry), stored separately in the NNC DataFrame.
+        - **Pinch-out NNCs**: K-pairs connected across one or more entirely
+          collapsed (zero-thickness) layers.
+
+        When *nnc_table* is supplied the method additionally computes
+        transmissibilities across the boundary of a nested hybrid grid.  The
+        table is produced by
+        :func:`fmu.tools.nestedhybridgrid.create_nested_hybrid_grid` and
+        encodes every mother ↔ refined cell pair that should be connected.
+
+        Args:
+            permx: Permeability in the I-direction (grid cells), md, either as
+                a :class:`~xtgeo.GridProperty` or a scalar float.
+            permy: Permeability in the J-direction (grid cells), md, either as
+                a :class:`~xtgeo.GridProperty` or a scalar float.
+            permz: Permeability in the K-direction (grid cells), md, either as
+                a :class:`~xtgeo.GridProperty`  or a scalar float.
+            ntg: Net-to-gross ratio (0–1). Applied to horizontal transmissibility
+                only. Either a :class:`~xtgeo.GridProperty` or a scalar float.
+                Defaults to ``1.0``.
+            min_dz_pinchout: Minimum layer thickness (in grid Z-units) below which
+                a K-layer is treated as a pinch-out and bridged by a K-NNC. Default
+                is ``1e-4``.
+            min_fault_throw: Minimum vertical displacement (in grid Z-units, same as
+                the grid coordinate system) between the two cell centres of a Fault
+                NNC.  Fault NNCs whose throw is smaller than this value are
+                discarded as numerical artefacts.  Default is ``0.0`` (no
+                filtering).  A typical practical value is ``0.1`` metres.
+            nnc_table: Optional :class:`pandas.DataFrame` with columns
+                ``I1, J1, K1`` (mother cell, 1-based), ``I2, J2, K2`` (refined
+                cell, 1-based), and ``DIRECTION`` (face direction from the
+                mother cell's perspective: ``I+``, ``I-``, ``J+``, ``J-``,
+                ``K+``, ``K-``). This is needed for special cases like so-called
+                nested-hybrid grids, not for the ordinary TPFA calculations.
+                When provided, nested-hybrid NNC transmissibilities are computed
+                for each cell pair and returned in the last two elements of the
+                result tuple.
+            nnc_table_only: If ``True``, skip the ordinary TPFA
+                transmissibility calculations (I/J/K neighbour, fault and
+                pinch-out NNCs) and only compute nested-hybrid NNC
+                transmissibilities from *nnc_table*.  In this mode ``tranx``,
+                ``trany`` and ``tranz`` are returned as zero-valued
+                :class:`~xtgeo.GridProperty` objects (masked where the input
+                permeability is masked) and the regular ``nnc`` DataFrame is
+                empty.  Requires *nnc_table* to be supplied.  Defaults to
+                ``False``.
+
+        Returns:
+            A 6-tuple ``(tranx, trany, tranz, nnc, nnc_nested_hybrid,
+            refined_boundary_prop)``:
+
+            - **tranx**: :class:`~xtgeo.GridProperty` of shape
+              ``(ncol, nrow, nlay)`` — I-direction transmissibilities in
+              *m³·cP/(d·bar)* (METRIC grids) or *rb·cP/(d·psi)* (FIELD grids).
+              The last I-slice (``tranx.values[-1, :, :]``) is a dummy zero
+              sentinel with no physical meaning. Entries are masked where either
+              neighbour cell is inactive.
+            - **trany**: :class:`~xtgeo.GridProperty` of shape
+              ``(ncol, nrow, nlay)`` — J-direction transmissibilities (same units).
+              The last J-slice (``trany.values[:, -1, :]``) is a dummy zero sentinel.
+            - **tranz**: :class:`~xtgeo.GridProperty` of shape
+              ``(ncol, nrow, nlay)`` — K-direction transmissibilities (same units).
+              The last K-slice (``tranz.values[:, :, -1]``) is a dummy zero sentinel.
+            - **nnc**: :class:`pandas.DataFrame` with columns
+              ``I1, J1, K1, I2, J2, K2`` (1-based cell indices),
+              ``T`` (transmissibility), and ``TYPE`` (``"Fault"`` or
+              ``"Pinchout"``).
+            - **nnc_nested_hybrid**: :class:`pandas.DataFrame` with columns
+              ``I1, J1, K1`` (mother cell, 1-based), ``I2, J2, K2`` (refined
+              cell, 1-based), ``T`` (transmissibility), ``TYPE``
+              (``"NestedHybrid"``), and ``DIRECTION``. ``None`` when
+              *nnc_table* is not supplied.
+            - **refined_boundary_prop**: :class:`~xtgeo.GridProperty` (discrete,
+              codes ``{0: "none", 1: "refined_boundary"}``) marking the refined
+              cells that appear as cell 2 in at least one nested-hybrid NNC.
+              ``None`` when *nnc_table* is not supplied.
+
+        Example::
+
+            >>> grid = xtgeo.grid_from_file("myGrid.roff")
+            >>> permx = xtgeo.gridproperty_from_file("permx.roff", grid=grid)
+            >>> permy = xtgeo.gridproperty_from_file("permy.roff", grid=grid)
+            >>> permz = xtgeo.gridproperty_from_file("permz.roff", grid=grid)
+            >>> ntg = xtgeo.gridproperty_from_file("ntg.roff", grid=grid)
+            >>> tranx, trany, tranz, nnc, _, _ = grid.get_transmissibilities(
+            ...     permx, permy, permz, ntg=ntg
+            ... )
+            >>> print(f"Max TRANX: {tranx.values.max():.4f}")
+
+        Nested hybrid example::
+
+            >>> from fmu.tools import create_nested_hybrid_grid
+            >>> merged, nnc_tbl = create_nested_hybrid_grid(
+            ...     grid, region, target_region_id=2, refinement=(3, 3, 3)
+            ... )
+            >>> tranx, trany, tranz, nnc, nnc_nh, rbnd = (
+            ...     merged.get_transmissibilities(
+            ...         permx, permy, permz, ntg=ntg, nnc_table=nnc_tbl
+            ...     )
+            ... )
+            >>> print(f"NNCs found: {len(nnc_nh)}")
+        """
+
+        return _grid_transmissibilities.get_transmissibilities(
+            self,
+            permx=permx,
+            permy=permy,
+            permz=permz,
+            ntg=ntg,
+            min_dz_pinchout=min_dz_pinchout,
+            min_fault_throw=min_fault_throw,
+            nnc_table=nnc_table,
+            nnc_table_only=nnc_table_only,
         )
 
     def get_heights_above_ffl(
