@@ -1450,7 +1450,7 @@ def test_more_translate_coords(testdata_path):
         (4, 0.5),
     ],
 )
-def test_create_box_grid_give_correct_pillar_zcoord(nz, dz):
+def test_create_box_grid_gives_correct_pillar_zcoord(nz, dz):
     """Test that create_box_grid with coordsv creates expected coordinates."""
     grd = xtgeo.create_box_grid(
         dimension=(2, 2, nz),
