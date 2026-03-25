@@ -10,7 +10,6 @@ import numpy.ma as ma
 
 import xtgeo
 import xtgeo._internal as _internal  # type: ignore
-import xtgeo.interfaces.resinsight
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGDescription, null_logger
 from xtgeo.common.exceptions import InvalidFileFormatError
@@ -246,6 +245,8 @@ def grid_from_resinsight(
         print(grid.dimensions)
 
     """
+    import xtgeo.interfaces.resinsight
+
     grid_resinsight = xtgeo.interfaces.resinsight.GridReader(
         instance_or_port=instance_or_port,
     ).load(case_name=case_name, find_last=find_last)
@@ -1264,7 +1265,10 @@ class Grid(_Grid3D):
             find_last: Controls which existing case to replace when multiple cases
                 share the same ``gname``. If ``True`` (default), the last matching
                 case is replaced; if ``False``, the first matching case is replaced.
+
         """
+        import xtgeo.interfaces.resinsight
+
         data = xtgeo.interfaces.resinsight.GridDataResInsight.from_xtgeo_grid(
             self,
             name=gname,

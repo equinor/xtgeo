@@ -1,8 +1,8 @@
 """Shared fixtures for testing the ResInsight interface.
 
 Note that these are only loaded if ResInsight API is available,
-and shall be without any direct dependency on xtgeo.
-"""
+and shall only depend on the ResInsight interface layer
+(xtgeo.interfaces.resinsight), not on other xtgeo modules."""
 
 import logging
 import pathlib

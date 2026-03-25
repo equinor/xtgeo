@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = null_logger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class GridDataResInsight:
     """Immutable data container for ResInsight grid metadata."""
 
@@ -35,26 +35,43 @@ class GridDataResInsight:
     actnumsv: npt.NDArray[np.int32] = field(repr=False)
     filesrc: str
 
+    # Explicitly unhashable: numpy array fields cannot be hashed reliably.
+    __hash__ = None  # type: ignore[assignment]
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GridDataResInsight):
+            return NotImplemented
+        return (
+            self.name == other.name
+            and self.nx == other.nx
+            and self.ny == other.ny
+            and self.nz == other.nz
+            and np.array_equal(self.coordsv, other.coordsv)
+            and np.array_equal(self.zcornsv, other.zcornsv)
+            and np.array_equal(self.actnumsv, other.actnumsv)
+            and self.filesrc == other.filesrc
+        )
+
     def __post_init__(self) -> None:
         # Validate that the array sizes match the expected dimensions
         expected_coordsv_size = (self.nx + 1) * (self.ny + 1) * 6
         expected_zcornsv_size = self.nx * self.ny * self.nz * 8
         expected_actnumsv_size = self.nx * self.ny * self.nz
 
-        if len(self.coordsv) != expected_coordsv_size:
+        if self.coordsv.size != expected_coordsv_size:
             raise ValueError(
                 f"coordsv should have length {expected_coordsv_size}, but got "
-                f"length {len(self.coordsv)}"
+                f"length {self.coordsv.size}"
             )
-        if len(self.zcornsv) != expected_zcornsv_size:
+        if self.zcornsv.size != expected_zcornsv_size:
             raise ValueError(
                 f"zcornsv should have length {expected_zcornsv_size}, but got "
-                f"length {len(self.zcornsv)}"
+                f"length {self.zcornsv.size}"
             )
-        if len(self.actnumsv) != expected_actnumsv_size:
+        if self.actnumsv.size != expected_actnumsv_size:
             raise ValueError(
                 f"actnumsv should have length {expected_actnumsv_size}, but got "
-                f"length {len(self.actnumsv)}"
+                f"length {self.actnumsv.size}"
             )
 
     def to_xtgeo_grid(self) -> Grid:
@@ -145,7 +162,21 @@ class GridWriter(_BaseResInsightDataRW):
     ) -> None:
         """Save grid to selected ResInsight case.
 
-        If both case_name and case_id are not specified, create a new case
+        Args:
+            data: The grid metadata to save.
+            gname: The name of the case to create or replace in ResInsight.
+                If a case with the same name already exists, it will be replaced with
+                the new grid data.
+                If multiple cases share the same name, the one to replace is determined
+                by the `find_last` parameter.
+
+            find_last: Controls which existing case to replace when multiple cases
+                share the same `gname`. If `True` (default), the last matching case is
+                replaced; if `False`, the first matching case is replaced.
+
+        Note: If an existing case with the same name is found but is not replaceable
+        (e.g. it's loaded from grid file), a warning is logged and a new case with the
+        same name is created instead of replacing the existing one.
         """
         try:
             case = self.get_case(case_name=gname, find_last=find_last)

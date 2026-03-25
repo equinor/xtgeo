@@ -57,8 +57,8 @@ def in_roxar_env():
     return any(env in os.environ for env in ["ROXENV", "RMSVENV_RELEASE"])
 
 
-def has_resinsight():
-    """Helper function to check if ResInsight is available"""
+def has_rips():
+    """Helper function to check if rips is available"""
     try:
         import rips  # noqa
 
@@ -84,7 +84,7 @@ def pytest_runtest_setup(item):
     if "requires_opm" in markers and "HAS_OPM" not in os.environ:
         pytest.skip("Skip as requires OPM")
 
-    if "requires_resinsight" in markers and not has_resinsight():
+    if "requires_resinsight" in markers and not has_rips():
         pytest.skip("Skip as requires ResInsight (+rips)")
 
 

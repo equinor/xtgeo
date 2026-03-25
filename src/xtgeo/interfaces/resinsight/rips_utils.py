@@ -47,7 +47,7 @@ class RipsApiUtils:
 
         if instance_or_port is None or isinstance(instance_or_port, int):
             self._instance = self.find_instance(port=instance_or_port)
-        elif hasattr(instance_or_port, "project"):
+        elif isinstance(instance_or_port, rips.Instance):
             self._instance = instance_or_port
         else:
             raise TypeError(
@@ -94,8 +94,8 @@ class RipsApiUtils:
                 to launch using default system path.
             console_mode: Whether to launch ResInsight in console mode.
             port: If 0, GRPC will find an available port. If -1, use the default port
-                50051 or RESINSIGHT_GRPC_PORT If anything else, ResInsight will try to
-                launch with the specified portnumber.
+                50051 or "RESINSIGHT_GRPC_PORT" if anything else, ResInsight will try to
+                launch with the specified port number.
         """
         if rips is None:
             raise RuntimeError("rips package is not available")
@@ -130,7 +130,7 @@ class RipsApiUtils:
                 ) from e
         else:
             try:
-                instance = rips.Instance.find(start_port=port, end_port=port + 1)
+                instance = rips.Instance(port=port)
             except Exception as e:
                 raise RuntimeError(
                     f"Unable to connect to a ResInsight instance on port {port}"
