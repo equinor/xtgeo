@@ -421,11 +421,20 @@ class GridProperties(_Grid3D):
 
     @props.setter
     def props(self, propslist: list[GridProperty]) -> None:
-        self._props = propslist
-        if propslist:
-            self._ncol = propslist[0].ncol
-            self._nrow = propslist[0].nrow
-            self._nlay = propslist[0].nlay
+        # Deduplicate by object identity while preserving order
+        seen_ids: set[int] = set()
+        unique_props = []
+        for prop in propslist:
+            prop_id = id(prop)
+            if prop_id not in seen_ids:
+                seen_ids.add(prop_id)
+                unique_props.append(prop)
+
+        self._props = unique_props
+        if unique_props:
+            self._ncol = unique_props[0].ncol
+            self._nrow = unique_props[0].nrow
+            self._nlay = unique_props[0].nlay
         self._consistency_check()
 
     @property
@@ -529,12 +538,20 @@ class GridProperties(_Grid3D):
         return None
 
     def append_props(self, proplist: list[GridProperty]) -> None:
-        """Add a list of GridProperty objects to current GridProperties instance."""
+        """Add a list of GridProperty objects to current GridProperties instance.
+
+        Properties already present (by object identity) will not be added again.
+        """
         if not self._props and proplist:
             self._ncol = proplist[0].ncol
             self._nrow = proplist[0].nrow
             self._nlay = proplist[0].nlay
-        self._props += proplist
+
+        # Only add properties that aren't already in the list (by object identity)
+        existing_ids = {id(prop) for prop in self._props}
+        new_props = [prop for prop in proplist if id(prop) not in existing_ids]
+        self._props += new_props
+
         self._consistency_check()
 
     def get_ijk(
