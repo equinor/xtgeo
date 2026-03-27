@@ -1440,3 +1440,39 @@ def test_more_translate_coords(testdata_path):
     np.testing.assert_allclose(
         g11_xyz[2].values, original_xyz[2].values, rtol=1e-5, atol=1e-6
     )
+
+
+@pytest.mark.parametrize(
+    "nz, dz",
+    [
+        (2, 1),
+        (3, 2),
+        (4, 0.5),
+    ],
+)
+def test_create_box_grid_gives_correct_pillar_zcoord(nz, dz):
+    """Test that create_box_grid with coordsv creates expected coordinates."""
+    grd = xtgeo.create_box_grid(
+        dimension=(2, 2, nz),
+        increment=(1, 1, dz),
+    )
+
+    # Check that the minimum pillar z-coordinate corresponds to the origin (z = 0)
+    min_pillar_z = np.min(grd._coordsv[:, :, 2])
+    assert min_pillar_z == pytest.approx(0.0)
+
+    # Check that the maximum pillar z-coordinate matches the total height nz * dz
+    max_pillar_z = np.max(grd._coordsv[:, :, 5])
+    assert max_pillar_z == pytest.approx(nz * dz)
+
+    # Check that the z-coordinates at intermediate layers (cell centers) are correct
+    _, _, z = grd.get_xyz()
+    expected_layer_centers = np.linspace(dz / 2.0, nz * dz - dz / 2.0, nz)
+    for k in range(nz):
+        # All cells in layer k should have the same z equal to the expected center
+        np.testing.assert_allclose(
+            z.values[:, :, k],
+            expected_layer_centers[k],
+            rtol=1e-6,
+            atol=1e-6,
+        )

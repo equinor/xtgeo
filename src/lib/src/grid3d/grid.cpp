@@ -767,7 +767,7 @@ create_grid_from_cube(const cube::Cube &cube,
             coordsv_[ibc++] = apply_zori;
             coordsv_[ibc++] = p.x();
             coordsv_[ibc++] = p.y();
-            coordsv_[ibc++] = apply_zori + cube.zinc * (cube.nlay + 1);
+            coordsv_[ibc++] = apply_zori + cube.zinc * cube.nlay;
         }
     }
 
