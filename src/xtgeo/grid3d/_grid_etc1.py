@@ -46,13 +46,6 @@ def create_box(
     from xtgeo.cube.cube1 import Cube
 
     ncol, nrow, nlay = dimension
-    nncol = ncol + 1
-    nnrow = nrow + 1
-    nnlay = nlay + 1
-
-    coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
-    zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
-    actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
 
     cube = Cube(
         ncol=ncol,
