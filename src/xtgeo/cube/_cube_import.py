@@ -33,7 +33,7 @@ import json
 from collections import defaultdict
 from copy import deepcopy
 from struct import unpack
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 from warnings import warn
 
 import numpy as np
@@ -55,19 +55,36 @@ xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
 
-def import_segy(sfile: FileWrapper) -> dict:
+def import_segy(
+    sfile: FileWrapper,
+    iline: Literal[189, 193] = 189,
+    xline: Literal[189, 193] = 193,
+) -> dict:
     """Import SEGY via the SegyIO library.
 
     Args:
         sfile: File object for SEGY file
+        iline: Byte position of the inline number field in trace headers.
+            Must be 189 or 193.  The only accepted combinations are the
+            SEGY-standard ``(iline=189, xline=193)`` and the swapped variant
+            ``(iline=193, xline=189)`` for files with non-standard byte
+            locations.
+        xline: Byte position of the crossline number field in trace headers.
+            Must be 189 or 193 and different from *iline*.
     """
+    if (iline, xline) not in ((189, 193), (193, 189)):
+        raise ValueError(
+            f"Invalid iline/xline byte positions ({iline}, {xline}). "
+            "Only (189, 193) and (193, 189) are accepted."
+        )
     sfile = sfile.file
 
     attributes = {}
 
     try:
         # cube with all traces present
-        with segyio.open(sfile, "r") as segyfile:
+        with segyio.open(sfile, "r", iline=iline, xline=xline) as segyfile:
+            _warn_if_crossline_sorted_default_bytes(segyfile, iline, xline)
             attributes = _import_segy_all_traces(segyfile)
     except ValueError as verr:
         if any(word in str(verr) for word in ["Invalid dimensions", "inconsistent"]):
@@ -93,6 +110,42 @@ def import_segy(sfile: FileWrapper) -> dict:
     return attributes
 
 
+def _warn_if_crossline_sorted_default_bytes(
+    segyfile: segyio.segy.SegyFile,
+    iline: Literal[189, 193],
+    xline: Literal[189, 193],
+) -> None:
+    """Emit a UserWarning when default byte positions yield a crossline-sorted cube.
+
+    A crossline-sorted file read with the SEGY-standard byte positions (iline=189,
+    xline=193) is imported correctly — the data array is transposed to xtgeo
+    convention automatically.  However, if the file was actually written with
+    *non-standard* byte positions (e.g. inline at byte 193, crossline at byte 189),
+    the automatic transposition still produces the correct spatial layout but the
+    ``ilines`` / ``xlines`` label arrays will be swapped, causing wrong
+    inline/crossline identification in some vendor software.
+
+    Because the two situations are geometrically indistinguishable for a complete
+    rectangular cube, exact detection is impossible.  This warning therefore fires
+    whenever default bytes are used and the file is crossline-sorted, prompting the
+    user to verify the orientation.
+    """
+    if iline != 189 or xline != 193:
+        # User already overrode the defaults — they know what they are doing.
+        return
+    if segyfile.sorting == segyio.TraceSortingFormat.CROSSLINE_SORTING:
+        warn(
+            "SEGY file is crossline-sorted when read with the default byte positions "
+            "(iline=189, xline=193).  The cube values are imported correctly via an "
+            "automatic transposition, but the inline/crossline *number labels* may be "
+            "swapped if the file uses non-standard byte positions.  "
+            "If the orientation looks wrong in your interpretation software, reload "
+            "with the swapped positions: cube_from_file(..., iline=193, xline=189).",
+            UserWarning,
+            stacklevel=2,
+        )
+
+
 def _import_segy_all_traces(segyfile: segyio.segy.SegyFile) -> dict:
     """Import a a full cube SEGY via the SegyIO library to xtgeo format spec.
 
@@ -105,16 +158,31 @@ def _import_segy_all_traces(segyfile: segyio.segy.SegyFile) -> dict:
 
     values = _process_cube_values(segyio.tools.cube(segyfile))
 
-    ilines = segyfile.ilines
-    xlines = segyfile.xlines
-
     ncol, nrow, nlay = values.shape
 
     # get additional but required geometries for xtgeo; xori, yori, xinc, ..., rotation
+    # Pass the raw shape so corner-index calculation matches the file's trace order.
     attrs = _segy_all_traces_attributes(segyfile, ncol, nrow, nlay)
 
-    attrs["ilines"] = ilines
-    attrs["xlines"] = xlines
+    ilsort = segyfile.sorting == segyio.TraceSortingFormat.INLINE_SORTING
+    if not ilsort:
+        # segyio.tools.cube() returns (n_xlines, n_ilines, n_samples) for
+        # crossline-sorted files. Normalize to xtgeo convention (axis-0 = ilines)
+        # by applying the same transformation as swapaxes(): swap array axes 0/1
+        # and adjust rotation/yflip/xinc/yinc accordingly.
+        values = np.ascontiguousarray(np.swapaxes(values, 0, 1))
+        attrs["traceidcodes"] = np.ascontiguousarray(
+            np.swapaxes(attrs["traceidcodes"], 0, 1)
+        )
+        ncol, nrow = nrow, ncol
+        attrs["ncol"], attrs["nrow"] = ncol, nrow
+        attrs["xinc"], attrs["yinc"] = attrs["yinc"], attrs["xinc"]
+        yflip = attrs["yflip"]
+        attrs["rotation"] = (attrs["rotation"] + yflip * 90) % 360
+        attrs["yflip"] = yflip * -1
+
+    attrs["ilines"] = segyfile.ilines  # ncol entries (axis-0 = inlines)
+    attrs["xlines"] = segyfile.xlines  # nrow entries (axis-1 = xlines)
     attrs["values"] = values
 
     return attrs
