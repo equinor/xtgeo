@@ -107,13 +107,10 @@ def test_writer_roundtrip_new_case(resinsight_instance):
     assert reloaded_data.filesrc == data.filesrc, (
         "Should reload the correct file source"
     )
-    # Coordinate roundtrip is intentionally not asserted yet. ResInsight and XTGeo
-    # currently disagree on how the bottom pillar coordinates are represented for
-    # XTGeo-created grids, and the planned fix belongs in XTGeo rather than in a
-    # temporary ResInsight-specific conversion layer.
-    # assert np.array_equal(reloaded_data.coordsv, data.coordsv), (
-    #     "Should reload the correct coordsv array"
-    # )
+
+    assert np.array_equal(reloaded_data.coordsv, data.coordsv), (
+        "Should reload the correct coordsv array"
+    )
     assert np.array_equal(reloaded_data.zcornsv, data.zcornsv), (
         "Should reload the correct zcornsv array"
     )
@@ -139,13 +136,9 @@ def test_writer_replace_case(resinsight_instance: RipsInstanceType):
     assert reloaded_data.filesrc == data.filesrc, (
         "Should reload the correct file source"
     )
-    # Coordinate roundtrip is intentionally not asserted yet. ResInsight and XTGeo
-    # currently disagree on how the bottom pillar coordinates are represented for
-    # XTGeo-created grids, and the planned fix belongs in XTGeo rather than in a
-    # temporary ResInsight-specific conversion layer.
-    # assert np.array_equal(reloaded_data.coordsv, data.coordsv), (
-    #     "Should reload the correct coordsv array"
-    # )
+    assert np.array_equal(reloaded_data.coordsv, data.coordsv), (
+        "Should reload the correct coordsv array"
+    )
     assert np.array_equal(reloaded_data.zcornsv, data.zcornsv), (
         "Should reload the correct zcornsv array"
     )
@@ -166,13 +159,9 @@ def test_writer_replace_case(resinsight_instance: RipsInstanceType):
     assert reloaded_data2.filesrc == data2.filesrc, (
         "Should reload the correct file source"
     )
-    # Coordinate roundtrip is intentionally not asserted yet. ResInsight and XTGeo
-    # currently disagree on how the bottom pillar coordinates are represented for
-    # XTGeo-created grids, and the planned fix belongs in XTGeo rather than in a
-    # temporary ResInsight-specific conversion layer.
-    # assert np.array_equal(reloaded_data2.coordsv, data2.coordsv), (
-    #     "Should reload the correct coordsv array"
-    # )
+    assert np.array_equal(reloaded_data2.coordsv, data2.coordsv), (
+        "Should reload the correct coordsv array"
+    )
     assert np.array_equal(reloaded_data2.zcornsv, data2.zcornsv), (
         "Should reload the correct zcornsv array"
     )

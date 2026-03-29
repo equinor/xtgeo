@@ -50,7 +50,7 @@ class _BaseResInsightDataRW:
         The case name is not unique in ResInsight, by default it will find the last
         matching case name.
         """
-        cases = self.get_project().cases()
+        cases = self.get_project().cases()  # type: ignore[attr-defined]
         logger.debug(
             "Found %d cases in project: %s",
             len(cases),

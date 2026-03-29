@@ -135,7 +135,7 @@ class GridReader(_BaseResInsightDataRW):
         if case is None:
             raise RuntimeError(f"Cannot find any case with name '{case_name}'")
 
-        zcorn, coord, actnum, nx, ny, nz = case.export_corner_point_grid()
+        zcorn, coord, actnum, nx, ny, nz = case.export_corner_point_grid()  # type: ignore[attr-defined]
         return GridDataResInsight(
             name=case.name,
             nx=nx,
@@ -187,7 +187,7 @@ class GridWriter(_BaseResInsightDataRW):
                         f"Found existing case named '{gname}'. Replacing its grid data."
                     )
                     # Replace existing case
-                    case.replace_corner_point_grid(
+                    case.replace_corner_point_grid(  # type: ignore[attr-defined]
                         data.nx,
                         data.ny,
                         data.nz,
@@ -211,7 +211,7 @@ class GridWriter(_BaseResInsightDataRW):
                 )
 
             # Create a new case
-            new_case = self.get_project().create_corner_point_grid(
+            new_case = self.get_project().create_corner_point_grid(  # type: ignore[attr-defined]
                 name=gname,
                 nx=data.nx,
                 ny=data.ny,

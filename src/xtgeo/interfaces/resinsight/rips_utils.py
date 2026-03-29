@@ -47,7 +47,7 @@ class RipsApiUtils:
 
         if instance_or_port is None or isinstance(instance_or_port, int):
             self._instance = self.find_instance(port=instance_or_port)
-        elif isinstance(instance_or_port, rips.Instance):
+        elif isinstance(instance_or_port, instance_cls):
             self._instance = instance_or_port
         else:
             raise TypeError(
@@ -71,16 +71,17 @@ class RipsApiUtils:
             name: Path to save the project file. If empty, the project is saved
                 to its current project location as determined by ResInsight.
         """
-        self.project.save(name)
+        self.project.save(name)  # type: ignore[attr-defined]
+        logger.debug("ResInsight project saved to '%s'", name or "current location")
 
     def close_project(self) -> None:
         """Close the active project and open a new one."""
-        self.project.close()
+        self.project.close()  # type: ignore[attr-defined]
         logger.debug("ResInsight project closed")
 
     def terminate(self) -> None:
         """Terminate ResInsight instance."""
-        self._instance.exit()
+        self._instance.exit()  # type: ignore[attr-defined]
         logger.debug("ResInsight instance closed")
 
     @staticmethod
@@ -100,7 +101,7 @@ class RipsApiUtils:
         if rips is None:
             raise RuntimeError("rips package is not available")
         instance = rips.Instance.launch(
-            str(executable),
+            resinsight_executable=str(executable),
             console=console_mode,
             launch_port=port,
         )

@@ -16,8 +16,19 @@ def load_package(package_name: str) -> Any | None:
 
 rips = load_package("rips")
 
-RipsCaseType: TypeAlias = Any
-RipsInstanceType: TypeAlias = Any
-RipsProjectType: TypeAlias = Any
+try:
+    from rips import (
+        Case as _RipsCase,
+        Instance as _RipsInstance,
+        Project as _RipsProject,
+    )
+except ImportError:
+    _RipsCase = Any  # type: ignore[misc,assignment]
+    _RipsInstance = Any  # type: ignore[misc,assignment]
+    _RipsProject = Any  # type: ignore[misc,assignment]
+
+RipsCaseType: TypeAlias = _RipsCase  # type: ignore[misc]
+RipsInstanceType: TypeAlias = _RipsInstance  # type: ignore[misc]
+RipsProjectType: TypeAlias = _RipsProject  # type: ignore[misc]
 
 ResInsightInstanceOrPortType: TypeAlias = int | RipsInstanceType
