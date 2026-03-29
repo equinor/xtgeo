@@ -57,6 +57,7 @@ def in_roxar_env():
     return any(env in os.environ for env in ["ROXENV", "RMSVENV_RELEASE"])
 
 
+@functools.lru_cache(maxsize=1)
 def has_rips():
     """Helper function to check if rips is available"""
     try:

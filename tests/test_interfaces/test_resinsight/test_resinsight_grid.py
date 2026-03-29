@@ -61,9 +61,7 @@ def test_reader_init(resinsight_instance):
     assert data.nx == 4, "Should load the correct nx value"
     assert data.ny == 4, "Should load the correct ny value"
     assert data.nz == 3, "Should load the correct nz value"
-    assert data.filesrc.endswith("eme/1/emerald.roff"), (
-        "Should load the correct file source"
-    )
+    assert data.filesrc.endswith("emerald.roff"), "Should load the correct file source"
 
 
 @pytest.mark.requires_resinsight
@@ -76,7 +74,7 @@ def test_reader_select_first_matching_case(resinsight_instance):
     assert data.nx == 92, "Should load the correct nx value"
     assert data.ny == 146, "Should load the correct ny value"
     assert data.nz == 67, "Should load the correct nz value"
-    assert data.filesrc.endswith("drogon/2/geogrid.roff"), (
+    assert data.filesrc.endswith("geogrid.roff"), (
         "Should load the first matching case when find_last is False"
     )
 

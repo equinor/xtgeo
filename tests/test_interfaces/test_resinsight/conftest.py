@@ -32,7 +32,13 @@ def resinsight_instance(testdata_path) -> RipsInstanceType:
     and can cause issues in headless environments.
     """
     logger.info("Creating ResInsight instance for testing")
-    instance = RipsApiUtils.launch_instance(executable="", console_mode=True)
+    try:
+        instance = RipsApiUtils.launch_instance(executable="", console_mode=True)
+    except Exception as e:
+        pytest.skip(
+            f"ResInsight executable not available (set RESINSIGHT_EXECUTABLE env var "
+            f"or add ResInsight to PATH): {e}"
+        )
 
     drogon = instance.project.load_case(path=str(testdata_path / DROGON_GRID))
     emerald = instance.project.load_case(path=str(testdata_path / EMERALD_GRID))

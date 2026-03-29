@@ -94,9 +94,11 @@ class RipsApiUtils:
             executable: Path to the ResInsight executable. If empty, will attempt
                 to launch using default system path.
             console_mode: Whether to launch ResInsight in console mode.
-            port: If 0, GRPC will find an available port. If -1, use the default port
-                50051 or "RESINSIGHT_GRPC_PORT" if anything else, ResInsight will try to
-                launch with the specified port number.
+            port: Port configuration for the gRPC server:
+                - ``-1``: Use the default port (50051), or the value of the
+                  ``RESINSIGHT_GRPC_PORT`` environment variable if it is set.
+                - ``0``: Let gRPC automatically select an available free port.
+                - ``> 0``: Attempt to launch ResInsight using the given port number.
         """
         if rips is None:
             raise RuntimeError("rips package is not available")
