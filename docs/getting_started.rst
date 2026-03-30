@@ -66,7 +66,7 @@ Install rips in the same environment as XTGeo::
 
     pip install rips
 
-Launch ResInsight with default and communicating through port 50051::
+Launch ResInsight with default settings, communicating through port 50051::
 
     import rips
     rips.Instance.launch(resinsight_executable="", launch_port=50051)

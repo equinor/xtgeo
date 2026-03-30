@@ -184,7 +184,8 @@ class GridWriter(_BaseResInsightDataRW):
                 grid_type = type(case).__name__.split(".")[-1]
                 if grid_type == "CornerPointCase":
                     logger.debug(
-                        f"Found existing case named '{gname}'. Replacing its grid data."
+                        "Found existing case named '%s'. Replacing its grid data.",
+                        gname,
                     )
                     # Replace existing case
                     case.replace_corner_point_grid(  # type: ignore[attr-defined]
@@ -207,7 +208,7 @@ class GridWriter(_BaseResInsightDataRW):
                 )
             else:
                 logger.debug(
-                    f"No existing case named '{gname}' found. Creating a new case."
+                    "No existing case named '%s' found. Creating a new case.", gname
                 )
 
             # Create a new case

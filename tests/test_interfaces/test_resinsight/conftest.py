@@ -39,9 +39,10 @@ def resinsight_instance(testdata_path) -> RipsInstanceType:
             f"ResInsight executable not available (set RESINSIGHT_EXECUTABLE env var "
             f"or add ResInsight to PATH): {e}"
         )
+    path = pathlib.Path(testdata_path)
 
-    drogon = instance.project.load_case(path=str(testdata_path / DROGON_GRID))
-    emerald = instance.project.load_case(path=str(testdata_path / EMERALD_GRID))
+    drogon = instance.project.load_case(path=str(path / DROGON_GRID))
+    emerald = instance.project.load_case(path=str(path / EMERALD_GRID))
 
     # Give the cases with same name to test 'find_last' functionality
     # in GridReader/GridWriter

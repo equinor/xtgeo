@@ -45,7 +45,9 @@ class RipsApiUtils:
 
         self._instance: RipsInstanceType
 
-        if instance_or_port is None or isinstance(instance_or_port, int):
+        if instance_or_port is None or (
+            isinstance(instance_or_port, int) and not isinstance(instance_or_port, bool)
+        ):
             self._instance = self.find_instance(port=instance_or_port)
         elif isinstance(instance_or_port, instance_cls):
             self._instance = instance_or_port
