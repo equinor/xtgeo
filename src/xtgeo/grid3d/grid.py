@@ -48,6 +48,9 @@ if TYPE_CHECKING:
         RegularSurface as RegularSurfaceCPP,
     )
     from xtgeo.common.types import FileLike
+    from xtgeo.interfaces.resinsight._rips_package import (
+        ResInsightInstanceOrPortType,
+    )
     from xtgeo.interfaces.rms._rmsapi_package import RmsProjectOrPathType
     from xtgeo.xyz.points import Points
 
@@ -215,6 +218,39 @@ def grid_from_roxar(
 
     """
     return Grid(**_grid_roxapi.load_grid_from_rms(project, gname, realisation, info))
+
+
+def grid_from_resinsight(
+    instance_or_port: ResInsightInstanceOrPortType | None,
+    case_name: str,
+    find_last: bool = True,
+) -> Grid:
+    """Load a corner-point grid from a ResInsight case into an XTGeo ``Grid``.
+
+    Args:
+        instance_or_port: Optional ``rips.Instance`` or gRPC port. Use ``None``
+            to auto-discover a running ResInsight instance.
+        case_name: Name of the ResInsight case to load.
+        find_last: If multiple cases have the same name, select the last match.
+            Set to ``False`` to select the first match instead.
+
+    Returns:
+        A populated :class:`xtgeo.Grid`.
+
+    Example::
+
+        import xtgeo
+
+        grid = xtgeo.grid_from_resinsight(5000, "EXAMPLE")
+        print(grid.dimensions)
+
+    """
+    import xtgeo.interfaces.resinsight
+
+    grid_resinsight = xtgeo.interfaces.resinsight.GridReader(
+        instance_or_port=instance_or_port,
+    ).load(case_name=case_name, find_last=find_last)
+    return grid_resinsight.to_xtgeo_grid()
 
 
 def create_box_grid(
@@ -1210,6 +1246,39 @@ class Grid(_Grid3D):
 
         """
         _grid_roxapi.save_grid_to_rms(self, project, gname, realisation, method=method)
+
+    def to_resinsight(
+        self,
+        instance_or_port: ResInsightInstanceOrPortType | None,
+        gname: str,
+        find_last: bool = True,
+    ) -> None:
+        """Export this grid as a new corner-point grid in ResInsight.
+
+        The case named ``gname`` will be created if it does not already exist,
+        or an existing case with that name will be replaced.
+
+        Args:
+            instance_or_port: Optional ``rips.Instance`` or gRPC port. Use
+                ``None`` to auto-discover a running ResInsight instance.
+            gname: Name of the ResInsight case to create or replace.
+            find_last: Controls which existing case to replace when multiple cases
+                share the same ``gname``. If ``True`` (default), the last matching
+                case is replaced; if ``False``, the first matching case is replaced.
+
+        """
+        import xtgeo.interfaces.resinsight
+
+        data = xtgeo.interfaces.resinsight.GridDataResInsight.from_xtgeo_grid(
+            self,
+            name=gname,
+            filesrc=str(self.filesrc) if self.filesrc else "",
+        )
+
+        writer = xtgeo.interfaces.resinsight.GridWriter(
+            instance_or_port=instance_or_port
+        )
+        writer.save(data, gname, find_last)
 
     def convert_units(self, units: Units) -> None:
         """

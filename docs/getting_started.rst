@@ -54,3 +54,51 @@ importing and exporting the most common file formats.
 XTGeo has many more capabilities beyond basic value manipulation. For more, 
 check out the examples in the 
 :doc:`Tutorial section <tutorial/tutorial_index>`.
+
+
+ResInsight (RIPS) quick start
+-----------------------------
+
+XTGeo can connect to a running ResInsight instance through the optional
+``rips`` package.
+
+Install rips in the same environment as XTGeo::
+
+    pip install rips
+
+Launch ResInsight with default settings, communicating through port 50051::
+
+    import rips
+    rips.Instance.launch(resinsight_executable="", launch_port=50051)
+
+Load a ResInsight corner-point grid into XTGeo by case name::
+
+    import xtgeo
+
+    grid = xtgeo.grid_from_resinsight(
+        instance_or_port=50051,
+        case_name="EXAMPLE",
+    )
+    print(grid.dimensions)
+
+If multiple ResInsight cases share the same name, XTGeo selects the last
+matching case by default. Set ``find_last=False`` to pick the first match::
+
+    import xtgeo
+
+    grid = xtgeo.grid_from_resinsight(
+        instance_or_port=50051,
+        case_name="EXAMPLE",
+        find_last=False,
+    )
+
+Create a new ResInsight corner-point grid from XTGeo::
+
+    import xtgeo
+    from xtgeo.common.types import Dimensions
+
+    grid = xtgeo.create_box_grid(Dimensions(10, 10, 5))
+    grid.to_resinsight(
+        instance_or_port=50051,
+        gname="CPG from XTGeo",
+    )

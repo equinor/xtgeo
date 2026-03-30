@@ -57,6 +57,17 @@ def in_roxar_env():
     return any(env in os.environ for env in ["ROXENV", "RMSVENV_RELEASE"])
 
 
+@functools.lru_cache(maxsize=1)
+def has_rips():
+    """Helper function to check if rips is available"""
+    try:
+        import rips  # noqa
+
+        return True
+    except ImportError:
+        return False
+
+
 def pytest_runtest_setup(item):
     """Called for each test."""
 
@@ -73,6 +84,9 @@ def pytest_runtest_setup(item):
     # pytest.mark.requires_opm:
     if "requires_opm" in markers and "HAS_OPM" not in os.environ:
         pytest.skip("Skip as requires OPM")
+
+    if "requires_resinsight" in markers and not has_rips():
+        pytest.skip("Skip as requires ResInsight (+rips)")
 
 
 @pytest.fixture(scope="session")
