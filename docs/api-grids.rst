@@ -11,6 +11,8 @@ Functions
 
 .. autofunction:: xtgeo.grid_from_roxar
 
+.. autofunction:: xtgeo.grid_from_resinsight
+
 .. autofunction:: xtgeo.create_box_grid
 
 .. autofunction:: xtgeo.grid_from_cube
@@ -50,4 +52,3 @@ Classes
 .. autoclass:: xtgeo.GridProperties
 
     .. autoclasstoc::
-
