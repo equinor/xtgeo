@@ -185,7 +185,7 @@ jobs:
         run: uv run pytest -n 4 tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: xtgeocoverage.xml
 
