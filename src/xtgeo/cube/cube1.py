@@ -50,19 +50,31 @@ def _data_reader_factory(fmt: FileFormat):
     )
 
 
-def cube_from_file(mfile, fformat="guess"):
+def cube_from_file(
+    mfile,
+    fformat="guess",
+    iline: Literal[189, 193] = 189,
+    xline: Literal[189, 193] = 193,
+):
     """This makes an instance of a Cube directly from file import.
 
     Args:
         mfile (str): Name of file
         fformat (str): See :meth:`Cube.from_file`
+        iline (Literal[189, 193]): Byte position of the inline number field in
+            each trace header. Default is 189 (SEGY standard). Only 189 and 193
+            are valid; use ``iline=193, xline=189`` for files with non-standard
+            byte locations.
+        xline (Literal[189, 193]): Byte position of the crossline number field
+            in each trace header. Default is 193 (SEGY standard). Must differ
+            from *iline*.
 
     Example::
 
         >>> import xtgeo
         >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
     """
-    return Cube._read_file(mfile, fformat)
+    return Cube._read_file(mfile, fformat, iline=iline, xline=xline)
 
 
 def cube_from_roxar(project, name, folder=None):
@@ -823,7 +835,13 @@ class Cube:
     # =========================================================================
 
     @classmethod
-    def _read_file(cls, sfile, fformat="guess"):
+    def _read_file(
+        cls,
+        sfile,
+        fformat="guess",
+        iline: Literal[189, 193] = 189,
+        xline: Literal[189, 193] = 193,
+    ):
         """Import cube data from file.
 
         If fformat is not provided, the file type will be guessed based
@@ -833,8 +851,11 @@ class Cube:
             sfile (str): Filename (as string or pathlib.Path instance).
             fformat (str): file format guess/segy/rms_regular/xtgregcube
                 where 'guess' is default. Regard 'xtgrecube' format as experimental.
-            deadtraces (float): Set 'dead' trace values to this value (SEGY
-                only). Default is UNDEF value (a very large number).
+            iline (Literal[189, 193]): Byte position of the inline number in
+                trace headers.  Only ``(189, 193)`` or ``(193, 189)`` pairs
+                are accepted.  Applies to SEGY format only.
+            xline (Literal[189, 193]): Byte position of the crossline number in
+                trace headers.  Must differ from *iline*.
 
         Raises:
             OSError: if the file cannot be read (e.g. not found)
@@ -849,9 +870,22 @@ class Cube:
         """
         mfile = FileWrapper(sfile)
         fmt = mfile.fileformat(fformat)
-        kwargs = _data_reader_factory(fmt)(mfile)
-        kwargs["filesrc"] = mfile.file
-        return cls(**kwargs)
+        if fmt != FileFormat.SEGY and (iline != 189 or xline != 193):
+            from warnings import warn
+
+            warn(
+                "iline/xline parameters are only used for SEGY format and "
+                f"will be ignored for {fmt.value!r} files.",
+                UserWarning,
+                stacklevel=2,
+            )
+        reader = _data_reader_factory(fmt)
+        if fmt == FileFormat.SEGY:
+            attrs = reader(mfile, iline=iline, xline=xline)
+        else:
+            attrs = reader(mfile)
+        attrs["filesrc"] = mfile.file
+        return cls(**attrs)
 
     def to_file(self, sfile, fformat="segy", pristine=False, engine=None):
         """Export cube data to file.
