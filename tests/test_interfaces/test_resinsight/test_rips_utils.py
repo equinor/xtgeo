@@ -24,7 +24,7 @@ def test_init_with_port_finds_instance(resinsight_instance):
     )
 
 
-def test_init_with_wrong_port(resinsight_instance):
+def test_init_with_wrong_port():
     with pytest.raises(
         RuntimeError, match="Unable to connect to a ResInsight instance on port 1234"
     ):

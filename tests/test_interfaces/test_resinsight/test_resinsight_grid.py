@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
+from hypothesis import given
+from numpy.testing import assert_allclose
 
 import xtgeo
+
+# Reuse the grid generator strategy from the grid3d test suite
+from tests.test_grid3d.grid_generator import xtgeo_grids
 from xtgeo.interfaces.resinsight._grid import GridDataResInsight, GridReader, GridWriter
 from xtgeo.interfaces.resinsight._rips_package import RipsInstanceType
 
@@ -49,6 +54,97 @@ def test_validate_array_size():
             actnumsv=np.zeros(10, dtype=np.int32),  # Incorrect size
             filesrc="test_grid.roff",
         )
+
+
+# ---------------------------------------------------------------------------
+# Roundtrip tests: GridDataResInsight ↔ XTGeo Grid (no ResInsight required)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "dimension, increment, rotation, origin, filesrc",
+    [
+        ((2, 2, 2), (1.0, 1.0, 1.0), 0.0, (0.0, 0.0, 0.0), ""),
+        ((4, 3, 2), (10.0, 10.0, 5.0), 0.0, (0.0, 0.0, 0.0), ""),
+        ((10, 8, 5), (100.0, 100.0, 20.0), 0.0, (0.0, 0.0, 0.0), "/path/to/file.roff"),
+        ((5, 4, 3), (50.0, 50.0, 10.0), 30.0, (100.0, 200.0, 1000.0), ""),
+    ],
+    ids=["small", "medium", "large-with-filesrc", "rotated"],
+)
+def test_roundtrip(
+    dimension,
+    increment: tuple[float, float, float],
+    rotation: float,
+    origin: tuple[float, float, float],
+    filesrc: str,
+):
+    """XTGeo Grid → GridDataResInsight → XTGeo Grid roundtrip preserves
+    dimensions, geometry (within float32 precision), flat array sizes/dtypes,
+    and filesrc."""
+    original = xtgeo.create_box_grid(
+        dimension, increment=increment, rotation=rotation, origin=origin
+    )
+    nx, ny, nz = original.ncol, original.nrow, original.nlay
+    data = GridDataResInsight.from_xtgeo_grid(original, name="TEST", filesrc=filesrc)
+
+    # Intermediate flat array sizes and dtypes
+    assert data.coordsv.size == (nx + 1) * (ny + 1) * 6
+    assert data.zcornsv.size == nx * ny * nz * 8
+    assert data.actnumsv.size == nx * ny * nz
+    assert data.coordsv.dtype == np.float64
+    assert data.zcornsv.dtype == np.float32
+    assert data.actnumsv.dtype == np.int32
+
+    restored = data.to_xtgeo_grid()
+
+    assert restored.ncol == nx
+    assert restored.nrow == ny
+    assert restored.nlay == nz
+    assert restored.filesrc == filesrc
+
+    original._set_xtgformat2()
+    restored._set_xtgformat2()
+
+    # atol=1e-2 covers float64→float32→float64 precision loss, including rotated grids
+    assert_allclose(original._coordsv, restored._coordsv, atol=1e-2)
+    assert_allclose(original._zcornsv, restored._zcornsv, atol=1e-2)
+    assert np.array_equal(original._actnumsv, restored._actnumsv)
+
+
+def test_roundtrip_inactive_cells():
+    """Inactive cells survive the GridDataResInsight roundtrip without change."""
+    original = xtgeo.create_box_grid((4, 3, 2))
+    actnum = original.get_actnum()
+    actnum.values[0, 0, 0] = 0
+    actnum.values[2, 1, 1] = 0
+    original.set_actnum(actnum)
+
+    data = GridDataResInsight.from_xtgeo_grid(original, name="INACTIVE", filesrc="")
+    restored = data.to_xtgeo_grid()
+
+    assert np.array_equal(
+        original.get_actnum().values,
+        restored.get_actnum().values,
+    )
+
+
+@given(xtgeo_grids)
+def test_roundtrip_hypothesis(grid: xtgeo.Grid):
+    """Property-based test: any xtgeo box grid round-trips through
+    GridDataResInsight without losing dimensions, geometry, or actnum."""
+    data = GridDataResInsight.from_xtgeo_grid(grid, name="HYPO", filesrc="")
+    restored = data.to_xtgeo_grid()
+
+    assert restored.ncol == grid.ncol
+    assert restored.nrow == grid.nrow
+    assert restored.nlay == grid.nlay
+
+    grid._set_xtgformat2()
+    restored._set_xtgformat2()
+
+    assert_allclose(grid._coordsv, restored._coordsv, atol=1e-2)
+    assert_allclose(grid._zcornsv, restored._zcornsv, atol=1e-2)
+    assert np.array_equal(grid._actnumsv, restored._actnumsv)
 
 
 @pytest.mark.requires_resinsight

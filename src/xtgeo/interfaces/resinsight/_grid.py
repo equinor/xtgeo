@@ -30,7 +30,7 @@ class GridDataResInsight:
     nx: int
     ny: int
     nz: int
-    coordsv: npt.NDArray[np.float32] = field(repr=False)
+    coordsv: npt.NDArray[np.float64] = field(repr=False)
     zcornsv: npt.NDArray[np.float32] = field(repr=False)
     actnumsv: npt.NDArray[np.int32] = field(repr=False)
     filesrc: str
@@ -82,7 +82,7 @@ class GridDataResInsight:
 
         # Build XTGeo Grid from flat corner-point arrays and dimensions
         egrid = EGrid.default_settings_grid(
-            coord=np.asarray(self.coordsv, dtype=np.float32),
+            coord=np.asarray(self.coordsv, dtype=np.float64),
             zcorn=np.asarray(self.zcornsv, dtype=np.float32),
             actnum=np.asarray(self.actnumsv, dtype=np.int32),
             size=(self.nx, self.ny, self.nz),
@@ -101,7 +101,7 @@ class GridDataResInsight:
         """Create a GridDataResInsight from an XTGeo Grid."""
         egrid = EGrid.from_xtgeo_grid(grid)
         nx, ny, nz = egrid.dimensions
-        coord = np.asarray(egrid.coord, dtype=np.float32)
+        coord = np.asarray(egrid.coord, dtype=np.float64)
         zcorn = np.asarray(egrid.zcorn, dtype=np.float32)
         if egrid.actnum is None:
             actnum = np.ones(nx * ny * nz, dtype=np.int32)
@@ -141,7 +141,7 @@ class GridReader(_BaseResInsightDataRW):
             nx=nx,
             ny=ny,
             nz=nz,
-            coordsv=np.asarray(coord, dtype=np.float32),
+            coordsv=np.asarray(coord, dtype=np.float64),
             zcornsv=np.asarray(zcorn, dtype=np.float32),
             actnumsv=np.asarray(actnum, dtype=np.int32),
             filesrc=case.file_path or "",

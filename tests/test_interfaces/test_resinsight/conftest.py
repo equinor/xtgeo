@@ -32,7 +32,7 @@ def resinsight_instance(testdata_path) -> RipsInstanceType:
     logger.info("Creating ResInsight instance for testing")
     try:
         instance = RipsApiUtils.launch_instance(executable="", console_mode=True)
-    except Exception as e:
+    except (RuntimeError, OSError) as e:
         pytest.skip(
             f"ResInsight executable not available (set RESINSIGHT_EXECUTABLE env var "
             f"or add ResInsight to PATH): {e}"
