@@ -525,3 +525,205 @@ def test_swapaxis_xinc_yinc():
     cube.swapaxes()
 
     assert (cube.xinc, cube.yinc) == (2, 1)
+
+
+def test_segy_io_roundtrip(tmp_path):
+    """Round-trip SEGY with non-standard byte positions (il-byte 193, xl-byte 189).
+
+    Some vendor software writes inline numbers to byte 193 and crossline numbers to
+    byte 189 instead of the SEGY-standard positions (189/193).  xtgeo must:
+
+      - read the file correctly when the caller supplies the actual byte positions
+      - warn when the default positions are used (file then appears crossline-sorted
+        because the physical crosslines occupy the fast-varying byte 189)
+      - export to a standard-bytes file that round-trips values and labels correctly
+    """
+    n_ilines, n_xlines, n_samples = 4, 6, 8
+    xori, yori, zori = 500.0, 1000.0, 0.0
+    xinc_xl, yinc_il, zinc = 25.0, 50.0, 4.0
+
+    segyfile = tmp_path / "nonstandard_bytes.segy"
+    iline_nums = np.arange(1, n_ilines + 1, dtype=np.int32)
+    xline_nums = np.arange(1, n_xlines + 1, dtype=np.int32)
+
+    # Write inline numbers to byte 193 and crossline to byte 189.
+    # segyio.TraceField.INLINE_3D == 189, CROSSLINE_3D == 193 (fixed byte offsets),
+    # so we intentionally assign the values to the *opposite* fields.
+    spec = segyio.spec()
+    spec.sorting = None  # unstructured — headers written explicitly
+    spec.format = 5  # IEEE float32
+    spec.samples = np.arange(n_samples, dtype=np.float32) * zinc + zori
+    spec.tracecount = n_ilines * n_xlines
+
+    rng = np.random.default_rng(7)
+    trace_data = rng.random((n_ilines, n_xlines, n_samples), dtype=np.float32)
+
+    with segyio.create(str(segyfile), spec) as f:
+        tr = 0
+        for il_idx, il in enumerate(iline_nums):
+            for xl_idx, xl in enumerate(xline_nums):
+                x = xori + xl_idx * xinc_xl
+                y = yori + il_idx * yinc_il
+                f.header[tr] = {
+                    segyio.TraceField.CROSSLINE_3D: int(il),  # byte 193 ← inline
+                    segyio.TraceField.INLINE_3D: int(xl),  # byte 189 ← crossline
+                    segyio.TraceField.CDP_X: int(round(x * 100)),
+                    segyio.TraceField.CDP_Y: int(round(y * 100)),
+                    segyio.TraceField.SourceGroupScalar: -100,
+                    segyio.TraceField.TRACE_SAMPLE_INTERVAL: int(zinc * 1000),
+                    segyio.TraceField.TRACE_SAMPLE_COUNT: n_samples,
+                    segyio.TraceField.DelayRecordingTime: int(zori),
+                }
+                f.trace[tr] = trace_data[il_idx, xl_idx, :]
+                tr += 1
+        f.bin[segyio.BinField.Interval] = int(zinc * 1000)
+        f.bin[segyio.BinField.Samples] = n_samples
+
+    # --- Correct import: supply the actual byte positions ---
+    cube = xtgeo.cube_from_file(str(segyfile), iline=193, xline=189)
+    assert cube.ncol == n_ilines
+    assert cube.nrow == n_xlines
+    assert cube.ilines.tolist() == iline_nums.tolist()
+    assert cube.xlines.tolist() == xline_nums.tolist()
+
+    # --- Export to a standard-bytes file and verify round-trip ---
+    outfile = tmp_path / "roundtrip_cube.segy"
+    cube.to_file(outfile)
+    cube_rt = xtgeo.cube_from_file(outfile)
+    assert cube_rt.ncol == n_ilines
+    assert cube_rt.nrow == n_xlines
+    assert cube_rt.ilines.tolist() == iline_nums.tolist()
+    np.testing.assert_array_almost_equal(cube.values, cube_rt.values, decimal=4)
+
+    # --- Default bytes: must warn — byte 189 carries xline (fast) values ---
+    with pytest.warns(UserWarning, match="crossline-sorted"):
+        cube2 = xtgeo.cube_from_file(str(segyfile))
+    # With default bytes the labels are transposed: xl values appear as ilines, etc.
+    assert cube2.ilines.tolist() == xline_nums.tolist()
+    assert cube2.xlines.tolist() == iline_nums.tolist()
+
+
+def test_segy_crossline_sorted_import_export(tmp_path):
+    """Crossline-sorted SEGY must import and re-export with correct orientation.
+
+    segyio.tools.cube() returns (n_xlines, n_ilines, nsamples) for crossline-sorted
+    files. xtgeo must transpose to its convention (axis-0 = inlines) so that:
+      - exported INLINE_3D / CROSSLINE_3D headers are NOT swapped
+      - the CDP_X / CDP_Y for every (INLINE, CROSSLINE) pair is identical to
+        the original file
+
+    Uses deliberately asymmetric inline/xline spacings (12.5 vs 25.0) so a
+    xinc/yinc swap would produce wrong coordinates, catching the bug the user
+    reported (inlines appearing perpendicular in RMS after a round-trip).
+    """
+    n_ilines, n_xlines, n_samples = 3, 5, 4
+    xori, yori, zori = 1000.0, 2000.0, 0.0
+    # Deliberately different so a xinc/yinc swap is detectable
+    xinc_xline = 12.5  # spacing between adjacent xlines (East direction)
+    yinc_inline = 25.0  # spacing between adjacent inlines (North direction)
+    zinc = 4.0
+
+    segyfile = tmp_path / "xline_sorted.segy"
+
+    iline_nums = np.arange(1, n_ilines + 1, dtype=np.int32)
+    xline_nums = np.arange(1, n_xlines + 1, dtype=np.int32)
+
+    spec = segyio.spec()
+    spec.sorting = 1  # crossline sorting
+    spec.format = 5
+    spec.samples = np.arange(n_samples) * zinc + zori
+    spec.ilines = iline_nums
+    spec.xlines = xline_nums
+
+    rng = np.random.default_rng(42)
+    trace_data = rng.random((n_ilines, n_xlines, n_samples), dtype=np.float32)
+
+    # Build a lookup: (il, xl) -> (cdpx, cdpy) to check round-trip preservation
+    original_coords: dict[tuple[int, int], tuple[float, float]] = {}
+
+    with segyio.create(str(segyfile), spec) as f:
+        tr = 0
+        for xl_idx, xl in enumerate(xline_nums):
+            for il_idx, il in enumerate(iline_nums):
+                # xlines run East (+X), inlines run North (+Y)
+                x = xori + xl_idx * xinc_xline
+                y = yori + il_idx * yinc_inline
+                original_coords[(int(il), int(xl))] = (x, y)
+                f.header[tr] = {
+                    segyio.TraceField.INLINE_3D: int(il),
+                    segyio.TraceField.CROSSLINE_3D: int(xl),
+                    segyio.TraceField.CDP_X: int(round(x * 100)),
+                    segyio.TraceField.CDP_Y: int(round(y * 100)),
+                    segyio.TraceField.SourceGroupScalar: -100,
+                    segyio.TraceField.TRACE_SAMPLE_INTERVAL: int(zinc * 1000),
+                    segyio.TraceField.TRACE_SAMPLE_COUNT: n_samples,
+                    segyio.TraceField.DelayRecordingTime: int(zori),
+                }
+                f.trace[tr] = trace_data[il_idx, xl_idx, :]
+                tr += 1
+        f.bin[segyio.BinField.Interval] = int(zinc * 1000)
+        f.bin[segyio.BinField.Samples] = n_samples
+        f.bin[segyio.BinField.SortingCode] = 1
+
+    with pytest.warns(UserWarning, match="crossline-sorted"):
+        cube = xtgeo.cube_from_file(str(segyfile))
+
+    # After normalising to xtgeo convention: axis-0 = inlines
+    assert cube.ncol == n_ilines
+    assert cube.nrow == n_xlines
+    assert cube.nlay == n_samples
+    assert len(cube.ilines) == cube.ncol
+    assert len(cube.xlines) == cube.nrow
+
+    outfile = tmp_path / "roundtrip.segy"
+    cube.to_file(outfile)
+
+    # Read back exported file and verify every (INLINE, CROSSLINE) pair has
+    # the same CDP_X/CDP_Y as the original -- this is what RMS would check.
+    with segyio.open(str(outfile), "r", ignore_geometry=True) as f:
+        for hdr in f.header:
+            il = hdr[segyio.TraceField.INLINE_3D]
+            xl = hdr[segyio.TraceField.CROSSLINE_3D]
+            scaler = hdr[segyio.TraceField.SourceGroupScalar]
+            raw_x = hdr[segyio.TraceField.CDP_X]
+            raw_y = hdr[segyio.TraceField.CDP_Y]
+            scale = -1.0 / scaler if scaler < 0 else float(scaler)
+            exported_x = raw_x * scale
+            exported_y = raw_y * scale
+
+            expected_x, expected_y = original_coords[(il, xl)]
+            assert exported_x == pytest.approx(expected_x, abs=0.1), (
+                f"CDP_X mismatch for IL={il} XL={xl}"
+            )
+            assert exported_y == pytest.approx(expected_y, abs=0.1), (
+                f"CDP_Y mismatch for IL={il} XL={xl}"
+            )
+
+
+@pytest.mark.parametrize(
+    "iline, xline",
+    [
+        (189, 189),
+        (193, 193),
+        (181, 193),
+        (189, 197),
+        (0, 0),
+    ],
+)
+def test_invalid_iline_xline_raises(tmp_path, iline, xline):
+    """Only (189, 193) and (193, 189) are accepted for iline/xline."""
+    cube = xtgeo.Cube(ncol=2, nrow=2, nlay=2, xinc=1, yinc=1, zinc=1)
+    outfile = tmp_path / "tiny.segy"
+    cube.to_file(outfile)
+    with pytest.raises(
+        ValueError, match=r"Only \(189, 193\) and \(193, 189\) are accepted\."
+    ):
+        xtgeo.cube_from_file(outfile, iline=iline, xline=xline)
+
+
+def test_iline_xline_ignored_for_non_segy(tmp_path, testdata_path):
+    """Passing non-default iline/xline for a non-SEGY file should warn."""
+    with pytest.warns(UserWarning, match="only used for SEGY"):
+        xtgeo.cube_from_file(
+            testdata_path / SFILE3, fformat="storm", iline=193, xline=189
+        )
