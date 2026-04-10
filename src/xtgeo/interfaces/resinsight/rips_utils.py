@@ -1,0 +1,147 @@
+"""Utility helpers for working with ResInsight via rips."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from xtgeo.common.log import null_logger
+
+from ._rips_package import (
+    ResInsightInstanceOrPortType,
+    RipsInstanceType,
+    RipsProjectType,
+    rips,
+)
+
+if TYPE_CHECKING:
+    import pathlib
+
+logger = null_logger(__name__)
+
+
+class RipsApiUtils:
+    """Utility class for connecting to a ResInsight instance and project.
+
+    Args:
+        instance_or_port: One of:
+            - existing ``rips.Instance``
+            - ``None`` to auto-discover a running instance
+            - ``int`` as ``port``
+    """
+
+    def __init__(
+        self,
+        instance_or_port: ResInsightInstanceOrPortType | None = None,
+    ) -> None:
+        if rips is None:
+            raise RuntimeError(
+                "rips package is not available. Please install it to use "
+                "ResInsight features."
+            )
+
+        instance_cls = getattr(rips, "Instance", None)
+        if instance_cls is None:
+            raise RuntimeError("rips does not expose Instance API")
+
+        self._instance: RipsInstanceType
+
+        if instance_or_port is None or (
+            isinstance(instance_or_port, int) and not isinstance(instance_or_port, bool)
+        ):
+            self._instance = self.find_instance(port=instance_or_port)
+        elif isinstance(instance_or_port, instance_cls):
+            self._instance = instance_or_port
+        else:
+            raise TypeError(
+                "instance_or_port must be None, an integer port, or a rips.Instance"
+            )
+
+    @property
+    def instance(self) -> RipsInstanceType:
+        """The connected ``rips.Instance``."""
+        return self._instance
+
+    @property
+    def project(self) -> RipsProjectType:
+        """The project object from the connected instance."""
+        return self._instance.project
+
+    def save_project(self, name: str = "") -> None:
+        """Save the ResInsight project.
+
+        Args:
+            name: Path to save the project file. If empty, the project is saved
+                to its current project location as determined by ResInsight.
+        """
+        self.project.save(name)  # type: ignore[attr-defined]
+        logger.debug("ResInsight project saved to '%s'", name or "current location")
+
+    def close_project(self) -> None:
+        """Close the active project and open a new one."""
+        self.project.close()  # type: ignore[attr-defined]
+        logger.debug("ResInsight project closed")
+
+    def terminate(self) -> None:
+        """Terminate ResInsight instance."""
+        self._instance.exit()  # type: ignore[attr-defined]
+        logger.debug("ResInsight instance closed")
+
+    @staticmethod
+    def launch_instance(
+        executable: str | pathlib.Path = "", console_mode: bool = False, port: int = -1
+    ) -> RipsInstanceType:
+        """Launch a new ResInsight instance using the specified executable.
+
+        Args:
+            executable: Path to the ResInsight executable. If empty, will attempt
+                to launch using default system path.
+            console_mode: Whether to launch ResInsight in console mode.
+            port: Port configuration for the gRPC server:
+                - ``-1``: Use the default port (50051), or the value of the
+                  ``RESINSIGHT_GRPC_PORT`` environment variable if it is set.
+                - ``0``: Let gRPC automatically select an available free port.
+                - ``> 0``: Attempt to launch ResInsight using the given port number.
+        """
+        if rips is None:
+            raise RuntimeError("rips package is not available")
+        instance = rips.Instance.launch(
+            resinsight_executable=str(executable),
+            console=console_mode,
+            launch_port=port,
+        )
+        logger.debug("Launching ResInsight using '%s'", str(executable))
+        if instance is None:
+            raise RuntimeError("Failed to launch ResInsight instance")
+        return instance
+
+    @staticmethod
+    def find_instance(port: int | None = None) -> RipsInstanceType:
+        """Use available rips APIs to discover/connect to an instance.
+
+        Args:
+            port: Port to connect to. If ``None`` (default), auto-discovers a
+                running instance.
+
+        Note:
+            Connection is port-driven.
+        """
+        if rips is None:
+            raise RuntimeError("rips package is not available")
+
+        if port is None:
+            try:
+                instance = rips.Instance.find()
+            except Exception as e:
+                raise RuntimeError(
+                    "Unable to connect to a running ResInsight instance. "
+                    "Ensure ResInsight is running and that auto-discovery can "
+                    "find a single reachable instance."
+                ) from e
+        else:
+            try:
+                instance = rips.Instance(port=port)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Unable to connect to a ResInsight instance on port {port}"
+                ) from e
+        return instance
