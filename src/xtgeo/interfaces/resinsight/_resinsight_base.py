@@ -13,6 +13,8 @@ if TYPE_CHECKING:
         ResInsightInstanceOrPortType,
         RipsCaseType,
         RipsInstanceType,
+        RipsPolygonCollectionType,
+        RipsPolygonType,
         RipsProjectType,
     )
 
@@ -66,3 +68,39 @@ class _BaseResInsightDataRW:
                 if not find_last:
                     break
         return selected_case
+
+    def get_polygon_collection(self) -> RipsPolygonCollectionType:
+        """Return the first PolygonCollection in the active ResInsight project.
+
+        Raises:
+            RuntimeError: If no PolygonCollection is present in the project.
+        """
+        from ._rips_package import rips
+
+        collections = self.get_project().descendants(rips.PolygonCollection)
+        if not collections:
+            raise RuntimeError(
+                "No PolygonCollection found in the active ResInsight project"
+            )
+        logger.debug("Found %d PolygonCollection(s) in project", len(collections))
+        return collections[0]
+
+    @staticmethod
+    def find_polygon(
+        collection: RipsPolygonCollectionType, name: str, find_last: bool
+    ) -> RipsPolygonType | None:
+        """Return the first or last polygon with the given name, or ``None``.
+
+        Args:
+            collection: The ``rips.PolygonCollection`` to search.
+            name: Exact polygon name to match.
+            find_last: If ``True``, continue scanning after a match so the last
+                match is returned; if ``False``, stop at the first match.
+        """
+        selected = None
+        for poly in collection.polygons():
+            if poly.name == name:
+                selected = poly
+                if not find_last:
+                    break
+        return selected

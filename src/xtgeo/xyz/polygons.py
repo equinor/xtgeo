@@ -27,6 +27,7 @@ from ._xyz_io import _convert_idbased_xyz
 
 if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
+    from xtgeo.interfaces.resinsight._rips_package import ResInsightInstanceOrPortType
     from xtgeo.well.well1 import Well
     from xtgeo.xyz.points import Points
 
@@ -221,6 +222,44 @@ def polygons_from_wells(
         points = xtgeo.polygons_from_wells(wells, zone=2)
     """
     return Polygons(**_wells_importer(wells, zone, resample))
+
+
+def polygons_from_resinsight(
+    instance_or_port: ResInsightInstanceOrPortType | None,
+    polygon_name: str,
+    find_last: bool = True,
+) -> Polygons:
+    """Load a polygon from ResInsight into an XTGeo :class:`Polygons` object.
+
+    The polygon is loaded from the polygon collection of the active ResInsight
+    project.  Each ResInsight polygon becomes a single-segment
+    :class:`Polygons` object (POLY_ID = 0).
+
+    Args:
+        instance_or_port: Optional ``rips.Instance`` or gRPC port. Use ``None``
+            to auto-discover a running ResInsight instance.
+        polygon_name: Name of the polygon to load from ResInsight.
+        find_last: When multiple polygons share the same name, select the last
+            match if ``True`` (default) or the first match if ``False``.
+
+    Returns:
+        A :class:`Polygons` instance with a single segment containing the
+        coordinates stored in ResInsight.
+
+    Example::
+
+        import xtgeo
+
+        poly = xtgeo.polygons_from_resinsight(5000, "MyFaultPolygon")
+        print(poly.get_dataframe())
+
+    """
+    import xtgeo.interfaces.resinsight
+
+    data = xtgeo.interfaces.resinsight.PolygonReader(
+        instance_or_port=instance_or_port,
+    ).load(polygon_name=polygon_name, find_last=find_last)
+    return data.to_xtgeo_polygons()
 
 
 def _generate_docstring_polygons(
@@ -458,6 +497,49 @@ class Polygons(XYZ):
             self._tname = None
         if self._hname not in self._df.columns:
             self._hname = None
+
+    def to_resinsight(
+        self,
+        instance_or_port: ResInsightInstanceOrPortType | None,
+        find_last: bool = True,
+    ) -> None:
+        """Export this Polygons object to the active ResInsight project.
+
+        Each POLY_ID segment is written as a separate ``rips.Polygon``.  If a
+        polygon with the same name already exists in the project's polygon
+        collection, its coordinates are updated in place; otherwise a new
+        polygon is created.
+
+        Polygon names are derived from the instance :attr:`name`.  When more
+        than one segment is present the name is suffixed with the POLY_ID value
+        (e.g. ``"MyFault_0"``, ``"MyFault_1"``).
+
+        Args:
+            instance_or_port: Optional ``rips.Instance`` or gRPC port. Use
+                ``None`` to auto-discover a running ResInsight instance.
+            find_last: Controls which existing polygon to replace when multiple
+                polygons share the same name. If ``True`` (default), the last
+                matching polygon is replaced; if ``False``, the first is replaced.
+
+        Example::
+
+            import xtgeo
+
+            poly = xtgeo.polygons_from_file("my_fault.pol")
+            poly.to_resinsight(5000, find_last=False)
+
+        """
+        import xtgeo.interfaces.resinsight
+
+        writer = xtgeo.interfaces.resinsight.PolygonWriter(
+            instance_or_port=instance_or_port
+        )
+        for (
+            data
+        ) in xtgeo.interfaces.resinsight.PolygonDataResInsight.from_xtgeo_polygons_all(
+            self
+        ):
+            writer.save(data, find_last=find_last)
 
     # ----------------------------------------------------------------------------------
     # Class methods
