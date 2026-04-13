@@ -209,3 +209,26 @@ jobs:
           sudo apt install mpi-default-bin libopm-simulators-bin
       - name: Integration test
         run: HAS_OPM=1 uv run pytest -m requires_opm --disable-warnings
+
+  resinsight-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: "./.github/actions/setup_xtgeo"
+        with:
+          python-version: "3.11"
+
+      - name: Setup testdata
+        uses: "./.github/actions/setup_testdata"
+
+      - name: Set up ResInsight
+        id: resinsight
+        uses: './.github/actions/setup_resinsight'
+
+      - name: ResInsight test
+        run: |
+          ${{ steps.resinsight.outputs.install-path}}/bin/ResInsight --console --version
+          export RESINSIGHT_EXECUTABLE="${{ steps.resinsight.outputs.install-path}}/bin/ResInsight"
+          uv run pytest -m requires_resinsight --disable-warnings
