@@ -1,0 +1,34 @@
+name: Setup ResInsight
+description: Download and install ResInsight for testing
+inputs:
+  install-dir:
+    description: "Installation directory name"
+    required: false
+    default: "resinsight_bin"
+outputs:
+  install-path:
+    description: "Path to ResInsight installation"
+    value: ${{ steps.extract.outputs.INSTALL_PATH }}
+runs:
+  using: composite
+  steps:
+    - name: Download ResInsight
+      shell: bash
+      run: |
+        wget https://nightly.link/OPM/ResInsight/workflows/ResInsightWithCache/dev/ResInsight-Ubuntu%2024.04%20gcc.zip -O /tmp/resinsight.zip
+        unzip /tmp/resinsight.zip -d /tmp/${{ inputs.install-dir }}
+    - name: Extract ResInsight
+      id: extract
+      shell: bash
+      run: |
+        sudo mv /tmp/${{ inputs.install-dir }} /opt/${{ inputs.install-dir }}
+        echo "INSTALL_PATH=/opt/${{ inputs.install-dir }}" >> $GITHUB_OUTPUT
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxkbcommon-x11-0 libegl1 libgl1-mesa-dev mesa-common-dev libglfw3-dev libglu1-mesa-dev libxcb-cursor0
+    - name: Install rips
+      shell: bash
+      run: |
+        uv pip install "/opt/${{ inputs.install-dir }}/bin/Python"

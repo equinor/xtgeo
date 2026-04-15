@@ -37,6 +37,11 @@ def resinsight_instance(testdata_path) -> RipsInstanceType:
             f"ResInsight executable not available (set RESINSIGHT_EXECUTABLE env var "
             f"or add ResInsight to PATH): {e}"
         )
+    logger.info(
+        "Version: ResInsight %s, RIPS %s",
+        instance.version_string(),
+        instance.client_version_string(),
+    )
     path = pathlib.Path(testdata_path)
 
     drogon = instance.project.load_case(path=str(path / DROGON_GRID))
@@ -49,7 +54,8 @@ def resinsight_instance(testdata_path) -> RipsInstanceType:
     emerald.name = "EXAMPLE"
     emerald.update()
 
-    logger.info("ResInsight instance created and test cases loaded")
+    cases = [case.name for case in instance.project.cases()]
+    logger.info("ResInsight instance created and test cases loaded %s", cases)
     yield instance
 
     # Teardown: close the instance after tests are done
