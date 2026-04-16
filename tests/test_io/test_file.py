@@ -282,9 +282,9 @@ def test_get_text_stream_read(testdata_path: str) -> None:
         assert stream.readline().startswith("GOCAD TSurf 1")
 
 
-def test_get_text_stream_write(testdata_path: str) -> None:
+def test_get_text_stream_write(tmp_path) -> None:
     """Test getting a text stream for writing to a file."""
-    file_path = pathlib.Path(testdata_path) / "test_write.txt"
+    file_path = tmp_path / "test_write.txt"
     xtgeo_file = FileWrapper(file_path)
     test_str = "LA8PV"
     with xtgeo_file.get_text_stream_write() as stream:
@@ -315,18 +315,18 @@ def test_get_text_stream_read_from_binary_file(testdata_path: str) -> None:
         stream.readlines()
 
 
-def test_get_text_stream_read_empty_file(testdata_path: str) -> None:
+def test_get_text_stream_read_empty_file(tmp_path) -> None:
     """Test getting a text stream from an empty text file."""
-    empty_file_path = pathlib.Path(testdata_path) / "empty_file.txt"
+    empty_file_path = tmp_path / "empty_file.txt"
     empty_file_path.touch()
     xtgeo_file = FileWrapper(empty_file_path)
     with xtgeo_file.get_text_stream_read() as stream:
         assert len(stream.readlines()) == 0
 
 
-def test_get_text_stream_write_to_nonexistent_file(testdata_path: str) -> None:
+def test_get_text_stream_write_to_nonexistent_file(tmp_path) -> None:
     """Test getting a text stream for writing to a non-existing file."""
-    file_path = pathlib.Path(testdata_path) / "nonexistent_dir/test_write.txt"
+    file_path = tmp_path / "nonexistent_dir/test_write.txt"
     xtgeo_file = FileWrapper(file_path)
     with pytest.raises(OSError, match="does not exist or cannot be accessed"):
         # Use __enter__ (not 'pass') to ensure proper test coverage
