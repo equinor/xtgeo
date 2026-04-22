@@ -23,7 +23,7 @@ from typing import (
 
 from typing_extensions import Self
 
-import xtgeo._cxtgeo
+import xtgeo._cxtgeo  # pyright: ignore[reportMissingImports]
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 
@@ -94,6 +94,7 @@ class FileFormat(Enum):
     XTG = ["xtg", "xtgeo", "xtgf", "xtgcpprop", "xtg.*"]
     XYZ = ["xyz", "poi", "pol"]
     TSURF = ["ts", "tsurf"]
+    GXF = ["gxf"]
     RMS_ATTR = ["rms_attr", "rms_attrs", "rmsattr.*"]
     CSV = ["csv", "csv.*"]
     PARQUET = ["parquet", "parquet.*", "pq"]
@@ -653,6 +654,14 @@ class FileWrapper:
             ):
                 logger.debug("Signature is tsurf")
                 return FileFormat.TSURF
+
+        # GXF format for regular surface.
+        # No specific signature line, so we could look for required keys.
+        # But only the first part of the file (in the buffer) is checked,
+        # and in GXF files the entire buffer may be filled with comments or free text.
+        # Thus, this check is skipped for GXF files ('strict = False').
+        # If this in fact not a GXF file, the GXF reader will fail with
+        # a more specific error message from the parsing logic.
 
         return FileFormat.UNKNOWN
 
