@@ -496,6 +496,8 @@ def _data_reader_factory(file_format: FileFormat):
         return _regsurf_import.import_petromod
     if file_format == FileFormat.ZMAP_ASCII:
         return _regsurf_import.import_zmap_ascii
+    if file_format == FileFormat.GXF:
+        return _regsurf_import.import_gxf
     if file_format == FileFormat.XTG:
         return _regsurf_import.import_xtg
     if file_format == FileFormat.HDF:
@@ -508,6 +510,7 @@ def _data_reader_factory(file_format: FileFormat):
             FileFormat.IJXYZ,
             FileFormat.PETROMOD,
             FileFormat.ZMAP_ASCII,
+            FileFormat.GXF,
             FileFormat.XTG,
             FileFormat.HDF,
         ]
@@ -1266,6 +1269,9 @@ class RegularSurface:
         elif fformat in FileFormat.IJXYZ.value:
             _regsurf_export.export_ijxyz_ascii(self, mfile)
 
+        elif fformat in FileFormat.GXF.value:
+            _regsurf_export.export_gxf(self, mfile)
+
         elif fformat == "xtgregsurf":
             _regsurf_export.export_xtgregsurf(self, mfile)
 
@@ -1277,6 +1283,7 @@ class RegularSurface:
                     FileFormat.IJXYZ,
                     FileFormat.PETROMOD,
                     FileFormat.ZMAP_ASCII,
+                    FileFormat.GXF,
                     FileFormat.XTG,
                     FileFormat.HDF,
                 ]
