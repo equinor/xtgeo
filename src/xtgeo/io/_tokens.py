@@ -84,7 +84,7 @@ def line_matches(line: Sequence[Token], reference: str) -> bool:
     return all(token == ref_token for token, ref_token in zip(line, tokens_to_match))
 
 
-def contains_single_token(line: Sequence[Token]) -> bool:
+def is_single_token(line: Sequence[Token]) -> bool:
     """Check if the line consists of a single token."""
     return len(line) == 1
 
@@ -104,7 +104,14 @@ def strip_surrounding_delimiters(token: Token, delimiter: str) -> Token:
 def is_base10_number(token: Token) -> bool:
     """
     Base-10 number or not
-        (base-10 numbers include integers, decimals and scientific notation)
+        - base-10 numbers include integers, decimals and scientific notation
+        - base-10 numbers include arbitrarily large numbers (e.g. "1e309")
+        - base-10 numbers exclude infinities (inf, -inf) and NaNs
+        - base-10 numbers exclude HEX numbers (e.g. "0xFF")
+          and binary numbers (e.g. "0b1010")
+        - base-10 numbers exclude numbers with underscores (e.g. "1_000"):
+          Python's float() function accepts these, but they are not
+          strictly base-10 numbers
     """
     return _BASE10_NUMBER.fullmatch(token) is not None
 
@@ -112,10 +119,32 @@ def is_base10_number(token: Token) -> bool:
 def is_finite_number(token: Token) -> bool:
     """
     Finite number or not
-        (finite numbers include base-10 numbers, but exclude infinities and NaNs)
+        - finite numbers include integers, decimals and scientific notation
+        - finite numbers exclude arbitrarily large numbers (e.g. "1e309")
+        - finite numbers exclude infinities (inf, -inf) and NaNs
+        - finite numbers include HEX numbers (e.g. "0xFF")
+          and binary numbers (e.g. "0b1010")
+        - finite numbers include numbers with underscores (e.g. "1_000")
     """
+
     try:
         float_value = float(token)
         return math.isfinite(float_value)
     except ValueError:
         return False
+
+
+def is_finite_decimal_number(token: Token) -> bool:
+    """
+    Finite decimal number or not
+    ("everyday" numbers excluding infinities, NaNs, HEX, binary and very large numbers)
+        - finite decimal numbers include integers, decimals and scientific notation
+        - finite decimal numbers exclude infinities (inf, -inf) and NaNs
+        - finite decimal numbers exclude very large numbers (e.g. "1e309")
+        - finite decimal numbers exclude HEX numbers (e.g. "0xFF")
+          and binary numbers (e.g. "0b1010")
+        - finite decimal numbers exclude numbers with underscores (e.g. "1_000"):
+          Python's float() function accepts these, but they are not
+          strictly base-10 numbers
+    """
+    return is_base10_number(token) and is_finite_number(token)

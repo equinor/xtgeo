@@ -5,10 +5,11 @@ import pytest
 
 from xtgeo.io._tokens import (
     TokenizedLine,
-    contains_single_token,
     is_base10_number,
     is_comment,
+    is_finite_decimal_number,
     is_finite_number,
+    is_single_token,
     iter_lines,
     iter_noncomment_lines,
     line_matches,
@@ -76,36 +77,7 @@ def test_is_comment(
     ],
 )
 def test_contains_single_token(line: TokenizedLine, expected: bool) -> None:
-    assert contains_single_token(line) is expected
-
-
-@pytest.mark.parametrize(
-    "token, expected",
-    [
-        ("0", True),
-        ("-1", True),
-        ("+1", True),
-        ("1.", True),
-        (".5", True),
-        ("1.5", True),
-        ("1e-3", True),
-        ("+1E3", True),
-        ("-1.5E+3", True),
-        ("", False),
-        (".", False),
-        ("1,2", False),
-        ("nan", False),
-        ("inf", False),
-        ("0x10", False),
-        ("1_000", False),
-        ("1e", False),
-        ("+", False),
-        ("-", False),
-        (" 1", False),
-    ],
-)
-def test_is_base10_number(token: str, expected: bool) -> None:
-    assert is_base10_number(token) is expected
+    assert is_single_token(line) is expected
 
 
 @pytest.mark.parametrize(
@@ -137,9 +109,45 @@ def test_strip_surrounding_delimiters_removes_only_one_matching_pair(
 @pytest.mark.parametrize(
     "token, expected",
     [
+        ("0", True),
+        ("-1", True),
+        ("+1", True),
+        ("1.", True),
+        (".5", True),
+        ("1.5", True),
+        ("1e-3", True),
+        ("+1E3", True),
+        ("-1.5E+3", True),
+        ("", False),
+        (".", False),
+        ("1,2", False),
+        ("1e309", True),  # Still a valid base-10 number, even if it overflows float
+        ("nan", False),
+        ("inf", False),
+        ("0x10", False),
+        ("1_000", False),
+        ("1e", False),
+        ("+", False),
+        ("-", False),
+        (" 1", False),
+    ],
+)
+def test_is_base10_number(token: str, expected: bool) -> None:
+    assert is_base10_number(token) is expected
+
+
+@pytest.mark.parametrize(
+    "token, expected",
+    [
         ("1.25", True),
         ("3", True),
         ("1e309", False),
+        ("1_000", True),
+        ("1_00_00_000.00_0_00", True),
+        ("0xFF", False),
+        ("0x_FF", False),
+        ("0xDead_Beef", False),
+        ("0b1010", False),
         ("nan", False),
         ("inf", False),
         ("-inf", False),
@@ -148,6 +156,35 @@ def test_strip_surrounding_delimiters_removes_only_one_matching_pair(
 )
 def test_is_finite_number(token: str, expected: bool) -> None:
     assert is_finite_number(token) is expected
+
+
+@pytest.mark.parametrize(
+    "token, expected",
+    [
+        ("0", True),
+        ("-1", True),
+        ("+1", True),
+        ("1.", True),
+        (".5", True),
+        ("1.5", True),
+        ("1e-3", True),
+        ("+1E3", True),
+        ("-1.5E+3", True),
+        ("1e309", False),
+        ("nan", False),
+        ("inf", False),
+        ("-inf", False),
+        ("0x10", False),
+        ("1_000", False),
+        ("1e", False),
+        ("+", False),
+        ("-", False),
+        (" 1", False),
+        ("not-a-number", False),
+    ],
+)
+def test_is_finite_decimal_number(token: str, expected: bool) -> None:
+    assert is_finite_decimal_number(token) is expected
 
 
 @pytest.mark.parametrize(
