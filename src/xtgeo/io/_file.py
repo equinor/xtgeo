@@ -23,7 +23,7 @@ from typing import (
 
 from typing_extensions import Self
 
-import xtgeo._cxtgeo
+import xtgeo._cxtgeo  # pyright: ignore[reportMissingImports]
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
 
@@ -94,6 +94,7 @@ class FileFormat(Enum):
     XTG = ["xtg", "xtgeo", "xtgf", "xtgcpprop", "xtg.*"]
     XYZ = ["xyz", "poi", "pol"]
     TSURF = ["ts", "tsurf"]
+    GXF = ["gxf"]
     RMS_ATTR = ["rms_attr", "rms_attrs", "rmsattr.*"]
     CSV = ["csv", "csv.*"]
     PARQUET = ["parquet", "parquet.*", "pq"]
@@ -653,6 +654,23 @@ class FileWrapper:
             ):
                 logger.debug("Signature is tsurf")
                 return FileFormat.TSURF
+
+        # GXF format for regular surface
+        # No specific signature line, so we look for required keys.
+        # Note that we only check the first part of the file (in the buffer), and
+        # that this part may contain only comments.
+        # TODO: include '#GRID': gxf_indicator_keys = {"#POINTS", "#ROWS", "#GRID"}
+        gxf_indicator_keys = {"#POINTS", "#ROWS"}
+        num_keys_found = 0
+        for line in xbuf:
+            stripped = line.strip()
+            if not stripped or stripped.startswith(("!", "##")):
+                continue
+            if stripped.upper() in gxf_indicator_keys:
+                num_keys_found += 1
+                if num_keys_found == len(gxf_indicator_keys):
+                    logger.debug("Signature is gxf")
+                    return FileFormat.GXF
 
         return FileFormat.UNKNOWN
 

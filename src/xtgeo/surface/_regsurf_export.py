@@ -15,6 +15,8 @@ from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.common.log import null_logger
 
+from ._regsurf_gxf_parser import GXFData
+
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper
     from xtgeo.surface.regular_surface import RegularSurface
@@ -176,6 +178,31 @@ def export_ijxyz_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
         mfile.file.write(buf)
     else:
         dfr.to_csv(mfile.name, sep="\t", float_format=fmt, index=False, header=False)
+
+
+def export_gxf(self: RegularSurface, mfile: FileWrapper) -> None:
+    """Export to GXF ascii format through the dedicated parser class."""
+
+    # GXF grid values are read as rows of length ncol. XTGeo stores regular
+    # surfaces as (ncol, nrow), therefore need to transpose
+    grid = (self.values.T,)
+
+    # TODO: check that parameters required by GXF are present
+    #   (they are present if also required by RegularSurface)
+    # TODO: mask grid using self.undef
+
+    gxf_data = GXFData(
+        points=self.ncol,
+        rows=self.nrow,
+        xorigin=self.xori,
+        yorigin=self.yori,
+        ptseparation=self.xinc,
+        rwseparation=self.yinc,
+        rotation=self.rotation,
+        dummy=float(self.undef),
+        grid=grid,
+    )
+    gxf_data.to_file(mfile.file)
 
 
 def export_zmap_ascii(self: RegularSurface, mfile: FileWrapper) -> None:

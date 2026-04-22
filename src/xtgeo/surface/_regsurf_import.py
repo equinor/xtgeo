@@ -17,6 +17,7 @@ from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.metadata.metadata import MetaDataRegularSurface
 
+from ._regsurf_gxf_parser import GXFData
 from ._regsurf_ijxyz_parser import parse_ijxyz
 from ._zmap_parser import parse_zmap
 
@@ -265,6 +266,38 @@ def import_zmap_ascii(mfile: FileWrapper, values: bool = True, **_):
         )
         loaded_values = np.flip(loaded_values, axis=1)
         args["values"] = loaded_values
+
+    return args
+
+
+def import_gxf(mfile: FileWrapper, values: bool = True, **_) -> dict:
+    """Import GXF ascii format through the dedicated parser class."""
+    gxf_data = GXFData.from_file(mfile.file)
+
+    args: dict = {
+        "ncol": gxf_data.points,
+        "nrow": gxf_data.rows,
+        "xori": gxf_data.xorigin,
+        "yori": gxf_data.yorigin,
+        "xinc": gxf_data.ptseparation,
+        "yinc": gxf_data.rwseparation,
+        "rotation": gxf_data.rotation,
+        "undef": gxf_data.dummy,
+    }
+
+    # Convert data from GXF format to XTGeo format
+
+    # 'yflip' set based on single example of file with real data
+    # Hence may not be correct for all GXF files
+    args["yflip"] = 1
+
+    # TODO: remove this, for testing only
+    # args["yflip"] = -1
+
+    # GXF grid values are read as rows of length ncol. XTGeo stores regular
+    # surfaces as (ncol, nrow), therefore must transpose.
+    if values:
+        args["values"] = gxf_data.grid.T
 
     return args
 
