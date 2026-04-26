@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     import io
     from pathlib import Path
 
+    from xtgeo.grid3d.grid import Grid
     from xtgeo.xyz._xyz_data import AttrRecordType
 
 logger = null_logger(__name__)
@@ -1491,6 +1492,104 @@ class Well:
         _well_oper.make_ijk_from_grid(
             self, grid, grid_id=grid_id, activeonly=activeonly
         )
+
+    def get_cell_intersections(
+        self,
+        grid: Grid,
+        sampling_step: float = 1.0,
+        refine_iters: int = 20,
+        active_only: bool = False,
+        zerobased: bool = False,
+    ) -> pd.DataFrame:
+        """Compute where this well's trajectory enters and exits each grid cell.
+
+        Walks the well polyline through the 3D corner-point grid and returns,
+        for every cell the trajectory passes through, the (X, Y, Z) coordinates
+        and Measured Depth (MD) at which the well enters and exits that cell.
+
+        The implementation is a hybrid algorithm: an analytic ray-tracing fast
+        path is used for convex (planar-faced) cells, with automatic fallback
+        to a sample-and-bisect scheme on distorted/non-convex cells.
+
+        Args:
+            grid: A XTGeo Grid instance.
+            sampling_step: Sampling step length used by the bisection fallback,
+                in the same units as the well coordinates. Smaller values give
+                higher accuracy on distorted cells at the cost of speed. The
+                ray-tracing fast path is unaffected by this. Must be > 0.
+            refine_iters: Maximum number of bisection iterations used by the
+                fallback to localize a cell-boundary crossing.
+            active_only: If True, cells with ACTNUM=0 are skipped from the
+                output (the trajectory still travels through them, but they
+                are not reported).
+            zerobased: If True, I/J/K indices start from 0. If False
+                (default), they start from 1, consistent with other XTGeo
+                grid methods such as :meth:`Grid.get_ijk`.
+
+        Returns:
+            A :class:`pandas.DataFrame` with one row per (cell, traversal),
+            sorted in trajectory order. Columns:
+
+            - ``I``, ``J``, ``K``: cell indices (int). 1-based by default,
+              0-based if ``zerobased=True``.
+            - ``ENTRY_EASTING``, ``ENTRY_NORTHING``, ``ENTRY_TVD``, ``ENTRY_MD``:
+              where the trajectory enters the cell.
+            - ``EXIT_EASTING``, ``EXIT_NORTHING``, ``EXIT_TVD``, ``EXIT_MD``:
+              where it exits.
+            - ``LENGTH_MD``: ``EXIT_MD - ENTRY_MD`` (in-cell traversal length).
+
+        Raises:
+            ValueError: If the well has no MD log, if ``sampling_step`` is
+                not positive, or if ``refine_iters`` is negative.
+
+        Example::
+
+            grid = xtgeo.grid_from_file("mygrid.roff")
+            well = xtgeo.well_from_file("mywell.rmswell", mdlogname="MD")
+            df = well.get_cell_intersections(grid, active_only=True)
+            print(df.head())
+        """
+        if self.mdlogname is None:
+            raise ValueError("The well must have an MD log (well.mdlogname is None).")
+        if sampling_step <= 0.0:
+            raise ValueError("sampling_step must be > 0")
+        if refine_iters < 0:
+            raise ValueError("refine_iters must be >= 0")
+
+        df_well = self.get_dataframe()
+        xv = df_well[self.xname].to_numpy(dtype=np.float64)
+        yv = df_well[self.yname].to_numpy(dtype=np.float64)
+        zv = df_well[self.zname].to_numpy(dtype=np.float64)
+        mdv = df_well[self.mdlogname].to_numpy(dtype=np.float64)
+
+        res = grid._get_grid_cpp().compute_well_cell_intersections(
+            xv,
+            yv,
+            zv,
+            mdv,
+            sampling_step=float(sampling_step),
+            refine_iters=int(refine_iters),
+            active_only=bool(active_only),
+        )
+
+        ijk_offset = 0 if zerobased else 1
+        df = pd.DataFrame(
+            {
+                "I": res["i"] + ijk_offset,
+                "J": res["j"] + ijk_offset,
+                "K": res["k"] + ijk_offset,
+                "ENTRY_EASTING": res["entry_x"],
+                "ENTRY_NORTHING": res["entry_y"],
+                "ENTRY_TVD": res["entry_z"],
+                "ENTRY_MD": res["entry_md"],
+                "EXIT_EASTING": res["exit_x"],
+                "EXIT_NORTHING": res["exit_y"],
+                "EXIT_TVD": res["exit_z"],
+                "EXIT_MD": res["exit_md"],
+            }
+        )
+        df["LENGTH_MD"] = df["EXIT_MD"] - df["ENTRY_MD"]
+        return df
 
     def make_zone_qual_log(self, zqname):
         """Create a zone quality/indicator (flag) log.
