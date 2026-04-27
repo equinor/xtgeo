@@ -655,22 +655,13 @@ class FileWrapper:
                 logger.debug("Signature is tsurf")
                 return FileFormat.TSURF
 
-        # GXF format for regular surface
-        # No specific signature line, so we look for required keys.
-        # Note that we only check the first part of the file (in the buffer), and
-        # that this part may contain only comments.
-        # TODO: include '#GRID': gxf_indicator_keys = {"#POINTS", "#ROWS", "#GRID"}
-        gxf_indicator_keys = {"#POINTS", "#ROWS"}
-        num_keys_found = 0
-        for line in xbuf:
-            stripped = line.strip()
-            if not stripped or stripped.startswith(("!", "##")):
-                continue
-            if stripped.upper() in gxf_indicator_keys:
-                num_keys_found += 1
-                if num_keys_found == len(gxf_indicator_keys):
-                    logger.debug("Signature is gxf")
-                    return FileFormat.GXF
+        # GXF format for regular surface.
+        # No specific signature line, so we could look for required keys.
+        # But only the first part of the file (in the buffer) is checked,
+        # and in GXF files the entire buffer may be filled with comments or free text.
+        # Thus, this check is skipped for GXF files ('strict = False').
+        # If this in fact not a GXF file, the GXF reader will fail with
+        # a more specific error message from the parsing logic.
 
         return FileFormat.UNKNOWN
 

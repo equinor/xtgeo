@@ -183,10 +183,6 @@ def export_ijxyz_ascii(self: RegularSurface, mfile: FileWrapper) -> None:
 def export_gxf(self: RegularSurface, mfile: FileWrapper) -> None:
     """Export to GXF ascii format through the dedicated parser class."""
 
-    # GXF grid values are read as rows of length ncol. XTGeo stores regular
-    # surfaces as (ncol, nrow), therefore need to transpose
-    grid = (self.values.T,)
-
     # TODO: check that parameters required by GXF are present and not None or Nan
     #   (they are present if also required by RegularSurface)
     # TODO: mask grid using self.undef
@@ -201,6 +197,11 @@ def export_gxf(self: RegularSurface, mfile: FileWrapper) -> None:
     # Should not be necessary, documentation says it's equal
     # between the systems
     # rot = self.rotation + 90
+
+    # GXF grid values are read as rows of length ncol. XTGeo stores regular
+    # surfaces as (ncol, nrow), therefore need to transpose
+    grid = self.values.T
+
 
     gxf_data = GXFData(
         points=self.ncol,

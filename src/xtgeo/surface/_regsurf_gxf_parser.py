@@ -163,7 +163,7 @@ class GXFData:
     grid: np.ma.MaskedArray
 
     def __post_init__(self) -> None:
-        values = np.ma.array(self.grid, dtype=np.float64, copy=True)
+        values = self.grid
 
         if self.points <= 0 or self.rows <= 0:
             raise ValueError("points and rows must be positive integers.")
@@ -178,10 +178,10 @@ class GXFData:
             raise ValueError("xinc and yinc must be positive numbers.")
 
         # Ensure undefined nodes are represented by a mask.
+        # masked_equal returns a new array, so no separate copy is needed.
         if values.mask is np.ma.nomask:
             values = np.ma.masked_equal(values, self.dummy)
-
-        object.__setattr__(self, "grid", values)
+            object.__setattr__(self, "grid", values)
 
     @staticmethod
     def _format_number(value: float | int) -> str:
@@ -416,7 +416,15 @@ class GXFData:
             raise FileNotFoundError(
                 f"\nIn file {wrapped_file.name}:\nThe file does not exist."
             )
-        wrapped_file.fileformat(FileFormat.GXF.value[0], strict=True)
+
+        # We let 'strict=False' because the format allows a large number of
+        # commented lines and free text lines at the beginning of the file.
+        # Setting 'strict=True' implies reading the beginning of the file
+        # into a buffer of limited size and checking for known format keys,
+        # which fails if size of comments and free text exceeds the buffer size.
+        # If this in fact not a GXF file, the reader will fail with
+        # a more specific error message from the parsing logic.
+        wrapped_file.fileformat(FileFormat.GXF.value[0], strict=False)
 
         with wrapped_file.get_text_stream_read(encoding=encoding) as stream:
             return cls._parse_gxf(stream, fileref_errmsg=str(wrapped_file.name))

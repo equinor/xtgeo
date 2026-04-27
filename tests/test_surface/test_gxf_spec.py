@@ -1,11 +1,23 @@
 from dataclasses import FrozenInstanceError
 from io import BytesIO, StringIO
+from pathlib import Path
+import shutil
 
 import numpy as np
 import pytest
 
 import xtgeo
 from xtgeo.surface._regsurf_gxf_parser import GXFData
+
+
+@pytest.fixture()
+def gxf_path(testdata_path: str) -> Path:
+    """Return the path to a GXF test file."""
+    p = Path(testdata_path) / "surfaces/etc/fdata_test.gxf"
+    if not p.exists():
+        pytest.skip(f"Test data file not found: {p}")  # pragma: no cover
+    return p
+
 
 
 def gxf_stream(content: str) -> StringIO:
@@ -723,9 +735,15 @@ class TestFileFormatVerification:
 
         with pytest.raises(
             ValueError,
-            match="does not match format detected from file contents",
+            match=r"Missing mandatory keys: \['ROWS'\]",
         ):
             GXFData.from_file(path)
+
+        with pytest.raises(
+            ValueError,
+            match=r"Missing mandatory keys: \['ROWS'\]\.",
+        ):
+            xtgeo.surface_from_file(path)
 
     def test_non_gxf_extension_and_content_raises(
         self, tmp_path, non_gxf_content: str
@@ -736,9 +754,38 @@ class TestFileFormatVerification:
 
         with pytest.raises(
             ValueError,
-            match="does not match format detected from file contents",
+            match=r"Missing mandatory keys: \['POINTS', 'ROWS'\]",
         ):
             GXFData.from_file(path)
+
+        with pytest.raises(
+            ValueError,
+            match=r"Missing mandatory keys: \['POINTS', 'ROWS'\]",
+        ):
+            xtgeo.surface_from_file(path, fformat="gxf")
+
+    def test_surface_from_file_no_format_hints(
+        self, gxf_path: Path, tmp_path
+    ) -> None:
+        """
+        Test that a real GXF file with a large number of comments or free text
+        at the beginning, and without a '.gxf' file extension, fails in
+        the parsing stage due to missing mandatory keys.
+        """
+
+        outpath = tmp_path / "fdata_test.not_gxf"
+        shutil.copy(gxf_path, outpath)
+
+        # File suffix is not .gxf, no other format hints exist. So this should fail
+        with pytest.raises(
+            ValueError, match="File format None is unknown or unsupported"
+        ):
+            xtgeo.surface_from_file(outpath)
+
+        # File suffix is not .gxf, but a format hint is given
+        surf = xtgeo.surface_from_file(outpath, fformat="gxf")
+        assert surf.ncol == 330
+        assert surf.nrow == 208
 
 
 class TestDummyTypePreservation:
@@ -1111,3 +1158,82 @@ class TestDummyValue:
             gxf.grid.filled(np.nan),
             equal_nan=True,
         )
+
+
+class TestRealGXFData:
+    """Tests using the real data file surfaces/etc/fdata_test.gxf."""
+
+    def test_parse_header_values(self, gxf_path: Path) -> None:
+        gxf = GXFData.from_file(gxf_path)
+
+        assert gxf.points == 330
+        assert gxf.rows == 208
+        assert gxf.ptseparation == pytest.approx(30.4800600)
+        assert gxf.rwseparation == pytest.approx(30.4800600)
+        assert gxf.xorigin == pytest.approx(427391.726575)
+        assert gxf.yorigin == pytest.approx(7250373.922731)
+        assert gxf.rotation == pytest.approx(66.57993141719481)
+        assert gxf.dummy == pytest.approx(9999999.0)
+
+    def test_grid_shape(self, gxf_path: Path) -> None:
+        gxf = GXFData.from_file(gxf_path)
+
+        assert gxf.grid.shape == (208, 330)
+        assert gxf.grid.size == 208 * 330
+
+    def test_grid_has_masked_values(self, gxf_path: Path) -> None:
+        gxf = GXFData.from_file(gxf_path)
+
+        assert gxf.grid.count() < gxf.grid.size
+        assert np.ma.count_masked(gxf.grid) > 0
+
+    def test_grid_valid_values_finite(self, gxf_path: Path) -> None:
+        gxf = GXFData.from_file(gxf_path)
+
+        valid = gxf.grid.compressed()
+        assert np.all(np.isfinite(valid))
+        assert np.all(valid != gxf.dummy)
+
+    def test_roundtrip_preserves_data(self, gxf_path: Path, tmp_path) -> None:
+        original = GXFData.from_file(gxf_path)
+
+        outpath = tmp_path / "roundtrip.gxf"
+        original.to_file(outpath)
+        reloaded = GXFData.from_file(outpath)
+
+        assert reloaded.points == original.points
+        assert reloaded.rows == original.rows
+        assert reloaded.ptseparation == pytest.approx(original.ptseparation)
+        assert reloaded.rwseparation == pytest.approx(original.rwseparation)
+        assert reloaded.xorigin == pytest.approx(original.xorigin)
+        assert reloaded.yorigin == pytest.approx(original.yorigin)
+        assert reloaded.rotation == pytest.approx(original.rotation)
+        assert reloaded.dummy == pytest.approx(original.dummy)
+        np.testing.assert_array_equal(reloaded.grid.mask, original.grid.mask)
+        np.testing.assert_allclose(
+            reloaded.grid.compressed(), original.grid.compressed()
+        )
+
+    def test_surface_from_file_metadata(self, gxf_path: Path) -> None:
+        surf = xtgeo.surface_from_file(gxf_path)
+
+        assert surf.ncol == 330
+        assert surf.nrow == 208
+        assert surf.xinc == pytest.approx(30.4800600)
+        assert surf.yinc == pytest.approx(30.4800600)
+        assert surf.xori == pytest.approx(427391.726575)
+        assert surf.yori == pytest.approx(7250373.922731)
+        assert surf.rotation == pytest.approx(66.57993141719481)
+
+    def test_surface_from_file_values_shape(self, gxf_path: Path) -> None:
+        surf = xtgeo.surface_from_file(gxf_path)
+
+        assert surf.values.shape == (330, 208)
+        assert surf.nactive < surf.ncol * surf.nrow
+
+    def test_surface_from_file_no_dummy_in_valid(self, gxf_path: Path) -> None:
+        surf = xtgeo.surface_from_file(gxf_path)
+
+        filled = surf.values.filled(np.nan)
+        finite_vals = filled[np.isfinite(filled)]
+        assert np.all(finite_vals != 9999999.0)
