@@ -187,9 +187,20 @@ def export_gxf(self: RegularSurface, mfile: FileWrapper) -> None:
     # surfaces as (ncol, nrow), therefore need to transpose
     grid = (self.values.T,)
 
-    # TODO: check that parameters required by GXF are present
+    # TODO: check that parameters required by GXF are present and not None or Nan
     #   (they are present if also required by RegularSurface)
     # TODO: mask grid using self.undef
+
+    yinc = self.yinc
+    if self.yflip == -1:
+        yinc *= -1
+
+    rot = self.rotation
+    # TODO: remove this
+    # Modify rotation:
+    # Should not be necessary, documentation says it's equal
+    # between the systems
+    # rot = self.rotation + 90
 
     gxf_data = GXFData(
         points=self.ncol,
@@ -197,11 +208,12 @@ def export_gxf(self: RegularSurface, mfile: FileWrapper) -> None:
         xorigin=self.xori,
         yorigin=self.yori,
         ptseparation=self.xinc,
-        rwseparation=self.yinc,
-        rotation=self.rotation,
+        rwseparation=yinc,
+        rotation=rot,
         dummy=float(self.undef),
         grid=grid,
     )
+
     gxf_data.to_file(mfile.file)
 
 

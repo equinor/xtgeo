@@ -272,6 +272,7 @@ def import_zmap_ascii(mfile: FileWrapper, values: bool = True, **_):
 
 def import_gxf(mfile: FileWrapper, values: bool = True, **_) -> dict:
     """Import GXF ascii format through the dedicated parser class."""
+
     gxf_data = GXFData.from_file(mfile.file)
 
     args: dict = {
@@ -285,17 +286,23 @@ def import_gxf(mfile: FileWrapper, values: bool = True, **_) -> dict:
         "undef": gxf_data.dummy,
     }
 
-    # Convert data from GXF format to XTGeo format
+    # If yinc is negative, convert to using yflip
+    if args["yinc"] < 0.0:
+        args["yinc"] *= -1
+        args["yflip"] = -1
+    else:
+        args["yflip"] = 1
 
-    # 'yflip' set based on single example of file with real data
-    # Hence may not be correct for all GXF files
-    args["yflip"] = 1
+    # TODO: remove this
+    # Modify rotation:
+    # Should not be necessary, documentation says it's equal
+    # between the systems
+    # rot = args["rotation"]
+    # if rot != 0.0:
+    #     args["rotation"] = rot - 90
 
-    # TODO: remove this, for testing only
-    # args["yflip"] = -1
-
-    # GXF grid values are read as rows of length ncol. XTGeo stores regular
-    # surfaces as (ncol, nrow), therefore must transpose.
+    # GXF grid values are stored as (nrow, ncol). XTGeo stores regular
+    # surfaces as (ncol, nrow), so must transpose.
     if values:
         args["values"] = gxf_data.grid.T
 
