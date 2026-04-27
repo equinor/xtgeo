@@ -224,18 +224,8 @@ class GXFData:
                 continue
 
             if TextParser.starts_with_prefix(line, "##"):
-                # '<EMPTY>' is used in the warning message when there is no key
-                # after '##', to avoid an empty string in the message.
-                ext_key = line[0][2:] or "<EMPTY> (missing key after '##')"
-
                 # Skip the value line for this extension key.
                 next(lines, None)
-                msg = (
-                    f"In file {fileref_errmsg}: Ignoring unsupported extension "
-                    f"key '##{ext_key}'."
-                )
-                logger.warning(msg)
-                warnings.warn(msg, UserWarning, stacklevel=3)
                 continue
 
             # Set the key and handle its value on the next line..
@@ -285,9 +275,6 @@ class GXFData:
 
             if key not in scalar_keys:
                 next(lines, None)  # skip value line
-                msg = f"In file {fileref_errmsg}: Ignoring unsupported key '#{key}'."
-                logger.warning(msg)
-                warnings.warn(msg, UserWarning, stacklevel=3)
                 continue
 
             if key in scalar_values:
@@ -343,27 +330,10 @@ class GXFData:
                 f"In file {fileref_errmsg}: Missing mandatory key '#GRID'."
             )
 
-        # Optional keys have defaults; warn when a default is used.
-        # TODO: remove warning
+        # Apply defaults for optional keys
         for dkey, dval in cls.DEFAULTS.items():
             if dkey not in scalar_values:
                 scalar_values[dkey] = dval
-                msg = (
-                    f"In file {fileref_errmsg}: Key '#{dkey}' not found, "
-                    f"using default value {dval}."
-                )
-                logger.warning(msg)
-                warnings.warn(msg, UserWarning, stacklevel=3)
-
-        # TODO: remove warning
-        has_dummy_value = "DUMMY" in scalar_values
-        if not has_dummy_value:
-            msg = (
-                f"In file {fileref_errmsg}: Key '#DUMMY' not found, "
-                "all grid values will be treated as valid (i.e. not undefined)."
-            )
-            logger.warning(msg)
-            warnings.warn(msg, UserWarning, stacklevel=3)
 
         points = int(scalar_values["POINTS"])
         rows = int(scalar_values["ROWS"])
@@ -377,7 +347,7 @@ class GXFData:
 
         values_2d = np.array(grid_values, dtype=np.float64).reshape((rows, points))
 
-        if has_dummy_value:
+        if "DUMMY" in scalar_values:
             dummy_val = scalar_values["DUMMY"]
             masked_values = np.ma.masked_equal(values_2d, dummy_val)
         else:

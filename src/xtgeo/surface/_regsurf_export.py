@@ -202,7 +202,6 @@ def export_gxf(self: RegularSurface, mfile: FileWrapper) -> None:
     # surfaces as (ncol, nrow), therefore need to transpose
     grid = self.values.T
 
-
     gxf_data = GXFData(
         points=self.ncol,
         rows=self.nrow,

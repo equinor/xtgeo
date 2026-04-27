@@ -1,7 +1,7 @@
+import shutil
 from dataclasses import FrozenInstanceError
 from io import BytesIO, StringIO
 from pathlib import Path
-import shutil
 
 import numpy as np
 import pytest
@@ -17,7 +17,6 @@ def gxf_path(testdata_path: str) -> Path:
     if not p.exists():
         pytest.skip(f"Test data file not found: {p}")  # pragma: no cover
     return p
-
 
 
 def gxf_stream(content: str) -> StringIO:
@@ -293,12 +292,7 @@ class TestGXFParsing:
     """Tests for reading and parsing GXF content."""
 
     def test_valid_with_extension_keys(self, valid_gxf_content: str) -> None:
-        with pytest.warns(UserWarning) as recorded:
-            result = GXFData.from_file(gxf_stream(valid_gxf_content))
-
-        warning_messages = [str(w.message) for w in recorded]
-        assert any("##XMAX" in message for message in warning_messages)
-        assert any("##YMAX" in message for message in warning_messages)
+        result = GXFData.from_file(gxf_stream(valid_gxf_content))
 
         assert result.points == 3
         assert result.rows == 2
@@ -319,8 +313,7 @@ class TestGXFParsing:
         path = tmp_path / "surface.gxf"
         path.write_text(valid_gxf_content)
 
-        with pytest.warns(UserWarning):
-            result = GXFData.from_file(path)
+        result = GXFData.from_file(path)
 
         assert result.points == 3
 
@@ -357,23 +350,16 @@ class TestGXFParsing:
 
     def test_missing_mandatory_key_raises(self, gxf_content_missing_grid: str) -> None:
         """Missing #GRID (a truly required key) must raise."""
+
         with pytest.raises(ValueError, match="Missing mandatory key"):
             GXFData.from_file(gxf_stream(gxf_content_missing_grid))
 
-    def test_optional_keys_default_with_warnings(
+    def test_optional_keys_default_values_assigned(
         self, gxf_content_minimal_only: str
     ) -> None:
-        """When optional keys are missing, defaults are applied with warnings."""
-        with pytest.warns(UserWarning) as recorded:
-            result = GXFData.from_file(gxf_stream(gxf_content_minimal_only))
+        """When optional keys are missing, defaults are applied."""
 
-        msgs = [str(w.message) for w in recorded]
-        assert any("#PTSEPARATION" in m and "default" in m for m in msgs)
-        assert any("#RWSEPARATION" in m and "default" in m for m in msgs)
-        assert any("#XORIGIN" in m and "default" in m for m in msgs)
-        assert any("#YORIGIN" in m and "default" in m for m in msgs)
-        assert any("#ROTATION" in m and "default" in m for m in msgs)
-        assert any("#DUMMY" in m for m in msgs)
+        result = GXFData.from_file(gxf_stream(gxf_content_minimal_only))
 
         assert result.points == 3
         assert result.rows == 2
@@ -389,8 +375,8 @@ class TestGXFParsing:
 
     def test_no_dummy_means_no_masking(self, gxf_content_no_dummy: str) -> None:
         """Without #DUMMY, no values should be masked."""
-        with pytest.warns(UserWarning, match="#DUMMY"):
-            result = GXFData.from_file(gxf_stream(gxf_content_no_dummy))
+
+        result = GXFData.from_file(gxf_stream(gxf_content_no_dummy))
 
         assert result.grid.count() == 4
         assert not np.any(result.grid.mask)
@@ -398,8 +384,8 @@ class TestGXFParsing:
     def test_unknown_single_hash_key_warns_and_skips(
         self, gxf_content_with_unknown_key: str
     ) -> None:
-        with pytest.warns(UserWarning, match="#UNKNOWN_KEY"):
-            result = GXFData.from_file(gxf_stream(gxf_content_with_unknown_key))
+
+        result = GXFData.from_file(gxf_stream(gxf_content_with_unknown_key))
 
         assert result.points == 3
         assert result.rows == 2
@@ -764,9 +750,7 @@ class TestFileFormatVerification:
         ):
             xtgeo.surface_from_file(path, fformat="gxf")
 
-    def test_surface_from_file_no_format_hints(
-        self, gxf_path: Path, tmp_path
-    ) -> None:
+    def test_surface_from_file_no_format_hints(self, gxf_path: Path, tmp_path) -> None:
         """
         Test that a real GXF file with a large number of comments or free text
         at the beginning, and without a '.gxf' file extension, fails in
@@ -913,8 +897,8 @@ class TestRegularSurfaceIntegration:
     """Tests for xtgeo RegularSurface GXF integration."""
 
     def test_from_file(self, valid_gxf_content: str) -> None:
-        with pytest.warns(UserWarning):
-            surf = xtgeo.surface_from_file(gxf_stream(valid_gxf_content), fformat="gxf")
+
+        surf = xtgeo.surface_from_file(gxf_stream(valid_gxf_content), fformat="gxf")
 
         assert surf.ncol == 3
         assert surf.nrow == 2
@@ -930,9 +914,6 @@ class TestRegularSurfaceIntegration:
         )
 
     def test_to_file_roundtrip(self) -> None:
-
-        # TODO: fix failing test
-        return
 
         values = np.ma.array(
             [[11.0, 44.0], [22.0, 55.0], [33.0, np.nan]],
@@ -1062,10 +1043,8 @@ class TestDummyValue:
         self, gxf_content_no_dummy_with_default_value: str
     ) -> None:
         """When #DUMMY is missing, the default (9999999.0) is used."""
-        with pytest.warns(UserWarning, match="#DUMMY"):
-            result = GXFData.from_file(
-                gxf_stream(gxf_content_no_dummy_with_default_value)
-            )
+
+        result = GXFData.from_file(gxf_stream(gxf_content_no_dummy_with_default_value))
 
         assert result.dummy == pytest.approx(9999999.0)
         # The default dummy should mask the matching value
