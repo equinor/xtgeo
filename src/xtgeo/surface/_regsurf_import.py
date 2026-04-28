@@ -275,24 +275,6 @@ def import_gxf(mfile: FileWrapper, values: bool = True, **_) -> dict:
 
     gxf_data = GXFData.from_file(mfile.file)
 
-    args: dict = {
-        "ncol": gxf_data.points,
-        "nrow": gxf_data.rows,
-        "xori": gxf_data.xorigin,
-        "yori": gxf_data.yorigin,
-        "xinc": gxf_data.ptseparation,
-        "yinc": gxf_data.rwseparation,
-        "rotation": gxf_data.rotation,
-        "undef": gxf_data.dummy,
-    }
-
-    # If yinc is negative, convert to using yflip
-    if args["yinc"] < 0.0:
-        args["yinc"] *= -1
-        args["yflip"] = -1
-    else:
-        args["yflip"] = 1
-
     # TODO: remove this
     # Modify rotation:
     # Should not be necessary, documentation says it's equal
@@ -301,10 +283,33 @@ def import_gxf(mfile: FileWrapper, values: bool = True, **_) -> dict:
     # if rot != 0.0:
     #     args["rotation"] = rot - 90
 
+    rotation = gxf_data.rotation % 360
+
+    yinc = gxf_data.rwseparation
+    if yinc < 0.0:
+        yinc *= -1
+        yflip = -1
+    else:
+        yflip = 1
+
     # GXF grid values are stored as (nrow, ncol). XTGeo stores regular
     # surfaces as (ncol, nrow), so must transpose.
-    if values:
-        args["values"] = gxf_data.grid.T
+    grid_values = gxf_data.grid.T if values else None
+
+    args: dict = {
+        "ncol": gxf_data.points,
+        "nrow": gxf_data.rows,
+        "xori": gxf_data.xorigin,
+        "yori": gxf_data.yorigin,
+        "xinc": gxf_data.ptseparation,
+        "yinc": yinc,
+        "rotation": rotation,
+        "yflip": yflip,
+        "undef": gxf_data.dummy,
+    }
+
+    if grid_values is not None:
+        args["values"] = grid_values
 
     return args
 
