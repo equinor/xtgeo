@@ -960,6 +960,65 @@ class TestRegularSurfaceIntegration:
         assert surf.ncol == 2
         assert surf.nrow == 2
 
+    @pytest.mark.parametrize(
+        "file_rotation, expected",
+        [
+            (0.0, 0.0),
+            (90.0, 90.0),
+            (359.9, 359.9),
+            (360.0, 0.0),
+            (450.0, 90.0),
+            (-90.0, 270.0),
+            (-360.0, 0.0),
+            (720.0, 0.0),
+        ],
+    )
+    def test_rotation_normalized_to_0_360(self, file_rotation, expected) -> None:
+        content = f"""
+#POINTS
+2
+#ROWS
+2
+#PTSEPARATION
+1
+#RWSEPARATION
+1
+#ROTATION
+{file_rotation}
+#GRID
+1 2 3 4
+"""
+        surf = xtgeo.surface_from_file(gxf_stream(content), fformat="gxf")
+        assert surf.rotation == pytest.approx(expected)
+
+    @pytest.mark.parametrize(
+        "rwseparation, expected_yinc, expected_yflip",
+        [
+            (1.0, 1.0, 1),
+            (20.5, 20.5, 1),
+            (-1.0, 1.0, -1),
+            (-20.5, 20.5, -1),
+        ],
+    )
+    def test_negative_yinc_converted_to_yflip(
+        self, rwseparation, expected_yinc, expected_yflip
+    ) -> None:
+        content = f"""
+#POINTS
+2
+#ROWS
+2
+#PTSEPARATION
+1
+#RWSEPARATION
+{rwseparation}
+#GRID
+1 2 3 4
+"""
+        surf = xtgeo.surface_from_file(gxf_stream(content), fformat="gxf")
+        assert surf.yinc == pytest.approx(expected_yinc)
+        assert surf.yflip == expected_yflip
+
 
 class TestDummyValue:
     """Tests for #DUMMY value handling: masking, edge cases, and propagation."""

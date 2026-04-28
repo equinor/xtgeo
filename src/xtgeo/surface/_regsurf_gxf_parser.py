@@ -174,8 +174,11 @@ class GXFData:
                 f"Expected {(self.rows, self.points)}, but got {values.shape}."
             )
 
-        if self.ptseparation <= 0.0 or self.rwseparation <= 0.0:
-            raise ValueError("xinc and yinc must be positive numbers.")
+        if self.ptseparation <= 0.0:
+            raise ValueError("xinc (ptseparation) must be a positive number.")
+
+        if self.rwseparation == 0.0:
+            raise ValueError("yinc (rwseparation) must be a non-zero number.")
 
         # Ensure undefined nodes are represented by a mask.
         # masked_equal returns a new array, so no separate copy is needed.
