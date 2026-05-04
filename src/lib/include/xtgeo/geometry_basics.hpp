@@ -139,6 +139,75 @@ calculate_normal(const Point &a, const Point &b, const Point &c)
 }  // namespace xtgeo::geometry::point
 
 // =====================================================================================
+// Ray–triangle intersection (Möller–Trumbore), namespace xtgeo::geometry::ray
+// =====================================================================================
+
+namespace ray {
+
+using xyz::Point;
+
+/**
+ * @brief Möller–Trumbore ray–triangle intersection.
+ *
+ * Returns the parameter t such that the intersection point is origin + t * dir,
+ * or NaN if the ray misses the triangle.
+ *
+ * @param origin  Ray origin.
+ * @param dir     Ray direction (not necessarily normalised).
+ * @param v0,v1,v2 Triangle vertices.
+ * @param det_eps Absolute threshold below which the determinant is treated as
+ *                zero (ray parallel to triangle).
+ * @param uv_eps  Tolerance on the barycentric coordinates u, v.
+ */
+inline double
+triangle_t(const Point &origin,
+           const Point &dir,
+           const Point &v0,
+           const Point &v1,
+           const Point &v2,
+           double det_eps = 1e-20,
+           double uv_eps = 1e-9)
+{
+    // Calculate edge vectors
+    const Point edge1 = v1 - v0;
+    const Point edge2 = v2 - v0;
+
+    // Calculate the cross product (pvec = direction x edge2)
+    const Point pvec = dir.cross(edge2);
+
+    // Calculate determinant (dot product of edge1 and pvec)
+    const double det = edge1.dot(pvec);
+
+    // If determinant is near zero, ray lies in plane of triangle or ray is parallel to
+    // plane Use absolute value to handle both left and right-handed coordinate systems
+    if (std::fabs(det) < det_eps)
+        return std::numeric_limits<double>::quiet_NaN();
+
+    const double inv_det = 1.0 / det;
+
+    // Calculate vector from v0 to ray origin
+    const Point tvec = origin - v0;
+
+    // Calculate u parameter and test bounds
+    const double u = tvec.dot(pvec) * inv_det;
+    if (u < -uv_eps || u > 1.0 + uv_eps)
+        return std::numeric_limits<double>::quiet_NaN();
+
+    // Calculate qvec (qvec = tvec × edge1)
+    const Point qvec = tvec.cross(edge1);
+
+    // Calculate v parameter and test bounds
+    const double v = dir.dot(qvec) * inv_det;
+    if (v < -uv_eps || u + v > 1.0 + uv_eps)
+        return std::numeric_limits<double>::quiet_NaN();
+
+    // Calculate t parameter - ray intersects triangle
+    return edge2.dot(qvec) * inv_det;
+}
+
+}  // namespace ray
+
+// =====================================================================================
 // Matrix operations, namespace xtgeo::geometry::matrix
 // =====================================================================================
 
