@@ -20,6 +20,6 @@ x_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
     ier = fread(ptr, size, nmemb, stream);
 
     if (ier != nmemb) {
-        logger_error(LI, FI, FU, "Problem in fread: IER=%d nmemb=%d", ier, nmemb);
+        logger_error(LI, FI, FU, "Problem in fread: IER=%zu nmemb=%zu", ier, nmemb);
     }
 }

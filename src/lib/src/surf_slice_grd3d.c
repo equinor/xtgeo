@@ -75,7 +75,7 @@ surf_slice_grd3d(int mcol,
     if (ier == -2)
         logger_error(LI, FI, FU, "Only UNDEF in input map!");
 
-    for (ic = 0; ic < mcol * mrow; ic++)
+    for (ic = 0; ic < (long)mcol * (long)mrow; ic++)
         p_map_v[ic] = UNDEF;
 
     /* loop grid3d columns innermost, and find approximate area for map

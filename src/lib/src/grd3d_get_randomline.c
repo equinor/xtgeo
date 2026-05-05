@@ -69,7 +69,7 @@ _get_ij_range(int *i1,
     long nmap;
     int itop, jtop, ibas, jbas, ii1, ii2, jj1, jj2;
 
-    nmap = mcol * mrow;
+    nmap = (long)mcol * (long)mrow;
 
     /* get map value for I J from x y */
     int opt = 2; /* nearest sampling */

@@ -14,7 +14,7 @@ x_ib2ijk(long ib, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start)
     long ir, nxy;
     long ix = 1, iy = 1, iz = 1;
 
-    nxy = nx * ny;
+    nxy = (long)nx * (long)ny;
 
     if (ia_start == 0)
         ib = ib + 1; /* offset number to counter number */
@@ -50,7 +50,7 @@ x_ic2ijk(long ic, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start)
     long ir, nzy;
     long ix = 1, iy = 1, iz = 1;
 
-    nzy = nz * ny;
+    nzy = (long)nz * (long)ny;
 
     if (ia_start == 0)
         ic = ic + 1; /* offset number to counter number */

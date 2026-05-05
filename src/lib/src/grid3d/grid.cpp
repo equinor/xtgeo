@@ -195,7 +195,9 @@ std::vector<CellCorners>
 cell_refinement(const CellCorners &cell, const int rx, const int ry, const int rz)
 {
     std::vector<CellCorners> refined_corners;
-    refined_corners.reserve(rx * ry * rz);
+    refined_corners.reserve(static_cast<std::size_t>(rx) *
+                            static_cast<std::size_t>(ry) *
+                            static_cast<std::size_t>(rz));
 
     const double inv_rx = 1.0 / rx;
     const double inv_ry = 1.0 / ry;

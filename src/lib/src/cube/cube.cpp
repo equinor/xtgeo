@@ -214,7 +214,7 @@ cube_stats_along_z(const Cube &cube,
                 min_val = std::min(min_val, static_cast<double>(value));
                 max_val = std::max(max_val, static_cast<double>(value));
                 sum += value;
-                sum_sq += value * value;
+                sum_sq += static_cast<double>(value) * static_cast<double>(value);
                 double abs_value = std::abs(value);
                 sum_abs += abs_value;
                 if (value >= 0) {
