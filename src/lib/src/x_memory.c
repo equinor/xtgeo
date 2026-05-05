@@ -7,11 +7,11 @@
 double **
 x_allocate_2d_double(int n1, int n2)
 {
-    double **ptr_array = calloc(sizeof(double *), n1);
+    double **ptr_array = calloc((size_t)n1, sizeof(double *));
 
-    double *data = calloc(sizeof(double), n1 * n2);
+    double *data = calloc((size_t)n1 * (size_t)n2, sizeof(double));
     for (int i = 0; i < n1; i++) {
-        ptr_array[i] = data + (i * n2);
+        ptr_array[i] = data + ((size_t)i * (size_t)n2);
     }
     return ptr_array;
 }
@@ -31,11 +31,11 @@ x_allocate_2d_bool(int n1, int n2)
 {
     int i;
 
-    bool *data = malloc(sizeof(bool) * n1 * n2);
+    bool *data = malloc(sizeof(bool) * (size_t)n1 * (size_t)n2);
 
-    bool **ptr_array = malloc(sizeof(bool *) * n1);
+    bool **ptr_array = malloc(sizeof(bool *) * (size_t)n1);
     for (i = 0; i < n1; i++) {
-        ptr_array[i] = data + (i * n2);
+        ptr_array[i] = data + ((size_t)i * (size_t)n2);
     }
     return ptr_array;
 }

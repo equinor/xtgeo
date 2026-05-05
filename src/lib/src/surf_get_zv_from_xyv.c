@@ -55,7 +55,7 @@ surf_get_zv_from_xyv(double *xv,
 {
     int i;
 
-    nn = nx * ny;
+    nn = (long)nx * (long)ny;
 
     for (i = 0; i < nxv; i++) {
         zv[i] = surf_get_z_from_xy(xv[i], yv[i], nx, ny, xori, yori, xinc, yinc, yflip,

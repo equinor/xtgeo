@@ -65,10 +65,10 @@ surf_get_dist_values(double xori,
     azi = (azimuth)*PI / 180.0; /* radians, positive */
 
     /* get the coordinates */
-    xv = calloc(nn, sizeof(double));
-    yv = calloc(nn, sizeof(double));
+    xv = calloc((size_t)nx * (size_t)ny, sizeof(double));
+    yv = calloc((size_t)nx * (size_t)ny, sizeof(double));
 
-    nn = nx * ny;
+    nn = (long)nx * (long)ny;
     ier = surf_xy_as_values(xori, xinc, yori, yinc, nx, ny, rot_deg, xv, nn, yv, nn, 0);
 
     if (ier != 0) {
