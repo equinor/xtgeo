@@ -179,15 +179,15 @@ grdcp3d_calc_dy(int nx,
                 metric m)
 
 {
-    if (ncoord != (nx + 1) * (ny + 1) * 6) {
+    if (ncoord != ((long)nx + 1L) * ((long)ny + 1L) * 6L) {
         throw_exception("Incorrect size of coordsv.");
         return EXIT_FAILURE;
     }
-    if (nzcorn != (nx + 1) * (ny + 1) * (nz + 1) * 4) {
+    if (nzcorn != ((long)nx + 1L) * ((long)ny + 1L) * ((long)nz + 1L) * 4L) {
         throw_exception("Incorrect size of zcornsv.");
         return EXIT_FAILURE;
     }
-    if (ndy != nx * ny * nz) {
+    if (ndy != (long)nx * (long)ny * (long)nz) {
         throw_exception("Incorrect size of dx.");
         return EXIT_FAILURE;
     }
@@ -207,7 +207,7 @@ grdcp3d_calc_dy(int nx,
     }
     size_t corner_line1_start = 0;
 
-    size_t num_plane = (nx + 1) * (ny + 1);
+    size_t num_plane = ((size_t)nx + 1U) * ((size_t)ny + 1U);
     for (size_t pair_index = 1, cell_plane_index = 0; pair_index < num_plane;
          pair_index++) {
 
@@ -221,16 +221,16 @@ grdcp3d_calc_dy(int nx,
         // of cells. Those having the edges of that pair to the west and those
         // having them to the east (west/east is x direction). We go through
         // each layer in that pillar/line pair.
-        size_t west_pillar_start = nz * cell_plane_index;
-        size_t corner_line1_end = corner_line1_start + (nz + 1);
-        size_t corner_line2_start = (nz + 1) * pair_index;
+        size_t west_pillar_start = (size_t)nz * cell_plane_index;
+        size_t corner_line1_end = corner_line1_start + ((size_t)nz + 1U);
+        size_t corner_line2_start = ((size_t)nz + 1U) * pair_index;
 
         // Skip the pair of corners going from the end of a row
         // to the start of the next row
-        if (pair_index % (ny + 1) != 0) {
+        if (pair_index % ((size_t)ny + 1U) != 0) {
 
-            char west_in_bounds = pair_index >= ny + 1;
-            char east_in_bounds = pair_index < num_plane - (ny + 1);
+            char west_in_bounds = pair_index >= ((size_t)ny + 1U);
+            char east_in_bounds = pair_index < num_plane - ((size_t)ny + 1U);
 
             for (size_t j = corner_line1_start, k = corner_line2_start,
                         jj = west_pillar_start;
@@ -264,12 +264,12 @@ grdcp3d_calc_dy(int nx,
                     if (l == 0 && west_in_bounds) {
                         // the cell to the west and above the edge
                         if (!at_top) {
-                            dy[jj - (ny * nz)] += vector_len;
+                            dy[jj - ((size_t)ny * (size_t)nz)] += vector_len;
                         }
 
                         // the cell to the west and below the edge
                         if (!at_bottom) {
-                            dy[(jj - (ny * nz)) - 1] += vector_len;
+                            dy[(jj - ((size_t)ny * (size_t)nz)) - 1] += vector_len;
                         }
                     } else if (l == 1 && east_in_bounds) {
                         // the cell to the east and above the edge
@@ -308,15 +308,15 @@ grdcp3d_calc_dx(int nx,
                 metric m)
 
 {
-    if (ncoord != (nx + 1) * (ny + 1) * 6) {
+    if (ncoord != ((long)nx + 1L) * ((long)ny + 1L) * 6L) {
         throw_exception("Incorrect size of coordsv.");
         return EXIT_FAILURE;
     }
-    if (nzcorn != (nx + 1) * (ny + 1) * (nz + 1) * 4) {
+    if (nzcorn != ((long)nx + 1L) * ((long)ny + 1L) * ((long)nz + 1L) * 4L) {
         throw_exception("Incorrect size of zcornsv.");
         return EXIT_FAILURE;
     }
-    if (ndx != nx * ny * nz) {
+    if (ndx != (long)nx * (long)ny * (long)nz) {
         throw_exception("Incorrect size of dx.");
         return EXIT_FAILURE;
     }
@@ -329,11 +329,11 @@ grdcp3d_calc_dx(int nx,
     // their corners and adds it contribution to the average of the cells
     // it is an edge of.
 
-    size_t num_line_pairs = nx * (ny + 1);
+    size_t num_line_pairs = (size_t)nx * ((size_t)ny + 1U);
 
     for (size_t pair_index = 0, cell_plane_index = 0; pair_index < num_line_pairs;
          pair_index++) {
-        if (pair_index % (ny + 1) != 0) {
+        if (pair_index % ((size_t)ny + 1U) != 0) {
             // There is one more line in the y direction then there
             // are cells, so we have to keep two indices.
             cell_plane_index++;
@@ -347,7 +347,8 @@ grdcp3d_calc_dx(int nx,
 
         // The next corner line in x direction (second in the pair)
         PlanarMap pm2;
-        if (pm_from_corner_line(coordsv, pair_index + ny + 1, &pm2) == EXIT_FAILURE) {
+        if (pm_from_corner_line(coordsv, pair_index + ((size_t)ny + 1U), &pm2) ==
+            EXIT_FAILURE) {
             return EXIT_FAILURE;
         }
 
@@ -355,13 +356,14 @@ grdcp3d_calc_dx(int nx,
         // of cells. Those having the edges of that pair to the north and those
         // having them to the south (north/south is y direction). We go through
         // each layer in that pillar/line pair.
-        size_t north_pillar_start = nz * cell_plane_index;
-        size_t corner_line1_start = (nz + 1) * pair_index;
-        size_t corner_line1_end = corner_line1_start + (nz + 1);
-        size_t corner_line2_start = (nz + 1) * (pair_index + (ny + 1));
+        size_t north_pillar_start = (size_t)nz * cell_plane_index;
+        size_t corner_line1_start = ((size_t)nz + 1U) * pair_index;
+        size_t corner_line1_end = corner_line1_start + ((size_t)nz + 1U);
+        size_t corner_line2_start =
+          ((size_t)nz + 1U) * (pair_index + ((size_t)ny + 1U));
 
-        char north_in_bounds = pair_index % (ny + 1) != ny;
-        char south_in_bounds = pair_index % (ny + 1) != 0;
+        char north_in_bounds = pair_index % ((size_t)ny + 1U) != (size_t)ny;
+        char south_in_bounds = pair_index % ((size_t)ny + 1U) != 0;
 
         for (size_t j = corner_line1_start, k = corner_line2_start,
                     jj = north_pillar_start;
@@ -395,12 +397,12 @@ grdcp3d_calc_dx(int nx,
                 if (l == 0 && south_in_bounds) {
                     // the cell to the south and above the edge
                     if (!at_top) {
-                        dx[jj - nz] += vector_len;
+                        dx[jj - (size_t)nz] += vector_len;
                     }
 
                     // the cell to the south and below the edge
                     if (!at_bottom) {
-                        dx[(jj - nz) - 1] += vector_len;
+                        dx[(jj - (size_t)nz) - 1] += vector_len;
                     }
                 } else if (l == 2 && north_in_bounds) {
                     // the cell to the south and above the edge
@@ -432,15 +434,15 @@ grdcp3d_calc_dz(int nx,
                 metric m)
 
 {
-    if (ncoord != (nx + 1) * (ny + 1) * 6) {
+    if (ncoord != ((long)nx + 1L) * ((long)ny + 1L) * 6L) {
         throw_exception("Incorrect size of coordsv.");
         return EXIT_FAILURE;
     }
-    if (nzcorn != (nx + 1) * (ny + 1) * (nz + 1) * 4) {
+    if (nzcorn != ((long)nx + 1L) * ((long)ny + 1L) * ((long)nz + 1L) * 4L) {
         throw_exception("Incorrect size of zcornsv.");
         return EXIT_FAILURE;
     }
-    if (ndx != nx * ny * nz) {
+    if (ndx != (long)nx * (long)ny * (long)nz) {
         throw_exception("Incorrect size of dx.");
         return EXIT_FAILURE;
     }
@@ -453,11 +455,11 @@ grdcp3d_calc_dz(int nx,
     // z direction, and adds the contribution of length average to
     // corresponding cells.
 
-    size_t num_corner_lines = (nx + 1) * (ny + 1);
+    size_t num_corner_lines = ((size_t)nx + 1U) * ((size_t)ny + 1U);
 
     for (size_t pair_index = 0, cell_plane_index = 0; pair_index < num_corner_lines;
          pair_index++) {
-        if (pair_index % (ny + 1) != 0) {
+        if (pair_index % ((size_t)ny + 1U) != 0) {
             // There is one more line in the y direction then there
             // are cells, so we have to keep two indecies.
             cell_plane_index++;
@@ -468,14 +470,14 @@ grdcp3d_calc_dz(int nx,
             return EXIT_FAILURE;
         }
 
-        size_t north_east_pillar_start = nz * cell_plane_index;
-        size_t corner_line_start = (nz + 1) * pair_index;
-        size_t corner_line_end = corner_line_start + (nz + 1);
+        size_t north_east_pillar_start = (size_t)nz * cell_plane_index;
+        size_t corner_line_start = ((size_t)nz + 1U) * pair_index;
+        size_t corner_line_end = corner_line_start + ((size_t)nz + 1U);
 
-        char north_in_bounds = pair_index % (ny + 1) != ny;
-        char south_in_bounds = pair_index % (ny + 1) != 0;
-        char west_in_bounds = pair_index >= ny + 1;
-        char east_in_bounds = pair_index < num_corner_lines - (ny + 1);
+        char north_in_bounds = pair_index % ((size_t)ny + 1U) != (size_t)ny;
+        char south_in_bounds = pair_index % ((size_t)ny + 1U) != 0;
+        char west_in_bounds = pair_index >= ((size_t)ny + 1U);
+        char east_in_bounds = pair_index < num_corner_lines - ((size_t)ny + 1U);
 
         for (size_t j = corner_line_start, jj = north_east_pillar_start;
              j < corner_line_end - 1; j += 1, jj += 1) {
@@ -498,11 +500,11 @@ grdcp3d_calc_dz(int nx,
                 double vector_len = 0.25 * m(x1, y1, z1, x2, y2, z2);
 
                 if (l == 0 && south_in_bounds && west_in_bounds) {
-                    dx[jj - nz * (ny + 1)] += vector_len;
+                    dx[jj - ((size_t)nz * ((size_t)ny + 1U))] += vector_len;
                 } else if (l == 1 && south_in_bounds && east_in_bounds) {
-                    dx[jj - nz] += vector_len;
+                    dx[jj - (size_t)nz] += vector_len;
                 } else if (l == 2 && north_in_bounds && west_in_bounds) {
-                    dx[jj - nz * ny] += vector_len;
+                    dx[jj - ((size_t)nz * (size_t)ny)] += vector_len;
                 } else if (l == 3 && north_in_bounds && east_in_bounds) {
                     dx[jj] += vector_len;
                 }

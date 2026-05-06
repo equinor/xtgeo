@@ -192,7 +192,10 @@ get_cell_volumes(const Grid &grd,
  */
 
 std::vector<CellCorners>
-cell_refinement(const CellCorners &cell, const int rx, const int ry, const int rz)
+cell_refinement(const CellCorners &cell,
+                const size_t rx,
+                const size_t ry,
+                const size_t rz)
 {
     std::vector<CellCorners> refined_corners;
     refined_corners.reserve(rx * ry * rz);
@@ -202,7 +205,7 @@ cell_refinement(const CellCorners &cell, const int rx, const int ry, const int r
     const double inv_rz = 1.0 / rz;
 
     // Loop through all refined cells
-    for (int ix = 0; ix < rx; ix++) {
+    for (size_t ix = 0; ix < rx; ix++) {
         const double tx1 = ix * inv_rx;
         const double tx2 = (ix + 1) * inv_rx;
         const double dtx = inv_rx;
@@ -223,7 +226,7 @@ cell_refinement(const CellCorners &cell, const int rx, const int ry, const int r
         const xyz::Point u_n1 = cell.upper_nw + (cell.upper_ne - cell.upper_nw) * tx1;
         const xyz::Point u_n2 = u_n1 + (cell.upper_ne - cell.upper_nw) * dtx;
 
-        for (int iy = 0; iy < ry; iy++) {
+        for (size_t iy = 0; iy < ry; iy++) {
             const double ty1 = iy * inv_ry;
             const double ty2 = (iy + 1) * inv_ry;
 

@@ -55,7 +55,7 @@ surf_xy_as_values(double xori,
     double angle, xdist, ydist, dist, beta, gamma, dxrot = 0.0, dyrot = 0.0;
     int i, j, ib, yflip;
 
-    if (nx * ny != nn1 || nn1 != nn2) {
+    if ((long)nx * (long)ny != nn1 || nn1 != nn2) {
         logger_error(LI, FI, FU, "Error? in length nn1 vs nx*ny or nn1 vs nn2 in %s",
                      FU);
     }

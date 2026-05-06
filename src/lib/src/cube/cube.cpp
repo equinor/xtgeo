@@ -205,14 +205,14 @@ cube_stats_along_z(const Cube &cube,
                 if (depth < upper_z || depth > lower_z) {
                     continue;
                 }
-                float value = refined_trace[k];
+                double value = refined_trace[k];
                 if (std::isnan(value)) {
                     continue;
                 }
                 n_items++;
 
-                min_val = std::min(min_val, static_cast<double>(value));
-                max_val = std::max(max_val, static_cast<double>(value));
+                min_val = std::min(min_val, value);
+                max_val = std::max(max_val, value);
                 sum += value;
                 sum_sq += value * value;
                 double abs_value = std::abs(value);
@@ -220,11 +220,11 @@ cube_stats_along_z(const Cube &cube,
                 if (value >= 0) {
                     sum_pos += value;
                     n_items_pos++;
-                    max_pos = std::max(max_pos, static_cast<double>(value));
+                    max_pos = std::max(max_pos, value);
                 } else {
                     sum_neg += value;
                     n_items_neg++;
-                    max_neg = std::min(max_neg, static_cast<double>(value));
+                    max_neg = std::min(max_neg, value);
                 }
                 max_abs = std::max(max_abs, abs_value);
 

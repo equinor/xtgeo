@@ -31,7 +31,7 @@ surf_zminmax(int nx, int ny, double *p_map_v, double *zmin, double *zmax)
 {
     /* locals */
 
-    long mxy = nx * ny;
+    long mxy = (long)nx * (long)ny;
     long ic;
     int found = 0;
 
