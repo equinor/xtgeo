@@ -207,3 +207,7 @@ exclude-newer = "1 week"
 
 [tool.uv.exclude-newer-package]
 "xtgeoviz" = false
+"resfo" = false
+"roffio" = false
+"segyio" = false
+
