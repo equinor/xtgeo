@@ -200,3 +200,10 @@ exclude_also = [
     "logger\\.error\\(",
     "logger\\.critical\\(",
 ]
+
+[tool.uv]
+exclude-newer = "1 week"
+# Exclude specific package(s) we maintain for quick iteration
+
+[tool.uv.exclude-newer-package]
+"xtgeoviz" = false
