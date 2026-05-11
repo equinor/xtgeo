@@ -948,13 +948,11 @@ def test_tsurfdata_immutability_cannot_modify_header_attribute() -> None:
         data.header = new_header  # type: ignore[misc]
 
 
-def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None:
+def test_tsurfdata_immutability_vertices_array_content_cannot_be_modified() -> None:
     """
-    Test that while the vertices attribute is frozen, the numpy array content can
-    still be modified.
-
-    Note: This is a known limitation of frozen dataclasses with mutable objects.
-    The attribute reference is frozen, but the array content is not.
+    Test that the numpy array content of vertices is also immutable
+    (not just the attribute reference). TSurfData locks its arrays in
+    __post_init__ so the dataclass is fully immutable.
     """
 
     header = TSurfHeader(name="TestSurface")
@@ -970,15 +968,50 @@ def test_tsurfdata_immutability_vertices_array_content_can_be_modified() -> None
         triangles=triangles,
     )
 
-    # This should succeed - array content can be modified
-    original_value = data.vertices[0, 0]
-    data.vertices[0, 0] = 999.0
-    assert data.vertices[0, 0] == 999.0
-    assert data.vertices[0, 0] != original_value
+    assert data.vertices.flags.writeable is False
+    assert data.triangles.flags.writeable is False
+
+    with pytest.raises(ValueError, match="read-only"):
+        data.vertices[0, 0] = 999.0
+    with pytest.raises(ValueError, match="read-only"):
+        data.triangles[0, 0] = 999
 
 
-def test_tsurfdata_get_cells_return_correct_array() -> None:
-    """Test that get_cells returns the correct numpy array."""
+def test_tsurfdata_raises_for_invalid_vertices_shape() -> None:
+    """Test that vertices must be a 2D array with three columns."""
+    header = TSurfHeader(name="TestSurface")
+    vertices = np.array([0.0, 0.0, 0.0], dtype=np.float64)
+    triangles = np.array([[1, 2, 3]], dtype=np.int64)
+
+    with pytest.raises(ValueError, match=r"vertices must have shape \(N, 3\)"):
+        TSurfData(
+            header=header,
+            coord_sys=None,
+            vertices=vertices,
+            triangles=triangles,
+        )
+
+
+def test_tsurfdata_raises_for_invalid_triangles_shape() -> None:
+    """Test that triangles must be a 2D array with three columns."""
+    header = TSurfHeader(name="TestSurface")
+    vertices = np.array(
+        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+        dtype=np.float64,
+    )
+    triangles = np.array([1, 2, 3], dtype=np.int64)
+
+    with pytest.raises(ValueError, match=r"triangles must have shape \(M, 3\)"):
+        TSurfData(
+            header=header,
+            coord_sys=None,
+            vertices=vertices,
+            triangles=triangles,
+        )
+
+
+def test_tsurfdata_triangles_return_correct_array() -> None:
+    """Test that the triangles attribute holds the correct numpy array."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
@@ -993,13 +1026,13 @@ def test_tsurfdata_get_cells_return_correct_array() -> None:
         triangles=triangles,
     )
 
-    result = data.get_cells
+    result = data.triangles
     np.testing.assert_array_equal(result, triangles)
     assert result.dtype == np.int64
 
 
-def test_tsurfdata_get_cells_shape() -> None:
-    """Test that get_cells returns array with correct shape (m x 3)."""
+def test_tsurfdata_triangles_shape() -> None:
+    """Test that triangles has the correct shape (m x 3)."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
         [
@@ -1019,21 +1052,20 @@ def test_tsurfdata_get_cells_shape() -> None:
         triangles=triangles,
     )
 
-    assert data.get_cells.shape == (2, 3)
+    assert data.triangles.shape == (2, 3)
 
 
-def test_tsurfdata_get_cells_from_file(complete_tsurf_file: str) -> None:
-    """Test that get_cells returns correct data when loaded from file."""
+def test_tsurfdata_triangles_from_file(complete_tsurf_file: str) -> None:
+    """Test that triangles holds correct data when loaded from file."""
     data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
 
     expected = np.array([[1, 2, 3]], dtype=np.int64)
 
-    np.testing.assert_array_equal(data.get_cells, expected)
-    assert data.get_cells is data.triangles
+    np.testing.assert_array_equal(data.triangles, expected)
 
 
-def test_tsurfdata_get_vertices_correct_values() -> None:
-    """Test that get_vertices returns the correct coordinate values."""
+def test_tsurfdata_vertices_correct_values() -> None:
+    """Test that vertices holds the correct coordinate values."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
         [[10.5, 20.3, 30.1], [40.0, 50.0, 60.0], [70.7, 80.8, 90.9]],
@@ -1048,11 +1080,11 @@ def test_tsurfdata_get_vertices_correct_values() -> None:
         triangles=triangles,
     )
 
-    np.testing.assert_array_equal(data.get_vertices, vertices)
+    np.testing.assert_array_equal(data.vertices, vertices)
 
 
-def test_tsurfdata_get_vertices_shape() -> None:
-    """Test that get_vertices returns array with correct shape (n x 3)."""
+def test_tsurfdata_vertices_shape() -> None:
+    """Test that vertices has the correct shape (n x 3)."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
         [
@@ -1072,11 +1104,11 @@ def test_tsurfdata_get_vertices_shape() -> None:
         triangles=triangles,
     )
 
-    assert data.get_vertices.shape == (4, 3)
+    assert data.vertices.shape == (4, 3)
 
 
-def test_tsurfdata_get_vertices_dtype() -> None:
-    """Test that get_vertices returns a float64 array."""
+def test_tsurfdata_vertices_dtype() -> None:
+    """Test that vertices is a float64 array."""
     header = TSurfHeader(name="TestSurface")
     vertices = np.array(
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
@@ -1091,19 +1123,18 @@ def test_tsurfdata_get_vertices_dtype() -> None:
         triangles=triangles,
     )
 
-    assert data.get_vertices.dtype == np.float64
+    assert data.vertices.dtype == np.float64
 
 
-def test_tsurfdata_get_vertices_from_file(complete_tsurf_file: str) -> None:
-    """Test that get_vertices returns correct data when loaded from file."""
+def test_tsurfdata_vertices_from_file(complete_tsurf_file: str) -> None:
+    """Test that vertices holds correct data when loaded from file."""
     data = TSurfData.from_file(tsurf_stream(complete_tsurf_file))
 
     expected = np.array(
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], dtype=np.float64
     )
 
-    np.testing.assert_array_equal(data.get_vertices, expected)
-    assert data.get_vertices is data.vertices
+    np.testing.assert_array_equal(data.vertices, expected)
 
 
 def test_tsurf_data_roundtrip_write_to_file(

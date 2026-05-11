@@ -1,11 +1,21 @@
+"""
+Module for reading and writing the TSurf file format.
+Currently only supports a subset of the TSurf format, namely sections with
+data for a triangulated surface.
+"""
+
 import warnings
+from collections.abc import Iterable, Iterator
 from dataclasses import asdict, dataclass
-from typing import Any, Generator, NotRequired, TextIO, TypedDict, TypeVar, cast
+from typing import Any, NotRequired, TypedDict, TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self
 
+# PEP 728 introduces the `@closed` decorator for TypedDicts to forbid extra keys.
+# It is not yet available in the standard `typing` module on all supported Python
+# versions, so fall back to a no-op decorator when the import fails.
 try:
     from typing import closed  # type: ignore[attr-defined]
 except ImportError:
@@ -17,6 +27,12 @@ except ImportError:
 
 from xtgeo.common.types import FileLike
 from xtgeo.io._file import FileFormat, FileWrapper
+from xtgeo.io._tokens import (
+    TokenizedLine,
+    iter_noncomment_lines,
+    line_matches,
+    strip_surrounding_delimiters,
+)
 
 
 @closed
@@ -311,6 +327,41 @@ class TSurfData:
     vertices: npt.NDArray[np.float64]
     triangles: npt.NDArray[np.int_]
 
+    def __post_init__(self) -> None:
+        # Need at least 3 vertices to form a triangle
+        if self.vertices.size == 0 or self.vertices.shape[0] < 3:
+            raise ValueError("Less than 3 vertices found in TSurf triangulation data.")
+
+        # Need at least one triangle to form a surface
+        if self.triangles.size == 0:
+            raise ValueError("No triangles found in TSurf triangulation data.")
+
+        if self.vertices.ndim != 2 or self.vertices.shape[1] != 3:
+            raise ValueError(
+                f"vertices must have shape (N, 3), got {self.vertices.shape}"
+            )
+        if self.triangles.ndim != 2 or self.triangles.shape[1] != 3:
+            raise ValueError(
+                f"triangles must have shape (M, 3), got {self.triangles.shape}"
+            )
+
+        # Triangle indices must be 1-based and within [1, num_vertices]
+        if np.any(self.triangles < 1):
+            raise ValueError(
+                "Triangle vertex indices must be >= 1 in triangulation data."
+            )
+        if np.any(self.triangles > self.vertices.shape[0]):
+            raise ValueError(
+                "Triangle vertex indices must be <= number of vertices in "
+                "triangulation data."
+            )
+
+        # Lock the arrays so the dataclass is truly immutable (not just at the
+        # attribute level). Frozen dataclasses normally only prevent rebinding
+        # of attributes; the underlying numpy buffers are still writable.
+        self.vertices.flags.writeable = False
+        self.triangles.flags.writeable = False
+
     @property
     def num_vertices(self) -> int:
         """Return the number of vertices in the triangulated surface."""
@@ -321,85 +372,14 @@ class TSurfData:
         """Return the number of triangles in the triangulated surface."""
         return self.triangles.shape[0]
 
-    @property
-    def get_vertices(self) -> npt.NDArray[np.float64]:
-        """Return the vertices of the triangulated surface."""
-        return self.vertices
-
-    @property
-    def get_cells(self) -> npt.NDArray[np.int_]:
-        """Return the triangles of the triangulated surface."""
-        return self.triangles
-
     @staticmethod
-    def _read_line(
-        stream: TextIO,
-    ) -> Generator[list[str], None, None]:
-        """
-        Iterate over lines from a TextIO, yielding lists of strings.
-        Filters out empty lines and comment lines.
-        """
-        for line in stream:
-            split_line = line.strip().split()
-
-            if not split_line:
-                continue
-
-            # Skip comments
-            if split_line[0].startswith("#"):
-                continue
-
-            yield split_line
-
-    @staticmethod
-    def _is_header_section_first_line(line: list[str]) -> bool:
-        """Check if the line is "HEADER {", to indicate the start of a HEADER section.
-
-        Args:
-            line: Line tokens from the file
-
-        Returns:
-            bool: True if the line indicates the start of a HEADER section,
-                False otherwise
-        """
-
-        return len(line) == 2 and line[0] == "HEADER" and line[1] == "{"
-
-    @staticmethod
-    def _is_coordinate_system_section_first_line(line: list[str]) -> bool:
-        """Check if the line is "GOCAD_ORIGINAL_COORDINATE_SYSTEM",
-        which indicates the start of a COORDINATE_SYSTEM section.
-
-        Args:
-            line: Line tokens from the file
-
-        Returns:
-            bool: True if the line indicates the start of a COORDINATE_SYSTEM section,
-                False otherwise
-        """
-
-        return len(line) == 1 and line[0] == "GOCAD_ORIGINAL_COORDINATE_SYSTEM"
-
-    @staticmethod
-    def _is_tface_section_first_line(line: list[str]) -> bool:
-        """Check if the line is "TFACE", which indicates the start of a TFACE section.
-
-        Args:
-            line: Line tokens from the file
-
-        Returns:
-            bool: True if the line indicates the start of a TFACE section,
-                False otherwise
-        """
-
-        return len(line) == 1 and line[0] == "TFACE"
-
-    @staticmethod
-    def _parse_header_section(stream: TextIO, fileref_errmsg: str) -> str:
+    def _parse_header_section(
+        lines: Iterator[TokenizedLine], fileref_errmsg: str
+    ) -> str:
         """Parse the HEADER section and extract the surface name.
 
         Args:
-            stream: Text stream to read from
+            lines: Tokenized text lines to read from
             fileref_errmsg: Error context for meaningful error messages
 
         Returns:
@@ -423,7 +403,7 @@ class TSurfData:
         # Is '}' present to end the HEADER section?
         end_is_present = False
 
-        for line in TSurfData._read_line(stream):
+        for line in lines:
             # Assume it can be either ['name:F5'] or ['name:', 'F5']
             # Assume the name itself may be split into several strings:
             # e.g. 'name:Massive listric fault' -> ['Massive', 'listric', 'fault']
@@ -432,7 +412,7 @@ class TSurfData:
                 # Extract name after the colon and join with remaining parts
                 tmp = [line[0][5:]] + line[1:]
                 header_name = [item.strip() for item in tmp if item.strip() != ""]
-            elif line[0] == "}":
+            elif line_matches(line, "}"):
                 end_is_present = True
                 break
             else:
@@ -447,12 +427,12 @@ class TSurfData:
 
     @staticmethod
     def _parse_coordinate_system_section(
-        stream: TextIO, fileref_errmsg: str
+        lines: Iterator[TokenizedLine], fileref_errmsg: str
     ) -> TSurfCoordinateSystemDict:
         """Parse the coordinate system section.
 
         Args:
-            stream: Text stream to read from
+            lines: Tokenized text lines to read from
             fileref_errmsg: Error context for meaningful error messages
 
         Returns:
@@ -487,19 +467,23 @@ class TSurfData:
         end_is_present = False
 
         # Parse coordinate system attributes
-        for line in TSurfData._read_line(stream):
+        for line in lines:
             if line[0] == "NAME":
                 coord_sys_data["name"] = " ".join(line[1:])
             elif line[0] == "AXIS_NAME":
                 # Extract axis names and remove quotes
-                coord_sys_data["axis_name"] = tuple(y.strip('"') for y in line[1:4])
+                coord_sys_data["axis_name"] = tuple(
+                    strip_surrounding_delimiters(y, '"') for y in line[1:4]
+                )
             elif line[0] == "AXIS_UNIT":
                 # Extract axis units and remove quotes
-                coord_sys_data["axis_unit"] = tuple(y.strip('"') for y in line[1:4])
+                coord_sys_data["axis_unit"] = tuple(
+                    strip_surrounding_delimiters(y, '"') for y in line[1:4]
+                )
             elif line[0] == "ZPOSITIVE":
                 # Extract zpositive value
                 coord_sys_data["zpositive"] = line[1]
-            elif line[0] == "END_ORIGINAL_COORDINATE_SYSTEM":
+            elif line_matches(line, "END_ORIGINAL_COORDINATE_SYSTEM"):
                 end_is_present = True
                 break
             else:
@@ -523,13 +507,13 @@ class TSurfData:
 
     @staticmethod
     def _parse_tface_section(
-        stream: TextIO, fileref_errmsg: str
+        lines: Iterator[TokenizedLine], fileref_errmsg: str
     ) -> tuple[list[list[float]], list[list[int]]]:
         """Parse the TFACE section with data defining a triangulated surface
         (vertices and triangles).
 
         Args:
-            stream: Text stream to read from
+            lines: Tokenized text lines to read from
             fileref_errmsg: Error context for meaningful error messages
 
         Returns:
@@ -570,7 +554,7 @@ class TSurfData:
         # Is 'END' statement present to end the TFACE section?
         end_is_present = False
 
-        for line in TSurfData._read_line(stream):
+        for line in lines:
             if line[0] == "VRTX":
                 if len(line) != 6 or line[1] != str(vrtx_no + 1) or line[5] != "CNXYZ":
                     err_msg_vrtx += f"Failing line: '{line}'"
@@ -615,38 +599,6 @@ class TSurfData:
 
         return vertices, triangles
 
-    @staticmethod
-    def _validate_triangulation_data(
-        vertices: np.ndarray, triangles: np.ndarray
-    ) -> None:
-        """Basic validation of the triangulation data in the TSurfData object.
-
-        Args:
-            vertices: Array of vertex coordinates
-            triangles: Array of triangle vertex indices
-        """
-
-        # Need at least 3 vertices to form a triangle
-        if vertices.shape[0] < 3:
-            raise ValueError("Less than 3 vertices found in TSurf triangulation data.")
-
-        # Need at least one triangle to form a surface
-        if triangles.size == 0:
-            raise ValueError("No triangles found in TSurf triangulation data.")
-
-        # Check for valid vertex indices in triangles
-        # Must be in the closed range [1, number of vertices]
-        if np.any(triangles < 1):
-            raise ValueError(
-                "Triangle vertex indices must be >= 1 in triangulation data."
-            )
-
-        if np.any(triangles > len(vertices)):
-            raise ValueError(
-                "Triangle vertex indices must be <= number of vertices in "
-                "triangulation data."
-            )
-
     @classmethod
     def _create_tsurf_data(
         cls,
@@ -690,18 +642,19 @@ class TSurfData:
         )
 
     @classmethod
-    def _parse_tsurf(cls, stream: TextIO, fileref_errmsg: str) -> Self:
+    def _parse_tsurf(cls, raw_lines: Iterable[str], fileref_errmsg: str) -> Self:
         """
-        Parse a TSurf file from a file stream.
+        Parse a TSurf file from raw text lines and create a TSurfData object.
 
         Args:
-            stream: A stream of the TSurf file.
+            raw_lines: Text lines from the TSurf file.
             fileref_errmsg: Error context for meaningful error messages
 
         Note:
         - The TSurf format has many more sections and attributes than
             those currently captured in this parser
-        - The first line must be the TSurf signature line: 'GOCAD TSurf 1'
+        - The first line is skipped, already checked to be
+            the TSurf signature line: 'GOCAD TSurf 1'
         - While we are not aware of whether the ordering of the other
             sections (HEADER, coordinate system, TFACE) is important,
             the ordering is not strictly enforced in this parser
@@ -718,14 +671,17 @@ class TSurfData:
         coord_sys_section_completed = False
         tface_section_completed = False
 
+        token_lines = iter_noncomment_lines(raw_lines, ["#"])
+
         # Skip the already verified TSurf signature line
-        next(TSurfData._read_line(stream))
+        next(token_lines)
 
         # Loop over sections, each section starts with a specific keyword.
         # For each section there is a parsing function
         # which reads lines until the end of the section.
-        for line in TSurfData._read_line(stream):
-            if TSurfData._is_header_section_first_line(line):
+        for line in token_lines:
+            # HEADER section (mandatory)
+            if line_matches(line, "HEADER {"):
                 # Ensure only one section of this type
                 if header_section_completed:
                     raise ValueError(
@@ -735,12 +691,15 @@ class TSurfData:
                     )
                 header_section_completed = True
 
-                header_name = TSurfData._parse_header_section(stream, fileref_errmsg)
+                header_name = TSurfData._parse_header_section(
+                    token_lines, fileref_errmsg
+                )
                 header_dict = TSurfHeaderDict({"name": header_name})
                 TSurfHeader.validate(header_dict, fileref_errmsg)
                 continue
 
-            if TSurfData._is_coordinate_system_section_first_line(line):
+            # COORDINATE_SYSTEM section (optional)
+            if line_matches(line, "GOCAD_ORIGINAL_COORDINATE_SYSTEM"):
                 # Ensure only one section of this type
                 if coord_sys_section_completed:
                     raise ValueError(
@@ -751,11 +710,12 @@ class TSurfData:
                 coord_sys_section_completed = True
 
                 coord_sys_data = TSurfData._parse_coordinate_system_section(
-                    stream, fileref_errmsg
+                    token_lines, fileref_errmsg
                 )
                 continue
 
-            if TSurfData._is_tface_section_first_line(line):
+            # TFACE section with triangulated surface data (mandatory)
+            if line_matches(line, "TFACE"):
                 # Ensure only one section of this type
                 if tface_section_completed:
                     raise ValueError(
@@ -766,7 +726,7 @@ class TSurfData:
                 tface_section_completed = True
 
                 vertices, triangles = TSurfData._parse_tface_section(
-                    stream, fileref_errmsg
+                    token_lines, fileref_errmsg
                 )
                 continue
 
@@ -797,11 +757,7 @@ class TSurfData:
                 f"\nIn file {fileref_errmsg}:\nMissing mandatory 'TFACE' section.\n"
             )
 
-        tsurf_data = cls._create_tsurf_data(
-            header_name, coord_sys_data, vertices, triangles
-        )
-        cls._validate_triangulation_data(tsurf_data.vertices, tsurf_data.triangles)
-        return tsurf_data
+        return cls._create_tsurf_data(header_name, coord_sys_data, vertices, triangles)
 
     def to_dict(self) -> TSurfDict:
         """
@@ -849,16 +805,11 @@ class TSurfData:
                 zpositive=coord_sys_dict["zpositive"],
             )
 
-        vertices_array = np.array(data["vertices"], dtype=np.float64)
-        triangles_array = np.array(data["triangles"], dtype=np.int64)
-
-        cls._validate_triangulation_data(vertices_array, triangles_array)
-
         return cls(
             header=header,
             coord_sys=coord_sys,
-            vertices=vertices_array,
-            triangles=triangles_array,
+            vertices=np.array(data["vertices"], dtype=np.float64),
+            triangles=np.array(data["triangles"], dtype=np.int64),
         )
 
     @classmethod

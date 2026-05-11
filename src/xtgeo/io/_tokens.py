@@ -1,3 +1,14 @@
+"""
+Utility functions for parsing text-based (geoscience) data files,
+typically containing text and numbers in structured formats.
+- lazy iteration through lines from text file
+- tokenizing text lines into lists of tokens (strings)
+- filtering out comment lines
+- identification of format-specific file sections (header, etc)
+- verification of base-10 numbers (integers, decimals and scientific notation)
+- verification of finite numbers (base-10 numbers, excluding infinities and NaNs)
+"""
+
 from __future__ import annotations
 
 import math
@@ -55,6 +66,22 @@ def is_comment(line: Sequence[Token], comment_prefixes: Sequence[str]) -> bool:
     if not line:
         return False
     return any(line[0].startswith(prefix) for prefix in comment_prefixes)
+
+
+def line_matches(line: Sequence[Token], reference: str) -> bool:
+    """
+    Check if a tokenized line matches a reference string token-for-token.
+    - Case-sensitive
+    - Ignores leading/trailing whitespace and multiple spaces between tokens
+    """
+    if not line or not reference:
+        return False
+
+    tokens_to_match = reference.split()
+    if len(line) != len(tokens_to_match):
+        return False
+
+    return all(token == ref_token for token, ref_token in zip(line, tokens_to_match))
 
 
 def contains_single_token(line: Sequence[Token]) -> bool:
