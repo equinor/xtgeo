@@ -152,6 +152,22 @@ def test_xtgeo_codes(param, expected_codes):
     assert param.xtgeo_codes() == expected_codes
 
 
+def test_xtgeo_codes_handles_scalar_code_values():
+    # Some ROFF writers emit a scalar instead of an array when there is a
+    # single code; xtgeo_codes() must not raise TypeError: 'int32' is not
+    # iterable. See issue #1623.
+    param = RoffParameter(
+        1,
+        1,
+        1,
+        "",
+        np.array([1], dtype=np.int32),
+        code_names="only_facies",
+        code_values=np.int32(1),
+    )
+    assert param.xtgeo_codes() == {1: "only_facies"}
+
+
 def test_to_file(tmp_path):
     roff_param = RoffParameter(1, 1, 2, "", b"\x01\xff")
     roff_param.to_file(tmp_path / "param.roff")
