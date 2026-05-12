@@ -153,9 +153,6 @@ def test_xtgeo_codes(param, expected_codes):
 
 
 def test_xtgeo_codes_handles_scalar_code_values():
-    # Some ROFF writers emit a scalar instead of an array when there is a
-    # single code; xtgeo_codes() must not raise TypeError: 'int32' is not
-    # iterable. See issue #1623.
     param = RoffParameter(
         1,
         1,

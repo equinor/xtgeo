@@ -51,9 +51,6 @@ class RoffParameter:
     code_values: np.ndarray | None = None
 
     def __post_init__(self) -> None:
-        # ROFF files written by some tools (e.g. RMS via rmsapi) emit a scalar
-        # rather than an array when there is only a single code. Normalize so
-        # downstream zip/iteration always sees an iterable.
         if self.code_values is not None and np.ndim(self.code_values) == 0:
             self.code_values = np.atleast_1d(self.code_values)
         if self.code_names is not None and isinstance(self.code_names, str):
