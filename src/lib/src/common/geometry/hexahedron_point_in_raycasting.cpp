@@ -41,55 +41,11 @@ ray_intersects_triangle(const Point &origin,
                         const Point &v1,
                         const Point &v2)
 {
-    const double epsilon = 1e-5;
-
-    // Calculate edge vectors
-    Point edge1 = { v1.x() - v0.x(), v1.y() - v0.y(), v1.z() - v0.z() };
-    Point edge2 = { v2.x() - v0.x(), v2.y() - v0.y(), v2.z() - v0.z() };
-
-    // Calculate the cross product (pvec = direction × edge2)
-    Point pvec = { direction.y() * edge2.z() - direction.z() * edge2.y(),
-                   direction.z() * edge2.x() - direction.x() * edge2.z(),
-                   direction.x() * edge2.y() - direction.y() * edge2.x() };
-
-    // Calculate determinant (dot product of edge1 and pvec)
-    double det = edge1.x() * pvec.x() + edge1.y() * pvec.y() + edge1.z() * pvec.z();
-
-    // If determinant is near zero, ray lies in plane of triangle or ray is parallel to
-    // plane Use absolute value to handle both left and right-handed coordinate systems
-    if (fabs(det) < epsilon)
-        return false;
-
-    double inv_det = 1.0 / det;
-
-    // Calculate vector from v0 to ray origin
-    Point tvec = { origin.x() - v0.x(), origin.y() - v0.y(), origin.z() - v0.z() };
-
-    // Calculate u parameter and test bounds
-    double u =
-      (tvec.x() * pvec.x() + tvec.y() * pvec.y() + tvec.z() * pvec.z()) * inv_det;
-    if (u < 0.0 || u > 1.0)
-        return false;
-
-    // Calculate qvec (qvec = tvec × edge1)
-    Point qvec = { tvec.y() * edge1.z() - tvec.z() * edge1.y(),
-                   tvec.z() * edge1.x() - tvec.x() * edge1.z(),
-                   tvec.x() * edge1.y() - tvec.y() * edge1.x() };
-
-    // Calculate v parameter and test bounds
-    double v =
-      (direction.x() * qvec.x() + direction.y() * qvec.y() + direction.z() * qvec.z()) *
-      inv_det;
-    if (v < 0.0 || u + v > 1.0)
-        return false;
-
-    // Calculate t parameter - ray intersects triangle
-    double t =
-      (edge2.x() * qvec.x() + edge2.y() * qvec.y() + edge2.z() * qvec.z()) * inv_det;
-
-    // Only consider intersections in front of the ray
-    return (t > epsilon);
-}  // ray_intersects_triangle
+    constexpr double det_eps = 1e-5;
+    constexpr double t_eps = 1e-5;
+    double t = ray::triangle_t(origin, direction, v0, v1, v2, det_eps, /*uv_eps=*/0.0);
+    return !std::isnan(t) && t > t_eps;
+}
 
 /**
  * @brief Using ray casting method to determine if a point is inside a hexahedron.

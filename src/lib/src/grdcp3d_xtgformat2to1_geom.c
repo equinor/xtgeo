@@ -51,7 +51,7 @@ grd3cp3d_xtgformat2to1_geom(long ncol,
     long nnrow = nrow + 1;
     long nnlay = nlay + 1;
 
-    logger_info(LI, FI, FU, "Dimensions: %d %d %d", ncol, nrow, nlay);
+    logger_info(LI, FI, FU, "Dimensions: %ld %ld %ld", ncol, nrow, nlay);
     logger_info(LI, FI, FU, "Transforming grid coordsv -> XTG internal format 2 to 1");
     long ib = 0;
     long j;

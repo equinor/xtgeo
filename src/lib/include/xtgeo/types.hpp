@@ -8,6 +8,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <xtgeo/logging.hpp>
@@ -364,6 +365,32 @@ struct CellCorners
                  upper_ne.y(), upper_ne.z(), lower_sw.x(), lower_sw.y(), lower_sw.z(),
                  lower_se.x(), lower_se.y(), lower_se.z(), lower_nw.x(), lower_nw.y(),
                  lower_nw.z(), lower_ne.x(), lower_ne.y(), lower_ne.z() };
+    }
+
+    // Access a corner by index (0-7): usw, use, unw, une, lsw, lse, lnw, lne
+    const xyz::Point &corner(int i) const
+    {
+        assert(0 <= i && i < 8);
+        switch (i) {
+            case 0:
+                return upper_sw;
+            case 1:
+                return upper_se;
+            case 2:
+                return upper_nw;
+            case 3:
+                return upper_ne;
+            case 4:
+                return lower_sw;
+            case 5:
+                return lower_se;
+            case 6:
+                return lower_nw;
+            case 7:
+                return lower_ne;
+            default:
+                return lower_ne;
+        }
     }
 
     // convert CellCorners struct to a std::array<double, 24> array

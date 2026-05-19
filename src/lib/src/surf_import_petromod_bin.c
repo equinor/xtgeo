@@ -47,7 +47,7 @@ surf_import_petromod_bin(FILE *fc,
 
     logger_info(LI, FI, FU, "Read PETROMOD binary map file: %s", FU);
 
-    if (mx * my != nsurf) {
+    if ((long)mx * (long)my != nsurf) {
         memset(surfzv, 0, nsurf * sizeof(double));
         dsc[0] = '\0';
         throw_exception("mx * my != nsurf, bug in surf_import_petromod_bin");

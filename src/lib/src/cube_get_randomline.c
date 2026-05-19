@@ -57,7 +57,8 @@ cube_get_randomline(double *xvec,
 {
     /* locals */
     int ib, ic, izc, ier;
-    float val, zsam;
+    float val;
+    double zsam;
 
     zsam = (zmax - zmin) / (nzsam - 1);
 
@@ -68,7 +69,7 @@ cube_get_randomline(double *xvec,
 
         for (izc = 0; izc < nzsam; izc++) {
 
-            float zc = zmin + izc * zsam;
+            double zc = zmin + (double)izc * zsam;
 
             if (option == 0) {
                 ier =

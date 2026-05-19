@@ -398,6 +398,27 @@ refine_rows(const Grid &grid_cpp, const py::array_t<uint16_t> refinement);
 py::array_t<float>
 collapse_inactive_cells(const Grid &grid_cpp, bool collapse_internal = true);
 
+// =====================================================================================
+// WELL TRAJECTORY OPERATIONS
+// =====================================================================================
+
+/**
+ * @brief Compute the entry/exit coordinates and MD for every cell that a well
+ *        trajectory intersects.
+ *
+ * See well_cell_intersections.cpp for full documentation.
+ */
+py::dict
+compute_well_cell_intersections(const Grid &grid,
+                                const py::array_t<double> &xv,
+                                const py::array_t<double> &yv,
+                                const py::array_t<double> &zv,
+                                const py::array_t<double> &mdv,
+                                const double sampling_step,
+                                const int refine_iters,
+                                const bool active_only,
+                                const geometry::PointInHexahedronMethod method);
+
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
 convert_to_hybrid_grid(const Grid &grid_cpp,
                        float top_level,
@@ -480,6 +501,13 @@ init(py::module &m)
            "Get a grid fence from a grid, fspec, property and z_vector")
       .def("collapse_inactive_cells", &collapse_inactive_cells,
            "Collapse inactive cells in the grid.", py::arg("collapse_internal") = true)
+      .def("compute_well_cell_intersections", &compute_well_cell_intersections,
+           "Compute X, Y, Z and MD entry/exit coordinates for every cell that a well "
+           "trajectory passes through.",
+           py::arg("xv"), py::arg("yv"), py::arg("zv"), py::arg("mdv"),
+           py::arg("sampling_step") = 1.0, py::arg("refine_iters") = 20,
+           py::arg("active_only") = false,
+           py::arg("method") = geometry::PointInHexahedronMethod::Optimized)
       .def("convert_to_hybrid_grid", &convert_to_hybrid_grid,
            "Convert the grid to a hybrid grid.");
 
