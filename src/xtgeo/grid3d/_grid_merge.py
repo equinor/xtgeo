@@ -57,24 +57,24 @@ def merge_grids(
 
     # create a new layer mapping for grid1 and grid2
     # group layers in the merged grid by the input layer number
+    lmap1 = np.arange(grid1.nlay, dtype=np.int32)
+    lmap2 = np.arange(grid2.nlay, dtype=np.int32)
+
     if layer_refinement == 0:
         new_nlay = max(grid1.nlay, layer_offset + grid2.nlay)
-        lmap1 = np.arange(grid1.nlay).astype(np.int32)
-        lmap2 = np.arange(grid2.nlay).astype(np.int32)
     else:
         new_nlay = (
             layer_offset
             + grid2.nlay
             + max(0, grid1.nlay - layer_offset - int(grid2.nlay / layer_refinement))
         )
-        lmap1 = np.arange(grid1.nlay).astype(np.int32)
         lmap1 = lmap1 + np.where(
             lmap1 < layer_offset,
             0,
             (layer_refinement - 1)
             * np.minimum(int(grid2.nlay / layer_refinement), lmap1 - layer_offset),
         )
-        lmap2 = np.arange(grid2.nlay).astype(np.int32) + layer_offset
+        lmap2 += layer_offset
 
     # Place grid1 at (0, 0) and grid2 with a 1-cell gap
     offset1 = (0, 0)
