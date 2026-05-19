@@ -21,6 +21,7 @@ from xtgeo.surface.regular_surface import surface_from_grid3d
 from . import (
     _grid3d_fence,
     _grid_boundary,
+    _grid_conform,
     _grid_etc1,
     _grid_export,
     _grid_hybrid,
@@ -3111,6 +3112,73 @@ class Grid(_Grid3D):
 
         """
         _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
+
+    def conform_to_surfaces(
+        self,
+        surfaces: list[xtgeo.RegularSurface],
+        layers_per_zone: list[int],
+        skip_faults: bool = False,
+        tolerance: float = 1e-6,
+    ) -> None:
+        """Conform grid ZCORN to a set of surfaces.
+
+        The surfaces define zone boundaries, ordered from top to bottom. The grid's
+        layer boundary z values (ZCORN) are updated so that zone boundaries match
+        the surfaces, while interior layer boundaries within each zone are
+        redistributed proportionally to the original layer thickness distribution
+        at each corner. COORD (pillar geometry) is unchanged.
+
+        The first surface is aligned to the top of the first grid layer, and the last
+        surface to the bottom of the last layer.
+
+        Surface sampling is done along the pillar line: the 3D intersection of each
+        pillar with each surface is found via bisection. If a surface cannot be
+        sampled at a pillar position (e.g. the pillar is outside the surface extent),
+        the original ZCORN for that pillar is kept.
+
+        Args:
+            surfaces: List of RegularSurface instances ordered from top to bottom.
+                Number of surfaces must be len(layers_per_zone) + 1.
+            layers_per_zone: Number of layers in each zone. The sum must equal
+                the grid's nlay. Each value must be >= 1.
+            skip_faults: If True, pillars where corners differ by more than 0.01m
+                at any k-level are left unchanged, preserving original fault
+                geometry. If False (default), the original per-corner offset from
+                the pillar average is preserved at each layer boundary.
+            tolerance: Tolerance for surface sampling at pillar positions.
+
+        Raises:
+            ValueError: If input dimensions are inconsistent.
+
+        Example::
+
+            import xtgeo
+            grid = xtgeo.grid_from_file("my_grid.roff")
+            surf_top = xtgeo.surface_from_file("top.gri")
+            surf_mid = xtgeo.surface_from_file("mid.gri")
+            surf_base = xtgeo.surface_from_file("base.gri")
+
+            # 2 zones: 3 layers in zone 1, 5 layers in zone 2
+            grid.conform_to_surfaces(
+                surfaces=[surf_top, surf_mid, surf_base],
+                layers_per_zone=[3, 5],
+            )
+
+            # Skip faulted pillars
+            grid.conform_to_surfaces(
+                surfaces=[surf_top, surf_mid, surf_base],
+                layers_per_zone=[3, 5],
+                skip_faults=True,
+            )
+
+        """
+        _grid_conform.conform_grid_to_surfaces(
+            self,
+            surfaces,
+            layers_per_zone,
+            skip_faults,
+            tolerance,
+        )
 
     def report_zone_mismatch(
         self,

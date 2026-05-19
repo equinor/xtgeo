@@ -2,6 +2,7 @@
 #define XTGEO_GRID3D_HPP_
 #include <pybind11/pybind11.h>  // should be included first according to pybind11 docs
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -358,6 +359,13 @@ adjust_boxgrid_layers_from_regsurfs(Grid &grd,
                                     const std::vector<regsurf::RegularSurface> &rsurfs,
                                     const double tolerance = numerics::TOLERANCE);
 
+void
+conform_grid_to_surfaces(Grid &grd,
+                         const std::vector<regsurf::RegularSurface> &surfaces,
+                         const std::vector<int> &layers_per_zone,
+                         bool skip_faults = false,
+                         double tolerance = numerics::TOLERANCE);
+
 std::tuple<py::array_t<float>, py::array_t<int8_t>>
 refine_vertically(const Grid &grid_cpp, const py::array_t<uint16_t> refine_layer);
 
@@ -509,7 +517,11 @@ init(py::module &m)
            py::arg("active_only") = false,
            py::arg("method") = geometry::PointInHexahedronMethod::Optimized)
       .def("convert_to_hybrid_grid", &convert_to_hybrid_grid,
-           "Convert the grid to a hybrid grid.");
+           "Convert the grid to a hybrid grid.")
+      .def("conform_grid_to_surfaces", &conform_grid_to_surfaces,
+           "Conform grid ZCORN to a set of surfaces (in-place).", py::arg("surfaces"),
+           py::arg("layers_per_zone"), py::arg("skip_faults") = false,
+           py::arg("tolerance") = numerics::TOLERANCE);
 
     py::class_<CellCorners>(m_grid3d, "CellCorners")
       // a constructor that takes 8 xyz::Point objects
