@@ -384,6 +384,8 @@ def grid_from_surfaces(
 def grid_merge(
     grid1: Grid,
     grid2: Grid,
+    layer_offset: int = 0,
+    layer_refinement: int = 0,
 ) -> Grid:
     """Merge two areally-separated grids into a single grid instance.
 
@@ -391,10 +393,26 @@ def grid_merge(
     with inactive cells filling the gaps. Grid1 is placed at position (0, 0)
     and grid2 is placed adjacent to it with a 1-cell gap in the column direction.
 
-    If the grids have different numbers of layers, the result grid will have
-    the maximum number of layers. The grid with fewer layers will have its
-    bottom layer geometry extended vertically with inactive cells for the
+    By default, if the grids have different numbers of layers, the result grid
+    will have the maximum number of layers. The grid with fewer layers will have
+    its bottom layer geometry extended vertically with inactive cells for the
     additional layers.
+
+    The resulting grid dimensions will be:
+    - ncol: grid1.ncol + 1 + grid2.ncol
+    - nrow: max(grid1.nrow, grid2.nrow)
+    - nlay: max(grid1.nlay, grid2.nlay)
+
+    Optionally a layer offset and layer refinement can be specified. This is for
+    for the case where grid2 is a section of grid1 with refinement. In this case
+    grid2 is inserted starting at layer offset. Grid1 layer is adjusted based on
+    the specified refinement in the layer interval covered by grid2. This
+    ensures that the result grid groups all layers based on the input grid order.
+
+    The resulting grid dimensions will be:
+    - ncol: grid1.ncol + 1 + grid2.ncol
+    - nrow: max(grid1.nrow, grid2.nrow)
+    - nlay: offset + grid2.nlay + max(0, grid1.nlay - offset- grid2.nlay/refinment)
 
     If the grids have different IJK handedness (left vs right), grid2 will be
     automatically adjusted to match grid1's handedness before merging.
@@ -408,14 +426,11 @@ def grid_merge(
     - Discrete properties with different codes are renamed (e.g., FACIES_2)
     - Properties with type conflicts (continuous vs discrete) are renamed
 
-    The resulting grid dimensions will be:
-    - ncol: grid1.ncol + 1 + grid2.ncol
-    - nrow: max(grid1.nrow, grid2.nrow)
-    - nlay: max(grid1.nlay, grid2.nlay)
-
     Args:
         grid1: First grid instance
         grid2: Second grid instance
+        layer_offset: Layer in grid1 where grid2 starts
+        layer_refinement: Refinement of each cell in grid2 versus grid1
 
     Returns:
         A new Grid instance containing both input grids with inactive cells in gaps.
@@ -440,7 +455,7 @@ def grid_merge(
 
     .. versionadded:: 4.18.0
     """
-    return _grid_merge.merge_grids(grid1, grid2)
+    return _grid_merge.merge_grids(grid1, grid2, layer_offset, layer_refinement)
 
 
 class _GridCache:

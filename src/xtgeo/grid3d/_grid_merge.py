@@ -17,6 +17,8 @@ logger = null_logger(__name__)
 def merge_grids(
     grid1: Grid,
     grid2: Grid,
+    layer_offset: int = 0,
+    layer_refinement: int = 0,
 ) -> Grid:
     """Merge two areally-separated grids into a single grid instance.
 
@@ -26,6 +28,11 @@ def merge_grids(
 
     grid1._set_xtgformat2()
     grid2._set_xtgformat2()
+
+    if layer_offset < 0:
+        raise ValueError("layer offset must be >=0")
+    if layer_refinement < 0:
+        raise ValueError("layer refinement must be >=0")
 
     # Ensure both grids have the same ijk_handedness
     if (
@@ -48,7 +55,26 @@ def merge_grids(
             grid2.ijk_handedness,
         )
 
-    new_nlay = max(grid1.nlay, grid2.nlay)
+    # create a new layer mapping for grid1 and grid2
+    # group layers in the merged grid by the input layer number
+    lmap1 = np.arange(grid1.nlay, dtype=np.int32)
+    lmap2 = np.arange(grid2.nlay, dtype=np.int32)
+
+    if layer_refinement == 0:
+        new_nlay = max(grid1.nlay, layer_offset + grid2.nlay)
+    else:
+        new_nlay = (
+            layer_offset
+            + grid2.nlay
+            + max(0, grid1.nlay - layer_offset - int(grid2.nlay / layer_refinement))
+        )
+        lmap1 = lmap1 + np.where(
+            lmap1 < layer_offset,
+            0,
+            (layer_refinement - 1)
+            * np.minimum(int(grid2.nlay / layer_refinement), lmap1 - layer_offset),
+        )
+        lmap2 += layer_offset
 
     # Place grid1 at (0, 0) and grid2 with a 1-cell gap
     offset1 = (0, 0)
@@ -81,6 +107,7 @@ def merge_grids(
         i1_start,
         j1_start,
         new_nlay,
+        lmap1,
     )
 
     _copy_grid_data(
@@ -91,6 +118,7 @@ def merge_grids(
         i2_start,
         j2_start,
         new_nlay,
+        lmap2,
     )
 
     _fill_gap_pillars(new_coordsv, new_zcornsv, new_actnumsv)
@@ -113,6 +141,8 @@ def merge_grids(
         i2_start,
         j2_start,
         new_nlay,
+        lmap1,
+        lmap2,
     )
 
     return merged_grid
@@ -126,11 +156,13 @@ def _copy_grid_data(
     i_offset: int,
     j_offset: int,
     target_nlay: int,
+    layer_map: np.ndarray,
 ) -> None:
     """Copy grid data from source to target arrays at given offset.
 
-    If source grid has fewer layers than target, the bottom layer geometry
-    is extended vertically with inactive cells for the additional layers.
+    The source grid is mapped to new grid based on the offsets and
+    layer mapping given. Any layers without an explicit mapping are
+    inserted with 0 thickness as inactive cells.
 
     Args:
         source_grid: Source grid to copy from
@@ -140,6 +172,7 @@ def _copy_grid_data(
         i_offset: Column offset in target grid
         j_offset: Row offset in target grid
         target_nlay: Number of layers in target grid
+        layer_map: Array of new layer numbers
     """
     ncol, nrow, nlay = source_grid.dimensions
 
@@ -150,49 +183,28 @@ def _copy_grid_data(
         :,
     ] = source_grid._coordsv
 
-    if nlay == target_nlay:
-        target_zcornsv[
-            i_offset : i_offset + ncol + 1,
-            j_offset : j_offset + nrow + 1,
-            : nlay + 1,
-            :,
-        ] = source_grid._zcornsv
+    zmap = np.zeros(target_nlay + 1, dtype=np.int32)
+    zmap[layer_map] = np.argsort(layer_map)
+    mask = np.ones(len(zmap), dtype=np.int32)
+    mask[layer_map] = 0
+    for k in np.where(mask == 1)[0]:
+        if k - 1 in layer_map:
+            zmap[k] = zmap[k - 1] + 1
+        elif k > layer_map[0]:
+            zmap[k] = zmap[:k].max()
 
-        target_actnumsv[
-            i_offset : i_offset + ncol,
-            j_offset : j_offset + nrow,
-            :nlay,
-        ] = source_grid._actnumsv
-    else:
-        # Grid has fewer layers than target - extend bottom layers
-        target_zcornsv[
-            i_offset : i_offset + ncol + 1,
-            j_offset : j_offset + nrow + 1,
-            : nlay + 1,
-            :,
-        ] = source_grid._zcornsv
+    target_zcornsv[
+        i_offset : i_offset + ncol + 1,
+        j_offset : j_offset + nrow + 1,
+        :,
+        :,
+    ] = source_grid._zcornsv[:, :, zmap, :]
 
-        bottom_z = source_grid._zcornsv[:, :, nlay, :]  # Shape: (ncol+1, nrow+1, 4)
-
-        # Calculate layer thickness from the last layer
-        second_last_z = source_grid._zcornsv[:, :, nlay - 1, :]
-        layer_thickness = bottom_z - second_last_z
-
-        for k in range(nlay + 1, target_nlay + 1):
-            extension = layer_thickness * (k - nlay)
-            target_zcornsv[
-                i_offset : i_offset + ncol + 1,
-                j_offset : j_offset + nrow + 1,
-                k,
-                :,
-            ] = bottom_z + extension
-
-        # Copy actnum for existing layers
-        target_actnumsv[
-            i_offset : i_offset + ncol,
-            j_offset : j_offset + nrow,
-            :nlay,
-        ] = source_grid._actnumsv
+    target_actnumsv[
+        i_offset : i_offset + ncol,
+        j_offset : j_offset + nrow,
+        layer_map,
+    ] = source_grid._actnumsv
 
 
 def _fill_gap_pillars(
@@ -455,6 +467,8 @@ def _merge_properties(
     i2_start: int,
     j2_start: int,
     target_nlay: int,
+    layer_map1: np.ndarray,
+    layer_map2: np.ndarray,
 ) -> None:
     """Merge properties from both input grids into the merged grid.
 
@@ -471,20 +485,22 @@ def _merge_properties(
         i2_start: Column offset for grid2
         j2_start: Row offset for grid2
         target_nlay: Number of layers in merged grid
+        layer_map1: Array with mapping of new layer numbers
+        layer_map2: Array with mapping of new layer numbers
     """
 
     if not grid1.props and not grid2.props:
         return
 
     # Build a dict of properties to merge
-    prop_map: dict[str, list[tuple[Grid, int, int, str]]] = {}
+    prop_map: dict[str, list[tuple[Grid, int, int, str, np.ndarray]]] = {}
 
     # Add grid1 properties
     if grid1.props:
         for prop in grid1.props:
             if prop.name is not None:
                 prop_map.setdefault(prop.name, []).append(
-                    (grid1, i1_start, j1_start, prop.name)
+                    (grid1, i1_start, j1_start, prop.name, layer_map1)
                 )
 
     # Add grid2 properties
@@ -504,13 +520,13 @@ def _merge_properties(
                         if g1_prop.codes == g2_prop.codes:
                             # Same codes, can merge
                             prop_map[prop.name].append(
-                                (grid2, i2_start, j2_start, prop.name)
+                                (grid2, i2_start, j2_start, prop.name, layer_map2)
                             )
                         else:
                             # Different codes, rename grid2's property
                             new_name = _find_unique_name(prop.name, prop_map)
                             prop_map[new_name] = [
-                                (grid2, i2_start, j2_start, prop.name)
+                                (grid2, i2_start, j2_start, prop.name, layer_map2)
                             ]
                             logger.debug(
                                 "Property '%s' from grid2 has different "
@@ -521,12 +537,14 @@ def _merge_properties(
                     else:
                         # Both continuous, merge them
                         prop_map[prop.name].append(
-                            (grid2, i2_start, j2_start, prop.name)
+                            (grid2, i2_start, j2_start, prop.name, layer_map2)
                         )
                 else:
                     # One discrete, one continuous - rename grid2's property
                     new_name = _find_unique_name(prop.name, prop_map)
-                    prop_map[new_name] = [(grid2, i2_start, j2_start, prop.name)]
+                    prop_map[new_name] = [
+                        (grid2, i2_start, j2_start, prop.name, layer_map2)
+                    ]
                     logger.debug(
                         "Property '%s' from grid2 has different type "
                         "than grid1, renaming to '%s'",
@@ -535,7 +553,9 @@ def _merge_properties(
                     )
             else:
                 # New property, add it
-                prop_map[prop.name] = [(grid2, i2_start, j2_start, prop.name)]
+                prop_map[prop.name] = [
+                    (grid2, i2_start, j2_start, prop.name, layer_map2)
+                ]
 
     for prop_name, prop_sources in prop_map.items():
         _create_merged_property(merged_grid, prop_name, prop_sources, target_nlay)
@@ -564,7 +584,7 @@ def _find_unique_name(base_name: str, existing_names: dict) -> str:
 def _create_merged_property(
     merged_grid: Grid,
     prop_name: str,
-    sources: list[tuple[Grid, int, int, str]],
+    sources: list[tuple[Grid, int, int, str, np.ndarray]],
     target_nlay: int,
 ) -> None:
     """Create a merged property from multiple source grids.
@@ -572,13 +592,14 @@ def _create_merged_property(
     Args:
         merged_grid: The output merged grid
         prop_name: Name of the property in the merged grid
-        sources: List of (source_grid, offset_i, offset_j, source_prop_name) tuples
+        sources: List of (source_grid, offset_i, offset_j, source_prop_name,
+            layer_map) tuples
         target_nlay: Number of layers in merged grid
     """
     from xtgeo.grid3d import GridProperty
 
     # Get the first source property to determine type and initialize
-    first_grid, _, _, first_prop_name = sources[0]
+    first_grid, _, _, first_prop_name, _ = sources[0]
     first_prop = first_grid.get_prop_by_name(first_prop_name)
     if first_prop is None:
         raise ValueError(f"Property '{first_prop_name}' not found in first grid")
@@ -590,24 +611,17 @@ def _create_merged_property(
     )
 
     # Copy values from each source grid
-    for source_grid, offset_i, offset_j, source_prop_name in sources:
+    for source_grid, offset_i, offset_j, source_prop_name, lmap in sources:
         source_prop = source_grid.get_prop_by_name(source_prop_name)
         if source_prop is None:
             raise ValueError(f"Property '{source_prop_name}' not found in source grid")
         ncol, nrow, nlay = source_grid.dimensions
 
-        if nlay == target_nlay:
-            merged_values[
-                offset_i : offset_i + ncol,
-                offset_j : offset_j + nrow,
-                :nlay,
-            ] = source_prop.values
-        else:
-            merged_values[
-                offset_i : offset_i + ncol,
-                offset_j : offset_j + nrow,
-                :nlay,
-            ] = source_prop.values
+        merged_values[
+            offset_i : offset_i + ncol,
+            offset_j : offset_j + nrow,
+            lmap,
+        ] = source_prop.values
 
     GridProperty(
         merged_grid,
