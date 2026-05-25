@@ -21,6 +21,7 @@ from xtgeo.surface.regular_surface import surface_from_grid3d
 from . import (
     _grid3d_fence,
     _grid_boundary,
+    _grid_conform,
     _grid_etc1,
     _grid_export,
     _grid_hybrid,
@@ -384,6 +385,8 @@ def grid_from_surfaces(
 def grid_merge(
     grid1: Grid,
     grid2: Grid,
+    layer_offset: int = 0,
+    layer_refinement: int = 0,
 ) -> Grid:
     """Merge two areally-separated grids into a single grid instance.
 
@@ -391,10 +394,26 @@ def grid_merge(
     with inactive cells filling the gaps. Grid1 is placed at position (0, 0)
     and grid2 is placed adjacent to it with a 1-cell gap in the column direction.
 
-    If the grids have different numbers of layers, the result grid will have
-    the maximum number of layers. The grid with fewer layers will have its
-    bottom layer geometry extended vertically with inactive cells for the
+    By default, if the grids have different numbers of layers, the result grid
+    will have the maximum number of layers. The grid with fewer layers will have
+    its bottom layer geometry extended vertically with inactive cells for the
     additional layers.
+
+    The resulting grid dimensions will be:
+    - ncol: grid1.ncol + 1 + grid2.ncol
+    - nrow: max(grid1.nrow, grid2.nrow)
+    - nlay: max(grid1.nlay, grid2.nlay)
+
+    Optionally a layer offset and layer refinement can be specified. This is for
+    for the case where grid2 is a section of grid1 with refinement. In this case
+    grid2 is inserted starting at layer offset. Grid1 layer is adjusted based on
+    the specified refinement in the layer interval covered by grid2. This
+    ensures that the result grid groups all layers based on the input grid order.
+
+    The resulting grid dimensions will be:
+    - ncol: grid1.ncol + 1 + grid2.ncol
+    - nrow: max(grid1.nrow, grid2.nrow)
+    - nlay: offset + grid2.nlay + max(0, grid1.nlay - offset- grid2.nlay/refinment)
 
     If the grids have different IJK handedness (left vs right), grid2 will be
     automatically adjusted to match grid1's handedness before merging.
@@ -408,14 +427,11 @@ def grid_merge(
     - Discrete properties with different codes are renamed (e.g., FACIES_2)
     - Properties with type conflicts (continuous vs discrete) are renamed
 
-    The resulting grid dimensions will be:
-    - ncol: grid1.ncol + 1 + grid2.ncol
-    - nrow: max(grid1.nrow, grid2.nrow)
-    - nlay: max(grid1.nlay, grid2.nlay)
-
     Args:
         grid1: First grid instance
         grid2: Second grid instance
+        layer_offset: Layer in grid1 where grid2 starts
+        layer_refinement: Refinement of each cell in grid2 versus grid1
 
     Returns:
         A new Grid instance containing both input grids with inactive cells in gaps.
@@ -440,7 +456,7 @@ def grid_merge(
 
     .. versionadded:: 4.18.0
     """
-    return _grid_merge.merge_grids(grid1, grid2)
+    return _grid_merge.merge_grids(grid1, grid2, layer_offset, layer_refinement)
 
 
 class _GridCache:
@@ -3096,6 +3112,73 @@ class Grid(_Grid3D):
 
         """
         _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
+
+    def conform_to_surfaces(
+        self,
+        surfaces: list[xtgeo.RegularSurface],
+        layers_per_zone: list[int],
+        skip_faults: bool = False,
+        tolerance: float = 1e-6,
+    ) -> None:
+        """Conform grid ZCORN to a set of surfaces.
+
+        The surfaces define zone boundaries, ordered from top to bottom. The grid's
+        layer boundary z values (ZCORN) are updated so that zone boundaries match
+        the surfaces, while interior layer boundaries within each zone are
+        redistributed proportionally to the original layer thickness distribution
+        at each corner. COORD (pillar geometry) is unchanged.
+
+        The first surface is aligned to the top of the first grid layer, and the last
+        surface to the bottom of the last layer.
+
+        Surface sampling is done along the pillar line: the 3D intersection of each
+        pillar with each surface is found via bisection. If a surface cannot be
+        sampled at a pillar position (e.g. the pillar is outside the surface extent),
+        the original ZCORN for that pillar is kept.
+
+        Args:
+            surfaces: List of RegularSurface instances ordered from top to bottom.
+                Number of surfaces must be len(layers_per_zone) + 1.
+            layers_per_zone: Number of layers in each zone. The sum must equal
+                the grid's nlay. Each value must be >= 1.
+            skip_faults: If True, pillars where corners differ by more than 0.01m
+                at any k-level are left unchanged, preserving original fault
+                geometry. If False (default), the original per-corner offset from
+                the pillar average is preserved at each layer boundary.
+            tolerance: Tolerance for surface sampling at pillar positions.
+
+        Raises:
+            ValueError: If input dimensions are inconsistent.
+
+        Example::
+
+            import xtgeo
+            grid = xtgeo.grid_from_file("my_grid.roff")
+            surf_top = xtgeo.surface_from_file("top.gri")
+            surf_mid = xtgeo.surface_from_file("mid.gri")
+            surf_base = xtgeo.surface_from_file("base.gri")
+
+            # 2 zones: 3 layers in zone 1, 5 layers in zone 2
+            grid.conform_to_surfaces(
+                surfaces=[surf_top, surf_mid, surf_base],
+                layers_per_zone=[3, 5],
+            )
+
+            # Skip faulted pillars
+            grid.conform_to_surfaces(
+                surfaces=[surf_top, surf_mid, surf_base],
+                layers_per_zone=[3, 5],
+                skip_faults=True,
+            )
+
+        """
+        _grid_conform.conform_grid_to_surfaces(
+            self,
+            surfaces,
+            layers_per_zone,
+            skip_faults,
+            tolerance,
+        )
 
     def report_zone_mismatch(
         self,

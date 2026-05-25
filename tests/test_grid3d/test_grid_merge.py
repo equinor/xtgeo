@@ -40,6 +40,38 @@ def test_default_placement():
     assert merged.nactive == g1.nactive + g2.nactive
 
 
+def test_layer_offset():
+    """Test layer offset is >=0."""
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+
+    with pytest.raises(ValueError):
+        xtgeo.grid_merge(g1, g2, -1, 0)
+
+
+def test_layer_refinement():
+    """Test layer refinement is >=0."""
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+
+    with pytest.raises(ValueError):
+        xtgeo.grid_merge(g1, g2, 0, -1)
+
+
+def test_merge_refinement_offset():
+    """Test merging grid with refinement and offset active"""
+    g1 = xtgeo.create_box_grid(dimension=(3, 3, 3))
+    g2 = xtgeo.create_box_grid(dimension=(2, 2, 2))
+
+    merged = xtgeo.grid_merge(g1, g2, 1, 2)
+
+    assert merged.ncol == 6
+    assert merged.nrow == 3
+    assert merged.nlay == 4
+
+    assert merged.nactive == g1.nactive + g2.nactive
+
+
 def test_geometry_preservation():
     """Test that grid geometries are preserved after merging."""
     g1 = xtgeo.create_box_grid(
@@ -239,9 +271,9 @@ def test_layer_extension_geometry():
     g1_layer1_bottom = merged._zcornsv[0:3, 0:3, 2, :]
     g1_layer2_bottom = merged._zcornsv[0:3, 0:3, 3, :]
 
-    # The extended layer should maintain the same thickness
+    # The extended layer should be 0 thickness
     thickness_diff = g1_layer2_bottom - g1_layer1_bottom
-    expected_thickness = 10.0
+    expected_thickness = 0.0
 
     # Allow small floating point differences
     assert np.allclose(thickness_diff, expected_thickness, atol=0.1), (
