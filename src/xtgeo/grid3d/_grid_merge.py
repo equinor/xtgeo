@@ -17,8 +17,8 @@ logger = null_logger(__name__)
 def merge_grids(
     grid1: Grid,
     grid2: Grid,
-    layer_offset: int = 0,
-    layer_refinement: int = 0,
+    lmap1: np.ndarray | None = None,
+    lmap2: np.ndarray | None = None,
 ) -> Grid:
     """Merge two areally-separated grids into a single grid instance.
 
@@ -29,10 +29,20 @@ def merge_grids(
     grid1._set_xtgformat2()
     grid2._set_xtgformat2()
 
-    if layer_offset < 0:
-        raise ValueError("layer offset must be >=0")
-    if layer_refinement < 0:
-        raise ValueError("layer refinement must be >=0")
+    if isinstance(lmap1, np.ndarray):
+        if lmap1.min() < 0:
+            raise ValueError("layer mapping 1 must be >=0")
+        if len(lmap1) != grid1.nlay:
+            raise ValueError("layer mapping 1 must map all layers")
+        if not np.all(lmap1 % 1 == 0):
+            raise ValueError("layer mapping 1 must only contrain int")
+    if isinstance(lmap2, np.ndarray):
+        if lmap2.min() < 0:
+            raise ValueError("layer mapping 2 must be >=0")
+        if len(lmap2) != grid2.nlay:
+            raise ValueError("layer mapping 2 must map all layers")
+        if not np.all(lmap2 % 1 == 0):
+            raise ValueError("layer mapping 2 must only contrain int")
 
     # Ensure both grids have the same ijk_handedness
     if (
@@ -57,24 +67,13 @@ def merge_grids(
 
     # create a new layer mapping for grid1 and grid2
     # group layers in the merged grid by the input layer number
-    lmap1 = np.arange(grid1.nlay, dtype=np.int32)
-    lmap2 = np.arange(grid2.nlay, dtype=np.int32)
 
-    if layer_refinement == 0:
-        new_nlay = max(grid1.nlay, layer_offset + grid2.nlay)
-    else:
-        new_nlay = (
-            layer_offset
-            + grid2.nlay
-            + max(0, grid1.nlay - layer_offset - int(grid2.nlay / layer_refinement))
-        )
-        lmap1 = lmap1 + np.where(
-            lmap1 < layer_offset,
-            0,
-            (layer_refinement - 1)
-            * np.minimum(int(grid2.nlay / layer_refinement), lmap1 - layer_offset),
-        )
-        lmap2 += layer_offset
+    if not isinstance(lmap1, np.ndarray) and lmap1 is None:
+        lmap1 = np.arange(grid1.nlay, dtype=np.int32)
+    if not isinstance(lmap2, np.ndarray) and lmap2 is None:
+        lmap2 = np.arange(grid2.nlay, dtype=np.int32)
+
+    new_nlay = max(lmap1.max() + 1, lmap2.max() + 1)
 
     # Place grid1 at (0, 0) and grid2 with a 1-cell gap
     offset1 = (0, 0)

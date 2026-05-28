@@ -385,8 +385,8 @@ def grid_from_surfaces(
 def grid_merge(
     grid1: Grid,
     grid2: Grid,
-    layer_offset: int = 0,
-    layer_refinement: int = 0,
+    lmap1: np.ndarray | None = None,
+    lmap2: np.ndarray | None = None,
 ) -> Grid:
     """Merge two areally-separated grids into a single grid instance.
 
@@ -404,16 +404,16 @@ def grid_merge(
     - nrow: max(grid1.nrow, grid2.nrow)
     - nlay: max(grid1.nlay, grid2.nlay)
 
-    Optionally a layer offset and layer refinement can be specified. This is for
-    for the case where grid2 is a section of grid1 with refinement. In this case
-    grid2 is inserted starting at layer offset. Grid1 layer is adjusted based on
-    the specified refinement in the layer interval covered by grid2. This
-    ensures that the result grid groups all layers based on the input grid order.
+    Optionally a layer mapping for both grids can be specified. This is a numpy
+    array of length input grid that contrains the resulting layer in the merged
+    grid. (Note this is zero indexed for input and output layers)
+
+    - lmap[ INPUT_LAYER ] = NEW_LAYER
 
     The resulting grid dimensions will be:
     - ncol: grid1.ncol + 1 + grid2.ncol
     - nrow: max(grid1.nrow, grid2.nrow)
-    - nlay: offset + grid2.nlay + max(0, grid1.nlay - offset- grid2.nlay/refinment)
+    - nlay: max(grid1.nlay, grid2.nlay, max(lmap1)+1, max(lmap2)+1 )
 
     If the grids have different IJK handedness (left vs right), grid2 will be
     automatically adjusted to match grid1's handedness before merging.
@@ -430,8 +430,8 @@ def grid_merge(
     Args:
         grid1: First grid instance
         grid2: Second grid instance
-        layer_offset: Layer in grid1 where grid2 starts
-        layer_refinement: Refinement of each cell in grid2 versus grid1
+        lmap1: Optional numpy array with layer mapping for grid1
+        lmap2: Optional numpy array with layer mapping for grid2
 
     Returns:
         A new Grid instance containing both input grids with inactive cells in gaps.
@@ -456,7 +456,7 @@ def grid_merge(
 
     .. versionadded:: 4.18.0
     """
-    return _grid_merge.merge_grids(grid1, grid2, layer_offset, layer_refinement)
+    return _grid_merge.merge_grids(grid1, grid2, lmap1, lmap2)
 
 
 class _GridCache:

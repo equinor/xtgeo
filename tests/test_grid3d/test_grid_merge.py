@@ -40,22 +40,70 @@ def test_default_placement():
     assert merged.nactive == g1.nactive + g2.nactive
 
 
-def test_layer_offset():
+def test_lmap1_len():
     """Test layer offset is >=0."""
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = np.arange(2)
+    lmap2 = np.arange(2)
 
     with pytest.raises(ValueError):
-        xtgeo.grid_merge(g1, g2, -1, 0)
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
-def test_layer_refinement():
-    """Test layer refinement is >=0."""
+def test_lmap2_len():
+    """Test layer offset is >=0."""
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = np.arange(3)
+    lmap2 = np.arange(3)
 
     with pytest.raises(ValueError):
-        xtgeo.grid_merge(g1, g2, 0, -1)
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
+
+
+def test_lmap1_negative():
+    """Test layer offset is >=0."""
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = np.arange(3) - 1
+    lmap2 = np.arange(2)
+
+    with pytest.raises(ValueError):
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
+
+
+def test_lmap2_negative():
+    """Test layer offset is >=0."""
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = np.arange(3)
+    lmap2 = np.arange(2) - 1
+
+    with pytest.raises(ValueError):
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
+
+
+def test_lmap1_int():
+    """Test layer offset is >=0."""
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = np.arange(3, dtype=np.float32) + 0.5
+    lmap2 = np.arange(2, dtype=np.float32)
+
+    with pytest.raises(ValueError):
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
+
+
+def test_lmap2_int():
+    """Test layer offset is >=0."""
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = np.arange(3, dtype=np.float32)
+    lmap2 = np.arange(2, dtype=np.float32) + 0.5
+
+    with pytest.raises(ValueError):
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
 def test_merge_refinement_offset():
@@ -63,7 +111,16 @@ def test_merge_refinement_offset():
     g1 = xtgeo.create_box_grid(dimension=(3, 3, 3))
     g2 = xtgeo.create_box_grid(dimension=(2, 2, 2))
 
-    merged = xtgeo.grid_merge(g1, g2, 1, 2)
+    lmap1 = np.arange(3, dtype=np.int32)
+    lmap1 = lmap1 + np.where(
+        lmap1 < 1,
+        0,
+        np.minimum(1, lmap1 - 1),
+    )
+
+    lmap2 = np.arange(2, dtype=np.int32) + 1
+
+    merged = xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
     assert merged.ncol == 6
     assert merged.nrow == 3
