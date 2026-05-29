@@ -3,22 +3,14 @@
 Upload Grid_model + PORO to Equinor OSDU dev, download, and verify exact roundtrip.
 
 Usage:
-    # Option A: Set env vars from k8s secrets (same as ores):
-    eval "$(python /home/maap/ores/k8s/env_from_k8s.py)"
+    # Set env vars directly
+    export OSDU_TENANT_ID=""
+    export OSDU_CLIENT_ID=""
+    export OSDU_CLIENT_SECRET=""
+    export OSDU_SCOPE="/.default"
+    export OSDU_HOSTNAME=""
+    export OSDU_DATA_PARTITION=""
     python tests/test_interfaces/test_osdu/test_eqndev_roundtrip.py
-
-    # Option B: Set env vars directly:
-    export OSDU_TENANT_ID="3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
-    export OSDU_CLIENT_ID="21b442a9-6c1c-4551-b234-afdf010dd3be"
-    export OSDU_CLIENT_SECRET="<from k8s/secret.yaml>"
-    export OSDU_SCOPE="bd0c9d90-89ad-4bb3-97bc-d787b9f69cdc/.default"
-    export OSDU_HOSTNAME="equinorswedev.energy.azure.com"
-    export OSDU_DATA_PARTITION="dev"
-    python tests/test_interfaces/test_osdu/test_eqndev_roundtrip.py
-
-    # Option C: Use a saved profile:
-    python tests/test_interfaces/test_osdu/test_eqndev_roundtrip.py \
-        --profile equinor-dev
 
 Exit codes:
     0 = all checks passed (exact geometry + property roundtrip)

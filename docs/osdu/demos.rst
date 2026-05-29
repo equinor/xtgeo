@@ -1,7 +1,7 @@
-Demos, Testing & References
-============================
+Demos & Examples
+================
 
-Runnable examples, local test setup, and external references.
+Copy-paste runnable examples for common workflows.
 
 .. contents:: On this page
    :local:
@@ -167,143 +167,8 @@ Pure offline workflow — no server needed:
     print(model.titles())  # ['MyGrid', 'PORO', 'Default CRS']
 
 
-Setting Up Local RDDMS for Testing
------------------------------------
+See Also
+--------
 
-The integration tests require a local OSDU Reservoir DDMS Docker stack.
-
-Docker Compose setup
-^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: yaml
-
-    # docker-compose.yml
-    services:
-      postgres:
-        image: postgres:15
-        environment:
-          POSTGRES_DB: rddms
-          POSTGRES_USER: rddms
-          POSTGRES_PASSWORD: rddms
-        healthcheck:
-          test: pg_isready -U rddms
-          interval: 2s
-          timeout: 5s
-          retries: 5
-
-      etp-server:
-        image: community.opengroup.org:5555/osdu/platform/domain-data-mgmt-services/reservoir/reservoir-ddms-etp:latest
-        ports:
-          - "9002:9002"
-        environment:
-          RDDMS_DB_HOST: postgres
-          RDDMS_DB_NAME: rddms
-          RDDMS_DB_USER: rddms
-          RDDMS_DB_PASSWORD: rddms
-          RDDMS_ETP_PORT: 9002
-          RDDMS_AUTH_ENABLED: "false"
-        depends_on:
-          postgres:
-            condition: service_healthy
-        healthcheck:
-          test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
-          interval: 3s
-          timeout: 5s
-          retries: 10
-
-Start it:
-
-.. code-block:: bash
-
-    docker compose up -d
-    # Wait for healthy
-    docker compose ps
-
-
-Running the Tests
------------------
-
-.. code-block:: bash
-
-    cd tests/test_interfaces/test_osdu
-
-    # All tests (requires Docker RDDMS running)
-    pytest -v --noconftest
-
-    # Only offline tests (no server needed)
-    pytest -v --noconftest test_epc_roundtrip.py test_api.py test_metadata_roundtrip.py
-
-    # Only ETP integration tests (requires server)
-    pytest -v --noconftest test_etp_roundtrip.py test_etp_discovery.py
-
-    # With resqpy interop
-    pytest -v --noconftest test_resqpy_interop.py
-
-Test structure
-^^^^^^^^^^^^^^
-
-.. list-table::
-   :header-rows: 1
-   :widths: 30 15 55
-
-   * - File
-     - Server?
-     - What it tests
-   * - ``test_epc_roundtrip.py``
-     - No
-     - Geometry/property roundtrip via EPC files (12 tests)
-   * - ``test_api.py``
-     - No
-     - High-level API functions with EPC files (15 tests)
-   * - ``test_metadata_roundtrip.py``
-     - No
-     - UUID/metadata preservation through roundtrips (12 tests)
-   * - ``test_etp_roundtrip.py``
-     - Yes
-     - Write → read → compare via ETP protocol (6 tests)
-   * - ``test_etp_discovery.py``
-     - Yes
-     - Deep discovery, related objects, notifications (20 tests)
-   * - ``test_resqpy_interop.py``
-     - Yes
-     - Cross-library compatibility with resqpy (6 tests)
-
-
-External References
--------------------
-
-Standards
-^^^^^^^^^
-
-- `RESQML 2.0.1 Specification <https://www.energistics.org/resqml-data-standards/>`_
-  — The data model for subsurface objects (grids, properties, surfaces)
-- `ETP 1.2 Specification <https://www.energistics.org/etp-specification/>`_
-  — Energistics Transfer Protocol (WebSocket + Avro binary)
-- `OSDU Technical Standard <https://community.opengroup.org/osdu/>`_
-  — Open Subsurface Data Universe platform specification
-
-Libraries
-^^^^^^^^^
-
-- `energistics (pyetp) <https://github.com/equinor/pyetp>`_
-  — Python implementation of ETP 1.2 message schemas
-- `resqpy <https://github.com/bp/resqpy>`_
-  — Pure-Python RESQML 2.0.1 read/write (for cross-validation)
-- `h5py <https://www.h5py.org/>`_
-  — HDF5 file access for array data in EPC containers
-
-OSDU Services
-^^^^^^^^^^^^^
-
-- `OSDU Reservoir DDMS <https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/reservoir/>`_
-  — The backend service providing ETP 1.2 access to subsurface data
-- `Equinor Energy DataLake <https://edc.equinor.com/>`_
-  — Equinor's OSDU deployment (requires Azure AD auth)
-
-Related xtgeo documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- :doc:`/getting_started` — General xtgeo introduction
-- :doc:`/api-grids` — Grid3D API reference
-- :doc:`/api-surface` — Surface API reference
-- :doc:`/api-points-polygons` — Points/Polygons API reference
+- :doc:`guide` — Full user guide with connection setup and property mappings
+- :doc:`developer` — Testing setup, Docker, architecture details

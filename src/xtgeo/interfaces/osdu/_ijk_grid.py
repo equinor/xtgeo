@@ -245,6 +245,20 @@ def xtgeo_grid_to_resqml(
     zcornsv = grid._zcornsv.copy()
     actnumsv = grid._actnumsv.copy()
 
+    # Warn if grid has Z-discontinuities (faults) — the RESQML output uses
+    # unsplit pillar geometry without SplitCoordinateLines, so fault geometry
+    # may not be faithfully represented for readers that expect split pillars.
+    if ni > 1 and nj > 1:
+        interior = zcornsv[1:-1, 1:-1, :, :]
+        ref = interior[:, :, :, 0:1]
+        if not np.allclose(interior, ref, atol=1e-3):
+            logger.warning(
+                "Grid '%s' has faulted geometry (Z-discontinuities at interior "
+                "pillar nodes). The RESQML output uses unsplit pillar geometry; "
+                "fault representation may differ from the original model.",
+                title,
+            )
+
     provider.put_ijk_grid_geometry(
         uuid=grid_uuid,
         title=title,

@@ -55,36 +55,47 @@ Discovery
 """""""""
 
 .. autofunction:: xtgeo.list_osdu_objects
+   :no-index:
 
 .. autofunction:: xtgeo.search_osdu
+   :no-index:
 
 Reading
 """""""
 
 .. autofunction:: xtgeo.grid_from_osdu
+   :no-index:
 
 .. autofunction:: xtgeo.surface_from_osdu
+   :no-index:
 
 .. autofunction:: xtgeo.points_from_osdu
+   :no-index:
 
 .. autofunction:: xtgeo.polygons_from_osdu
+   :no-index:
 
 Writing
 """""""
 
 .. autofunction:: xtgeo.grid_to_osdu
+   :no-index:
 
 .. autofunction:: xtgeo.surface_to_osdu
+   :no-index:
 
 .. autofunction:: xtgeo.points_to_osdu
+   :no-index:
 
 .. autofunction:: xtgeo.polygons_to_osdu
+   :no-index:
 
 
 Session management
 ^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: xtgeo.interfaces.osdu.OsduSession
+   :no-index:
    :members: access_token, etp_config, create_dataspace_rest, create_dataspace_etp,
              list_dataspaces, get_dataspace, delete_dataspace, list_objects_rest,
              search_objects_rest, get_object_metadata_rest, switch_dataspace,
@@ -94,12 +105,15 @@ Providers
 ^^^^^^^^^
 
 .. autoclass:: xtgeo.interfaces.osdu.EtpProvider
+   :no-index:
    :members: open, close, list_objects
 
 .. autoclass:: xtgeo.interfaces.osdu.EpcFileProvider
+   :no-index:
    :members: open, close, list_objects
 
 .. autoclass:: xtgeo.interfaces.osdu.EtpConnectionConfig
+   :no-index:
 
 Dataspace operations
 ^^^^^^^^^^^^^^^^^^^^
@@ -107,39 +121,55 @@ Dataspace operations
 For advanced bulk operations (copy entire dataspaces, compare datasets):
 
 .. autofunction:: xtgeo.interfaces.osdu.read_dataspace
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.write_dataspace
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.compare_snapshots
+   :no-index:
 
 .. autoclass:: xtgeo.interfaces.osdu.DataspaceSnapshot
+   :no-index:
 
 Low-level converters
 ^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: xtgeo.interfaces.osdu.ijk_grid_to_xtgeo
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.xtgeo_grid_to_resqml
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.grid2d_to_xtgeo
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.xtgeo_surface_to_resqml
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.pointset_to_xtgeo
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.xtgeo_points_to_resqml
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.polylineset_to_xtgeo
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.xtgeo_polygons_to_resqml
+   :no-index:
 
 CRS and metadata
 ^^^^^^^^^^^^^^^^
 
 .. autoclass:: xtgeo.interfaces.osdu.LocalDepth3dCrs
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.resolve_property_mapping
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.ecl_keyword_to_osdu
+   :no-index:
 
 .. autofunction:: xtgeo.interfaces.osdu.osdu_name_to_ecl_keyword
+   :no-index:

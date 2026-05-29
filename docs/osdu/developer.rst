@@ -1,7 +1,8 @@
-Design & Development
-====================
+Developer Guide
+===============
 
-Architecture, protocol details, and guidance for contributors.
+Architecture, data model details, protocol internals, testing, and
+contributor guidance.
 
 .. contents:: On this page
    :local:
@@ -130,6 +131,297 @@ Property Axis Convention
 - **RESQML/resqpy**: properties in ``(nk, nj, ni)`` KJI (row-major) order
 - Conversion: ``values.reshape(nk, nj, ni).transpose(2, 1, 0)``
 - Verified to machine precision in all roundtrip tests
+
+
+Data Model: xtgeo vs RESQML
+----------------------------
+
+This section documents the key structural differences between xtgeo's internal
+data model and the RESQML 2.0.1 standard. Understanding these is essential for
+contributors working on converters or for interoperability with other tools.
+
+IJK Grid Geometry
+^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Aspect
+     - xtgeo
+     - RESQML 2.0.1
+   * - Coordinate storage
+     - ``_coordsv``: ``(ni+1, nj+1, 6)`` — one pillar line per node (top+bottom XYZ)
+     - ``Points``: ``(nk+1, nj+1, ni+1, 3)`` — explicit XYZ at every K-layer boundary
+   * - Z-corners
+     - ``_zcornsv``: ``(ni+1, nj+1, nk+1, 4)`` — 4 values per pillar node per layer
+     - Embedded in the 3D Points array as the Z-coordinate
+   * - Axis order
+     - IJK (column-major): I fastest, K slowest
+     - KJI (row-major): K outermost, I innermost
+   * - Handedness
+     - Implicit (depends on grid construction)
+     - Explicit via ``GridIsRighthanded`` flag
+   * - Split pillars
+     - **Not supported** — ``_coordsv`` stores one pillar per node; true XY-splits
+       cannot be represented
+     - Full support via ``PillarIndices`` + ``ColumnsPerSplitCoordinateLine`` +
+       ``SplitCoordinateLines`` arrays
+
+**Split pillar limitation:** xtgeo's internal geometry stores one pillar line
+per ``(i, j)`` node. This means true XY-split pillars (where different cells
+sharing a pillar node have different X/Y coordinates) are structurally
+impossible. Only Z-discontinuities (faults with vertical throw) are
+representable. When exporting to RESQML, a warning is emitted if
+Z-discontinuities are detected at interior pillar nodes, since the RESQML
+output uses unsplit pillar geometry:
+
+.. code-block:: text
+
+    WARNING: Grid has Z‑discontinuities at N interior pillar nodes that
+    suggest faulted geometry. The exported RESQML uses unsplit pillar
+    coordinates — lateral fault geometry (XY‑split pillars) is not
+    representable in the xtgeo data model.
+
+K-direction gaps
+^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Aspect
+     - xtgeo
+     - RESQML
+   * - Layer connectivity
+     - Layers share top/bottom surfaces (forced connected on import)
+     - ``KGaps`` flag + boolean array allow vertical separation between layers
+   * - Data loss
+     - K-gaps collapsed on Eclipse GRDECL import, with warning
+     - Preserved natively
+
+Properties
+^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Aspect
+     - xtgeo
+     - RESQML
+   * - Value type
+     - ``GridProperty.values``: masked float64 array
+     - ``ContinuousProperty`` (float64) or ``DiscreteProperty`` (int32)
+   * - Inactive cells
+     - ``np.ma.MaskedArray`` — masked entries for ACTNUM=0
+     - Separate ``PatchOfValues`` + supporting representation activity mask
+   * - Name mapping
+     - Eclipse keyword (``PORO``, ``PERMX``, etc.) or free-form
+     - OSDU PropertyNameType reference URI + human-readable name
+   * - Time series
+     - Not directly supported (each timestep is a separate ``GridProperty``)
+     - ``TimeIndex`` + ``TimeSeries`` objects for temporal properties
+   * - Realizations
+     - Not supported as a first-class concept
+     - ``RealizationIndex`` on property patches
+
+Surfaces
+^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Aspect
+     - xtgeo
+     - RESQML
+   * - Type
+     - ``RegularSurface`` — regular 2D grid
+     - ``Grid2dRepresentation`` with ``Grid2dPatch``
+   * - Origin
+     - ``xori``, ``yori`` (lower-left corner)
+     - ``Origin`` XYZ point (may differ from lower-left depending on axis directions)
+   * - Offset axes
+     - ``xinc``, ``yinc``, ``rotation`` (rotation in degrees from north)
+     - Two ``Point3d`` offset vectors with spacing + count (explicit direction)
+   * - Missing values
+     - ``np.nan`` in masked arrays
+     - NaN in HDF5 arrays (same convention)
+
+Points & Polygons
+^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Aspect
+     - xtgeo
+     - RESQML
+   * - Points storage
+     - DataFrame with X, Y, Z columns
+     - ``PointSetRepresentation`` with HDF5 array ``(N, 3)``
+   * - Polygon storage
+     - DataFrame with X, Y, Z, POLY_ID columns
+     - ``PolylineSetRepresentation`` with ``NodeCountPerPolyline`` int array +
+       concatenated coordinates ``(total_nodes, 3)``
+   * - Closure
+     - Not explicit (user convention)
+     - ``ArePatched`` flag indicates closed vs open polylines
+
+
+Supported vs Unsupported RESQML Features
+-----------------------------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 15 50
+
+   * - Feature
+     - Status
+     - Notes
+   * - IJK Grid (explicit Points array)
+     - Full
+     - Read + write, exact roundtrip
+   * - Grid properties (Continuous + Discrete)
+     - Full
+     - Float64 continuous, int32 discrete, multi-property
+   * - Grid2d (regular surface)
+     - Full
+     - Origin, increments, rotation preserved
+   * - PointSet
+     - Full
+     - N-point arrays with XYZ
+   * - PolylineSet
+     - Full
+     - Multiple polylines per representation
+   * - LocalDepth3dCrs
+     - Full
+     - EPSG-based, auto-created
+   * - Split coordinate lines
+     - Read only
+     - Read if expanded to full Points array; write always unsplit
+   * - K-gaps
+     - Lossy
+     - Collapsed on import
+   * - Parametric geometry
+     - None
+     - Only explicit geometry supported
+   * - Unstructured grids
+     - None
+     - Not in xtgeo data model
+   * - WellboreTrajectory / WellboreFrame
+     - None
+     - Future work
+   * - Time-series properties
+     - None
+     - Each timestep is a separate xtgeo property
+   * - EPC relationship parts
+     - Partial
+     - ``_rels/.rels`` written; ``[Content_Types].xml`` included
+   * - RESQML 2.2
+     - None
+     - Only 2.0.1 schemas
+
+
+Property Name Mapping (Implementation Details)
+-----------------------------------------------
+
+This section documents the mapping logic for developers. For the user-facing
+reference table, see :ref:`property-mapping-table` in the User Guide.
+
+Resolution order
+^^^^^^^^^^^^^^^^
+
+When reading a RESQML property, the name is resolved in this order:
+
+1. **Title match** — the XML ``Citation/Title`` is normalised and looked up in
+   the mapping table and title synonyms (e.g., ``"NET/GROSS"`` → ``NTG``)
+2. **PropertyKind match** — the RESQML ``PropertyKind`` string is normalised
+   and matched via the kind synonym table, with optional facet direction
+   (e.g., ``"permeability rock"`` + facet ``I`` → ``PERMX``)
+3. **Fallback** — if no mapping is found, the original title is used as-is
+
+The implementation lives in ``_metadata.py:resolve_property_mapping()``.
+
+Title synonyms
+^^^^^^^^^^^^^^
+
+These aliases allow RMS-style and free-form names to resolve to canonical
+Eclipse keywords:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 30
+
+   * - Input alias
+     - Resolves to
+   * - ``NET/GROSS``, ``NET_GROSS``, ``NET TO GROSS``
+     - ``NTG``
+   * - ``PERM_X``, ``KLOGH``
+     - ``PERMX``
+   * - ``PERM_Y``
+     - ``PERMY``
+   * - ``PERM_Z``
+     - ``PERMZ``
+   * - ``SW``
+     - ``SWAT``
+   * - ``SO``
+     - ``SOIL``
+   * - ``SG``
+     - ``SGAS``
+   * - ``FACIES_CODE``
+     - ``FACIES``
+   * - ``ZONE_LOG``
+     - ``ZONE``
+
+RESQML PropertyKind synonyms
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These handle the ``PropertyKind`` field from RESQML XML:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 50 30
+
+   * - RESQML PropertyKind
+     - Eclipse keyword
+   * - ``porosity``
+     - ``PORO``
+   * - ``net to gross ratio``
+     - ``NTG``
+   * - ``permeability rock``, ``permeability``, ``permeability thickness``
+     - ``PERMX`` / ``PERMY`` / ``PERMZ`` (via facet)
+   * - ``pressure``, ``pore pressure``
+     - ``PRESSURE``
+   * - ``water saturation``
+     - ``SWAT``
+   * - ``oil saturation``
+     - ``SOIL``
+   * - ``gas saturation``
+     - ``SGAS``
+   * - ``depth``
+     - ``DEPTH``
+   * - ``thickness``, ``cell thickness``
+     - ``DZ``
+   * - ``temperature``
+     - ``TEMP``
+   * - ``transmissibility``
+     - ``TRANX`` / ``TRANY`` / ``TRANZ`` (via facet)
+   * - ``facies``
+     - ``FACIES``
+   * - ``rock type``
+     - ``ROCKNUM``
+   * - ``zone``
+     - ``ZONE``
+   * - ``active``
+     - ``ACTNUM``
+   * - ``region``
+     - ``FIPNUM``
+
+For directional properties (permeability, transmissibility), the facet
+direction (``I``/``J``/``K`` or ``X``/``Y``/``Z``) selects the variant.
 
 
 ETP Protocol Details
@@ -281,12 +573,6 @@ Dependency Graph
 - Without ``h5py``: EPC operations raise ``ImportError``
 - Without ``resqpy``: Interop tests skip
 
-Install the optional OSDU dependencies with:
-
-.. code-block:: bash
-
-    pip install xtgeo[osdu]
-
 pyetp — Role & Scope
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -344,6 +630,127 @@ message classes. Change detection is therefore implemented via timestamp-based
 polling (see `Change Detection`_ above).
 
 
+Testing
+-------
+
+Setting Up Local RDDMS
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The integration tests require a local OSDU Reservoir DDMS Docker stack.
+
+**Docker Compose setup:**
+
+.. code-block:: yaml
+
+    # docker-compose.yml
+    services:
+      postgres:
+        image: postgres:15
+        environment:
+          POSTGRES_DB: rddms
+          POSTGRES_USER: rddms
+          POSTGRES_PASSWORD: rddms
+        healthcheck:
+          test: pg_isready -U rddms
+          interval: 2s
+          timeout: 5s
+          retries: 5
+
+      etp-server:
+        image: community.opengroup.org:5555/osdu/platform/domain-data-mgmt-services/reservoir/reservoir-ddms-etp:latest
+        ports:
+          - "9002:9002"
+        environment:
+          RDDMS_DB_HOST: postgres
+          RDDMS_DB_NAME: rddms
+          RDDMS_DB_USER: rddms
+          RDDMS_DB_PASSWORD: rddms
+          RDDMS_ETP_PORT: 9002
+          RDDMS_AUTH_ENABLED: "false"
+        depends_on:
+          postgres:
+            condition: service_healthy
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+          interval: 3s
+          timeout: 5s
+          retries: 10
+
+Start it:
+
+.. code-block:: bash
+
+    docker compose up -d
+    docker compose ps   # wait for healthy
+
+Running the Tests
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+    cd tests/test_interfaces/test_osdu
+
+    # All tests (requires Docker RDDMS running)
+    pytest -v --noconftest
+
+    # Only offline tests (no server needed)
+    pytest -v --noconftest -k "not etp and not resqpy"
+
+    # Only ETP integration tests (requires server)
+    pytest -v --noconftest test_etp_roundtrip.py test_etp_discovery.py
+
+    # With resqpy interop
+    pytest -v --noconftest test_resqpy_interop.py
+
+Test Structure
+^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 10 55
+
+   * - File
+     - Server?
+     - What it tests
+   * - ``test_epc_roundtrip.py``
+     - No
+     - Geometry/property roundtrip via EPC files
+   * - ``test_epc_grid3d_compliance.py``
+     - No
+     - Grid3d scenarios (rotated, faulted, pinched, asymmetric, masked,
+       hypothesis-based) through EPC roundtrip
+   * - ``test_epc_grid3d_operations.py``
+     - No
+     - Post-roundtrip operations (bulk volume, cell dims, XYZ, dataframe,
+       crop, grid quality, reduce-to-one-layer, surface extraction)
+   * - ``test_epc_surface_xyz_compliance.py``
+     - No
+     - Surface (large, NaN, rotation, asymmetric), Points, and Polygons
+       compliance through EPC roundtrip
+   * - ``test_api.py``
+     - No
+     - High-level API functions with EPC files
+   * - ``test_metadata_roundtrip.py``
+     - No
+     - UUID/metadata preservation through roundtrips
+   * - ``test_etp_roundtrip.py``
+     - Yes
+     - Write → read → compare via ETP protocol
+   * - ``test_etp_discovery.py``
+     - Yes
+     - Deep discovery, related objects, notifications
+   * - ``test_resqpy_interop.py``
+     - Yes
+     - Cross-library compatibility with resqpy
+
+**Offline tests** (``test_epc_*``, ``test_api.py``, ``test_metadata_roundtrip.py``)
+run in CI without any infrastructure. They exercise the full converter and
+EPC file I/O stack.
+
+**Online tests** (``test_etp_*``) require a running RDDMS and are gated by
+``pytest.importorskip("energistics")`` and connection availability.
+
+
 Contributing
 ------------
 
@@ -374,3 +781,35 @@ Future Considerations
 - **Property collections**: Group by realization/timestep for ensemble workflows
 - **Well data**: RESQML WellboreTrajectory/WellboreFrame → xtgeo Well
 - **True Protocol 5 notifications**: If/when the energistics library adds StoreNotification message classes
+- **Split coordinate lines (write)**: Full XY-split pillar export when xtgeo's data model supports it
+- **Time-series properties**: Temporal property support with ``TimeIndex`` / ``TimeSeries``
+
+
+External References
+-------------------
+
+Standards
+^^^^^^^^^
+
+- `RESQML 2.0.1 Specification <https://www.energistics.org/resqml-data-standards/>`_
+  — The data model for subsurface objects (grids, properties, surfaces)
+- `ETP 1.2 Specification <https://www.energistics.org/etp-specification/>`_
+  — Energistics Transfer Protocol (WebSocket + Avro binary)
+- `OSDU Technical Standard <https://community.opengroup.org/osdu/>`_
+  — Open Subsurface Data Universe platform specification
+
+Libraries
+^^^^^^^^^
+
+- `energistics (pyetp) <https://github.com/equinor/pyetp>`_
+  — Python implementation of ETP 1.2 message schemas
+- `resqpy <https://github.com/bp/resqpy>`_
+  — Pure-Python RESQML 2.0.1 read/write (for cross-validation)
+- `h5py <https://www.h5py.org/>`_
+  — HDF5 file access for array data in EPC containers
+
+OSDU Services
+^^^^^^^^^^^^^
+
+- `OSDU Reservoir DDMS <https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/reservoir/>`_
+  — The backend service providing ETP 1.2 access to subsurface data

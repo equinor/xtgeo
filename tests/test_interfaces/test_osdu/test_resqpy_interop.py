@@ -329,7 +329,7 @@ class TestResqpyEtpRoundTrip:
         """ETP provider for resqpy interop tests with fresh dataspace."""
         import uuid as _uuid
 
-        ds_path = f"maap/test_resqpy_{_uuid.uuid4().hex[:8]}"
+        ds_path = f"xtgeo/test_resqpy_{_uuid.uuid4().hex[:8]}"
         cfg = EtpConnectionConfig(
             url="ws://localhost:9002",
             dataspace=f"eml:///dataspace('{ds_path}')",

@@ -4,6 +4,14 @@ OSDU / RESQML examples
 This tutorial covers reading and writing xtgeo objects to and from
 OSDU Reservoir DDMS (RDDMS) servers and RESQML EPC file containers.
 
+.. seealso::
+
+   - :doc:`/osdu/guide` — Full user guide with connection options, environment
+     variables, profiles, and property name mapping reference
+   - :doc:`/osdu/api` — Complete API reference
+   - :doc:`/osdu/demos` — More runnable examples (change tracking, bulk copy)
+   - :doc:`/osdu/developer` — Architecture, data model details, testing
+
 Prerequisites
 -------------
 
@@ -13,8 +21,9 @@ Install the optional OSDU dependencies:
 
     pip install xtgeo[osdu]
 
-This installs ``energistics`` (ETP 1.2 protocol) and ``h5py``.
-For file-based EPC access, ``resqpy`` is also recommended.
+This installs ``pyetp`` (ETP 1.2 Avro protocol schemas) and ``websockets``.
+The core dependencies ``lxml`` and ``h5py`` (for EPC files) are already
+included in xtgeo.
 
 Session setup
 -------------
@@ -27,37 +36,50 @@ For local development (Docker RDDMS, no auth):
 
     session = OsduSession(
         etp_url="ws://localhost:9002",
-        dataspace="maap/drogon",
+        dataspace="myteam/project",
         auth_mode="none",
     )
 
-For cloud OSDU (Equinor Energy DataLake, Azure AD auth):
+For cloud OSDU via environment variables (recommended for CI/scripts):
 
 .. code-block:: python
 
     from xtgeo.interfaces.osdu import OsduSession
 
+    # Reads OSDU_HOSTNAME, OSDU_TENANT_ID, OSDU_CLIENT_ID, etc.
+    session = OsduSession.from_env()
+
+For cloud OSDU with explicit configuration:
+
+.. code-block:: python
+
+    import os
+    from xtgeo.interfaces.osdu import OsduSession
+
     session = OsduSession(
-        profile="equinor-dev",
-        etp_url="wss://edl.equinor.com/api/reservoir-ddms-etp/v2/",
-        rest_base_url="https://edl.equinor.com",
+        profile="my-cloud",
+        etp_url="wss://your-osdu-host.energy.azure.com/api/reservoir-ddms-etp/v2/",
+        rest_base_url="https://your-osdu-host.energy.azure.com",
         token_url="https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token",
         client_id="<your-client-id>",
-        auth_mode="refresh_token",
-        data_partition="equinor-dev",
+        client_secret=os.environ["OSDU_CLIENT_SECRET"],
+        auth_mode="client_credentials",
+        data_partition="<your-partition>",
         dataspace="myteam/project",
+        legal_tag="<partition>-private-default",
+        owners=["data.default.owners@<partition>.dataservices.energy"],
+        viewers=["data.default.viewers@<partition>.dataservices.energy"],
     )
-    # Set secrets via environment:
-    # export XTGEO_OSDU_REFRESH_TOKEN=...
-    # export XTGEO_OSDU_CLIENT_SECRET=...
-
-    session.save()  # Persists to ~/.config/xtgeo/osdu/equinor-dev.toml
+    session.save()  # Persists to ~/.config/xtgeo/osdu/my-cloud.toml
 
 Later, reload with:
 
 .. code-block:: python
 
-    session = OsduSession.load("equinor-dev")
+    session = OsduSession.load("my-cloud")
+
+See :ref:`connecting-to-a-server` in the User Guide for the full list of
+environment variables and configuration options.
 
 Discovering objects
 -------------------
@@ -194,7 +216,7 @@ Copy an entire dataspace (all objects) to a new location:
         read_dataspace, write_dataspace, compare_snapshots,
     )
 
-    session = OsduSession(etp_url="ws://localhost:9002", dataspace="maap/drogon")
+    session = OsduSession(etp_url="ws://localhost:9002", dataspace="myteam/project")
     config = session.etp_config()
 
     # Read everything from source
@@ -204,8 +226,8 @@ Copy an entire dataspace (all objects) to a new location:
     print(f"Read {len(snapshot.grids)} grids, {len(snapshot.surfaces)} surfaces")
 
     # Write to new dataspace
-    session.switch_dataspace("maap/drogon-copy")
-    session.create_dataspace_etp("maap/drogon-copy")
+    session.switch_dataspace("myteam/project-copy")
+    session.create_dataspace_etp("myteam/project-copy")
     config2 = session.etp_config()
 
     with EtpProvider(config2) as provider:
@@ -225,15 +247,30 @@ Copy an entire dataspace (all objects) to a new location:
 Property name mapping
 ---------------------
 
-The module maps between Eclipse keywords and OSDU property names:
+Eclipse keywords are automatically mapped to OSDU property names when
+reading and writing:
 
 .. code-block:: python
 
     from xtgeo.interfaces.osdu import ecl_keyword_to_osdu, osdu_name_to_ecl_keyword
 
     mapping = ecl_keyword_to_osdu("PORO")
-    print(mapping.osdu_name)  # "Porosity"
-    print(mapping.uom)        # "v/v"
+    print(mapping.osdu_name)    # "Porosity"
+    print(mapping.uom_family)   # "fraction"
 
     kw = osdu_name_to_ecl_keyword("Porosity")
     print(kw)  # "PORO"
+
+    # List all 40 supported mappings
+    from xtgeo.interfaces.osdu import list_supported_properties
+    for m in list_supported_properties():
+        print(f"{m.ecl_keyword:12s} → {m.osdu_name:30s} ({m.uom_family})")
+
+Common aliases like ``SW`` → ``SWAT``, ``KLOGH`` → ``PERMX``, and
+``NET/GROSS`` → ``NTG`` are also resolved automatically.
+
+Unmapped property names are stored as-is and round-trip correctly, but
+won't have standardised OSDU metadata.
+
+See :ref:`property-mapping-table` in the User Guide for the complete
+reference table.

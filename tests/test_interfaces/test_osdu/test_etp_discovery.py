@@ -31,7 +31,7 @@ from xtgeo.interfaces.osdu import (
 @pytest.fixture
 def etp_config():
     """Config with a unique test dataspace."""
-    ds_path = f"maap/test_disc_{_uuid.uuid4().hex[:8]}"
+    ds_path = f"xtgeo/test_disc_{_uuid.uuid4().hex[:8]}"
     return EtpConnectionConfig(
         url="ws://localhost:9002",
         dataspace=f"eml:///dataspace('{ds_path}')",

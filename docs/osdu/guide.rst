@@ -33,16 +33,16 @@ Cloud connection via environment variables
 .. code-block:: bash
 
     # Set these in your shell, CI pipeline, or .env file:
-    export OSDU_HOSTNAME="equinorswedev.energy.azure.com"
-    export OSDU_TENANT_ID="3aa4a235-..."
-    export OSDU_CLIENT_ID="21b442a9-..."
-    export OSDU_CLIENT_SECRET="<secret>"
-    export OSDU_SCOPE="bd0c9d90-.../.default"
-    export OSDU_DATA_PARTITION="dev"
+    export OSDU_HOSTNAME="your-osdu-host.energy.azure.com"
+    export OSDU_TENANT_ID="<your-tenant-id>"
+    export OSDU_CLIENT_ID="<your-client-id>"
+    export OSDU_CLIENT_SECRET="<your-client-secret>"
+    export OSDU_SCOPE="<your-scope>/.default"
+    export OSDU_DATA_PARTITION="<your-partition>"
     export OSDU_DATASPACE="myteam/project"
-    export OSDU_LEGAL_TAG="dev-equinor-private-default"
-    export OSDU_ACL_OWNERS="data.default.owners@dev.dataservices.energy"
-    export OSDU_ACL_VIEWERS="data.default.viewers@dev.dataservices.energy"
+    export OSDU_LEGAL_TAG="<partition>-private-default"
+    export OSDU_ACL_OWNERS="data.default.owners@<partition>.dataservices.energy"
+    export OSDU_ACL_VIEWERS="data.default.viewers@<partition>.dataservices.energy"
 
 .. code-block:: python
 
@@ -119,29 +119,31 @@ Save and reuse a profile
 
     # First time: configure and save
     session = OsduSession(
-        profile="equinor-dev",
-        etp_url="wss://edl.equinor.com/api/reservoir-ddms-etp/v2/",
-        rest_base_url="https://edl.equinor.com",
+        profile="my-cloud",
+        etp_url="wss://your-osdu-host.energy.azure.com/api/reservoir-ddms-etp/v2/",
+        rest_base_url="https://your-osdu-host.energy.azure.com",
         token_url="https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token",
         client_id="<client-id>",
         auth_mode="client_credentials",
-        data_partition="equinor-dev",
+        data_partition="<your-partition>",
         dataspace="myteam/project",
-        legal_tag="equinor-dev-equinor-private-default",
-        owners=["data.default.owners@equinor-dev.dataservices.energy"],
-        viewers=["data.default.viewers@equinor-dev.dataservices.energy"],
+        legal_tag="<partition>-private-default",
+        owners=["data.default.owners@<partition>.dataservices.energy"],
+        viewers=["data.default.viewers@<partition>.dataservices.energy"],
     )
-    session.save()  # → ~/.config/xtgeo/osdu/equinor-dev.toml
+    session.save()  # → ~/.config/xtgeo/osdu/my-cloud.toml
 
     # Later (secrets come from XTGEO_OSDU_CLIENT_SECRET env var):
-    session = OsduSession.load("equinor-dev")
+    session = OsduSession.load("my-cloud")
 
 List available profiles:
 
 .. code-block:: python
 
-    print(OsduSession.list_profiles())  # ['equinor-dev', 'local']
+    print(OsduSession.list_profiles())  # ['my-cloud', 'local']
 
+
+.. _connecting-to-a-server:
 
 Connecting to a Server
 ----------------------
@@ -178,7 +180,7 @@ the auth mode. For local development with no env vars set, it defaults to
    * - ``OSDU_SCOPE``
      - OAuth2 scope (defaults to ``<client_id>/.default``)
    * - ``OSDU_DATA_PARTITION``
-     - OSDU data partition (e.g. ``"dev"``, ``"equinor-dev"``)
+     - OSDU data partition (e.g. ``"opendes"``, ``"my-partition"``)
    * - ``OSDU_DATASPACE``
      - ETP dataspace path (e.g. ``"myteam/project"``)
    * - ``OSDU_LEGAL_TAG``
@@ -198,7 +200,7 @@ From a saved profile (recommended for interactive use)
 
 .. code-block:: python
 
-    session = OsduSession.load("equinor-dev")
+    session = OsduSession.load("my-cloud")
 
 Profiles are TOML files at ``~/.config/xtgeo/osdu/<name>.toml``. Secrets
 should always come from environment variables, not the file.
@@ -206,8 +208,8 @@ should always come from environment variables, not the file.
 Explicit construction (for programmatic control)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Local development (Docker RDDMS, no authentication):
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Local development (Docker RDDMS, no authentication)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -232,29 +234,29 @@ Local development (Docker RDDMS, no authentication):
         dataspace="myteam/project",
     )
 
-Cloud OSDU (e.g. Equinor Energy DataLake with Azure AD):
+Cloud OSDU (Azure AD authentication):
 
 .. code-block:: python
 
     session = OsduSession(
-        etp_url="wss://edl.equinor.com/api/reservoir-ddms-etp/v2/",
-        rest_base_url="https://edl.equinor.com",
+        etp_url="wss://your-osdu-host.energy.azure.com/api/reservoir-ddms-etp/v2/",
+        rest_base_url="https://your-osdu-host.energy.azure.com",
         token_url="https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token",
         client_id="<client-id>",
         client_secret=os.environ["OSDU_CLIENT_SECRET"],
         auth_mode="client_credentials",
-        data_partition="equinor-dev",
+        data_partition="<your-partition>",
         dataspace="myteam/project",
-        legal_tag="equinor-dev-equinor-private-default",
-        owners=["data.default.owners@equinor-dev.dataservices.energy"],
-        viewers=["data.default.viewers@equinor-dev.dataservices.energy"],
+        legal_tag="<partition>-private-default",
+        owners=["data.default.owners@<partition>.dataservices.energy"],
+        viewers=["data.default.viewers@<partition>.dataservices.energy"],
     )
 
 Reload a saved profile:
 
 .. code-block:: python
 
-    session = OsduSession.load("equinor-dev")
+    session = OsduSession.load("my-cloud")
 
 
 Working with EPC Files
@@ -517,10 +519,15 @@ UUIDs and RESQML metadata are preserved automatically through roundtrips:
     xtgeo.grid_to_osdu(session, grid2, title="MyGrid", crs_epsg=23031)
 
 
+.. _property-mapping-table:
+
 Property Name Mapping
 ---------------------
 
-Eclipse keywords are mapped to OSDU property names automatically:
+When you store or retrieve grid properties via OSDU, Eclipse keywords are
+automatically mapped to OSDU property names (and back). This is important for
+interoperability — your ``PORO`` property appears as ``Porosity`` in the OSDU
+catalog, and vice versa.
 
 .. code-block:: python
 
@@ -528,10 +535,194 @@ Eclipse keywords are mapped to OSDU property names automatically:
 
     mapping = ecl_keyword_to_osdu("PORO")
     print(mapping.osdu_name)  # "Porosity"
-    print(mapping.uom)        # "v/v"
+    print(mapping.uom_family) # "fraction"
 
     kw = osdu_name_to_ecl_keyword("Porosity")
     print(kw)  # "PORO"
+
+    # List all supported mappings
+    from xtgeo.interfaces.osdu import list_supported_properties
+    for m in list_supported_properties():
+        print(f"{m.ecl_keyword:12s} → {m.osdu_name:40s} ({m.uom_family})")
+
+Continuous properties
+^^^^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 30 15
+
+   * - Eclipse keyword
+     - OSDU name
+     - Unit
+   * - ``PORO``
+     - Porosity
+     - fraction
+   * - ``NTG``
+     - Net to Gross Ratio
+     - fraction
+   * - ``PERMX``
+     - Permeability X
+     - mD
+   * - ``PERMY``
+     - Permeability Y
+     - mD
+   * - ``PERMZ``
+     - Permeability Z
+     - mD
+   * - ``SWAT``
+     - Water Saturation
+     - fraction
+   * - ``SOIL``
+     - Oil Saturation
+     - fraction
+   * - ``SGAS``
+     - Gas Saturation
+     - fraction
+   * - ``SWCR``
+     - Critical Water Saturation
+     - fraction
+   * - ``SWINIT``
+     - Initial Water Saturation
+     - fraction
+   * - ``SWL``
+     - Connate Water Saturation
+     - fraction
+   * - ``SOWCR``
+     - Critical Oil In Water Saturation
+     - fraction
+   * - ``SGCR``
+     - Critical Gas Saturation
+     - fraction
+   * - ``SGU``
+     - Maximum Gas Saturation
+     - fraction
+   * - ``PRESSURE``
+     - Pressure
+     - bar
+   * - ``PINIT``
+     - Initial Pressure
+     - bar
+   * - ``RS``
+     - Solution Gas-Oil Ratio
+     - sm3/sm3
+   * - ``RV``
+     - Vaporized Oil-Gas Ratio
+     - sm3/sm3
+   * - ``OILVISCOSITY``
+     - Oil Viscosity
+     - cP
+   * - ``OILDENSITY``
+     - Oil Density
+     - kg/m3
+   * - ``BO``
+     - Oil Formation Volume Factor
+     - rm3/sm3
+   * - ``TEMP``
+     - Temperature
+     - degC
+   * - ``TRANX``
+     - Transmissibility X
+     - cP.rm3/day/bar
+   * - ``TRANY``
+     - Transmissibility Y
+     - cP.rm3/day/bar
+   * - ``TRANZ``
+     - Transmissibility Z
+     - cP.rm3/day/bar
+   * - ``MULTZ``
+     - Transmissibility Multiplier Z
+     - unitless
+   * - ``MULTPV``
+     - Pore Volume Multiplier
+     - unitless
+   * - ``DEPTH``
+     - Depth
+     - m
+   * - ``TOPS``
+     - Top Depth
+     - m
+   * - ``DZ``
+     - Thickness
+     - m
+   * - ``BULKVOL``
+     - Bulk Volume
+     - m3
+   * - ``PORV``
+     - Pore Volume
+     - rm3
+
+Discrete properties
+^^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 30 15
+
+   * - Eclipse keyword
+     - OSDU name
+     - Unit
+   * - ``ACTNUM``
+     - Active Cell
+     - unitless
+   * - ``FIPNUM``
+     - Flow Region Index
+     - unitless
+   * - ``SATNUM``
+     - Saturation Number
+     - unitless
+   * - ``EQLNUM``
+     - Equilibrium Number
+     - unitless
+   * - ``PVTNUM``
+     - PVT Number
+     - unitless
+   * - ``ROCKNUM``
+     - Rock Type Index
+     - unitless
+   * - ``IMBNUM``
+     - Imbibition Number
+     - unitless
+   * - ``ENDNUM``
+     - Endpoint Scaling Number
+     - unitless
+   * - ``FACIES``
+     - Facies
+     - unitless
+   * - ``ZONE``
+     - Zone Index
+     - unitless
+
+Common aliases
+^^^^^^^^^^^^^^
+
+You can also use these RMS-style aliases in property names — they are
+automatically resolved:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 20
+
+   * - Input alias
+     - Maps to
+   * - ``NET/GROSS``, ``NET_GROSS``, ``NET TO GROSS``
+     - ``NTG``
+   * - ``PERM_X``, ``KLOGH``
+     - ``PERMX``
+   * - ``SW``
+     - ``SWAT``
+   * - ``SO``
+     - ``SOIL``
+   * - ``SG``
+     - ``SGAS``
+   * - ``FACIES_CODE``
+     - ``FACIES``
+   * - ``ZONE_LOG``
+     - ``ZONE``
+
+**Unmapped properties** are stored with their original name as the RESQML
+title. They round-trip correctly but won't appear in OSDU's property catalog
+with standardised metadata.
 
 
 Multi-Dataspace Queries

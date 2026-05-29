@@ -16,7 +16,7 @@ def etp_provider():
 
     cfg = EtpConnectionConfig(
         url="ws://localhost:9002",
-        dataspace="eml:///dataspace('maap/xtgeo')",
+        dataspace="eml:///dataspace('xtgeo/tests')",
     )
     try:
         p = EtpProvider(cfg)

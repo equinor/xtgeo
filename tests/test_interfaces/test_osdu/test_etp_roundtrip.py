@@ -37,7 +37,7 @@ def etp_config():
     """Base ETP config for local RDDMS."""
     import uuid as _uuid
 
-    ds_path = f"maap/test_rt_{_uuid.uuid4().hex[:8]}"
+    ds_path = f"xtgeo/test_rt_{_uuid.uuid4().hex[:8]}"
     return EtpConnectionConfig(
         url="ws://localhost:9002",
         dataspace=f"eml:///dataspace('{ds_path}')",
@@ -378,8 +378,8 @@ class TestDataspaceCopy:
 
     def test_copy_dataspace(self, fresh_provider):
         """Read from source ds → write to target ds → compare both."""
-        source_path = "maap/test_copy_src"
-        target_path = "maap/test_copy_dst"
+        source_path = "xtgeo/test_copy_src"
+        target_path = "xtgeo/test_copy_dst"
 
         # Setup: create source dataspace and write test data
         src = fresh_provider(source_path)

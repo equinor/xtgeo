@@ -13,31 +13,32 @@ and RESQML 2.0.1 EPC+HDF5 file containers. This enables:
 - **Deep discovery** — traverse the full object graph in a dataspace
 - **Change tracking** — detect when objects are created, modified, or deleted
 
-.. grid:: 2
 
-    .. grid-item-card:: User Guide
-        :link: guide
-        :link-type: doc
+For Users — Geologists & Geomodellers
+--------------------------------------
 
-        Get started quickly. Connect, read, write, and discover data.
+Set up connections, read/write data in scripts and pipelines, and understand
+property name mappings between Eclipse and OSDU.
 
-    .. grid-item-card:: API Reference
-        :link: api
-        :link-type: doc
+- :doc:`guide` — Installation, connection setup, read/write recipes, property
+  name mappings (Eclipse ↔ OSDU), EPC files, format compatibility
+- :doc:`api` — Complete function reference (high-level functions first,
+  low-level converters at the bottom)
+- :doc:`demos` — Copy-paste runnable examples: local RDDMS, change tracking,
+  bulk copy, EPC files
 
-        Complete function reference organised by use case.
 
-    .. grid-item-card:: Design & Development
-        :link: design
-        :link-type: doc
+For Developers — Architecture & Internals
+------------------------------------------
 
-        Architecture, protocols, and contribution guide.
+Understand the design, data model structures, protocol details, what is
+supported (and what is not), and how to contribute.
 
-    .. grid-item-card:: Demos & Testing
-        :link: demos
-        :link-type: doc
-
-        Runnable examples, test setup, and references.
+- :doc:`developer` — Architecture, data model differences (xtgeo vs RESQML),
+  supported vs unsupported features, ETP protocol details, pyetp, testing
+  setup, Docker, test structure, contributing
+- :doc:`api` — Provider classes, low-level converters, enums — the full
+  programmatic interface
 
 .. toctree::
    :maxdepth: 2
@@ -45,5 +46,5 @@ and RESQML 2.0.1 EPC+HDF5 file containers. This enables:
 
    guide
    api
-   design
    demos
+   developer
