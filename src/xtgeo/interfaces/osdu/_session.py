@@ -20,7 +20,7 @@ Usage::
     from xtgeo.interfaces.osdu import OsduSession
 
     # Load or create session
-    session = OsduSession.load("equinor-dev")
+    session = OsduSession.load("my-cloud")
     # or from env/defaults
     session = OsduSession.from_env()
 
@@ -76,9 +76,9 @@ class OsduSession:
         One of: "refresh_token", "client_credentials", "none".
         "none" means no token management (for local dev servers).
     data_partition : str
-        OSDU data partition ID (e.g. "opendes", "equinor-dev").
+        OSDU data partition ID (e.g. "opendes", "my-partition").
     dataspace : str
-        ETP dataspace path (two-part string, e.g. "maap/xtgeo").
+        ETP dataspace path (two-part string, e.g. "myteam/project").
     legal_tag : str
         Default OSDU legal tag for new objects.
     owners : list[str]
@@ -97,7 +97,7 @@ class OsduSession:
     etp_url: str = "ws://localhost:9002"
     rest_base_url: str = ""
     data_partition: str = ""
-    dataspace: str = "maap/xtgeo"
+    dataspace: str = "xtgeo/default"
 
     # Auth
     token_url: str = ""
@@ -220,7 +220,7 @@ class OsduSession:
         Parameters
         ----------
         path : str, optional
-            Dataspace path (e.g. "maap/xtgeo"). Defaults to self.dataspace.
+            Dataspace path (e.g. "myteam/project"). Defaults to self.dataspace.
 
         Returns
         -------
@@ -376,7 +376,7 @@ class OsduSession:
 
         Examples
         --------
-        >>> session = OsduSession.load("equinor-dev")
+        >>> session = OsduSession.load("my-cloud")
         >>> for ds in session.list_dataspaces():
         ...     print(ds['Path'])
         """
@@ -513,7 +513,7 @@ class OsduSession:
         Parameters
         ----------
         path : str
-            New dataspace path (e.g. "maap/production").
+            New dataspace path (e.g. "myteam/production").
         """
         self.dataspace = path
         logger.info("Switched to dataspace '%s'", path)
@@ -601,7 +601,7 @@ class OsduSession:
             etp_url=conn.get("etp_url", "ws://localhost:9002"),
             rest_base_url=conn.get("rest_base_url", ""),
             data_partition=conn.get("data_partition", ""),
-            dataspace=conn.get("dataspace", "maap/xtgeo"),
+            dataspace=conn.get("dataspace", "xtgeo/default"),
             timeout_s=conn.get("timeout_s", 30.0),
             token_url=auth.get("token_url", ""),
             client_id=auth.get("client_id", ""),
@@ -694,7 +694,7 @@ class OsduSession:
             "OSDU_DATASPACE": "dataspace",
             "OSDU_LEGAL_TAG": "legal_tag",
         }
-        _defaults = {"dataspace": "maap/xtgeo"}
+        _defaults = {"dataspace": "xtgeo/default"}
         for env_key, attr in _osdu_fallbacks.items():
             current = getattr(self, attr)
             if not current or current == _defaults.get(attr):

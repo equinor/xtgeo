@@ -4,8 +4,8 @@
 This module implements the ResqmlDataProvider interface using the ETP 1.2 protocol
 to communicate with OSDU Reservoir DMS (RDDMS) endpoints.
 
-It uses proper Avro binary encoding via the `energistics` package (same schemas
-used by equinor/pyetp) but implements its own synchronous client tailored for
+It uses proper Avro binary encoding via the `energistics` package (pyetp)
+but implements its own synchronous client tailored for
 xtgeo's data types: IJK grids, Grid2D surfaces, PointSets, PolylineSets.
 
 Connection flow:
@@ -1773,7 +1773,7 @@ class EtpProvider(ResqmlDataProvider):
         Parameters
         ----------
         path : str
-            Dataspace path, e.g. "maap/drogonxtgeo".
+            Dataspace path, e.g. "myteam/project".
 
         Returns
         -------
@@ -1814,7 +1814,7 @@ class EtpProvider(ResqmlDataProvider):
         Parameters
         ----------
         path : str
-            Dataspace path to delete, e.g. "maap/drogonxtgeo".
+            Dataspace path to delete, e.g. "myteam/project".
         """
         self._run(self._async_delete_dataspace(path))
 
@@ -1835,7 +1835,7 @@ class EtpProvider(ResqmlDataProvider):
         Parameters
         ----------
         path : str
-            New dataspace path, e.g. "maap/drogonxtgeo".
+            New dataspace path, e.g. "myteam/project".
         """
         self._config.dataspace = f"eml:///dataspace('{path}')"
 

@@ -1,2 +1,18 @@
 fixes:
     - "*/site-packages/xtgeo::src/xtgeo"
+
+coverage:
+  status:
+    patch:
+      default:
+        # ETP provider, session, and dataspace modules require a live RDDMS
+        # server and cannot be covered by offline CI tests.
+        only_pulls: true
+    project:
+      default:
+        target: auto
+
+ignore:
+  - "src/xtgeo/interfaces/osdu/_etp_provider.py"
+  - "src/xtgeo/interfaces/osdu/_session.py"
+  - "src/xtgeo/interfaces/osdu/_dataspace.py"

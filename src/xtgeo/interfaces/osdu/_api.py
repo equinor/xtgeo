@@ -26,8 +26,8 @@ Example usage::
     import xtgeo
     from xtgeo.interfaces.osdu import OsduSession
 
-    session = OsduSession(etp_url="ws://localhost:9002", dataspace="maap/drogon")
-    # or: session = OsduSession.load("equinor-dev")
+    session = OsduSession(etp_url="ws://localhost:9002", dataspace="myteam/project")
+    # or: session = OsduSession.load("my-cloud")
 
     # List all objects
     objects = xtgeo.list_osdu_objects(session)
@@ -121,7 +121,7 @@ def list_osdu_objects(
     Examples
     --------
     >>> from xtgeo.interfaces.osdu import OsduSession
-    >>> session = OsduSession(etp_url="ws://localhost:9002", dataspace="maap/drogon")
+    >>> session = OsduSession(etp_url="ws://localhost:9002", dataspace="myteam/project")
     >>> objects = list_osdu_objects(session)
     >>> grids = list_osdu_objects(session, object_type="grid")
     """
@@ -211,8 +211,8 @@ def list_osdu_dataspaces(source: SessionLike) -> List[Dict[str, Any]]:
     --------
     >>> for ds in xtgeo.list_osdu_dataspaces(session):
     ...     print(ds['path'])
-    maap/drogon
-    maap/production
+    myteam/project
+    myteam/production
     """
     from ._etp_provider import EtpProvider
 
@@ -267,7 +267,7 @@ def query_osdu(
     Examples
     --------
     >>> # Search grids across a specific dataspace
-    >>> results = xtgeo.query_osdu(session, object_type="grid", dataspace="maap/drogon")
+    >>> results = xtgeo.query_osdu(session, object_type="grid", dataspace="myteam/project")
 
     >>> # Wildcard name search
     >>> results = xtgeo.query_osdu(session, name="*poro*", object_type="property")
@@ -341,8 +341,8 @@ def query_osdu_all_dataspaces(
     >>> all_grids = xtgeo.query_osdu_all_dataspaces(session, object_type="grid")
     >>> for g in all_grids:
     ...     print(f"{g['dataspace']:20s} {g['title']}")
-    maap/drogon          Drogon
-    maap/production      ProdGrid
+    myteam/project       Drogon
+    myteam/production    ProdGrid
     """
     if not isinstance(source, OsduSession):
         raise TypeError("query_osdu_all_dataspaces requires an OsduSession")
