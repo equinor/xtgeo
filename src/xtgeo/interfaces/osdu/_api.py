@@ -267,7 +267,9 @@ def query_osdu(
     Examples
     --------
     >>> # Search grids across a specific dataspace
-    >>> results = xtgeo.query_osdu(session, object_type="grid", dataspace="myteam/project")
+    >>> results = xtgeo.query_osdu(
+    ...     session, object_type="grid", dataspace="myteam/project"
+    ... )
 
     >>> # Wildcard name search
     >>> results = xtgeo.query_osdu(session, name="*poro*", object_type="property")

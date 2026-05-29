@@ -8,8 +8,6 @@ Covers: _api.py, _metadata.py, _properties.py, _crs.py, _epc_provider.py,
 from __future__ import annotations
 
 import math
-import os
-import tempfile
 
 import numpy as np
 import pytest
@@ -17,7 +15,6 @@ import pytest
 import xtgeo
 from xtgeo.interfaces.osdu import (
     EpcFileProvider,
-    OsduSession,
 )
 from xtgeo.interfaces.osdu._crs import LocalDepth3dCrs
 from xtgeo.interfaces.osdu._metadata import (
@@ -29,7 +26,6 @@ from xtgeo.interfaces.osdu._metadata import (
     osdu_reference_to_mapping,
     resolve_property_mapping,
 )
-
 
 # ---------------------------------------------------------------------------
 # _metadata.py coverage
@@ -89,9 +85,7 @@ class TestResolvePropertyMapping:
         assert m.ecl_keyword == "PERMY"
 
     def test_resolve_by_kind_permeability_with_k_facet_maps_to_permz(self):
-        m = resolve_property_mapping(
-            property_kind="permeability", facet_direction="K"
-        )
+        m = resolve_property_mapping(property_kind="permeability", facet_direction="K")
         assert m is not None
         assert m.ecl_keyword == "PERMZ"
 
@@ -291,16 +285,16 @@ class TestLocalDepth3dCrs:
         assert abs(gz - 30.0) < 1e-10
 
     def test_local_to_global_rotates_90_degrees(self):
-        crs = LocalDepth3dCrs(
-            origin_x=0.0, origin_y=0.0, areal_rotation=math.pi / 2
-        )
+        crs = LocalDepth3dCrs(origin_x=0.0, origin_y=0.0, areal_rotation=math.pi / 2)
         gx, gy, gz = crs.local_to_global(1.0, 0.0, 0.0)
         assert abs(gx - 0.0) < 1e-10
         assert abs(gy - 1.0) < 1e-10
 
     def test_local_global_roundtrip_with_rotation_preserves_coordinates(self):
         crs = LocalDepth3dCrs(
-            origin_x=500.0, origin_y=600.0, origin_z=100.0,
+            origin_x=500.0,
+            origin_y=600.0,
+            origin_z=100.0,
             areal_rotation=0.3,
         )
         lx, ly, lz = 10.0, 20.0, 30.0
@@ -349,6 +343,7 @@ class TestLocalDepth3dCrs:
     def test_from_xml_with_only_uuid_uses_zero_defaults(self):
         """XML with no optional elements."""
         from lxml import etree
+
         from xtgeo.interfaces.osdu._resqml_enums import NS_RESQML20, RESQML_NS_MAP
 
         root = etree.Element(
@@ -417,7 +412,9 @@ class TestApiImportOsdu:
         epc = str(tmp_path / "test.epc")
         grid = xtgeo.create_box_grid((4, 3, 2))
         poro = xtgeo.GridProperty(grid, name="PORO", values=np.ones((4, 3, 2)) * 0.3)
-        xtgeo.grid_to_osdu(epc, grid, title="ImpGrid", properties=[poro], crs_epsg=23031)
+        xtgeo.grid_to_osdu(
+            epc, grid, title="ImpGrid", properties=[poro], crs_epsg=23031
+        )
 
         results = xtgeo.search_osdu(epc, name="ImpGrid", object_type="grid")
         result = results[0]
@@ -450,12 +447,14 @@ class TestApiImportOsdu:
         epc = str(tmp_path / "test.epc")
         import pandas as pd
 
-        df = pd.DataFrame({
-            "X_UTME": [0, 1, 2],
-            "Y_UTMN": [0, 1, 0],
-            "Z_TVDSS": [0, 0, 0],
-            "POLY_ID": [0, 0, 0],
-        })
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0, 1, 2],
+                "Y_UTMN": [0, 1, 0],
+                "Z_TVDSS": [0, 0, 0],
+                "POLY_ID": [0, 0, 0],
+            }
+        )
         polys = xtgeo.Polygons(df)
         xtgeo.polygons_to_osdu(epc, polys, title="ImpPoly", crs_epsg=23031)
 
@@ -524,7 +523,10 @@ class TestApiQueryOsdu:
 
 
 class TestApiDeepQueryOsduEpc:
-    """Test deep_query_osdu against EPC files — EPC provider doesn't support discover."""
+    """Test deep_query_osdu against EPC files.
+
+    EPC provider doesn't support discover.
+    """
 
     def test_deep_query_raises_attribute_error_on_epc_provider(self, tmp_path):
         epc = str(tmp_path / "test.epc")
@@ -566,10 +568,14 @@ class TestPropertyReadWrite:
         epc = str(tmp_path / "test.epc")
         grid = xtgeo.create_box_grid((4, 3, 2))
         fipnum = xtgeo.GridProperty(
-            grid, name="FIPNUM", discrete=True,
+            grid,
+            name="FIPNUM",
+            discrete=True,
             values=np.array([[[1, 2], [3, 1], [2, 3]]] * 4, dtype=np.int32),
         )
-        xtgeo.grid_to_osdu(epc, grid, title="DProp", properties=[fipnum], crs_epsg=23031)
+        xtgeo.grid_to_osdu(
+            epc, grid, title="DProp", properties=[fipnum], crs_epsg=23031
+        )
 
         grid2, props2 = xtgeo.grid_from_osdu(epc, name="DProp")
         fip = next(p for p in props2 if p.name == "FIPNUM")
@@ -584,8 +590,11 @@ class TestPropertyReadWrite:
         swat = xtgeo.GridProperty(grid, name="SWAT", values=np.full((3, 3, 2), 0.7))
 
         xtgeo.grid_to_osdu(
-            epc, grid, title="MultiP",
-            properties=[poro, permx, swat], crs_epsg=23031,
+            epc,
+            grid,
+            title="MultiP",
+            properties=[poro, permx, swat],
+            crs_epsg=23031,
         )
         _, props2 = xtgeo.grid_from_osdu(epc, name="MultiP")
         names = sorted(p.name for p in props2)
@@ -600,7 +609,9 @@ class TestPropertyReadWrite:
         custom = xtgeo.GridProperty(
             grid, name="MY_CUSTOM_PROP", values=np.random.rand(3, 3, 2)
         )
-        xtgeo.grid_to_osdu(epc, grid, title="CustP", properties=[custom], crs_epsg=23031)
+        xtgeo.grid_to_osdu(
+            epc, grid, title="CustP", properties=[custom], crs_epsg=23031
+        )
 
         _, props2 = xtgeo.grid_from_osdu(epc, name="CustP")
         assert any(p.name == "MY_CUSTOM_PROP" for p in props2)
@@ -662,7 +673,9 @@ class TestPropertyReadWrite:
         provider.open()
         try:
             satnum = xtgeo.GridProperty(
-                grid, name="SATNUM", discrete=True,
+                grid,
+                name="SATNUM",
+                discrete=True,
                 values=np.ones((3, 3, 2), dtype=np.int32) * 2,
             )
             write_grid_property(provider, satnum, grid_uuid)
@@ -714,7 +727,11 @@ class TestEpcProviderEdgeCases:
         """Exercise EPC surface write path with put_grid2d/get_grid2d_geometry."""
         epc = str(tmp_path / "surf.epc")
         surf = xtgeo.RegularSurface(
-            ncol=5, nrow=8, xinc=50, yinc=25, rotation=15.0,
+            ncol=5,
+            nrow=8,
+            xinc=50,
+            yinc=25,
+            rotation=15.0,
             values=np.random.rand(5, 8),
         )
         xtgeo.surface_to_osdu(epc, surf, title="MySurf", crs_epsg=23031)
@@ -750,12 +767,14 @@ class TestPolylineClosedDetection:
 
         epc = str(tmp_path / "poly.epc")
         # Closed polygon: last point == first point
-        df = pd.DataFrame({
-            "X_UTME": [0, 10, 10, 0, 0],
-            "Y_UTMN": [0, 0, 10, 10, 0],
-            "Z_TVDSS": [0, 0, 0, 0, 0],
-            "POLY_ID": [0, 0, 0, 0, 0],
-        })
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0, 10, 10, 0, 0],
+                "Y_UTMN": [0, 0, 10, 10, 0],
+                "Z_TVDSS": [0, 0, 0, 0, 0],
+                "POLY_ID": [0, 0, 0, 0, 0],
+            }
+        )
         polys = xtgeo.Polygons(df)
         xtgeo.polygons_to_osdu(epc, polys, title="ClosedPoly", crs_epsg=23031)
 
@@ -771,12 +790,14 @@ class TestPolylineMultiPoly:
         import pandas as pd
 
         epc = str(tmp_path / "mpoly.epc")
-        df = pd.DataFrame({
-            "X_UTME": [0, 1, 2, 10, 11, 12, 13],
-            "Y_UTMN": [0, 1, 0, 10, 11, 10, 12],
-            "Z_TVDSS": [0, 0, 0, 5, 5, 5, 5],
-            "POLY_ID": [0, 0, 0, 1, 1, 1, 1],
-        })
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0, 1, 2, 10, 11, 12, 13],
+                "Y_UTMN": [0, 1, 0, 10, 11, 10, 12],
+                "Z_TVDSS": [0, 0, 0, 5, 5, 5, 5],
+                "POLY_ID": [0, 0, 0, 1, 1, 1, 1],
+            }
+        )
         polys = xtgeo.Polygons(df)
         xtgeo.polygons_to_osdu(epc, polys, title="MultiPoly", crs_epsg=23031)
 
@@ -797,7 +818,9 @@ class TestIjkGridEdgeCases:
         epc = str(tmp_path / "test.epc")
         grid = xtgeo.create_box_grid((3, 3, 2))
         actnum = xtgeo.GridProperty(
-            grid, name="ACTNUM", discrete=True,
+            grid,
+            name="ACTNUM",
+            discrete=True,
             values=np.zeros((3, 3, 2), dtype=np.int32),
         )
         grid.set_actnum(actnum)
