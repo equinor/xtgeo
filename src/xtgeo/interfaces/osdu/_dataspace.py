@@ -101,6 +101,41 @@ class PolylineSetSnapshot(ResqmlObject):
 
 
 @dataclass
+class TriangulatedSurfaceSnapshot(ResqmlObject):
+    """TriangulatedSetRepresentation with vertices and triangles."""
+
+    vertices: Optional[np.ndarray] = None  # (N, 3)
+    triangles: Optional[np.ndarray] = None  # (M, 3) int
+
+
+@dataclass
+class WellSnapshot(ResqmlObject):
+    """WellboreTrajectoryRepresentation with MD + XYZ + logs."""
+
+    md: Optional[np.ndarray] = None
+    x: Optional[np.ndarray] = None
+    y: Optional[np.ndarray] = None
+    z: Optional[np.ndarray] = None
+    logs: Dict[str, np.ndarray] = field(default_factory=dict)
+
+
+@dataclass
+class BlockedWellSnapshot(ResqmlObject):
+    """BlockedWellboreRepresentation with cell indices + properties."""
+
+    md: Optional[np.ndarray] = None
+    x: Optional[np.ndarray] = None
+    y: Optional[np.ndarray] = None
+    z: Optional[np.ndarray] = None
+    cell_indices_i: Optional[np.ndarray] = None
+    cell_indices_j: Optional[np.ndarray] = None
+    cell_indices_k: Optional[np.ndarray] = None
+    grid_uuid: str = ""
+    trajectory_uuid: str = ""
+    properties: Dict[str, np.ndarray] = field(default_factory=dict)
+
+
+@dataclass
 class PropertySnapshot:
     """Grid property data."""
 
@@ -139,6 +174,11 @@ class DataspaceSnapshot:
     surfaces: List[SurfaceSnapshot] = field(default_factory=list)
     pointsets: List[PointSetSnapshot] = field(default_factory=list)
     polylinesets: List[PolylineSetSnapshot] = field(default_factory=list)
+    triangulated_surfaces: List[TriangulatedSurfaceSnapshot] = field(
+        default_factory=list
+    )
+    wells: List[WellSnapshot] = field(default_factory=list)
+    blocked_wells: List[BlockedWellSnapshot] = field(default_factory=list)
     crs_list: List[CrsSnapshot] = field(default_factory=list)
 
     @property
@@ -149,6 +189,9 @@ class DataspaceSnapshot:
             + len(self.surfaces)
             + len(self.pointsets)
             + len(self.polylinesets)
+            + len(self.triangulated_surfaces)
+            + len(self.wells)
+            + len(self.blocked_wells)
             + len(self.crs_list)
             + sum(len(g.properties) for g in self.grids)
         )
@@ -167,6 +210,14 @@ class DataspaceSnapshot:
             parts.append(f"{len(self.pointsets)} pointsets")
         if self.polylinesets:
             parts.append(f"{len(self.polylinesets)} polylinesets")
+        if self.triangulated_surfaces:
+            parts.append(
+                f"{len(self.triangulated_surfaces)} triangulated surfaces"
+            )
+        if self.wells:
+            parts.append(f"{len(self.wells)} wells")
+        if self.blocked_wells:
+            parts.append(f"{len(self.blocked_wells)} blocked wells")
         if self.crs_list:
             parts.append(f"{len(self.crs_list)} CRS")
         return ", ".join(parts) if parts else "empty"
@@ -181,6 +232,9 @@ _TYPE_MAP = {
     "Grid2dRepresentation": "surface",
     "PointSetRepresentation": "pointset",
     "PolylineSetRepresentation": "polylineset",
+    "TriangulatedSetRepresentation": "triangulated_surface",
+    "WellboreTrajectoryRepresentation": "well",
+    "BlockedWellboreRepresentation": "blocked_well",
     "LocalDepth3dCrs": "crs",
     "ContinuousProperty": "property",
     "DiscreteProperty": "property",
@@ -222,6 +276,9 @@ def read_dataspace(provider: ResqmlDataProvider) -> DataspaceSnapshot:
     surfaces_info = []
     pointsets_info = []
     polylinesets_info = []
+    trisurfaces_info = []
+    wells_info = []
+    blocked_wells_info = []
     crs_info = []
     properties_info = []
 
@@ -235,6 +292,12 @@ def read_dataspace(provider: ResqmlDataProvider) -> DataspaceSnapshot:
             pointsets_info.append(obj)
         elif category == "polylineset":
             polylinesets_info.append(obj)
+        elif category == "triangulated_surface":
+            trisurfaces_info.append(obj)
+        elif category == "well":
+            wells_info.append(obj)
+        elif category == "blocked_well":
+            blocked_wells_info.append(obj)
         elif category == "crs":
             crs_info.append(obj)
         elif category == "property":
@@ -382,6 +445,72 @@ def read_dataspace(provider: ResqmlDataProvider) -> DataspaceSnapshot:
         except Exception as e:
             logger.warning("Failed to read polylineset %s: %s", obj["uuid"], e)
 
+    # Read triangulated surfaces
+    for obj in trisurfaces_info:
+        try:
+            data = provider.get_triangulated_set(obj["uuid"])
+            snapshot.triangulated_surfaces.append(
+                TriangulatedSurfaceSnapshot(
+                    uuid=obj["uuid"],
+                    title=obj.get("title", ""),
+                    resqml_type=obj.get(
+                        "type", "resqml20.TriangulatedSetRepresentation"
+                    ),
+                    crs_uuid=data.get("crs_uuid", ""),
+                    vertices=data["vertices"],
+                    triangles=data["triangles"],
+                )
+            )
+        except Exception as e:
+            logger.warning("Failed to read triangulated surface %s: %s", obj["uuid"], e)
+
+    # Read wells (trajectories)
+    for obj in wells_info:
+        try:
+            data = provider.get_wellbore_trajectory(obj["uuid"])
+            snapshot.wells.append(
+                WellSnapshot(
+                    uuid=obj["uuid"],
+                    title=obj.get("title", ""),
+                    resqml_type=obj.get(
+                        "type", "resqml20.WellboreTrajectoryRepresentation"
+                    ),
+                    crs_uuid=data.get("crs_uuid", ""),
+                    md=data.get("md"),
+                    x=data.get("x"),
+                    y=data.get("y"),
+                    z=data.get("z"),
+                )
+            )
+        except Exception as e:
+            logger.warning("Failed to read well trajectory %s: %s", obj["uuid"], e)
+
+    # Read blocked wells
+    for obj in blocked_wells_info:
+        try:
+            data = provider.get_blocked_wellbore(obj["uuid"])
+            snapshot.blocked_wells.append(
+                BlockedWellSnapshot(
+                    uuid=obj["uuid"],
+                    title=obj.get("title", ""),
+                    resqml_type=obj.get(
+                        "type", "resqml20.BlockedWellboreRepresentation"
+                    ),
+                    crs_uuid=data.get("crs_uuid", ""),
+                    md=data.get("md"),
+                    x=data.get("x"),
+                    y=data.get("y"),
+                    z=data.get("z"),
+                    cell_indices_i=data.get("cell_indices_i"),
+                    cell_indices_j=data.get("cell_indices_j"),
+                    cell_indices_k=data.get("cell_indices_k"),
+                    grid_uuid=data.get("grid_uuid", ""),
+                    trajectory_uuid=data.get("trajectory_uuid", ""),
+                )
+            )
+        except Exception as e:
+            logger.warning("Failed to read blocked well %s: %s", obj["uuid"], e)
+
     logger.info("Read dataspace: %s", snapshot.summary())
     return snapshot
 
@@ -523,6 +652,59 @@ def write_dataspace(
         )
         logger.debug("Wrote polylineset: %s -> %s", pls.title, new_uuid)
 
+    # Write triangulated surfaces
+    for ts in snapshot.triangulated_surfaces:
+        new_uuid = _get_uuid(ts.uuid)
+        crs_uuid = uuid_map.get(ts.crs_uuid, ts.crs_uuid)
+
+        provider.put_triangulated_set(
+            uuid=new_uuid,
+            title=ts.title,
+            vertices=ts.vertices,
+            triangles=ts.triangles,
+            crs_uuid=crs_uuid,
+        )
+        logger.debug("Wrote triangulated surface: %s -> %s", ts.title, new_uuid)
+
+    # Write wells (trajectories)
+    for well in snapshot.wells:
+        new_uuid = _get_uuid(well.uuid)
+        crs_uuid = uuid_map.get(well.crs_uuid, well.crs_uuid)
+
+        provider.put_wellbore_trajectory(
+            uuid=new_uuid,
+            title=well.title,
+            md=well.md,
+            x=well.x,
+            y=well.y,
+            z=well.z,
+            crs_uuid=crs_uuid,
+        )
+        logger.debug("Wrote well trajectory: %s -> %s", well.title, new_uuid)
+
+    # Write blocked wells
+    for bw in snapshot.blocked_wells:
+        new_uuid = _get_uuid(bw.uuid)
+        crs_uuid = uuid_map.get(bw.crs_uuid, bw.crs_uuid)
+        traj_uuid = uuid_map.get(bw.trajectory_uuid, bw.trajectory_uuid)
+        grid_uuid = uuid_map.get(bw.grid_uuid, bw.grid_uuid)
+
+        provider.put_blocked_wellbore(
+            uuid=new_uuid,
+            title=bw.title,
+            md=bw.md,
+            x=bw.x,
+            y=bw.y,
+            z=bw.z,
+            cell_indices_i=bw.cell_indices_i,
+            cell_indices_j=bw.cell_indices_j,
+            cell_indices_k=bw.cell_indices_k,
+            trajectory_uuid=traj_uuid,
+            grid_uuid=grid_uuid,
+            crs_uuid=crs_uuid,
+        )
+        logger.debug("Wrote blocked well: %s -> %s", bw.title, new_uuid)
+
     logger.info("Wrote dataspace: %s", snapshot.summary())
     return uuid_map
 
@@ -619,6 +801,39 @@ def compare_snapshots(
         match_by,
         diffs,
         _compare_polylinesets,
+        atol=atol,
+    )
+
+    # Compare triangulated surfaces
+    _compare_lists(
+        a.triangulated_surfaces,
+        b.triangulated_surfaces,
+        "TriangulatedSurface",
+        match_by,
+        diffs,
+        _compare_triangulated_surfaces,
+        atol=atol,
+    )
+
+    # Compare wells
+    _compare_lists(
+        a.wells,
+        b.wells,
+        "Well",
+        match_by,
+        diffs,
+        _compare_wells,
+        atol=atol,
+    )
+
+    # Compare blocked wells
+    _compare_lists(
+        a.blocked_wells,
+        b.blocked_wells,
+        "BlockedWell",
+        match_by,
+        diffs,
+        _compare_blocked_wells,
         atol=atol,
     )
 
@@ -900,3 +1115,104 @@ def _compare_polylinesets(
         diffs.append(
             Difference("PolylineSet", title, "closed", f"{a.closed} vs {b.closed}")
         )
+
+
+def _compare_triangulated_surfaces(
+    a: TriangulatedSurfaceSnapshot,
+    b: TriangulatedSurfaceSnapshot,
+    diffs: List[Difference],
+    atol: float = 1e-10,
+):
+    title = a.title
+    if a.vertices is None or b.vertices is None:
+        if (a.vertices is None) != (b.vertices is None):
+            diffs.append(
+                Difference("TriangulatedSurface", title, "vertices", "one is None")
+            )
+        return
+    if a.vertices.shape != b.vertices.shape:
+        diffs.append(
+            Difference(
+                "TriangulatedSurface",
+                title,
+                "vertices.shape",
+                f"{a.vertices.shape} vs {b.vertices.shape}",
+            )
+        )
+        return
+    if not np.allclose(a.vertices, b.vertices, atol=atol, equal_nan=True):
+        max_diff = np.nanmax(np.abs(a.vertices - b.vertices))
+        diffs.append(
+            Difference(
+                "TriangulatedSurface", title, "vertices", f"max diff = {max_diff:.2e}"
+            )
+        )
+    if a.triangles is not None and b.triangles is not None:
+        if not np.array_equal(a.triangles, b.triangles):
+            diffs.append(
+                Difference(
+                    "TriangulatedSurface",
+                    title,
+                    "triangles",
+                    f"shapes {a.triangles.shape} vs {b.triangles.shape}",
+                )
+            )
+
+
+def _compare_wells(
+    a: WellSnapshot,
+    b: WellSnapshot,
+    diffs: List[Difference],
+    atol: float = 1e-10,
+):
+    title = a.title
+    for fname in ("md", "x", "y", "z"):
+        va, vb = getattr(a, fname), getattr(b, fname)
+        if va is None or vb is None:
+            if (va is None) != (vb is None):
+                diffs.append(Difference("Well", title, fname, "one is None"))
+            continue
+        if va.shape != vb.shape:
+            diffs.append(
+                Difference("Well", title, fname, f"{va.shape} vs {vb.shape}")
+            )
+        elif not np.allclose(va, vb, atol=atol, equal_nan=True):
+            max_diff = np.nanmax(np.abs(va - vb))
+            diffs.append(
+                Difference("Well", title, fname, f"max diff = {max_diff:.2e}")
+            )
+
+
+def _compare_blocked_wells(
+    a: BlockedWellSnapshot,
+    b: BlockedWellSnapshot,
+    diffs: List[Difference],
+    atol: float = 1e-10,
+):
+    title = a.title
+    for fname in ("md", "x", "y", "z"):
+        va, vb = getattr(a, fname), getattr(b, fname)
+        if va is None or vb is None:
+            if (va is None) != (vb is None):
+                diffs.append(Difference("BlockedWell", title, fname, "one is None"))
+            continue
+        if va.shape != vb.shape:
+            diffs.append(
+                Difference("BlockedWell", title, fname, f"{va.shape} vs {vb.shape}")
+            )
+        elif not np.allclose(va, vb, atol=atol, equal_nan=True):
+            max_diff = np.nanmax(np.abs(va - vb))
+            diffs.append(
+                Difference("BlockedWell", title, fname, f"max diff = {max_diff:.2e}")
+            )
+    for fname in ("cell_indices_i", "cell_indices_j", "cell_indices_k"):
+        va, vb = getattr(a, fname), getattr(b, fname)
+        if va is None or vb is None:
+            if (va is None) != (vb is None):
+                diffs.append(Difference("BlockedWell", title, fname, "one is None"))
+            continue
+        if not np.array_equal(va, vb):
+            n_diff = np.sum(va.flatten() != vb.flatten())
+            diffs.append(
+                Difference("BlockedWell", title, fname, f"{n_diff} cells differ")
+            )

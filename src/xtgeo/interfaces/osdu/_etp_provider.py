@@ -1735,6 +1735,592 @@ class EtpProvider(ResqmlDataProvider):
         return uuid
 
     # ------------------------------------------------------------------
+    # TriangulatedSet
+    # ------------------------------------------------------------------
+
+    def get_triangulated_set(self, uuid: str) -> Dict[str, Any]:
+        """Read TriangulatedSetRepresentation."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
+
+        qualified_type = "resqml20.TriangulatedSetRepresentation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        xml_str = self._get_xml(uuid, uri=uri)
+        if xml_str is None:
+            raise ValueError(f"TriangulatedSet {uuid} not found via ETP")
+
+        root = etree.fromstring(
+            xml_str.encode("utf-8") if isinstance(xml_str, str) else xml_str
+        )
+
+        crs_uuid = ""
+        crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
+        if crs_ref is not None:
+            crs_uuid = crs_ref.get("uuid", "")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        uri = _uri_for_object(
+            self._config.dataspace, qualified_type, uuid
+        )
+        # Try resqpy-compatible per-patch naming first, then fallback
+        vertices = self._get_array(uri, f"/RESQML/{uuid}/points_patch0")
+        if vertices is None:
+            vertices = self._get_array(uri, f"/RESQML/{uuid}/Points")
+        triangles = self._get_array(uri, f"/RESQML/{uuid}/triangles_patch0")
+        if triangles is None:
+            triangles = self._get_array(uri, f"/RESQML/{uuid}/Triangles")
+
+        if vertices is None:
+            vertices = np.zeros((0, 3), dtype=np.float64)
+        if triangles is None:
+            triangles = np.zeros((0, 3), dtype=np.int32)
+
+        return {
+            "vertices": vertices,
+            "triangles": triangles,
+            "crs_uuid": crs_uuid,
+            "title": title,
+        }
+
+    def put_triangulated_set(
+        self,
+        uuid: str,
+        title: str,
+        vertices: np.ndarray,
+        triangles: np.ndarray,
+        crs_uuid: str,
+    ) -> str:
+        """Write TriangulatedSetRepresentation."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+
+        if not uuid:
+            uuid = _make_uuid()
+
+        qualified_type = "resqml20.TriangulatedSetRepresentation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}TriangulatedSetRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        # SurfaceRole (required by RESQML 2.0.1 schema)
+        role_el = etree.SubElement(root, f"{{{NS_RESQML20}}}SurfaceRole")
+        role_el.text = "map"
+
+        patch = etree.SubElement(root, f"{{{NS_RESQML20}}}TrianglePatch")
+
+        patch_idx = etree.SubElement(patch, f"{{{NS_RESQML20}}}PatchIndex")
+        patch_idx.text = "0"
+
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}Count").text = str(
+            len(triangles)
+        )
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}NodeCount").text = str(
+            len(vertices)
+        )
+
+        # Triangles (IntegerHdf5Array)
+        tri_el = etree.SubElement(patch, f"{{{NS_RESQML20}}}Triangles")
+        hdf_ref2 = etree.SubElement(tri_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref2.set("uuid", _make_uuid())
+        path_el2 = etree.SubElement(tri_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el2.text = f"/RESQML/{uuid}/triangles_patch0"
+
+        # Geometry with Points (Point3dHdf5Array)
+        geom = etree.SubElement(patch, f"{{{NS_RESQML20}}}Geometry")
+        crs_geom = etree.SubElement(geom, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_geom.set("uuid", crs_uuid)
+        pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}Points")
+        hdf_ref = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = f"/RESQML/{uuid}/points_patch0"
+
+        xml_str = etree.tostring(root, encoding="unicode")
+
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._put_array(
+            uri, f"/RESQML/{uuid}/points_patch0", vertices.astype(np.float64)
+        )
+        self._put_array(
+            uri, f"/RESQML/{uuid}/triangles_patch0", triangles.astype(np.int32)
+        )
+        self._run(self._commit_transaction())
+
+        return uuid
+
+    # ------------------------------------------------------------------
+    # WellboreTrajectory
+    # ------------------------------------------------------------------
+
+    def get_wellbore_trajectory(self, uuid: str) -> Dict[str, Any]:
+        """Read WellboreTrajectoryRepresentation."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
+
+        qualified_type = "resqml20.WellboreTrajectoryRepresentation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        xml_str = self._get_xml(uuid, uri=uri)
+        if xml_str is None:
+            raise ValueError(f"WellboreTrajectory {uuid} not found via ETP")
+
+        root = etree.fromstring(
+            xml_str.encode("utf-8") if isinstance(xml_str, str) else xml_str
+        )
+
+        crs_uuid = ""
+        crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
+        if crs_ref is not None:
+            crs_uuid = crs_ref.get("uuid", "")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        md = self._get_array(uri, f"/RESQML/{uuid}/MdValues")
+        xyz = self._get_array(uri, f"/RESQML/{uuid}/Points")
+
+        if md is None:
+            md = np.zeros(0, dtype=np.float64)
+        if xyz is None:
+            xyz = np.zeros((0, 3), dtype=np.float64)
+
+        # Find associated frames via discovery
+        frames = []
+        try:
+            related = self.get_related_objects(uuid, direction="sources")
+            for obj in related:
+                if "WellboreFrame" in obj.get("type", ""):
+                    frame_uuid = obj["uuid"]
+                    frame_uri = _uri_for_object(
+                        self._config.dataspace,
+                        "resqml20.WellboreFrameRepresentation",
+                        frame_uuid,
+                    )
+                    frame_md = self._get_array(
+                        frame_uri, f"/RESQML/{frame_uuid}/MdValues"
+                    )
+                    # Find properties on this frame
+                    props = self._find_etp_frame_properties(frame_uuid)
+                    frames.append(
+                        {"uuid": frame_uuid, "md": frame_md, "properties": props}
+                    )
+        except Exception:
+            pass  # Discovery may not find frames in all setups
+
+        return {
+            "md": md,
+            "xyz": xyz,
+            "crs_uuid": crs_uuid,
+            "title": title,
+            "frames": frames,
+        }
+
+    def _find_etp_frame_properties(self, frame_uuid: str) -> List[Dict[str, Any]]:
+        """Find properties attached to a wellbore frame via ETP."""
+        props = []
+        try:
+            related = self.get_related_objects(frame_uuid, direction="sources")
+            for obj in related:
+                if "Property" in obj.get("type", ""):
+                    prop_uuid = obj["uuid"]
+                    prop_type = obj.get("type", "resqml20.ContinuousProperty")
+                    prop_uri = _uri_for_object(
+                        self._config.dataspace, prop_type, prop_uuid
+                    )
+                    values = self._get_array(
+                        prop_uri, f"/RESQML/{prop_uuid}/Values"
+                    )
+                    is_discrete = "Discrete" in prop_type or "Categorical" in prop_type
+                    props.append(
+                        {
+                            "uuid": prop_uuid,
+                            "title": obj.get("title", ""),
+                            "values": values
+                            if values is not None
+                            else np.array([], dtype=np.float64),
+                            "is_discrete": is_discrete,
+                        }
+                    )
+        except Exception:
+            pass
+        return props
+
+    def put_wellbore_trajectory(
+        self,
+        uuid: str,
+        title: str,
+        md: np.ndarray,
+        xyz: np.ndarray,
+        crs_uuid: str,
+    ) -> str:
+        """Write WellboreTrajectoryRepresentation."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+
+        if not uuid:
+            uuid = _make_uuid()
+
+        # Create WellboreFeature → WellboreInterpretation chain
+        feature_uuid = _make_uuid()
+        interp_uuid = _make_uuid()
+        self._put_wellbore_feature(feature_uuid, title)
+        self._put_wellbore_interpretation(interp_uuid, title, feature_uuid)
+
+        qualified_type = "resqml20.WellboreTrajectoryRepresentation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreTrajectoryRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        etree.SubElement(root, f"{{{NS_RESQML20}}}StartMd").text = str(
+            float(md[0]) if len(md) > 0 else 0.0
+        )
+        etree.SubElement(root, f"{{{NS_RESQML20}}}FinishMd").text = str(
+            float(md[-1]) if len(md) > 0 else 0.0
+        )
+
+        # RepresentedInterpretation reference
+        interp_ref = etree.SubElement(
+            root, f"{{{NS_RESQML20}}}RepresentedInterpretation"
+        )
+        interp_ref.set("uuid", interp_uuid)
+
+        geom = etree.SubElement(root, f"{{{NS_RESQML20}}}Geometry")
+        md_el = etree.SubElement(geom, f"{{{NS_RESQML20}}}ControlPointParameters")
+        hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = f"/RESQML/{uuid}/MdValues"
+
+        pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}ControlPoints")
+        hdf_ref2 = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref2.set("uuid", _make_uuid())
+        path_el2 = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el2.text = f"/RESQML/{uuid}/Points"
+
+        crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_ref.set("uuid", crs_uuid)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._put_array(uri, f"/RESQML/{uuid}/MdValues", md.astype(np.float64))
+        self._put_array(uri, f"/RESQML/{uuid}/Points", xyz.astype(np.float64))
+        self._run(self._commit_transaction())
+
+        return uuid
+
+    def _put_wellbore_feature(self, uuid: str, title: str) -> str:
+        """Write a WellboreFeature via ETP."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+
+        qualified_type = "resqml20.WellboreFeature"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreFeature", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        xml_str = etree.tostring(root, encoding="unicode")
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._run(self._commit_transaction())
+        return uuid
+
+    def _put_wellbore_interpretation(
+        self, uuid: str, title: str, feature_uuid: str
+    ) -> str:
+        """Write a WellboreInterpretation referencing a WellboreFeature via ETP."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+
+        qualified_type = "resqml20.WellboreInterpretation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreInterpretation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        feat_ref = etree.SubElement(
+            root, f"{{{NS_RESQML20}}}InterpretedFeature"
+        )
+        feat_ref.set("uuid", feature_uuid)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._run(self._commit_transaction())
+        return uuid
+
+    def put_wellbore_frame(
+        self,
+        uuid: str,
+        title: str,
+        trajectory_uuid: str,
+        md: np.ndarray,
+        properties: List[Dict[str, Any]],
+        crs_uuid: str,
+    ) -> str:
+        """Write WellboreFrameRepresentation with properties."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+
+        if not uuid:
+            uuid = _make_uuid()
+
+        qualified_type = "resqml20.WellboreFrameRepresentation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreFrameRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
+
+        md_el = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeMd")
+        hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = f"/RESQML/{uuid}/MdValues"
+
+        traj_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}Trajectory")
+        traj_ref.set("uuid", trajectory_uuid)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._put_array(uri, f"/RESQML/{uuid}/MdValues", md.astype(np.float64))
+        self._run(self._commit_transaction())
+
+        # Write properties
+        for prop in properties:
+            self.put_property_values(
+                uuid=prop.get("uuid") or _make_uuid(),
+                title=prop["title"],
+                values=np.asarray(prop["values"]),
+                supporting_representation_uuid=uuid,
+                property_kind=prop.get("property_kind", "continuous"),
+                indexable_element="nodes",
+                is_discrete=prop.get("is_discrete", False),
+            )
+
+        return uuid
+
+    # ------------------------------------------------------------------
+    # BlockedWellbore
+    # ------------------------------------------------------------------
+
+    def get_blocked_wellbore(self, uuid: str) -> Dict[str, Any]:
+        """Read BlockedWellboreRepresentation."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
+
+        qualified_type = "resqml20.BlockedWellboreRepresentation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        xml_str = self._get_xml(uuid, uri=uri)
+        if xml_str is None:
+            raise ValueError(f"BlockedWellbore {uuid} not found via ETP")
+
+        root = etree.fromstring(
+            xml_str.encode("utf-8") if isinstance(xml_str, str) else xml_str
+        )
+
+        crs_uuid = ""
+        crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
+        if crs_ref is not None:
+            crs_uuid = crs_ref.get("uuid", "")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        grid_uuid = ""
+        grid_ref = root.find(f".//{{{NS_RESQML20}}}Grid")
+        if grid_ref is not None:
+            grid_uuid = grid_ref.get("uuid", "")
+
+        trajectory_uuid = ""
+        traj_ref = root.find(f".//{{{NS_RESQML20}}}Trajectory")
+        if traj_ref is not None:
+            trajectory_uuid = traj_ref.get("uuid", "")
+
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        md = self._get_array(uri, f"/RESQML/{uuid}/MdValues")
+        xyz = self._get_array(uri, f"/RESQML/{uuid}/Points")
+        cell_indices = self._get_array(uri, f"/RESQML/{uuid}/CellIndices")
+
+        if md is None:
+            md = np.zeros(0, dtype=np.float64)
+        if xyz is None:
+            xyz = np.zeros((0, 3), dtype=np.float64)
+        if cell_indices is None:
+            cell_indices = np.zeros((0, 3), dtype=np.int32)
+
+        # Find properties
+        props = self._find_etp_frame_properties(uuid)
+
+        return {
+            "md": md,
+            "xyz": xyz,
+            "cell_indices": cell_indices,
+            "crs_uuid": crs_uuid,
+            "title": title,
+            "grid_uuid": grid_uuid,
+            "trajectory_uuid": trajectory_uuid,
+            "properties": props,
+        }
+
+    def put_blocked_wellbore(
+        self,
+        uuid: str,
+        title: str,
+        trajectory_uuid: str,
+        grid_uuid: str,
+        md: np.ndarray,
+        xyz: np.ndarray,
+        cell_indices: np.ndarray,
+        properties: List[Dict[str, Any]],
+        crs_uuid: str,
+    ) -> str:
+        """Write BlockedWellboreRepresentation."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+
+        if not uuid:
+            uuid = _make_uuid()
+
+        qualified_type = "resqml20.BlockedWellboreRepresentation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}BlockedWellboreRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
+        etree.SubElement(root, f"{{{NS_RESQML20}}}CellCount").text = str(
+            len(cell_indices)
+        )
+
+        traj_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}Trajectory")
+        traj_ref.set("uuid", trajectory_uuid)
+
+        if grid_uuid:
+            grid_ref_el = etree.SubElement(root, f"{{{NS_RESQML20}}}Grid")
+            grid_ref_el.set("uuid", grid_uuid)
+
+        md_el = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeMd")
+        hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = f"/RESQML/{uuid}/MdValues"
+
+        pts = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeGeometry")
+        pts_geom = etree.SubElement(pts, f"{{{NS_RESQML20}}}Points")
+        hdf_ref2 = etree.SubElement(pts_geom, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref2.set("uuid", _make_uuid())
+        path_el2 = etree.SubElement(pts_geom, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el2.text = f"/RESQML/{uuid}/Points"
+
+        ci_el = etree.SubElement(root, f"{{{NS_RESQML20}}}CellIndices")
+        hdf_ref3 = etree.SubElement(ci_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref3.set("uuid", _make_uuid())
+        path_el3 = etree.SubElement(ci_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el3.text = f"/RESQML/{uuid}/CellIndices"
+
+        crs_ref_el = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_ref_el.set("uuid", crs_uuid)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._put_array(uri, f"/RESQML/{uuid}/MdValues", md.astype(np.float64))
+        self._put_array(uri, f"/RESQML/{uuid}/Points", xyz.astype(np.float64))
+        self._put_array(
+            uri, f"/RESQML/{uuid}/CellIndices", cell_indices.astype(np.int32)
+        )
+        self._run(self._commit_transaction())
+
+        # Write properties
+        for prop in properties:
+            self.put_property_values(
+                uuid=prop.get("uuid") or _make_uuid(),
+                title=prop["title"],
+                values=np.asarray(prop["values"]),
+                supporting_representation_uuid=uuid,
+                property_kind=prop.get("property_kind", "continuous"),
+                indexable_element="cells",
+                is_discrete=prop.get("is_discrete", False),
+            )
+
+        return uuid
+
+    # ------------------------------------------------------------------
     # Dataspace Management (ETP Protocol 24)
     # ------------------------------------------------------------------
 

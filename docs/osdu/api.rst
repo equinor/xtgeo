@@ -125,6 +125,21 @@ Polygons
 
 .. autofunction:: xtgeo.polygons_from_osdu
 
+Wells
+^^^^^
+
+.. autofunction:: xtgeo.well_from_osdu
+
+Blocked Wells
+^^^^^^^^^^^^^
+
+.. autofunction:: xtgeo.blocked_well_from_osdu
+
+Triangulated Surfaces
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: xtgeo.triangulated_surface_from_osdu
+
 
 Writing Objects
 ---------------
@@ -148,6 +163,21 @@ Polygons
 ^^^^^^^^
 
 .. autofunction:: xtgeo.polygons_to_osdu
+
+Wells
+^^^^^
+
+.. autofunction:: xtgeo.well_to_osdu
+
+Blocked Wells
+^^^^^^^^^^^^^
+
+.. autofunction:: xtgeo.blocked_well_to_osdu
+
+Triangulated Surfaces
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: xtgeo.triangulated_surface_to_osdu
 
 
 Dataspace Management
@@ -236,6 +266,27 @@ PolylineSet
 .. autofunction:: xtgeo.interfaces.osdu.polylineset_to_xtgeo
 
 .. autofunction:: xtgeo.interfaces.osdu.xtgeo_polygons_to_resqml
+
+TriangulatedSet
+^^^^^^^^^^^^^^^
+
+.. autofunction:: xtgeo.interfaces.osdu.triangulated_surface_to_xtgeo
+
+.. autofunction:: xtgeo.interfaces.osdu.xtgeo_triangulated_surface_to_resqml
+
+Well (Trajectory + Logs)
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: xtgeo.interfaces.osdu.well_to_xtgeo
+
+.. autofunction:: xtgeo.interfaces.osdu.xtgeo_well_to_resqml
+
+BlockedWell
+^^^^^^^^^^^
+
+.. autofunction:: xtgeo.interfaces.osdu.blocked_well_to_xtgeo
+
+.. autofunction:: xtgeo.interfaces.osdu.xtgeo_blocked_well_to_resqml
 
 
 CRS & Metadata

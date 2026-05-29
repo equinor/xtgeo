@@ -960,3 +960,534 @@ class EpcFileProvider(ResqmlDataProvider):
         xml = crs.to_xml()
         self._add_part(ResqmlObjectType.LOCAL_DEPTH3D_CRS, uuid, xml)
         return uuid
+
+    # ---- TriangulatedSet ----
+
+    def get_triangulated_set(self, uuid: str) -> Dict[str, Any]:
+        """Read TriangulatedSetRepresentation."""
+        root = self._find_part_by_uuid(uuid)
+        if root is None:
+            raise ValueError(f"TriangulatedSet with UUID {uuid} not found in EPC")
+
+        crs_uuid = ""
+        crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
+        if crs_ref is not None:
+            crs_uuid = crs_ref.get("uuid", "")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        # Try resqpy-compatible per-patch naming first, then fallback
+        vertices = self._read_hdf5_array(uuid, "points_patch0")
+        if vertices is None:
+            vertices = self._read_hdf5_array(uuid, "Points")
+        if vertices is None:
+            vertices = np.zeros((0, 3), dtype=np.float64)
+
+        triangles = self._read_hdf5_array(uuid, "triangles_patch0")
+        if triangles is None:
+            triangles = self._read_hdf5_array(uuid, "Triangles")
+        if triangles is None:
+            triangles = np.zeros((0, 3), dtype=np.int32)
+
+        return {
+            "vertices": vertices,
+            "triangles": triangles,
+            "crs_uuid": crs_uuid,
+            "title": title,
+        }
+
+    def put_triangulated_set(
+        self,
+        uuid: str,
+        title: str,
+        vertices: np.ndarray,
+        triangles: np.ndarray,
+        crs_uuid: str,
+    ) -> str:
+        """Write TriangulatedSetRepresentation."""
+        if not uuid:
+            uuid = _make_uuid()
+
+        # Use resqpy-compatible per-patch dataset naming
+        self._write_hdf5_array(uuid, "points_patch0", vertices.astype(np.float64))
+        self._write_hdf5_array(
+            uuid, "triangles_patch0", triangles.astype(np.int32)
+        )
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}TriangulatedSetRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        # SurfaceRole (required by RESQML 2.0.1 schema)
+        role_el = etree.SubElement(root, f"{{{NS_RESQML20}}}SurfaceRole")
+        role_el.text = "map"
+
+        # TrianglePatch
+        patch = etree.SubElement(root, f"{{{NS_RESQML20}}}TrianglePatch")
+
+        patch_idx = etree.SubElement(patch, f"{{{NS_RESQML20}}}PatchIndex")
+        patch_idx.text = "0"
+
+        count_el = etree.SubElement(patch, f"{{{NS_RESQML20}}}Count")
+        count_el.text = str(len(triangles))
+
+        node_count_el = etree.SubElement(patch, f"{{{NS_RESQML20}}}NodeCount")
+        node_count_el.text = str(len(vertices))
+
+        # Triangles reference (IntegerHdf5Array)
+        tri_el = etree.SubElement(patch, f"{{{NS_RESQML20}}}Triangles")
+        hdf_ref2 = etree.SubElement(tri_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref2.set("uuid", _make_uuid())
+        path_el2 = etree.SubElement(tri_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el2.text = _hdf5_dataset_path(uuid, "triangles_patch0")
+
+        # Geometry with Points (Point3dHdf5Array)
+        geom = etree.SubElement(patch, f"{{{NS_RESQML20}}}Geometry")
+        crs_geom = etree.SubElement(geom, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_geom.set("uuid", crs_uuid)
+        pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}Points")
+        hdf_ref = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = _hdf5_dataset_path(uuid, "points_patch0")
+
+        self._add_part(
+            ResqmlObjectType.TRIANGULATED_SET_REPRESENTATION, uuid, root
+        )
+        return uuid
+
+    # ---- WellboreTrajectory ----
+
+    def get_wellbore_trajectory(self, uuid: str) -> Dict[str, Any]:
+        """Read WellboreTrajectoryRepresentation."""
+        root = self._find_part_by_uuid(uuid)
+        if root is None:
+            raise ValueError(f"WellboreTrajectory with UUID {uuid} not found in EPC")
+
+        crs_uuid = ""
+        crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
+        if crs_ref is not None:
+            crs_uuid = crs_ref.get("uuid", "")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        md = self._read_hdf5_array(uuid, "MdValues")
+        xyz = self._read_hdf5_array(uuid, "Points")
+
+        if md is None:
+            md = np.zeros(0, dtype=np.float64)
+        if xyz is None:
+            xyz = np.zeros((0, 3), dtype=np.float64)
+
+        # Find associated WellboreFrames (search for parts referencing this trajectory)
+        frames = []
+        for pname, proot in self._parts.items():
+            tag = etree.QName(proot.tag).localname if proot.tag else ""
+            if "WellboreFrameRepresentation" not in tag:
+                continue
+            # Check if this frame references our trajectory
+            traj_ref = proot.find(
+                f".//{{{NS_RESQML20}}}Trajectory"
+            )
+            if traj_ref is None:
+                traj_ref = proot.find(
+                    f".//{{{NS_RESQML20}}}RepresentedInterpretation"
+                )
+            ref_uuid = ""
+            if traj_ref is not None:
+                ref_uuid = traj_ref.get("uuid", "")
+            if ref_uuid != uuid:
+                continue
+
+            frame_uuid = proot.get("uuid", "")
+            frame_md = self._read_hdf5_array(frame_uuid, "MdValues")
+
+            # Find properties on this frame
+            props = self._find_frame_properties(frame_uuid)
+            frames.append(
+                {"uuid": frame_uuid, "md": frame_md, "properties": props}
+            )
+
+        return {
+            "md": md,
+            "xyz": xyz,
+            "crs_uuid": crs_uuid,
+            "title": title,
+            "frames": frames,
+        }
+
+    def _find_frame_properties(self, frame_uuid: str) -> List[Dict[str, Any]]:
+        """Find properties attached to a wellbore frame."""
+        props = []
+        for pname, proot in self._parts.items():
+            tag = etree.QName(proot.tag).localname if proot.tag else ""
+            if "Property" not in tag:
+                continue
+            supp_ref = proot.find(
+                f".//{{{NS_RESQML20}}}SupportingRepresentation"
+            )
+            if supp_ref is None:
+                continue
+            supp_uuid = supp_ref.get("uuid", "")
+            if supp_uuid != frame_uuid:
+                continue
+
+            prop_uuid = proot.get("uuid", "")
+            prop_title = ""
+            cit = proot.find(f"{{{NS_COMMON20}}}Citation")
+            if cit is not None:
+                t = cit.find(f"{{{NS_COMMON20}}}Title")
+                if t is not None:
+                    prop_title = t.text or ""
+
+            is_discrete = "Discrete" in tag or "Categorical" in tag
+            values = self._read_hdf5_array(prop_uuid, "Values")
+            if values is None:
+                # Try reading from XML path references
+                for path_el in proot.iter(f"{{{NS_COMMON20}}}PathInHdfFile"):
+                    path_text = path_el.text
+                    if path_text:
+                        values = self._read_hdf5_by_path(path_text)
+                        if values is not None:
+                            break
+            if values is None:
+                values = np.array([], dtype=np.float64)
+
+            props.append(
+                {
+                    "uuid": prop_uuid,
+                    "title": prop_title,
+                    "values": values,
+                    "is_discrete": is_discrete,
+                }
+            )
+        return props
+
+    def put_wellbore_trajectory(
+        self,
+        uuid: str,
+        title: str,
+        md: np.ndarray,
+        xyz: np.ndarray,
+        crs_uuid: str,
+    ) -> str:
+        """Write WellboreTrajectoryRepresentation."""
+        if not uuid:
+            uuid = _make_uuid()
+
+        self._write_hdf5_array(uuid, "MdValues", md.astype(np.float64))
+        self._write_hdf5_array(uuid, "Points", xyz.astype(np.float64))
+
+        # Create WellboreFeature → WellboreInterpretation chain
+        feature_uuid = _make_uuid()
+        interp_uuid = _make_uuid()
+        self._put_wellbore_feature(feature_uuid, title)
+        self._put_wellbore_interpretation(interp_uuid, title, feature_uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreTrajectoryRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        # MD datum
+        etree.SubElement(root, f"{{{NS_RESQML20}}}StartMd").text = str(
+            float(md[0]) if len(md) > 0 else 0.0
+        )
+        etree.SubElement(root, f"{{{NS_RESQML20}}}FinishMd").text = str(
+            float(md[-1]) if len(md) > 0 else 0.0
+        )
+
+        # RepresentedInterpretation reference
+        interp_ref = etree.SubElement(
+            root, f"{{{NS_RESQML20}}}RepresentedInterpretation"
+        )
+        interp_ref.set("uuid", interp_uuid)
+
+        # Geometry
+        geom = etree.SubElement(root, f"{{{NS_RESQML20}}}Geometry")
+
+        # MD values reference
+        md_el = etree.SubElement(geom, f"{{{NS_RESQML20}}}ControlPointParameters")
+        hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = _hdf5_dataset_path(uuid, "MdValues")
+
+        # Points reference
+        pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}ControlPoints")
+        hdf_ref2 = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref2.set("uuid", _make_uuid())
+        path_el2 = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el2.text = _hdf5_dataset_path(uuid, "Points")
+
+        crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_ref.set("uuid", crs_uuid)
+
+        self._add_part(
+            ResqmlObjectType.WELLBORE_TRAJECTORY_REPRESENTATION, uuid, root
+        )
+        return uuid
+
+    def _put_wellbore_feature(self, uuid: str, title: str) -> str:
+        """Write a WellboreFeature (part of the Feature→Interpretation→Rep chain)."""
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreFeature", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        self._add_part(ResqmlObjectType.WELLBORE_FEATURE, uuid, root)
+        return uuid
+
+    def _put_wellbore_interpretation(
+        self, uuid: str, title: str, feature_uuid: str
+    ) -> str:
+        """Write a WellboreInterpretation referencing a WellboreFeature."""
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreInterpretation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        # Reference to WellboreFeature
+        feat_ref = etree.SubElement(
+            root, f"{{{NS_RESQML20}}}InterpretedFeature"
+        )
+        feat_ref.set("uuid", feature_uuid)
+
+        self._add_part(ResqmlObjectType.WELLBORE_INTERPRETATION, uuid, root)
+        return uuid
+
+    def put_wellbore_frame(
+        self,
+        uuid: str,
+        title: str,
+        trajectory_uuid: str,
+        md: np.ndarray,
+        properties: List[Dict[str, Any]],
+        crs_uuid: str,
+    ) -> str:
+        """Write WellboreFrameRepresentation with properties."""
+        if not uuid:
+            uuid = _make_uuid()
+
+        self._write_hdf5_array(uuid, "MdValues", md.astype(np.float64))
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}WellboreFrameRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        # Node count
+        etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
+
+        # MD reference
+        md_el = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeMd")
+        hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = _hdf5_dataset_path(uuid, "MdValues")
+
+        # Trajectory reference
+        traj_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}Trajectory")
+        traj_ref.set("uuid", trajectory_uuid)
+
+        self._add_part(
+            ResqmlObjectType.WELLBORE_FRAME_REPRESENTATION, uuid, root
+        )
+
+        # Write each property referencing this frame
+        for prop in properties:
+            prop_uuid = prop.get("uuid") or _make_uuid()
+            self.put_property_values(
+                uuid=prop_uuid,
+                title=prop["title"],
+                values=np.asarray(prop["values"]),
+                supporting_representation_uuid=uuid,
+                property_kind=prop.get("property_kind", "continuous"),
+                indexable_element="nodes",
+                is_discrete=prop.get("is_discrete", False),
+            )
+
+        return uuid
+
+    # ---- BlockedWellbore ----
+
+    def get_blocked_wellbore(self, uuid: str) -> Dict[str, Any]:
+        """Read BlockedWellboreRepresentation."""
+        root = self._find_part_by_uuid(uuid)
+        if root is None:
+            raise ValueError(
+                f"BlockedWellbore with UUID {uuid} not found in EPC"
+            )
+
+        crs_uuid = ""
+        crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
+        if crs_ref is not None:
+            crs_uuid = crs_ref.get("uuid", "")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        # References
+        grid_uuid = ""
+        grid_ref = root.find(f".//{{{NS_RESQML20}}}Grid")
+        if grid_ref is not None:
+            grid_uuid = grid_ref.get("uuid", "")
+
+        trajectory_uuid = ""
+        traj_ref = root.find(f".//{{{NS_RESQML20}}}Trajectory")
+        if traj_ref is not None:
+            trajectory_uuid = traj_ref.get("uuid", "")
+
+        md = self._read_hdf5_array(uuid, "MdValues")
+        xyz = self._read_hdf5_array(uuid, "Points")
+        cell_indices = self._read_hdf5_array(uuid, "CellIndices")
+
+        if md is None:
+            md = np.zeros(0, dtype=np.float64)
+        if xyz is None:
+            xyz = np.zeros((0, 3), dtype=np.float64)
+        if cell_indices is None:
+            cell_indices = np.zeros((0, 3), dtype=np.int32)
+
+        # Find properties on this blocked wellbore
+        props = self._find_frame_properties(uuid)
+
+        return {
+            "md": md,
+            "xyz": xyz,
+            "cell_indices": cell_indices,
+            "crs_uuid": crs_uuid,
+            "title": title,
+            "grid_uuid": grid_uuid,
+            "trajectory_uuid": trajectory_uuid,
+            "properties": props,
+        }
+
+    def put_blocked_wellbore(
+        self,
+        uuid: str,
+        title: str,
+        trajectory_uuid: str,
+        grid_uuid: str,
+        md: np.ndarray,
+        xyz: np.ndarray,
+        cell_indices: np.ndarray,
+        properties: List[Dict[str, Any]],
+        crs_uuid: str,
+    ) -> str:
+        """Write BlockedWellboreRepresentation."""
+        if not uuid:
+            uuid = _make_uuid()
+
+        self._write_hdf5_array(uuid, "MdValues", md.astype(np.float64))
+        self._write_hdf5_array(uuid, "Points", xyz.astype(np.float64))
+        self._write_hdf5_array(uuid, "CellIndices", cell_indices.astype(np.int32))
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}BlockedWellboreRepresentation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = title
+
+        # Node count
+        etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
+        etree.SubElement(root, f"{{{NS_RESQML20}}}CellCount").text = str(
+            len(cell_indices)
+        )
+
+        # Trajectory reference
+        traj_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}Trajectory")
+        traj_ref.set("uuid", trajectory_uuid)
+
+        # Grid reference
+        if grid_uuid:
+            grid_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}Grid")
+            grid_ref.set("uuid", grid_uuid)
+
+        # MD reference
+        md_el = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeMd")
+        hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set("uuid", _make_uuid())
+        path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = _hdf5_dataset_path(uuid, "MdValues")
+
+        # Points reference
+        pts = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeGeometry")
+        pts_geom = etree.SubElement(pts, f"{{{NS_RESQML20}}}Points")
+        hdf_ref2 = etree.SubElement(pts_geom, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref2.set("uuid", _make_uuid())
+        path_el2 = etree.SubElement(pts_geom, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el2.text = _hdf5_dataset_path(uuid, "Points")
+
+        # Cell indices reference
+        ci_el = etree.SubElement(root, f"{{{NS_RESQML20}}}CellIndices")
+        hdf_ref3 = etree.SubElement(ci_el, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref3.set("uuid", _make_uuid())
+        path_el3 = etree.SubElement(ci_el, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el3.text = _hdf5_dataset_path(uuid, "CellIndices")
+
+        crs_ref_el = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_ref_el.set("uuid", crs_uuid)
+
+        self._add_part(
+            ResqmlObjectType.BLOCKED_WELLBORE_REPRESENTATION, uuid, root
+        )
+
+        # Write properties referencing this blocked wellbore
+        for prop in properties:
+            prop_uuid = prop.get("uuid") or _make_uuid()
+            self.put_property_values(
+                uuid=prop_uuid,
+                title=prop["title"],
+                values=np.asarray(prop["values"]),
+                supporting_representation_uuid=uuid,
+                property_kind=prop.get("property_kind", "continuous"),
+                indexable_element="cells",
+                is_discrete=prop.get("is_discrete", False),
+            )
+
+        return uuid

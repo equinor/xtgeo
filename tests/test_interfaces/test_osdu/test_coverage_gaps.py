@@ -462,6 +462,68 @@ class TestApiImportOsdu:
         imported = xtgeo.import_osdu(epc, results[0])
         assert isinstance(imported, xtgeo.Polygons)
 
+    def test_import_well_returns_well_object(self, tmp_path):
+        import pandas as pd
+
+        epc = str(tmp_path / "test.epc")
+        df = pd.DataFrame(
+            {
+                "X_UTME": [460000.0, 460010.0, 460020.0],
+                "Y_UTMN": [5930000.0, 5930000.0, 5930000.0],
+                "Z_TVDSS": [0.0, 500.0, 1000.0],
+                "M_DEPTH": [0.0, 500.0, 1000.0],
+            }
+        )
+        well = xtgeo.Well(
+            xpos=460000, ypos=5930000, wname="ImpW", df=df, mdlogname="M_DEPTH"
+        )
+        xtgeo.well_to_osdu(epc, well, title="ImpW", crs_epsg=23031)
+
+        results = xtgeo.search_osdu(epc, name="ImpW", object_type="well")
+        assert len(results) >= 1
+        imported = xtgeo.import_osdu(epc, results[0])
+        assert isinstance(imported, xtgeo.Well)
+
+    def test_import_blocked_well_returns_blocked_well_object(self, tmp_path):
+        import pandas as pd
+
+        epc = str(tmp_path / "test.epc")
+        df = pd.DataFrame(
+            {
+                "X_UTME": [460000.0, 460010.0, 460020.0],
+                "Y_UTMN": [5930000.0, 5930000.0, 5930000.0],
+                "Z_TVDSS": [100.0, 200.0, 300.0],
+                "M_DEPTH": [100.0, 200.0, 300.0],
+                "I_INDEX": np.array([1, 2, 3], dtype=np.int32),
+                "J_INDEX": np.array([1, 1, 2], dtype=np.int32),
+                "K_INDEX": np.array([1, 1, 1], dtype=np.int32),
+            }
+        )
+        bwell = xtgeo.BlockedWell(
+            xpos=460000, ypos=5930000, wname="ImpBW", df=df, mdlogname="M_DEPTH"
+        )
+        xtgeo.blocked_well_to_osdu(epc, bwell, title="ImpBW", crs_epsg=23031)
+
+        results = xtgeo.search_osdu(epc, name="ImpBW", object_type="blocked_well")
+        assert len(results) >= 1
+        imported = xtgeo.import_osdu(epc, results[0])
+        assert isinstance(imported, xtgeo.BlockedWell)
+
+    def test_import_triangulated_surface_returns_trisurf(self, tmp_path):
+        epc = str(tmp_path / "test.epc")
+        trisurf = xtgeo.TriangulatedSurface(
+            vertices=np.array([[0, 0, 0], [1, 0, 0], [0.5, 1, 0]], dtype=np.float64),
+            triangles=np.array([[0, 1, 2]], dtype=np.int32),
+        )
+        xtgeo.triangulated_surface_to_osdu(
+            epc, trisurf, title="ImpTri", crs_epsg=23031
+        )
+
+        results = xtgeo.search_osdu(epc, name="ImpTri", object_type="trisurface")
+        assert len(results) >= 1
+        imported = xtgeo.import_osdu(epc, results[0])
+        assert isinstance(imported, xtgeo.TriangulatedSurface)
+
     def test_import_raises_valueerror_for_unknown_object_type(self, tmp_path):
         with pytest.raises(ValueError, match="Cannot import"):
             xtgeo.import_osdu(

@@ -130,10 +130,16 @@ def list_osdu_objects(
         "grid": "IjkGrid",
         "surface": "Grid2d",
         "map": "Grid2d",
+        "triangulated_surface": "TriangulatedSet",
+        "trisurface": "TriangulatedSet",
         "points": "PointSet",
         "pointset": "PointSet",
         "polygons": "PolylineSet",
         "polylines": "PolylineSet",
+        "well": "WellboreTrajectory",
+        "trajectory": "WellboreTrajectory",
+        "blocked_well": "BlockedWellbore",
+        "blockedwell": "BlockedWellbore",
         "property": "Property",
         "crs": "LocalDepth3dCrs",
     }
@@ -425,19 +431,26 @@ def import_osdu(
         source.dataspace = result["dataspace"]
 
     try:
-        if "ijkgrid" in obj_type or "grid" in obj_type and "2d" not in obj_type:
+        if "ijkgrid" in obj_type or ("grid" in obj_type and "2d" not in obj_type):
             return grid_from_osdu(
                 source, uuid=obj_uuid, load_properties=load_properties
             )
         if "grid2d" in obj_type or "surface" in obj_type or "map" in obj_type:
             return surface_from_osdu(source, uuid=obj_uuid)
+        if "triangulatedset" in obj_type or "triangulated" in obj_type:
+            return triangulated_surface_from_osdu(source, uuid=obj_uuid)
         if "pointset" in obj_type or "point" in obj_type:
             return points_from_osdu(source, uuid=obj_uuid)
         if "polylineset" in obj_type or "polyline" in obj_type or "polygon" in obj_type:
             return polygons_from_osdu(source, uuid=obj_uuid)
+        if "blockedwellbore" in obj_type:
+            return blocked_well_from_osdu(source, uuid=obj_uuid)
+        if "wellboretrajectory" in obj_type or "trajectory" in obj_type:
+            return well_from_osdu(source, uuid=obj_uuid)
         raise ValueError(
             f"Cannot import object type '{result.get('type')}'. "
-            f"Supported: IjkGrid, Grid2d, PointSet, PolylineSet"
+            f"Supported: IjkGrid, Grid2d, TriangulatedSet, PointSet, "
+            f"PolylineSet, WellboreTrajectory, BlockedWellbore"
         )
     finally:
         if original_dataspace is not None:
@@ -839,6 +852,273 @@ def polygons_to_osdu(
         return xtgeo_polygons_to_resqml(
             provider,
             polygons,
+            title=title,
+            crs_uuid=crs_uuid,
+            crs_epsg=crs_epsg,
+        )
+    finally:
+        if needs_close:
+            provider.close()
+
+
+def well_from_osdu(
+    source: SessionLike,
+    *,
+    uuid: Optional[str] = None,
+    name: Optional[str] = None,
+    load_logs: bool = True,
+) -> Any:
+    """Read a Well (trajectory + logs) from OSDU/RDDMS or an EPC file.
+
+    Parameters
+    ----------
+    source : OsduSession or str
+        An OSDU session or path to an EPC file.
+    uuid : str, optional
+        UUID of the WellboreTrajectoryRepresentation to read.
+    name : str, optional
+        Title/name of the trajectory.
+    load_logs : bool
+        If True, also load well logs from associated frames.
+
+    Returns
+    -------
+    xtgeo.Well
+
+    Examples
+    --------
+    >>> well = well_from_osdu(session, name="Well-A")
+    """
+    from ._well import well_to_xtgeo
+
+    traj_uuid = _resolve_uuid(source, uuid, name, "well")
+    provider, needs_close = _open_provider(source)
+    try:
+        return well_to_xtgeo(provider, traj_uuid, load_logs=load_logs)
+    finally:
+        if needs_close:
+            provider.close()
+
+
+def well_to_osdu(
+    source: SessionLike,
+    well: Any,
+    *,
+    title: Optional[str] = None,
+    crs_epsg: Optional[int] = None,
+    crs_uuid: Optional[str] = None,
+    export_logs: bool = True,
+) -> Dict[str, str]:
+    """Write an xtgeo Well to OSDU/RDDMS or an EPC file.
+
+    Parameters
+    ----------
+    source : OsduSession or str
+        An OSDU session or path to an EPC file.
+    well : xtgeo.Well
+        The well to export.
+    title : str, optional
+        Title for the RESQML object. Uses well.wellname if not given.
+    crs_epsg : int, optional
+        EPSG code for the CRS.
+    crs_uuid : str, optional
+        UUID of an existing CRS.
+    export_logs : bool
+        If True, also export well logs.
+
+    Returns
+    -------
+    dict
+        Mapping of object titles to their UUIDs.
+
+    Examples
+    --------
+    >>> uuids = well_to_osdu(session, well, title="Well-A", crs_epsg=23031)
+    """
+    from ._well import xtgeo_well_to_resqml
+
+    provider, needs_close = _open_provider(source, mode="w")
+    try:
+        return xtgeo_well_to_resqml(
+            provider,
+            well,
+            title=title,
+            crs_uuid=crs_uuid,
+            crs_epsg=crs_epsg,
+            export_logs=export_logs,
+        )
+    finally:
+        if needs_close:
+            provider.close()
+
+
+def blocked_well_from_osdu(
+    source: SessionLike,
+    *,
+    uuid: Optional[str] = None,
+    name: Optional[str] = None,
+) -> Any:
+    """Read a BlockedWell from OSDU/RDDMS or an EPC file.
+
+    Parameters
+    ----------
+    source : OsduSession or str
+        An OSDU session or path to an EPC file.
+    uuid : str, optional
+        UUID of the BlockedWellboreRepresentation to read.
+    name : str, optional
+        Title/name of the blocked well.
+
+    Returns
+    -------
+    xtgeo.BlockedWell
+
+    Examples
+    --------
+    >>> bwell = blocked_well_from_osdu(session, name="Well-A Blocked")
+    """
+    from ._blocked_well import blocked_well_to_xtgeo
+
+    bw_uuid = _resolve_uuid(source, uuid, name, "blocked_well")
+    provider, needs_close = _open_provider(source)
+    try:
+        return blocked_well_to_xtgeo(provider, bw_uuid)
+    finally:
+        if needs_close:
+            provider.close()
+
+
+def blocked_well_to_osdu(
+    source: SessionLike,
+    blocked_well: Any,
+    *,
+    title: Optional[str] = None,
+    trajectory_uuid: Optional[str] = None,
+    grid_uuid: Optional[str] = None,
+    crs_epsg: Optional[int] = None,
+    crs_uuid: Optional[str] = None,
+) -> Dict[str, str]:
+    """Write an xtgeo BlockedWell to OSDU/RDDMS or an EPC file.
+
+    Parameters
+    ----------
+    source : OsduSession or str
+        An OSDU session or path to an EPC file.
+    blocked_well : xtgeo.BlockedWell
+        The blocked well to export.
+    title : str, optional
+        Title for the RESQML object. Uses well name if not given.
+    trajectory_uuid : str, optional
+        UUID of the trajectory this blocked well references.
+    grid_uuid : str, optional
+        UUID of the grid this blocked well belongs to.
+    crs_epsg : int, optional
+        EPSG code for the CRS.
+    crs_uuid : str, optional
+        UUID of an existing CRS.
+
+    Returns
+    -------
+    dict
+        Mapping of object titles to their UUIDs.
+
+    Examples
+    --------
+    >>> uuids = blocked_well_to_osdu(session, bwell, grid_uuid="abc-123")
+    """
+    from ._blocked_well import xtgeo_blocked_well_to_resqml
+
+    provider, needs_close = _open_provider(source, mode="w")
+    try:
+        return xtgeo_blocked_well_to_resqml(
+            provider,
+            blocked_well,
+            title=title,
+            trajectory_uuid=trajectory_uuid,
+            grid_uuid=grid_uuid,
+            crs_uuid=crs_uuid,
+            crs_epsg=crs_epsg,
+        )
+    finally:
+        if needs_close:
+            provider.close()
+
+
+def triangulated_surface_from_osdu(
+    source: SessionLike,
+    *,
+    uuid: Optional[str] = None,
+    name: Optional[str] = None,
+) -> Any:
+    """Read a TriangulatedSurface from OSDU/RDDMS or an EPC file.
+
+    Parameters
+    ----------
+    source : OsduSession or str
+        An OSDU session or path to an EPC file.
+    uuid : str, optional
+        UUID of the TriangulatedSetRepresentation to read.
+    name : str, optional
+        Title/name of the triangulated surface.
+
+    Returns
+    -------
+    xtgeo.TriangulatedSurface
+
+    Examples
+    --------
+    >>> trisurf = triangulated_surface_from_osdu(session, name="FaultPlane1")
+    """
+    from ._triangulated_surface import triangulated_surface_to_xtgeo
+
+    ts_uuid = _resolve_uuid(source, uuid, name, "triangulated_surface")
+    provider, needs_close = _open_provider(source)
+    try:
+        return triangulated_surface_to_xtgeo(provider, ts_uuid)
+    finally:
+        if needs_close:
+            provider.close()
+
+
+def triangulated_surface_to_osdu(
+    source: SessionLike,
+    trisurf: Any,
+    *,
+    title: str = "Exported TriangulatedSurface",
+    crs_epsg: Optional[int] = None,
+    crs_uuid: Optional[str] = None,
+) -> Dict[str, str]:
+    """Write an xtgeo TriangulatedSurface to OSDU/RDDMS or an EPC file.
+
+    Parameters
+    ----------
+    source : OsduSession or str
+        An OSDU session or path to an EPC file.
+    trisurf : xtgeo.TriangulatedSurface
+        The triangulated surface to export.
+    title : str
+        Title for the RESQML object.
+    crs_epsg : int, optional
+        EPSG code for the CRS.
+    crs_uuid : str, optional
+        UUID of an existing CRS.
+
+    Returns
+    -------
+    dict
+        Mapping of object titles to their UUIDs.
+
+    Examples
+    --------
+    >>> uuids = triangulated_surface_to_osdu(session, trisurf, title="FaultPlane")
+    """
+    from ._triangulated_surface import xtgeo_triangulated_surface_to_resqml
+
+    provider, needs_close = _open_provider(source, mode="w")
+    try:
+        return xtgeo_triangulated_surface_to_resqml(
+            provider,
+            trisurf,
             title=title,
             crs_uuid=crs_uuid,
             crs_epsg=crs_epsg,

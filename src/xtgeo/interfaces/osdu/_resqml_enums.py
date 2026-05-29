@@ -33,6 +33,13 @@ class ResqmlObjectType(str, Enum):
     TRIANGULATED_SET_REPRESENTATION = "resqml20.obj_TriangulatedSetRepresentation"
     POINT_SET_REPRESENTATION = "resqml20.obj_PointSetRepresentation"
     POLYLINE_SET_REPRESENTATION = "resqml20.obj_PolylineSetRepresentation"
+    WELLBORE_TRAJECTORY_REPRESENTATION = (
+        "resqml20.obj_WellboreTrajectoryRepresentation"
+    )
+    WELLBORE_FRAME_REPRESENTATION = "resqml20.obj_WellboreFrameRepresentation"
+    BLOCKED_WELLBORE_REPRESENTATION = "resqml20.obj_BlockedWellboreRepresentation"
+    WELLBORE_FEATURE = "resqml20.obj_WellboreFeature"
+    WELLBORE_INTERPRETATION = "resqml20.obj_WellboreInterpretation"
     CONTINUOUS_PROPERTY = "resqml20.obj_ContinuousProperty"
     DISCRETE_PROPERTY = "resqml20.obj_DiscreteProperty"
     CATEGORICAL_PROPERTY = "resqml20.obj_CategoricalProperty"
@@ -115,6 +122,21 @@ CONTENT_TYPE_MAP = {
     ),
     ResqmlObjectType.POLYLINE_SET_REPRESENTATION: (
         "application/x-resqml+xml;version=2.0;type=obj_PolylineSetRepresentation"
+    ),
+    ResqmlObjectType.WELLBORE_TRAJECTORY_REPRESENTATION: (
+        "application/x-resqml+xml;version=2.0;type=obj_WellboreTrajectoryRepresentation"
+    ),
+    ResqmlObjectType.WELLBORE_FRAME_REPRESENTATION: (
+        "application/x-resqml+xml;version=2.0;type=obj_WellboreFrameRepresentation"
+    ),
+    ResqmlObjectType.BLOCKED_WELLBORE_REPRESENTATION: (
+        "application/x-resqml+xml;version=2.0;type=obj_BlockedWellboreRepresentation"
+    ),
+    ResqmlObjectType.WELLBORE_FEATURE: (
+        "application/x-resqml+xml;version=2.0;type=obj_WellboreFeature"
+    ),
+    ResqmlObjectType.WELLBORE_INTERPRETATION: (
+        "application/x-resqml+xml;version=2.0;type=obj_WellboreInterpretation"
     ),
     ResqmlObjectType.CONTINUOUS_PROPERTY: (
         "application/x-resqml+xml;version=2.0;type=obj_ContinuousProperty"

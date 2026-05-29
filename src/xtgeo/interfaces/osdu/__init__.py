@@ -40,6 +40,8 @@ ETP protocol (RDDMS):
 # --- Providers ---
 # --- High-level user API ---
 from ._api import (
+    blocked_well_from_osdu,
+    blocked_well_to_osdu,
     deep_query_osdu,
     grid_from_osdu,
     grid_to_osdu,
@@ -55,7 +57,11 @@ from ._api import (
     search_osdu,
     surface_from_osdu,
     surface_to_osdu,
+    triangulated_surface_from_osdu,
+    triangulated_surface_to_osdu,
     watch_osdu_changes,
+    well_from_osdu,
+    well_to_osdu,
 )
 
 # --- CRS ---
@@ -63,6 +69,7 @@ from ._crs import LocalDepth3dCrs
 
 # --- Dataspace operations ---
 from ._dataspace import (
+    BlockedWellSnapshot,
     CrsSnapshot,
     DataspaceSnapshot,
     Difference,
@@ -71,6 +78,8 @@ from ._dataspace import (
     PolylineSetSnapshot,
     PropertySnapshot,
     SurfaceSnapshot,
+    TriangulatedSurfaceSnapshot,
+    WellSnapshot,
     compare_snapshots,
     read_dataspace,
     write_dataspace,
@@ -79,6 +88,7 @@ from ._epc_provider import EpcFileProvider
 from ._etp_provider import EtpConnectionConfig, EtpProvider
 
 # --- Converters ---
+from ._blocked_well import blocked_well_to_xtgeo, xtgeo_blocked_well_to_resqml
 from ._grid2d import grid2d_to_xtgeo, xtgeo_surface_to_resqml
 from ._ijk_grid import ijk_grid_to_xtgeo, xtgeo_grid_to_resqml
 
@@ -96,6 +106,11 @@ from ._pointset import pointset_to_xtgeo, xtgeo_points_to_resqml
 from ._polyline import polylineset_to_xtgeo, xtgeo_polygons_to_resqml
 from ._properties import read_grid_properties, write_grid_property
 from ._provider_base import ResqmlDataProvider
+from ._triangulated_surface import (
+    triangulated_surface_to_xtgeo,
+    xtgeo_triangulated_surface_to_resqml,
+)
+from ._well import well_to_xtgeo, xtgeo_well_to_resqml
 
 # --- Enums ---
 from ._resqml_enums import (
@@ -147,6 +162,15 @@ __all__ = [
     # Polygon converters
     "polylineset_to_xtgeo",
     "xtgeo_polygons_to_resqml",
+    # TriangulatedSurface converters
+    "triangulated_surface_to_xtgeo",
+    "xtgeo_triangulated_surface_to_resqml",
+    # Well converters
+    "well_to_xtgeo",
+    "xtgeo_well_to_resqml",
+    # BlockedWell converters
+    "blocked_well_to_xtgeo",
+    "xtgeo_blocked_well_to_resqml",
     # Property converters
     "read_grid_properties",
     "write_grid_property",
@@ -156,6 +180,9 @@ __all__ = [
     "SurfaceSnapshot",
     "PointSetSnapshot",
     "PolylineSetSnapshot",
+    "TriangulatedSurfaceSnapshot",
+    "WellSnapshot",
+    "BlockedWellSnapshot",
     "PropertySnapshot",
     "CrsSnapshot",
     "Difference",
@@ -171,6 +198,12 @@ __all__ = [
     "points_to_osdu",
     "polygons_from_osdu",
     "polygons_to_osdu",
+    "well_from_osdu",
+    "well_to_osdu",
+    "blocked_well_from_osdu",
+    "blocked_well_to_osdu",
+    "triangulated_surface_from_osdu",
+    "triangulated_surface_to_osdu",
     "list_osdu_objects",
     "list_osdu_dataspaces",
     "search_osdu",

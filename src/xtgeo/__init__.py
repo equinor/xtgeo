@@ -163,6 +163,8 @@ from xtgeo.xyz.polygons import (
 
 # OSDU/RESQML interface (high-level API)
 from xtgeo.interfaces.osdu._api import (
+    blocked_well_from_osdu,
+    blocked_well_to_osdu,
     deep_query_osdu,
     grid_from_osdu,
     grid_to_osdu,
@@ -178,7 +180,11 @@ from xtgeo.interfaces.osdu._api import (
     search_osdu,
     surface_from_osdu,
     surface_to_osdu,
+    triangulated_surface_from_osdu,
+    triangulated_surface_to_osdu,
     watch_osdu_changes,
+    well_from_osdu,
+    well_to_osdu,
 )
 
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
@@ -292,6 +298,12 @@ __all__ = [
     "points_to_osdu",
     "polygons_from_osdu",
     "polygons_to_osdu",
+    "well_from_osdu",
+    "well_to_osdu",
+    "blocked_well_from_osdu",
+    "blocked_well_to_osdu",
+    "triangulated_surface_from_osdu",
+    "triangulated_surface_to_osdu",
     "list_osdu_objects",
     "list_osdu_dataspaces",
     "search_osdu",

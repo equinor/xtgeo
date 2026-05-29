@@ -209,3 +209,99 @@ class ResqmlDataProvider(abc.ABC):
         vertical_crs_epsg: Optional[int] = None,
     ) -> str:
         """Write CRS definition. Returns UUID."""
+
+    # ---- TriangulatedSet ----
+
+    @abc.abstractmethod
+    def get_triangulated_set(self, uuid: str) -> Dict[str, Any]:
+        """Read TriangulatedSetRepresentation.
+
+        Returns dict with keys:
+          - vertices: np.ndarray shape (N, 3) XYZ coordinates
+          - triangles: np.ndarray shape (M, 3) 0-based vertex indices
+          - crs_uuid: str
+          - title: str
+        """
+
+    @abc.abstractmethod
+    def put_triangulated_set(
+        self,
+        uuid: str,
+        title: str,
+        vertices: "np.ndarray",
+        triangles: "np.ndarray",
+        crs_uuid: str,
+    ) -> str:
+        """Write TriangulatedSetRepresentation. Returns UUID."""
+
+    # ---- WellboreTrajectory ----
+
+    @abc.abstractmethod
+    def get_wellbore_trajectory(self, uuid: str) -> Dict[str, Any]:
+        """Read WellboreTrajectoryRepresentation.
+
+        Returns dict with keys:
+          - md: np.ndarray shape (N,) measured depths
+          - xyz: np.ndarray shape (N, 3) XYZ coordinates
+          - crs_uuid: str
+          - title: str
+          - frames: list of dict, each with:
+              - uuid: str
+              - md: np.ndarray
+              - properties: list of dict with uuid, title, values, is_discrete
+        """
+
+    @abc.abstractmethod
+    def put_wellbore_trajectory(
+        self,
+        uuid: str,
+        title: str,
+        md: "np.ndarray",
+        xyz: "np.ndarray",
+        crs_uuid: str,
+    ) -> str:
+        """Write WellboreTrajectoryRepresentation. Returns UUID."""
+
+    @abc.abstractmethod
+    def put_wellbore_frame(
+        self,
+        uuid: str,
+        title: str,
+        trajectory_uuid: str,
+        md: "np.ndarray",
+        properties: List[Dict[str, Any]],
+        crs_uuid: str,
+    ) -> str:
+        """Write WellboreFrameRepresentation with properties. Returns UUID."""
+
+    # ---- BlockedWellbore ----
+
+    @abc.abstractmethod
+    def get_blocked_wellbore(self, uuid: str) -> Dict[str, Any]:
+        """Read BlockedWellboreRepresentation.
+
+        Returns dict with keys:
+          - md: np.ndarray shape (N,)
+          - xyz: np.ndarray shape (N, 3)
+          - cell_indices: np.ndarray shape (N, 3) — I, J, K
+          - crs_uuid: str
+          - title: str
+          - grid_uuid: str
+          - trajectory_uuid: str
+          - properties: list of dict with uuid, title, values, is_discrete
+        """
+
+    @abc.abstractmethod
+    def put_blocked_wellbore(
+        self,
+        uuid: str,
+        title: str,
+        trajectory_uuid: str,
+        grid_uuid: str,
+        md: "np.ndarray",
+        xyz: "np.ndarray",
+        cell_indices: "np.ndarray",
+        properties: List[Dict[str, Any]],
+        crs_uuid: str,
+    ) -> str:
+        """Write BlockedWellboreRepresentation. Returns UUID."""
