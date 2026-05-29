@@ -91,9 +91,7 @@ class TestSurfaceCompliance:
 
         assert s2.ncol == 100
         assert s2.nrow == 120
-        assert np.allclose(
-            s2.values.filled(np.nan), s.values.filled(np.nan), atol=1e-4
-        )
+        assert np.allclose(s2.values.filled(np.nan), s.values.filled(np.nan), atol=1e-4)
 
     def test_surface_with_many_nans(self, epc_path):
         """Surface where 50% of values are NaN."""
@@ -206,11 +204,13 @@ class TestPointsCompliance:
     def test_many_points(self, epc_path):
         """1000 randomly distributed points."""
         rng = np.random.RandomState(42)
-        data = np.column_stack([
-            rng.uniform(460000, 461000, 1000),
-            rng.uniform(5930000, 5931000, 1000),
-            rng.uniform(1000, 3000, 1000),
-        ])
+        data = np.column_stack(
+            [
+                rng.uniform(460000, 461000, 1000),
+                rng.uniform(5930000, 5931000, 1000),
+                rng.uniform(1000, 3000, 1000),
+            ]
+        )
         pts = xtgeo.Points(data)
 
         pts2 = _roundtrip_points(epc_path, pts, title="ManyPts", crs_epsg=23031)
@@ -232,12 +232,15 @@ class TestPointsCompliance:
 
     def test_points_negative_z(self, epc_path):
         """Points with negative Z values."""
-        data = np.array([
-            [0, 0, -100],
-            [100, 100, -50],
-            [200, 200, 0],
-            [300, 300, 50],
-        ], dtype=np.float64)
+        data = np.array(
+            [
+                [0, 0, -100],
+                [100, 100, -50],
+                [200, 200, 0],
+                [300, 300, 50],
+            ],
+            dtype=np.float64,
+        )
         pts = xtgeo.Points(data)
 
         pts2 = _roundtrip_points(epc_path, pts, title="NegZPts")
@@ -247,11 +250,14 @@ class TestPointsCompliance:
 
     def test_points_collocated(self, epc_path):
         """Multiple points at the same location."""
-        data = np.array([
-            [100, 200, 300],
-            [100, 200, 300],
-            [100, 200, 400],
-        ], dtype=np.float64)
+        data = np.array(
+            [
+                [100, 200, 300],
+                [100, 200, 300],
+                [100, 200, 400],
+            ],
+            dtype=np.float64,
+        )
         pts = xtgeo.Points(data)
 
         pts2 = _roundtrip_points(epc_path, pts, title="CollocPts")
@@ -271,12 +277,14 @@ class TestPolygonsCompliance:
 
     def test_single_polygon(self, epc_path):
         """Single closed polygon."""
-        df = pd.DataFrame({
-            "X_UTME": [0, 100, 100, 0, 0],
-            "Y_UTMN": [0, 0, 100, 100, 0],
-            "Z_TVDSS": [1000, 1000, 1000, 1000, 1000],
-            "POLY_ID": [0, 0, 0, 0, 0],
-        })
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0, 100, 100, 0, 0],
+                "Y_UTMN": [0, 0, 100, 100, 0],
+                "Z_TVDSS": [1000, 1000, 1000, 1000, 1000],
+                "POLY_ID": [0, 0, 0, 0, 0],
+            }
+        )
         polys = xtgeo.Polygons(df)
 
         polys2 = _roundtrip_polygons(epc_path, polys, title="SinglePoly")
@@ -302,12 +310,16 @@ class TestPolygonsCompliance:
             x = np.append(x, x[0])
             y = np.append(y, y[0])
             z = np.append(z, z[0])
-            frames.append(pd.DataFrame({
-                "X_UTME": x,
-                "Y_UTMN": y,
-                "Z_TVDSS": z,
-                "POLY_ID": pid,
-            }))
+            frames.append(
+                pd.DataFrame(
+                    {
+                        "X_UTME": x,
+                        "Y_UTMN": y,
+                        "Z_TVDSS": z,
+                        "POLY_ID": pid,
+                    }
+                )
+            )
 
         df = pd.concat(frames, ignore_index=True)
         polys = xtgeo.Polygons(df)
@@ -325,17 +337,17 @@ class TestPolygonsCompliance:
 
     def test_polygon_varying_z(self, epc_path):
         """Polygon with varying Z values (3D fault trace)."""
-        df = pd.DataFrame({
-            "X_UTME": [0, 100, 200, 300, 200, 100, 0],
-            "Y_UTMN": [0, 50, 0, 50, 100, 50, 0],
-            "Z_TVDSS": [1000, 1100, 1200, 1300, 1200, 1100, 1000],
-            "POLY_ID": [0, 0, 0, 0, 0, 0, 0],
-        })
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0, 100, 200, 300, 200, 100, 0],
+                "Y_UTMN": [0, 50, 0, 50, 100, 50, 0],
+                "Z_TVDSS": [1000, 1100, 1200, 1300, 1200, 1100, 1000],
+                "POLY_ID": [0, 0, 0, 0, 0, 0, 0],
+            }
+        )
         polys = xtgeo.Polygons(df)
 
         polys2 = _roundtrip_polygons(epc_path, polys, title="3DPoly")
 
         df2 = polys2.get_dataframe()
-        assert np.allclose(
-            df["Z_TVDSS"].values, df2["Z_TVDSS"].values, atol=1e-6
-        )
+        assert np.allclose(df["Z_TVDSS"].values, df2["Z_TVDSS"].values, atol=1e-6)

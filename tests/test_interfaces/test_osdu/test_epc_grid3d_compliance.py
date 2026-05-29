@@ -6,11 +6,12 @@ rotated grids, pinch-outs, inactive-cell property interaction, large grids,
 and hypothesis-driven fuzzing with random box grids.
 """
 
-import numpy as np
 import pathlib
-import pytest
 import tempfile
-from hypothesis import given, settings, HealthCheck
+
+import numpy as np
+import pytest
+from hypothesis import given, settings
 
 import xtgeo
 from xtgeo.interfaces.osdu import EpcFileProvider
@@ -88,9 +89,7 @@ class TestMaskedPropertyRoundTrip:
     def test_discrete_property_preserves_codes(self, epc_path):
         """Discrete property with multiple code values roundtrips correctly."""
         g = xtgeo.create_box_grid((4, 3, 2))
-        vals = np.array(
-            [1, 2, 3, 4] * 6, dtype=np.int32
-        ).reshape(4, 3, 2)
+        vals = np.array([1, 2, 3, 4] * 6, dtype=np.int32).reshape(4, 3, 2)
         fac = xtgeo.GridProperty(g, name="FACIES", values=vals, discrete=True)
 
         _, props = _write_and_read_grid(epc_path, g, properties=[fac])
@@ -286,9 +285,7 @@ class TestFaultedGridVariations:
         g._zcornsv = z
 
         rng = np.random.RandomState(42)
-        poro = xtgeo.GridProperty(
-            g, name="PORO", values=rng.rand(4, 3, 2)
-        )
+        poro = xtgeo.GridProperty(g, name="PORO", values=rng.rand(4, 3, 2))
         fipnum = xtgeo.GridProperty(
             g,
             name="FIPNUM",
@@ -362,9 +359,7 @@ class TestLargeGrid:
             (30, 20, 10), origin=(460000, 5930000, 1000), increment=(50, 50, 5)
         )
         rng = np.random.RandomState(99)
-        poro = xtgeo.GridProperty(
-            g, name="PORO", values=rng.rand(30, 20, 10)
-        )
+        poro = xtgeo.GridProperty(g, name="PORO", values=rng.rand(30, 20, 10))
 
         g2, props = _write_and_read_grid(
             epc_path, g, title="MedGrid", properties=[poro]
@@ -486,9 +481,7 @@ class TestCRSRotationGrid:
             z_increasing_downward=True,
             projected_crs_epsg=23031,
         )
-        uuids = xtgeo_grid_to_resqml(
-            p, g, title="CRSRotGrid", crs_uuid=crs_uuid
-        )
+        uuids = xtgeo_grid_to_resqml(p, g, title="CRSRotGrid", crs_uuid=crs_uuid)
         p.close()
 
         p2 = EpcFileProvider(epc_path, mode="r")
@@ -533,9 +526,7 @@ class TestMixedScenarios:
 
         rng = np.random.RandomState(42)
         poro = xtgeo.GridProperty(g, name="PORO", values=rng.rand(4, 5, 3))
-        permx = xtgeo.GridProperty(
-            g, name="PERMX", values=rng.rand(4, 5, 3) * 500
-        )
+        permx = xtgeo.GridProperty(g, name="PERMX", values=rng.rand(4, 5, 3) * 500)
         fipnum = xtgeo.GridProperty(
             g,
             name="FIPNUM",
@@ -641,7 +632,9 @@ class TestKDirectionMetadata:
         """Default k_direction='down' should be stored in RESQML metadata."""
         from xtgeo.interfaces.osdu._resqml_meta import _get_resqml_meta
 
-        g = xtgeo.create_box_grid((3, 3, 2), origin=(0, 0, 1000), increment=(50, 50, 10))
+        g = xtgeo.create_box_grid(
+            (3, 3, 2), origin=(0, 0, 1000), increment=(50, 50, 10)
+        )
 
         g2, _ = _write_and_read_grid(epc_path, g, title="KDownGrid")
 
@@ -650,7 +643,9 @@ class TestKDirectionMetadata:
 
     def test_k_direction_geometry_identity(self, epc_path):
         """Grid geometry should be identical regardless of k_direction metadata."""
-        g = xtgeo.create_box_grid((3, 3, 2), origin=(0, 0, 1000), increment=(50, 50, 10))
+        g = xtgeo.create_box_grid(
+            (3, 3, 2), origin=(0, 0, 1000), increment=(50, 50, 10)
+        )
 
         g2, _ = _write_and_read_grid(epc_path, g, title="KDirGrid")
 

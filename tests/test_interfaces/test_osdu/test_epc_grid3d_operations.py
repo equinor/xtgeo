@@ -48,9 +48,7 @@ class TestBulkVolume:
         assert np.allclose(bv1.values, bv2.values, rtol=1e-4)
 
     def test_rotated_grid_bulk_volume(self, epc_path):
-        g = xtgeo.create_box_grid(
-            (3, 4, 2), increment=(50, 50, 10), rotation=30.0
-        )
+        g = xtgeo.create_box_grid((3, 4, 2), increment=(50, 50, 10), rotation=30.0)
         g2, _ = _roundtrip_grid(epc_path, g, title="RotBV")
 
         bv1 = g.get_bulk_volume()
@@ -86,9 +84,7 @@ class TestCellDimensions:
             assert np.allclose(v1.values, v2.values, rtol=1e-4), f"{method} mismatch"
 
     def test_dx_dy_dz_rotated(self, epc_path):
-        g = xtgeo.create_box_grid(
-            (3, 3, 2), increment=(50, 50, 10), rotation=45.0
-        )
+        g = xtgeo.create_box_grid((3, 3, 2), increment=(50, 50, 10), rotation=45.0)
         g2, _ = _roundtrip_grid(epc_path, g, title="DxDyDzRot")
 
         for method in ("get_dx", "get_dy", "get_dz"):
@@ -151,9 +147,9 @@ class TestGetDataframe:
         for col in ("IX", "JY", "KZ"):
             assert np.array_equal(df1[col].values, df2[col].values), f"{col} mismatch"
         for col in ("X_UTME", "Y_UTMN", "Z_TVDSS"):
-            assert np.allclose(
-                df1[col].values, df2[col].values, atol=0.1
-            ), f"{col} mismatch"
+            assert np.allclose(df1[col].values, df2[col].values, atol=0.1), (
+                f"{col} mismatch"
+            )
 
     def test_dataframe_with_inactive(self, epc_path):
         g = xtgeo.create_box_grid((3, 3, 2), increment=(10, 10, 5))
@@ -219,9 +215,7 @@ class TestCrop:
         rng = np.random.RandomState(42)
         poro = xtgeo.GridProperty(g, name="PORO", values=rng.rand(5, 6, 4))
 
-        g2, props = _roundtrip_grid(
-            epc_path, g, title="CropProp", properties=[poro]
-        )
+        g2, props = _roundtrip_grid(epc_path, g, title="CropProp", properties=[poro])
 
         prop2 = props[0]
         g2.crop((2, 4), (2, 5), (1, 3), props=[prop2])
@@ -248,9 +242,9 @@ class TestGridQuality:
         for propname in ("minangle_topbase", "maxangle_topbase", "collapsed"):
             p1 = qp1.get_prop_by_name(propname)
             p2 = qp2.get_prop_by_name(propname)
-            assert np.allclose(
-                p1.values.filled(0), p2.values.filled(0), atol=1e-3
-            ), f"{propname} mismatch"
+            assert np.allclose(p1.values.filled(0), p2.values.filled(0), atol=1e-3), (
+                f"{propname} mismatch"
+            )
 
 
 class TestReduceToOneLayer:
