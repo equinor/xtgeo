@@ -51,8 +51,7 @@ def test_lmap1_len():
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
-def test_lmap2_len():
-    """Test layer offset is >=0."""
+def test_lmap2_raises_if_incorrect_length():
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
     lmap1 = np.arange(3)
