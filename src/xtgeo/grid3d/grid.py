@@ -385,8 +385,8 @@ def grid_from_surfaces(
 def grid_merge(
     grid1: Grid,
     grid2: Grid,
-    lmap1: np.ndarray | None = None,
-    lmap2: np.ndarray | None = None,
+    layer_map1: np.ndarray | None = None,
+    layer_map2: np.ndarray | None = None,
 ) -> Grid:
     """Merge two areally-separated grids into a single grid instance.
 
