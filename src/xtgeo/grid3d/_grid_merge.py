@@ -68,10 +68,8 @@ def merge_grids(
     # create a new layer mapping for grid1 and grid2
     # group layers in the merged grid by the input layer number
 
-    if not isinstance(lmap1, np.ndarray) and lmap1 is None:
-        lmap1 = np.arange(grid1.nlay, dtype=np.int32)
-    if not isinstance(lmap2, np.ndarray) and lmap2 is None:
-        lmap2 = np.arange(grid2.nlay, dtype=np.int32)
+    lmap1 = lmap1 or np.arange(grid1.nlay, dtype=np.int32)
+    lmap2 = lmap2 or np.arange(grid2.nlay, dtype=np.int32)
 
     new_nlay = max(lmap1.max() + 1, lmap2.max() + 1)
 
