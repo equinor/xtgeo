@@ -57,6 +57,22 @@ def _hdf5_dataset_path(uuid: str, tag: str) -> str:
     return f"/RESQML/{uuid}/{tag}"
 
 
+def _add_citation(parent: etree._Element, title: str) -> etree._Element:
+    """Add a Citation element with Title, CreationDate, Originator, Format."""
+    from datetime import datetime, timezone
+
+    citation = etree.SubElement(parent, f"{{{NS_COMMON20}}}Citation")
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Title").text = title
+    etree.SubElement(
+        citation, f"{{{NS_COMMON20}}}Creation"
+    ).text = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Originator").text = "xtgeo"
+    etree.SubElement(
+        citation, f"{{{NS_COMMON20}}}Format"
+    ).text = "xtgeo RESQML 2.0.1"
+    return citation
+
+
 class EpcFileProvider(ResqmlDataProvider):
     """Read/write RESQML 2.0.1 data via EPC+HDF5 file pairs.
 
@@ -79,6 +95,7 @@ class EpcFileProvider(ResqmlDataProvider):
         self._content_types: Dict[str, str] = {}  # part_name -> content_type
         self._relationships: Dict[str, List[Dict[str, str]]] = {}  # source -> rels
         self._uuids: Dict[str, str] = {}  # uuid -> part_name
+        self._hdf_proxy_uuid: str = _make_uuid()  # single HDF proxy for this EPC
 
     def open(self) -> None:
         """Open the EPC archive and associated HDF5 file."""
@@ -139,11 +156,52 @@ class EpcFileProvider(ResqmlDataProvider):
                     logger.warning("Skipping malformed XML part: %s", name)
 
     def _write_epc_metadata(self) -> None:
-        """Write content types and relationships to the zip."""
+        """Write content types, relationships, and EpcExternalPartReference."""
         assert self._zip is not None
+
+        # EpcExternalPartReference — links HDF proxy UUID to the .h5 file
+        ext_ref_root = etree.Element(
+            f"{{{NS_COMMON20}}}EpcExternalPartReference",
+            nsmap={"eml": NS_COMMON20, "xsi": "http://www.w3.org/2001/XMLSchema-instance"},
+        )
+        ext_ref_root.set("uuid", self._hdf_proxy_uuid)
+        ext_ref_root.set("schemaVersion", "2.0")
+        citation = etree.SubElement(ext_ref_root, f"{{{NS_COMMON20}}}Citation")
+        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
+        title_el.text = "Hdf Proxy"
+        mime_el = etree.SubElement(ext_ref_root, f"{{{NS_COMMON20}}}MimeType")
+        mime_el.text = "application/x-hdf5"
+
+        ext_part_name = _part_name("obj_EpcExternalPartReference", self._hdf_proxy_uuid)
+        self._zip.writestr(
+            ext_part_name,
+            etree.tostring(ext_ref_root, xml_declaration=True, encoding="UTF-8", pretty_print=True),
+        )
+        self._content_types[ext_part_name] = CONTENT_TYPE_MAP[
+            ResqmlObjectType.EPC_EXTERNAL_PART_REFERENCE
+        ]
+
+        # .rels for the ext ref — points to the actual .h5 file
+        ext_rels_root = etree.Element(f"{{{NS_RELS}}}Relationships")
+        ext_rel = etree.SubElement(ext_rels_root, f"{{{NS_RELS}}}Relationship")
+        ext_rel.set("Id", "Hdf5File")
+        ext_rel.set(
+            "Type",
+            "http://schemas.energistics.org/package/2012/relationships/externalResource",
+        )
+        ext_rel.set("Target", self._h5_path.name)
+        ext_rel.set("TargetMode", "External")
+        self._zip.writestr(
+            f"_rels/{ext_part_name}.rels",
+            etree.tostring(ext_rels_root, xml_declaration=True, encoding="UTF-8", pretty_print=True),
+        )
 
         # [Content_Types].xml
         types_root = etree.Element(f"{{{NS_CONTENT_TYPES}}}Types")
+        # Default extension for .rels files
+        default_el = etree.SubElement(types_root, f"{{{NS_CONTENT_TYPES}}}Default")
+        default_el.set("Extension", "rels")
+        default_el.set("ContentType", "application/vnd.openxmlformats-package.relationships+xml")
         for part_name, ctype in self._content_types.items():
             override = etree.SubElement(types_root, f"{{{NS_CONTENT_TYPES}}}Override")
             override.set("PartName", f"/{part_name}")
@@ -244,7 +302,7 @@ class EpcFileProvider(ResqmlDataProvider):
                     coord_out[:, :, 3:6] = arr[-1, :, :, :].transpose(1, 0, 2)
                     coord = coord_out.flatten()
                     z_all = arr[:, :, :, 2].transpose(2, 1, 0)
-                    zcorn_out = np.zeros((ni1, nj1, nk1, 4), dtype=np.float32)
+                    zcorn_out = np.zeros((ni1, nj1, nk1, 4), dtype=np.float64)
                     for c in range(4):
                         zcorn_out[:, :, :, c] = z_all
                     zcorn = zcorn_out.flatten()
@@ -355,7 +413,7 @@ class EpcFileProvider(ResqmlDataProvider):
                 z_transposed = z_all.transpose(2, 1, 0)  # (ni+1, nj+1, nk+1)
                 # Each pillar node needs 4 corner contributions — for regular grids
                 # these are all the same Z value
-                zcorn_out = np.zeros((ni1, nj1, nk1, 4), dtype=np.float32)
+                zcorn_out = np.zeros((ni1, nj1, nk1, 4), dtype=np.float64)
                 for c in range(4):
                     zcorn_out[:, :, :, c] = z_transposed
                 zcorn = zcorn_out.flatten()
@@ -400,7 +458,7 @@ class EpcFileProvider(ResqmlDataProvider):
 
         # Write HDF5 arrays
         self._write_hdf5_array(uuid, "Points/Coordinates", coord.astype(np.float64))
-        self._write_hdf5_array(uuid, "Points/ZCorners", zcorn.astype(np.float32))
+        self._write_hdf5_array(uuid, "Points/ZCorners", zcorn.astype(np.float64))
         self._write_hdf5_array(uuid, "CellGeometryIsDefined", actnum.astype(np.int32))
 
         # Build XML
@@ -410,9 +468,7 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         etree.SubElement(root, f"{{{NS_RESQML20}}}Ni").text = str(ni)
         etree.SubElement(root, f"{{{NS_RESQML20}}}Nj").text = str(nj)
@@ -427,7 +483,7 @@ class EpcFileProvider(ResqmlDataProvider):
         geom = etree.SubElement(root, f"{{{NS_RESQML20}}}Geometry")
         points = etree.SubElement(geom, f"{{{NS_RESQML20}}}Points")
         hdf_ref = etree.SubElement(points, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(points, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "Points/Coordinates")
 
@@ -539,12 +595,11 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # Grid2dPatch
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}Grid2dPatch")
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}PatchIndex").text = "0"
         etree.SubElement(patch, f"{{{NS_RESQML20}}}FastestAxisCount").text = str(ni)
         etree.SubElement(patch, f"{{{NS_RESQML20}}}SlowestAxisCount").text = str(nj)
 
@@ -586,7 +641,7 @@ class EpcFileProvider(ResqmlDataProvider):
         # Z values HDF reference
         z_vals = etree.SubElement(geom, f"{{{NS_RESQML20}}}ZValues")
         hdf_ref = etree.SubElement(z_vals, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(z_vals, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "ZValues")
 
@@ -637,17 +692,16 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # NodePatch
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}NodePatch")
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}PatchIndex").text = "0"
         etree.SubElement(patch, f"{{{NS_RESQML20}}}Count").text = str(len(points))
         geom = etree.SubElement(patch, f"{{{NS_RESQML20}}}Geometry")
         pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}Points")
         hdf_ref = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "Points")
 
@@ -714,7 +768,7 @@ class EpcFileProvider(ResqmlDataProvider):
             all_points = np.zeros((0, 3), dtype=np.float64)
             node_counts = np.zeros(0, dtype=np.int32)
 
-        closed_arr = np.array(closed, dtype=np.int8)
+        closed_arr = np.array(closed, dtype=bool)
 
         self._write_hdf5_array(uuid, "Points", all_points)
         self._write_hdf5_array(uuid, "NodeCountPerPolyline", node_counts)
@@ -726,18 +780,17 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # LinePatch
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}LinePatch")
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}PatchIndex").text = "0"
         etree.SubElement(patch, f"{{{NS_RESQML20}}}Count").text = str(len(polylines))
 
         geom = etree.SubElement(patch, f"{{{NS_RESQML20}}}Geometry")
         pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}Points")
         hdf_ref = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "Points")
 
@@ -871,22 +924,21 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         etree.SubElement(
             root, f"{{{NS_RESQML20}}}IndexableElement"
         ).text = indexable_element
 
-        # Supporting representation
+        # Supporting representation (DataObjectReference format)
         supp = etree.SubElement(root, f"{{{NS_RESQML20}}}SupportingRepresentation")
-        supp.set("uuid", supporting_representation_uuid)
+        uuid_el = etree.SubElement(supp, f"{{{NS_COMMON20}}}UUID")
+        uuid_el.text = supporting_representation_uuid
 
-        # Property kind
+        # Property kind (StandardPropertyKind/Kind per RESQML 2.0.1)
         pk = etree.SubElement(root, f"{{{NS_RESQML20}}}PropertyKind")
-        pk_title = etree.SubElement(pk, f"{{{NS_COMMON20}}}Title")
-        pk_title.text = property_kind
+        kind_el = etree.SubElement(pk, f"{{{NS_RESQML20}}}Kind")
+        kind_el.text = property_kind
 
         # UOM
         if uom:
@@ -901,9 +953,10 @@ class EpcFileProvider(ResqmlDataProvider):
 
         # HDF reference
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}PatchOfValues")
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}RepresentationPatchIndex").text = "0"
         vals = etree.SubElement(patch, f"{{{NS_RESQML20}}}Values")
         hdf_ref = etree.SubElement(vals, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(vals, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "Values")
 
@@ -1025,9 +1078,7 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # SurfaceRole (required by RESQML 2.0.1 schema)
         role_el = etree.SubElement(root, f"{{{NS_RESQML20}}}SurfaceRole")
@@ -1048,7 +1099,7 @@ class EpcFileProvider(ResqmlDataProvider):
         # Triangles reference (IntegerHdf5Array)
         tri_el = etree.SubElement(patch, f"{{{NS_RESQML20}}}Triangles")
         hdf_ref2 = etree.SubElement(tri_el, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref2.set("uuid", _make_uuid())
+        hdf_ref2.set("uuid", self._hdf_proxy_uuid)
         path_el2 = etree.SubElement(tri_el, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el2.text = _hdf5_dataset_path(uuid, "triangles_patch0")
 
@@ -1058,7 +1109,7 @@ class EpcFileProvider(ResqmlDataProvider):
         crs_geom.set("uuid", crs_uuid)
         pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}Points")
         hdf_ref = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "points_patch0")
 
@@ -1145,6 +1196,10 @@ class EpcFileProvider(ResqmlDataProvider):
             if supp_ref is None:
                 continue
             supp_uuid = supp_ref.get("uuid", "")
+            if not supp_uuid:
+                uid_el = supp_ref.find(f"{{{NS_COMMON20}}}UUID")
+                if uid_el is not None:
+                    supp_uuid = uid_el.text or ""
             if supp_uuid != frame_uuid:
                 continue
 
@@ -1197,8 +1252,10 @@ class EpcFileProvider(ResqmlDataProvider):
         # Create WellboreFeature → WellboreInterpretation chain
         feature_uuid = _make_uuid()
         interp_uuid = _make_uuid()
+        md_datum_uuid = _make_uuid()
         self._put_wellbore_feature(feature_uuid, title)
         self._put_wellbore_interpretation(interp_uuid, title, feature_uuid)
+        self._put_md_datum(md_datum_uuid, title, crs_uuid, xyz[0] if len(xyz) > 0 else np.zeros(3))
 
         root = etree.Element(
             f"{{{NS_RESQML20}}}WellboreTrajectoryRepresentation", nsmap=RESQML_NS_MAP
@@ -1206,11 +1263,13 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
-        # MD datum
+        # MdDatum reference
+        md_datum_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}MdDatum")
+        md_datum_ref.set("uuid", md_datum_uuid)
+
+        # MD range
         etree.SubElement(root, f"{{{NS_RESQML20}}}StartMd").text = str(
             float(md[0]) if len(md) > 0 else 0.0
         )
@@ -1230,14 +1289,14 @@ class EpcFileProvider(ResqmlDataProvider):
         # MD values reference
         md_el = etree.SubElement(geom, f"{{{NS_RESQML20}}}ControlPointParameters")
         hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "MdValues")
 
         # Points reference
         pts = etree.SubElement(geom, f"{{{NS_RESQML20}}}ControlPoints")
         hdf_ref2 = etree.SubElement(pts, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref2.set("uuid", _make_uuid())
+        hdf_ref2.set("uuid", self._hdf_proxy_uuid)
         path_el2 = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el2.text = _hdf5_dataset_path(uuid, "Points")
 
@@ -1257,9 +1316,7 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         self._add_part(ResqmlObjectType.WELLBORE_FEATURE, uuid, root)
         return uuid
@@ -1274,9 +1331,7 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # Reference to WellboreFeature
         feat_ref = etree.SubElement(
@@ -1285,6 +1340,31 @@ class EpcFileProvider(ResqmlDataProvider):
         feat_ref.set("uuid", feature_uuid)
 
         self._add_part(ResqmlObjectType.WELLBORE_INTERPRETATION, uuid, root)
+        return uuid
+
+    def _put_md_datum(
+        self, uuid: str, title: str, crs_uuid: str, location: np.ndarray
+    ) -> str:
+        """Write an MdDatum object (MD reference point for trajectories)."""
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}MdDatum", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, f"{title} MD Datum")
+
+        # Location (X, Y, Z of the datum point)
+        loc = etree.SubElement(root, f"{{{NS_RESQML20}}}Location")
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate1").text = str(float(location[0]))
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate2").text = str(float(location[1]))
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate3").text = str(float(location[2]))
+
+        # CRS reference
+        crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_ref.set("uuid", crs_uuid)
+
+        self._add_part(ResqmlObjectType.MD_DATUM, uuid, root)
         return uuid
 
     def put_wellbore_frame(
@@ -1308,9 +1388,7 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # Node count
         etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
@@ -1318,7 +1396,7 @@ class EpcFileProvider(ResqmlDataProvider):
         # MD reference
         md_el = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeMd")
         hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "MdValues")
 
@@ -1429,9 +1507,7 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # Node count
         etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
@@ -1451,7 +1527,7 @@ class EpcFileProvider(ResqmlDataProvider):
         # MD reference
         md_el = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeMd")
         hdf_ref = etree.SubElement(md_el, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", _make_uuid())
+        hdf_ref.set("uuid", self._hdf_proxy_uuid)
         path_el = etree.SubElement(md_el, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "MdValues")
 
@@ -1459,14 +1535,14 @@ class EpcFileProvider(ResqmlDataProvider):
         pts = etree.SubElement(root, f"{{{NS_RESQML20}}}NodeGeometry")
         pts_geom = etree.SubElement(pts, f"{{{NS_RESQML20}}}Points")
         hdf_ref2 = etree.SubElement(pts_geom, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref2.set("uuid", _make_uuid())
+        hdf_ref2.set("uuid", self._hdf_proxy_uuid)
         path_el2 = etree.SubElement(pts_geom, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el2.text = _hdf5_dataset_path(uuid, "Points")
 
         # Cell indices reference
         ci_el = etree.SubElement(root, f"{{{NS_RESQML20}}}CellIndices")
         hdf_ref3 = etree.SubElement(ci_el, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref3.set("uuid", _make_uuid())
+        hdf_ref3.set("uuid", self._hdf_proxy_uuid)
         path_el3 = etree.SubElement(ci_el, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el3.text = _hdf5_dataset_path(uuid, "CellIndices")
 

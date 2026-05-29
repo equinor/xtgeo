@@ -54,6 +54,26 @@ def _make_uuid() -> str:
     return str(_uuid.uuid4())
 
 
+def _add_citation(parent, title: str):
+    """Add a Citation element with Title, Creation, Originator, Format."""
+    from datetime import datetime, timezone
+
+    from lxml import etree
+
+    from ._resqml_enums import NS_COMMON20
+
+    citation = etree.SubElement(parent, f"{{{NS_COMMON20}}}Citation")
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Title").text = title
+    etree.SubElement(
+        citation, f"{{{NS_COMMON20}}}Creation"
+    ).text = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Originator").text = "xtgeo"
+    etree.SubElement(
+        citation, f"{{{NS_COMMON20}}}Format"
+    ).text = "xtgeo RESQML 2.0.1"
+    return citation
+
+
 def _uri_for_object(dataspace: str, qualified_type: str, uuid: str) -> str:
     """Build ETP URI for a data object: eml:///dataspace('x')/resqml20.Type(uuid)"""
     return f"{dataspace}/{qualified_type}({uuid})"
@@ -125,7 +145,7 @@ def _points_array_to_coord_zcorn(
     z_all = pts[:, :, :, 2]  # shape (nk+1, nj+1, ni+1) — just Z
     # Transpose to (ni+1, nj+1, nk+1)
     z_ijk = z_all.transpose((2, 1, 0))  # (ni+1, nj+1, nk+1)
-    zcornsv = np.zeros((ni + 1, nj + 1, nk + 1, 4), dtype=np.float32)
+    zcornsv = np.zeros((ni + 1, nj + 1, nk + 1, 4), dtype=np.float64)
     zcornsv[:, :, :, 0] = z_ijk  # SW
     zcornsv[:, :, :, 1] = z_ijk  # SE
     zcornsv[:, :, :, 2] = z_ijk  # NW
@@ -1018,9 +1038,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         etree.SubElement(root, f"{{{NS_RESQML20}}}Ni").text = str(ni)
         etree.SubElement(root, f"{{{NS_RESQML20}}}Nj").text = str(nj)
@@ -1079,7 +1097,7 @@ class EtpProvider(ResqmlDataProvider):
             uri, f"/RESQML/{uuid}/Points/Coordinates", coord.astype(np.float64)
         )
         self._put_array(
-            uri, f"/RESQML/{uuid}/Points/ZCorners", zcorn.astype(np.float32)
+            uri, f"/RESQML/{uuid}/Points/ZCorners", zcorn.astype(np.float64)
         )
         self._put_array(
             uri, f"/RESQML/{uuid}/CellGeometryIsDefined", actnum.astype(np.int32)
@@ -1225,9 +1243,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}Grid2dPatch")
         etree.SubElement(patch, f"{{{NS_RESQML20}}}FastestAxisCount").text = str(ni)
@@ -1349,9 +1365,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # NodePatch with external data reference
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}NodePatch")
@@ -1451,9 +1465,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # LinePatch with external data references
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}LinePatch")
@@ -1496,7 +1508,7 @@ class EtpProvider(ResqmlDataProvider):
             all_points = np.zeros((0, 3), dtype=np.float64)
             node_counts = np.zeros(0, dtype=np.int64)
 
-        closed_arr = np.array(closed, dtype=np.int32)
+        closed_arr = np.array(closed, dtype=bool)
 
         self._put_array(uri, f"/RESQML/{uuid}/Points", all_points)
         self._put_array(uri, f"/RESQML/{uuid}/NodeCountPerPolyline", node_counts)
@@ -1541,6 +1553,10 @@ class EtpProvider(ResqmlDataProvider):
             kind_title = pk_el.find(f".//{{{NS_COMMON20}}}Title")
             if kind_title is not None:
                 property_kind = kind_title.text or ""
+            if not property_kind:
+                kind_el = pk_el.find(f"{{{NS_RESQML20}}}Kind")
+                if kind_el is not None:
+                    property_kind = kind_el.text or ""
 
         idx_el = root.find(f"{{{NS_RESQML20}}}IndexableElement")
         indexable_element = idx_el.text if idx_el is not None else "cells"
@@ -1549,6 +1565,10 @@ class EtpProvider(ResqmlDataProvider):
         supp_ref = root.find(f".//{{{NS_RESQML20}}}SupportingRepresentation")
         if supp_ref is not None:
             supp_uuid = supp_ref.get("uuid", "")
+            if not supp_uuid:
+                uid_el = supp_ref.find(f"{{{NS_COMMON20}}}UUID")
+                if uid_el is not None:
+                    supp_uuid = uid_el.text or ""
 
         uom = ""
         uom_el = root.find(f".//{{{NS_RESQML20}}}UOM")
@@ -1617,20 +1637,19 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         etree.SubElement(
             root, f"{{{NS_RESQML20}}}IndexableElement"
         ).text = indexable_element
 
         supp = etree.SubElement(root, f"{{{NS_RESQML20}}}SupportingRepresentation")
-        supp.set("uuid", supporting_representation_uuid)
+        uuid_el = etree.SubElement(supp, f"{{{NS_COMMON20}}}UUID")
+        uuid_el.text = supporting_representation_uuid
 
         pk = etree.SubElement(root, f"{{{NS_RESQML20}}}PropertyKind")
-        pk_title = etree.SubElement(pk, f"{{{NS_COMMON20}}}Title")
-        pk_title.text = property_kind
+        kind_el = etree.SubElement(pk, f"{{{NS_RESQML20}}}Kind")
+        kind_el.text = property_kind
 
         if uom:
             uom_el = etree.SubElement(root, f"{{{NS_RESQML20}}}UOM")
@@ -1814,9 +1833,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         # SurfaceRole (required by RESQML 2.0.1 schema)
         role_el = etree.SubElement(root, f"{{{NS_RESQML20}}}SurfaceRole")
@@ -1983,11 +2000,13 @@ class EtpProvider(ResqmlDataProvider):
         if not uuid:
             uuid = _make_uuid()
 
-        # Create WellboreFeature → WellboreInterpretation chain
+        # Create WellboreFeature → WellboreInterpretation → MdDatum chain
         feature_uuid = _make_uuid()
         interp_uuid = _make_uuid()
+        md_datum_uuid = _make_uuid()
         self._put_wellbore_feature(feature_uuid, title)
         self._put_wellbore_interpretation(interp_uuid, title, feature_uuid)
+        self._put_md_datum(md_datum_uuid, title, crs_uuid, xyz[0] if len(xyz) > 0 else np.zeros(3))
 
         qualified_type = "resqml20.WellboreTrajectoryRepresentation"
         uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
@@ -1998,9 +2017,11 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
+
+        # MdDatum reference
+        md_datum_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}MdDatum")
+        md_datum_ref.set("uuid", md_datum_uuid)
 
         etree.SubElement(root, f"{{{NS_RESQML20}}}StartMd").text = str(
             float(md[0]) if len(md) > 0 else 0.0
@@ -2056,9 +2077,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         xml_str = etree.tostring(root, encoding="unicode")
         self._run(self._start_transaction())
@@ -2083,14 +2102,45 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         feat_ref = etree.SubElement(
             root, f"{{{NS_RESQML20}}}InterpretedFeature"
         )
         feat_ref.set("uuid", feature_uuid)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._run(self._commit_transaction())
+        return uuid
+
+    def _put_md_datum(
+        self, uuid: str, title: str, crs_uuid: str, location: np.ndarray
+    ) -> str:
+        """Write an MdDatum object via ETP."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+
+        qualified_type = "resqml20.obj_MdDatum"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}MdDatum", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, f"{title} MD Datum")
+
+        loc = etree.SubElement(root, f"{{{NS_RESQML20}}}Location")
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate1").text = str(float(location[0]))
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate2").text = str(float(location[1]))
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate3").text = str(float(location[2]))
+
+        crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_ref.set("uuid", crs_uuid)
 
         xml_str = etree.tostring(root, encoding="unicode")
         self._run(self._start_transaction())
@@ -2124,9 +2174,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
 
@@ -2257,9 +2305,7 @@ class EtpProvider(ResqmlDataProvider):
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
-        citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
-        title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
-        title_el.text = title
+        _add_citation(root, title)
 
         etree.SubElement(root, f"{{{NS_RESQML20}}}NodeCount").text = str(len(md))
         etree.SubElement(root, f"{{{NS_RESQML20}}}CellCount").text = str(

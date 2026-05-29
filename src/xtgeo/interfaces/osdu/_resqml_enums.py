@@ -45,6 +45,7 @@ class ResqmlObjectType(str, Enum):
     CATEGORICAL_PROPERTY = "resqml20.obj_CategoricalProperty"
     LOCAL_DEPTH3D_CRS = "resqml20.obj_LocalDepth3dCrs"
     LOCAL_TIME3D_CRS = "resqml20.obj_LocalTime3dCrs"
+    MD_DATUM = "resqml20.obj_MdDatum"
     EPC_EXTERNAL_PART_REFERENCE = "eml20.obj_EpcExternalPartReference"
 
 
@@ -149,6 +150,9 @@ CONTENT_TYPE_MAP = {
     ),
     ResqmlObjectType.LOCAL_DEPTH3D_CRS: (
         "application/x-resqml+xml;version=2.0;type=obj_LocalDepth3dCrs"
+    ),
+    ResqmlObjectType.MD_DATUM: (
+        "application/x-resqml+xml;version=2.0;type=obj_MdDatum"
     ),
     ResqmlObjectType.EPC_EXTERNAL_PART_REFERENCE: (
         "application/x-eml+xml;version=2.0;type=obj_EpcExternalPartReference"
