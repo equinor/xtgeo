@@ -43,6 +43,7 @@ dependencies = [
     "joblib",
     "matplotlib>=3.3",
     "numpy",
+    "packaging",
     "pandas>=1.1",
     "pyarrow",
     "resfo>=5",
@@ -89,6 +90,10 @@ docs = [
     "sphinx-rtd-theme",
     "sphinx-tabs<3.4.5",  # 3.4.5 breaks doc parsing
     "sphinx-toolbox>=3.5.0",
+]
+osdu = [
+    "pyetp",
+    "websockets",
 ]
 
 [tool.scikit-build]
