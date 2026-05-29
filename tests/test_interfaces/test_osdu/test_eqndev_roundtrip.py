@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Upload Grid_model + PORO to Equinor OSDU dev, download, and verify exact roundtrip.
+Upload Grid_model + PORO to a cloud OSDU RDDMS, download, and verify exact roundtrip.
 
 Usage:
     # Set env vars directly
@@ -73,7 +73,7 @@ def main():
         print("  See script docstring for required env vars.", file=sys.stderr)
         sys.exit(2)
 
-    print("┌─ Equinor OSDU Dev Roundtrip Test ─────────────────────────")
+    print("┌─ Cloud OSDU RDDMS Roundtrip Test ────────────────────────")
     print(f"│  ETP:        {session.etp_url}")
     print(f"│  Partition:  {session.data_partition}")
     print(f"│  Dataspace:  {session.dataspace}")
