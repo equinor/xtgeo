@@ -145,11 +145,9 @@ def _points_array_to_coord_zcorn(
     z_all = pts[:, :, :, 2]  # shape (nk+1, nj+1, ni+1) — just Z
     # Transpose to (ni+1, nj+1, nk+1)
     z_ijk = z_all.transpose((2, 1, 0))  # (ni+1, nj+1, nk+1)
-    zcornsv = np.zeros((ni + 1, nj + 1, nk + 1, 4), dtype=np.float64)
-    zcornsv[:, :, :, 0] = z_ijk  # SW
-    zcornsv[:, :, :, 1] = z_ijk  # SE
-    zcornsv[:, :, :, 2] = z_ijk  # NW
-    zcornsv[:, :, :, 3] = z_ijk  # NE
+    zcornsv = np.broadcast_to(
+        z_ijk[..., np.newaxis], (ni + 1, nj + 1, nk + 1, 4)
+    ).copy()
 
     return coordsv.ravel(), zcornsv.ravel()
 

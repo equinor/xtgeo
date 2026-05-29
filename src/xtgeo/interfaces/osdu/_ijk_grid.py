@@ -240,10 +240,10 @@ def xtgeo_grid_to_resqml(
     nj = grid.nrow
     nk = grid.nlay
 
-    # Get raw arrays from grid
-    coordsv = grid._coordsv.copy()
-    zcornsv = grid._zcornsv.copy()
-    actnumsv = grid._actnumsv.copy()
+    # Get raw arrays from grid (views — no copy needed, provider doesn't modify)
+    coordsv = grid._coordsv
+    zcornsv = grid._zcornsv
+    actnumsv = grid._actnumsv
 
     # Warn if grid has Z-discontinuities (faults) — the RESQML output uses
     # unsplit pillar geometry without SplitCoordinateLines, so fault geometry

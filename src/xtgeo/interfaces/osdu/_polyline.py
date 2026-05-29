@@ -47,19 +47,23 @@ def polylineset_to_xtgeo(
     polylines = data["polylines"]
     closed = data["closed"]
 
-    # Build dataframe with polygon ID column
-    rows = []
+    # Build dataframe with polygon ID column (vectorized)
+    chunks = []
     for poly_id, (poly, is_closed) in enumerate(zip(polylines, closed)):
         if poly.ndim == 1:
             poly = poly.reshape(-1, 3)
-        for pt in poly:
-            rows.append([pt[0], pt[1], pt[2], poly_id])
-        # If closed, repeat the first point
-        if is_closed and len(poly) > 0:
-            rows.append([poly[0][0], poly[0][1], poly[0][2], poly_id])
+        if len(poly) == 0:
+            continue
+        ids = np.full(len(poly), poly_id, dtype=np.float64)
+        chunk = np.column_stack([poly, ids])
+        chunks.append(chunk)
+        if is_closed:
+            chunks.append(np.array([[poly[0, 0], poly[0, 1], poly[0, 2], poly_id]]))
 
-    if rows:
-        df = pd.DataFrame(rows, columns=["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"])
+    if chunks:
+        df = pd.DataFrame(
+            np.vstack(chunks), columns=["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]
+        )
     else:
         df = pd.DataFrame(columns=["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"])
 
@@ -140,9 +144,8 @@ def xtgeo_polygons_to_resqml(
     closed_list: List[bool] = []
 
     if "POLY_ID" in df.columns:
-        for poly_id in df["POLY_ID"].unique():
-            mask = df["POLY_ID"] == poly_id
-            pts = df.loc[mask, ["X_UTME", "Y_UTMN", "Z_TVDSS"]].values.astype(
+        for _, group in df.groupby("POLY_ID", sort=False):
+            pts = group[["X_UTME", "Y_UTMN", "Z_TVDSS"]].values.astype(
                 np.float64
             )
 

@@ -302,10 +302,9 @@ class EpcFileProvider(ResqmlDataProvider):
                     coord_out[:, :, 3:6] = arr[-1, :, :, :].transpose(1, 0, 2)
                     coord = coord_out.flatten()
                     z_all = arr[:, :, :, 2].transpose(2, 1, 0)
-                    zcorn_out = np.zeros((ni1, nj1, nk1, 4), dtype=np.float64)
-                    for c in range(4):
-                        zcorn_out[:, :, :, c] = z_all
-                    zcorn = zcorn_out.flatten()
+                    zcorn = np.broadcast_to(
+                        z_all[..., np.newaxis], (ni1, nj1, nk1, 4)
+                    ).copy().flatten()
                 elif arr.ndim == 3:
                     coord = arr.flatten()
         return coord, zcorn
@@ -413,10 +412,9 @@ class EpcFileProvider(ResqmlDataProvider):
                 z_transposed = z_all.transpose(2, 1, 0)  # (ni+1, nj+1, nk+1)
                 # Each pillar node needs 4 corner contributions — for regular grids
                 # these are all the same Z value
-                zcorn_out = np.zeros((ni1, nj1, nk1, 4), dtype=np.float64)
-                for c in range(4):
-                    zcorn_out[:, :, :, c] = z_transposed
-                zcorn = zcorn_out.flatten()
+                zcorn = np.broadcast_to(
+                    z_transposed[..., np.newaxis], (ni1, nj1, nk1, 4)
+                ).copy().flatten()
 
         # Also try reading HDF5 path from XML (PathInHdfFile elements)
         if coord is None and zcorn is None:
