@@ -405,7 +405,7 @@ def grid_merge(
     - nlay: max(grid1.nlay, grid2.nlay)
 
     Optionally a layer mapping for both grids can be specified. This is a numpy
-    array of length input grid that contrains the resulting layer in the merged
+    array of length input grid that contains the resulting layer in the merged
     grid. (Note this is zero indexed for input and output layers)
 
     - lmap[ INPUT_LAYER ] = NEW_LAYER
