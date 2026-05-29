@@ -179,14 +179,67 @@ test data that may not be available.
 xtgeo (core)
 ├── numpy
 ├── h5py (EPC HDF5 access)
-├── energistics (ETP 1.2 protocol) [optional]
-└── resqpy (for interop testing) [optional, test only]
+├── lxml (RESQML XML construction/parsing)
+├── packaging
+└── xtgeo[osdu] (optional extras):
+    ├── pyetp  ← provides the `energistics` Python module
+    └── websockets
 ```
 
 The OSDU module gracefully degrades:
-- Without `energistics`: ETP operations raise ImportError with instructions
+- Without `pyetp`/`websockets`: ETP operations raise ImportError with instructions
 - Without `h5py`: EPC operations raise ImportError
 - Without `resqpy`: Interop tests skip
+
+Install the optional OSDU dependencies with:
+
+```bash
+pip install xtgeo[osdu]
+```
+
+### pyetp — Role & Scope
+
+The [`pyetp`](https://pypi.org/project/pyetp/) package
+([equinor/pyetp](https://github.com/equinor/pyetp)) provides the
+`energistics` Python module. It is an Equinor-maintained package that
+auto-generates typed Pydantic models from the official ETP 1.2 Avro schemas.
+
+**What pyetp provides (used as-is by xtgeo):**
+
+- `avro_handler.encode_message()` / `decode_message()` — Avro binary
+  serialization via `fastavro`
+- Pydantic models for every ETP 1.2 message type (`RequestSession`,
+  `GetDataObjects`, `PutDataArrays`, etc.)
+- Datatype models (`MessageHeader`, `DataArrayIdentifier`, `Resource`,
+  `Dataspace`, etc.)
+- `Protocol` / `Role` enums
+- Numpy array bridge (`DataArray.from_numpy_array()` / `.to_numpy_array()`)
+
+**What pyetp does NOT provide:**
+
+- No WebSocket client or connection management
+- No session lifecycle handling
+- No RESQML XML object models
+- No domain-aware methods or high-level API
+
+**What xtgeo builds on top:**
+
+| Layer | Implementation |
+|-------|----------------|
+| WebSocket ETP client | Custom sync-over-async client in `_etp_provider.py` using `websockets` |
+| RESQML 2.0.1 XML | Hand-built `lxml.etree` construction/parsing for IjkGrid, Grid2D, PointSet, PolylineSet, ContinuousProperty, DiscreteProperty, CRS |
+| EPC file I/O | Full ZIP/OPC container + HDF5 handling in `_epc_provider.py` (no resqpy) |
+| xtgeo ↔ RESQML converters | Bidirectional geometry transforms (pillar arrays ↔ coord/zcorn, etc.) |
+| Session / auth | OAuth2 token management with profile persistence |
+| High-level API | `grid_from_osdu()`, `surface_to_osdu()`, `list_osdu_objects()`, etc. |
+
+In summary, pyetp is a **pure schema/codec layer** — xtgeo uses it for
+message construction and binary serialization, and builds everything else
+(client, XML models, converters, auth) from scratch.
+
+**Known limitation:** pyetp does not include Protocol 5 (StoreNotification)
+message classes. Change detection is therefore implemented via timestamp-based
+polling (see Change Detection above).
 
 ## Future Considerations
 
