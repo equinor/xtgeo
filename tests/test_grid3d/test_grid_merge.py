@@ -40,8 +40,7 @@ def test_default_placement():
     assert merged.nactive == g1.nactive + g2.nactive
 
 
-def test_lmap1_len():
-    """Test layer offset is >=0."""
+def test_lmap1_raises_if_incorrect_length():
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
     lmap1 = np.arange(2)
@@ -61,8 +60,7 @@ def test_lmap2_raises_if_incorrect_length():
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
-def test_lmap1_negative():
-    """Test layer offset is >=0."""
+def test_lmap1_raises_if_negative():
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
     lmap1 = np.arange(3) - 1
@@ -72,8 +70,7 @@ def test_lmap1_negative():
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
-def test_lmap2_negative():
-    """Test layer offset is >=0."""
+def test_lmap2_raises_if_negative():
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
     lmap1 = np.arange(3)
@@ -83,8 +80,7 @@ def test_lmap2_negative():
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
-def test_lmap1_int():
-    """Test layer offset is >=0."""
+def test_lmap1_raises_if_not_int():
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
     lmap1 = np.arange(3, dtype=np.float32) + 0.5
@@ -94,8 +90,7 @@ def test_lmap1_int():
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
-def test_lmap2_int():
-    """Test layer offset is >=0."""
+def test_lmap2_raises_if_not_int():
     g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
     g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
     lmap1 = np.arange(3, dtype=np.float32)
@@ -105,8 +100,8 @@ def test_lmap2_int():
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
-def test_merge_refinement_offset():
-    """Test merging grid with refinement and offset active"""
+def test_merge_with_lmap_inputs():
+    """Test merging grid with lmap1 and lmap2 active"""
     g1 = xtgeo.create_box_grid(dimension=(3, 3, 3))
     g2 = xtgeo.create_box_grid(dimension=(2, 2, 2))
 

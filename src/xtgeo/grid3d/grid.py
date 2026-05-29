@@ -413,7 +413,7 @@ def grid_merge(
     The resulting grid dimensions will be:
     - ncol: grid1.ncol + 1 + grid2.ncol
     - nrow: max(grid1.nrow, grid2.nrow)
-    - nlay: max(grid1.nlay, grid2.nlay, max(lmap1)+1, max(lmap2)+1 )
+    - nlay: max(grid1.nlay, grid2.nlay, max(layer_map1)+1, max(layer_map2)+1 )
 
     If the grids have different IJK handedness (left vs right), grid2 will be
     automatically adjusted to match grid1's handedness before merging.
@@ -430,8 +430,8 @@ def grid_merge(
     Args:
         grid1: First grid instance
         grid2: Second grid instance
-        lmap1: Optional numpy array with layer mapping for grid1
-        lmap2: Optional numpy array with layer mapping for grid2
+        layer_map1: Optional numpy array with layer mapping for grid1
+        layer_map2: Optional numpy array with layer mapping for grid2
 
     Returns:
         A new Grid instance containing both input grids with inactive cells in gaps.
@@ -456,7 +456,7 @@ def grid_merge(
 
     .. versionadded:: 4.18.0
     """
-    return _grid_merge.merge_grids(grid1, grid2, lmap1, lmap2)
+    return _grid_merge.merge_grids(grid1, grid2, layer_map1, layer_map2)
 
 
 class _GridCache:
