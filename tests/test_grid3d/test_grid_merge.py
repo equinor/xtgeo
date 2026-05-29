@@ -46,7 +46,7 @@ def test_lmap1_raises_if_incorrect_length():
     lmap1 = np.arange(2)
     lmap2 = np.arange(2)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="layer mapping 1 must map all layers"):
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
@@ -56,7 +56,7 @@ def test_lmap2_raises_if_incorrect_length():
     lmap1 = np.arange(3)
     lmap2 = np.arange(3)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="layer mapping 2 must map all layers"):
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
@@ -66,7 +66,7 @@ def test_lmap1_raises_if_negative():
     lmap1 = np.arange(3) - 1
     lmap2 = np.arange(2)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="layer mapping 1 must be >=0"):
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
@@ -76,7 +76,7 @@ def test_lmap2_raises_if_negative():
     lmap1 = np.arange(3)
     lmap2 = np.arange(2) - 1
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="layer mapping 2 must be >=0"):
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
@@ -86,7 +86,7 @@ def test_lmap1_raises_if_not_int():
     lmap1 = np.arange(3, dtype=np.float32) + 0.5
     lmap2 = np.arange(2, dtype=np.float32)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="layer mapping 1 must only contrain int"):
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
@@ -96,7 +96,7 @@ def test_lmap2_raises_if_not_int():
     lmap1 = np.arange(3, dtype=np.float32)
     lmap2 = np.arange(2, dtype=np.float32) + 0.5
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="layer mapping 2 must only contrain int"):
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
