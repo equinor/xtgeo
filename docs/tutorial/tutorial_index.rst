@@ -11,3 +11,5 @@ examples can be found as Python files in the
 
    examples
    examples_rms
+   examples_osdu
+   /osdu/guide

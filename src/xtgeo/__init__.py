@@ -161,6 +161,26 @@ from xtgeo.xyz.polygons import (
     polygons_from_wells,
 )
 
+# OSDU/RESQML interface (high-level API)
+from xtgeo.interfaces.osdu._api import (
+    deep_query_osdu,
+    grid_from_osdu,
+    grid_to_osdu,
+    import_osdu,
+    list_osdu_dataspaces,
+    list_osdu_objects,
+    points_from_osdu,
+    points_to_osdu,
+    polygons_from_osdu,
+    polygons_to_osdu,
+    query_osdu,
+    query_osdu_all_dataspaces,
+    search_osdu,
+    surface_from_osdu,
+    surface_to_osdu,
+    watch_osdu_changes,
+)
+
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 
 _xprint("XTGEO __init__ done")
@@ -263,4 +283,21 @@ __all__ = [
     "wells",
     "wells_from_files",
     "wells_from_stacked_file",
+    # OSDU/RESQML
+    "grid_from_osdu",
+    "grid_to_osdu",
+    "surface_from_osdu",
+    "surface_to_osdu",
+    "points_from_osdu",
+    "points_to_osdu",
+    "polygons_from_osdu",
+    "polygons_to_osdu",
+    "list_osdu_objects",
+    "list_osdu_dataspaces",
+    "search_osdu",
+    "query_osdu",
+    "query_osdu_all_dataspaces",
+    "import_osdu",
+    "deep_query_osdu",
+    "watch_osdu_changes",
 ]

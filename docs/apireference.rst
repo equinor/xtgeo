@@ -9,4 +9,5 @@ API Reference
    api-well
    api-cubes
    api-grids
+   api-osdu
    api-other

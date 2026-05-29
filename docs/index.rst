@@ -30,6 +30,7 @@ The repository is hosted on `GitHub <https://github.com/equinor/xtgeo>`_.
    getting_started
    tutorial/tutorial_index
    datamodels
+   osdu/index
    xtgeo_4_migration
    apireference
 
