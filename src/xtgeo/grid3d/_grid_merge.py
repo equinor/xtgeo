@@ -30,19 +30,9 @@ def merge_grids(
     grid2._set_xtgformat2()
 
     if isinstance(lmap1, np.ndarray):
-        if lmap1.min() < 0:
-            raise ValueError("layer mapping 1 must be >=0")
-        if len(lmap1) != grid1.nlay:
-            raise ValueError("layer mapping 1 must map all layers")
-        if not np.all(lmap1 % 1 == 0):
-            raise ValueError("layer mapping 1 must only contrain int")
+        _validate_layer_mapping(lmap1, grid1.nlay)
     if isinstance(lmap2, np.ndarray):
-        if lmap2.min() < 0:
-            raise ValueError("layer mapping 2 must be >=0")
-        if len(lmap2) != grid2.nlay:
-            raise ValueError("layer mapping 2 must map all layers")
-        if not np.all(lmap2 % 1 == 0):
-            raise ValueError("layer mapping 2 must only contrain int")
+        _validate_layer_mapping(lmap2, grid2.nlay)
 
     # Ensure both grids have the same ijk_handedness
     if (
@@ -628,3 +618,27 @@ def _create_merged_property(
         values=merged_values,
         codes=first_prop.codes if first_prop.isdiscrete else None,
     )
+
+
+def _validate_layer_mapping(
+    lmap: np.ndarray,
+    layers: int,
+) -> None:
+    """Validate layer mapping arrays to ensure. They always
+    only int equivalents
+    >=0
+    monotonic increasing
+    unique values
+    all layers in input grid are mapped
+    """
+
+    if lmap.min() < 0:
+        raise ValueError("layer mapping must be >=0")
+    if len(lmap) != layers:
+        raise ValueError("layer mapping must map all layers")
+    if not np.all(lmap % 1 == 0):
+        raise ValueError("layer mapping must only contain int")
+    if len(np.unique(lmap)) < len(lmap):
+        raise ValueError("layer mapping must be unique")
+    if not np.array_equal(lmap, np.sort(lmap)):
+        raise ValueError("layer mapping must monotonical increase")
