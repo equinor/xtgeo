@@ -73,6 +73,12 @@ Module Inventory
      - PointSet ↔ xtgeo Points converter
    * - ``_polyline.py``
      - PolylineSet ↔ xtgeo Polygons converter
+   * - ``_triangulated_surface.py``
+     - TriangulatedSetRepresentation ↔ xtgeo TriangulatedSurface converter
+   * - ``_well.py``
+     - WellboreTrajectory + WellboreFrame ↔ xtgeo Well converter
+   * - ``_blocked_well.py``
+     - BlockedWellboreRepresentation ↔ xtgeo BlockedWell converter
    * - ``_properties.py``
      - Grid property read/write (multi-property support)
    * - ``_crs.py``
@@ -131,6 +137,50 @@ Property Axis Convention
 - **RESQML/resqpy**: properties in ``(nk, nj, ni)`` KJI (row-major) order
 - Conversion: ``values.reshape(nk, nj, ni).transpose(2, 1, 0)``
 - Verified to machine precision in all roundtrip tests
+
+UUID Preservation
+^^^^^^^^^^^^^^^^^
+
+All converters follow the same UUID pattern:
+
+1. On **write**: check if the xtgeo object has RESQML metadata attached
+   (via ``_resqml_meta.py``). If a UUID exists, reuse it (update-in-place).
+   Otherwise generate a new ``uuid4()``.
+2. On **read**: attach the RESQML UUID, CRS UUID, and other references to
+   the xtgeo object's metadata dict, so subsequent writes preserve identity.
+3. **Cross-references** (CRS, HDF proxy, Feature/Interpretation links) use
+   UUID attributes on child elements — consistent across all types.
+
+CRS Handling
+^^^^^^^^^^^^
+
+All 8 write converters share the same CRS creation pattern:
+
+- If no ``crs_uuid`` is passed, create a ``LocalDepth3dCrs`` with the given
+  EPSG code and default origin ``(0, 0, 0)``
+- CRS is referenced from within the object's ``Geometry`` element
+- One CRS per EPC/dataspace is typical (shared across objects)
+
+Metadata & Citation
+^^^^^^^^^^^^^^^^^^^
+
+All types write a ``Citation`` element with ``Title``. The title is the
+user-supplied ``title=`` argument. Additional Citation fields (``Originator``,
+``Creation``, ``Description``) are not currently written but are preserved
+if present when reading third-party files.
+
+resqpy Interoperability
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The module follows resqpy conventions where possible:
+
+- **HDF5 per-patch naming**: ``points_patch0``, ``triangles_patch0`` for
+  TriangulatedSets (resqpy's standard naming)
+- **WellboreFeature → WellboreInterpretation → Representation** chain
+  (required for resqpy/Petrel discovery)
+- **SurfaceRole** element on TriangulatedSets
+- **Read fallback**: readers try per-patch names first, then fall back to
+  generic names for backward compatibility with older files
 
 
 Data Model: xtgeo vs RESQML
@@ -270,6 +320,55 @@ Points & Polygons
      - Not explicit (user convention)
      - ``ArePatched`` flag indicates closed vs open polylines
 
+Wells
+^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Aspect
+     - xtgeo
+     - RESQML
+   * - Trajectory storage
+     - DataFrame with X_UTME, Y_UTMN, Z_TVDSS, MD columns
+     - ``WellboreTrajectoryRepresentation`` with MD + XYZ HDF5 arrays
+   * - Well logs
+     - Additional DataFrame columns (GR, PORO, etc.)
+     - ``WellboreFrameRepresentation`` with log properties
+   * - Object hierarchy
+     - Flat (single Well object)
+     - ``WellboreFeature`` → ``WellboreInterpretation`` → ``Trajectory``
+   * - Blocked well
+     - ``BlockedWell`` with I/J/K index columns
+     - ``BlockedWellboreRepresentation`` with cell index arrays
+   * - MD datum
+     - Implicit (first MD value)
+     - Explicit ``MdDatum`` object (not yet written)
+
+Triangulated Surfaces
+^^^^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 35 40
+
+   * - Aspect
+     - xtgeo
+     - RESQML
+   * - Vertex storage
+     - ``vertices``: ``(N, 3)`` float64 array
+     - ``points_patch0`` HDF5 dataset (per-patch naming)
+   * - Triangle storage
+     - ``triangles``: ``(M, 3)`` int32 array
+     - ``triangles_patch0`` HDF5 dataset (per-patch naming)
+   * - Surface role
+     - Not explicit
+     - ``SurfaceRole`` element (``"map"`` default)
+   * - Multi-patch
+     - Single patch only
+     - Schema supports multiple patches (read fallback supported)
+
 
 Supported vs Unsupported RESQML Features
 -----------------------------------------
@@ -296,6 +395,18 @@ Supported vs Unsupported RESQML Features
    * - PolylineSet
      - Full
      - Multiple polylines per representation
+   * - TriangulatedSetRepresentation
+     - Full
+     - Vertices + triangle indices, per-patch HDF5 naming (resqpy-compatible)
+   * - WellboreTrajectoryRepresentation
+     - Full
+     - MD + XYZ arrays, WellboreFeature → Interpretation chain auto-created
+   * - WellboreFrameRepresentation
+     - Full
+     - Well logs stored as frame properties
+   * - BlockedWellboreRepresentation
+     - Full
+     - Cell I/J/K indices + properties, linked to trajectory
    * - LocalDepth3dCrs
      - Full
      - EPSG-based, auto-created
@@ -312,8 +423,14 @@ Supported vs Unsupported RESQML Features
      - None
      - Not in xtgeo data model
    * - WellboreTrajectory / WellboreFrame
-     - None
-     - Future work
+     - Full
+     - Read + write with Feature → Interpretation → Representation chain
+   * - BlockedWellboreRepresentation
+     - Full
+     - I/J/K cell indices + discrete/continuous properties
+   * - TriangulatedSetRepresentation
+     - Full
+     - Per-patch HDF5 naming, SurfaceRole, resqpy-interoperable
    * - Time-series properties
      - None
      - Each timestep is a separate xtgeo property

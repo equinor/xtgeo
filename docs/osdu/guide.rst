@@ -24,6 +24,62 @@ This installs:
 - ``energistics`` — ETP 1.2 protocol (Avro binary WebSocket)
 - ``h5py`` — HDF5 array storage for EPC files
 
+Supported Types
+---------------
+
+All major xtgeo object types are supported for OSDU/RESQML read and write:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 30 20 25
+
+   * - xtgeo type
+     - RESQML representation
+     - Read/Write
+     - API functions
+   * - ``Grid``
+     - IjkGridRepresentation
+     - Full
+     - ``grid_to_osdu`` / ``grid_from_osdu``
+   * - ``GridProperty``
+     - ContinuousProperty / DiscreteProperty
+     - Full
+     - Included with grid read/write
+   * - ``RegularSurface``
+     - Grid2dRepresentation
+     - Full
+     - ``surface_to_osdu`` / ``surface_from_osdu``
+   * - ``TriangulatedSurface``
+     - TriangulatedSetRepresentation
+     - Full
+     - ``triangulated_surface_to_osdu`` / ``triangulated_surface_from_osdu``
+   * - ``Points``
+     - PointSetRepresentation
+     - Full
+     - ``points_to_osdu`` / ``points_from_osdu``
+   * - ``Polygons``
+     - PolylineSetRepresentation
+     - Full
+     - ``polygons_to_osdu`` / ``polygons_from_osdu``
+   * - ``Well``
+     - WellboreTrajectoryRepresentation + WellboreFrameRepresentation
+     - Full
+     - ``well_to_osdu`` / ``well_from_osdu``
+   * - ``BlockedWell``
+     - BlockedWellboreRepresentation
+     - Full
+     - ``blocked_well_to_osdu`` / ``blocked_well_from_osdu``
+
+All types support:
+
+- **UUID preservation** — UUIDs are attached to xtgeo objects on read and
+  reused on write (enabling update-in-place workflows)
+- **CRS handling** — auto-created ``LocalDepth3dCrs`` with EPSG code
+- **Metadata** — title stored in RESQML Citation element
+- **Generic import** — ``import_osdu(source, result)`` dispatches to the correct
+  type based on search/list results
+
+
 Quick Start Recipes
 -------------------
 
@@ -296,6 +352,9 @@ Filter by type:
 
     grids = xtgeo.list_osdu_objects(session, object_type="grid")
     surfaces = xtgeo.list_osdu_objects(session, object_type="surface")
+    wells = xtgeo.list_osdu_objects(session, object_type="well")
+    blocked_wells = xtgeo.list_osdu_objects(session, object_type="blocked_well")
+    trisurfaces = xtgeo.list_osdu_objects(session, object_type="trisurface")
     properties = xtgeo.list_osdu_objects(session, object_type="property")
 
 Search by name pattern (shell-style wildcards):
@@ -342,6 +401,38 @@ Points and Polygons
     pts = xtgeo.points_from_osdu(session, name="WellTops")
     polys = xtgeo.polygons_from_osdu(session, name="FaultTraces")
 
+Wells
+^^^^^
+
+.. code-block:: python
+
+    # Read a well trajectory + logs
+    well = xtgeo.well_from_osdu(session, name="NO 31/2-A-1")
+    print(well.mdlogname)  # MD column name
+    print(well.get_dataframe().columns.tolist())
+
+    # Read by UUID
+    well = xtgeo.well_from_osdu(session, uuid="12345678-abcd-...")
+
+Blocked Wells
+^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    # Read a blocked well (well samples with cell indices)
+    bwell = xtgeo.blocked_well_from_osdu(session, name="NO 31/2-A-1 blocked")
+    df = bwell.get_dataframe()
+    print(df[["I_INDEX", "J_INDEX", "K_INDEX"]].head())
+
+Triangulated Surfaces
+^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    # Read a fault plane or other triangulated mesh
+    trisurf = xtgeo.triangulated_surface_from_osdu(session, name="FaultA")
+    print(f"{trisurf.vertices.shape[0]} vertices, {trisurf.triangles.shape[0]} triangles")
+
 
 Writing Data
 ------------
@@ -375,6 +466,20 @@ Writing Data
     # Write points / polygons
     pts = xtgeo.Points(values=np.array([[1, 2, 3], [4, 5, 6]]))
     xtgeo.points_to_osdu(session, pts, title="MyPoints", crs_epsg=23031)
+
+    # Write a well (trajectory + logs)
+    well = xtgeo.well_from_file("well.w", fformat="rmswell")
+    xtgeo.well_to_osdu(session, well, title="NO 31/2-A-1", crs_epsg=23031)
+
+    # Write a blocked well
+    bwell = xtgeo.blockedwell_from_file("bwell.bw", fformat="rmswell")
+    xtgeo.blocked_well_to_osdu(session, bwell, title="BW-1", crs_epsg=23031)
+
+    # Write a triangulated surface (fault plane, horizon mesh, etc.)
+    trisurf = xtgeo.TriangulatedSurface(vertices=verts, triangles=tris)
+    xtgeo.triangulated_surface_to_osdu(
+        session, trisurf, title="FaultA", crs_epsg=23031
+    )
 
 
 Deep Discovery
