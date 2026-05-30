@@ -230,7 +230,7 @@ def _store_in_roxar(
     _validate_dtype_in_roxar(val3d, original_dtype, dtype, casting == "unsafe")
 
     dtype = original_dtype
-    cast_mode: Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"]
+    cast_mode: Literal["no", "equiv", "safe", "same_kind", "unsafe"]
     cast_mode = casting if casting is not None else "unsafe"
     val3d = np.ma.array(val3d.astype(dtype, casting=cast_mode), copy=False)
 

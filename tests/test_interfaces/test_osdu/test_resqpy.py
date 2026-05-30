@@ -37,7 +37,6 @@ import resqpy.property as rprop  # noqa: E402
 from resqpy.crs import Crs  # noqa: E402
 from resqpy.grid import RegularGrid  # noqa: E402
 from resqpy.model import Model  # noqa: E402
-from resqpy.property import PropertyCollection  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -515,8 +514,7 @@ class TestExtractBoxPipeline:
 
         # Step 1: xtgeo → EPC
         epc_src = str(tmp_path / "source.epc")
-        result = _xtgeo_grid_to_epc(epc_src, grid, props, title="FullGrid")
-        grid_uuid = result["FullGrid"]
+        _xtgeo_grid_to_epc(epc_src, grid, props, title="FullGrid")
 
         # Step 2: resqpy extract_box (IJK box: i=2..6, j=1..5, k=0..3)
         epc_box = str(tmp_path / "extracted.epc")

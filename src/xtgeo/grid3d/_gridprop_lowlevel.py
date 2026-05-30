@@ -101,7 +101,7 @@ def update_carray(
 
     logger.debug("Entering conversion from numpy to C array ...")
 
-    values_masked: ma.MaskedArray[Any] = ma.array(self.values, copy=True)
+    values_masked: ma.MaskedArray[Any, Any] = ma.array(self.values, copy=True)
 
     if dtype is None:
         target_dtype: DTypeLike = np.int32 if dstatus else np.float64

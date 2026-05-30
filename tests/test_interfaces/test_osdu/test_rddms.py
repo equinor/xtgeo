@@ -27,6 +27,9 @@ pytestmark = pytest.mark.requires_rddms
 
 K8S_DIR = Path.home() / "ores" / "k8s"
 
+if not K8S_DIR.exists():
+    pytest.skip("K8s env directory not available", allow_module_level=True)
+
 
 def _load_k8s_env() -> dict[str, str]:
     sys.path.insert(0, str(K8S_DIR))
