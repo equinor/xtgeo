@@ -75,7 +75,7 @@ jobs:
 
       - name: Install Linux dependencies
         run: |
-          sudo apt-get install libeigen3-dev libfmt-dev
+          sudo apt-get install libeigen3-dev libfmt-dev libxml2-dev libxslt-dev
 
       - name: Setup xtgeo
         uses: "./.github/actions/setup_xtgeo"
@@ -125,7 +125,7 @@ jobs:
 
       - name: Install Linux dependencies
         run: |
-          sudo apt-get install libeigen3-dev libfmt-dev
+          sudo apt-get install libeigen3-dev libfmt-dev libxml2-dev libxslt-dev
 
       - name: Build and install xtgeo
         run: |
