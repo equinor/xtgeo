@@ -1145,8 +1145,10 @@ def _compare_triangulated_surfaces(
                 "TriangulatedSurface", title, "vertices", f"max diff = {max_diff:.2e}"
             )
         )
-    if a.triangles is not None and b.triangles is not None and not np.array_equal(
-        a.triangles, b.triangles
+    if (
+        a.triangles is not None
+        and b.triangles is not None
+        and not np.array_equal(a.triangles, b.triangles)
     ):
         diffs.append(
             Difference(

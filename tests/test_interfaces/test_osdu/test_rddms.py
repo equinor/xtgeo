@@ -517,12 +517,12 @@ def _double_roundtrip(
 
     # ===== Compare =====
     print(f"\n{'=' * 60}")
-    print(f"COMPARE: cycle0 vs cycle1 (format conversion tolerance)")
+    print("COMPARE: cycle0 vs cycle1 (format conversion tolerance)")
     print(f"{'=' * 60}")
     ok_01 = _compare_snapshots(snap_0, snap_1, "cycle0↔cycle1", strict=False)
 
     print(f"\n{'=' * 60}")
-    print(f"COMPARE: cycle1 vs cycle2 (MUST BE BITWISE IDENTICAL)")
+    print("COMPARE: cycle1 vs cycle2 (MUST BE BITWISE IDENTICAL)")
     print(f"{'=' * 60}")
     ok_12 = _compare_snapshots(snap_1, snap_2, "cycle1↔cycle2", strict=True)
 
