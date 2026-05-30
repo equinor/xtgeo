@@ -805,67 +805,58 @@ Running the Tests
 
 .. code-block:: bash
 
-    cd tests/test_interfaces/test_osdu
+    cd /path/to/xtgeo
 
-    # All tests (requires Docker RDDMS running)
-    pytest -v --noconftest
+    # CI-safe tests (no RDDMS needed)
+    pytest -m "not requires_rddms" tests/test_interfaces/test_osdu/
 
-    # Only offline tests (no server needed)
-    pytest -v --noconftest -k "not etp and not resqpy"
+    # All tests (requires Docker RDDMS or Azure eqndev credentials)
+    pytest tests/test_interfaces/test_osdu/
 
-    # Only ETP integration tests (requires server)
-    pytest -v --noconftest test_etp_roundtrip.py test_etp_discovery.py
-
-    # With resqpy interop
-    pytest -v --noconftest test_resqpy_interop.py
+    # Only RDDMS integration tests
+    pytest -m "requires_rddms" tests/test_interfaces/test_osdu/
 
 Test Structure
 ^^^^^^^^^^^^^^
 
 .. list-table::
    :header-rows: 1
-   :widths: 35 10 55
+   :widths: 30 12 58
 
    * - File
-     - Server?
+     - RDDMS?
      - What it tests
-   * - ``test_epc_roundtrip.py``
+   * - ``test_epc_compliance.py``
      - No
-     - Geometry/property roundtrip via EPC files
-   * - ``test_epc_grid3d_compliance.py``
+     - All object types through EPC roundtrip: grids (rotated, faulted,
+       pinched, asymmetric, hypothesis-fuzzed), surfaces, points, polygons,
+       wells, blocked wells, triangulated surfaces
+   * - ``test_epc_operations.py``
      - No
-     - Grid3d scenarios (rotated, faulted, pinched, asymmetric, masked,
-       hypothesis-based) through EPC roundtrip
-   * - ``test_epc_grid3d_operations.py``
-     - No
-     - Post-roundtrip operations (bulk volume, cell dims, XYZ, dataframe,
-       crop, grid quality, reduce-to-one-layer, surface extraction)
-   * - ``test_epc_surface_xyz_compliance.py``
-     - No
-     - Surface (large, NaN, rotation, asymmetric), Points, and Polygons
-       compliance through EPC roundtrip
+     - Post-roundtrip xtgeo operations (bulk volume, cell dims, XYZ,
+       dataframe, crop, grid quality, reduce-to-one-layer, surface extraction)
    * - ``test_api.py``
      - No
-     - High-level API functions with EPC files
-   * - ``test_metadata_roundtrip.py``
+     - High-level API functions (grid/surface/points/polygons from/to OSDU)
+   * - ``test_osdu_unit.py``
      - No
-     - UUID/metadata preservation through roundtrips
-   * - ``test_etp_roundtrip.py``
-     - Yes
-     - Write → read → compare via ETP protocol
-   * - ``test_etp_discovery.py``
-     - Yes
-     - Deep discovery, related objects, notifications
-   * - ``test_resqpy_interop.py``
-     - Yes
-     - Cross-library compatibility with resqpy
+     - Unit tests for internals (metadata mapping, CRS transforms, property
+       resolution, UUID preservation)
+   * - ``test_resqpy.py``
+     - No
+     - Cross-library compatibility with resqpy + pipeline patterns
+       (extract_box, coarsen, fault connection sets)
+   * - ``test_rddms.py``
+     - **Yes**
+     - Double roundtrip (Sleipner, Drogon, synthetic TriSet), deep discovery,
+       notifications, dataspace snapshot API
 
-**Offline tests** (``test_epc_*``, ``test_api.py``, ``test_metadata_roundtrip.py``)
-run in CI without any infrastructure. They exercise the full converter and
-EPC file I/O stack.
+**Offline tests** (all except ``test_rddms.py``) run in CI without any
+infrastructure. They exercise the full converter and EPC file I/O stack.
 
-**Online tests** (``test_etp_*``) require a running RDDMS and are gated by
-``pytest.importorskip("energistics")`` and connection availability.
+**RDDMS tests** (``test_rddms.py``) are marked with ``requires_rddms`` and
+excluded from CI via ``pytest -m "not requires_rddms"``. They require either
+a local Docker RDDMS (``ws://localhost:9002``) or Azure eqndev credentials.
 
 
 Contributing
