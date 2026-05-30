@@ -95,9 +95,6 @@ osdu = [
     "pyetp",
     "websockets",
 ]
-resqpy = [
-    "resqpy>=4.0",
-]
 
 [tool.scikit-build]
 cmake.version = "CMakeLists.txt"
@@ -214,12 +211,6 @@ exclude_also = [
 [tool.uv]
 exclude-newer = "1 week"
 # Exclude specific package(s) we maintain for quick iteration
-conflicts = [
-    [
-        { extra = "osdu" },
-        { extra = "resqpy" },
-    ],
-]
 
 [tool.uv.exclude-newer-package]
 "xtgeoviz" = false
