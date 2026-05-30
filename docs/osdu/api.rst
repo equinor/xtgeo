@@ -130,7 +130,7 @@ Wells
 
 .. autofunction:: xtgeo.well_from_osdu
 
-Blocked Wells
+Blocked Well
 ^^^^^^^^^^^^^
 
 .. autofunction:: xtgeo.blocked_well_from_osdu
