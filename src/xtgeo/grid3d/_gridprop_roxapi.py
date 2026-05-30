@@ -118,8 +118,7 @@ def export_prop_roxapi(
     gname: str,
     pname: str,
     realisation: int = 0,
-    casting: Literal["no", "equiv", "safe", "same_kind", "unsafe"]
-    | None = "unsafe",
+    casting: Literal["no", "equiv", "safe", "same_kind", "unsafe"] | None = "unsafe",
 ) -> None:
     """Export (i.e. store or save) to a Property icon in RMS via ROXAR API spec."""
     rox = RoxUtils(project, readonly=False)
