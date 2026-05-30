@@ -26,6 +26,8 @@ property name mappings between Eclipse and OSDU.
   low-level converters at the bottom)
 - :doc:`demos` — Copy-paste runnable examples: local RDDMS, change tracking,
   bulk copy, EPC files
+- :doc:`resqpy_interop` — Round-trip xtgeo → resqpy → xtgeo for advanced
+  operations (sub-gridding, coarsening, fault analysis)
 
 
 For Developers — Architecture & Internals
@@ -47,4 +49,5 @@ supported (and what is not), and how to contribute.
    guide
    api
    demos
+   resqpy_interop
    developer
