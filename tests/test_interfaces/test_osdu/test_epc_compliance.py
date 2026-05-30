@@ -44,6 +44,7 @@ def epc_path(tmp_path):
     """Return a temporary EPC file path."""
     return str(tmp_path / "test.epc")
 
+
 def _write_and_read_grid(epc_path, grid, title="Grid", properties=None, **kw):
     """Helper: write grid+props to EPC, read back, return (grid2, props2)."""
     p = EpcFileProvider(epc_path, mode="w")
@@ -678,6 +679,7 @@ class TestKDirectionMetadata:
 # Surface, Points, Polygons compliance
 # ===========================================================================
 
+
 def _roundtrip_surface(epc_path, surf, title="Surf", **kw):
     """Write surface to EPC, read back."""
     p = EpcFileProvider(epc_path, mode="w")
@@ -1010,6 +1012,7 @@ class TestPolygonsCompliance:
 # ===========================================================================
 # Well, BlockedWell, TriangulatedSurface compliance
 # ===========================================================================
+
 
 class TestTriangulatedSurfaceRoundTrip:
     """Tests for TriangulatedSurface round-trips via EPC."""

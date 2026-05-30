@@ -728,6 +728,6 @@ class TestFullWorkflowPipeline:
         assert Path(grdecl_path).stat().st_size > 0
 
         # Verify dimensions of extracted grid
-        assert result_grid.ncol == 6   # i: 7-2+1
-        assert result_grid.nrow == 5   # j: 5-1+1
-        assert result_grid.nlay == 5   # k: 4-0+1
+        assert result_grid.ncol == 6  # i: 7-2+1
+        assert result_grid.nrow == 5  # j: 5-1+1
+        assert result_grid.nlay == 5  # k: 4-0+1

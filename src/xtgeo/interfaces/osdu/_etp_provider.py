@@ -242,8 +242,10 @@ def _parametric_to_explicit_points(
     # Interpolate XYZ: shape (nk+1, npillars, 3)
     top = cp[0, :, :]  # (npillars, 3)
     bot = cp[1, :, :]  # (npillars, 3)
-    points = top[np.newaxis, :, :] * (1.0 - t[:, :, np.newaxis]) + \
-             bot[np.newaxis, :, :] * t[:, :, np.newaxis]
+    points = (
+        top[np.newaxis, :, :] * (1.0 - t[:, :, np.newaxis])
+        + bot[np.newaxis, :, :] * t[:, :, np.newaxis]
+    )
 
     # Reshape to standard RESQML order: (nk+1, nj+1, ni+1, 3)
     points = points.reshape(nk + 1, nj + 1, ni + 1, 3)
@@ -323,9 +325,7 @@ def _parametric_split_to_coord_zcorn(
 
     # --- Build line_map: which coordinate line each (pi, pj, corner) uses ---
     # Default: all 4 corners use the pillar's own line index
-    pi_grid, pj_grid = np.meshgrid(
-        np.arange(ni + 1), np.arange(nj + 1), indexing="ij"
-    )
+    pi_grid, pj_grid = np.meshgrid(np.arange(ni + 1), np.arange(nj + 1), indexing="ij")
     default_line = (pj_grid * (ni + 1) + pi_grid).astype(np.int64)
     line_map = np.broadcast_to(
         default_line[..., np.newaxis], (ni + 1, nj + 1, 4)
@@ -1266,9 +1266,7 @@ class EtpProvider(ResqmlDataProvider):
         actnum = self._get_array(array_uri, f"/RESQML/{uuid}/CellGeometryIsDefined")
         # Also try lowercase path (RMS exports use lowercase)
         if actnum is None:
-            actnum = self._get_array(
-                array_uri, f"/RESQML/{uuid}/cellGeometryIsDefined"
-            )
+            actnum = self._get_array(array_uri, f"/RESQML/{uuid}/cellGeometryIsDefined")
 
         # If custom paths not found, try standard RESQML Point3dHdf5Array path
         if coord is None and zcorn is None:
@@ -1279,15 +1277,9 @@ class EtpProvider(ResqmlDataProvider):
         # If still not found, try parametric representation
         # (Point3dParametricArray — used by RMS exports)
         if coord is None and zcorn is None:
-            cp = self._get_array(
-                array_uri, f"/RESQML/{uuid}/controlPoints"
-            )
-            cpp = self._get_array(
-                array_uri, f"/RESQML/{uuid}/controlPointParameters"
-            )
-            params = self._get_array(
-                array_uri, f"/RESQML/{uuid}/parameters"
-            )
+            cp = self._get_array(array_uri, f"/RESQML/{uuid}/controlPoints")
+            cpp = self._get_array(array_uri, f"/RESQML/{uuid}/controlPointParameters")
+            params = self._get_array(array_uri, f"/RESQML/{uuid}/parameters")
             if cp is not None and cpp is not None and params is not None:
                 npillars = (ni + 1) * (nj + 1)
                 n_param_cols = params.reshape(nk + 1, -1).shape[1]
@@ -1305,10 +1297,21 @@ class EtpProvider(ResqmlDataProvider):
                         array_uri,
                         f"/RESQML/{uuid}/ColumnsPerSplitCoordinateLine/cumulativeLength",
                     )
-                    if pil_idx is not None and col_el is not None and col_cum is not None:
+                    if (
+                        pil_idx is not None
+                        and col_el is not None
+                        and col_cum is not None
+                    ):
                         coord, zcorn = _parametric_split_to_coord_zcorn(
-                            cp, cpp, params, ni, nj, nk,
-                            pil_idx, col_el, col_cum,
+                            cp,
+                            cpp,
+                            params,
+                            ni,
+                            nj,
+                            nk,
+                            pil_idx,
+                            col_el,
+                            col_cum,
                         )
                     else:
                         # Fall back to unsplit (ignore extra columns)
@@ -1324,9 +1327,7 @@ class EtpProvider(ResqmlDataProvider):
                     explicit = _parametric_to_explicit_points(
                         cp, cpp, params, ni, nj, nk
                     )
-                    coord, zcorn = _points_array_to_coord_zcorn(
-                        explicit, ni, nj, nk
-                    )
+                    coord, zcorn = _points_array_to_coord_zcorn(explicit, ni, nj, nk)
 
         # Handle actnum shape: RESQML uses (nk, nj, ni), xtgeo needs flat (ni*nj*nk)
         # in I-fastest order (ni, nj, nk) when reshaped
@@ -2297,9 +2298,7 @@ class EtpProvider(ResqmlDataProvider):
 
         uri = self._resolve_uri(uuid, qualified_type)
         hdf_paths = _hdf_paths_from_xml(root, NS_COMMON20)
-        md_path = hdf_paths.get(
-            "ControlPointParameters", f"/RESQML/{uuid}/MdValues"
-        )
+        md_path = hdf_paths.get("ControlPointParameters", f"/RESQML/{uuid}/MdValues")
         pts_path = hdf_paths.get("ControlPoints", f"/RESQML/{uuid}/Points")
         md = self._get_array(uri, md_path)
         xyz = self._get_array(uri, pts_path)

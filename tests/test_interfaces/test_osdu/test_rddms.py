@@ -166,9 +166,7 @@ def _read_snapshot(provider, objects: Dict[str, str], label: str) -> Dict[str, A
 # ---------------------------------------------------------------------------
 
 
-def _write_snapshot(
-    provider, snap: Dict[str, Any], prefix: str
-) -> Dict[str, str]:
+def _write_snapshot(provider, snap: Dict[str, Any], prefix: str) -> Dict[str, str]:
     """Write snapshot objects to provider with new UUIDs. Return UUID map."""
     from xtgeo.interfaces.osdu._ijk_grid import xtgeo_grid_to_resqml
 
@@ -283,20 +281,30 @@ def _compare_snapshots(
         assert snap_a["grid_dims"] == snap_b["grid_dims"], "Grid dimensions differ"
         print(f"  [{label}] Dimensions: MATCH {snap_a['grid_dims']}")
 
-        for name, atol in [("grid_coord", 1e-6), ("grid_zcorn", 1e-3), ("grid_actnum", 0)]:
+        for name, atol in [
+            ("grid_coord", 1e-6),
+            ("grid_zcorn", 1e-3),
+            ("grid_actnum", 0),
+        ]:
             a, b = snap_a[name], snap_b[name]
             if np.array_equal(a, b):
                 print(f"  [{label}] {name}: BITWISE IDENTICAL {a.shape}")
             elif strict:
                 max_diff = np.max(np.abs(a.astype(np.float64) - b.astype(np.float64)))
                 n_diff = np.sum(a != b)
-                print(f"  [{label}] {name}: DIFFER max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}")
+                print(
+                    f"  [{label}] {name}: DIFFER max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}"
+                )
                 raise AssertionError(f"{name} not bitwise identical in {label}")
             else:
                 max_diff = np.max(np.abs(a.astype(np.float64) - b.astype(np.float64)))
                 n_diff = np.sum(a != b)
-                print(f"  [{label}] {name}: DIFFER max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}")
-                np.testing.assert_allclose(a.astype(np.float64), b.astype(np.float64), atol=atol)
+                print(
+                    f"  [{label}] {name}: DIFFER max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}"
+                )
+                np.testing.assert_allclose(
+                    a.astype(np.float64), b.astype(np.float64), atol=atol
+                )
                 print(f"  [{label}] {name}: MATCH within {atol}")
                 all_ok = False
 
@@ -310,13 +318,21 @@ def _compare_snapshots(
                 continue
             b_vals = snap_b["grid_props_arrays"][pname]
             if np.array_equal(a_vals, b_vals):
-                print(f"  [{label}] property '{pname}': BITWISE IDENTICAL {a_vals.shape}")
+                print(
+                    f"  [{label}] property '{pname}': BITWISE IDENTICAL {a_vals.shape}"
+                )
             elif strict:
-                max_diff = np.max(np.abs(a_vals.astype(np.float64) - b_vals.astype(np.float64)))
+                max_diff = np.max(
+                    np.abs(a_vals.astype(np.float64) - b_vals.astype(np.float64))
+                )
                 print(f"  [{label}] property '{pname}': DIFFER max_diff={max_diff:.2e}")
-                raise AssertionError(f"Property '{pname}' not bitwise identical in {label}")
+                raise AssertionError(
+                    f"Property '{pname}' not bitwise identical in {label}"
+                )
             else:
-                max_diff = np.max(np.abs(a_vals.astype(np.float64) - b_vals.astype(np.float64)))
+                max_diff = np.max(
+                    np.abs(a_vals.astype(np.float64) - b_vals.astype(np.float64))
+                )
                 print(f"  [{label}] property '{pname}': DIFFER max_diff={max_diff:.2e}")
                 np.testing.assert_allclose(
                     a_vals.astype(np.float64), b_vals.astype(np.float64), atol=1e-6
@@ -339,7 +355,9 @@ def _compare_snapshots(
         else:
             max_diff = np.max(np.abs(va.astype(np.float64) - vb.astype(np.float64)))
             print(f"  [{label}] Grid2D values: DIFFER max_diff={max_diff:.2e}")
-            np.testing.assert_allclose(va.astype(np.float64), vb.astype(np.float64), atol=1e-6)
+            np.testing.assert_allclose(
+                va.astype(np.float64), vb.astype(np.float64), atol=1e-6
+            )
             all_ok = False
 
     # Wellbore trajectory
@@ -354,7 +372,9 @@ def _compare_snapshots(
         elif strict:
             md_diff = np.max(np.abs(md_a - md_b)) if md_a.size else 0
             xyz_diff = np.max(np.abs(xyz_a - xyz_b)) if xyz_a.size else 0
-            print(f"  [{label}] Trajectory: DIFFER md={md_diff:.2e}, xyz={xyz_diff:.2e}")
+            print(
+                f"  [{label}] Trajectory: DIFFER md={md_diff:.2e}, xyz={xyz_diff:.2e}"
+            )
             raise AssertionError(f"Trajectory not bitwise identical in {label}")
         else:
             np.testing.assert_allclose(md_a, md_b, atol=1e-6)
@@ -421,7 +441,9 @@ def _compare_snapshots(
                 print(f"  [{label}] TriSet triangles: DIFFER n_diff={n_diff}")
             raise AssertionError(f"TriangulatedSet not bitwise identical in {label}")
         else:
-            np.testing.assert_allclose(va.astype(np.float64), vb.astype(np.float64), atol=1e-6)
+            np.testing.assert_allclose(
+                va.astype(np.float64), vb.astype(np.float64), atol=1e-6
+            )
             np.testing.assert_array_equal(ta, tb)
             print(f"  [{label}] TriangulatedSet: MATCH within tolerance")
             all_ok = False
@@ -445,9 +467,9 @@ def _double_roundtrip(
     target_ds = "maap/xtgeo"
 
     # ===== Cycle 0: Read from source =====
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"CYCLE 0: Read from {source_dataspace}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     cfg_src = _etp_config(source_dataspace)
     p_src = EtpProvider(cfg_src)
     p_src.open()
@@ -464,9 +486,9 @@ def _double_roundtrip(
         pass
 
     # ===== Cycle 1: Write → Read =====
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"CYCLE 1: Write to {target_ds} → Read back")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     uuid_map_1 = _write_snapshot(p_wr, snap_0, f"{name}_C1")
     p_wr.close()
 
@@ -476,9 +498,9 @@ def _double_roundtrip(
     p_rd1.close()
 
     # ===== Cycle 2: Write snap_1 → Read =====
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"CYCLE 2: Write again to {target_ds} → Read back")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     p_wr2 = EtpProvider(cfg_dst)
     p_wr2.open()
     uuid_map_2 = _write_snapshot(p_wr2, snap_1, f"{name}_C2")
@@ -490,17 +512,17 @@ def _double_roundtrip(
     p_rd2.close()
 
     # ===== Compare =====
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"COMPARE: cycle0 vs cycle1 (format conversion tolerance)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     ok_01 = _compare_snapshots(snap_0, snap_1, "cycle0↔cycle1", strict=False)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"COMPARE: cycle1 vs cycle2 (MUST BE BITWISE IDENTICAL)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     ok_12 = _compare_snapshots(snap_1, snap_2, "cycle1↔cycle2", strict=True)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     if ok_01 and ok_12:
         print(f"PASS: {name} double roundtrip BITWISE IDENTICAL across all cycles")
     elif ok_12:
@@ -508,7 +530,7 @@ def _double_roundtrip(
         print("  cycle0→cycle1 has expected format conversion differences")
     else:
         print(f"FAIL: {name} double roundtrip NOT idempotent")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     return ok_01, ok_12
 
@@ -583,12 +605,16 @@ def test_synthetic_triset_double_roundtrip():
     p1 = EtpProvider(cfg)
     p1.open()
     uuid2 = str(_uuid.uuid4())
-    p1.put_triangulated_set(uuid2, "SynTriSet_C2", tri1["vertices"], tri1["triangles"], crs_uuid)
+    p1.put_triangulated_set(
+        uuid2, "SynTriSet_C2", tri1["vertices"], tri1["triangles"], crs_uuid
+    )
     tri2 = p1.get_triangulated_set(uuid2)
     p1.close()
 
     assert np.array_equal(tri1["vertices"], tri2["vertices"]), "Cycle 2 vertices differ"
-    assert np.array_equal(tri1["triangles"], tri2["triangles"]), "Cycle 2 triangles differ"
+    assert np.array_equal(tri1["triangles"], tri2["triangles"]), (
+        "Cycle 2 triangles differ"
+    )
     print(
         f"  Cycle 2: BITWISE IDENTICAL "
         f"({tri2['vertices'].shape[0]} vertices, {tri2['triangles'].shape[0]} triangles)"
@@ -1451,4 +1477,3 @@ class TestDataspaceCopy:
         except Exception:
             pass
         cleanup.close()
-

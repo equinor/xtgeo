@@ -92,12 +92,8 @@ class LocalDepth3dCrs:
         title_el.text = self.title
 
         # UOMs (required by resqpy)
-        etree.SubElement(
-            root, f"{{{NS_RESQML20}}}ProjectedUom"
-        ).text = self.xy_unit
-        etree.SubElement(
-            root, f"{{{NS_RESQML20}}}VerticalUom"
-        ).text = self.z_unit
+        etree.SubElement(root, f"{{{NS_RESQML20}}}ProjectedUom").text = self.xy_unit
+        etree.SubElement(root, f"{{{NS_RESQML20}}}VerticalUom").text = self.z_unit
         etree.SubElement(
             root, f"{{{NS_RESQML20}}}ProjectedAxisOrder"
         ).text = "easting northing"

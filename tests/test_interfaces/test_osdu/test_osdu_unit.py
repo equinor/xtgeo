@@ -1135,4 +1135,3 @@ class TestMetadataManualAttachment:
 
         result = points_to_osdu(tmp_epc, pts, title="ManualPts", crs_epsg=23031)
         assert result["ManualPts"] == custom_uuid
-
