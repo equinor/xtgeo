@@ -220,9 +220,11 @@ def xtgeo_grid_to_resqml(
 
     result_uuids = {}
 
-    # Create CRS if needed
+    # Create CRS if not already present in the provider
     if crs_uuid is None:
         crs_uuid = str(_uuid.uuid4())
+    _has_part = getattr(provider, "has_part", lambda u: False)
+    if not _has_part(crs_uuid):
         provider.put_crs(
             uuid=crs_uuid,
             title="Default CRS",
@@ -233,7 +235,7 @@ def xtgeo_grid_to_resqml(
             z_increasing_downward=True,
             projected_crs_epsg=crs_epsg,
         )
-        result_uuids["CRS"] = crs_uuid
+    result_uuids["CRS"] = crs_uuid
 
     # Extract geometry from xtgeo grid
     ni = grid.ncol

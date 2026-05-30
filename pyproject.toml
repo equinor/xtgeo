@@ -95,6 +95,9 @@ osdu = [
     "pyetp",
     "websockets",
 ]
+resqpy = [
+    "resqpy>=4.0",
+]
 
 [tool.scikit-build]
 cmake.version = "CMakeLists.txt"

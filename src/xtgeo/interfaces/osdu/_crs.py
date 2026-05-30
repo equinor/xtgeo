@@ -10,7 +10,7 @@ from typing import Optional, Tuple
 
 from lxml import etree
 
-from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+from ._resqml_enums import NS_COMMON20, NS_RESQML20, NS_XSI, RESQML_NS_MAP
 
 
 @dataclass
@@ -85,10 +85,22 @@ class LocalDepth3dCrs:
         )
         root.set("uuid", self.uuid)
         root.set("schemaVersion", "2.0")
+        root.set(f"{{{NS_XSI}}}type", "resqml2:obj_LocalDepth3dCrs")
 
         citation = etree.SubElement(root, f"{{{NS_COMMON20}}}Citation")
         title_el = etree.SubElement(citation, f"{{{NS_COMMON20}}}Title")
         title_el.text = self.title
+
+        # UOMs (required by resqpy)
+        etree.SubElement(
+            root, f"{{{NS_RESQML20}}}ProjectedUom"
+        ).text = self.xy_unit
+        etree.SubElement(
+            root, f"{{{NS_RESQML20}}}VerticalUom"
+        ).text = self.z_unit
+        etree.SubElement(
+            root, f"{{{NS_RESQML20}}}ProjectedAxisOrder"
+        ).text = "easting northing"
 
         # Origin
         for tag, val in [
@@ -111,12 +123,14 @@ class LocalDepth3dCrs:
         # Projected CRS
         if self.projected_crs_epsg:
             proj = etree.SubElement(root, f"{{{NS_RESQML20}}}ProjectedCrs")
+            proj.set(f"{{{NS_XSI}}}type", "eml:ProjectedCrsEpsgCode")
             epsg_el = etree.SubElement(proj, f"{{{NS_COMMON20}}}EpsgCode")
             epsg_el.text = str(self.projected_crs_epsg)
 
         # Vertical CRS
         if self.vertical_crs_epsg:
             vert = etree.SubElement(root, f"{{{NS_RESQML20}}}VerticalCrs")
+            vert.set(f"{{{NS_XSI}}}type", "eml:VerticalCrsEpsgCode")
             epsg_el = etree.SubElement(vert, f"{{{NS_COMMON20}}}EpsgCode")
             epsg_el.text = str(self.vertical_crs_epsg)
 

@@ -31,6 +31,7 @@ from ._resqml_enums import (
     NS_CONTENT_TYPES,
     NS_RELS,
     NS_RESQML20,
+    NS_XSI,
     RESQML_NS_MAP,
     ResqmlObjectType,
 )
@@ -55,6 +56,50 @@ def _part_name(obj_type: str, uid: str) -> str:
 def _hdf5_dataset_path(uuid: str, tag: str) -> str:
     """Standard HDF5 dataset path for a data object array."""
     return f"/RESQML/{uuid}/{tag}"
+
+
+def _pillars_to_explicit_points(
+    coord: np.ndarray, zcorn: np.ndarray, ni: int, nj: int, nk: int
+) -> np.ndarray:
+    """Convert xtgeo pillar geometry to explicit point array for RESQML.
+
+    Args:
+        coord: Pillar definitions (ni+1, nj+1, 6) - [xtop,ytop,ztop,xbot,ybot,zbot]
+        zcorn: Corner depths (ni+1, nj+1, nk+1, 4) - z at 4 cell corners
+        ni, nj, nk: Grid dimensions
+
+    Returns:
+        Explicit points (nk+1, nj+1, ni+1, 3) shaped for RESQML unfaulted grids.
+    """
+    # Average z across 4 corners for each pillar/layer
+    z_avg = zcorn.mean(axis=3)  # (ni+1, nj+1, nk+1)
+
+    # Pillar top/bottom
+    xtop = coord[:, :, 0]
+    ytop = coord[:, :, 1]
+    ztop = coord[:, :, 2]
+    xbot = coord[:, :, 3]
+    ybot = coord[:, :, 4]
+    zbot = coord[:, :, 5]
+
+    # Interpolation parameter t along pillar for each layer
+    dz = zbot - ztop  # (ni+1, nj+1)
+    # Avoid division by zero for vertical pillars (dz=0 means top==bottom)
+    safe_dz = np.where(np.abs(dz) < 1e-30, 1.0, dz)
+    # t shape: (ni+1, nj+1, nk+1)
+    t = (z_avg - ztop[:, :, np.newaxis]) / safe_dz[:, :, np.newaxis]
+    # Where pillar is a point (dz≈0), t=0 (use top position)
+    t = np.where(np.abs(dz[:, :, np.newaxis]) < 1e-30, 0.0, t)
+
+    # Interpolate x, y
+    x = xtop[:, :, np.newaxis] + t * (xbot - xtop)[:, :, np.newaxis]
+    y = ytop[:, :, np.newaxis] + t * (ybot - ytop)[:, :, np.newaxis]
+    z = z_avg
+
+    # Stack and transpose to (nk+1, nj+1, ni+1, 3) from (ni+1, nj+1, nk+1)
+    points = np.stack([x, y, z], axis=-1)  # (ni+1, nj+1, nk+1, 3)
+    points = np.transpose(points, (2, 1, 0, 3))  # (nk+1, nj+1, ni+1, 3)
+    return np.ascontiguousarray(points, dtype=np.float64)
 
 
 def _add_citation(parent: etree._Element, title: str) -> etree._Element:
@@ -270,6 +315,10 @@ class EpcFileProvider(ResqmlDataProvider):
                 return root
         return None
 
+    def has_part(self, uuid: str) -> bool:
+        """Check if a part with the given UUID exists."""
+        return self._find_part_by_uuid(uuid) is not None
+
     def _read_hdf5_by_path(self, path: str) -> Optional[np.ndarray]:
         """Read an HDF5 dataset by its full internal path."""
         if self._h5 is None:
@@ -380,8 +429,32 @@ class EpcFileProvider(ResqmlDataProvider):
                     crs_uuid = uid_el.text or ""
 
         # Arrays from HDF5
-        coord = self._read_hdf5_array(uuid, "Points/Coordinates")
-        zcorn = self._read_hdf5_array(uuid, "Points/ZCorners")
+        # Prefer xtgeo-native pillar format if available
+        coord = self._read_hdf5_array(uuid, "PillarCoordinates")
+        zcorn = self._read_hdf5_array(uuid, "ZCorners")
+        if zcorn is None:
+            zcorn = self._read_hdf5_array(uuid, "Points/ZCorners")
+
+        # Fall back to explicit points array (nk+1, nj+1, ni+1, 3)
+        if coord is None:
+            coord = self._read_hdf5_array(uuid, "Points")
+        if coord is not None and coord.ndim == 4 and coord.shape[-1] == 3:
+            nk1, nj1, ni1, _ = coord.shape
+            # Extract pillar definitions from top and bottom layers
+            coord_out = np.zeros((ni1, nj1, 6), dtype=np.float64)
+            coord_out[:, :, 0:3] = coord[0, :, :, :].transpose(1, 0, 2)
+            coord_out[:, :, 3:6] = coord[-1, :, :, :].transpose(1, 0, 2)
+            # If no zcorn from HDF5, derive from explicit points Z values
+            if zcorn is None:
+                z_all = coord[:, :, :, 2]  # (nk+1, nj+1, ni+1)
+                z_transposed = z_all.transpose(2, 1, 0)  # (ni+1, nj+1, nk+1)
+                zcorn = np.broadcast_to(
+                    z_transposed[..., np.newaxis], (ni1, nj1, nk1, 4)
+                ).copy()
+            coord = coord_out
+
+        if coord is None:
+            coord = self._read_hdf5_array(uuid, "Points/Coordinates")
         actnum = self._read_hdf5_array(uuid, "CellGeometryIsDefined")
 
         # If arrays not found with standard paths, try alternate conventions
@@ -389,32 +462,6 @@ class EpcFileProvider(ResqmlDataProvider):
             coord = self._read_hdf5_array(uuid, "pillar_coordinates")
         if zcorn is None:
             zcorn = self._read_hdf5_array(uuid, "cell_corners")
-
-        # Try resqpy-style unified Points array: shape (nk+1, nj+1, ni+1, 3)
-        if coord is None and zcorn is None:
-            unified = self._read_hdf5_array(uuid, "Points")
-            if unified is not None and unified.ndim == 4:
-                # Shape is (nk+1, nj+1, ni+1, 3) — convert to xtgeo layout
-                nk1, nj1, ni1, _ = unified.shape
-                # coord: (ni+1, nj+1, 6) — pillar top XYZ + bottom XYZ
-                coord_out = np.zeros((ni1, nj1, 6), dtype=np.float64)
-                coord_out[:, :, 0:3] = unified[0, :, :, :].transpose(
-                    1, 0, 2
-                )  # top layer
-                coord_out[:, :, 3:6] = unified[-1, :, :, :].transpose(
-                    1, 0, 2
-                )  # bottom layer
-                coord = coord_out.flatten()
-                # zcorn: (ni+1, nj+1, nk+1, 4) — corner Z at each pillar node
-                # From unified (nk+1, nj+1, ni+1, 3), extract Z values
-                z_all = unified[:, :, :, 2]  # (nk+1, nj+1, ni+1)
-                # Transpose to (ni+1, nj+1, nk+1) for xtgeo
-                z_transposed = z_all.transpose(2, 1, 0)  # (ni+1, nj+1, nk+1)
-                # Each pillar node needs 4 corner contributions — for regular grids
-                # these are all the same Z value
-                zcorn = np.broadcast_to(
-                    z_transposed[..., np.newaxis], (ni1, nj1, nk1, 4)
-                ).copy().flatten()
 
         # Also try reading HDF5 path from XML (PathInHdfFile elements)
         if coord is None and zcorn is None:
@@ -454,9 +501,15 @@ class EpcFileProvider(ResqmlDataProvider):
         if not uuid:
             uuid = _make_uuid()
 
+        # Convert xtgeo pillar-based geometry to explicit points (nk+1, nj+1, ni+1, 3)
+        # coord: (ni+1, nj+1, 6) - pillar top/bottom xyz
+        # zcorn: (ni+1, nj+1, nk+1, 4) - z-values at 4 corners per pillar/layer
+        points = _pillars_to_explicit_points(coord, zcorn, ni, nj, nk)
+
         # Write HDF5 arrays
-        self._write_hdf5_array(uuid, "Points/Coordinates", coord.astype(np.float64))
-        self._write_hdf5_array(uuid, "Points/ZCorners", zcorn.astype(np.float64))
+        self._write_hdf5_array(uuid, "Points", points)
+        self._write_hdf5_array(uuid, "PillarCoordinates", coord.astype(np.float64))
+        self._write_hdf5_array(uuid, "ZCorners", zcorn.astype(np.float64))
         self._write_hdf5_array(uuid, "CellGeometryIsDefined", actnum.astype(np.int32))
 
         # Build XML
@@ -465,6 +518,7 @@ class EpcFileProvider(ResqmlDataProvider):
         )
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
+        root.set(f"{{{NS_XSI}}}type", "resqml2:obj_IjkGridRepresentation")
 
         _add_citation(root, title)
 
@@ -473,17 +527,31 @@ class EpcFileProvider(ResqmlDataProvider):
         etree.SubElement(root, f"{{{NS_RESQML20}}}Nk").text = str(nk)
         etree.SubElement(root, f"{{{NS_RESQML20}}}KDirection").text = k_direction
 
-        # CRS reference
-        crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
-        crs_ref.set("uuid", crs_uuid)
-
         # HDF proxy reference for geometry
         geom = etree.SubElement(root, f"{{{NS_RESQML20}}}Geometry")
+
+        # CRS reference (DataObjectReference inside Geometry for resqpy compat)
+        crs_ref = etree.SubElement(geom, f"{{{NS_RESQML20}}}LocalCrs")
+        crs_ref.set(f"{{{NS_XSI}}}type", "eml:DataObjectReference")
+        etree.SubElement(
+            crs_ref, f"{{{NS_COMMON20}}}ContentType"
+        ).text = "application/x-resqml+xml;version=2.0;type=obj_LocalDepth3dCrs"
+        etree.SubElement(crs_ref, f"{{{NS_COMMON20}}}Title").text = "CRS"
+        etree.SubElement(crs_ref, f"{{{NS_COMMON20}}}UUID").text = crs_uuid
+
         points = etree.SubElement(geom, f"{{{NS_RESQML20}}}Points")
-        hdf_ref = etree.SubElement(points, f"{{{NS_COMMON20}}}HdfProxy")
-        hdf_ref.set("uuid", self._hdf_proxy_uuid)
-        path_el = etree.SubElement(points, f"{{{NS_COMMON20}}}PathInHdfFile")
-        path_el.text = _hdf5_dataset_path(uuid, "Points/Coordinates")
+        points.set(f"{{{NS_XSI}}}type", "resqml2:Point3dHdf5Array")
+        coords = etree.SubElement(points, f"{{{NS_RESQML20}}}Coordinates")
+        coords.set(f"{{{NS_XSI}}}type", "eml:Hdf5Dataset")
+        path_el = etree.SubElement(coords, f"{{{NS_COMMON20}}}PathInHdfFile")
+        path_el.text = _hdf5_dataset_path(uuid, "Points")
+        hdf_ref = etree.SubElement(coords, f"{{{NS_COMMON20}}}HdfProxy")
+        hdf_ref.set(f"{{{NS_XSI}}}type", "eml:DataObjectReference")
+        etree.SubElement(
+            hdf_ref, f"{{{NS_COMMON20}}}ContentType"
+        ).text = "application/x-eml+xml;version=2.0;type=obj_EpcExternalPartReference"
+        etree.SubElement(hdf_ref, f"{{{NS_COMMON20}}}Title").text = "Hdf Proxy"
+        etree.SubElement(hdf_ref, f"{{{NS_COMMON20}}}UUID").text = self._hdf_proxy_uuid
 
         self._add_part(ResqmlObjectType.IJK_GRID_REPRESENTATION, uuid, root)
         return uuid
