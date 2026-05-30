@@ -131,7 +131,7 @@ before-all = [
 ]
 
 [tool.cibuildwheel.linux]
-before-all = "yum update -y && yum install -y eigen3-devel fmt-devel || (apt-get update && apt-get install -y libeigen3-dev libfmt-dev)"
+before-all = "yum update -y && yum install -y eigen3-devel fmt-devel libxml2-devel libxslt-devel || (apt-get update && apt-get install -y libeigen3-dev libfmt-dev libxml2-dev libxslt-dev)"
 
 [tool.cibuildwheel.macos]
 before-all = [
