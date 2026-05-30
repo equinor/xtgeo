@@ -161,34 +161,31 @@ from xtgeo.xyz.polygons import (
     polygons_from_wells,
 )
 
-# OSDU/RESQML interface (high-level API) — requires lxml
-try:
-    from xtgeo.interfaces.osdu._api import (
-        blocked_well_from_osdu,
-        blocked_well_to_osdu,
-        deep_query_osdu,
-        grid_from_osdu,
-        grid_to_osdu,
-        import_osdu,
-        list_osdu_dataspaces,
-        list_osdu_objects,
-        points_from_osdu,
-        points_to_osdu,
-        polygons_from_osdu,
-        polygons_to_osdu,
-        query_osdu,
-        query_osdu_all_dataspaces,
-        search_osdu,
-        surface_from_osdu,
-        surface_to_osdu,
-        triangulated_surface_from_osdu,
-        triangulated_surface_to_osdu,
-        watch_osdu_changes,
-        well_from_osdu,
-        well_to_osdu,
-    )
-except ImportError:
-    pass
+# OSDU/RESQML interface (high-level API)
+from xtgeo.interfaces.osdu._api import (
+    blocked_well_from_osdu,
+    blocked_well_to_osdu,
+    deep_query_osdu,
+    grid_from_osdu,
+    grid_to_osdu,
+    import_osdu,
+    list_osdu_dataspaces,
+    list_osdu_objects,
+    points_from_osdu,
+    points_to_osdu,
+    polygons_from_osdu,
+    polygons_to_osdu,
+    query_osdu,
+    query_osdu_all_dataspaces,
+    search_osdu,
+    surface_from_osdu,
+    surface_to_osdu,
+    triangulated_surface_from_osdu,
+    triangulated_surface_to_osdu,
+    watch_osdu_changes,
+    well_from_osdu,
+    well_to_osdu,
+)
 
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 
