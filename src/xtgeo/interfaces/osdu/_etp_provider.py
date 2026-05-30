@@ -84,6 +84,24 @@ def _uuid_from_uri(uri: str) -> str:
     return ""
 
 
+def _uuid_from_ref(el) -> str:
+    """Extract UUID from a RESQML DataObjectReference element.
+
+    Handles both formats:
+      - ``<LocalCrs uuid="xxx">`` (attribute)
+      - ``<LocalCrs><eml:UUID>xxx</eml:UUID></LocalCrs>`` (child element)
+    """
+    uid = el.get("uuid", "")
+    if uid:
+        return uid
+    # Try eml:UUID child element (OSDU RDDMS / RMS format)
+    for child in el:
+        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+        if tag in ("UUID", "UuidString"):
+            return (child.text or "").strip()
+    return ""
+
+
 def _qualified_type_from_uri(uri: str) -> str:
     """Extract qualified type from URI."""
     parts = uri.rstrip(")").split("/")
@@ -150,6 +168,62 @@ def _points_array_to_coord_zcorn(
     return coordsv.ravel(), zcornsv.ravel()
 
 
+def _parametric_to_explicit_points(
+    control_points: np.ndarray,
+    control_point_params: np.ndarray,
+    parameters: np.ndarray,
+    ni: int,
+    nj: int,
+    nk: int,
+) -> np.ndarray:
+    """Convert RESQML Point3dParametricArray (straight pillars) to explicit points.
+
+    For straight pillars with KnotCount=2, each pillar has a top and bottom
+    control point. Nodes are positioned by linear interpolation along the pillar
+    based on Z-parameter values.
+
+    Parameters
+    ----------
+    control_points : ndarray, shape (2, npillars, 3)
+        Top (index 0) and bottom (index 1) XYZ for each pillar.
+    control_point_params : ndarray, shape (2, npillars)
+        Z-parameter values at top (index 0) and bottom (index 1) control points.
+    parameters : ndarray, shape (nk+1, npillars)
+        Z-parameter value at each layer node on each pillar.
+    ni, nj, nk : int
+        Grid dimensions (number of cells in each direction).
+
+    Returns
+    -------
+    ndarray, shape ((nk+1)*(nj+1)*(ni+1)*3,)
+        Explicit XYZ coordinates for all grid nodes, flattened.
+    """
+    npillars = (ni + 1) * (nj + 1)
+
+    cp = control_points.reshape(2, npillars, 3).astype(np.float64)
+    cpp = control_point_params.reshape(2, npillars).astype(np.float64)
+    params = parameters.reshape(nk + 1, npillars).astype(np.float64)
+
+    # Linear interpolation factor: t = (param - top_param) / (bot_param - top_param)
+    denom = cpp[1, :] - cpp[0, :]
+    # Avoid division by zero for degenerate pillars (top == bottom z-param)
+    denom = np.where(np.abs(denom) < 1e-30, 1.0, denom)
+
+    # t: shape (nk+1, npillars)
+    t = (params - cpp[0, :]) / denom
+
+    # Interpolate XYZ: shape (nk+1, npillars, 3)
+    top = cp[0, :, :]  # (npillars, 3)
+    bot = cp[1, :, :]  # (npillars, 3)
+    points = top[np.newaxis, :, :] * (1.0 - t[:, :, np.newaxis]) + \
+             bot[np.newaxis, :, :] * t[:, :, np.newaxis]
+
+    # Reshape to standard RESQML order: (nk+1, nj+1, ni+1, 3)
+    points = points.reshape(nk + 1, nj + 1, ni + 1, 3)
+
+    return points.ravel()
+
+
 class EtpProvider(ResqmlDataProvider):
     """ETP 1.2 WebSocket provider for RESQML data access.
 
@@ -169,9 +243,50 @@ class EtpProvider(ResqmlDataProvider):
         self._message_id = 2  # Start at 2 per ETP spec (1 reserved for server)
         self._session_open = False
         self._tx_uuid: Optional[str] = None  # Active transaction UUID
+        self._uri_cache: Dict[str, str] = {}  # uuid → server URI cache
+
+    def _resolve_uri(self, uuid: str, fallback_type: str = "") -> str:
+        """Resolve the server-side URI for an object by UUID.
+
+        Handles servers that use ``obj_`` prefix in qualified types (OSDU Azure)
+        vs servers that strip it (local RDDMS). Caches results to avoid repeated
+        ``list_objects()`` calls.
+
+        Parameters
+        ----------
+        uuid : str
+            Object UUID to look up.
+        fallback_type : str, optional
+            Qualified type to construct a URI if discovery fails (e.g.
+            ``"resqml20.IjkGridRepresentation"``). Used as last resort.
+
+        Returns
+        -------
+        str
+            Resolved URI from the server, or constructed fallback.
+        """
+        if uuid in self._uri_cache:
+            return self._uri_cache[uuid]
+
+        # Populate cache from list_objects (one round-trip)
+        if not self._uri_cache:
+            try:
+                for obj in self.list_objects():
+                    self._uri_cache[obj["uuid"]] = obj["uri"]
+            except Exception:
+                pass
+
+        if uuid in self._uri_cache:
+            return self._uri_cache[uuid]
+
+        # Fallback: construct URI (works for local RDDMS)
+        if fallback_type:
+            return _uri_for_object(self._config.dataspace, fallback_type, uuid)
+        return _uri_for_object(self._config.dataspace, "resqml20.Unknown", uuid)
 
     def open(self) -> None:
         """Connect to the ETP server and perform handshake."""
+        self._uri_cache.clear()
         self._loop = asyncio.new_event_loop()
         self._loop.run_until_complete(self._async_open())
 
@@ -208,7 +323,7 @@ class EtpProvider(ResqmlDataProvider):
             subprotocols=[websockets.typing.Subprotocol("etp12.energistics.org")],
             additional_headers=additional_headers,
             open_timeout=self._config.timeout_s,
-            max_size=2**22,  # 4 MiB
+            max_size=2**26,  # 64 MiB (large grids can exceed 4 MiB)
         )
 
         await self._handshake()
@@ -953,8 +1068,7 @@ class EtpProvider(ResqmlDataProvider):
 
         from ._resqml_enums import NS_RESQML20
 
-        qualified_type = "resqml20.IjkGridRepresentation"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, "resqml20.IjkGridRepresentation")
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"IJK grid {uuid} not found via ETP")
@@ -973,21 +1087,39 @@ class EtpProvider(ResqmlDataProvider):
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
-            crs_uuid = crs_ref.get("uuid", "")
+            crs_uuid = _uuid_from_ref(crs_ref)
 
         # Fetch arrays — try our custom paths first, then standard RESQML paths
-        uri = _uri_for_object(
-            self._config.dataspace, "resqml20.IjkGridRepresentation", uuid
-        )
-        coord = self._get_array(uri, f"/RESQML/{uuid}/Points/Coordinates")
-        zcorn = self._get_array(uri, f"/RESQML/{uuid}/Points/ZCorners")
-        actnum = self._get_array(uri, f"/RESQML/{uuid}/CellGeometryIsDefined")
+        array_uri = self._resolve_uri(uuid, "resqml20.IjkGridRepresentation")
+        coord = self._get_array(array_uri, f"/RESQML/{uuid}/Points/Coordinates")
+        zcorn = self._get_array(array_uri, f"/RESQML/{uuid}/Points/ZCorners")
+        actnum = self._get_array(array_uri, f"/RESQML/{uuid}/CellGeometryIsDefined")
 
         # If custom paths not found, try standard RESQML Point3dHdf5Array path
         if coord is None and zcorn is None:
-            points = self._get_array(uri, f"/RESQML/{uuid}/Points")
+            points = self._get_array(array_uri, f"/RESQML/{uuid}/Points")
             if points is not None:
                 coord, zcorn = _points_array_to_coord_zcorn(points, ni, nj, nk)
+
+        # If still not found, try parametric representation
+        # (Point3dParametricArray — used by RMS exports)
+        if coord is None and zcorn is None:
+            cp = self._get_array(
+                array_uri, f"/RESQML/{uuid}/controlPoints"
+            )
+            cpp = self._get_array(
+                array_uri, f"/RESQML/{uuid}/controlPointParameters"
+            )
+            params = self._get_array(
+                array_uri, f"/RESQML/{uuid}/parameters"
+            )
+            if cp is not None and cpp is not None and params is not None:
+                explicit = _parametric_to_explicit_points(
+                    cp, cpp, params, ni, nj, nk
+                )
+                coord, zcorn = _points_array_to_coord_zcorn(
+                    explicit, ni, nj, nk
+                )
 
         if actnum is None:
             actnum = np.ones(ni * nj * nk, dtype=np.int32)
@@ -1115,7 +1247,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._resqml_enums import NS_RESQML20
 
         qualified_type = "resqml20.Grid2dRepresentation"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"Grid2D {uuid} not found via ETP")
@@ -1185,11 +1317,9 @@ class EtpProvider(ResqmlDataProvider):
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
-            crs_uuid = crs_ref.get("uuid", "")
+            crs_uuid = _uuid_from_ref(crs_ref)
 
-        uri = _uri_for_object(
-            self._config.dataspace, "resqml20.Grid2dRepresentation", uuid
-        )
+        uri = self._resolve_uri(uuid, "resqml20.Grid2dRepresentation")
         values = self._get_array(uri, f"/RESQML/{uuid}/ZValues")
         if values is None:
             values = np.zeros((nj, ni), dtype=np.float64)
@@ -1314,7 +1444,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._resqml_enums import NS_RESQML20
 
         qualified_type = "resqml20.PointSetRepresentation"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"PointSet {uuid} not found via ETP")
@@ -1326,11 +1456,9 @@ class EtpProvider(ResqmlDataProvider):
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
-            crs_uuid = crs_ref.get("uuid", "")
+            crs_uuid = _uuid_from_ref(crs_ref)
 
-        uri = _uri_for_object(
-            self._config.dataspace, "resqml20.PointSetRepresentation", uuid
-        )
+        uri = self._resolve_uri(uuid, "resqml20.PointSetRepresentation")
         points = self._get_array(uri, f"/RESQML/{uuid}/Points")
         if points is None:
             points = np.zeros((0, 3), dtype=np.float64)
@@ -1396,7 +1524,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._resqml_enums import NS_RESQML20
 
         qualified_type = "resqml20.PolylineSetRepresentation"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"PolylineSet {uuid} not found via ETP")
@@ -1408,11 +1536,9 @@ class EtpProvider(ResqmlDataProvider):
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
-            crs_uuid = crs_ref.get("uuid", "")
+            crs_uuid = _uuid_from_ref(crs_ref)
 
-        uri = _uri_for_object(
-            self._config.dataspace, "resqml20.PolylineSetRepresentation", uuid
-        )
+        uri = self._resolve_uri(uuid, "resqml20.PolylineSetRepresentation")
         all_points = self._get_array(uri, f"/RESQML/{uuid}/Points")
         node_counts = self._get_array(uri, f"/RESQML/{uuid}/NodeCountPerPolyline")
         closed_flags = self._get_array(uri, f"/RESQML/{uuid}/ClosedPolylines")
@@ -1526,7 +1652,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._resqml_enums import NS_COMMON20, NS_RESQML20
 
         qualified_type = f"resqml20.{object_type}"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"Property {uuid} not found via ETP")
@@ -1560,11 +1686,7 @@ class EtpProvider(ResqmlDataProvider):
         supp_uuid = ""
         supp_ref = root.find(f".//{{{NS_RESQML20}}}SupportingRepresentation")
         if supp_ref is not None:
-            supp_uuid = supp_ref.get("uuid", "")
-            if not supp_uuid:
-                uid_el = supp_ref.find(f"{{{NS_COMMON20}}}UUID")
-                if uid_el is not None:
-                    supp_uuid = uid_el.text or ""
+            supp_uuid = _uuid_from_ref(supp_ref)
 
         uom = ""
         uom_el = root.find(f".//{{{NS_RESQML20}}}UOM")
@@ -1582,7 +1704,7 @@ class EtpProvider(ResqmlDataProvider):
         else:
             obj_type = "resqml20.ContinuousProperty"
 
-        uri = _uri_for_object(self._config.dataspace, obj_type, uuid)
+        uri = self._resolve_uri(uuid, obj_type)
         values = self._get_array(uri, f"/RESQML/{uuid}/Values")
         if values is None:
             values = np.array([], dtype=np.float64)
@@ -1683,7 +1805,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._crs import LocalDepth3dCrs
 
         qualified_type = "resqml20.LocalDepth3dCrs"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"CRS {uuid} not found via ETP")
@@ -1760,7 +1882,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._resqml_enums import NS_COMMON20, NS_RESQML20
 
         qualified_type = "resqml20.TriangulatedSetRepresentation"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"TriangulatedSet {uuid} not found via ETP")
@@ -1772,7 +1894,7 @@ class EtpProvider(ResqmlDataProvider):
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
-            crs_uuid = crs_ref.get("uuid", "")
+            crs_uuid = _uuid_from_ref(crs_ref)
 
         title = ""
         citation = root.find(f"{{{NS_COMMON20}}}Citation")
@@ -1781,7 +1903,7 @@ class EtpProvider(ResqmlDataProvider):
             if t is not None:
                 title = t.text or ""
 
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         # Try resqpy-compatible per-patch naming first, then fallback
         vertices = self._get_array(uri, f"/RESQML/{uuid}/points_patch0")
         if vertices is None:
@@ -1883,7 +2005,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._resqml_enums import NS_COMMON20, NS_RESQML20
 
         qualified_type = "resqml20.WellboreTrajectoryRepresentation"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"WellboreTrajectory {uuid} not found via ETP")
@@ -1895,7 +2017,7 @@ class EtpProvider(ResqmlDataProvider):
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
-            crs_uuid = crs_ref.get("uuid", "")
+            crs_uuid = _uuid_from_ref(crs_ref)
 
         title = ""
         citation = root.find(f"{{{NS_COMMON20}}}Citation")
@@ -1920,10 +2042,9 @@ class EtpProvider(ResqmlDataProvider):
             for obj in related:
                 if "WellboreFrame" in obj.get("type", ""):
                     frame_uuid = obj["uuid"]
-                    frame_uri = _uri_for_object(
-                        self._config.dataspace,
-                        "resqml20.WellboreFrameRepresentation",
+                    frame_uri = self._resolve_uri(
                         frame_uuid,
+                        "resqml20.WellboreFrameRepresentation",
                     )
                     frame_md = self._get_array(
                         frame_uri, f"/RESQML/{frame_uuid}/MdValues"
@@ -2209,7 +2330,7 @@ class EtpProvider(ResqmlDataProvider):
         from ._resqml_enums import NS_COMMON20, NS_RESQML20
 
         qualified_type = "resqml20.BlockedWellboreRepresentation"
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         xml_str = self._get_xml(uuid, uri=uri)
         if xml_str is None:
             raise ValueError(f"BlockedWellbore {uuid} not found via ETP")
@@ -2221,7 +2342,7 @@ class EtpProvider(ResqmlDataProvider):
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
-            crs_uuid = crs_ref.get("uuid", "")
+            crs_uuid = _uuid_from_ref(crs_ref)
 
         title = ""
         citation = root.find(f"{{{NS_COMMON20}}}Citation")
@@ -2240,7 +2361,7 @@ class EtpProvider(ResqmlDataProvider):
         if traj_ref is not None:
             trajectory_uuid = traj_ref.get("uuid", "")
 
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+        uri = self._resolve_uri(uuid, qualified_type)
         md = self._get_array(uri, f"/RESQML/{uuid}/MdValues")
         xyz = self._get_array(uri, f"/RESQML/{uuid}/Points")
         cell_indices = self._get_array(uri, f"/RESQML/{uuid}/CellIndices")
