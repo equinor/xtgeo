@@ -21,6 +21,10 @@ from hypothesis import given, settings
 
 import xtgeo
 from xtgeo.interfaces.osdu import EpcFileProvider
+from xtgeo.interfaces.osdu._blocked_well import (
+    blocked_well_to_xtgeo,
+    xtgeo_blocked_well_to_resqml,
+)
 from xtgeo.interfaces.osdu._grid2d import grid2d_to_xtgeo, xtgeo_surface_to_resqml
 from xtgeo.interfaces.osdu._ijk_grid import ijk_grid_to_xtgeo, xtgeo_grid_to_resqml
 from xtgeo.interfaces.osdu._pointset import pointset_to_xtgeo, xtgeo_points_to_resqml
@@ -33,10 +37,6 @@ from xtgeo.interfaces.osdu._triangulated_surface import (
     xtgeo_triangulated_surface_to_resqml,
 )
 from xtgeo.interfaces.osdu._well import well_to_xtgeo, xtgeo_well_to_resqml
-from xtgeo.interfaces.osdu._blocked_well import (
-    blocked_well_to_xtgeo,
-    xtgeo_blocked_well_to_resqml,
-)
 
 
 @pytest.fixture

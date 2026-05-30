@@ -11,10 +11,11 @@ Assert: snapshot_0 ≈ snapshot_1   (bitwise for grids/surfaces, exact for wells
 
 from __future__ import annotations
 
+import contextlib
 import sys
 import uuid as _uuid
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import numpy as np
 import pytest
@@ -296,14 +297,16 @@ def _compare_snapshots(
                 max_diff = np.max(np.abs(a.astype(np.float64) - b.astype(np.float64)))
                 n_diff = np.sum(a != b)
                 print(
-                    f"  [{label}] {name}: DIFFER max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}"
+                    f"  [{label}] {name}: DIFFER "
+                    f"max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}"
                 )
                 raise AssertionError(f"{name} not bitwise identical in {label}")
             else:
                 max_diff = np.max(np.abs(a.astype(np.float64) - b.astype(np.float64)))
                 n_diff = np.sum(a != b)
                 print(
-                    f"  [{label}] {name}: DIFFER max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}"
+                    f"  [{label}] {name}: DIFFER "
+                    f"max_diff={max_diff:.2e}, n_diff={n_diff}/{a.size}"
                 )
                 np.testing.assert_allclose(
                     a.astype(np.float64), b.astype(np.float64), atol=atol
@@ -483,10 +486,8 @@ def _double_roundtrip(
     cfg_dst = _etp_config(target_ds)
     p_wr = EtpProvider(cfg_dst)
     p_wr.open()
-    try:
+    with contextlib.suppress(Exception):
         p_wr.put_dataspace(target_ds)
-    except Exception:
-        pass
 
     # ===== Cycle 1: Write → Read =====
     print(f"\n{'=' * 60}")
@@ -585,10 +586,8 @@ def test_synthetic_triset_double_roundtrip():
     # Ensure dataspace
     p0 = EtpProvider(cfg)
     p0.open()
-    try:
+    with contextlib.suppress(Exception):
         p0.put_dataspace(target_ds)
-    except Exception:
-        pass
     p0.put_crs(crs_uuid, "SyntheticCRS", 0, 0, 0, 0, True)
 
     # Cycle 1: write → read
@@ -620,7 +619,8 @@ def test_synthetic_triset_double_roundtrip():
     )
     print(
         f"  Cycle 2: BITWISE IDENTICAL "
-        f"({tri2['vertices'].shape[0]} vertices, {tri2['triangles'].shape[0]} triangles)"
+        f"({tri2['vertices'].shape[0]} vertices, "
+        f"{tri2['triangles'].shape[0]} triangles)"
     )
     print("  PASS: Synthetic TriangulatedSet double roundtrip BITWISE IDENTICAL")
 
@@ -654,8 +654,6 @@ if __name__ == "__main__":
 # LOCAL RDDMS: Discovery & Notification Tests
 # (Requires local RDDMS at ws://localhost:9002)
 # ===========================================================================
-
-import contextlib  # noqa: E402 (already imported above, safe duplicate)
 
 import xtgeo  # noqa: E402
 from xtgeo.interfaces.osdu import (  # noqa: E402
@@ -1093,7 +1091,7 @@ from xtgeo.interfaces.osdu import (  # noqa: E402, F811
 
 
 @pytest.fixture
-def etp_config():
+def etp_config_rt():
     """Base ETP config for local RDDMS."""
     import uuid as _uuid
 
@@ -1105,9 +1103,9 @@ def etp_config():
 
 
 @pytest.fixture
-def provider(etp_config):
+def provider_rt(etp_config_rt):
     """ETP provider with a fresh test dataspace."""
-    cfg, ds_path = etp_config
+    cfg, ds_path = etp_config_rt
     p = EtpProvider(cfg)
     try:
         p.open()
@@ -1125,7 +1123,7 @@ def provider(etp_config):
 
 
 @pytest.fixture
-def fresh_provider(etp_config):
+def fresh_provider(etp_config_rt):
     """Provider factory that creates a new provider for a given dataspace."""
 
     def _make(dataspace_path: str):
@@ -1314,15 +1312,15 @@ def _build_test_snapshot() -> DataspaceSnapshot:
 class TestDataspaceRoundTrip:
     """Write a full dataset to ETP, read back, and compare bitwise."""
 
-    def test_write_read_compare(self, provider):
+    def test_write_read_compare(self, provider_rt):
         """Full roundtrip: build snapshot → write → read back → compare."""
         original = _build_test_snapshot()
 
         # Write
-        write_dataspace(provider, original)
+        write_dataspace(provider_rt, original)
 
         # Read back
-        readback = read_dataspace(provider)
+        readback = read_dataspace(provider_rt)
 
         # Compare
         diffs = compare_snapshots(original, readback, atol=1e-6)
@@ -1332,11 +1330,11 @@ class TestDataspaceRoundTrip:
             )
             pytest.fail(f"Roundtrip differences:\n{msg}")
 
-    def test_grid_geometry_exact(self, provider):
+    def test_grid_geometry_exact(self, provider_rt):
         """Verify grid geometry survives ETP roundtrip with full precision."""
         original = _build_test_snapshot()
-        write_dataspace(provider, original)
-        readback = read_dataspace(provider)
+        write_dataspace(provider_rt, original)
+        readback = read_dataspace(provider_rt)
 
         assert len(readback.grids) >= 1
         g_orig = original.grids[0]
@@ -1368,11 +1366,11 @@ class TestDataspaceRoundTrip:
             g_orig.actnum.flatten().astype(np.int32),
         )
 
-    def test_properties_exact(self, provider):
+    def test_properties_exact(self, provider_rt):
         """Verify grid properties survive roundtrip with full precision."""
         original = _build_test_snapshot()
-        write_dataspace(provider, original)
-        readback = read_dataspace(provider)
+        write_dataspace(provider_rt, original)
+        readback = read_dataspace(provider_rt)
 
         g_read = next(g for g in readback.grids if g.title == "TestGrid_Faulted")
         props_by_name = {p.title: p for p in g_read.properties}
@@ -1396,13 +1394,13 @@ class TestDataspaceRoundTrip:
             original.grids[0].properties[1].values.astype(np.int32),
         )
 
-    def test_surface_rotation_preserved(self, provider):
+    def test_surface_rotation_preserved(self, provider_rt):
         """Verify surface rotation survives ETP roundtrip."""
         import math
 
         original = _build_test_snapshot()
-        write_dataspace(provider, original)
-        readback = read_dataspace(provider)
+        write_dataspace(provider_rt, original)
+        readback = read_dataspace(provider_rt)
 
         s_read = next(s for s in readback.surfaces if s.title == "TestSurface_Rotated")
         s_orig = original.surfaces[0]
@@ -1418,11 +1416,11 @@ class TestDataspaceRoundTrip:
             f"vs {math.degrees(s_orig.rotation):.4f}°"
         )
 
-    def test_crs_metadata_preserved(self, provider):
+    def test_crs_metadata_preserved(self, provider_rt):
         """Verify CRS EPSG and metadata survive roundtrip."""
         original = _build_test_snapshot()
-        write_dataspace(provider, original)
-        readback = read_dataspace(provider)
+        write_dataspace(provider_rt, original)
+        readback = read_dataspace(provider_rt)
 
         assert len(readback.crs_list) >= 1
         crs_read = next(c for c in readback.crs_list if c.title == "TestCRS_EPSG23031")

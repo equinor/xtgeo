@@ -2479,7 +2479,7 @@ class EtpProvider(ResqmlDataProvider):
         """Write a WellboreFeature via ETP."""
         from lxml import etree
 
-        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+        from ._resqml_enums import NS_RESQML20, RESQML_NS_MAP
 
         qualified_type = "resqml20.WellboreFeature"
         uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
@@ -2502,7 +2502,7 @@ class EtpProvider(ResqmlDataProvider):
         """Write a WellboreInterpretation referencing a WellboreFeature via ETP."""
         from lxml import etree
 
-        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+        from ._resqml_enums import NS_RESQML20, RESQML_NS_MAP
 
         qualified_type = "resqml20.WellboreInterpretation"
         uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
@@ -2530,7 +2530,7 @@ class EtpProvider(ResqmlDataProvider):
         """Write an MdDatum object via ETP."""
         from lxml import etree
 
-        from ._resqml_enums import NS_COMMON20, NS_RESQML20, RESQML_NS_MAP
+        from ._resqml_enums import NS_RESQML20, RESQML_NS_MAP
 
         qualified_type = "resqml20.obj_MdDatum"
         uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)

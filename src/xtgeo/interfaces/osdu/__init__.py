@@ -37,8 +37,6 @@ ETP protocol (RDDMS):
     ...     grid, props = ijk_grid_to_xtgeo(provider, objects[0]["uuid"])
 """
 
-# --- Providers ---
-# --- High-level user API ---
 from ._api import (
     blocked_well_from_osdu,
     blocked_well_to_osdu,
@@ -63,11 +61,8 @@ from ._api import (
     well_from_osdu,
     well_to_osdu,
 )
-
-# --- CRS ---
+from ._blocked_well import blocked_well_to_xtgeo, xtgeo_blocked_well_to_resqml
 from ._crs import LocalDepth3dCrs
-
-# --- Dataspace operations ---
 from ._dataspace import (
     BlockedWellSnapshot,
     CrsSnapshot,
@@ -86,13 +81,8 @@ from ._dataspace import (
 )
 from ._epc_provider import EpcFileProvider
 from ._etp_provider import EtpConnectionConfig, EtpProvider
-
-# --- Converters ---
-from ._blocked_well import blocked_well_to_xtgeo, xtgeo_blocked_well_to_resqml
 from ._grid2d import grid2d_to_xtgeo, xtgeo_surface_to_resqml
 from ._ijk_grid import ijk_grid_to_xtgeo, xtgeo_grid_to_resqml
-
-# --- Metadata ---
 from ._metadata import (
     OsduPropertyMapping,
     OsduWorkProductMetadata,
@@ -106,13 +96,6 @@ from ._pointset import pointset_to_xtgeo, xtgeo_points_to_resqml
 from ._polyline import polylineset_to_xtgeo, xtgeo_polygons_to_resqml
 from ._properties import read_grid_properties, write_grid_property
 from ._provider_base import ResqmlDataProvider
-from ._triangulated_surface import (
-    triangulated_surface_to_xtgeo,
-    xtgeo_triangulated_surface_to_resqml,
-)
-from ._well import well_to_xtgeo, xtgeo_well_to_resqml
-
-# --- Enums ---
 from ._resqml_enums import (
     CellShape,
     Handedness,
@@ -121,9 +104,12 @@ from ._resqml_enums import (
     PropertyKind,
     ResqmlObjectType,
 )
-
-# --- Session ---
 from ._session import OsduSession
+from ._triangulated_surface import (
+    triangulated_surface_to_xtgeo,
+    xtgeo_triangulated_surface_to_resqml,
+)
+from ._well import well_to_xtgeo, xtgeo_well_to_resqml
 
 __all__ = [
     # Providers

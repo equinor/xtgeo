@@ -918,7 +918,7 @@ class TestGrid2dEdgeCases:
 # Metadata preservation tests (merged from test_metadata_roundtrip.py)
 # ---------------------------------------------------------------------------
 
-from xtgeo.interfaces.osdu import (  # noqa: E402, F811
+from xtgeo.interfaces.osdu import (  # noqa: E402, F811, I001
     grid_from_osdu,
     grid_to_osdu,
     points_from_osdu,
@@ -928,7 +928,7 @@ from xtgeo.interfaces.osdu import (  # noqa: E402, F811
     surface_from_osdu,
     surface_to_osdu,
 )
-from xtgeo.interfaces.osdu._resqml_meta import _get_resqml_meta, _set_resqml_meta  # noqa: E402, F811
+from xtgeo.interfaces.osdu._resqml_meta import _get_resqml_meta, _set_resqml_meta  # noqa: E402, F811, I001
 
 
 @pytest.fixture
