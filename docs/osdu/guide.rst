@@ -904,3 +904,54 @@ Written RESQML objects include:
 - Proper Grid2D offset axis ordering (1st = J/slowest, 2nd = I/fastest)
 
 These ensure interoperability with other RESQML readers (resqpy, Petrel, etc.).
+
+
+Using resqpy for advanced operations
+-------------------------------------
+
+`resqpy <https://github.com/bp/resqpy>`_ offers derived-model operations
+(sub-gridding, coarsening, fault analysis) not available in xtgeo. You can
+round-trip through EPC files: **xtgeo → EPC → resqpy → EPC → xtgeo**.
+
+Install resqpy separately (it is not bundled with xtgeo):
+
+.. code-block:: bash
+
+    pip install resqpy>=4.0
+
+Round-trip example — extract a sub-grid:
+
+.. code-block:: python
+
+    import numpy as np
+    import xtgeo
+    from xtgeo.interfaces.osdu import EpcFileProvider
+    from xtgeo.interfaces.osdu._ijk_grid import ijk_grid_to_xtgeo, xtgeo_grid_to_resqml
+    import resqpy.derived_model as rdm
+
+    # 1. Export xtgeo grid to EPC
+    grid = xtgeo.grid_from_file("model.roff")
+    prov = EpcFileProvider("work.epc", mode="w")
+    prov.open()
+    xtgeo_grid_to_resqml(prov, grid, title="FullField", crs_epsg=23031)
+    prov.close()
+
+    # 2. Use resqpy to extract a sub-grid (kji min/max)
+    box = np.array([[0, 2, 3], [4, 7, 9]])
+    sub = rdm.extract_box(
+        epc_file="work.epc", box=box,
+        inherit_properties=True, new_grid_title="SubGrid",
+        new_epc_file="sub.epc",
+    )
+
+    # 3. Import back into xtgeo
+    prov2 = EpcFileProvider("sub.epc", mode="r")
+    prov2.open()
+    subgrid = ijk_grid_to_xtgeo(prov2, str(sub.uuid))
+    prov2.close()
+
+    subgrid.to_file("subgrid.roff")
+
+The same pattern works for coarsening (``resqpy.derived_model.coarsened_grid``)
+and fault analysis (``resqpy.fault.GridConnectionSet``). See the
+`resqpy documentation <https://resqpy.readthedocs.io>`_ for the full API.
