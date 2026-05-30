@@ -10,7 +10,6 @@ Requires: resqpy >= 4.0
 """
 
 import contextlib
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -33,7 +32,6 @@ import resqpy.derived_model as rdm  # noqa: E402
 import resqpy.fault as rf  # noqa: E402
 import resqpy.grid as rqgrid  # noqa: E402
 import resqpy.olio.fine_coarse as fc  # noqa: E402
-import resqpy.property as rprop  # noqa: E402
 from resqpy.crs import Crs  # noqa: E402
 from resqpy.grid import RegularGrid  # noqa: E402
 from resqpy.model import Model  # noqa: E402

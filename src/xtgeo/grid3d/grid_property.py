@@ -905,7 +905,7 @@ class GridProperty(_Grid3D):
         propertyname: str,
         realisation: int = 0,
         casting: (
-            Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"] | None
+            Literal["no", "equiv", "safe", "same_kind", "unsafe"] | None
         ) = "unsafe",
     ) -> None:
         """
