@@ -81,9 +81,7 @@ class TestTriangulatedSurfaceRoundTrip:
 
     def test_high_level_api(self, epc_path):
         """Test via the high-level triangulated_surface_to/from_osdu."""
-        vertices = np.array(
-            [[0, 0, 100], [10, 0, 100], [5, 10, 110]], dtype=np.float64
-        )
+        vertices = np.array([[0, 0, 100], [10, 0, 100], [5, 10, 110]], dtype=np.float64)
         triangles = np.array([[0, 1, 2]], dtype=np.int32)
         trisurf = xtgeo.TriangulatedSurface(vertices=vertices, triangles=triangles)
 
@@ -143,10 +141,16 @@ class TestWellRoundTrip:
         well2 = well_to_xtgeo(p2, uuids["WELL-A"], load_logs=False)
         p2.close()
 
-        assert np.allclose(well.get_dataframe()["M_DEPTH"].values,
-                           well2.get_dataframe()[well2.mdlogname].values, atol=1e-6)
-        assert np.allclose(well.get_dataframe()["X_UTME"].values,
-                           well2.get_dataframe()["X_UTME"].values, atol=1e-6)
+        assert np.allclose(
+            well.get_dataframe()["M_DEPTH"].values,
+            well2.get_dataframe()[well2.mdlogname].values,
+            atol=1e-6,
+        )
+        assert np.allclose(
+            well.get_dataframe()["X_UTME"].values,
+            well2.get_dataframe()["X_UTME"].values,
+            atol=1e-6,
+        )
 
     def test_trajectory_with_logs_roundtrip(self, epc_path):
         """Test well trajectory + logs roundtrip."""
@@ -177,9 +181,7 @@ class TestWellRoundTrip:
         """Test via well_from_osdu / well_to_osdu."""
         well = self._make_well()
 
-        uuids = xtgeo.well_to_osdu(
-            epc_path, well, title="WELL-A", crs_epsg=23031
-        )
+        uuids = xtgeo.well_to_osdu(epc_path, well, title="WELL-A", crs_epsg=23031)
         assert "WELL-A" in uuids
 
         well2 = xtgeo.well_from_osdu(epc_path, uuid=uuids["WELL-A"])
@@ -226,9 +228,7 @@ class TestBlockedWellRoundTrip:
 
         p = EpcFileProvider(epc_path, mode="w")
         p.open()
-        uuids = xtgeo_blocked_well_to_resqml(
-            p, bwell, title="BW-1", crs_epsg=23031
-        )
+        uuids = xtgeo_blocked_well_to_resqml(p, bwell, title="BW-1", crs_epsg=23031)
         p.close()
 
         p2 = EpcFileProvider(epc_path, mode="r")

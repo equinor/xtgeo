@@ -64,13 +64,11 @@ def _add_citation(parent, title: str):
 
     citation = etree.SubElement(parent, f"{{{NS_COMMON20}}}Citation")
     etree.SubElement(citation, f"{{{NS_COMMON20}}}Title").text = title
-    etree.SubElement(
-        citation, f"{{{NS_COMMON20}}}Creation"
-    ).text = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Creation").text = datetime.now(
+        timezone.utc
+    ).strftime("%Y-%m-%dT%H:%M:%SZ")
     etree.SubElement(citation, f"{{{NS_COMMON20}}}Originator").text = "xtgeo"
-    etree.SubElement(
-        citation, f"{{{NS_COMMON20}}}Format"
-    ).text = "xtgeo RESQML 2.0.1"
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Format").text = "xtgeo RESQML 2.0.1"
     return citation
 
 
@@ -1783,9 +1781,7 @@ class EtpProvider(ResqmlDataProvider):
             if t is not None:
                 title = t.text or ""
 
-        uri = _uri_for_object(
-            self._config.dataspace, qualified_type, uuid
-        )
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
         # Try resqpy-compatible per-patch naming first, then fallback
         vertices = self._get_array(uri, f"/RESQML/{uuid}/points_patch0")
         if vertices is None:
@@ -1842,12 +1838,8 @@ class EtpProvider(ResqmlDataProvider):
         patch_idx = etree.SubElement(patch, f"{{{NS_RESQML20}}}PatchIndex")
         patch_idx.text = "0"
 
-        etree.SubElement(patch, f"{{{NS_RESQML20}}}Count").text = str(
-            len(triangles)
-        )
-        etree.SubElement(patch, f"{{{NS_RESQML20}}}NodeCount").text = str(
-            len(vertices)
-        )
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}Count").text = str(len(triangles))
+        etree.SubElement(patch, f"{{{NS_RESQML20}}}NodeCount").text = str(len(vertices))
 
         # Triangles (IntegerHdf5Array)
         tri_el = etree.SubElement(patch, f"{{{NS_RESQML20}}}Triangles")
@@ -1964,9 +1956,7 @@ class EtpProvider(ResqmlDataProvider):
                     prop_uri = _uri_for_object(
                         self._config.dataspace, prop_type, prop_uuid
                     )
-                    values = self._get_array(
-                        prop_uri, f"/RESQML/{prop_uuid}/Values"
-                    )
+                    values = self._get_array(prop_uri, f"/RESQML/{prop_uuid}/Values")
                     is_discrete = "Discrete" in prop_type or "Categorical" in prop_type
                     props.append(
                         {
@@ -2004,7 +1994,9 @@ class EtpProvider(ResqmlDataProvider):
         md_datum_uuid = _make_uuid()
         self._put_wellbore_feature(feature_uuid, title)
         self._put_wellbore_interpretation(interp_uuid, title, feature_uuid)
-        self._put_md_datum(md_datum_uuid, title, crs_uuid, xyz[0] if len(xyz) > 0 else np.zeros(3))
+        self._put_md_datum(
+            md_datum_uuid, title, crs_uuid, xyz[0] if len(xyz) > 0 else np.zeros(3)
+        )
 
         qualified_type = "resqml20.WellboreTrajectoryRepresentation"
         uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
@@ -2069,9 +2061,7 @@ class EtpProvider(ResqmlDataProvider):
         qualified_type = "resqml20.WellboreFeature"
         uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
 
-        root = etree.Element(
-            f"{{{NS_RESQML20}}}WellboreFeature", nsmap=RESQML_NS_MAP
-        )
+        root = etree.Element(f"{{{NS_RESQML20}}}WellboreFeature", nsmap=RESQML_NS_MAP)
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
@@ -2102,9 +2092,7 @@ class EtpProvider(ResqmlDataProvider):
 
         _add_citation(root, title)
 
-        feat_ref = etree.SubElement(
-            root, f"{{{NS_RESQML20}}}InterpretedFeature"
-        )
+        feat_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}InterpretedFeature")
         feat_ref.set("uuid", feature_uuid)
 
         xml_str = etree.tostring(root, encoding="unicode")
@@ -2124,18 +2112,22 @@ class EtpProvider(ResqmlDataProvider):
         qualified_type = "resqml20.obj_MdDatum"
         uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
 
-        root = etree.Element(
-            f"{{{NS_RESQML20}}}MdDatum", nsmap=RESQML_NS_MAP
-        )
+        root = etree.Element(f"{{{NS_RESQML20}}}MdDatum", nsmap=RESQML_NS_MAP)
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
         _add_citation(root, f"{title} MD Datum")
 
         loc = etree.SubElement(root, f"{{{NS_RESQML20}}}Location")
-        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate1").text = str(float(location[0]))
-        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate2").text = str(float(location[1]))
-        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate3").text = str(float(location[2]))
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate1").text = str(
+            float(location[0])
+        )
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate2").text = str(
+            float(location[1])
+        )
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate3").text = str(
+            float(location[2])
+        )
 
         crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
         crs_ref.set("uuid", crs_uuid)

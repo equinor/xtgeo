@@ -33,9 +33,7 @@ class ResqmlObjectType(str, Enum):
     TRIANGULATED_SET_REPRESENTATION = "resqml20.obj_TriangulatedSetRepresentation"
     POINT_SET_REPRESENTATION = "resqml20.obj_PointSetRepresentation"
     POLYLINE_SET_REPRESENTATION = "resqml20.obj_PolylineSetRepresentation"
-    WELLBORE_TRAJECTORY_REPRESENTATION = (
-        "resqml20.obj_WellboreTrajectoryRepresentation"
-    )
+    WELLBORE_TRAJECTORY_REPRESENTATION = "resqml20.obj_WellboreTrajectoryRepresentation"
     WELLBORE_FRAME_REPRESENTATION = "resqml20.obj_WellboreFrameRepresentation"
     BLOCKED_WELLBORE_REPRESENTATION = "resqml20.obj_BlockedWellboreRepresentation"
     WELLBORE_FEATURE = "resqml20.obj_WellboreFeature"

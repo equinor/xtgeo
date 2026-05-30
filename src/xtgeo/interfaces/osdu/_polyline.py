@@ -145,9 +145,7 @@ def xtgeo_polygons_to_resqml(
 
     if "POLY_ID" in df.columns:
         for _, group in df.groupby("POLY_ID", sort=False):
-            pts = group[["X_UTME", "Y_UTMN", "Z_TVDSS"]].values.astype(
-                np.float64
-            )
+            pts = group[["X_UTME", "Y_UTMN", "Z_TVDSS"]].values.astype(np.float64)
 
             # Detect if closed (first point == last point)
             is_closed = False

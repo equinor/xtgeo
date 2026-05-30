@@ -211,9 +211,7 @@ class DataspaceSnapshot:
         if self.polylinesets:
             parts.append(f"{len(self.polylinesets)} polylinesets")
         if self.triangulated_surfaces:
-            parts.append(
-                f"{len(self.triangulated_surfaces)} triangulated surfaces"
-            )
+            parts.append(f"{len(self.triangulated_surfaces)} triangulated surfaces")
         if self.wells:
             parts.append(f"{len(self.wells)} wells")
         if self.blocked_wells:
@@ -1173,14 +1171,10 @@ def _compare_wells(
                 diffs.append(Difference("Well", title, fname, "one is None"))
             continue
         if va.shape != vb.shape:
-            diffs.append(
-                Difference("Well", title, fname, f"{va.shape} vs {vb.shape}")
-            )
+            diffs.append(Difference("Well", title, fname, f"{va.shape} vs {vb.shape}"))
         elif not np.allclose(va, vb, atol=atol, equal_nan=True):
             max_diff = np.nanmax(np.abs(va - vb))
-            diffs.append(
-                Difference("Well", title, fname, f"max diff = {max_diff:.2e}")
-            )
+            diffs.append(Difference("Well", title, fname, f"max diff = {max_diff:.2e}"))
 
 
 def _compare_blocked_wells(

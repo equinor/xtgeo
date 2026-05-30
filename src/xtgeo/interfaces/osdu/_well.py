@@ -223,8 +223,7 @@ def xtgeo_well_to_resqml(
         log_cols = [
             c
             for c in df.columns
-            if c not in ["X_UTME", "Y_UTMN", "Z_TVDSS"]
-            and c != well.mdlogname
+            if c not in ["X_UTME", "Y_UTMN", "Z_TVDSS"] and c != well.mdlogname
         ]
         if log_cols:
             frame_uuid = str(_uuid.uuid4())

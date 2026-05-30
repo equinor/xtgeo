@@ -108,13 +108,11 @@ def _add_citation(parent: etree._Element, title: str) -> etree._Element:
 
     citation = etree.SubElement(parent, f"{{{NS_COMMON20}}}Citation")
     etree.SubElement(citation, f"{{{NS_COMMON20}}}Title").text = title
-    etree.SubElement(
-        citation, f"{{{NS_COMMON20}}}Creation"
-    ).text = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Creation").text = datetime.now(
+        timezone.utc
+    ).strftime("%Y-%m-%dT%H:%M:%SZ")
     etree.SubElement(citation, f"{{{NS_COMMON20}}}Originator").text = "xtgeo"
-    etree.SubElement(
-        citation, f"{{{NS_COMMON20}}}Format"
-    ).text = "xtgeo RESQML 2.0.1"
+    etree.SubElement(citation, f"{{{NS_COMMON20}}}Format").text = "xtgeo RESQML 2.0.1"
     return citation
 
 
@@ -207,7 +205,10 @@ class EpcFileProvider(ResqmlDataProvider):
         # EpcExternalPartReference — links HDF proxy UUID to the .h5 file
         ext_ref_root = etree.Element(
             f"{{{NS_COMMON20}}}EpcExternalPartReference",
-            nsmap={"eml": NS_COMMON20, "xsi": "http://www.w3.org/2001/XMLSchema-instance"},
+            nsmap={
+                "eml": NS_COMMON20,
+                "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            },
         )
         ext_ref_root.set("uuid", self._hdf_proxy_uuid)
         ext_ref_root.set("schemaVersion", "2.0")
@@ -220,7 +221,9 @@ class EpcFileProvider(ResqmlDataProvider):
         ext_part_name = _part_name("obj_EpcExternalPartReference", self._hdf_proxy_uuid)
         self._zip.writestr(
             ext_part_name,
-            etree.tostring(ext_ref_root, xml_declaration=True, encoding="UTF-8", pretty_print=True),
+            etree.tostring(
+                ext_ref_root, xml_declaration=True, encoding="UTF-8", pretty_print=True
+            ),
         )
         self._content_types[ext_part_name] = CONTENT_TYPE_MAP[
             ResqmlObjectType.EPC_EXTERNAL_PART_REFERENCE
@@ -238,7 +241,9 @@ class EpcFileProvider(ResqmlDataProvider):
         ext_rel.set("TargetMode", "External")
         self._zip.writestr(
             f"_rels/{ext_part_name}.rels",
-            etree.tostring(ext_rels_root, xml_declaration=True, encoding="UTF-8", pretty_print=True),
+            etree.tostring(
+                ext_rels_root, xml_declaration=True, encoding="UTF-8", pretty_print=True
+            ),
         )
 
         # [Content_Types].xml
@@ -246,7 +251,9 @@ class EpcFileProvider(ResqmlDataProvider):
         # Default extension for .rels files
         default_el = etree.SubElement(types_root, f"{{{NS_CONTENT_TYPES}}}Default")
         default_el.set("Extension", "rels")
-        default_el.set("ContentType", "application/vnd.openxmlformats-package.relationships+xml")
+        default_el.set(
+            "ContentType", "application/vnd.openxmlformats-package.relationships+xml"
+        )
         for part_name, ctype in self._content_types.items():
             override = etree.SubElement(types_root, f"{{{NS_CONTENT_TYPES}}}Override")
             override.set("PartName", f"/{part_name}")
@@ -351,9 +358,11 @@ class EpcFileProvider(ResqmlDataProvider):
                     coord_out[:, :, 3:6] = arr[-1, :, :, :].transpose(1, 0, 2)
                     coord = coord_out.flatten()
                     z_all = arr[:, :, :, 2].transpose(2, 1, 0)
-                    zcorn = np.broadcast_to(
-                        z_all[..., np.newaxis], (ni1, nj1, nk1, 4)
-                    ).copy().flatten()
+                    zcorn = (
+                        np.broadcast_to(z_all[..., np.newaxis], (ni1, nj1, nk1, 4))
+                        .copy()
+                        .flatten()
+                    )
                 elif arr.ndim == 3:
                     coord = arr.flatten()
         return coord, zcorn
@@ -1134,9 +1143,7 @@ class EpcFileProvider(ResqmlDataProvider):
 
         # Use resqpy-compatible per-patch dataset naming
         self._write_hdf5_array(uuid, "points_patch0", vertices.astype(np.float64))
-        self._write_hdf5_array(
-            uuid, "triangles_patch0", triangles.astype(np.int32)
-        )
+        self._write_hdf5_array(uuid, "triangles_patch0", triangles.astype(np.int32))
 
         root = etree.Element(
             f"{{{NS_RESQML20}}}TriangulatedSetRepresentation", nsmap=RESQML_NS_MAP
@@ -1179,9 +1186,7 @@ class EpcFileProvider(ResqmlDataProvider):
         path_el = etree.SubElement(pts, f"{{{NS_COMMON20}}}PathInHdfFile")
         path_el.text = _hdf5_dataset_path(uuid, "points_patch0")
 
-        self._add_part(
-            ResqmlObjectType.TRIANGULATED_SET_REPRESENTATION, uuid, root
-        )
+        self._add_part(ResqmlObjectType.TRIANGULATED_SET_REPRESENTATION, uuid, root)
         return uuid
 
     # ---- WellboreTrajectory ----
@@ -1219,13 +1224,9 @@ class EpcFileProvider(ResqmlDataProvider):
             if "WellboreFrameRepresentation" not in tag:
                 continue
             # Check if this frame references our trajectory
-            traj_ref = proot.find(
-                f".//{{{NS_RESQML20}}}Trajectory"
-            )
+            traj_ref = proot.find(f".//{{{NS_RESQML20}}}Trajectory")
             if traj_ref is None:
-                traj_ref = proot.find(
-                    f".//{{{NS_RESQML20}}}RepresentedInterpretation"
-                )
+                traj_ref = proot.find(f".//{{{NS_RESQML20}}}RepresentedInterpretation")
             ref_uuid = ""
             if traj_ref is not None:
                 ref_uuid = traj_ref.get("uuid", "")
@@ -1237,9 +1238,7 @@ class EpcFileProvider(ResqmlDataProvider):
 
             # Find properties on this frame
             props = self._find_frame_properties(frame_uuid)
-            frames.append(
-                {"uuid": frame_uuid, "md": frame_md, "properties": props}
-            )
+            frames.append({"uuid": frame_uuid, "md": frame_md, "properties": props})
 
         return {
             "md": md,
@@ -1256,9 +1255,7 @@ class EpcFileProvider(ResqmlDataProvider):
             tag = etree.QName(proot.tag).localname if proot.tag else ""
             if "Property" not in tag:
                 continue
-            supp_ref = proot.find(
-                f".//{{{NS_RESQML20}}}SupportingRepresentation"
-            )
+            supp_ref = proot.find(f".//{{{NS_RESQML20}}}SupportingRepresentation")
             if supp_ref is None:
                 continue
             supp_uuid = supp_ref.get("uuid", "")
@@ -1321,7 +1318,9 @@ class EpcFileProvider(ResqmlDataProvider):
         md_datum_uuid = _make_uuid()
         self._put_wellbore_feature(feature_uuid, title)
         self._put_wellbore_interpretation(interp_uuid, title, feature_uuid)
-        self._put_md_datum(md_datum_uuid, title, crs_uuid, xyz[0] if len(xyz) > 0 else np.zeros(3))
+        self._put_md_datum(
+            md_datum_uuid, title, crs_uuid, xyz[0] if len(xyz) > 0 else np.zeros(3)
+        )
 
         root = etree.Element(
             f"{{{NS_RESQML20}}}WellboreTrajectoryRepresentation", nsmap=RESQML_NS_MAP
@@ -1369,16 +1368,12 @@ class EpcFileProvider(ResqmlDataProvider):
         crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
         crs_ref.set("uuid", crs_uuid)
 
-        self._add_part(
-            ResqmlObjectType.WELLBORE_TRAJECTORY_REPRESENTATION, uuid, root
-        )
+        self._add_part(ResqmlObjectType.WELLBORE_TRAJECTORY_REPRESENTATION, uuid, root)
         return uuid
 
     def _put_wellbore_feature(self, uuid: str, title: str) -> str:
         """Write a WellboreFeature (part of the Feature→Interpretation→Rep chain)."""
-        root = etree.Element(
-            f"{{{NS_RESQML20}}}WellboreFeature", nsmap=RESQML_NS_MAP
-        )
+        root = etree.Element(f"{{{NS_RESQML20}}}WellboreFeature", nsmap=RESQML_NS_MAP)
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
@@ -1400,9 +1395,7 @@ class EpcFileProvider(ResqmlDataProvider):
         _add_citation(root, title)
 
         # Reference to WellboreFeature
-        feat_ref = etree.SubElement(
-            root, f"{{{NS_RESQML20}}}InterpretedFeature"
-        )
+        feat_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}InterpretedFeature")
         feat_ref.set("uuid", feature_uuid)
 
         self._add_part(ResqmlObjectType.WELLBORE_INTERPRETATION, uuid, root)
@@ -1412,9 +1405,7 @@ class EpcFileProvider(ResqmlDataProvider):
         self, uuid: str, title: str, crs_uuid: str, location: np.ndarray
     ) -> str:
         """Write an MdDatum object (MD reference point for trajectories)."""
-        root = etree.Element(
-            f"{{{NS_RESQML20}}}MdDatum", nsmap=RESQML_NS_MAP
-        )
+        root = etree.Element(f"{{{NS_RESQML20}}}MdDatum", nsmap=RESQML_NS_MAP)
         root.set("uuid", uuid)
         root.set("schemaVersion", "2.0")
 
@@ -1422,9 +1413,15 @@ class EpcFileProvider(ResqmlDataProvider):
 
         # Location (X, Y, Z of the datum point)
         loc = etree.SubElement(root, f"{{{NS_RESQML20}}}Location")
-        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate1").text = str(float(location[0]))
-        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate2").text = str(float(location[1]))
-        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate3").text = str(float(location[2]))
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate1").text = str(
+            float(location[0])
+        )
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate2").text = str(
+            float(location[1])
+        )
+        etree.SubElement(loc, f"{{{NS_RESQML20}}}Coordinate3").text = str(
+            float(location[2])
+        )
 
         # CRS reference
         crs_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
@@ -1470,9 +1467,7 @@ class EpcFileProvider(ResqmlDataProvider):
         traj_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}Trajectory")
         traj_ref.set("uuid", trajectory_uuid)
 
-        self._add_part(
-            ResqmlObjectType.WELLBORE_FRAME_REPRESENTATION, uuid, root
-        )
+        self._add_part(ResqmlObjectType.WELLBORE_FRAME_REPRESENTATION, uuid, root)
 
         # Write each property referencing this frame
         for prop in properties:
@@ -1495,9 +1490,7 @@ class EpcFileProvider(ResqmlDataProvider):
         """Read BlockedWellboreRepresentation."""
         root = self._find_part_by_uuid(uuid)
         if root is None:
-            raise ValueError(
-                f"BlockedWellbore with UUID {uuid} not found in EPC"
-            )
+            raise ValueError(f"BlockedWellbore with UUID {uuid} not found in EPC")
 
         crs_uuid = ""
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
@@ -1615,9 +1608,7 @@ class EpcFileProvider(ResqmlDataProvider):
         crs_ref_el = etree.SubElement(root, f"{{{NS_RESQML20}}}LocalCrs")
         crs_ref_el.set("uuid", crs_uuid)
 
-        self._add_part(
-            ResqmlObjectType.BLOCKED_WELLBORE_REPRESENTATION, uuid, root
-        )
+        self._add_part(ResqmlObjectType.BLOCKED_WELLBORE_REPRESENTATION, uuid, root)
 
         # Write properties referencing this blocked wellbore
         for prop in properties:

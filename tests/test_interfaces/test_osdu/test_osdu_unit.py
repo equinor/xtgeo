@@ -515,9 +515,7 @@ class TestApiImportOsdu:
             vertices=np.array([[0, 0, 0], [1, 0, 0], [0.5, 1, 0]], dtype=np.float64),
             triangles=np.array([[0, 1, 2]], dtype=np.int32),
         )
-        xtgeo.triangulated_surface_to_osdu(
-            epc, trisurf, title="ImpTri", crs_epsg=23031
-        )
+        xtgeo.triangulated_surface_to_osdu(epc, trisurf, title="ImpTri", crs_epsg=23031)
 
         results = xtgeo.search_osdu(epc, name="ImpTri", object_type="trisurface")
         assert len(results) >= 1
