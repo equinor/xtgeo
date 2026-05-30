@@ -158,6 +158,7 @@ markers = [
     "requires_opm: A test requiring opm in the environment",
     "requires_roxar: Test requires to run in RMS python",
     "requires_resinsight: Test requires ResInsight (+rips)",
+    "requires_rddms: Test requires a live RDDMS/ETP server (local or Azure)",
 ]
 doctest_optionflags = "ELLIPSIS"
 filterwarnings = [

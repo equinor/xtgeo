@@ -111,6 +111,33 @@ def _qualified_type_from_uri(uri: str) -> str:
     return ""
 
 
+def _hdf_paths_from_xml(root, ns_common: str) -> Dict[str, str]:
+    """Build mapping of ancestor-element localname → HDF path from XML.
+
+    Scans all ``PathInHdfFile`` elements and keys them by the localname
+    of both their parent and grandparent elements.  This handles two
+    common RESQML patterns:
+
+    * Direct: ``<ZValues><PathInHdfFile>…`` → parent is ``ZValues``
+    * Wrapped: ``<ControlPoints><Coordinates><PathInHdfFile>…``
+      → parent is ``Coordinates``, grandparent is ``ControlPoints``
+    """
+    result: Dict[str, str] = {}
+    for path_el in root.iter(f"{{{ns_common}}}PathInHdfFile"):
+        if path_el.text:
+            parent = path_el.getparent()
+            if parent is not None:
+                from lxml import etree as _et
+
+                ptag = _et.QName(parent.tag).localname
+                result[ptag] = path_el.text
+                grandparent = parent.getparent()
+                if grandparent is not None:
+                    gptag = _et.QName(grandparent.tag).localname
+                    result[gptag] = path_el.text
+    return result
+
+
 def _points_array_to_coord_zcorn(
     points: np.ndarray, ni: int, nj: int, nk: int
 ) -> tuple:
@@ -222,6 +249,149 @@ def _parametric_to_explicit_points(
     points = points.reshape(nk + 1, nj + 1, ni + 1, 3)
 
     return points.ravel()
+
+
+def _parametric_split_to_coord_zcorn(
+    control_points: np.ndarray,
+    control_point_params: np.ndarray,
+    parameters: np.ndarray,
+    ni: int,
+    nj: int,
+    nk: int,
+    pillar_indices: np.ndarray,
+    col_elements: np.ndarray,
+    col_cumlength: np.ndarray,
+) -> tuple:
+    """Convert parametric grid with split coordinate lines to xtgeo coord/zcorn.
+
+    Handles faulted grids where some pillars have split Z-values for
+    different adjacent cell columns (RESQML SplitCoordinateLines).
+
+    Parameters
+    ----------
+    control_points : ndarray, shape (2, npillars, 3)
+        Top/bottom XYZ for each original pillar.
+    control_point_params : ndarray, shape (2, npillars)
+        Z-parameter values at top/bottom of each pillar.
+    parameters : ndarray, shape (nk+1, npillars + nsplits)
+        Z-parameter at each layer node for pillars and split lines.
+    ni, nj, nk : int
+        Grid cell dimensions.
+    pillar_indices : ndarray, shape (nsplits,)
+        Original pillar index for each split coordinate line.
+    col_elements : ndarray
+        Flat array of column indices for each split (jagged).
+    col_cumlength : ndarray, shape (nsplits,)
+        Cumulative lengths into col_elements for each split.
+
+    Returns
+    -------
+    tuple of (coord_flat, zcorn_flat)
+        coord: shape ((ni+1)*(nj+1)*6,) — pillar top/bottom XYZ
+        zcorn: shape ((ni+1)*(nj+1)*(nk+1)*4,) — Z at 4 corners per node
+    """
+    npillars = (ni + 1) * (nj + 1)
+    nsplits = pillar_indices.shape[0]
+    n_total = npillars + nsplits
+
+    cp = control_points.reshape(2, npillars, 3).astype(np.float64)
+    cpp = control_point_params.reshape(2, npillars).astype(np.float64)
+    params = parameters.reshape(nk + 1, n_total).astype(np.float64)
+
+    # --- coord from original pillars (splits don't affect pillar geometry) ---
+    # Pillar index = pj*(ni+1) + pi, so reshape to (nj+1, ni+1, ...)
+    cp_2d = cp.reshape(2, nj + 1, ni + 1, 3)
+    coordsv = np.zeros((ni + 1, nj + 1, 6), dtype=np.float64)
+    coordsv[:, :, 0:3] = cp_2d[0].transpose(1, 0, 2)  # top: (pi, pj, xyz)
+    coordsv[:, :, 3:6] = cp_2d[1].transpose(1, 0, 2)  # bot: (pi, pj, xyz)
+
+    # --- Compute Z at every (k, line) by interpolation along parent pillar ---
+    parent = np.arange(n_total, dtype=np.int64)
+    parent[npillars:] = pillar_indices.astype(np.int64)
+
+    top_z_param = cpp[0, parent]  # (n_total,)
+    bot_z_param = cpp[1, parent]  # (n_total,)
+    denom = bot_z_param - top_z_param
+    denom = np.where(np.abs(denom) < 1e-30, 1.0, denom)
+
+    t = (params - top_z_param) / denom  # (nk+1, n_total)
+
+    # Z coordinate at each (k, line)
+    z_top = cp[0, parent, 2]  # (n_total,)
+    z_bot = cp[1, parent, 2]  # (n_total,)
+    z_at = z_top * (1.0 - t) + z_bot * t  # (nk+1, n_total)
+
+    # --- Build line_map: which coordinate line each (pi, pj, corner) uses ---
+    # Default: all 4 corners use the pillar's own line index
+    pi_grid, pj_grid = np.meshgrid(
+        np.arange(ni + 1), np.arange(nj + 1), indexing="ij"
+    )
+    default_line = (pj_grid * (ni + 1) + pi_grid).astype(np.int64)
+    line_map = np.broadcast_to(
+        default_line[..., np.newaxis], (ni + 1, nj + 1, 4)
+    ).copy()
+
+    # xtgeo zcorn corner convention (from _ecl_grid.py):
+    #   c=0 (SW): cell (pi-1, pj-1) → column (pi-1) + (pj-1)*ni
+    #   c=1 (SE): cell (pi,   pj-1) → column  pi    + (pj-1)*ni
+    #   c=2 (NW): cell (pi-1, pj  ) → column (pi-1) +  pj   *ni
+    #   c=3 (NE): cell (pi,   pj  ) → column  pi    +  pj   *ni
+    _CORNER_DI = np.array([-1, 0, -1, 0])
+    _CORNER_DJ = np.array([-1, -1, 0, 0])
+
+    # Override with split coordinate lines
+    start = 0
+    for s in range(nsplits):
+        end = int(col_cumlength[s])
+        orig_pillar = int(pillar_indices[s])
+        orig_pi = orig_pillar % (ni + 1)
+        orig_pj = orig_pillar // (ni + 1)
+        split_line = npillars + s
+        for idx in range(start, end):
+            col = int(col_elements[idx])
+            ci = col % ni
+            cj = col // ni
+            # Determine which corner of pillar (orig_pi, orig_pj) this column is
+            di = ci - orig_pi
+            dj = cj - orig_pj
+            for c in range(4):
+                if _CORNER_DI[c] == di and _CORNER_DJ[c] == dj:
+                    line_map[orig_pi, orig_pj, c] = split_line
+                    break
+        start = end
+
+    # --- Build zcorn using vectorized fancy indexing ---
+    flat_lines = line_map.ravel()  # ((ni+1)*(nj+1)*4,)
+    z_selected = z_at[:, flat_lines]  # (nk+1, (ni+1)*(nj+1)*4)
+    zcornsv = (
+        z_selected.reshape(nk + 1, ni + 1, nj + 1, 4)
+        .transpose(1, 2, 0, 3)
+        .astype(np.float32)
+    )
+
+    # Duplicate boundary corners (same as _ecl_grid.duplicate_insignificant_xtgeo_zcorn)
+    # South boundary: c=0,1 at pj=0 → copy from c=2,3
+    zcornsv[1:ni, 0, :, 0] = zcornsv[1:ni, 0, :, 2]
+    zcornsv[1:ni, 0, :, 1] = zcornsv[1:ni, 0, :, 3]
+    # North boundary: c=2,3 at pj=nj → copy from c=0,1
+    zcornsv[1:ni, nj, :, 2] = zcornsv[1:ni, nj, :, 0]
+    zcornsv[1:ni, nj, :, 3] = zcornsv[1:ni, nj, :, 1]
+    # West boundary: c=0,2 at pi=0 → copy from c=1,3
+    zcornsv[0, 1:nj, :, 0] = zcornsv[0, 1:nj, :, 1]
+    zcornsv[0, 1:nj, :, 2] = zcornsv[0, 1:nj, :, 3]
+    # East boundary: c=1,3 at pi=ni → copy from c=0,2
+    zcornsv[ni, 1:nj, :, 1] = zcornsv[ni, 1:nj, :, 0]
+    zcornsv[ni, 1:nj, :, 3] = zcornsv[ni, 1:nj, :, 2]
+    # SW corner: all = c=3
+    zcornsv[0, 0, :, :] = zcornsv[0, 0, :, 3:4]
+    # SE corner: all = c=2
+    zcornsv[ni, 0, :, :] = zcornsv[ni, 0, :, 2:3]
+    # NW corner: all = c=1
+    zcornsv[0, nj, :, :] = zcornsv[0, nj, :, 1:2]
+    # NE corner: all = c=0
+    zcornsv[ni, nj, :, :] = zcornsv[ni, nj, :, 0:1]
+
+    return coordsv.ravel(), zcornsv.ravel()
 
 
 class EtpProvider(ResqmlDataProvider):
@@ -1094,6 +1264,11 @@ class EtpProvider(ResqmlDataProvider):
         coord = self._get_array(array_uri, f"/RESQML/{uuid}/Points/Coordinates")
         zcorn = self._get_array(array_uri, f"/RESQML/{uuid}/Points/ZCorners")
         actnum = self._get_array(array_uri, f"/RESQML/{uuid}/CellGeometryIsDefined")
+        # Also try lowercase path (RMS exports use lowercase)
+        if actnum is None:
+            actnum = self._get_array(
+                array_uri, f"/RESQML/{uuid}/cellGeometryIsDefined"
+            )
 
         # If custom paths not found, try standard RESQML Point3dHdf5Array path
         if coord is None and zcorn is None:
@@ -1114,14 +1289,56 @@ class EtpProvider(ResqmlDataProvider):
                 array_uri, f"/RESQML/{uuid}/parameters"
             )
             if cp is not None and cpp is not None and params is not None:
-                explicit = _parametric_to_explicit_points(
-                    cp, cpp, params, ni, nj, nk
-                )
-                coord, zcorn = _points_array_to_coord_zcorn(
-                    explicit, ni, nj, nk
-                )
+                npillars = (ni + 1) * (nj + 1)
+                n_param_cols = params.reshape(nk + 1, -1).shape[1]
 
-        if actnum is None:
+                if n_param_cols > npillars:
+                    # Split coordinate lines present (faulted grid)
+                    pil_idx = self._get_array(
+                        array_uri, f"/RESQML/{uuid}/PillarIndices"
+                    )
+                    col_el = self._get_array(
+                        array_uri,
+                        f"/RESQML/{uuid}/ColumnsPerSplitCoordinateLine/elements",
+                    )
+                    col_cum = self._get_array(
+                        array_uri,
+                        f"/RESQML/{uuid}/ColumnsPerSplitCoordinateLine/cumulativeLength",
+                    )
+                    if pil_idx is not None and col_el is not None and col_cum is not None:
+                        coord, zcorn = _parametric_split_to_coord_zcorn(
+                            cp, cpp, params, ni, nj, nk,
+                            pil_idx, col_el, col_cum,
+                        )
+                    else:
+                        # Fall back to unsplit (ignore extra columns)
+                        params_trimmed = params.reshape(nk + 1, -1)[:, :npillars]
+                        explicit = _parametric_to_explicit_points(
+                            cp, cpp, params_trimmed, ni, nj, nk
+                        )
+                        coord, zcorn = _points_array_to_coord_zcorn(
+                            explicit, ni, nj, nk
+                        )
+                else:
+                    # No splits — simple parametric
+                    explicit = _parametric_to_explicit_points(
+                        cp, cpp, params, ni, nj, nk
+                    )
+                    coord, zcorn = _points_array_to_coord_zcorn(
+                        explicit, ni, nj, nk
+                    )
+
+        # Handle actnum shape: RESQML uses (nk, nj, ni), xtgeo needs flat (ni*nj*nk)
+        # in I-fastest order (ni, nj, nk) when reshaped
+        if actnum is not None and actnum.size == ni * nj * nk:
+            if actnum.ndim == 3 and actnum.shape == (nk, nj, ni):
+                # RESQML order (K,J,I) → transpose to xtgeo order (I,J,K) then flatten
+                actnum = actnum.transpose(2, 1, 0).astype(np.int32).ravel()
+            elif actnum.ndim == 1:
+                actnum = actnum.astype(np.int32)
+            else:
+                actnum = actnum.ravel().astype(np.int32)
+        elif actnum is None:
             actnum = np.ones(ni * nj * nk, dtype=np.int32)
 
         return {
@@ -1244,7 +1461,7 @@ class EtpProvider(ResqmlDataProvider):
 
         from lxml import etree
 
-        from ._resqml_enums import NS_RESQML20
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
 
         qualified_type = "resqml20.Grid2dRepresentation"
         uri = self._resolve_uri(uuid, qualified_type)
@@ -1320,7 +1537,11 @@ class EtpProvider(ResqmlDataProvider):
             crs_uuid = _uuid_from_ref(crs_ref)
 
         uri = self._resolve_uri(uuid, "resqml20.Grid2dRepresentation")
-        values = self._get_array(uri, f"/RESQML/{uuid}/ZValues")
+        hdf_paths = _hdf_paths_from_xml(root, NS_COMMON20)
+        zpath = hdf_paths.get("ZValues", f"/RESQML/{uuid}/ZValues")
+        values = self._get_array(uri, zpath)
+        if values is None and zpath != f"/RESQML/{uuid}/ZValues":
+            values = self._get_array(uri, f"/RESQML/{uuid}/ZValues")
         if values is None:
             values = np.zeros((nj, ni), dtype=np.float64)
 
@@ -1441,7 +1662,7 @@ class EtpProvider(ResqmlDataProvider):
         """Read PointSet representation."""
         from lxml import etree
 
-        from ._resqml_enums import NS_RESQML20
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
 
         qualified_type = "resqml20.PointSetRepresentation"
         uri = self._resolve_uri(uuid, qualified_type)
@@ -1459,7 +1680,11 @@ class EtpProvider(ResqmlDataProvider):
             crs_uuid = _uuid_from_ref(crs_ref)
 
         uri = self._resolve_uri(uuid, "resqml20.PointSetRepresentation")
-        points = self._get_array(uri, f"/RESQML/{uuid}/Points")
+        hdf_paths = _hdf_paths_from_xml(root, NS_COMMON20)
+        pts_path = hdf_paths.get("Points", f"/RESQML/{uuid}/Points")
+        points = self._get_array(uri, pts_path)
+        if points is None and pts_path != f"/RESQML/{uuid}/Points":
+            points = self._get_array(uri, f"/RESQML/{uuid}/Points")
         if points is None:
             points = np.zeros((0, 3), dtype=np.float64)
 
@@ -1521,7 +1746,7 @@ class EtpProvider(ResqmlDataProvider):
         """Read PolylineSet representation."""
         from lxml import etree
 
-        from ._resqml_enums import NS_RESQML20
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
 
         qualified_type = "resqml20.PolylineSetRepresentation"
         uri = self._resolve_uri(uuid, qualified_type)
@@ -1539,9 +1764,28 @@ class EtpProvider(ResqmlDataProvider):
             crs_uuid = _uuid_from_ref(crs_ref)
 
         uri = self._resolve_uri(uuid, "resqml20.PolylineSetRepresentation")
-        all_points = self._get_array(uri, f"/RESQML/{uuid}/Points")
-        node_counts = self._get_array(uri, f"/RESQML/{uuid}/NodeCountPerPolyline")
-        closed_flags = self._get_array(uri, f"/RESQML/{uuid}/ClosedPolylines")
+        hdf_paths = _hdf_paths_from_xml(root, NS_COMMON20)
+        pts_path = hdf_paths.get("Points", f"/RESQML/{uuid}/Points")
+        ncp_path = hdf_paths.get(
+            "NodeCountPerPolyline", f"/RESQML/{uuid}/NodeCountPerPolyline"
+        )
+        closed_path = hdf_paths.get(
+            "ClosedPolylines", f"/RESQML/{uuid}/ClosedPolylines"
+        )
+        all_points = self._get_array(uri, pts_path)
+        node_counts = self._get_array(uri, ncp_path)
+        closed_flags = self._get_array(uri, closed_path)
+
+        # Handle inline BooleanConstantArray for ClosedPolylines
+        if closed_flags is None:
+            cp_el = root.find(f".//{{{NS_RESQML20}}}ClosedPolylines")
+            if cp_el is not None:
+                val_el = cp_el.find(f"{{{NS_RESQML20}}}Value")
+                cnt_el = cp_el.find(f"{{{NS_RESQML20}}}Count")
+                if val_el is not None and cnt_el is not None:
+                    bval = val_el.text.strip().lower() in ("true", "1")
+                    cnt = int(cnt_el.text or 0)
+                    closed_flags = np.full(cnt, bval, dtype=bool)
 
         polylines: List[np.ndarray] = []
         closed_list: List[bool] = []
@@ -1705,7 +1949,20 @@ class EtpProvider(ResqmlDataProvider):
             obj_type = "resqml20.ContinuousProperty"
 
         uri = self._resolve_uri(uuid, obj_type)
-        values = self._get_array(uri, f"/RESQML/{uuid}/Values")
+
+        # Find the data array path from the XML PathInHdfFile element
+        values = None
+        path_el = root.find(f".//{{{NS_COMMON20}}}PathInHdfFile")
+        if path_el is not None and path_el.text:
+            values = self._get_array(uri, path_el.text)
+
+        # Fallback: try common path conventions
+        if values is None:
+            for suffix in ("Values", "values_patch0", "values"):
+                values = self._get_array(uri, f"/RESQML/{uuid}/{suffix}")
+                if values is not None:
+                    break
+
         if values is None:
             values = np.array([], dtype=np.float64)
 
@@ -1904,11 +2161,23 @@ class EtpProvider(ResqmlDataProvider):
                 title = t.text or ""
 
         uri = self._resolve_uri(uuid, qualified_type)
-        # Try resqpy-compatible per-patch naming first, then fallback
-        vertices = self._get_array(uri, f"/RESQML/{uuid}/points_patch0")
+        hdf_paths = _hdf_paths_from_xml(root, NS_COMMON20)
+        # Vertices (Points): try PathInHdfFile, then resqpy convention, then RESQML
+        pts_path = hdf_paths.get("Points")
+        vertices = None
+        if pts_path:
+            vertices = self._get_array(uri, pts_path)
+        if vertices is None:
+            vertices = self._get_array(uri, f"/RESQML/{uuid}/points_patch0")
         if vertices is None:
             vertices = self._get_array(uri, f"/RESQML/{uuid}/Points")
-        triangles = self._get_array(uri, f"/RESQML/{uuid}/triangles_patch0")
+        # Triangles: try PathInHdfFile, then resqpy convention, then RESQML
+        tri_path = hdf_paths.get("Triangles")
+        triangles = None
+        if tri_path:
+            triangles = self._get_array(uri, tri_path)
+        if triangles is None:
+            triangles = self._get_array(uri, f"/RESQML/{uuid}/triangles_patch0")
         if triangles is None:
             triangles = self._get_array(uri, f"/RESQML/{uuid}/Triangles")
 
@@ -2026,9 +2295,19 @@ class EtpProvider(ResqmlDataProvider):
             if t is not None:
                 title = t.text or ""
 
-        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
-        md = self._get_array(uri, f"/RESQML/{uuid}/MdValues")
-        xyz = self._get_array(uri, f"/RESQML/{uuid}/Points")
+        uri = self._resolve_uri(uuid, qualified_type)
+        hdf_paths = _hdf_paths_from_xml(root, NS_COMMON20)
+        md_path = hdf_paths.get(
+            "ControlPointParameters", f"/RESQML/{uuid}/MdValues"
+        )
+        pts_path = hdf_paths.get("ControlPoints", f"/RESQML/{uuid}/Points")
+        md = self._get_array(uri, md_path)
+        xyz = self._get_array(uri, pts_path)
+        # Fallback to hardcoded paths
+        if md is None and md_path != f"/RESQML/{uuid}/MdValues":
+            md = self._get_array(uri, f"/RESQML/{uuid}/MdValues")
+        if xyz is None and pts_path != f"/RESQML/{uuid}/Points":
+            xyz = self._get_array(uri, f"/RESQML/{uuid}/Points")
 
         if md is None:
             md = np.zeros(0, dtype=np.float64)
@@ -2067,6 +2346,8 @@ class EtpProvider(ResqmlDataProvider):
 
     def _find_etp_frame_properties(self, frame_uuid: str) -> List[Dict[str, Any]]:
         """Find properties attached to a wellbore frame via ETP."""
+        from ._resqml_enums import NS_COMMON20
+
         props = []
         try:
             related = self.get_related_objects(frame_uuid, direction="sources")
@@ -2074,10 +2355,32 @@ class EtpProvider(ResqmlDataProvider):
                 if "Property" in obj.get("type", ""):
                     prop_uuid = obj["uuid"]
                     prop_type = obj.get("type", "resqml20.ContinuousProperty")
-                    prop_uri = _uri_for_object(
-                        self._config.dataspace, prop_type, prop_uuid
-                    )
-                    values = self._get_array(prop_uri, f"/RESQML/{prop_uuid}/Values")
+                    prop_uri = self._resolve_uri(prop_uuid, prop_type)
+                    # Try to parse PathInHdfFile from XML
+                    values = None
+                    try:
+                        from lxml import etree
+
+                        xml_str = self._get_xml(prop_uuid, uri=prop_uri)
+                        if xml_str:
+                            proot = etree.fromstring(
+                                xml_str.encode("utf-8")
+                                if isinstance(xml_str, str)
+                                else xml_str
+                            )
+                            hpaths = _hdf_paths_from_xml(proot, NS_COMMON20)
+                            vpath = hpaths.get("Values")
+                            if vpath:
+                                values = self._get_array(prop_uri, vpath)
+                    except Exception:
+                        pass
+                    if values is None:
+                        for suffix in ("Values", "values_patch0", "values"):
+                            values = self._get_array(
+                                prop_uri, f"/RESQML/{prop_uuid}/{suffix}"
+                            )
+                            if values is not None:
+                                break
                     is_discrete = "Discrete" in prop_type or "Categorical" in prop_type
                     props.append(
                         {

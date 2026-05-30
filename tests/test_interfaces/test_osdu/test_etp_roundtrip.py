@@ -12,6 +12,8 @@ import numpy as np
 import pytest
 
 import xtgeo
+
+pytestmark = pytest.mark.requires_rddms
 from xtgeo.interfaces.osdu import (
     CrsSnapshot,
     DataspaceSnapshot,

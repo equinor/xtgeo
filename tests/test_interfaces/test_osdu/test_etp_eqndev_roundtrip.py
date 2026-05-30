@@ -19,6 +19,9 @@ import uuid as _uuid
 from pathlib import Path
 
 import numpy as np
+import pytest
+
+pytestmark = pytest.mark.requires_rddms
 
 # ---------------------------------------------------------------------------
 # Auth helpers - load from ~/ores/k8s

@@ -118,10 +118,21 @@ def ijk_grid_to_xtgeo(
                 # Determine the object type from the listing
                 obj_type = obj.get("type", "resqml20.ContinuousProperty")
                 # Extract local name e.g. "DiscreteProperty"
-                # from "resqml20.DiscreteProperty"
+                # from "resqml20.DiscreteProperty" or "resqml20.obj_DiscreteProperty"
                 obj_type_short = (
                     obj_type.split(".")[-1] if "." in obj_type else obj_type
                 )
+                if obj_type_short.startswith("obj_"):
+                    obj_type_short = obj_type_short[4:]
+
+                # Skip non-property types (e.g. PropertyKind)
+                if obj_type_short not in (
+                    "ContinuousProperty",
+                    "DiscreteProperty",
+                    "CategoricalProperty",
+                ):
+                    continue
+
                 prop_data = provider.get_property_values(
                     prop_uuid, object_type=obj_type_short
                 )
@@ -132,6 +143,10 @@ def ijk_grid_to_xtgeo(
                 values = prop_data["values"]
                 if values.size != ni * nj * nk:
                     continue
+
+                # Handle RESQML (nk,nj,ni) → xtgeo (ni,nj,nk) axis order
+                if values.ndim == 3 and values.shape == (nk, nj, ni):
+                    values = values.transpose(2, 1, 0)
 
                 name = prop_data["title"]
                 is_discrete = prop_data["is_discrete"]
@@ -186,6 +201,7 @@ def xtgeo_grid_to_resqml(
     crs_uuid: Optional[str] = None,
     crs_epsg: Optional[int] = None,
     properties: Optional[List[Any]] = None,
+    preserve_uuids: bool = True,
 ) -> Dict[str, str]:
     """Write an xtgeo.Grid to a RESQML provider.
 
@@ -205,13 +221,17 @@ def xtgeo_grid_to_resqml(
         EPSG code for the projected CRS (used when creating default CRS).
     properties : list of xtgeo.GridProperty, optional
         Properties to export alongside the grid.
+    preserve_uuids : bool
+        If True (default), reuse UUIDs stored in xtgeo object metadata
+        (round-trip identity). If False, always generate fresh UUIDs
+        (creates new RESQML objects, appropriate for copies/new versions).
 
     Returns
     -------
     dict mapping object titles to their UUIDs.
     """
     # Try to recover UUIDs from metadata if available
-    saved = _get_resqml_meta(grid)
+    saved = _get_resqml_meta(grid) if preserve_uuids else {}
 
     if grid_uuid is None:
         grid_uuid = saved.get("uuid") or str(_uuid.uuid4())
@@ -278,8 +298,8 @@ def xtgeo_grid_to_resqml(
     # Export properties
     if properties:
         for prop in properties:
-            # Recover UUID from property metadata if available
-            prop_saved = _get_resqml_meta(prop)
+            # Recover UUID from property metadata if preserve_uuids is set
+            prop_saved = _get_resqml_meta(prop) if preserve_uuids else {}
             prop_uuid = prop_saved.get("uuid") or str(_uuid.uuid4())
             values = prop.values.flatten()
 
