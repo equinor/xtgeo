@@ -31,8 +31,12 @@ def merge_grids(
 
     if isinstance(lmap1, np.ndarray):
         _validate_layer_mapping(lmap1, grid1.nlay)
+    else:
+        lmap1 = np.arange(grid1.nlay, dtype=np.int32)
     if isinstance(lmap2, np.ndarray):
         _validate_layer_mapping(lmap2, grid2.nlay)
+    else:
+        lmap2 = np.arange(grid2.nlay, dtype=np.int32)
 
     # Ensure both grids have the same ijk_handedness
     if (
@@ -54,13 +58,6 @@ def merge_grids(
             grid1.ijk_handedness,
             grid2.ijk_handedness,
         )
-
-    # create a new layer mapping for grid1 and grid2
-    # group layers in the merged grid by the input layer number
-    if not isinstance(lmap1, np.ndarray):
-        lmap1 = np.arange(grid1.nlay, dtype=np.int32)
-    if not isinstance(lmap2, np.ndarray):
-        lmap2 = np.arange(grid2.nlay, dtype=np.int32)
 
     new_nlay = max(lmap1.max() + 1, lmap2.max() + 1)
 
@@ -622,7 +619,7 @@ def _create_merged_property(
 
 def _validate_layer_mapping(
     lmap: np.ndarray,
-    layers: int,
+    num_grid_layers: int,
 ) -> None:
     """Validate layer mapping arrays to ensure. They always
     only int equivalents
@@ -634,11 +631,11 @@ def _validate_layer_mapping(
 
     if lmap.min() < 0:
         raise ValueError("layer mapping must be >=0")
-    if len(lmap) != layers:
+    if len(lmap) != num_grid_layers:
         raise ValueError("layer mapping must map all layers")
     if not np.all(lmap % 1 == 0):
         raise ValueError("layer mapping must only contain int")
     if len(np.unique(lmap)) < len(lmap):
         raise ValueError("layer mapping must be unique")
-    if not np.array_equal(lmap, np.sort(lmap)):
-        raise ValueError("layer mapping must monotonical increase")
+    if not np.all(lmap[1:] >= lmap[:-1]):
+        raise ValueError("layer mapping must strictly monotonically increase")

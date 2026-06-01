@@ -408,7 +408,7 @@ def grid_merge(
     array of length input grid that contains the resulting layer in the merged
     grid. (Note this is zero indexed for input and output layers)
 
-    - lmap[ INPUT_LAYER ] = NEW_LAYER
+    - layer_map[ INPUT_LAYER ] = NEW_LAYER
 
     The resulting grid dimensions will be:
     - ncol: grid1.ncol + 1 + grid2.ncol
