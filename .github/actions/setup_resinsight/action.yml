@@ -32,3 +32,4 @@ runs:
       shell: bash
       run: |
         uv pip install "/opt/${{ inputs.install-dir }}/bin/Python"
+        uv pip install --upgrade --no-cache-dir --force-reinstall --verbose "grpcio>=1.81.0" "grpcio-tools>=1.81.0"
