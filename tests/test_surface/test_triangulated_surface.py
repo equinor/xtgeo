@@ -1305,6 +1305,25 @@ class TestWriteFile:
         with pytest.raises(InvalidFileFormatError):
             surf.to_file(filepath, fformat="irap_binary")
 
+    def test_to_file_guess_format_from_content(self, tmp_path: Path) -> None:
+        surf = _create_surface(name="guess_format_test")
+        filepath = tmp_path / "guess_format.no_format_hint"
+        # Raises FileNotFoundError because file doesn't exist when trying
+        # to guess format from content.
+        # This behaviour is awkward and could be improved
+        with pytest.raises(FileNotFoundError):
+            surf.to_file(filepath, fformat="guess")
+
+    def test_to_file_default_format(self, tmp_path: Path) -> None:
+        surf = _create_surface(name="default_format_test")
+        filepath = tmp_path / "default_format.no_format_hint"
+        result_file = surf.to_file(filepath)
+
+        assert result_file == filepath
+        loaded = triangulated_surface_from_file(filepath, fformat="guess")
+        np.testing.assert_array_almost_equal(loaded.vertices, surf.vertices)
+        assert loaded.num_triangles == surf.num_triangles
+
     def test_to_file_bytes_io(self) -> None:
         surf = _create_surface(fformat=FileFormat.TSURF.value[0], name="bytes_io_test")
         buf = BytesIO()
