@@ -773,7 +773,7 @@ class TriangulatedSurface:
     def to_file(
         self,
         filepath: FileLike,
-        fformat: str = "guess",
+        fformat: str = "tsurf",
     ) -> Path | BytesIO | StringIO | None:
         """
         Write triangulated surface to a file with format selection.
