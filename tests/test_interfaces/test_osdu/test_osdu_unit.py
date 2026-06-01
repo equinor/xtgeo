@@ -19,7 +19,7 @@ from xtgeo.interfaces.osdu import (
 from xtgeo.interfaces.osdu._crs import LocalDepth3dCrs
 from xtgeo.interfaces.osdu._metadata import (
     OsduPropertyMapping,
-    OsduWorkProductMetadata,
+    OsduWorkProductMetadata
     ecl_keyword_to_osdu,
     list_supported_properties,
     osdu_name_to_ecl_keyword,
