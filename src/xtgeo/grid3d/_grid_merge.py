@@ -29,11 +29,11 @@ def merge_grids(
     grid1._set_xtgformat2()
     grid2._set_xtgformat2()
 
-    if isinstance(lmap1, np.ndarray):
+    if lmap1 is not None:
         _validate_layer_mapping(lmap1, grid1.nlay)
     else:
         lmap1 = np.arange(grid1.nlay, dtype=np.int32)
-    if isinstance(lmap2, np.ndarray):
+    if lmap2 is not None:
         _validate_layer_mapping(lmap2, grid2.nlay)
     else:
         lmap2 = np.arange(grid2.nlay, dtype=np.int32)
@@ -629,6 +629,8 @@ def _validate_layer_mapping(
     all layers in input grid are mapped
     """
 
+    if not isinstance(lmap, np.ndarray):
+        raise ValueError("The layermap must be input as a numpy array")
     if lmap.min() < 0:
         raise ValueError("layer mapping must be >=0")
     if len(lmap) != num_grid_layers:

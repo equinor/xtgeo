@@ -144,6 +144,26 @@ def test_lmap2_raises_if_not_increasing():
         xtgeo.grid_merge(g1, g2, lmap1, lmap2)
 
 
+def test_lmap1_raises_if_not_np_array():
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = [0, 1, 2]
+    lmap2 = np.arange(2, dtype=np.float32)
+
+    with pytest.raises(ValueError, match="The layermap must be input as a numpy array"):
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
+
+
+def test_lmap2_raises_if_not_np_array():
+    g1 = xtgeo.create_box_grid(dimension=(5, 5, 3))
+    g2 = xtgeo.create_box_grid(dimension=(3, 3, 2))
+    lmap1 = np.arange(3, dtype=np.float32)
+    lmap2 = [0, 1]
+
+    with pytest.raises(ValueError, match="The layermap must be input as a numpy array"):
+        xtgeo.grid_merge(g1, g2, lmap1, lmap2)
+
+
 def test_merge_with_lmap_inputs():
     """Test merging grid with lmap1 and lmap2 active"""
     g1 = xtgeo.create_box_grid(dimension=(3, 3, 3))
