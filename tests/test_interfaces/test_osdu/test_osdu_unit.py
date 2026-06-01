@@ -866,6 +866,57 @@ class TestPolylineMultiPoly:
         # Should have points from both polylines
         assert len(df2) >= 7
 
+    def test_fault_interpretation_roundtrip(self, tmp_path):
+        """Fault polylines with BoundaryFeature + FaultInterpretation chain."""
+        import pandas as pd
+
+        epc = str(tmp_path / "fault.epc")
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0, 1, 2, 10, 11, 12],
+                "Y_UTMN": [0, 1, 0, 10, 11, 10],
+                "Z_TVDSS": [100, 200, 300, 100, 200, 300],
+                "POLY_ID": [0, 0, 0, 1, 1, 1],
+            }
+        )
+        polys = xtgeo.Polygons(df, name="MainFault")
+        result = xtgeo.polygons_to_osdu(
+            epc, polys, title="MainFault sticks", fault_name="MainFault", crs_epsg=23031
+        )
+
+        # Should have created BoundaryFeature, FaultInterpretation, and PolylineSet
+        assert "BoundaryFeature:MainFault" in result
+        assert "FaultInterpretation:MainFault" in result
+        assert "MainFault sticks" in result
+
+        # Round-trip: read back and verify fault name is recovered
+        polys2 = xtgeo.polygons_from_osdu(epc, name="MainFault sticks")
+        assert polys2.name == "MainFault"
+        df2 = polys2.get_dataframe()
+        assert len(df2) >= 6
+
+    def test_fault_name_inferred_from_polygons_name(self, tmp_path):
+        """If Polygons.name is set and fault_name is not given, infer it."""
+        import pandas as pd
+
+        epc = str(tmp_path / "fault2.epc")
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0, 1, 2],
+                "Y_UTMN": [0, 1, 0],
+                "Z_TVDSS": [100, 200, 300],
+                "POLY_ID": [0, 0, 0],
+            }
+        )
+        polys = xtgeo.Polygons(df, name="WestFault")
+        result = xtgeo.polygons_to_osdu(
+            epc, polys, title="WestFault sticks", crs_epsg=23031
+        )
+
+        # Fault chain should be created automatically from Polygons.name
+        assert "BoundaryFeature:WestFault" in result
+        assert "FaultInterpretation:WestFault" in result
+
 
 # ---------------------------------------------------------------------------
 # _ijk_grid.py and _grid2d.py edge cases
@@ -993,6 +1044,71 @@ class TestGridMetadataPreservation:
             epc2, grid2, title="G2", properties=props2, crs_epsg=23031
         )
         assert result["PORO"] == orig_prop_uuid
+
+
+class TestHorizonInterpretation:
+    """Horizon interpretation chain (GeneticBoundaryFeature + HorizonInterpretation)."""
+
+    def test_horizon_interpretation_roundtrip(self, tmp_path):
+        """Surface with horizon interpretation chain roundtrips correctly."""
+        epc = str(tmp_path / "horizon.epc")
+        vals = np.arange(25, dtype=np.float64).reshape(5, 5) * 100
+        surf = xtgeo.RegularSurface(
+            ncol=5, nrow=5, xinc=25, yinc=25, values=vals, name="TopVolantis"
+        )
+        result = xtgeo.surface_to_osdu(
+            epc,
+            surf,
+            title="TopVolantis depth",
+            horizon_name="TopVolantis",
+            crs_epsg=23031,
+        )
+
+        # Should have created GeneticBoundaryFeature, HorizonInterpretation, Grid2d
+        assert "GeneticBoundaryFeature:TopVolantis" in result
+        assert "HorizonInterpretation:TopVolantis" in result
+        assert "TopVolantis depth" in result
+
+        # Round-trip: read back and verify horizon name is recovered
+        surf2 = xtgeo.surface_from_osdu(epc, name="TopVolantis depth")
+        assert surf2.name == "TopVolantis"
+        assert surf2.ncol == 5
+        assert surf2.nrow == 5
+
+    def test_horizon_name_inferred_from_surface_name(self, tmp_path):
+        """If RegularSurface.name is set and horizon_name is not given, infer it."""
+        epc = str(tmp_path / "horizon2.epc")
+        vals = np.zeros((4, 4))
+        surf = xtgeo.RegularSurface(
+            ncol=4, nrow=4, xinc=50, yinc=50, values=vals, name="BaseReek"
+        )
+        result = xtgeo.surface_to_osdu(
+            epc,
+            surf,
+            title="BaseReek map",
+            crs_epsg=23031,
+        )
+
+        # Horizon chain should be created automatically from surface.name
+        assert "GeneticBoundaryFeature:BaseReek" in result
+        assert "HorizonInterpretation:BaseReek" in result
+
+    def test_no_horizon_chain_for_default_name(self, tmp_path):
+        """Surface with default name 'unknown' should NOT create horizon chain."""
+        epc = str(tmp_path / "nochain.epc")
+        vals = np.ones((3, 3))
+        surf = xtgeo.RegularSurface(ncol=3, nrow=3, xinc=10, yinc=10, values=vals)
+        # name defaults to "unknown"
+        result = xtgeo.surface_to_osdu(
+            epc,
+            surf,
+            title="GenericSurface",
+            crs_epsg=23031,
+        )
+
+        # No interpretation chain keys
+        assert not any("GeneticBoundaryFeature" in k for k in result)
+        assert not any("HorizonInterpretation" in k for k in result)
 
 
 class TestSurfaceMetadataPreservation:
@@ -1135,3 +1251,69 @@ class TestMetadataManualAttachment:
 
         result = points_to_osdu(tmp_epc, pts, title="ManualPts", crs_epsg=23031)
         assert result["ManualPts"] == custom_uuid
+
+
+# ---------------------------------------------------------------------------
+# FIRP chain roundtrip tests (fault + horizon interpretation)
+# ---------------------------------------------------------------------------
+
+
+class TestFirpChainRoundtrip:
+    """Verify Feature → Interpretation → Representation chains roundtrip."""
+
+    def test_fault_chain_roundtrip(self, tmp_path):
+        """BoundaryFeature → FaultInterpretation → PolylineSet."""
+        import pandas as pd
+
+        epc = str(tmp_path / "fault_firp.epc")
+        df = pd.DataFrame(
+            {
+                "X_UTME": [0.0, 1.0, 2.0],
+                "Y_UTMN": [0.0, 1.0, 0.0],
+                "Z_TVDSS": [100.0, 200.0, 300.0],
+                "POLY_ID": [0, 0, 0],
+            }
+        )
+        polys = xtgeo.Polygons(df, name="F1")
+        result = xtgeo.polygons_to_osdu(
+            epc, polys, title="F1 sticks", fault_name="F1", crs_epsg=23031
+        )
+
+        assert "BoundaryFeature:F1" in result
+        assert "FaultInterpretation:F1" in result
+
+        polys2 = xtgeo.polygons_from_osdu(epc, name="F1 sticks")
+        assert polys2.name == "F1"
+        assert len(polys2.get_dataframe()) == 3
+
+    def test_horizon_chain_roundtrip(self, tmp_path):
+        """GeneticBoundaryFeature → HorizonInterpretation → Grid2d."""
+        epc = str(tmp_path / "hz_firp.epc")
+        vals = np.arange(9, dtype=np.float64).reshape(3, 3)
+        surf = xtgeo.RegularSurface(
+            ncol=3, nrow=3, xinc=25, yinc=25, values=vals, name="Top"
+        )
+        result = xtgeo.surface_to_osdu(
+            epc, surf, title="Top depth", horizon_name="Top", crs_epsg=23031
+        )
+
+        assert "GeneticBoundaryFeature:Top" in result
+        assert "HorizonInterpretation:Top" in result
+
+        surf2 = xtgeo.surface_from_osdu(epc, name="Top depth")
+        assert surf2.name == "Top"
+        np.testing.assert_allclose(surf2.values, vals, atol=1e-6)
+
+    def test_firp_uuids_are_distinct(self, tmp_path):
+        """Feature, Interpretation, and Representation get unique UUIDs."""
+        epc = str(tmp_path / "uuid_check.epc")
+        vals = np.ones((3, 3))
+        surf = xtgeo.RegularSurface(
+            ncol=3, nrow=3, xinc=10, yinc=10, values=vals, name="H"
+        )
+        r = xtgeo.surface_to_osdu(
+            epc, surf, title="H map", horizon_name="H", crs_epsg=23031
+        )
+
+        uuids = [v for k, v in r.items() if k != "CRS"]
+        assert len(uuids) == len(set(uuids))

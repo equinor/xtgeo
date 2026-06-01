@@ -4,6 +4,9 @@
 Handles bidirectional conversion:
   - RESQML Grid2dRepresentation -> xtgeo.RegularSurface
   - xtgeo.RegularSurface -> RESQML Grid2dRepresentation
+
+Supports the full RESQML horizon chain:
+  GeneticBoundaryFeature -> HorizonInterpretation -> Grid2dRepresentation
 """
 
 from __future__ import annotations
@@ -28,6 +31,10 @@ def grid2d_to_xtgeo(
     surface_uuid: str,
 ) -> Any:
     """Read a Grid2D representation and convert to xtgeo.RegularSurface.
+
+    If the Grid2dRepresentation references a HorizonInterpretation, the horizon
+    name (from GeneticBoundaryFeature) is stored on the surface's name attribute
+    and in RESQML metadata.
 
     Parameters
     ----------
@@ -68,6 +75,22 @@ def grid2d_to_xtgeo(
     # xtgeo RegularSurface uses masked arrays
     masked_values = np.ma.masked_invalid(values.astype(np.float64))
 
+    # Resolve horizon name from interpretation chain
+    horizon_name = ""
+    interpretation_uuid = geom.get("interpretation_uuid", "")
+    if interpretation_uuid:
+        try:
+            interp_data = provider.get_horizon_interpretation(interpretation_uuid)
+            horizon_name = interp_data.get("feature_title", "") or interp_data.get(
+                "title", ""
+            )
+        except Exception:
+            logger.debug(
+                "Could not resolve HorizonInterpretation %s", interpretation_uuid
+            )
+
+    obj_title = geom.get("title", "")
+
     surf = RegularSurface(
         ncol=ncol,
         nrow=nrow,
@@ -77,6 +100,7 @@ def grid2d_to_xtgeo(
         yinc=yinc,
         rotation=rotation,
         values=masked_values,
+        name=horizon_name or obj_title or "unknown",
     )
 
     # Attach RESQML provenance metadata
@@ -87,7 +111,9 @@ def grid2d_to_xtgeo(
             "schema_version": "2.0.1",
             "object_type": "Grid2dRepresentation",
             "crs_uuid": geom.get("crs_uuid", ""),
-            "title": geom.get("title", ""),
+            "title": obj_title,
+            "interpretation_uuid": interpretation_uuid,
+            "horizon_name": horizon_name,
         },
     )
 
@@ -101,8 +127,12 @@ def xtgeo_surface_to_resqml(
     surface_uuid: Optional[str] = None,
     crs_uuid: Optional[str] = None,
     crs_epsg: Optional[int] = None,
+    horizon_name: Optional[str] = None,
 ) -> Dict[str, str]:
     """Write an xtgeo.RegularSurface to a RESQML provider as Grid2dRepresentation.
+
+    If ``horizon_name`` is provided, creates the full RESQML horizon
+    chain: GeneticBoundaryFeature -> HorizonInterpretation -> Grid2d.
 
     Parameters
     ----------
@@ -118,6 +148,11 @@ def xtgeo_surface_to_resqml(
         UUID of existing CRS. If None, a default CRS is created.
     crs_epsg : int, optional
         EPSG code for projected CRS if creating default.
+    horizon_name : str, optional
+        Name of the horizon. If provided, creates GeneticBoundaryFeature +
+        HorizonInterpretation objects and links them to the representation.
+        If not provided but the surface has a non-default name or was
+        previously read from a horizon interpretation, that name is used.
 
     Returns
     -------
@@ -131,7 +166,13 @@ def xtgeo_surface_to_resqml(
     if crs_uuid is None:
         crs_uuid = saved.get("crs_uuid") or None
 
-    result_uuids = {}
+    # Resolve horizon_name from surface metadata/name if not explicitly given
+    if horizon_name is None:
+        horizon_name = saved.get("horizon_name", "")
+        if not horizon_name and surface.name not in ("unknown", ""):
+            horizon_name = surface.name
+
+    result_uuids: Dict[str, str] = {}
 
     # Create CRS if needed
     if crs_uuid is None:
@@ -147,6 +188,20 @@ def xtgeo_surface_to_resqml(
             projected_crs_epsg=crs_epsg,
         )
         result_uuids["CRS"] = crs_uuid
+
+    # Create horizon interpretation chain if horizon_name is set
+    interpretation_uuid: Optional[str] = None
+    if horizon_name:
+        feature_uuid = str(_uuid.uuid4())
+        interpretation_uuid = str(_uuid.uuid4())
+
+        provider._put_genetic_boundary_feature(feature_uuid, horizon_name)
+        provider._put_horizon_interpretation(
+            interpretation_uuid, horizon_name, feature_uuid
+        )
+
+        result_uuids[f"GeneticBoundaryFeature:{horizon_name}"] = feature_uuid
+        result_uuids[f"HorizonInterpretation:{horizon_name}"] = interpretation_uuid
 
     # Extract values (fill masked with NaN for HDF5 storage)
     values = surface.values.filled(np.nan).astype(np.float64)
@@ -164,6 +219,7 @@ def xtgeo_surface_to_resqml(
         rotation=rotation_rad,
         values=values,
         crs_uuid=crs_uuid,
+        interpretation_uuid=interpretation_uuid,
     )
     result_uuids[title] = surface_uuid
 

@@ -573,6 +573,20 @@ class EpcFileProvider(ResqmlDataProvider):
         if root is None:
             raise ValueError(f"Grid2D with UUID {uuid} not found in EPC")
 
+        # Title
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        # RepresentedInterpretation (link to HorizonInterpretation)
+        interpretation_uuid = ""
+        interp_ref = root.find(f".//{{{NS_RESQML20}}}RepresentedInterpretation")
+        if interp_ref is not None:
+            interpretation_uuid = interp_ref.get("uuid", "")
+
         # Dimensions
         ni = int(root.findtext(f".//{{{NS_RESQML20}}}FastestAxisCount") or 0)
         nj = int(root.findtext(f".//{{{NS_RESQML20}}}SlowestAxisCount") or 0)
@@ -642,6 +656,8 @@ class EpcFileProvider(ResqmlDataProvider):
             "rotation": rotation,
             "values": values,
             "crs_uuid": crs_uuid,
+            "title": title,
+            "interpretation_uuid": interpretation_uuid,
         }
 
     def put_grid2d_geometry(
@@ -657,6 +673,7 @@ class EpcFileProvider(ResqmlDataProvider):
         rotation: float,
         values: np.ndarray,
         crs_uuid: str,
+        interpretation_uuid: Optional[str] = None,
     ) -> str:
         """Write Grid2D representation (regular surface)."""
         if not uuid:
@@ -671,6 +688,13 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("schemaVersion", "2.0")
 
         _add_citation(root, title)
+
+        # RepresentedInterpretation (link to HorizonInterpretation if provided)
+        if interpretation_uuid:
+            interp_ref = etree.SubElement(
+                root, f"{{{NS_RESQML20}}}RepresentedInterpretation"
+            )
+            interp_ref.set("uuid", interpretation_uuid)
 
         # Grid2dPatch
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}Grid2dPatch")
@@ -788,6 +812,44 @@ class EpcFileProvider(ResqmlDataProvider):
 
     # ---- PolylineSet ----
 
+    def get_fault_interpretation(self, uuid: str) -> Dict[str, Any]:
+        """Read a FaultInterpretation and its referenced BoundaryFeature.
+
+        Returns dict with keys: title, feature_uuid, feature_title.
+        """
+        root = self._find_part_by_uuid(uuid)
+        if root is None:
+            raise ValueError(f"FaultInterpretation with UUID {uuid} not found")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        feature_uuid = ""
+        feat_ref = root.find(f".//{{{NS_RESQML20}}}InterpretedFeature")
+        if feat_ref is not None:
+            feature_uuid = feat_ref.get("uuid", "")
+
+        # Read the BoundaryFeature title
+        feature_title = ""
+        if feature_uuid:
+            feat_root = self._find_part_by_uuid(feature_uuid)
+            if feat_root is not None:
+                fc = feat_root.find(f"{{{NS_COMMON20}}}Citation")
+                if fc is not None:
+                    ft = fc.find(f"{{{NS_COMMON20}}}Title")
+                    if ft is not None:
+                        feature_title = ft.text or ""
+
+        return {
+            "title": title,
+            "feature_uuid": feature_uuid,
+            "feature_title": feature_title,
+        }
+
     def get_polylineset(self, uuid: str) -> Dict[str, Any]:
         """Read PolylineSet representation."""
         root = self._find_part_by_uuid(uuid)
@@ -798,6 +860,20 @@ class EpcFileProvider(ResqmlDataProvider):
         crs_ref = root.find(f".//{{{NS_RESQML20}}}LocalCrs")
         if crs_ref is not None:
             crs_uuid = crs_ref.get("uuid", "")
+
+        # RepresentedInterpretation (link to FaultInterpretation)
+        interpretation_uuid = ""
+        interp_ref = root.find(f".//{{{NS_RESQML20}}}RepresentedInterpretation")
+        if interp_ref is not None:
+            interpretation_uuid = interp_ref.get("uuid", "")
+
+        # Title
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
 
         # Read concatenated points and node counts
         all_points = self._read_hdf5_array(uuid, "Points")
@@ -821,7 +897,13 @@ class EpcFileProvider(ResqmlDataProvider):
             polylines.append(all_points)
             closed_list.append(False)
 
-        return {"polylines": polylines, "closed": closed_list, "crs_uuid": crs_uuid}
+        return {
+            "polylines": polylines,
+            "closed": closed_list,
+            "crs_uuid": crs_uuid,
+            "title": title,
+            "interpretation_uuid": interpretation_uuid,
+        }
 
     def put_polylineset(
         self,
@@ -830,6 +912,8 @@ class EpcFileProvider(ResqmlDataProvider):
         polylines: List[np.ndarray],
         closed: List[bool],
         crs_uuid: str,
+        interpretation_uuid: Optional[str] = None,
+        line_role: Optional[str] = None,
     ) -> str:
         """Write PolylineSet representation."""
         if not uuid:
@@ -856,6 +940,18 @@ class EpcFileProvider(ResqmlDataProvider):
         root.set("schemaVersion", "2.0")
 
         _add_citation(root, title)
+
+        # RepresentedInterpretation (link to FaultInterpretation if provided)
+        if interpretation_uuid:
+            interp_ref = etree.SubElement(
+                root, f"{{{NS_RESQML20}}}RepresentedInterpretation"
+            )
+            interp_ref.set("uuid", interpretation_uuid)
+
+        # LineRole (e.g. "fault center line")
+        if line_role:
+            role_el = etree.SubElement(root, f"{{{NS_RESQML20}}}LineRole")
+            role_el.text = line_role
 
         # LinePatch
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}LinePatch")
@@ -1400,6 +1496,107 @@ class EpcFileProvider(ResqmlDataProvider):
 
         self._add_part(ResqmlObjectType.WELLBORE_INTERPRETATION, uuid, root)
         return uuid
+
+    def _put_boundary_feature(self, uuid: str, title: str) -> str:
+        """Write a BoundaryFeature (represents a named fault in the Feature chain)."""
+        root = etree.Element(f"{{{NS_RESQML20}}}BoundaryFeature", nsmap=RESQML_NS_MAP)
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        self._add_part(ResqmlObjectType.BOUNDARY_FEATURE, uuid, root)
+        return uuid
+
+    def _put_fault_interpretation(
+        self, uuid: str, title: str, feature_uuid: str
+    ) -> str:
+        """Write a FaultInterpretation referencing a BoundaryFeature."""
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}FaultInterpretation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        # Reference to BoundaryFeature
+        feat_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}InterpretedFeature")
+        feat_ref.set("uuid", feature_uuid)
+
+        self._add_part(ResqmlObjectType.FAULT_INTERPRETATION, uuid, root)
+        return uuid
+
+    def _put_genetic_boundary_feature(self, uuid: str, title: str) -> str:
+        """Write a GeneticBoundaryFeature (represents a named horizon)."""
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}GeneticBoundaryFeature", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        # GeneticBoundaryKind = "horizon" (vs "geobody boundary")
+        kind_el = etree.SubElement(root, f"{{{NS_RESQML20}}}GeneticBoundaryKind")
+        kind_el.text = "horizon"
+
+        self._add_part(ResqmlObjectType.GENETIC_BOUNDARY_FEATURE, uuid, root)
+        return uuid
+
+    def _put_horizon_interpretation(
+        self, uuid: str, title: str, feature_uuid: str
+    ) -> str:
+        """Write a HorizonInterpretation referencing a GeneticBoundaryFeature."""
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}HorizonInterpretation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        # Reference to GeneticBoundaryFeature
+        feat_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}InterpretedFeature")
+        feat_ref.set("uuid", feature_uuid)
+
+        self._add_part(ResqmlObjectType.HORIZON_INTERPRETATION, uuid, root)
+        return uuid
+
+    def get_horizon_interpretation(self, uuid: str) -> Dict[str, Any]:
+        """Read a HorizonInterpretation and its referenced GeneticBoundaryFeature."""
+        root = self._find_part_by_uuid(uuid)
+        if root is None:
+            raise ValueError(f"HorizonInterpretation with UUID {uuid} not found")
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        feature_uuid = ""
+        feat_ref = root.find(f".//{{{NS_RESQML20}}}InterpretedFeature")
+        if feat_ref is not None:
+            feature_uuid = feat_ref.get("uuid", "")
+
+        # Read the GeneticBoundaryFeature title
+        feature_title = ""
+        if feature_uuid:
+            feat_root = self._find_part_by_uuid(feature_uuid)
+            if feat_root is not None:
+                fc = feat_root.find(f"{{{NS_COMMON20}}}Citation")
+                if fc is not None:
+                    ft = fc.find(f"{{{NS_COMMON20}}}Title")
+                    if ft is not None:
+                        feature_title = ft.text or ""
+
+        return {
+            "title": title,
+            "feature_uuid": feature_uuid,
+            "feature_title": feature_title,
+        }
 
     def _put_md_datum(
         self, uuid: str, title: str, crs_uuid: str, location: np.ndarray

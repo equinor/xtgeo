@@ -729,6 +729,7 @@ def surface_to_osdu(
     crs_epsg: Optional[int] = None,
     crs_uuid: Optional[str] = None,
     surface_uuid: Optional[str] = None,
+    horizon_name: Optional[str] = None,
 ) -> Dict[str, str]:
     """Write an xtgeo RegularSurface to OSDU/RDDMS or an EPC file.
 
@@ -746,6 +747,11 @@ def surface_to_osdu(
         UUID of an existing CRS.
     surface_uuid : str, optional
         Explicit UUID for the surface object.
+    horizon_name : str, optional
+        Name of the horizon. Creates GeneticBoundaryFeature +
+        HorizonInterpretation objects linked to the Grid2dRepresentation.
+        If not provided but the surface has a non-default name, that name
+        is used automatically.
 
     Returns
     -------
@@ -755,6 +761,8 @@ def surface_to_osdu(
     Examples
     --------
     >>> uuids = surface_to_osdu(session, surf, title="TopReek", crs_epsg=23031)
+    >>> uuids = surface_to_osdu(session, surf, title="TopVolantis",
+    ...                         horizon_name="TopVolantis", crs_epsg=23031)
     """
     from ._grid2d import xtgeo_surface_to_resqml
 
@@ -767,6 +775,7 @@ def surface_to_osdu(
             surface_uuid=surface_uuid,
             crs_uuid=crs_uuid,
             crs_epsg=crs_epsg,
+            horizon_name=horizon_name,
         )
     finally:
         if needs_close:
@@ -824,6 +833,8 @@ def polygons_to_osdu(
     title: str = "Exported Polygons",
     crs_epsg: Optional[int] = None,
     crs_uuid: Optional[str] = None,
+    fault_name: Optional[str] = None,
+    line_role: Optional[str] = None,
 ) -> Dict[str, str]:
     """Write xtgeo Polygons to OSDU/RDDMS or an EPC file.
 
@@ -839,6 +850,11 @@ def polygons_to_osdu(
         EPSG code for the CRS.
     crs_uuid : str, optional
         UUID of an existing CRS.
+    fault_name : str, optional
+        Name of the fault. Creates BoundaryFeature + FaultInterpretation
+        objects linked to the PolylineSetRepresentation.
+    line_role : str, optional
+        RESQML LineRole value (e.g. "fault center line").
 
     Returns
     -------
@@ -855,6 +871,8 @@ def polygons_to_osdu(
             title=title,
             crs_uuid=crs_uuid,
             crs_epsg=crs_epsg,
+            fault_name=fault_name,
+            line_role=line_role,
         )
     finally:
         if needs_close:

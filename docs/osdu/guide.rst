@@ -46,7 +46,7 @@ All major xtgeo object types are supported for OSDU/RESQML read and write:
      - Full
      - Included with grid read/write
    * - ``RegularSurface``
-     - Grid2dRepresentation
+     - Grid2dRepresentation (+ GeneticBoundaryFeature / HorizonInterpretation)
      - Full
      - ``surface_to_osdu`` / ``surface_from_osdu``
    * - ``TriangulatedSurface``
@@ -58,7 +58,7 @@ All major xtgeo object types are supported for OSDU/RESQML read and write:
      - Full
      - ``points_to_osdu`` / ``points_from_osdu``
    * - ``Polygons``
-     - PolylineSetRepresentation
+     - PolylineSetRepresentation (+ BoundaryFeature / FaultInterpretation)
      - Full
      - ``polygons_to_osdu`` / ``polygons_from_osdu``
    * - ``Well``
@@ -480,6 +480,163 @@ Writing Data
     xtgeo.triangulated_surface_to_osdu(
         session, trisurf, title="FaultA", crs_epsg=23031
     )
+
+
+Fault Polylines (RESQML Interpretation Chain)
+---------------------------------------------
+
+When pushing fault polylines (fault sticks) to OSDU, xtgeo creates the full
+RESQML **Feature → Interpretation → Representation** (FIRP) chain that
+AspenTech and Landmark software produce:
+
+.. code-block:: none
+
+    BoundaryFeature("MainFault")
+      → FaultInterpretation("MainFault")
+        → PolylineSetRepresentation (the geometry, with LineRole="fault center line")
+
+This happens automatically when a ``fault_name`` is provided — or inferred
+from ``Polygons.name``.
+
+Writing faults from RMS
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    import xtgeo
+
+    # Load fault sticks from RMS
+    fault = xtgeo.polygons_from_roxar(project, "MainFault", "DL_depth", stype="faults")
+    # fault.name == "MainFault" (from RMS project.faults namespace)
+
+    # Push to OSDU — fault chain is created automatically
+    uuids = xtgeo.polygons_to_osdu(
+        session, fault,
+        title="MainFault sticks",
+        crs_epsg=23031,
+    )
+    # {'BoundaryFeature:MainFault': 'uuid-...',
+    #  'FaultInterpretation:MainFault': 'uuid-...',
+    #  'MainFault sticks': 'uuid-...', 'CRS': 'uuid-...'}
+
+The fault name flows through from ``Polygons.name`` without explicit
+configuration. You can also set it explicitly:
+
+.. code-block:: python
+
+    # Explicit fault_name (overrides Polygons.name)
+    xtgeo.polygons_to_osdu(
+        session, polys,
+        title="F1 sticks",
+        fault_name="Fault_1",
+        crs_epsg=23031,
+    )
+
+Reading faults back
+^^^^^^^^^^^^^^^^^^^^
+
+On read, the interpretation chain is resolved automatically — the fault name
+is recovered from the ``BoundaryFeature`` and set on ``Polygons.name``:
+
+.. code-block:: python
+
+    polys = xtgeo.polygons_from_osdu(session, name="MainFault sticks")
+    print(polys.name)  # "MainFault" (from BoundaryFeature)
+
+Multiple faults — recommended pattern
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For interoperability with other OSDU software, use **one Polygons per fault**
+(each fault stick as a separate ``POLY_ID`` within that object):
+
+.. code-block:: python
+
+    import xtgeo
+
+    fault_names = ["Fault_A", "Fault_B", "Fault_C"]
+
+    for fname in fault_names:
+        fault = xtgeo.polygons_from_roxar(project, fname, "DL_depth", stype="faults")
+        xtgeo.polygons_to_osdu(
+            session, fault,
+            title=f"{fname} sticks",
+            crs_epsg=23031,
+        )
+
+This produces proper per-fault RESQML objects that other software (AspenTech,
+Landmark, RESQML viewers) can recognize and display individually.
+
+.. note::
+
+    If you put all faults into a single ``Polygons`` object (distinguished only
+    by ``POLY_ID``), only a single ``PolylineSetRepresentation`` is created — no
+    per-fault interpretation chain. This is fine for local analysis but loses
+    fault identity in OSDU.
+
+Plain polylines (no fault semantics)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For generic polylines (not faults), leave ``Polygons.name`` as the default
+(``"poly"``) and don't set ``fault_name``. No interpretation chain is created:
+
+.. code-block:: python
+
+    polys = xtgeo.Polygons(df)  # name defaults to "poly"
+    xtgeo.polygons_to_osdu(session, polys, title="Contours", crs_epsg=23031)
+    # Creates only a bare PolylineSetRepresentation — no BoundaryFeature
+
+
+Horizon Surfaces (RESQML Interpretation Chain)
+-----------------------------------------------
+
+Surfaces representing horizons follow the same FIRP pattern as faults:
+**GeneticBoundaryFeature** → **HorizonInterpretation** → **Grid2dRepresentation**.
+
+Writing a horizon surface
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    import xtgeo
+
+    surf = xtgeo.RegularSurface(
+        ncol=100, nrow=100, xinc=25, yinc=25,
+        xori=460000, yori=6780000,
+        values=depth_values,
+        name="TopVolantis",
+    )
+
+    # Explicit horizon_name (takes priority):
+    xtgeo.surface_to_osdu(
+        session, surf,
+        title="TopVolantis depth",
+        horizon_name="TopVolantis",
+        crs_epsg=23031,
+    )
+
+    # Or just set surface.name — it will be inferred automatically:
+    surf.name = "TopVolantis"
+    xtgeo.surface_to_osdu(session, surf, title="TopVolantis depth", crs_epsg=23031)
+
+Reading a horizon surface back
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    surf = xtgeo.surface_from_osdu(session, name="TopVolantis depth")
+    print(surf.name)  # "TopVolantis" — recovered from interpretation chain
+
+Plain surfaces (no horizon semantics)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For generic surfaces (not horizons), leave ``RegularSurface.name`` as the default
+(``"unknown"``) and don't set ``horizon_name``. No interpretation chain is created:
+
+.. code-block:: python
+
+    surf = xtgeo.RegularSurface(ncol=50, nrow=50, xinc=10, yinc=10, values=vals)
+    xtgeo.surface_to_osdu(session, surf, title="Attribute map", crs_epsg=23031)
+    # Creates only a bare Grid2dRepresentation — no GeneticBoundaryFeature
 
 
 Deep Discovery

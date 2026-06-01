@@ -1474,6 +1474,20 @@ class EtpProvider(ResqmlDataProvider):
             xml_str.encode("utf-8") if isinstance(xml_str, str) else xml_str
         )
 
+        # Title
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        # RepresentedInterpretation (link to HorizonInterpretation)
+        interpretation_uuid = ""
+        interp_ref = root.find(f".//{{{NS_RESQML20}}}RepresentedInterpretation")
+        if interp_ref is not None:
+            interpretation_uuid = _uuid_from_ref(interp_ref)
+
         ni = int(root.findtext(f".//{{{NS_RESQML20}}}FastestAxisCount") or 0)
         nj = int(root.findtext(f".//{{{NS_RESQML20}}}SlowestAxisCount") or 0)
         origin_x = float(
@@ -1556,6 +1570,8 @@ class EtpProvider(ResqmlDataProvider):
             "rotation": rotation,
             "values": values,
             "crs_uuid": crs_uuid,
+            "title": title,
+            "interpretation_uuid": interpretation_uuid,
         }
 
     def put_grid2d_geometry(
@@ -1571,6 +1587,7 @@ class EtpProvider(ResqmlDataProvider):
         rotation: float,
         values: np.ndarray,
         crs_uuid: str,
+        interpretation_uuid: Optional[str] = None,
     ) -> str:
         """Write Grid2D representation (regular surface)."""
         import math
@@ -1592,6 +1609,13 @@ class EtpProvider(ResqmlDataProvider):
         root.set("schemaVersion", "2.0")
 
         _add_citation(root, title)
+
+        # RepresentedInterpretation (link to HorizonInterpretation if provided)
+        if interpretation_uuid:
+            interp_ref = etree.SubElement(
+                root, f"{{{NS_RESQML20}}}RepresentedInterpretation"
+            )
+            interp_ref.set("uuid", interpretation_uuid)
 
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}Grid2dPatch")
         etree.SubElement(patch, f"{{{NS_RESQML20}}}FastestAxisCount").text = str(ni)
@@ -1764,6 +1788,20 @@ class EtpProvider(ResqmlDataProvider):
         if crs_ref is not None:
             crs_uuid = _uuid_from_ref(crs_ref)
 
+        # RepresentedInterpretation (link to FaultInterpretation)
+        interpretation_uuid = ""
+        interp_ref = root.find(f".//{{{NS_RESQML20}}}RepresentedInterpretation")
+        if interp_ref is not None:
+            interpretation_uuid = _uuid_from_ref(interp_ref)
+
+        # Title
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
         uri = self._resolve_uri(uuid, "resqml20.PolylineSetRepresentation")
         hdf_paths = _hdf_paths_from_xml(root, NS_COMMON20)
         pts_path = hdf_paths.get("Points", f"/RESQML/{uuid}/Points")
@@ -1805,7 +1843,13 @@ class EtpProvider(ResqmlDataProvider):
             polylines.append(all_points.reshape(-1, 3))
             closed_list.append(False)
 
-        return {"polylines": polylines, "closed": closed_list, "crs_uuid": crs_uuid}
+        return {
+            "polylines": polylines,
+            "closed": closed_list,
+            "crs_uuid": crs_uuid,
+            "title": title,
+            "interpretation_uuid": interpretation_uuid,
+        }
 
     def put_polylineset(
         self,
@@ -1814,6 +1858,8 @@ class EtpProvider(ResqmlDataProvider):
         polylines: List[np.ndarray],
         closed: List[bool],
         crs_uuid: str,
+        interpretation_uuid: Optional[str] = None,
+        line_role: Optional[str] = None,
     ) -> str:
         """Write PolylineSet representation."""
         from lxml import etree
@@ -1833,6 +1879,18 @@ class EtpProvider(ResqmlDataProvider):
         root.set("schemaVersion", "2.0")
 
         _add_citation(root, title)
+
+        # RepresentedInterpretation (link to FaultInterpretation if provided)
+        if interpretation_uuid:
+            interp_ref = etree.SubElement(
+                root, f"{{{NS_RESQML20}}}RepresentedInterpretation"
+            )
+            interp_ref.set("uuid", interpretation_uuid)
+
+        # LineRole (e.g. "fault center line")
+        if line_role:
+            role_el = etree.SubElement(root, f"{{{NS_RESQML20}}}LineRole")
+            role_el.text = line_role
 
         # LinePatch with external data references
         patch = etree.SubElement(root, f"{{{NS_RESQML20}}}LinePatch")
@@ -2523,6 +2581,215 @@ class EtpProvider(ResqmlDataProvider):
         self._put_xml(uri, xml_str, qualified_type)
         self._run(self._commit_transaction())
         return uuid
+
+    def _put_boundary_feature(self, uuid: str, title: str) -> str:
+        """Write a BoundaryFeature (fault) via ETP."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_RESQML20, RESQML_NS_MAP
+
+        qualified_type = "resqml20.BoundaryFeature"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(f"{{{NS_RESQML20}}}BoundaryFeature", nsmap=RESQML_NS_MAP)
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._run(self._commit_transaction())
+        return uuid
+
+    def _put_fault_interpretation(
+        self, uuid: str, title: str, feature_uuid: str
+    ) -> str:
+        """Write a FaultInterpretation referencing a BoundaryFeature via ETP."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_RESQML20, RESQML_NS_MAP
+
+        qualified_type = "resqml20.FaultInterpretation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}FaultInterpretation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        feat_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}InterpretedFeature")
+        feat_ref.set("uuid", feature_uuid)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._run(self._commit_transaction())
+        return uuid
+
+    def get_fault_interpretation(self, uuid: str) -> Dict[str, Any]:
+        """Read a FaultInterpretation and its referenced BoundaryFeature via ETP."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
+
+        qualified_type = "resqml20.FaultInterpretation"
+        uri = self._resolve_uri(uuid, qualified_type)
+        xml_str = self._get_xml(uuid, uri=uri)
+        if xml_str is None:
+            raise ValueError(f"FaultInterpretation {uuid} not found via ETP")
+
+        root = etree.fromstring(
+            xml_str.encode("utf-8") if isinstance(xml_str, str) else xml_str
+        )
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        feature_uuid = ""
+        feat_ref = root.find(f".//{{{NS_RESQML20}}}InterpretedFeature")
+        if feat_ref is not None:
+            feature_uuid = _uuid_from_ref(feat_ref)
+
+        # Read BoundaryFeature title
+        feature_title = ""
+        if feature_uuid:
+            try:
+                bf_uri = self._resolve_uri(feature_uuid, "resqml20.BoundaryFeature")
+                bf_xml = self._get_xml(feature_uuid, uri=bf_uri)
+                if bf_xml:
+                    bf_root = etree.fromstring(
+                        bf_xml.encode("utf-8") if isinstance(bf_xml, str) else bf_xml
+                    )
+                    fc = bf_root.find(f"{{{NS_COMMON20}}}Citation")
+                    if fc is not None:
+                        ft = fc.find(f"{{{NS_COMMON20}}}Title")
+                        if ft is not None:
+                            feature_title = ft.text or ""
+            except Exception:
+                pass
+
+        return {
+            "title": title,
+            "feature_uuid": feature_uuid,
+            "feature_title": feature_title,
+        }
+
+    def _put_genetic_boundary_feature(self, uuid: str, title: str) -> str:
+        """Write a GeneticBoundaryFeature (horizon) via ETP."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_RESQML20, RESQML_NS_MAP
+
+        qualified_type = "resqml20.GeneticBoundaryFeature"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}GeneticBoundaryFeature", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        kind_el = etree.SubElement(root, f"{{{NS_RESQML20}}}GeneticBoundaryKind")
+        kind_el.text = "horizon"
+
+        xml_str = etree.tostring(root, encoding="unicode")
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._run(self._commit_transaction())
+        return uuid
+
+    def _put_horizon_interpretation(
+        self, uuid: str, title: str, feature_uuid: str
+    ) -> str:
+        """Write a HorizonInterpretation referencing a Feature."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_RESQML20, RESQML_NS_MAP
+
+        qualified_type = "resqml20.HorizonInterpretation"
+        uri = _uri_for_object(self._config.dataspace, qualified_type, uuid)
+
+        root = etree.Element(
+            f"{{{NS_RESQML20}}}HorizonInterpretation", nsmap=RESQML_NS_MAP
+        )
+        root.set("uuid", uuid)
+        root.set("schemaVersion", "2.0")
+
+        _add_citation(root, title)
+
+        feat_ref = etree.SubElement(root, f"{{{NS_RESQML20}}}InterpretedFeature")
+        feat_ref.set("uuid", feature_uuid)
+
+        xml_str = etree.tostring(root, encoding="unicode")
+        self._run(self._start_transaction())
+        self._put_xml(uri, xml_str, qualified_type)
+        self._run(self._commit_transaction())
+        return uuid
+
+    def get_horizon_interpretation(self, uuid: str) -> Dict[str, Any]:
+        """Read a HorizonInterpretation and its referenced GeneticBoundaryFeature."""
+        from lxml import etree
+
+        from ._resqml_enums import NS_COMMON20, NS_RESQML20
+
+        qualified_type = "resqml20.HorizonInterpretation"
+        uri = self._resolve_uri(uuid, qualified_type)
+        xml_str = self._get_xml(uuid, uri=uri)
+        if xml_str is None:
+            raise ValueError(f"HorizonInterpretation {uuid} not found via ETP")
+
+        root = etree.fromstring(
+            xml_str.encode("utf-8") if isinstance(xml_str, str) else xml_str
+        )
+
+        title = ""
+        citation = root.find(f"{{{NS_COMMON20}}}Citation")
+        if citation is not None:
+            t = citation.find(f"{{{NS_COMMON20}}}Title")
+            if t is not None:
+                title = t.text or ""
+
+        feature_uuid = ""
+        feat_ref = root.find(f".//{{{NS_RESQML20}}}InterpretedFeature")
+        if feat_ref is not None:
+            feature_uuid = _uuid_from_ref(feat_ref)
+
+        # Read GeneticBoundaryFeature title
+        feature_title = ""
+        if feature_uuid:
+            try:
+                bf_uri = self._resolve_uri(
+                    feature_uuid, "resqml20.GeneticBoundaryFeature"
+                )
+                bf_xml = self._get_xml(feature_uuid, uri=bf_uri)
+                if bf_xml:
+                    bf_root = etree.fromstring(
+                        bf_xml.encode("utf-8") if isinstance(bf_xml, str) else bf_xml
+                    )
+                    fc = bf_root.find(f"{{{NS_COMMON20}}}Citation")
+                    if fc is not None:
+                        ft = fc.find(f"{{{NS_COMMON20}}}Title")
+                        if ft is not None:
+                            feature_title = ft.text or ""
+            except Exception:
+                pass
+
+        return {
+            "title": title,
+            "feature_uuid": feature_uuid,
+            "feature_title": feature_title,
+        }
 
     def _put_md_datum(
         self, uuid: str, title: str, crs_uuid: str, location: np.ndarray

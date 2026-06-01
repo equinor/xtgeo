@@ -91,6 +91,8 @@ class ResqmlDataProvider(abc.ABC):
           - rotation: float (radians)
           - values: np.ndarray shape (nj, ni) z-values
           - crs_uuid: str
+          - title: str
+          - interpretation_uuid: str (UUID of linked HorizonInterpretation, or "")
         """
 
     @abc.abstractmethod
@@ -107,6 +109,7 @@ class ResqmlDataProvider(abc.ABC):
         rotation: float,
         values: np.ndarray,
         crs_uuid: str,
+        interpretation_uuid: Optional[str] = None,
     ) -> str:
         """Write Grid2D representation. Returns UUID."""
 
@@ -141,6 +144,8 @@ class ResqmlDataProvider(abc.ABC):
           - polylines: list of np.ndarray, each shape (M, 3)
           - closed: list of bool, whether each polyline is closed
           - crs_uuid: str
+          - title: str
+          - interpretation_uuid: str (UUID of linked FaultInterpretation, or "")
         """
 
     @abc.abstractmethod
@@ -151,8 +156,30 @@ class ResqmlDataProvider(abc.ABC):
         polylines: List[np.ndarray],
         closed: List[bool],
         crs_uuid: str,
+        interpretation_uuid: Optional[str] = None,
+        line_role: Optional[str] = None,
     ) -> str:
         """Write PolylineSet representation. Returns UUID."""
+
+    @abc.abstractmethod
+    def get_fault_interpretation(self, uuid: str) -> Dict[str, Any]:
+        """Read a FaultInterpretation and its referenced BoundaryFeature.
+
+        Returns dict with keys:
+          - title: str
+          - feature_uuid: str
+          - feature_title: str (the fault name from BoundaryFeature)
+        """
+
+    @abc.abstractmethod
+    def get_horizon_interpretation(self, uuid: str) -> Dict[str, Any]:
+        """Read a HorizonInterpretation and its referenced GeneticBoundaryFeature.
+
+        Returns dict with keys:
+          - title: str
+          - feature_uuid: str
+          - feature_title: str (the horizon name from GeneticBoundaryFeature)
+        """
 
     # ---- Properties ----
 

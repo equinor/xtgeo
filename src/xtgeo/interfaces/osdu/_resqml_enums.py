@@ -38,6 +38,10 @@ class ResqmlObjectType(str, Enum):
     BLOCKED_WELLBORE_REPRESENTATION = "resqml20.obj_BlockedWellboreRepresentation"
     WELLBORE_FEATURE = "resqml20.obj_WellboreFeature"
     WELLBORE_INTERPRETATION = "resqml20.obj_WellboreInterpretation"
+    BOUNDARY_FEATURE = "resqml20.obj_BoundaryFeature"
+    FAULT_INTERPRETATION = "resqml20.obj_FaultInterpretation"
+    GENETIC_BOUNDARY_FEATURE = "resqml20.obj_GeneticBoundaryFeature"
+    HORIZON_INTERPRETATION = "resqml20.obj_HorizonInterpretation"
     CONTINUOUS_PROPERTY = "resqml20.obj_ContinuousProperty"
     DISCRETE_PROPERTY = "resqml20.obj_DiscreteProperty"
     CATEGORICAL_PROPERTY = "resqml20.obj_CategoricalProperty"
@@ -136,6 +140,18 @@ CONTENT_TYPE_MAP = {
     ),
     ResqmlObjectType.WELLBORE_INTERPRETATION: (
         "application/x-resqml+xml;version=2.0;type=obj_WellboreInterpretation"
+    ),
+    ResqmlObjectType.BOUNDARY_FEATURE: (
+        "application/x-resqml+xml;version=2.0;type=obj_BoundaryFeature"
+    ),
+    ResqmlObjectType.FAULT_INTERPRETATION: (
+        "application/x-resqml+xml;version=2.0;type=obj_FaultInterpretation"
+    ),
+    ResqmlObjectType.GENETIC_BOUNDARY_FEATURE: (
+        "application/x-resqml+xml;version=2.0;type=obj_GeneticBoundaryFeature"
+    ),
+    ResqmlObjectType.HORIZON_INTERPRETATION: (
+        "application/x-resqml+xml;version=2.0;type=obj_HorizonInterpretation"
     ),
     ResqmlObjectType.CONTINUOUS_PROPERTY: (
         "application/x-resqml+xml;version=2.0;type=obj_ContinuousProperty"
