@@ -17,8 +17,8 @@ logger = null_logger(__name__)
 def merge_grids(
     grid1: Grid,
     grid2: Grid,
-    layer_offset: int = 0,
-    layer_refinement: int = 0,
+    lmap1: np.ndarray | None = None,
+    lmap2: np.ndarray | None = None,
 ) -> Grid:
     """Merge two areally-separated grids into a single grid instance.
 
@@ -29,10 +29,14 @@ def merge_grids(
     grid1._set_xtgformat2()
     grid2._set_xtgformat2()
 
-    if layer_offset < 0:
-        raise ValueError("layer offset must be >=0")
-    if layer_refinement < 0:
-        raise ValueError("layer refinement must be >=0")
+    if lmap1 is not None:
+        _validate_layer_mapping(lmap1, grid1.nlay)
+    else:
+        lmap1 = np.arange(grid1.nlay, dtype=np.int32)
+    if lmap2 is not None:
+        _validate_layer_mapping(lmap2, grid2.nlay)
+    else:
+        lmap2 = np.arange(grid2.nlay, dtype=np.int32)
 
     # Ensure both grids have the same ijk_handedness
     if (
@@ -55,26 +59,7 @@ def merge_grids(
             grid2.ijk_handedness,
         )
 
-    # create a new layer mapping for grid1 and grid2
-    # group layers in the merged grid by the input layer number
-    lmap1 = np.arange(grid1.nlay, dtype=np.int32)
-    lmap2 = np.arange(grid2.nlay, dtype=np.int32)
-
-    if layer_refinement == 0:
-        new_nlay = max(grid1.nlay, layer_offset + grid2.nlay)
-    else:
-        new_nlay = (
-            layer_offset
-            + grid2.nlay
-            + max(0, grid1.nlay - layer_offset - int(grid2.nlay / layer_refinement))
-        )
-        lmap1 = lmap1 + np.where(
-            lmap1 < layer_offset,
-            0,
-            (layer_refinement - 1)
-            * np.minimum(int(grid2.nlay / layer_refinement), lmap1 - layer_offset),
-        )
-        lmap2 += layer_offset
+    new_nlay = max(lmap1.max() + 1, lmap2.max() + 1)
 
     # Place grid1 at (0, 0) and grid2 with a 1-cell gap
     offset1 = (0, 0)
@@ -630,3 +615,29 @@ def _create_merged_property(
         values=merged_values,
         codes=first_prop.codes if first_prop.isdiscrete else None,
     )
+
+
+def _validate_layer_mapping(
+    lmap: np.ndarray,
+    num_grid_layers: int,
+) -> None:
+    """Validate layer mapping arrays to ensure. They always
+    only int equivalents
+    >=0
+    monotonic increasing
+    unique values
+    all layers in input grid are mapped
+    """
+
+    if not isinstance(lmap, np.ndarray):
+        raise ValueError("The layermap must be input as a numpy array")
+    if lmap.min() < 0:
+        raise ValueError("layer mapping must be >=0")
+    if len(lmap) != num_grid_layers:
+        raise ValueError("layer mapping must map all layers")
+    if not np.all(lmap % 1 == 0):
+        raise ValueError("layer mapping must only contain int")
+    if len(np.unique(lmap)) < len(lmap):
+        raise ValueError("layer mapping must be unique")
+    if not np.all(lmap[1:] >= lmap[:-1]):
+        raise ValueError("layer mapping must strictly monotonically increase")
