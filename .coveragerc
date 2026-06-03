@@ -21,3 +21,6 @@ exclude_lines =
     # Don't complain if tests don't hit defensive assertion code:
     raise NotImplementedError
 
+    # Exclude TYPE_CHECKING-only imports (never executed at runtime)
+    if TYPE_CHECKING:
+
