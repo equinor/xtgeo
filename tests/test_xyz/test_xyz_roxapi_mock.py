@@ -88,6 +88,23 @@ def test_polygons_invalid_stype():
         xtgeo.polygons_from_roxar("project", "Name", "Category", stype="")
 
 
+def test_replace_undefined_values_converts_numeric_strings():
+    values = np.array(["1.0", "2.0", str(xtgeo.UNDEF)])
+
+    result = _xyz_roxapi._replace_undefined_values(values)
+
+    assert result[:2].tolist() == [1.0, 2.0]
+    assert np.isnan(result[2])
+
+
+def test_replace_undefined_values_keeps_non_numeric_strings():
+    values = np.array(["alpha", "UNDEF", "beta"])
+
+    result = _xyz_roxapi._replace_undefined_values(values)
+
+    assert result.tolist() == ["alpha", "", "beta"]
+
+
 @pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
 def test_load_polygons_from_roxar():
     pol = xtgeo.polygons_from_roxar("project", "Name", "Category")
