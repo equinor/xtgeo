@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal, Type, cast
 
@@ -452,9 +451,6 @@ def _replace_undefined_values(
     """
     if dtype in {"float", "int"}:
         values = pd.to_numeric(values, errors="coerce")
-    else:
-        with suppress(TypeError, ValueError):
-            values = pd.to_numeric(values, errors="raise")
 
     dtype = dtype or _get_attribute_type_from_values(values)
 

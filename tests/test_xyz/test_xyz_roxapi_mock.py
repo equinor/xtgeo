@@ -88,13 +88,12 @@ def test_polygons_invalid_stype():
         xtgeo.polygons_from_roxar("project", "Name", "Category", stype="")
 
 
-def test_replace_undefined_values_converts_numeric_strings():
+def test_replace_undefined_values_keeps_numeric_strings_without_dtype():
     values = np.array(["1.0", "2.0", str(xtgeo.UNDEF)])
 
     result = _xyz_roxapi._replace_undefined_values(values)
 
-    assert result[:2].tolist() == [1.0, 2.0]
-    assert np.isnan(result[2])
+    assert result.tolist() == ["1.0", "2.0", str(xtgeo.UNDEF)]
 
 
 def test_replace_undefined_values_keeps_non_numeric_strings():
