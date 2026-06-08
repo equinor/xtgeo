@@ -105,6 +105,52 @@ def test_replace_undefined_values_keeps_non_numeric_strings():
     assert result.tolist() == ["alpha", "", "beta"]
 
 
+def test_replace_undefined_values_converts_mixed_float_attribute():
+    values = np.array(["1.0", "", "UNDEF"])
+
+    result = _xyz_roxapi._replace_undefined_values(values, dtype="float")
+
+    assert result[0] == 1.0
+    assert np.isnan(result[1])
+    assert np.isnan(result[2])
+
+
+def test_replace_undefined_values_masks_mixed_float_attribute():
+    values = np.array(["1.0", "", "UNDEF"])
+
+    result = _xyz_roxapi._replace_undefined_values(values, dtype="float", asmasked=True)
+
+    assert result[0] == 1.0
+    assert result.mask.tolist() == [False, True, True]
+
+
+def test_replace_undefined_values_converts_mixed_int_attribute():
+    values = np.array(["1", "", "UNDEF"])
+
+    result = _xyz_roxapi._replace_undefined_values(values, dtype="int")
+
+    assert result[0] == 1
+    assert np.isnan(result[1])
+    assert np.isnan(result[2])
+
+
+def test_replace_undefined_values_masks_mixed_int_attribute():
+    values = np.array(["1", "", "UNDEF"])
+
+    result = _xyz_roxapi._replace_undefined_values(values, dtype="int", asmasked=True)
+
+    assert result[0] == 1
+    assert result.mask.tolist() == [False, True, True]
+
+
+def test_replace_undefined_values_keeps_string_attribute_as_strings():
+    values = np.array(["OP_1", "", "UNDEF"])
+
+    result = _xyz_roxapi._replace_undefined_values(values, dtype="str")
+
+    assert result.tolist() == ["OP_1", "", ""]
+
+
 @pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
 def test_load_polygons_from_roxar():
     pol = xtgeo.polygons_from_roxar("project", "Name", "Category")
