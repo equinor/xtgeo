@@ -221,6 +221,10 @@ Before you submit a pull request, check that it meets these guidelines:
    public method make sure it displays helpful information in the
    documentation.
 
+3. This repository uses `.github/CODEOWNERS` to define code ownership for all
+   files. Pull requests that target the `main` branch in `equinor/xtgeo` must
+   have at least one approval from the code owner team `@equinor/atlas`.
+
 ## Tips
 
 - To run a subset of tests, e.g. only surface tests:
