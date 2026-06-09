@@ -468,8 +468,10 @@ def _replace_undefined_values(
 
     # string attributes does not support nan values
     # and requires string type array returned
-    values = values.astype(str)
-    return np.where(np.isin(values, ["UNDEF", "nan"]), "", values)
+    values = np.asarray(values, dtype=str)
+    return np.asarray(
+        np.where(np.isin(values, ["UNDEF", "nan"]), "", values), dtype=str
+    )
 
 
 def _apply_pfilter_to_dataframe(

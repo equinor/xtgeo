@@ -143,11 +143,13 @@ def test_replace_undefined_values_masks_mixed_int_attribute():
 
 
 def test_replace_undefined_values_keeps_string_attribute_as_strings():
-    values = np.array(["OP_1", "", "UNDEF"])
+    # RMS 15.2 rejects object dtype, so string attributes should be converted.
+    values = np.array(["OP_1", "", "UNDEF"], dtype=object)
 
     result = _xyz_roxapi._replace_undefined_values(values, dtype="str")
 
     assert result.tolist() == ["OP_1", "", ""]
+    assert result.dtype.kind == "U"  # NumPy uses "U" for string dtype
 
 
 @pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
