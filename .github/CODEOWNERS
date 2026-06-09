@@ -1,0 +1,9 @@
+# CODEOWNERS policy for the xtgeo repository
+# This file declares the code owners recognized by GitHub for review assignment.
+# Pull requests to the protected branches `main` must be approved by the 
+# designated code owner team.
+# The rule below explicitly protects this file to prevent unauthorized
+# changes to ownership.
+
+/.github/CODEOWNERS @equinor/atlas
+* @equinor/atlas
