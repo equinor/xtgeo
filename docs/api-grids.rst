@@ -36,6 +36,8 @@ Functions
 
 .. autofunction:: xtgeo.gridproperty_from_roxar
 
+.. autofunction:: xtgeo.gridproperty_from_resinsight
+
 Classes
 """""""
 

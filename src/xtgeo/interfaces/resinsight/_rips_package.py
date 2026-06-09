@@ -21,11 +21,15 @@ try:
         Case as _RipsCase,
         Instance as _RipsInstance,
         Project as _RipsProject,
+        PropertyDataType,
+        PropertyType,
     )
 except ImportError:
     _RipsCase = Any  # type: ignore[misc,assignment]
     _RipsInstance = Any  # type: ignore[misc,assignment]
     _RipsProject = Any  # type: ignore[misc,assignment]
+    PropertyDataType = Any  # type: ignore[misc,assignment]
+    PropertyType = Any  # type: ignore[misc,assignment]
 
 RipsCaseType: TypeAlias = _RipsCase  # type: ignore[misc]
 RipsInstanceType: TypeAlias = _RipsInstance  # type: ignore[misc]

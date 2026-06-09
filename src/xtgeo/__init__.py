@@ -108,6 +108,7 @@ from xtgeo.grid3d.grid_property import (
     GridProperty,
     gridproperty_from_cube,
     gridproperty_from_file,
+    gridproperty_from_resinsight,
     gridproperty_from_roxar,
 )
 
@@ -236,6 +237,7 @@ __all__ = [
     "gridproperties_from_file",
     "gridproperty_from_cube",
     "gridproperty_from_file",
+    "gridproperty_from_resinsight",
     "gridproperty_from_roxar",
     "list_gridproperties",
     "points",

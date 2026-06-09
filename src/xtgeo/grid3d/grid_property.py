@@ -44,6 +44,10 @@ if TYPE_CHECKING:
 
     from xtgeo.common.types import FileLike
     from xtgeo.cube.cube1 import Cube
+    from xtgeo.interfaces.resinsight._rips_package import (
+        PropertyType,
+        ResInsightInstanceOrPortType,
+    )
     from xtgeo.xyz.polygons import Polygons
 
     from ._gridprop_op1 import XYValueLists
@@ -193,6 +197,60 @@ def gridproperty_from_roxar(
         realisation=realisation,
         faciescodes=faciescodes,
     )
+
+
+def gridproperty_from_resinsight(
+    instance_or_port: ResInsightInstanceOrPortType | None,
+    case_name: str,
+    property_name: str,
+    property_type: str | PropertyType = "STATIC_NATIVE",
+    time_step_index: int = 0,
+    find_last: bool = True,
+) -> GridProperty:
+    """Load a grid property from a ResInsight case into an XTGeo ``GridProperty``.
+
+    Args:
+        instance_or_port: Optional ``rips.Instance`` or gRPC port. Use ``None``
+            to auto-discover a running ResInsight instance.
+        case_name: Name of the ResInsight case.
+        property_name: Name of the property (e.g. ``"PORO"``, ``"PRESSURE"``).
+        property_type: A :class:`~xtgeo.interfaces.resinsight.PropertyType`
+            member or a plain string such as ``"STATIC_NATIVE"``,
+            ``"DYNAMIC_NATIVE"``, ``"GENERATED"``, or ``"INPUT_PROPERTY"``.
+            Strings are validated and coerced to the enum internally.
+        time_step_index: Time step index (default 0).
+        find_last: If multiple cases share the same name, select the last match.
+
+    Returns:
+        A populated :class:`xtgeo.GridProperty`.
+
+    Raises:
+        ValueError: If *property_type* is not a valid
+            :class:`~xtgeo.interfaces.resinsight.PropertyType`.
+
+    Example::
+
+        import xtgeo
+
+        poro = xtgeo.gridproperty_from_resinsight(
+            5000, "MY_CASE", "PORO",
+            property_type="STATIC_NATIVE",
+        )
+        print(poro.values.mean())
+
+    """
+    import xtgeo.interfaces.resinsight
+
+    data = xtgeo.interfaces.resinsight.GridPropertyReader(
+        instance_or_port=instance_or_port,
+    ).load(
+        case_name=case_name,
+        property_name=property_name,
+        property_type=property_type,
+        time_step_index=time_step_index,
+        find_last=find_last,
+    )
+    return data.to_xtgeo_gridproperty()
 
 
 def gridproperty_from_cube(
@@ -946,6 +1004,66 @@ class GridProperty(_Grid3D):
             realisation=realisation,
             casting=casting,
         )
+
+    def to_resinsight(
+        self,
+        instance_or_port: ResInsightInstanceOrPortType | None,
+        case_name: str,
+        property_type: str | PropertyType = "GENERATED",
+        property_name: str | None = None,
+        time_step_index: int = 0,
+        find_last: bool = True,
+    ) -> None:
+        """Export this grid property to a ResInsight case.
+
+        Args:
+            instance_or_port: Optional ``rips.Instance`` or gRPC port. Use
+                ``None`` to auto-discover a running ResInsight instance.
+            case_name: Name of the target ResInsight case.
+            property_type: A
+                :class:`~xtgeo.interfaces.resinsight.PropertyType`
+                member or a plain string such as ``"GENERATED"``.
+                Strings are validated and coerced to the enum internally.
+            property_name: Name to give the property in ResInsight. If ``None``,
+                the current :attr:`name` is used.
+            time_step_index: Time step index (default 0).
+            find_last: Controls which case to target when multiple cases share
+                the same name. If ``True`` (default), the last matching case is
+                used; if ``False``, the first.
+
+        Raises:
+            ValueError: If *property_type* is not a valid
+                :class:`~xtgeo.interfaces.resinsight.PropertyType`.
+
+        Example::
+
+            import xtgeo
+
+            poro = xtgeo.gridproperty_from_file("poro.roff", name="PORO")
+            poro.to_resinsight(5000, "MY_CASE", property_name="PORO_MODIFIED")
+
+        """
+        import xtgeo.interfaces.resinsight as resinsight_interface
+
+        pname = property_name if property_name is not None else self.name
+        if pname is None:
+            raise ValueError("property_name must be given (GridProperty.name is None)")
+
+        data = resinsight_interface.GridPropertyDataResInsight.from_xtgeo_gridproperty(
+            self,
+            property_type=property_type,
+            time_step_index=time_step_index,
+            grid=self.geometry,
+        )
+        if pname != data.name:
+            from dataclasses import replace
+
+            data = replace(data, name=pname)
+
+        writer = resinsight_interface.GridPropertyWriter(
+            instance_or_port=instance_or_port
+        )
+        writer.save(data, case_name, find_last)
 
     # ==================================================================================
     # Various public methods
