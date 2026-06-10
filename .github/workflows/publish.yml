@@ -21,7 +21,7 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
         python: ["cp311", "cp312", "cp313", "cp314"]
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
 
@@ -43,7 +43,7 @@ jobs:
       - name: Check metadata
         run: uv run twine check wheelhouse/*
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
         with:
           name: cibw-${{ matrix.os }}-${{ runner.arch }}-${{ matrix.python }}
@@ -60,13 +60,13 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@ad191675b41f6a5b46da9a048cb6893812da158b
+      - uses: actions/download-artifact@ad191675b41f6a5b46da9a048cb6893812da158b # v3.1.0
         with:
           pattern: cibw-*
           path: wheelhouse
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
+      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           skip-existing: true
           packages-dir: wheelhouse
