@@ -59,12 +59,13 @@ def in_roxar_env():
 
 @functools.lru_cache(maxsize=1)
 def has_rips():
-    """Helper function to check if rips is available"""
+    """Helper function to check if rips is available and meets minimum version."""
     try:
-        import rips  # noqa
+        from xtgeo.interfaces.resinsight._rips_package import require_rips
 
+        require_rips()
         return True
-    except ImportError:
+    except (RuntimeError, ImportError):
         return False
 
 

@@ -10,7 +10,7 @@ from ._rips_package import (
     ResInsightInstanceOrPortType,
     RipsInstanceType,
     RipsProjectType,
-    rips,
+    require_rips,
 )
 
 if TYPE_CHECKING:
@@ -33,15 +33,7 @@ class RipsApiUtils:
         self,
         instance_or_port: ResInsightInstanceOrPortType | None = None,
     ) -> None:
-        if rips is None:
-            raise RuntimeError(
-                "rips package is not available. Please install it to use "
-                "ResInsight features."
-            )
-
-        instance_cls = getattr(rips, "Instance", None)
-        if instance_cls is None:
-            raise RuntimeError("rips does not expose Instance API")
+        rips = require_rips()
 
         self._instance: RipsInstanceType
 
@@ -49,7 +41,7 @@ class RipsApiUtils:
             isinstance(instance_or_port, int) and not isinstance(instance_or_port, bool)
         ):
             self._instance = self.find_instance(port=instance_or_port)
-        elif isinstance(instance_or_port, instance_cls):
+        elif isinstance(instance_or_port, rips.Instance):
             self._instance = instance_or_port
         else:
             raise TypeError(
@@ -102,8 +94,7 @@ class RipsApiUtils:
                 - ``0``: Let gRPC automatically select an available free port.
                 - ``> 0``: Attempt to launch ResInsight using the given port number.
         """
-        if rips is None:
-            raise RuntimeError("rips package is not available")
+        rips = require_rips()
         instance = rips.Instance.launch(
             resinsight_executable=str(executable),
             console=console_mode,
@@ -125,8 +116,7 @@ class RipsApiUtils:
         Note:
             Connection is port-driven.
         """
-        if rips is None:
-            raise RuntimeError("rips package is not available")
+        rips = require_rips()
 
         if port is None:
             try:
