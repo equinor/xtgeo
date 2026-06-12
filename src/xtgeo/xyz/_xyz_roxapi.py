@@ -449,20 +449,20 @@ def _replace_undefined_values(
     Set xtgeo UNDEF values to np.nan or empty string dependent on type.
     With option to return array with masked values instead of np.nan.
     """
+    dtype = dtype or _get_attribute_type_from_values(values)
+
     if dtype in {"float", "int"}:
         values = pd.to_numeric(values, errors="coerce")
 
-    dtype = dtype or _get_attribute_type_from_values(values)
-
     if dtype == "float":
-        values = np.where(pd.isna(values), UNDEF, values)
         if asmasked:
+            values = np.where(pd.isna(values), UNDEF, values)
             return np.ma.masked_greater(values, UNDEF_LIMIT)
         return np.where(values > UNDEF_LIMIT, np.nan, values)
 
     if dtype == "int":
-        values = np.where(pd.isna(values), UNDEF_INT, values)
         if asmasked:
+            values = np.where(pd.isna(values), UNDEF_INT, values)
             return np.ma.masked_greater(values, UNDEF_INT_LIMIT)
         return np.where(values > UNDEF_INT_LIMIT, np.nan, values)
 
