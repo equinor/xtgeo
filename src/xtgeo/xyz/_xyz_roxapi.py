@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal, Type, cast
 
@@ -450,25 +449,29 @@ def _replace_undefined_values(
     Set xtgeo UNDEF values to np.nan or empty string dependent on type.
     With option to return array with masked values instead of np.nan.
     """
-    with suppress(TypeError, ValueError):
-        values = pd.to_numeric(values, errors="raise")
-
     dtype = dtype or _get_attribute_type_from_values(values)
+
+    if dtype in {"float", "int"}:
+        values = pd.to_numeric(values, errors="coerce")
 
     if dtype == "float":
         if asmasked:
+            values = np.where(pd.isna(values), UNDEF, values)
             return np.ma.masked_greater(values, UNDEF_LIMIT)
         return np.where(values > UNDEF_LIMIT, np.nan, values)
 
     if dtype == "int":
         if asmasked:
+            values = np.where(pd.isna(values), UNDEF_INT, values)
             return np.ma.masked_greater(values, UNDEF_INT_LIMIT)
         return np.where(values > UNDEF_INT_LIMIT, np.nan, values)
 
     # string attributes does not support nan values
     # and requires string type array returned
-    values = values.astype(str)
-    return np.where(np.isin(values, ["UNDEF", "nan"]), "", values)
+    values = np.asarray(values, dtype=str)
+    return np.asarray(
+        np.where(np.isin(values, ["UNDEF", "nan"]), "", values), dtype=str
+    )
 
 
 def _apply_pfilter_to_dataframe(
