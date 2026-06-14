@@ -40,8 +40,6 @@ class _BaseResInsightDataRW:
 
     def get_project(self) -> RipsProjectType:
         """Get the active ResInsight project."""
-        if not hasattr(self.get_ripsapi_utils().instance, "project"):
-            raise RuntimeError("Connected rips.Instance does not have a project API")
         return self.get_ripsapi_utils().project
 
     def get_case(self, case_name: str, find_last: bool = True) -> RipsCaseType | None:
