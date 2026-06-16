@@ -27,9 +27,12 @@ def export_tsurf(data: TriangulatedSurfaceDict, mfile: FileWrapper) -> None:
         mfile: Path to output file.
     """
 
+    # Avoid modifying original data, and avoid setting input data immutable
+    # in the immutable TSurfData class.
     # Convert from 0-based to 1-based indexing for TSurf format
-    tris = data["triangles"].copy()  # Avoid modifying original data
+    tris = data["triangles"].copy()
     tris += 1
+    verts = data["vertices"].copy()
 
     coord_sys = None
     if "free_form_metadata" in data and "tsurf_coord_sys" in data["free_form_metadata"]:
@@ -39,7 +42,7 @@ def export_tsurf(data: TriangulatedSurfaceDict, mfile: FileWrapper) -> None:
     tsurf_data: TSurfData = TSurfData(
         header=TSurfHeader(name=data.get("name", "Unknown")),
         coord_sys=coord_sys,
-        vertices=data["vertices"],
+        vertices=verts,
         triangles=tris,
     )
 

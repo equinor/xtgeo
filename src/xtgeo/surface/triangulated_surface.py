@@ -176,8 +176,8 @@ class TriangulatedSurface:
         self._name = name
 
         TriangulatedSurface.validate_triangulation_data(vertices, triangles)
-        self._vertices = vertices
-        self._triangles = triangles
+        self._vertices = vertices.copy()
+        self._triangles = triangles.copy()
 
         self._metadata = MetaDataTriangulatedSurface()
         self._metadata.required = self._get_required_metadata_values()

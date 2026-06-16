@@ -15,8 +15,9 @@ import pytest
 import xtgeo
 from xtgeo import TriangulatedSurface
 from xtgeo.common.exceptions import InvalidFileFormatError
-from xtgeo.io._file import FileFormat
+from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.metadata.metadata import MetaDataTriangulatedSurface
+from xtgeo.surface._trisurf_export import export_tsurf
 from xtgeo.surface.triangulated_surface import (
     triangulated_surface_from_file,
     triangulated_surface_from_rms,
@@ -159,6 +160,39 @@ class TestConstructor:
     def test_metadata_initialised(self) -> None:
         surf = _create_surface()
         assert isinstance(surf.metadata, MetaDataTriangulatedSurface)
+
+    @pytest.mark.parametrize("input_writeable", [True, False])
+    def test_stored_arrays_are_mutable(self, input_writeable: bool) -> None:
+        vertices = _square_vertices()
+        triangles = _square_triangles()
+        vertices.flags.writeable = input_writeable
+        triangles.flags.writeable = input_writeable
+
+        surf = TriangulatedSurface(vertices=vertices, triangles=triangles)
+
+        assert surf._vertices.flags.writeable is True
+        assert surf._triangles.flags.writeable is True
+
+        surf._vertices[0, 0] = 10.0
+        surf._triangles[0, 0] = 3
+
+        assert surf._vertices[0, 0] == 10.0
+        assert surf._triangles[0, 0] == 3
+
+    def test_stored_arrays_are_not_references_to_input_arrays(self) -> None:
+        vertices = _square_vertices()
+        triangles = _square_triangles()
+
+        surf = TriangulatedSurface(vertices=vertices, triangles=triangles)
+
+        assert np.shares_memory(surf._vertices, vertices) is False
+        assert np.shares_memory(surf._triangles, triangles) is False
+
+        vertices[0, 0] = 10.0
+        triangles[0, 0] = 3
+
+        assert surf._vertices[0, 0] == 0.0
+        assert surf._triangles[0, 0] == 0
 
 
 # ===================================================================
@@ -1334,6 +1368,38 @@ class TestWriteFile:
         content = buf.read()
         assert len(content) > 0
         assert b"GOCAD TSurf" in content
+
+    def test_export_tsurf_writes_one_based_triangles(self) -> None:
+        data = {
+            "vertices": _square_vertices(),
+            "triangles": _square_triangles(),
+            "name": "one_based_test",
+        }
+        stream = StringIO()
+
+        export_tsurf(data, FileWrapper(stream))
+
+        content = stream.getvalue()
+        assert "TRGL 1 2 3\n" in content
+        assert "TRGL 1 3 4\n" in content
+
+    def test_export_tsurf_does_not_mutate_or_freeze_input_arrays(self) -> None:
+        vertices = _square_vertices()
+        triangles = _square_triangles()
+        original_vertices = vertices.copy()
+        original_triangles = triangles.copy()
+        data = {
+            "vertices": vertices,
+            "triangles": triangles,
+            "name": "copy_test",
+        }
+
+        export_tsurf(data, FileWrapper(StringIO()))
+
+        np.testing.assert_array_equal(vertices, original_vertices)
+        np.testing.assert_array_equal(triangles, original_triangles)
+        assert vertices.flags.writeable is True
+        assert triangles.flags.writeable is True
 
     def test_round_trip_preserves_coord_sys(self, tmp_path: Path) -> None:
         """Round-trip should preserve coord sys metadata if present."""
