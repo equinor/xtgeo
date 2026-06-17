@@ -6,7 +6,10 @@ import pytest
 
 from xtgeo.interfaces.resinsight.rips_utils import RipsApiUtils
 
-pytestmark = pytest.mark.requires_resinsight
+pytestmark = [
+    pytest.mark.requires_resinsight,
+    pytest.mark.xdist_group(name="resinsight"),
+]  # Avoid running multiple tests in parallel against the same ResInsight instance
 
 
 def test_init_with_none_auto_discovers(resinsight_instance):

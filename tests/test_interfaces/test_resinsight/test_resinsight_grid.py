@@ -148,6 +148,7 @@ def test_roundtrip_hypothesis(grid: xtgeo.Grid):
 
 
 @pytest.mark.requires_resinsight
+@pytest.mark.xdist_group(name="resinsight")
 def test_reader_init(resinsight_instance):
     """Test that GridReader can load grid metadata from ResInsight cases."""
 
@@ -161,6 +162,7 @@ def test_reader_init(resinsight_instance):
 
 
 @pytest.mark.requires_resinsight
+@pytest.mark.xdist_group(name="resinsight")
 def test_reader_select_first_matching_case(resinsight_instance):
     """Test that GridReader selects the first matching case when find_last is False."""
 
@@ -176,6 +178,7 @@ def test_reader_select_first_matching_case(resinsight_instance):
 
 
 @pytest.mark.requires_resinsight
+@pytest.mark.xdist_group(name="resinsight")
 def test_reader_no_matching_case(resinsight_instance):
     """Test that GridReader raises an error when no matching case is found."""
     reader = GridReader(resinsight_instance)
@@ -186,6 +189,7 @@ def test_reader_no_matching_case(resinsight_instance):
 
 
 @pytest.mark.requires_resinsight
+@pytest.mark.xdist_group(name="resinsight")
 def test_writer_roundtrip_new_case(resinsight_instance):
     reader = GridReader(resinsight_instance)
     data = reader.load("EXAMPLE")
@@ -214,6 +218,7 @@ def test_writer_roundtrip_new_case(resinsight_instance):
 
 
 @pytest.mark.requires_resinsight
+@pytest.mark.xdist_group(name="resinsight")
 def test_writer_replace_case(resinsight_instance: RipsInstanceType):
     grid = xtgeo.create_box_grid((2, 2, 2), increment=(2.0, 2.0, 2.0))
 
@@ -265,6 +270,7 @@ def test_writer_replace_case(resinsight_instance: RipsInstanceType):
 
 
 @pytest.mark.requires_resinsight
+@pytest.mark.xdist_group(name="resinsight")
 def test_writer_roundtrip_replace_case(resinsight_instance):
     reader = GridReader(resinsight_instance)
     data = reader.load("EXAMPLE")

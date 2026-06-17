@@ -17,7 +17,10 @@ import pytest
 
 import xtgeo
 
-pytestmark = pytest.mark.requires_resinsight
+pytestmark = [
+    pytest.mark.requires_resinsight,
+    pytest.mark.xdist_group(name="resinsight"),
+]  # Avoid running multiple tests in parallel against the same ResInsight instance
 
 
 # ---------------------------------------------------------------------------
