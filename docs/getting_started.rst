@@ -115,3 +115,33 @@ Create a new ResInsight corner-point grid from XTGeo::
         instance_or_port=50051,
         gname="CPG from XTGeo",
     )
+
+Read a grid property (e.g. porosity) from a ResInsight case::
+
+    import xtgeo
+
+    poro = xtgeo.gridproperty_from_resinsight(
+        instance_or_port=50051,
+        case_name="EXAMPLE",
+        property_name="PORO",
+        property_type="STATIC_NATIVE",
+    )
+    print(poro.values.mean())
+
+Read a dynamic property at a specific time step::
+
+    pressure = xtgeo.gridproperty_from_resinsight(
+        instance_or_port=50051,
+        case_name="EXAMPLE",
+        property_name="PRESSURE",
+        property_type="DYNAMIC_NATIVE",
+        time_step_index=5,
+    )
+
+Write a property back to ResInsight as a "GENERATED" result::
+
+    poro.to_resinsight(
+        instance_or_port=50051,
+        case_name="EXAMPLE",
+        property_name="PORO_MODIFIED",
+    )
