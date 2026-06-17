@@ -71,8 +71,8 @@ if rips is not None:
             Case as _RipsCase,
             Instance as _RipsInstance,
             Project as _RipsProject,
-            PropertyDataType,
-            PropertyType,
+            PropertyDataType,  # noqa: F401
+            PropertyType,  # noqa: F401
         )
     except ImportError as err:
         _rips_import_error = (

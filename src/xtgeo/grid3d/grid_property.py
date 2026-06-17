@@ -225,6 +225,8 @@ def gridproperty_from_resinsight(
         A populated :class:`xtgeo.GridProperty`.
 
     Raises:
+        RuntimeError: If rips is unavailable/too old, or if the case/property
+            cannot be read.
         ValueError: If *property_type* is not a valid
             :class:`~xtgeo.interfaces.resinsight.PropertyType`.
 
@@ -1032,6 +1034,8 @@ class GridProperty(_Grid3D):
                 used; if ``False``, the first.
 
         Raises:
+            RuntimeError: If rips is unavailable/too old, or if the
+                case/property cannot be written.
             ValueError: If *property_type* is not a valid
                 :class:`~xtgeo.interfaces.resinsight.PropertyType`.
 

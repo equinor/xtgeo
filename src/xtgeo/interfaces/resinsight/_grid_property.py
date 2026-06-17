@@ -38,7 +38,7 @@ def _validate_property_type(property_type: str | PropertyType) -> PropertyType:
         return property_type
     try:
         return PropertyType(property_type)
-    except ValueError:
+    except (ValueError, TypeError):
         valid = ", ".join(f'"{m.value}"' for m in PropertyType)
         raise ValueError(
             f"Invalid property_type {property_type!r}. Must be one of: {valid}"
@@ -137,6 +137,12 @@ class GridPropertyDataResInsight:
         # Ravel in Fortran order (i fastest) to match Eclipse/ResInsight convention.
         active = ~np.ma.getmaskarray(prop.values).ravel(order="F")
         if grid is not None:
+            if (grid.ncol, grid.nrow, grid.nlay) != (prop.ncol, prop.nrow, prop.nlay):
+                raise ValueError(
+                    f"Grid dimensions ({grid.ncol}, {grid.nrow}, {grid.nlay}) "
+                    f"do not match property dimensions "
+                    f"({prop.ncol}, {prop.nrow}, {prop.nlay})"
+                )
             grid_actnum = np.asarray(
                 grid.get_actnum().values.data, dtype=np.int32
             ).ravel(order="F")
@@ -171,6 +177,7 @@ def _read_actnum(case: object, expected_size: int) -> npt.NDArray[np.int32]:
     Active cells have value 1, inactive cells have value 0.  Non-finite
     values (inf at inactive cells) are treated as inactive.
     """
+    require_rips()
     for ptype in (PropertyType.STATIC_NATIVE, PropertyType.INPUT_PROPERTY):
         try:
             raw = np.asarray(

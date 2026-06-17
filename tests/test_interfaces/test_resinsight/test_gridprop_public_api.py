@@ -121,18 +121,22 @@ def test_to_resinsight_discrete(resinsight_instance):
         resinsight_instance, "EXAMPLE", "SYNTH_PORO", property_type="GENERATED"
     )
 
-    # Create a discrete property from the continuous values
-    active_vals = base_prop.values.compressed()
+    # Create a discrete property from the continuous values.
+    # Use Fortran order consistently to match the XTGeo/ResInsight convention.
+    mask_flat = np.ma.getmaskarray(base_prop.values).ravel(order="F")
+    active_mask = ~mask_flat
+    active_vals = base_prop.values.data.ravel(order="F")[active_mask]
     region_vals = np.asarray([int(v * 100) % 4 for v in active_vals], dtype=np.int32)
 
     total = base_prop.ncol * base_prop.nrow * base_prop.nlay
     full_vals = np.zeros(total, dtype=np.int32)
-    active_mask = ~np.ma.getmaskarray(base_prop.values).ravel()
     full_vals[active_mask] = region_vals
 
     masked = np.ma.MaskedArray(
-        full_vals.reshape(base_prop.ncol, base_prop.nrow, base_prop.nlay),
-        mask=np.ma.getmaskarray(base_prop.values),
+        full_vals.reshape(base_prop.ncol, base_prop.nrow, base_prop.nlay, order="F"),
+        mask=mask_flat.reshape(
+            base_prop.ncol, base_prop.nrow, base_prop.nlay, order="F"
+        ),
     )
     region_prop = xtgeo.GridProperty(
         ncol=base_prop.ncol,
