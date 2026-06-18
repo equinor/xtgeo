@@ -167,7 +167,7 @@ jobs:
 
   codecov:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
         with:
@@ -181,8 +181,15 @@ jobs:
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
 
+      - name: Set up ResInsight
+        id: resinsight
+        uses: './.github/actions/setup_resinsight'
+
       - name: Generate coverage report
-        run: uv run pytest -n 4 tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
+        run: |
+          ${{ steps.resinsight.outputs.install-path}}/bin/ResInsight --console --version
+          export RESINSIGHT_EXECUTABLE="${{ steps.resinsight.outputs.install-path}}/bin/ResInsight"
+          uv run pytest -n 4 --dist=loadgroup tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
@@ -211,26 +218,3 @@ jobs:
 
       - name: Integration test
         run: HAS_OPM=1 uv run pytest -m requires_opm --disable-warnings
-
-  resinsight-integration:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: "./.github/actions/setup_xtgeo"
-        with:
-          python-version: "3.11"
-
-      - name: Setup testdata
-        uses: "./.github/actions/setup_testdata"
-
-      - name: Set up ResInsight
-        id: resinsight
-        uses: './.github/actions/setup_resinsight'
-
-      - name: ResInsight test
-        run: |
-          ${{ steps.resinsight.outputs.install-path}}/bin/ResInsight --console --version
-          export RESINSIGHT_EXECUTABLE="${{ steps.resinsight.outputs.install-path}}/bin/ResInsight"
-          uv run pytest -m requires_resinsight --disable-warnings
