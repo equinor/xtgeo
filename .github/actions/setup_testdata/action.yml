@@ -22,7 +22,7 @@ runs:
 
     - name: Cache xtgeo-testdata
       id: cache-testdata
-      uses: actions/cache@v4
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ${{ steps.cache-path.outputs.path }}
         key: xtgeo-testdata-${{ steps.testdata-info.outputs.commit-hash }}
