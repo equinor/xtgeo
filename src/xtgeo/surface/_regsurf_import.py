@@ -15,6 +15,7 @@ from xtgeo import _cxtgeo
 from xtgeo.common.constants import UNDEF, UNDEF_LIMIT, UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.io.gxf._gxf_io import GXFData
 from xtgeo.metadata.metadata import MetaDataRegularSurface
 
 from ._regsurf_ijxyz_parser import parse_ijxyz
@@ -265,6 +266,48 @@ def import_zmap_ascii(mfile: FileWrapper, values: bool = True, **_):
         )
         loaded_values = np.flip(loaded_values, axis=1)
         args["values"] = loaded_values
+
+    return args
+
+
+def import_gxf(mfile: FileWrapper, values: bool = True, **_) -> dict:
+    """Import GXF ascii format."""
+
+    gxf_data = GXFData.from_file(mfile.file)
+
+    # normalize rotation into the range [0, 360)
+    rotation = gxf_data.rotation % 360
+
+    yinc = gxf_data.rwseparation
+    if yinc < 0.0:
+        yinc *= -1
+        yflip = -1
+        # Note that the GXF #SENSE parameter is not handled in xtgeo,
+        # but that it would have an impact on the handling of yinc/yflip,
+        # origin, possibly rotation and the ordering of values (rows vs columns).
+    else:
+        yflip = 1
+
+    # GXF grid values are stored as (nrow, ncol). XTGeo stores regular
+    # surfaces as (ncol, nrow), so must transpose.
+    grid_values = gxf_data.grid.T if values else None
+
+    args: dict = {
+        "ncol": gxf_data.points,
+        "nrow": gxf_data.rows,
+        "xori": gxf_data.xorigin,
+        "yori": gxf_data.yorigin,
+        "xinc": gxf_data.ptseparation,
+        "yinc": yinc,
+        "rotation": rotation,
+        "yflip": yflip,
+    }
+
+    if gxf_data.dummy is not None:
+        args["undef"] = gxf_data.dummy
+
+    if grid_values is not None:
+        args["values"] = grid_values
 
     return args
 
