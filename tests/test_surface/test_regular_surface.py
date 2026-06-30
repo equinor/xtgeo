@@ -79,6 +79,62 @@ def test_values(default_surface):
         srf.values = "text"
 
 
+def test_default_undef_value_is_masked_by_undef_limit():
+    values = [1.0, xtgeo.UNDEF, 3.0, 4.0]
+
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=values)
+
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, True], [False, False]]
+    )
+
+
+@pytest.mark.parametrize("undef", [-999.0, 9999999.0])
+def test_custom_undef_value_is_not_masked_by_value_assignment(undef):
+    """Document current bug: custom undef is ignored during value masking.
+
+    See GH issue #1684.
+    """
+
+    values = [1.0, undef, 3.0, 4.0]
+
+    surf = xtgeo.RegularSurface(
+        ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=values, undef=undef
+    )
+
+    assert surf.undef == pytest.approx(undef)
+
+    # Should be np.ma.count_masked(surf.values) == 1
+    assert np.ma.count_masked(surf.values) == 0
+
+    # Should be: surf.values[0, 1] == None
+    assert surf.values[0, 1] == pytest.approx(undef)
+
+    # Should be [[False, True], [False, False]]
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, False], [False, False]]
+    )
+
+    # Should be [[1.0, None], [3.0, 4.0]]
+    assert surf.values.tolist() == [[1.0, undef], [3.0, 4.0]]
+
+    surf.values = values
+
+    # Should be np.ma.count_masked(surf.values) == 1
+    assert np.ma.count_masked(surf.values) == 0
+
+    # Should be: surf.values[0, 1] == None
+    assert surf.values[0, 1] == pytest.approx(undef)
+
+    surf.set_values1d(np.array(values))
+
+    # Should be np.ma.count_masked(surf.values) == 1
+    assert np.ma.count_masked(surf.values) == 0
+
+    # Should be: surf.values[0, 1] == None
+    assert surf.values[0, 1] == pytest.approx(undef)
+
+
 def test_regularsurface_copy():
     """Test copying a surface instance."""
     values = np.random.normal(2000, 50, size=12)
