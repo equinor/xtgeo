@@ -79,6 +79,187 @@ def test_values(default_surface):
         srf.values = "text"
 
 
+def test_ensure_correct_values_scalar_preserves_existing_mask():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+    existing_values = surf.values
+
+    surf.values = 5.5
+
+    assert surf.values is existing_values
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, True], [False, False]]
+    )
+    assert surf.values.tolist() == [[5.5, None], [5.5, 5.5]]
+
+
+def test_ensure_correct_values_undef_scalar_extends_existing_mask_to_all_cells():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+
+    surf.values = xtgeo.UNDEF
+
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[True, True], [True, True]]
+    )
+    assert surf.values.tolist() == [[None, None], [None, None]]
+
+
+def test_ensure_correct_values_ndarray_replaces_existing_mask():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+    existing_values = surf.values
+
+    surf.values = np.array([[1.0, 2.0], [3.0, 4.0]])
+
+    assert surf.values is not existing_values
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, False], [False, False]]
+    )
+    assert surf.values.tolist() == [[1.0, 2.0], [3.0, 4.0]]
+
+
+def test_ensure_correct_values_ndarray_gets_explicit_false_mask():
+    surf = xtgeo.RegularSurface(
+        ncol=2,
+        nrow=2,
+        xinc=1.0,
+        yinc=1.0,
+        values=np.array([[1.0, 2.0], [3.0, 4.0]]),
+    )
+
+    assert surf.values.mask is not np.ma.nomask
+    np.testing.assert_array_equal(surf.values.mask, [[False, False], [False, False]])
+    assert surf.values.tolist() == [[1.0, 2.0], [3.0, 4.0]]
+
+
+def test_ensure_correct_values_ndarray_mask_is_derived_from_input_values():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[True, False], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+
+    surf.values = np.array([[1.0, xtgeo.UNDEF], [np.nan, 4.0]])
+
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, True], [True, False]]
+    )
+    assert surf.values.tolist() == [[1.0, None], [None, 4.0]]
+
+
+def test_ensure_correct_values_masked_array_same_mask_updates_in_place():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+    existing_values = surf.values
+    values = np.ma.array(
+        [[1.0, 2.0], [3.0, 4.0]],
+        mask=[[False, True], [False, False]],
+    )
+
+    surf.values = values
+
+    assert surf.values is existing_values
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, True], [False, False]]
+    )
+    assert surf.values.tolist() == [[1.0, None], [3.0, 4.0]]
+
+
+def test_ensure_correct_values_same_mask_rebinds_when_dtype_changes():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+    existing_values = surf.values
+    values = np.ma.array(
+        [[1.0, 2.0], [3.0, 4.0]],
+        mask=[[False, True], [False, False]],
+    )
+
+    surf._ensure_correct_values(values, force_dtype=np.float32)
+
+    assert surf.values is not existing_values
+    assert surf.values.dtype == np.float32
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, True], [False, False]]
+    )
+    assert surf.values.tolist() == [[1.0, None], [3.0, 4.0]]
+
+
+def test_ensure_correct_values_scalar_rebinds_when_dtype_changes():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+    existing_values = surf.values
+
+    surf._ensure_correct_values(5.5, force_dtype=np.float32)
+
+    assert surf.values is not existing_values
+    assert surf.values.dtype == np.float32
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, True], [False, False]]
+    )
+    assert surf.values.tolist() == [[5.5, None], [5.5, 5.5]]
+
+
+def test_ensure_correct_values_masked_array_same_mask_can_add_undef_masks():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+    existing_values = surf.values
+    values = np.ma.array(
+        [[1.0, 2.0], [xtgeo.UNDEF, np.nan]],
+        mask=[[False, True], [False, False]],
+    )
+
+    surf.values = values
+
+    assert surf.values is existing_values
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[False, True], [True, True]]
+    )
+    assert surf.values.tolist() == [[1.0, None], [None, None]]
+
+
+def test_ensure_correct_values_masked_array_different_mask_replaces_mask():
+    initial = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[False, True], [False, False]],
+    )
+    surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
+    existing_values = surf.values
+    values = np.ma.array(
+        [[10.0, 20.0], [30.0, 40.0]],
+        mask=[[True, False], [False, True]],
+    )
+
+    surf.values = values
+
+    assert surf.values is not existing_values
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(surf.values), [[True, False], [False, True]]
+    )
+    assert surf.values.tolist() == [[None, 20.0], [30.0, None]]
+
+
 def test_regularsurface_copy():
     """Test copying a surface instance."""
     values = np.random.normal(2000, 50, size=12)
