@@ -1,0 +1,43 @@
+name: CodSpeed
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  UV_FROZEN: true
+  OMP_NUM_THREADS: 1
+
+jobs:
+  benchmarks:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup xtgeo
+        uses: "./.github/actions/setup_xtgeo"
+        with:
+          python-version: "3.13"
+          os: ubuntu-latest
+
+      - name: Setup testdata
+        uses: "./.github/actions/setup_testdata"
+
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@a4a36bb07c0638b0b4ca52bf1f3dad1b4289e52f # v4.18.1
+        with:
+          mode: simulation
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: |
+            uv run --no-sync pytest tests/ --codspeed --disable-warnings
