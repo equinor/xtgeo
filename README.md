@@ -3,6 +3,7 @@
 ![linting](https://github.com/equinor/xtgeo/workflows/linting/badge.svg)
 [![codecov](https://codecov.io/gh/equinor/xtgeo/branch/main/graph/badge.svg)](https://codecov.io/gh/equinor/xtgeo)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/equinor/xtgeo?utm_source=badge)
 [![PyPI version](https://badge.fury.io/py/xtgeo.svg)](https://badge.fury.io/py/xtgeo)
 [![Documentation Status](https://readthedocs.org/projects/xtgeo/badge/?version=latest)](https://xtgeo.readthedocs.io/en/latest/?badge=latest)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xtgeo.svg)
