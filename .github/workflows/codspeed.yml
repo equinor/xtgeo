@@ -15,7 +15,9 @@ permissions:
 jobs:
   benchmarks:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # xtgeo builds a C++/SWIG/pybind11 extension from source, which alone takes
+    # ~20 minutes on a cold runner, so allow generous headroom for build + benchmarks.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -34,4 +36,6 @@ jobs:
         uses: CodSpeedHQ/action@a4a36bb07c0638b0b4ca52bf1f3dad1b4289e52f # v4.18.1
         with:
           mode: simulation
-          run: uv run pytest tests --codspeed --disable-warnings
+          # Exclude the large-cube stress benchmark: it builds a ~9M-cell synthetic
+          # cube and is impractically slow under CPU instrumentation.
+          run: uv run pytest tests --codspeed --disable-warnings -k "not test_avg_surface_large_cube_algorithmx"
