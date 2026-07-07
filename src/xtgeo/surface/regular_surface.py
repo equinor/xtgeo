@@ -540,7 +540,7 @@ class RegularSurface:
         values: Optional[Union[List[float], float]] = None,
         ilines: Optional[List[float]] = None,
         xlines: Optional[List[float]] = None,
-        masked: Optional[bool] = True,
+        masked: Optional[bool] = None,
         name: Optional[str] = "unknown",
         filesrc: Optional[str] = None,
         fformat: Optional[str] = None,
@@ -568,7 +568,7 @@ class RegularSurface:
             values: A scalar (for constant values) or a "array-like" input that has
                 ncol * nrow elements. As result, a 2D (masked) numpy array of shape
                 (ncol, nrow), C order will be made.
-            masked: Indicating if numpy array shall be masked or not. Default is True.
+            masked: Deprecated and ignored.
             name: A given name for the surface, default is file name root or
                 'unknown' if constructed from scratch.
 
@@ -623,7 +623,15 @@ class RegularSurface:
             self._ilines = ilines
             self._xlines = xlines
 
-        self._masked = masked  # TODO: check usecase
+        if masked is not None:
+            warnings.warn(
+                "The 'masked' parameter is deprecated and will be removed in a "
+                "future version.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        self._masked = True if masked is None else masked
         self._metadata.required = self
 
     def __repr__(self):

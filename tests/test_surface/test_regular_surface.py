@@ -3,6 +3,7 @@
 import logging
 import pathlib
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -36,6 +37,32 @@ FENCE1 = pathlib.Path("polygons/reek/1/fence.pol")
 def test_surface_from_file_missing(tmp_path):
     with pytest.raises(ValueError, match="missing"):
         xtgeo.surface_from_file(tmp_path / "nosuchfile", fformat="irap_binary")
+
+
+def test_masked_constructor_argument_is_deprecated():
+    """
+    Verify that a warning is raised when the deprecated 'masked' argument
+    is used in the RegularSurface constructor.
+    """
+    with pytest.warns(DeprecationWarning, match="'masked' parameter is deprecated"):
+        xtgeo.RegularSurface(
+            ncol=2,
+            nrow=2,
+            xinc=1.0,
+            yinc=1.0,
+            values=1.0,
+            masked=False,
+        )
+
+
+def test_omitted_masked_constructor_argument_does_not_warn():
+    """
+    Verify that a warning is _not_ raised when the deprecated 'masked' argument
+    is _not_ used in the RegularSurface constructor.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=1.0)
 
 
 @pytest.mark.filterwarnings("ignore:Default values*")
