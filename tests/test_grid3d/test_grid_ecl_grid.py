@@ -47,6 +47,20 @@ def test_unit_conversion_factors():
     assert feet.conversion_factor(feet) == 1.0
 
 
+def test_unit_from_grdecl_us_surve_returns_feet_and_warns():
+    """
+    Tests that FEET is returned and warning is issued when unit system is US_SURVE
+
+    When the discontinued standard 'US_SURVE' is provided as unit string to the method
+    ggrid.Units.from_grdecl(), ggrid.Units.FEET should be returned and warning issued.
+
+    """
+
+    with pytest.warns(match="is a discontinued standard."):
+        unit: ggrid.Units = ggrid.Units.from_grdecl("US_SURVE")
+        assert unit == ggrid.Units.FEET
+
+
 def ecl_grids(*args, **kwargs):
     return st.one_of([grdecl_grids(*args, **kwargs), egrids(*args, **kwargs)])
 
