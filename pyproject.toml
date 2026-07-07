@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "pybind11",
-    "scikit-build-core[pyproject]",
+    "scikit-build-core[pyproject]<1.0.0",
     "swig<4.3.0",
     "numpy==1.19.2; python_version == '3.8'",
     "numpy==1.19.5; python_version == '3.9'",
