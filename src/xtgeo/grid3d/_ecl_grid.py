@@ -49,6 +49,13 @@ class Units(Enum):
             return cls.FEET
         if match_keyword(unit_string, "CM"):
             return cls.CM
+        if match_keyword(unit_string, "US_SURVE"):
+            warnings.warn(
+                "The provided unit system 'US_SURVE' (US. Survey Foot) is a "
+                "discontinued standard. The international foot definition "
+                "will be used instead."
+            )
+            return cls.FEET
         raise ValueError(f"Unknown unit string {unit_string}")
 
     @classmethod
