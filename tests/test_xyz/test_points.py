@@ -20,7 +20,7 @@ CSV1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
 
 
 @pytest.fixture
-def points_with_attrs():
+def points_with_attrs() -> tuple[list, dict]:
     plist = [
         (234.0, 556.0, 11.0, 0, "some", 1.0),
         (235.0, 559.0, 14.0, 1, "attr", 1.1),
@@ -45,7 +45,9 @@ def points_with_attrs():
         (POINTSET4_CSV, "csv"),
     ],
 )
-def test_points_from_file_alternatives(testdata_path, filename, fformat):
+def test_points_from_file_alternatives(
+    testdata_path: str, filename: pathlib.Path, fformat: str
+) -> None:
     """Test that explicit and auto-detected ``fformat`` produce identical results.
 
     What is tested:
@@ -69,7 +71,7 @@ def test_points_from_file_alternatives(testdata_path, filename, fformat):
     pd.testing.assert_frame_equal(points3.get_dataframe(), points4.get_dataframe())
 
 
-def test_points_rmsattr_vs_csv(testdata_path):
+def test_points_rmsattr_vs_csv(testdata_path: str) -> None:
     """Test reading points from RMS attr and CSV files.
 
     What is tested:
@@ -95,7 +97,7 @@ def test_points_rmsattr_vs_csv(testdata_path):
     )
 
 
-def test_points_read_write_csv(testdata_path, tmp_path):
+def test_points_read_write_csv(testdata_path: str, tmp_path: pathlib.Path) -> None:
     """Test reading and writing points to CSV file.
 
     What is tested:
@@ -121,7 +123,9 @@ def test_points_read_write_csv(testdata_path, tmp_path):
     )
 
 
-def test_points_io_with_attrs(points_with_attrs, tmp_path):
+def test_points_io_with_attrs(
+    points_with_attrs: tuple[list, dict], tmp_path: pathlib.Path
+) -> None:
     """Test roundtrip of polygons with attributes from file and back.
     What is tested:
         A ``Points`` instance with three attributes (``some_int``, ``sometxt``,
@@ -173,7 +177,9 @@ def test_points_io_with_attrs(points_with_attrs, tmp_path):
     )
 
 
-def test_points_io_table_with_some_attrs(points_with_attrs, tmp_path):
+def test_points_io_table_with_some_attrs(
+    points_with_attrs: tuple[list, dict], tmp_path: pathlib.Path
+) -> None:
     """Test roundtrip with selected attributes from file and back for csv/pq.
 
     What is tested:
@@ -213,7 +219,7 @@ def test_points_io_table_with_some_attrs(points_with_attrs, tmp_path):
         assert "some_int" not in mypoints2.get_dataframe().columns
 
 
-def test_points_from_list_of_tuples():
+def test_points_from_list_of_tuples() -> None:
     """Test that a plain list of 3-tuples creates a valid ``Points`` instance.
 
     What is tested:
@@ -234,7 +240,7 @@ def test_points_from_list_of_tuples():
     assert z2 == 12
 
 
-def test_points_with_attrs_copy(points_with_attrs):
+def test_points_with_attrs_copy(points_with_attrs: tuple[list, dict]) -> None:
     """Test that ``copy()`` produces a fully independent deep copy.
 
     What is tested:
@@ -258,7 +264,7 @@ def test_points_with_attrs_copy(points_with_attrs):
 
 
 @st.composite
-def list_of_equal_length_lists(draw):
+def list_of_equal_length_lists(draw: st.DrawFn) -> list[list[float]]:
     list_len = draw(st.integers(min_value=3, max_value=3))
     fixed_len_list = st.lists(
         st.floats(allow_nan=False, allow_infinity=False),
@@ -269,7 +275,7 @@ def list_of_equal_length_lists(draw):
 
 
 @given(list_of_equal_length_lists())
-def test_create_pointset(points):
+def test_create_pointset(points: list[list[float]]) -> None:
     """Test that a ``Points`` instance stores exactly the input coordinates.
 
     What is tested:
@@ -284,22 +290,22 @@ def test_create_pointset(points):
         precision.
     """
     pointset = Points(points)
-    points = np.array(points)
+    points_arr = np.array(points)
 
-    assert len(points) == pointset.nrow
+    assert len(points_arr) == pointset.nrow
 
     np.testing.assert_array_almost_equal(
-        pointset.get_dataframe()["X_UTME"], points[:, 0]
+        pointset.get_dataframe()["X_UTME"], points_arr[:, 0]
     )
     np.testing.assert_array_almost_equal(
-        pointset.get_dataframe()["Y_UTMN"], points[:, 1]
+        pointset.get_dataframe()["Y_UTMN"], points_arr[:, 1]
     )
     np.testing.assert_array_almost_equal(
-        pointset.get_dataframe()["Z_TVDSS"], points[:, 2]
+        pointset.get_dataframe()["Z_TVDSS"], points_arr[:, 2]
     )
 
 
-def test_import(testdata_path):
+def test_import(testdata_path: str) -> None:
     """Verify that a file is read correctly from disk.
 
     What is tested:
@@ -319,7 +325,7 @@ def test_import(testdata_path):
     assert x0 == pytest.approx(460842.434326, 0.001)
 
 
-def test_import_from_dataframe(testdata_path):
+def test_import_from_dataframe(testdata_path: str) -> None:
     """Verify that a ``Points`` instance can be constructed from a pandas DataFrame.
 
     What is tested:
@@ -346,7 +352,7 @@ def test_import_from_dataframe(testdata_path):
         mypoints = Points(dfr, xname="NOTTHERE", yname="Y", zname="Z", attributes=attr)
 
 
-def test_export_and_load_points(tmp_path):
+def test_export_and_load_points(tmp_path: pathlib.Path) -> None:
     """Export XYZ points to file. Write to file and read back.
 
     What is tested:
@@ -376,7 +382,9 @@ def test_export_and_load_points(tmp_path):
     )
 
 
-def test_export_load_rmsformatted_points(testdata_path, tmp_path):
+def test_export_load_rmsformatted_points(
+    testdata_path: str, tmp_path: pathlib.Path
+) -> None:
     """Export XYZ points to file, various formats
 
     What is tested:
@@ -406,7 +414,9 @@ def test_export_load_rmsformatted_points(testdata_path, tmp_path):
     )
 
 
-def test_io_rms_attrs(points_with_attrs, tmp_path):
+def test_io_rms_attrs(
+    points_with_attrs: tuple[list, dict], tmp_path: pathlib.Path
+) -> None:
     """Test points with attributes from file and back using rms_attrs fmt.
 
     What is tested:
@@ -454,7 +464,9 @@ def test_io_rms_attrs(points_with_attrs, tmp_path):
     assert "some_int" not in mypoints2.get_dataframe().columns
 
 
-def test_io_rms_wrong_attrs(points_with_attrs, tmp_path):
+def test_io_rms_wrong_attrs(
+    points_with_attrs: tuple[list, dict], tmp_path: pathlib.Path
+) -> None:
     """Test points with attributes from file and back using rms_attrs fmt.
 
     What is tested:
@@ -488,7 +500,7 @@ def test_io_rms_wrong_attrs(points_with_attrs, tmp_path):
 
 
 @pytest.mark.bigtest
-def test_import_rmsattr_format(testdata_path, tmp_path):
+def test_import_rmsattr_format(testdata_path: str, tmp_path: pathlib.Path) -> None:
     """Import points with attributes from RMS attr format.
 
     What is tested:
@@ -513,7 +525,7 @@ def test_import_rmsattr_format(testdata_path, tmp_path):
     )
 
 
-def test_export_points_rmsattr(testdata_path, tmp_path):
+def test_export_points_rmsattr(testdata_path: str, tmp_path: pathlib.Path) -> None:
     """Export XYZ points to file, as rmsattr..
 
     What is tested:
@@ -543,7 +555,7 @@ def test_export_points_rmsattr(testdata_path, tmp_path):
     )
 
 
-def test_points_comparison_operators_compare_z_column():
+def test_points_comparison_operators_compare_z_column() -> None:
     """Test that the overloaded rich-comparison operators act on the Z column only.
 
     What is tested:
@@ -571,7 +583,7 @@ def test_points_comparison_operators_compare_z_column():
     assert list(points <= 3.0) == [True, True, False]
 
 
-def test_points_random_populates_dataframe():
+def test_points_random_populates_dataframe() -> None:
     """Test the private ``_random`` helper fills the instance with random points.
 
     What is tested:
@@ -595,7 +607,7 @@ def test_points_random_populates_dataframe():
     assert dataframe.lt(1.0).all().all()
 
 
-def test_points_get_boundary_delegates_to_base_implementation():
+def test_points_get_boundary_delegates_to_base_implementation() -> None:
     """Test ``Points.get_boundary`` returns the 3D bounding box of all points.
 
     Expected behaviour:
@@ -607,7 +619,7 @@ def test_points_get_boundary_delegates_to_base_implementation():
     assert points.get_boundary() == (-1.0, 2.0, 3.0, 8.0, 4.0, 9.0)
 
 
-def test_points_from_numpy_array_2d():
+def test_points_from_numpy_array_2d() -> None:
     """Test a 2D ``(n, 3)`` numpy array is accepted directly as XYZ input.
 
     What is tested:
@@ -629,7 +641,7 @@ def test_points_from_numpy_array_2d():
     assert points.get_dataframe()["Z_TVDSS"].tolist() == [3.0, 6.0]
 
 
-def test_points_from_1d_numpy_array_raises():
+def test_points_from_1d_numpy_array_raises() -> None:
     """Test a one-dimensional numpy array is rejected as invalid input.
 
     What is tested:
@@ -664,7 +676,9 @@ def test_points_from_1d_numpy_array_raises():
         ),
     ],
 )
-def test_points_dataframe_missing_required_column_raises(dataframe, match):
+def test_points_dataframe_missing_required_column_raises(
+    dataframe: pd.DataFrame, match: str
+) -> None:
     """Test that a dataframe missing a required coordinate column fails.
 
     What is tested:
@@ -685,7 +699,9 @@ def test_points_dataframe_missing_required_column_raises(dataframe, match):
         Points(values=dataframe)
 
 
-def test_points_get_dataframe_copy_semantics(points_with_attrs):
+def test_points_get_dataframe_copy_semantics(
+    points_with_attrs: tuple[list, dict],
+) -> None:
     """Test the ``copy`` flag of ``get_dataframe`` controls view vs. copy.
 
     What is tested:
@@ -710,7 +726,9 @@ def test_points_get_dataframe_copy_semantics(points_with_attrs):
     assert points.get_dataframe()["Z_TVDSS"][0] == 999.0
 
 
-def test_points_delete_columns_protects_coordinates(points_with_attrs):
+def test_points_delete_columns_protects_coordinates(
+    points_with_attrs: tuple[list, dict],
+) -> None:
     """Test ``delete_columns`` never removes any of the protected coordinate columns.
 
     What is tested:
@@ -739,7 +757,7 @@ def test_points_delete_columns_protects_coordinates(points_with_attrs):
     assert points.zname in columns
 
 
-def test_file_importer_drops_nan_rows(tmp_path):
+def test_file_importer_drops_nan_rows(tmp_path: pathlib.Path) -> None:
     """Test undefined rows are dropped when importing a points file.
 
     What is tested:
@@ -761,7 +779,7 @@ def test_file_importer_drops_nan_rows(tmp_path):
     assert 999.0 not in points.get_dataframe()["Z_TVDSS"].values
 
 
-def test_to_file_pfilter_selects_matching_rows(tmp_path):
+def test_to_file_pfilter_selects_matching_rows(tmp_path: pathlib.Path) -> None:
     """Test ``pfilter`` keeps only rows whose attribute matches the listed values.
 
     What is tested:
@@ -790,7 +808,7 @@ def test_to_file_pfilter_selects_matching_rows(tmp_path):
     assert reloaded.nrow == 2
 
 
-def test_to_file_pfilter_invalid_key_raises(tmp_path):
+def test_to_file_pfilter_invalid_key_raises(tmp_path: pathlib.Path) -> None:
     """Test ``pfilter`` referencing a non-existent column raises ``KeyError``.
 
     What is tested:
@@ -817,7 +835,7 @@ def test_to_file_pfilter_invalid_key_raises(tmp_path):
         )
 
 
-def test_data_reader_factory_unsupported_format_raises():
+def test_data_reader_factory_unsupported_format_raises() -> None:
     """Test ``_data_reader_factory`` raises for an unsupported ``FileFormat``.
 
     What is tested:
@@ -838,7 +856,7 @@ def test_data_reader_factory_unsupported_format_raises():
         _data_reader_factory(FileFormat.RMSWELL)
 
 
-def test_wells_importer_skips_none_wells_and_object_dtype_attrs():
+def test_wells_importer_skips_none_wells_and_object_dtype_attrs() -> None:
     """Test ``_wells_importer`` skips ``None`` wells and maps object-dtype attrs.
 
     What is tested:
@@ -883,7 +901,7 @@ def test_wells_importer_skips_none_wells_and_object_dtype_attrs():
     assert result["attributes"]["Category"] == "float"
 
 
-def test_wells_dfrac_importer_skips_none_wells():
+def test_wells_dfrac_importer_skips_none_wells() -> None:
     """Test ``_wells_dfrac_importer`` silently skips wells that return ``None``.
 
     What is tested:
@@ -914,7 +932,7 @@ def test_wells_dfrac_importer_skips_none_wells():
     assert len(result["values"]) == 1
 
 
-def test_points_get_xyz_arrays_returns_n3_numpy_array():
+def test_points_get_xyz_arrays_returns_n3_numpy_array() -> None:
     """Test ``get_xyz_arrays`` returns coordinates as a ``(n, 3)`` numpy array.
 
     What is tested:
@@ -936,7 +954,7 @@ def test_points_get_xyz_arrays_returns_n3_numpy_array():
     np.testing.assert_array_equal(arr[:, 2], [3.0, 6.0])
 
 
-def test_points_dataframe_property_getter_warns_and_returns_dataframe():
+def test_points_dataframe_property_getter_warns_and_returns_dataframe() -> None:
     """Test deprecated ``dataframe`` getter emits warning and returns dataframe.
 
     What is tested:
@@ -956,7 +974,7 @@ def test_points_dataframe_property_getter_warns_and_returns_dataframe():
     assert dataframe["Z_TVDSS"].tolist() == [3.0, 6.0]
 
 
-def test_points_dataframe_property_setter_warns_and_sets_deep_copy():
+def test_points_dataframe_property_setter_warns_and_sets_deep_copy() -> None:
     """Test deprecated ``dataframe`` setter emits warning and updates data.
 
     What is tested:
