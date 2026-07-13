@@ -71,6 +71,11 @@ RegularSurface supported import/export formats
      - Yes
      -
      - 5 columns: I, J, X, Y, Z
+   * - GXF ASCII
+     - Yes
+     - Yes
+     -
+     -
    * - ZMAP+ ASCII
      - No
      - Yes
