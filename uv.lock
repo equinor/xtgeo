@@ -782,18 +782,19 @@ wheels = [
 
 [[package]]
 name = "hdf5plugin"
-version = "6.0.0"
+version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "h5py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/4f/9130151e3aa475b3e4e9a611bf608107fe5c72d277d74c4cf36f164b7c81/hdf5plugin-6.0.0.tar.gz", hash = "sha256:847ed9e96b451367a110f0ba64a3b260d38d64bbf3f25751858d3b56e094cfe0", size = 66372085, upload-time = "2025-10-08T18:16:28.423Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3d/64/0fc6b68e5bc671e7b81d67b930fbed3a4e8a2a92dc4af0f7282b2a2ff988/hdf5plugin-7.0.0.tar.gz", hash = "sha256:e6e6b1f8b0c4d2ca87e616ddc31d08330b36207e466357040f95269e5e0401c8", size = 68284761, upload-time = "2026-06-25T20:59:40.102Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/13/15017f6210bfea843316d62f0f121e364e17bb129444ed803a256a213036/hdf5plugin-6.0.0-py3-none-macosx_10_13_universal2.whl", hash = "sha256:a59fbd5d4290a8a5334d82ccb4c6b9bfc7aaf586de7fedb88762e8601bc05fd4", size = 13339413, upload-time = "2025-10-08T18:16:10.656Z" },
-    { url = "https://files.pythonhosted.org/packages/40/bf/d1f3765fb879820d7331e30e860b684f5b78d3ec17324e8f54130cbe560b/hdf5plugin-6.0.0-py3-none-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d301f4b9295872bacf277c70628d4c5e965ee47db762d8fde2d4849f201b9897", size = 42858563, upload-time = "2025-10-08T18:16:14.106Z" },
-    { url = "https://files.pythonhosted.org/packages/0a/67/37d0b84fbbf26bf0d6a99a8f98bcd82bb6d437dc8cabee259fb3d7506ec7/hdf5plugin-6.0.0-py3-none-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:78b082ea355fe46bf5b396024de1fb662a1aaf9a5e11861ad61a5a2a6316d59d", size = 45126124, upload-time = "2025-10-08T18:16:17.992Z" },
-    { url = "https://files.pythonhosted.org/packages/ed/2f/1046d464ad1db29a4f6c70ba4e19b39baa8a6542c719eaa4e765108f07f1/hdf5plugin-6.0.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:79e0524d18ddc41c0cf2e1bb2e529d4e154c286f6a1bd85f3d44019d2a17574a", size = 44857273, upload-time = "2025-10-08T18:16:22.007Z" },
-    { url = "https://files.pythonhosted.org/packages/61/b3/75478bdfee85533777de4204373f563aa7a1074355300743c3aedc33cac5/hdf5plugin-6.0.0-py3-none-win_amd64.whl", hash = "sha256:99866f90be1ceac5519e6e038669564be326c233618d59ba1f38c9dd8c32099e", size = 3379316, upload-time = "2025-10-08T18:16:25.007Z" },
+    { url = "https://files.pythonhosted.org/packages/03/5a/00d0f491d420d491b5134ee044cd8ead5103382d88f4c8aee623258a6348/hdf5plugin-7.0.0-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:e0ff0a81e6319575ffc8bf230b8df43f3f19f6fe96843e113e04c5ba9f7f3141", size = 6941923, upload-time = "2026-06-25T20:59:24.517Z" },
+    { url = "https://files.pythonhosted.org/packages/96/ad/b28f4102e619c262b29bfcd13ccf6799e26f9ff113d2fdce19050ae29448/hdf5plugin-7.0.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:97ea4ff6114223c5e8ccce7e23cc6cd398b58c02f4e988e967aeea914fcb8030", size = 6259223, upload-time = "2026-06-25T20:59:26.246Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/f4/67263173ff61c49800eec4f16b4d84e6a39170be8d4871d4eb0d540b71ee/hdf5plugin-7.0.0-py3-none-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0f3ba9f4e2a370340b45e7042d1b1b1577ab259c1ddf00956264836fa33052ef", size = 42789778, upload-time = "2026-06-25T20:59:28.438Z" },
+    { url = "https://files.pythonhosted.org/packages/75/d2/66673e2d0ef8499d08dd7061caa194e4ddec12df73ab512431c60538f675/hdf5plugin-7.0.0-py3-none-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:1a4cb2207ec3ac538fc728e4596e9e49aed6c4487a641071fb370c04a361e7bf", size = 45295544, upload-time = "2026-06-25T20:59:31.765Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/0b/855e50e27eab8338c71c3157672c065cd2a2ab38887b3ea4bf128cbd89a1/hdf5plugin-7.0.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4ad4ab0d3367699d132e61b1cc382a0c640a7dba56536e5105508205ebbe8762", size = 45012013, upload-time = "2026-06-25T20:59:35.029Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/14/32cf2aae083c74b95678875e11d25d0cb9e51a33d27f4218eb9aeacfcd70/hdf5plugin-7.0.0-py3-none-win_amd64.whl", hash = "sha256:2e052af8d7848e8bac92646584617503a08bb9b466cfa810a49ecd93e89b7ffa", size = 3523827, upload-time = "2026-06-25T20:59:37.758Z" },
 ]
 
 [[package]]
@@ -2701,11 +2702,11 @@ wheels = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.15.0"
+version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/72/94/1a15dd82efb362ac84269196e94cf00f187f7ed21c242792a923cdb1c61f/typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466", size = 109391, upload-time = "2025-08-25T13:49:26.313Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz", hash = "sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5", size = 113555, upload-time = "2026-07-02T08:40:05.92Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548", size = 44614, upload-time = "2025-08-25T13:49:24.86Z" },
+    { url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl", hash = "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8", size = 45571, upload-time = "2026-07-02T08:40:04.659Z" },
 ]
 
 [[package]]
@@ -2789,6 +2790,26 @@ docs = [
     { name = "sphinx-toolbox" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "clang-format" },
+    { name = "cmake-format" },
+    { name = "coverage" },
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pandas-stubs" },
+    { name = "psutil" },
+    { name = "pydocstyle" },
+    { name = "pytest" },
+    { name = "pytest-benchmark" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-runner" },
+    { name = "pytest-snapshot" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "autoclasstoc", marker = "extra == 'docs'" },
@@ -2835,9 +2856,29 @@ requires-dist = [
 ]
 provides-extras = ["dev", "docs"]
 
+[package.metadata.requires-dev]
+dev = [
+    { name = "clang-format" },
+    { name = "cmake-format" },
+    { name = "coverage", specifier = ">=4.1" },
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pandas-stubs" },
+    { name = "psutil" },
+    { name = "pydocstyle" },
+    { name = "pytest" },
+    { name = "pytest-benchmark" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-runner" },
+    { name = "pytest-snapshot" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+]
+
 [[package]]
 name = "xtgeoviz"
-version = "0.3.2"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
@@ -2847,7 +2888,7 @@ dependencies = [
     { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "xtgeo" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b9/a3/3bc321041e237cc6956c74a827bdc12f89bd82fdcc98ce14a8ed4b066326/xtgeoviz-0.3.2.tar.gz", hash = "sha256:188d44a9c17c6309bee6e4c145dc4036942067996ea01b3a9f2aa7ad3c7e2549", size = 257916, upload-time = "2026-07-01T06:58:53.609Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ce/3d/4755a058081b5ef23bcefea2ce0d82ebe9812b234265ff200edae9e8bb78/xtgeoviz-0.3.0.tar.gz", hash = "sha256:f17e967434e2f6af65150c8c04fd5d5114501dfc4afff6b8f8cbbc547c4edf87", size = 103083, upload-time = "2025-09-15T08:41:15.22Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/d5/7c6f506848dcdf00ccd9e69fa14d89d68e1f7eee6dad833c26a1a82f7413/xtgeoviz-0.3.2-py3-none-any.whl", hash = "sha256:5db19fc0a74f165858a0a03bc4abf265876019082b251c7216ddce0e56141787", size = 40583, upload-time = "2026-07-01T06:58:52.513Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/fa/36204e2c8be5d7732843f7f7e9b9700b3319fecca2e577dcc17dcf3c6db6/xtgeoviz-0.3.0-py3-none-any.whl", hash = "sha256:3c8d2b4adf603f3bfc2ce4d87269189194e3e3cc635ab775bc4e53e3fb770d2e", size = 39755, upload-time = "2025-09-15T08:41:13.959Z" },
 ]
