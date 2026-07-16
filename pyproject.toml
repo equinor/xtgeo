@@ -90,26 +90,6 @@ docs = [
     "sphinx-toolbox>=3.5.0",
 ]
 
-[dependency-groups]
-dev = [
-    "clang-format",
-    "cmake-format",
-    "coverage>=4.1",
-    "hypothesis",
-    "mypy",
-    "pandas-stubs",
-    "psutil",
-    "pydocstyle",
-    "pytest",
-    "pytest-benchmark",
-    "pytest-cov",
-    "pytest-mock",
-    "pytest-runner",
-    "pytest-snapshot",
-    "pytest-xdist",
-    "ruff",
-]
-
 [tool.scikit-build]
 cmake.version = "CMakeLists.txt"
 build.verbose = true
