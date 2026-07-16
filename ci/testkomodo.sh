@@ -36,7 +36,7 @@ install_and_test () {
 
 install_package () {
     pushd $CI_SOURCE_ROOT
-    pip install ".[dev]"
+    pip install --group dev
     popd
 }
 
