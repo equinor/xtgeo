@@ -29,6 +29,16 @@ copy_test_files () {
 
 install_test_dependencies () {
     echo "Installing test dependencies..."
+
+    # Cache CMake FetchContent deps (Eigen/fmt) per Python version so they are
+    # fetched once instead of re-cloned on every run. Reuse the CI cache dir if
+    # provided, otherwise fall back to a temp location for local runs.
+    local cache_root="${CACHE_DIR:+$HOME/$CACHE_DIR}"
+    cache_root="${cache_root:-${CI_ROOT:-/tmp}/cache}"
+    local py_tag="${PYTHON_VERSION:-$(python -c 'import sys; print(f"py{sys.version_info.major}{sys.version_info.minor}")')}"
+    export SKBUILD_CMAKE_DEFINE="FETCHCONTENT_BASE_DIR=${cache_root}/xtgeo-cmake-deps/${py_tag}"
+    echo "SKBUILD_CMAKE_DEFINE=$SKBUILD_CMAKE_DEFINE"
+
     pip install ".[dev]"
 
     echo "Dependencies installed successfully. Listing installed dependencies..."
