@@ -195,7 +195,10 @@ def test_writer_roundtrip_new_case(resinsight_instance):
     data = reader.load("EXAMPLE")
 
     writer = GridWriter(resinsight_instance)
-    writer.save(data, gname="NEW_CASE")
+    case = writer.save(data, gname="NEW_CASE")
+
+    assert case is not None, "save should return the created case"
+    assert case.name == "NEW_CASE"
 
     reloaded_data = reader.load("NEW_CASE")
     assert reloaded_data.name == "NEW_CASE", "Should reload the grid with the new name"
@@ -225,7 +228,10 @@ def test_writer_replace_case(resinsight_instance: RipsInstanceType):
     writer = GridWriter(resinsight_instance)
     data = GridDataResInsight.from_xtgeo_grid(grid, name="TEST_GRID", filesrc="")
 
-    writer.save(data, gname="SIMPLE", find_last=False)
+    case = writer.save(data, gname="SIMPLE", find_last=False)
+
+    assert case is not None, "save should return the created case"
+    assert case.name == "SIMPLE"
 
     reloaded_data = GridReader(resinsight_instance).load("SIMPLE", find_last=False)
     assert reloaded_data.name == "SIMPLE", "Should reload the grid with the new name"
@@ -248,7 +254,10 @@ def test_writer_replace_case(resinsight_instance: RipsInstanceType):
     # Create a new grid with different dimensions and save it with the same case name
     grid2 = xtgeo.create_box_grid((3, 3, 3))
     data2 = GridDataResInsight.from_xtgeo_grid(grid2, name="TEST_GRID_2", filesrc="")
-    writer.save(data2, gname="SIMPLE", find_last=False)
+    case2 = writer.save(data2, gname="SIMPLE", find_last=False)
+
+    assert case2 is not None, "save should return the replaced case"
+    assert case2.name == "SIMPLE"
 
     reloaded_data2 = GridReader(resinsight_instance).load("SIMPLE", find_last=False)
     assert reloaded_data2.name == "SIMPLE", "Should reload the grid with the new name"

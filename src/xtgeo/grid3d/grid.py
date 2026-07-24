@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
     from xtgeo.interfaces.resinsight._rips_package import (
         ResInsightInstanceOrPortType,
+        RipsCaseType,
     )
     from xtgeo.interfaces.rms._rmsapi_package import RmsProjectOrPathType
     from xtgeo.xyz.points import Points
@@ -1269,7 +1270,7 @@ class Grid(_Grid3D):
         instance_or_port: ResInsightInstanceOrPortType | None,
         gname: str,
         find_last: bool = True,
-    ) -> None:
+    ) -> RipsCaseType:
         """Export this grid as a new corner-point grid in ResInsight.
 
         The case named ``gname`` will be created if it does not already exist,
@@ -1283,6 +1284,9 @@ class Grid(_Grid3D):
                 share the same ``gname``. If ``True`` (default), the last matching
                 case is replaced; if ``False``, the first matching case is replaced.
 
+        Returns:
+            The ResInsight case that was created or replaced.
+
         """
         import xtgeo.interfaces.resinsight
 
@@ -1295,7 +1299,7 @@ class Grid(_Grid3D):
         writer = xtgeo.interfaces.resinsight.GridWriter(
             instance_or_port=instance_or_port
         )
-        writer.save(data, gname, find_last)
+        return writer.save(data, gname, find_last)
 
     def convert_units(self, units: Units) -> None:
         """
