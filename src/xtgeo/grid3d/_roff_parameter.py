@@ -50,6 +50,12 @@ class RoffParameter:
     code_names: list[str] | None = None
     code_values: np.ndarray | None = None
 
+    def __post_init__(self) -> None:
+        if self.code_values is not None and np.ndim(self.code_values) == 0:
+            self.code_values = np.atleast_1d(self.code_values)
+        if self.code_names is not None and isinstance(self.code_names, str):
+            self.code_names = [self.code_names]
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, RoffParameter):
             return False
