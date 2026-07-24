@@ -14,9 +14,20 @@ runs:
   steps:
     - name: Download ResInsight
       shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
-        wget https://nightly.link/OPM/ResInsight/workflows/ResInsightWithCache/dev/ResInsight-Ubuntu%2024.04%20gcc.zip -O /tmp/resinsight.zip
-        unzip /tmp/resinsight.zip -d /tmp/${{ inputs.install-dir }}
+        tmpdir="$(mktemp -d)"
+        gh release download --repo OPM/ResInsight \
+          --pattern 'ResInsight-Ubuntu_24.04_gcc*.zip' \
+          --dir "$tmpdir"
+        set -- "$tmpdir"/ResInsight-Ubuntu_24.04_gcc*.zip
+        [ "$#" -eq 1 ] || { echo "Expected exactly one ResInsight archive, found $# : $*"; exit 1; }
+        unzip "$1" -d "$tmpdir/resinsight_extract"
+        mkdir -p "/tmp/${{ inputs.install-dir }}"
+        # Release archives nest everything under a single top-level directory;
+        # flatten it so bin/Python is directly under the install directory.
+        mv "$tmpdir/resinsight_extract"/*/* "/tmp/${{ inputs.install-dir }}/"
     - name: Extract ResInsight
       id: extract
       shell: bash
