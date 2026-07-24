@@ -78,9 +78,12 @@ def test_grid_from_resinsight_auto_discover(resinsight_instance):
 
 
 def test_to_resinsight_creates_new_case(resinsight_instance):
-    """to_resinsight should create a new case in ResInsight."""
+    """to_resinsight should create a new case in ResInsight and return it."""
     grid = xtgeo.create_box_grid((3, 3, 2), increment=(10.0, 10.0, 5.0))
-    grid.to_resinsight(resinsight_instance, gname="GRID_NEW")
+    case = grid.to_resinsight(resinsight_instance, gname="GRID_NEW")
+
+    assert case is not None, "to_resinsight should return the created case"
+    assert case.name == "GRID_NEW"
 
     reloaded = xtgeo.grid_from_resinsight(resinsight_instance, "GRID_NEW")
     assert reloaded.ncol == grid.ncol
@@ -94,7 +97,10 @@ def test_to_resinsight_replaces_existing_case(resinsight_instance):
     grid_a.to_resinsight(resinsight_instance, gname="GRID_REPLACE")
 
     grid_b = xtgeo.create_box_grid((5, 4, 3))
-    grid_b.to_resinsight(resinsight_instance, gname="GRID_REPLACE")
+    case = grid_b.to_resinsight(resinsight_instance, gname="GRID_REPLACE")
+
+    assert case is not None, "to_resinsight should return the replaced case"
+    assert case.name == "GRID_REPLACE"
 
     reloaded = xtgeo.grid_from_resinsight(resinsight_instance, "GRID_REPLACE")
     assert reloaded.ncol == grid_b.ncol

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from xtgeo.grid3d.grid import Grid
 
-    from ._rips_package import ResInsightInstanceOrPortType
+    from ._rips_package import ResInsightInstanceOrPortType, RipsCaseType
 
 logger = null_logger(__name__)
 
@@ -159,7 +159,7 @@ class GridWriter(_BaseResInsightDataRW):
 
     def save(
         self, data: GridDataResInsight, gname: str, find_last: bool = True
-    ) -> None:
+    ) -> RipsCaseType:
         """Save grid to selected ResInsight case.
 
         Args:
@@ -173,6 +173,9 @@ class GridWriter(_BaseResInsightDataRW):
             find_last: Controls which existing case to replace when multiple cases
                 share the same `gname`. If `True` (default), the last matching case is
                 replaced; if `False`, the first matching case is replaced.
+
+        Returns:
+            The ResInsight case that was created or replaced.
 
         Note: If an existing case with the same name is found but is not replaceable
         (e.g. it's loaded from grid file), a warning is logged and a new case with the
@@ -198,7 +201,7 @@ class GridWriter(_BaseResInsightDataRW):
                     )
                     case.file_path = data.filesrc
                     case.update()
-                    return
+                    return case
                 logger.warning(
                     "Existing case named '%s' is of type '%s', which is not "
                     "compatible with grid data. Creating a new case with same name "
@@ -223,6 +226,7 @@ class GridWriter(_BaseResInsightDataRW):
             )
             new_case.file_path = data.filesrc
             new_case.update()
+            return new_case
 
         except Exception as exc:
             raise RuntimeError(f"Failed to save ResInsight case data: {exc}") from exc
