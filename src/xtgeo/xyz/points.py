@@ -74,6 +74,13 @@ def _surface_importer(
     surf: RegularSurface, zname: str = _AttrName.ZNAME.value
 ) -> dict[str, Any]:
     """General function for _read_surface()"""
+    if zname in (_AttrName.XNAME.value, _AttrName.YNAME.value):
+        raise ValueError(
+            f"The zname '{zname}' collides with a coordinate column name; "
+            f"it must differ from '{_AttrName.XNAME.value}' and "
+            f"'{_AttrName.YNAME.value}'."
+        )
+
     val = surf.values
     xc, yc = surf.get_xy_values()
 

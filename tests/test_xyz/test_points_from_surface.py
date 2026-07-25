@@ -1,6 +1,7 @@
 import pathlib
 
 import pandas as pd
+import pytest
 
 import xtgeo
 
@@ -30,3 +31,13 @@ def test_init_with_surface_classmethod(testdata_path):
 
     poi.zname = "VALUES"
     pd.testing.assert_frame_equal(poi.get_dataframe(), surf.get_dataframe())
+
+
+@pytest.mark.parametrize("zname", ["X_UTME", "Y_UTMN"])
+def test_zname_colliding_with_coordinate_column(zname):
+    """A zname equal to a coordinate column would overwrite those coordinates."""
+    surf = xtgeo.RegularSurface(
+        ncol=4, nrow=5, xori=0, yori=0, xinc=25, yinc=25, values=1234.0
+    )
+    with pytest.raises(ValueError, match="collides with a coordinate column"):
+        xtgeo.points_from_surface(surf, zname=zname)
