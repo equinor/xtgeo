@@ -268,9 +268,9 @@ def grid_from_resinsight(
     if case is None:
         raise TypeError("grid_from_resinsight() missing required argument: 'case'")
 
-    import xtgeo.interfaces.resinsight
+    from xtgeo.interfaces.resinsight._grid import GridReader
 
-    grid_resinsight = xtgeo.interfaces.resinsight.GridReader(
+    grid_resinsight = GridReader(
         instance_or_port=instance_or_port,
     ).load(case=case, find_last=find_last)
     return grid_resinsight.to_xtgeo_grid()
@@ -1326,20 +1326,21 @@ class Grid(_Grid3D):
         if case is None:
             raise TypeError("to_resinsight() missing required argument: 'case'")
 
-        import xtgeo.interfaces.resinsight
+        from xtgeo.interfaces.resinsight._grid import (
+            GridDataResInsight,
+            GridWriter,
+        )
         from xtgeo.interfaces.resinsight._resinsight_base import validate_case
 
         validate_case(case)  # fail fast before extracting grid data
         name = case if isinstance(case, str) else case.name
-        data = xtgeo.interfaces.resinsight.GridDataResInsight.from_xtgeo_grid(
+        data = GridDataResInsight.from_xtgeo_grid(
             self,
             name=name,
             filesrc=str(self.filesrc) if self.filesrc else "",
         )
 
-        writer = xtgeo.interfaces.resinsight.GridWriter(
-            instance_or_port=instance_or_port
-        )
+        writer = GridWriter(instance_or_port=instance_or_port)
         return writer.save(data, case, find_last)
 
     def convert_units(self, units: Units) -> None:
