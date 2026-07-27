@@ -129,11 +129,20 @@ class GridReader(_BaseResInsightDataRW):
     ) -> None:
         super().__init__(instance_or_port)
 
-    def load(self, case_name: str, find_last: bool = True) -> GridDataResInsight:
-        """Load metadata from selected ResInsight case."""
-        case = self.get_case(case_name=case_name, find_last=find_last)
-        if case is None:
-            raise RuntimeError(f"Cannot find any case with name '{case_name}'")
+    def load(
+        self, case: str | RipsCaseType, find_last: bool = True
+    ) -> GridDataResInsight:
+        """Load metadata from selected ResInsight case.
+
+        Args:
+            case: A ``rips`` case object, or the name of the case to look up.
+            find_last: When *case* is a name shared by several cases, select the
+                last match if ``True`` (default), otherwise the first.
+        """
+        resolved = self.resolve_case(case, find_last=find_last)
+        if resolved is None:
+            raise RuntimeError(f"Cannot find any case with name '{case}'")
+        case = resolved
 
         zcorn, coord, actnum, nx, ny, nz = case.export_corner_point_grid()  # type: ignore[attr-defined]
         return GridDataResInsight(
@@ -158,20 +167,24 @@ class GridWriter(_BaseResInsightDataRW):
         super().__init__(instance_or_port)
 
     def save(
-        self, data: GridDataResInsight, gname: str, find_last: bool = True
+        self,
+        data: GridDataResInsight,
+        case: str | RipsCaseType,
+        find_last: bool = True,
     ) -> RipsCaseType:
         """Save grid to selected ResInsight case.
 
         Args:
             data: The grid metadata to save.
-            gname: The name of the case to create or replace in ResInsight.
+            case: A ``rips`` case object to replace, or the name of the case to
+                create or replace in ResInsight.
                 If a case with the same name already exists, it will be replaced with
                 the new grid data.
                 If multiple cases share the same name, the one to replace is determined
                 by the `find_last` parameter.
 
             find_last: Controls which existing case to replace when multiple cases
-                share the same `gname`. If `True` (default), the last matching case is
+                share the same `case`. If `True` (default), the last matching case is
                 replaced; if `False`, the first matching case is replaced.
 
         Returns:
@@ -181,17 +194,18 @@ class GridWriter(_BaseResInsightDataRW):
         (e.g. it's loaded from grid file), a warning is logged and a new case with the
         same name is created instead of replacing the existing one.
         """
+        resolved = self.resolve_case(case, find_last=find_last)
+        case_name = case if isinstance(case, str) else case.name
         try:
-            case = self.get_case(case_name=gname, find_last=find_last)
-            if case:
-                grid_type = type(case).__name__.split(".")[-1]
+            if resolved:
+                grid_type = type(resolved).__name__.split(".")[-1]
                 if grid_type == "CornerPointCase":
                     logger.debug(
                         "Found existing case named '%s'. Replacing its grid data.",
-                        gname,
+                        case_name,
                     )
                     # Replace existing case
-                    case.replace_corner_point_grid(  # type: ignore[attr-defined]
+                    resolved.replace_corner_point_grid(  # type: ignore[attr-defined]
                         data.nx,
                         data.ny,
                         data.nz,
@@ -199,24 +213,25 @@ class GridWriter(_BaseResInsightDataRW):
                         data.zcornsv,
                         data.actnumsv,
                     )
-                    case.file_path = data.filesrc
-                    case.update()
-                    return case
+                    resolved.file_path = data.filesrc
+                    resolved.update()
+                    return resolved
                 logger.warning(
                     "Existing case named '%s' is of type '%s', which is not "
                     "compatible with grid data. Creating a new case with same name "
                     "instead.",
-                    gname,
+                    case_name,
                     grid_type,
                 )
             else:
                 logger.debug(
-                    "No existing case named '%s' found. Creating a new case.", gname
+                    "No existing case named '%s' found. Creating a new case.",
+                    case_name,
                 )
 
             # Create a new case
             new_case = self.get_project().create_corner_point_grid(  # type: ignore[attr-defined]
-                name=gname,
+                name=case_name,
                 nx=data.nx,
                 ny=data.ny,
                 nz=data.nz,
