@@ -247,7 +247,7 @@ def test_writer_rejects_dimension_mismatch(resinsight_instance):
     )
     writer = GridPropertyWriter(instance_or_port=resinsight_instance)
     with pytest.raises(ValueError, match="dimensions"):
-        writer.save(data, case_name="EXAMPLE")
+        writer.save(data, case="EXAMPLE")
 
 
 def test_writer_rejects_nonexistent_case(resinsight_instance):
@@ -255,4 +255,4 @@ def test_writer_rejects_nonexistent_case(resinsight_instance):
     data = _make_data()
     writer = GridPropertyWriter(instance_or_port=resinsight_instance)
     with pytest.raises(RuntimeError, match="Cannot find any case with name"):
-        writer.save(data, case_name="NONEXISTENT_CASE")
+        writer.save(data, case="NONEXISTENT_CASE")

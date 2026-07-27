@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from xtgeo.grid3d.grid import Grid
     from xtgeo.grid3d.grid_property import GridProperty
 
-    from ._rips_package import ResInsightInstanceOrPortType
+    from ._rips_package import ResInsightInstanceOrPortType, RipsCaseType
 
 logger = null_logger(__name__)
 
@@ -206,18 +206,28 @@ class GridPropertyReader(_BaseResInsightDataRW):
 
     def load(
         self,
-        case_name: str,
+        case: str | RipsCaseType,
         property_name: str,
         property_type: str | PropertyType = "STATIC_NATIVE",
         time_step_index: int = 0,
         find_last: bool = True,
     ) -> GridPropertyDataResInsight:
-        """Load a grid property from selected ResInsight case."""
+        """Load a grid property from selected ResInsight case.
+
+        Args:
+            case: A ``rips`` case object, or the name of the case to look up.
+            property_name: Name of the property to read.
+            property_type: The ResInsight property type (or a plain string).
+            time_step_index: Time step index (default 0).
+            find_last: When *case* is a name shared by several cases, select the
+                last match if ``True`` (default), otherwise the first.
+        """
         validated_type = _validate_property_type(property_type)
 
-        case = self.get_case(case_name=case_name, find_last=find_last)
-        if case is None:
-            raise RuntimeError(f"Cannot find any case with name '{case_name}'")
+        resolved = self.resolve_case(case, find_last=find_last)
+        if resolved is None:
+            raise RuntimeError(f"Cannot find any case with name '{case}'")
+        case = resolved
 
         dims = case.grids()[0].dimensions()  # type: ignore[attr-defined]
         nx, ny, nz = dims.i, dims.j, dims.k
@@ -283,22 +293,30 @@ class GridPropertyWriter(_BaseResInsightDataRW):
     def save(
         self,
         data: GridPropertyDataResInsight,
-        case_name: str,
+        case: str | RipsCaseType,
         find_last: bool = True,
     ) -> None:
-        """Save a grid property into selected ResInsight case."""
-        case = self.get_case(case_name=case_name, find_last=find_last)
-        if case is None:
+        """Save a grid property into selected ResInsight case.
+
+        Args:
+            data: The grid property data to save.
+            case: A ``rips`` case object, or the name of the case to look up.
+            find_last: When *case* is a name shared by several cases, select the
+                last match if ``True`` (default), otherwise the first.
+        """
+        resolved = self.resolve_case(case, find_last=find_last)
+        if resolved is None:
             raise RuntimeError(
-                f"Cannot find any case with name '{case_name}' for property export"
+                f"Cannot find any case with name '{case}' for property export"
             )
+        case = resolved
 
         # Validate grid dimensions before writing.
         dims = case.grids()[0].dimensions()  # type: ignore[attr-defined]
         if (data.nx, data.ny, data.nz) != (dims.i, dims.j, dims.k):
             raise ValueError(
                 f"Property '{data.name}' has dimensions "
-                f"{data.nx}x{data.ny}x{data.nz}, but case '{case_name}' grid "
+                f"{data.nx}x{data.ny}x{data.nz}, but case '{case.name}' grid "
                 f"has {dims.i}x{dims.j}x{dims.k}"
             )
 
@@ -329,11 +347,11 @@ class GridPropertyWriter(_BaseResInsightDataRW):
                 data.name,
                 validated_type,
                 data.time_step_index,
-                case_name,
+                case.name,
             )
 
         except Exception as exc:
             raise RuntimeError(
                 f"Failed to save property '{data.name}' to ResInsight case "
-                f"'{case_name}': {exc}"
+                f"'{case.name}': {exc}"
             ) from exc

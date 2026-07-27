@@ -225,17 +225,23 @@ def grid_from_roxar(
 
 def grid_from_resinsight(
     instance_or_port: ResInsightInstanceOrPortType | None,
-    case_name: str,
+    case: str | RipsCaseType | None = None,
     find_last: bool = True,
+    *,
+    case_name: str | RipsCaseType | None = None,
 ) -> Grid:
     """Load a corner-point grid from a ResInsight case into an XTGeo ``Grid``.
 
     Args:
         instance_or_port: Optional ``rips.Instance`` or gRPC port. Use ``None``
             to auto-discover a running ResInsight instance.
-        case_name: Name of the ResInsight case to load.
+        case: The name of the ResInsight case to load, or a ``rips`` case object.
+            Since case names are not unique in ResInsight, passing a case object
+            avoids the ambiguity that name-based lookup can introduce.
         find_last: If multiple cases have the same name, select the last match.
-            Set to ``False`` to select the first match instead.
+            Set to ``False`` to select the first match instead. Ignored when
+            *case* is a case object.
+        case_name: Deprecated alias for *case*, kept for backward compatibility.
 
     Returns:
         A populated :class:`xtgeo.Grid`.
@@ -244,15 +250,29 @@ def grid_from_resinsight(
 
         import xtgeo
 
+        # By case name
         grid = xtgeo.grid_from_resinsight(5000, "EXAMPLE")
         print(grid.dimensions)
 
+        # By case object
+        case = instance.project.cases()[0]
+        grid = xtgeo.grid_from_resinsight(instance, case)
+
     """
+    if case_name is not None:
+        from xtgeo.interfaces.resinsight._deprecation import resolve_deprecated_alias
+
+        case = resolve_deprecated_alias(
+            case, case_name, new_name="case", old_name="case_name"
+        )
+    if case is None:
+        raise TypeError("grid_from_resinsight() missing required argument: 'case'")
+
     import xtgeo.interfaces.resinsight
 
     grid_resinsight = xtgeo.interfaces.resinsight.GridReader(
         instance_or_port=instance_or_port,
-    ).load(case_name=case_name, find_last=find_last)
+    ).load(case=case, find_last=find_last)
     return grid_resinsight.to_xtgeo_grid()
 
 
@@ -1268,38 +1288,59 @@ class Grid(_Grid3D):
     def to_resinsight(
         self,
         instance_or_port: ResInsightInstanceOrPortType | None,
-        gname: str,
+        case: str | RipsCaseType | None = None,
         find_last: bool = True,
+        *,
+        gname: str | RipsCaseType | None = None,
     ) -> RipsCaseType:
         """Export this grid as a new corner-point grid in ResInsight.
 
-        The case named ``gname`` will be created if it does not already exist,
-        or an existing case with that name will be replaced.
+        The case named ``case`` will be created if it does not already exist,
+        or an existing case will be replaced.
 
         Args:
             instance_or_port: Optional ``rips.Instance`` or gRPC port. Use
                 ``None`` to auto-discover a running ResInsight instance.
-            gname: Name of the ResInsight case to create or replace.
+            case: Name of the ResInsight case to create or replace, or a ``rips``
+                case object to replace directly. Passing a case object avoids the
+                ambiguity that name-based lookup can introduce, since case names
+                are not unique in ResInsight.
             find_last: Controls which existing case to replace when multiple cases
-                share the same ``gname``. If ``True`` (default), the last matching
+                share the same name. If ``True`` (default), the last matching
                 case is replaced; if ``False``, the first matching case is replaced.
+                Ignored when *case* is a case object.
+            gname: Deprecated alias for *case*, kept for backward compatibility.
 
         Returns:
             The ResInsight case that was created or replaced.
 
         """
-        import xtgeo.interfaces.resinsight
+        if gname is not None:
+            from xtgeo.interfaces.resinsight._deprecation import (
+                resolve_deprecated_alias,
+            )
 
+            case = resolve_deprecated_alias(
+                case, gname, new_name="case", old_name="gname"
+            )
+        if case is None:
+            raise TypeError("to_resinsight() missing required argument: 'case'")
+
+        import xtgeo.interfaces.resinsight
+        from xtgeo.interfaces.resinsight._resinsight_base import validate_case
+
+        validate_case(case)  # fail fast before extracting grid data
+        name = case if isinstance(case, str) else case.name
         data = xtgeo.interfaces.resinsight.GridDataResInsight.from_xtgeo_grid(
             self,
-            name=gname,
+            name=name,
             filesrc=str(self.filesrc) if self.filesrc else "",
         )
 
         writer = xtgeo.interfaces.resinsight.GridWriter(
             instance_or_port=instance_or_port
         )
-        return writer.save(data, gname, find_last)
+        return writer.save(data, case, find_last)
 
     def convert_units(self, units: Units) -> None:
         """

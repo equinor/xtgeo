@@ -83,6 +83,18 @@ def test_gridproperty_from_resinsight_no_case_raises(resinsight_instance):
         )
 
 
+def test_gridproperty_from_resinsight_case_object(resinsight_instance):
+    """A rips case object can be passed directly instead of a case name."""
+    _write_generated_property(resinsight_instance)
+    # _write_generated_property targets the last matching "EXAMPLE" case.
+    case = [c for c in resinsight_instance.project.cases() if c.name == "EXAMPLE"][-1]
+    prop = xtgeo.gridproperty_from_resinsight(
+        resinsight_instance, case, "SYNTH_PORO", property_type="GENERATED"
+    )
+    assert isinstance(prop, xtgeo.GridProperty)
+    assert prop.name == "SYNTH_PORO"
+
+
 # ---------------------------------------------------------------------------
 # GridProperty.to_resinsight
 # ---------------------------------------------------------------------------
@@ -97,7 +109,7 @@ def test_to_resinsight_continuous(resinsight_instance):
 
     original.to_resinsight(
         resinsight_instance,
-        case_name="EXAMPLE",
+        case="EXAMPLE",
         property_name="SYNTH_PORO_COPY",
         property_type="GENERATED",
     )
@@ -106,6 +118,35 @@ def test_to_resinsight_continuous(resinsight_instance):
         resinsight_instance,
         "EXAMPLE",
         "SYNTH_PORO_COPY",
+        property_type="GENERATED",
+    )
+
+    assert_allclose(
+        original.values.compressed(), reloaded.values.compressed(), atol=1e-6
+    )
+
+
+def test_to_resinsight_case_object(resinsight_instance):
+    """A rips case object can be passed directly to the write path."""
+    _write_generated_property(resinsight_instance)
+    original = xtgeo.gridproperty_from_resinsight(
+        resinsight_instance, "EXAMPLE", "SYNTH_PORO", property_type="GENERATED"
+    )
+
+    # Pick the last matching "EXAMPLE" case,
+    # which is the one _write_generated_property wrote to.
+    case = [c for c in resinsight_instance.project.cases() if c.name == "EXAMPLE"][-1]
+    original.to_resinsight(
+        resinsight_instance,
+        case=case,
+        property_name="SYNTH_PORO_CASE_OBJ",
+        property_type="GENERATED",
+    )
+
+    reloaded = xtgeo.gridproperty_from_resinsight(
+        resinsight_instance,
+        case,
+        "SYNTH_PORO_CASE_OBJ",
         property_type="GENERATED",
     )
 
@@ -150,7 +191,7 @@ def test_to_resinsight_discrete(resinsight_instance):
 
     region_prop.to_resinsight(
         resinsight_instance,
-        case_name="EXAMPLE",
+        case="EXAMPLE",
         property_type="GENERATED",
     )
 
@@ -172,12 +213,12 @@ def test_to_resinsight_discrete(resinsight_instance):
 def test_roundtrip_box_grid_property(resinsight_instance):
     """A synthetic box grid + property should roundtrip through ResInsight."""
     grid = xtgeo.create_box_grid((4, 3, 2), increment=(5.0, 5.0, 2.0))
-    grid.to_resinsight(resinsight_instance, gname="PROP_TEST_GRID")
+    grid.to_resinsight(resinsight_instance, case="PROP_TEST_GRID")
 
     prop = xtgeo.GridProperty(grid, name="SYNTH", values=0.42, discrete=False)
     prop.to_resinsight(
         resinsight_instance,
-        case_name="PROP_TEST_GRID",
+        case="PROP_TEST_GRID",
         property_name="SYNTH",
         property_type="GENERATED",
     )
@@ -192,3 +233,24 @@ def test_roundtrip_box_grid_property(resinsight_instance):
     assert reloaded.nrow == 3
     assert reloaded.nlay == 2
     assert_allclose(reloaded.values.compressed(), 0.42, atol=1e-6)
+
+
+def test_gridproperty_from_resinsight_case_name_alias_deprecated(resinsight_instance):
+    """The deprecated 'case_name' alias still works but emits a warning."""
+    _write_generated_property(resinsight_instance)
+    with pytest.warns(DeprecationWarning, match="case_name"):
+        prop = xtgeo.gridproperty_from_resinsight(
+            resinsight_instance,
+            case_name="EXAMPLE",
+            property_name="SYNTH_PORO",
+            property_type="GENERATED",
+        )
+    assert prop.name == "SYNTH_PORO"
+
+    with pytest.raises(TypeError, match="only 'case'"):
+        xtgeo.gridproperty_from_resinsight(
+            resinsight_instance,
+            "EXAMPLE",
+            property_name="SYNTH_PORO",
+            case_name="EXAMPLE",
+        )

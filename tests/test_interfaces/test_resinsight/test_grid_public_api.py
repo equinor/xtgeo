@@ -72,6 +72,22 @@ def test_grid_from_resinsight_auto_discover(resinsight_instance):
     assert grid.nlay == 3
 
 
+def test_grid_from_resinsight_case_object(resinsight_instance):
+    """A rips case object can be passed directly instead of a case name.
+
+    This disambiguates the two cases both named "EXAMPLE": here we explicitly
+    pick the first one (the Drogon grid, 92 x 146 x 67).
+    """
+    cases = [c for c in resinsight_instance.project.cases() if c.name == "EXAMPLE"]
+    assert len(cases) >= 2, "conftest should load two cases named EXAMPLE"
+
+    grid = xtgeo.grid_from_resinsight(resinsight_instance, cases[0])
+    assert isinstance(grid, xtgeo.Grid)
+    assert grid.ncol == 92
+    assert grid.nrow == 146
+    assert grid.nlay == 67
+
+
 # ---------------------------------------------------------------------------
 # Grid.to_resinsight
 # ---------------------------------------------------------------------------
@@ -80,7 +96,7 @@ def test_grid_from_resinsight_auto_discover(resinsight_instance):
 def test_to_resinsight_creates_new_case(resinsight_instance):
     """to_resinsight should create a new case in ResInsight and return it."""
     grid = xtgeo.create_box_grid((3, 3, 2), increment=(10.0, 10.0, 5.0))
-    case = grid.to_resinsight(resinsight_instance, gname="GRID_NEW")
+    case = grid.to_resinsight(resinsight_instance, case="GRID_NEW")
 
     assert case is not None, "to_resinsight should return the created case"
     assert case.name == "GRID_NEW"
@@ -94,15 +110,32 @@ def test_to_resinsight_creates_new_case(resinsight_instance):
 def test_to_resinsight_replaces_existing_case(resinsight_instance):
     """to_resinsight should replace an existing case when called with the same name."""
     grid_a = xtgeo.create_box_grid((2, 2, 2))
-    grid_a.to_resinsight(resinsight_instance, gname="GRID_REPLACE")
+    grid_a.to_resinsight(resinsight_instance, case="GRID_REPLACE")
 
     grid_b = xtgeo.create_box_grid((5, 4, 3))
-    case = grid_b.to_resinsight(resinsight_instance, gname="GRID_REPLACE")
+    case = grid_b.to_resinsight(resinsight_instance, case="GRID_REPLACE")
 
     assert case is not None, "to_resinsight should return the replaced case"
     assert case.name == "GRID_REPLACE"
 
     reloaded = xtgeo.grid_from_resinsight(resinsight_instance, "GRID_REPLACE")
+    assert reloaded.ncol == grid_b.ncol
+    assert reloaded.nrow == grid_b.nrow
+    assert reloaded.nlay == grid_b.nlay
+
+
+def test_to_resinsight_replaces_case_object(resinsight_instance):
+    """to_resinsight should replace a case given directly as a rips case object."""
+    grid_a = xtgeo.create_box_grid((2, 2, 2))
+    case = grid_a.to_resinsight(resinsight_instance, case="GRID_OBJ_REPLACE")
+
+    grid_b = xtgeo.create_box_grid((6, 5, 4))
+    replaced = grid_b.to_resinsight(resinsight_instance, case=case)
+
+    assert replaced is not None
+    assert replaced.name == "GRID_OBJ_REPLACE"
+
+    reloaded = xtgeo.grid_from_resinsight(resinsight_instance, replaced)
     assert reloaded.ncol == grid_b.ncol
     assert reloaded.nrow == grid_b.nrow
     assert reloaded.nlay == grid_b.nlay
@@ -117,7 +150,7 @@ def test_roundtrip_from_resinsight_to_resinsight(resinsight_instance):
     """A grid read from ResInsight should survive a write → read roundtrip unchanged."""
     original = xtgeo.grid_from_resinsight(resinsight_instance, "EXAMPLE")
 
-    original.to_resinsight(resinsight_instance, gname="GRID_ROUNDTRIP")
+    original.to_resinsight(resinsight_instance, case="GRID_ROUNDTRIP")
 
     reloaded = xtgeo.grid_from_resinsight(resinsight_instance, "GRID_ROUNDTRIP")
 
@@ -133,7 +166,7 @@ def test_roundtrip_box_grid(resinsight_instance):
     """A synthetic box grid should round-trip through ResInsight without loss."""
     original = xtgeo.create_box_grid((4, 3, 2), increment=(5.0, 5.0, 2.0))
 
-    original.to_resinsight(resinsight_instance, gname="GRID_BOX_ROUNDTRIP")
+    original.to_resinsight(resinsight_instance, case="GRID_BOX_ROUNDTRIP")
 
     reloaded = xtgeo.grid_from_resinsight(resinsight_instance, "GRID_BOX_ROUNDTRIP")
 
@@ -143,3 +176,27 @@ def test_roundtrip_box_grid(resinsight_instance):
     assert np.array_equal(reloaded.get_actnum().values, original.get_actnum().values), (
         "Active cell mask should be identical after roundtrip"
     )
+
+
+# ---------------------------------------------------------------------------
+# Deprecated argument aliases (backward compatibility)
+# ---------------------------------------------------------------------------
+
+
+def test_grid_from_resinsight_case_name_alias_deprecated(resinsight_instance):
+    """The deprecated 'case_name' alias still works but emits a warning."""
+    with pytest.warns(DeprecationWarning, match="case_name"):
+        grid = xtgeo.grid_from_resinsight(resinsight_instance, case_name="EXAMPLE")
+    assert isinstance(grid, xtgeo.Grid)
+
+    # Passing both the new name and the deprecated alias is an error.
+    with pytest.raises(TypeError, match="only 'case'"):
+        xtgeo.grid_from_resinsight(resinsight_instance, "EXAMPLE", case_name="EXAMPLE")
+
+
+def test_to_resinsight_gname_alias_deprecated(resinsight_instance):
+    """The deprecated 'gname' alias for Grid.to_resinsight still works but warns."""
+    grid = xtgeo.create_box_grid((2, 2, 2))
+    with pytest.warns(DeprecationWarning, match="gname"):
+        case = grid.to_resinsight(resinsight_instance, gname="GRID_GNAME_ALIAS")
+    assert case.name == "GRID_GNAME_ALIAS"

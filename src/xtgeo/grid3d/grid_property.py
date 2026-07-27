@@ -36,6 +36,8 @@ from ._gridprop_import_xtgcpprop import import_xtgcpprop
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
 
+_REQUIRED: Any = object()
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Union
@@ -47,6 +49,7 @@ if TYPE_CHECKING:
     from xtgeo.interfaces.resinsight._rips_package import (
         PropertyType,
         ResInsightInstanceOrPortType,
+        RipsCaseType,
     )
     from xtgeo.xyz.polygons import Polygons
 
@@ -201,18 +204,22 @@ def gridproperty_from_roxar(
 
 def gridproperty_from_resinsight(
     instance_or_port: ResInsightInstanceOrPortType | None,
-    case_name: str,
-    property_name: str,
+    case: str | RipsCaseType | None = None,
+    property_name: str = _REQUIRED,
     property_type: str | PropertyType = "STATIC_NATIVE",
     time_step_index: int = 0,
     find_last: bool = True,
+    *,
+    case_name: str | RipsCaseType | None = None,
 ) -> GridProperty:
     """Load a grid property from a ResInsight case into an XTGeo ``GridProperty``.
 
     Args:
         instance_or_port: Optional ``rips.Instance`` or gRPC port. Use ``None``
             to auto-discover a running ResInsight instance.
-        case_name: Name of the ResInsight case.
+        case: The name of the ResInsight case, or a ``rips`` case object.
+            Since case names are not unique in ResInsight, passing a case object
+            avoids the ambiguity that name-based lookup can introduce.
         property_name: Name of the property (e.g. ``"PORO"``, ``"PRESSURE"``).
         property_type: A :class:`~xtgeo.interfaces.resinsight.PropertyType`
             member or a plain string such as ``"STATIC_NATIVE"``,
@@ -220,6 +227,8 @@ def gridproperty_from_resinsight(
             Strings are validated and coerced to the enum internally.
         time_step_index: Time step index (default 0).
         find_last: If multiple cases share the same name, select the last match.
+            Ignored when *case* is a case object.
+        case_name: Deprecated alias for *case*, kept for backward compatibility.
 
     Returns:
         A populated :class:`xtgeo.GridProperty`.
@@ -241,12 +250,28 @@ def gridproperty_from_resinsight(
         print(poro.values.mean())
 
     """
+    if case_name is not None:
+        from xtgeo.interfaces.resinsight._deprecation import resolve_deprecated_alias
+
+        case = resolve_deprecated_alias(
+            case, case_name, new_name="case", old_name="case_name"
+        )
+    if case is None:
+        raise TypeError(
+            "gridproperty_from_resinsight() missing required argument: 'case'"
+        )
+    if property_name is _REQUIRED:
+        raise TypeError(
+            "gridproperty_from_resinsight() missing required argument: "
+            "'property_name'"
+        )
+
     import xtgeo.interfaces.resinsight
 
     data = xtgeo.interfaces.resinsight.GridPropertyReader(
         instance_or_port=instance_or_port,
     ).load(
-        case_name=case_name,
+        case=case,
         property_name=property_name,
         property_type=property_type,
         time_step_index=time_step_index,
@@ -1010,18 +1035,23 @@ class GridProperty(_Grid3D):
     def to_resinsight(
         self,
         instance_or_port: ResInsightInstanceOrPortType | None,
-        case_name: str,
+        case: str | RipsCaseType | None = None,
         property_type: str | PropertyType = "GENERATED",
         property_name: str | None = None,
         time_step_index: int = 0,
         find_last: bool = True,
+        *,
+        case_name: str | RipsCaseType | None = None,
     ) -> None:
         """Export this grid property to a ResInsight case.
 
         Args:
             instance_or_port: Optional ``rips.Instance`` or gRPC port. Use
                 ``None`` to auto-discover a running ResInsight instance.
-            case_name: Name of the target ResInsight case.
+            case: Name of the target ResInsight case, or a ``rips`` case
+                object. Since case names are not unique in ResInsight, passing a
+                case object avoids the ambiguity that name-based lookup can
+                introduce.
             property_type: A
                 :class:`~xtgeo.interfaces.resinsight.PropertyType`
                 member or a plain string such as ``"GENERATED"``.
@@ -1031,7 +1061,10 @@ class GridProperty(_Grid3D):
             time_step_index: Time step index (default 0).
             find_last: Controls which case to target when multiple cases share
                 the same name. If ``True`` (default), the last matching case is
-                used; if ``False``, the first.
+                used; if ``False``, the first. Ignored when *case* is a case
+                object.
+            case_name: Deprecated alias for *case*, kept for backward
+                compatibility.
 
         Raises:
             RuntimeError: If rips is unavailable/too old, or if the
@@ -1047,8 +1080,21 @@ class GridProperty(_Grid3D):
             poro.to_resinsight(5000, "MY_CASE", property_name="PORO_MODIFIED")
 
         """
-        import xtgeo.interfaces.resinsight as resinsight_interface
+        if case_name is not None:
+            from xtgeo.interfaces.resinsight._deprecation import (
+                resolve_deprecated_alias,
+            )
 
+            case = resolve_deprecated_alias(
+                case, case_name, new_name="case", old_name="case_name"
+            )
+        if case is None:
+            raise TypeError("to_resinsight() missing required argument: 'case'")
+
+        import xtgeo.interfaces.resinsight as resinsight_interface
+        from xtgeo.interfaces.resinsight._resinsight_base import validate_case
+
+        validate_case(case)  # fail fast before extracting property data
         pname = property_name if property_name is not None else self.name
         if pname is None:
             raise ValueError("property_name must be given (GridProperty.name is None)")
@@ -1067,7 +1113,7 @@ class GridProperty(_Grid3D):
         writer = resinsight_interface.GridPropertyWriter(
             instance_or_port=instance_or_port
         )
-        writer.save(data, case_name, find_last)
+        writer.save(data, case, find_last)
 
     # ==================================================================================
     # Various public methods
