@@ -247,14 +247,14 @@ def surface_from_roxar(
     )
 
 
-def surface_from_cube(cube, value):
+def surface_from_cube(cube: "Cube", value: float | int) -> RegularSurface:
     """Make RegularSurface directly from a cube instance with a constant value.
 
     The surface geometry will be exactly the same as for the Cube.
 
     Args:
-        cube(xtgeo.cube.Cube): A Cube instance
-        value (float): A constant value for the surface
+        cube (xtgeo.cube.Cube): A Cube instance
+        value (float | int): A constant value for the surface
 
     Example::
 
@@ -1471,7 +1471,7 @@ class RegularSurface:
         )
 
     @classmethod
-    def _read_cube(cls, cube, zlevel):
+    def _read_cube(cls, cube: "Cube", zlevel: float | int):
         """Make a constant surface from a Cube, at a given time/depth level.
 
         The surface instance will have exactly the same origins and increments
@@ -1479,7 +1479,7 @@ class RegularSurface:
 
         Args:
             cube (Cube): XTGeo Cube instance
-            zlevel (float): Depth or Time (or whatever) value of the surface
+            zlevel (float | int): Depth or Time (or whatever) value of the surface
 
         Returns:
             Object instance updated
