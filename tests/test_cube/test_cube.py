@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import logging
 import pathlib
@@ -8,12 +10,12 @@ import pytest
 import segyio
 from hypothesis import HealthCheck, given, settings
 
-import xtgeo
-from xtgeo.cube import Cube
+from xtgeo.cube import Cube, cube_from_file
 from xtgeo.cube._cube_import import (
     _import_segy_all_traces,
     _import_segy_incomplete_traces,
 )
+from xtgeo.xyz.polygons import Polygons
 
 logger = logging.getLogger(__name__)
 
@@ -25,18 +27,18 @@ SFILE6 = pathlib.Path("cubes/etc/ex1_missing_traces_75x71x26.segy")
 
 
 @pytest.fixture(name="smallcube")
-def fixture_smallcube():
+def fixture_smallcube() -> Cube:
     """Fixture for making a small cube"""
-    return xtgeo.Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
+    return Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
 
 
 @pytest.fixture(name="loadsfile1")
-def fixture_loadsfile1(testdata_path):
+def fixture_loadsfile1(testdata_path: str) -> Cube:
     """Fixture for loading a SFILE1"""
-    return xtgeo.cube_from_file(testdata_path / SFILE1)
+    return cube_from_file(testdata_path / SFILE1)
 
 
-def test_create():
+def test_create() -> None:
     """Create default cube instance."""
     xcu = Cube(ncol=5, nrow=3, nlay=4, xinc=10, yinc=10, zinc=1)
     assert xcu.ncol == 5, "NCOL"
@@ -74,25 +76,27 @@ def test_create():
         "letter (err)",
     ],
 )
-def test_create_cube_with_values(input, behaviour):
+def test_create_cube_with_values(
+    input: np.ndarray | list | int | str, behaviour: type[BaseException] | None
+) -> None:
     """Create cube with various input values, both correct and incorrect formats."""
 
     if behaviour is None:
-        Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)
+        Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)  # type: ignore[arg-type]
 
     elif behaviour is UserWarning:
         with pytest.warns(behaviour):
-            Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)
+            Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)  # type: ignore[arg-type]
 
     elif behaviour is ValueError:
         with pytest.raises(behaviour):
-            Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)
+            Cube(ncol=2, nrow=3, nlay=1, xinc=1, yinc=1, zinc=1, values=input)  # type: ignore[arg-type]
 
 
-def test_import_wrong_format(tmp_path):
+def test_import_wrong_format(tmp_path: pathlib.Path) -> None:
     (tmp_path / "test.EGRID").write_text("hello")
     with pytest.raises(ValueError, match="File format"):
-        xtgeo.cube_from_file(tmp_path / "test.EGRID", fformat="egrid")
+        cube_from_file(tmp_path / "test.EGRID", fformat="egrid")
 
 
 indices = st.integers(min_value=2, max_value=4)
@@ -104,10 +108,10 @@ cubes = st.builds(Cube, *([indices] * 3), *([increments] * 3), *([coordinates] *
 
 @given(cubes)
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-def test_import_guess_segy(tmp_path, cube):
+def test_import_guess_segy(tmp_path: pathlib.Path, cube: Cube) -> None:
     filepath = tmp_path / "test.segy"
     cube.to_file(filepath)
-    cube2 = xtgeo.cube_from_file(filepath)
+    cube2 = cube_from_file(filepath)
     assert cube.xori == pytest.approx(cube2.xori, abs=1)
     assert cube.yori == pytest.approx(cube2.yori, abs=1)
     assert cube.zori == pytest.approx(cube2.zori, abs=1)
@@ -116,15 +120,15 @@ def test_import_guess_segy(tmp_path, cube):
     assert cube.nlay == cube2.nlay
 
 
-def test_segy_export_import(tmp_path, testdata_path):
-    cube = xtgeo.cube_from_file(testdata_path / SFILE4)
+def test_segy_export_import(tmp_path: pathlib.Path, testdata_path: str) -> None:
+    cube = cube_from_file(testdata_path / SFILE4)
     assert cube.zinc == 4
 
     # change to study rounding effect
     cube.zinc = 3.99
     fname = tmp_path / "small1.segy"
     cube.to_file(fname, fformat="segy")
-    cube2 = xtgeo.cube_from_file(fname)
+    cube2 = cube_from_file(fname)
 
     np.testing.assert_equal(cube.values, cube2.values)
     assert cube.zinc == pytest.approx(cube2.zinc)
@@ -139,10 +143,10 @@ def test_segy_export_import(tmp_path, testdata_path):
     assert cube.ilines.all() == cube2.ilines.all()
 
 
-def test_storm_import(testdata_path):
+def test_storm_import(testdata_path: str) -> None:
     """Import Cube using Storm format (case Reek)."""
 
-    acube = xtgeo.cube_from_file(testdata_path / SFILE3, fformat="storm")
+    acube = cube_from_file(testdata_path / SFILE3, fformat="storm")
     assert acube.ncol == 280, "NCOL"
     vals = acube.values
     assert vals[180, 185, 4] == pytest.approx(0.117074, 0.0001)
@@ -150,7 +154,7 @@ def test_storm_import(testdata_path):
 
 # @skipsegyio
 # @skiplargetest
-def test_segy_import(loadsfile1):
+def test_segy_import(loadsfile1: Cube) -> None:
     """Import SEGY using internal reader (case 1 Reek)."""
 
     xcu = loadsfile1
@@ -164,7 +168,7 @@ def test_segy_import(loadsfile1):
     assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
-def test_segyio_import(loadsfile1):
+def test_segyio_import(loadsfile1: Cube) -> None:
     """Import SEGY (case 1 Reek) via SegIO library."""
 
     xcu = loadsfile1
@@ -176,7 +180,7 @@ def test_segyio_import(loadsfile1):
     assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
-def test_internal_segy_import_full_vs_partial(testdata_path):
+def test_internal_segy_import_full_vs_partial(testdata_path: str) -> None:
     """Test variants of private internal import of segy for compatibility.
 
     Most prominent, a full SEGY cube should be possible to parse using the same routine
@@ -196,10 +200,10 @@ def test_internal_segy_import_full_vs_partial(testdata_path):
             assert val == attrs2[key]
 
 
-def test_segyio_import_ex2(testdata_path):
+def test_segyio_import_ex2(testdata_path: str) -> None:
     """Import small SEGY (ex2 case) via segyio library."""
 
-    cube = xtgeo.cube_from_file(testdata_path / SFILE5)
+    cube = cube_from_file(testdata_path / SFILE5)
     assert cube.ncol == 75
     assert list(cube.ilines)[0:4] == [10750, 10752, 10754, 10756]
     assert cube.rotation == pytest.approx(90.0)
@@ -207,11 +211,11 @@ def test_segyio_import_ex2(testdata_path):
     assert cube.yinc == pytest.approx(12.5, abs=0.01)
 
 
-def test_segyio_import_ex1(testdata_path):
+def test_segyio_import_ex1(testdata_path: str) -> None:
     """Import small SEGY (ex1 case with missing traces!) via segyio library."""
 
     with pytest.warns(UserWarning, match=r"Missing or inconsistent"):
-        cube = xtgeo.cube_from_file(testdata_path / SFILE6)
+        cube = cube_from_file(testdata_path / SFILE6)
         assert cube.ncol == 75
         assert list(cube.ilines)[0:4] == [11352, 11354, 11356, 11358]
         assert cube.rotation == pytest.approx(90.0)
@@ -220,21 +224,23 @@ def test_segyio_import_ex1(testdata_path):
 
 
 @pytest.mark.parametrize("pristine", [True, False])
-def test_segyio_import_export(tmp_path, pristine, smallcube):
+def test_segyio_import_export(
+    tmp_path: pathlib.Path, pristine: bool, smallcube: Cube
+) -> None:
     """Import and export SEGY (case 1 Reek) via SegIO library."""
     input_cube = smallcube
     input_cube.values = list(range(30))
     input_cube.to_file(tmp_path / "reek_cube.segy", pristine=pristine)
 
     # reread that file
-    read_cube = xtgeo.cube_from_file(tmp_path / "reek_cube.segy")
+    read_cube = cube_from_file(tmp_path / "reek_cube.segy")
     assert input_cube.dimensions == read_cube.dimensions
     assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
 
 
-def test_segy_export_to_bytesio_raises():
+def test_segy_export_to_bytesio_raises() -> None:
     """SEGY cube export to BytesIO is not supported."""
-    cube = xtgeo.Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
+    cube = Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
     cube.values = list(range(30))
 
     stream = io.BytesIO()
@@ -246,7 +252,7 @@ def test_segy_export_sanitizes_text_header_last_byte(
     tmp_path: pathlib.Path,
 ) -> None:
     """Text header last byte is a safe EBCDIC space after export."""
-    cube = xtgeo.Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
+    cube = Cube(ncol=3, nrow=2, nlay=5, xinc=10, yinc=10, zinc=1)
     cube.values = list(range(30))
     outfile = tmp_path / "cube_text_header_sanitized.segy"
 
@@ -260,7 +266,7 @@ def test_segy_export_sanitizes_text_header_last_byte(
         assert seg.bin[segyio.BinField.Samples] == 5
 
 
-def test_cube_resampling(loadsfile1):
+def test_cube_resampling(loadsfile1: Cube) -> None:
     """Import a cube, then make a smaller and resample, then export the new"""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -287,7 +293,7 @@ def test_cube_resampling(loadsfile1):
     assert newcube.values[20, 20, 20] == pytest.approx(10.0, 0.0001)
 
 
-def test_cube_thinning(tmp_path, loadsfile1):
+def test_cube_thinning(tmp_path: pathlib.Path, loadsfile1: Cube) -> None:
     """Import a cube, then make a smaller by thinning every N line"""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -301,11 +307,11 @@ def test_cube_thinning(tmp_path, loadsfile1):
 
     incube.to_file(tmp_path / "cube_thinned.segy")
 
-    incube2 = xtgeo.cube_from_file(tmp_path / "cube_thinned.segy")
+    incube2 = cube_from_file(tmp_path / "cube_thinned.segy")
     logger.info(incube2)
 
 
-def test_cube_cropping(loadsfile1):
+def test_cube_cropping(loadsfile1: Cube) -> None:
     """Import a cube, then make a smaller by cropping"""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -318,7 +324,7 @@ def test_cube_cropping(loadsfile1):
     assert incube.values.mean() == pytest.approx(0.0003633049)
 
 
-def test_cube_get_xy_from_ij(loadsfile1):
+def test_cube_get_xy_from_ij(loadsfile1: Cube) -> None:
     """Import a cube, then report XY for a given IJ"""
 
     logger.info("Checking get xy from IJ")
@@ -344,12 +350,12 @@ def test_cube_get_xy_from_ij(loadsfile1):
     assert ypos == pytest.approx(5933633.598034564, 0.01)
 
 
-def test_cube_swapaxes(testdata_path):
+def test_cube_swapaxes(testdata_path: str) -> None:
     """Import a cube, do axes swapping back and forth"""
 
     logger.info("Import SEGY format via SEGYIO")
 
-    incube = xtgeo.cube_from_file(testdata_path / SFILE4)
+    incube = cube_from_file(testdata_path / SFILE4)
     logger.info(incube)
     val1 = incube.values.copy()
 
@@ -363,12 +369,12 @@ def test_cube_swapaxes(testdata_path):
     np.testing.assert_array_equal(val1, val2)
 
 
-def test_cube_randomline(show_plot, testdata_path):
+def test_cube_randomline(show_plot: bool, testdata_path: str) -> None:
     """Import a cube, and compute a randomline given a simple Polygon"""
 
-    incube = xtgeo.cube_from_file(testdata_path / SFILE4)
+    incube = cube_from_file(testdata_path / SFILE4)
 
-    poly = xtgeo.Polygons([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]])
+    poly = Polygons([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]])
 
     logger.info("Generate random line...")
     hmin, hmax, vmin, vmax, random = incube.get_randomline(poly)
@@ -391,7 +397,7 @@ def test_cube_randomline(show_plot, testdata_path):
         plt.show()
 
 
-def test_swapaxis():
+def test_swapaxis() -> None:
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -413,7 +419,7 @@ def test_swapaxis():
     assert cube.values.flatten().tolist() == [1.0, 2.0, 5.0, 6.0, 3.0, 4.0, 7.0, 8.0]
 
 
-def test_swapaxis_traceidcodes():
+def test_swapaxis_traceidcodes() -> None:
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -447,7 +453,7 @@ def test_swapaxis_traceidcodes():
         (361, 91),
     ],
 )
-def test_swapaxis_rotation(rotation, expected_rotation):
+def test_swapaxis_rotation(rotation: int, expected_rotation: int) -> None:
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -468,7 +474,7 @@ def test_swapaxis_rotation(rotation, expected_rotation):
     assert cube.rotation == expected_rotation
 
 
-def test_swapaxis_ilines():
+def test_swapaxis_ilines() -> None:
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -489,7 +495,7 @@ def test_swapaxis_ilines():
     assert cube.ilines.tolist() == [1, 2]
 
 
-def test_swapaxis_ncol_nrow():
+def test_swapaxis_ncol_nrow() -> None:
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -508,7 +514,7 @@ def test_swapaxis_ncol_nrow():
     assert (cube.nrow, cube.ncol) == (2, 3)
 
 
-def test_swapaxis_xinc_yinc():
+def test_swapaxis_xinc_yinc() -> None:
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -527,7 +533,7 @@ def test_swapaxis_xinc_yinc():
     assert (cube.xinc, cube.yinc) == (2, 1)
 
 
-def test_segy_io_roundtrip(tmp_path):
+def test_segy_io_roundtrip(tmp_path: pathlib.Path) -> None:
     """Round-trip SEGY with non-standard byte positions (il-byte 193, xl-byte 189).
 
     Some vendor software writes inline numbers to byte 193 and crossline numbers to
@@ -580,7 +586,7 @@ def test_segy_io_roundtrip(tmp_path):
         f.bin[segyio.BinField.Samples] = n_samples
 
     # --- Correct import: supply the actual byte positions ---
-    cube = xtgeo.cube_from_file(str(segyfile), iline=193, xline=189)
+    cube = cube_from_file(str(segyfile), iline=193, xline=189)
     assert cube.ncol == n_ilines
     assert cube.nrow == n_xlines
     assert cube.ilines.tolist() == iline_nums.tolist()
@@ -589,7 +595,7 @@ def test_segy_io_roundtrip(tmp_path):
     # --- Export to a standard-bytes file and verify round-trip ---
     outfile = tmp_path / "roundtrip_cube.segy"
     cube.to_file(outfile)
-    cube_rt = xtgeo.cube_from_file(outfile)
+    cube_rt = cube_from_file(outfile)
     assert cube_rt.ncol == n_ilines
     assert cube_rt.nrow == n_xlines
     assert cube_rt.ilines.tolist() == iline_nums.tolist()
@@ -597,13 +603,13 @@ def test_segy_io_roundtrip(tmp_path):
 
     # --- Default bytes: must warn — byte 189 carries xline (fast) values ---
     with pytest.warns(UserWarning, match="crossline-sorted"):
-        cube2 = xtgeo.cube_from_file(str(segyfile))
+        cube2 = cube_from_file(str(segyfile))
     # With default bytes the labels are transposed: xl values appear as ilines, etc.
     assert cube2.ilines.tolist() == xline_nums.tolist()
     assert cube2.xlines.tolist() == iline_nums.tolist()
 
 
-def test_segy_crossline_sorted_import_export(tmp_path):
+def test_segy_crossline_sorted_import_export(tmp_path: pathlib.Path) -> None:
     """Crossline-sorted SEGY must import and re-export with correct orientation.
 
     segyio.tools.cube() returns (n_xlines, n_ilines, nsamples) for crossline-sorted
@@ -666,7 +672,7 @@ def test_segy_crossline_sorted_import_export(tmp_path):
         f.bin[segyio.BinField.SortingCode] = 1
 
     with pytest.warns(UserWarning, match="crossline-sorted"):
-        cube = xtgeo.cube_from_file(str(segyfile))
+        cube = cube_from_file(str(segyfile))
 
     # After normalising to xtgeo convention: axis-0 = inlines
     assert cube.ncol == n_ilines
@@ -710,20 +716,22 @@ def test_segy_crossline_sorted_import_export(tmp_path):
         (0, 0),
     ],
 )
-def test_invalid_iline_xline_raises(tmp_path, iline, xline):
+def test_invalid_iline_xline_raises(
+    tmp_path: pathlib.Path, iline: int, xline: int
+) -> None:
     """Only (189, 193) and (193, 189) are accepted for iline/xline."""
-    cube = xtgeo.Cube(ncol=2, nrow=2, nlay=2, xinc=1, yinc=1, zinc=1)
+    cube = Cube(ncol=2, nrow=2, nlay=2, xinc=1, yinc=1, zinc=1)
     outfile = tmp_path / "tiny.segy"
     cube.to_file(outfile)
     with pytest.raises(
         ValueError, match=r"Only \(189, 193\) and \(193, 189\) are accepted\."
     ):
-        xtgeo.cube_from_file(outfile, iline=iline, xline=xline)
+        cube_from_file(outfile, iline=iline, xline=xline)  # type: ignore[arg-type]
 
 
-def test_iline_xline_ignored_for_non_segy(tmp_path, testdata_path):
+def test_iline_xline_ignored_for_non_segy(
+    tmp_path: pathlib.Path, testdata_path: str
+) -> None:
     """Passing non-default iline/xline for a non-SEGY file should warn."""
     with pytest.warns(UserWarning, match="only used for SEGY"):
-        xtgeo.cube_from_file(
-            testdata_path / SFILE3, fformat="storm", iline=193, xline=189
-        )
+        cube_from_file(testdata_path / SFILE3, fformat="storm", iline=193, xline=189)
