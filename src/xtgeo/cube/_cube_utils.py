@@ -1,6 +1,9 @@
 """Cube utilities (basic low level)"""
 
+from __future__ import annotations
+
 import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -11,10 +14,13 @@ from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.log import null_logger
 from xtgeo.xyz.polygons import Polygons
 
+if TYPE_CHECKING:
+    from .cube1 import Cube
+
 logger = null_logger(__name__)
 
 
-def swapaxes(self):
+def swapaxes(self: Cube) -> None:
     """Pure numpy/python version"""
     self._rotation, self._yflip, swapped_values = _swap_axes(
         self._rotation,
@@ -28,7 +34,7 @@ def swapaxes(self):
     self._traceidcodes = swapped_values["traceidcodes"]
 
 
-def thinning(self, icol, jrow, klay):
+def thinning(self: Cube, icol: int, jrow: int, klay: int) -> None:
     inputs = [icol, jrow, klay]
     ranges = [self.nrow, self.ncol, self.nlay]
 
@@ -59,7 +65,12 @@ def thinning(self, icol, jrow, klay):
     self.values = val
 
 
-def cropping(self, icols, jrows, klays):
+def cropping(
+    self: Cube,
+    icols: tuple[int, int],
+    jrows: tuple[int, int],
+    klays: tuple[int, int],
+) -> None:
     """Cropping, where inputs are tuples"""
 
     icol1, icol2 = icols
@@ -111,7 +122,12 @@ def cropping(self, icols, jrows, klays):
     self.values = val
 
 
-def resample(self, other, sampling="nearest", outside_value=None):
+def resample(
+    self: Cube,
+    other: Cube,
+    sampling: str = "nearest",
+    outside_value: float | None = None,
+) -> None:
     """Resample another cube to the current self"""
     # TODO: traceidcodes
 
@@ -155,7 +171,13 @@ def resample(self, other, sampling="nearest", outside_value=None):
         raise XTGeoCLibError("cube_resample_cube failed to complete")
 
 
-def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
+def get_xy_value_from_ij(
+    self: Cube,
+    iloc: int,
+    jloc: int,
+    ixline: bool = False,
+    zerobased: bool = False,
+) -> tuple[float, float]:
     """Find X Y value from I J index, or corresponding inline/xline"""
     # assumes that inline follows I and xlines follows J
 
@@ -196,16 +218,16 @@ def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
 
 
 def get_randomline(
-    self,
-    fencespec,
-    zmin=None,
-    zmax=None,
-    zincrement=None,
-    hincrement=None,
-    atleast=5,
-    nextend=2,
-    sampling="nearest",
-):
+    self: Cube,
+    fencespec: np.ndarray | Polygons,
+    zmin: float | None = None,
+    zmax: float | None = None,
+    zincrement: float | None = None,
+    hincrement: float | None = None,
+    atleast: int = 5,
+    nextend: int = 2,
+    sampling: str = "nearest",
+) -> tuple[float, float, float, float, np.ndarray]:
     """Get a random line from a fence spesification"""
 
     if isinstance(fencespec, Polygons):
@@ -270,7 +292,13 @@ def get_randomline(
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)
 
 
-def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
+def _get_randomline_fence(
+    self: Cube,
+    fencespec: Polygons,
+    hincrement: float | None,
+    atleast: int,
+    nextend: int,
+) -> np.ndarray:
     """Compute a resampled fence from a Polygons instance"""
 
     if hincrement is None:
@@ -284,4 +312,10 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
         distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
     )
     logger.info("Getting fence from a Polygons instance... DONE")
+
+    if not isinstance(fspec, np.ndarray):
+        raise ValueError(
+            "Expected a numpy array from polygons.get_fence(),"
+            f"but got type {type(fspec)}."
+        )
     return fspec
