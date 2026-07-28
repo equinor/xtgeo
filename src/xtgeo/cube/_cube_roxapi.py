@@ -14,18 +14,27 @@ Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
 
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.roxutils import RoxUtils
 from xtgeo.roxutils._roxar_loader import roxar
 
+if TYPE_CHECKING:
+    from .cube1 import Cube
+
 xtg = XTGeoDialog()
 
 logger = null_logger(__name__)
 
 
-def import_cube_roxapi(self, project, name, folder=None):  # pragma: no cover
+def import_cube_roxapi(
+    self: Cube, project: Any, name: str, folder: str | None = None
+) -> None:  # pragma: no cover
     """Import (transfer) a Cube via ROXAR API container to XTGeo.
 
     .. versionadded:: 2.1
@@ -37,7 +46,9 @@ def import_cube_roxapi(self, project, name, folder=None):  # pragma: no cover
     _roxapi_import_cube(self, rox, proj, name, folder)
 
 
-def _roxapi_import_cube(self, rox, proj, name, folder):  # pragma: no cover
+def _roxapi_import_cube(
+    self: Cube, rox: RoxUtils, proj: Any, name: str, folder: str | None
+) -> None:  # pragma: no cover
     """Short summary.
 
     Args:
@@ -62,7 +73,9 @@ def _roxapi_import_cube(self, rox, proj, name, folder):  # pragma: no cover
         raise
 
 
-def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
+def _roxapi_cube_to_xtgeo(
+    self: Cube, rox: RoxUtils, rcube: Any
+) -> None:  # pragma: no cover
     """Tranforming cube from ROXAPI to XTGeo object."""
     logger.info("Cube from roxapi to xtgeo...")
 
@@ -107,8 +120,13 @@ def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
 
 
 def export_cube_roxapi(
-    self, project, name, folder=None, domain="time", compression=("wavelet", 5)
-):  # pragma: no cover
+    self: Cube,
+    project: Any,
+    name: str,
+    folder: str | None = None,
+    domain: str = "time",
+    compression: tuple[str, float] = ("wavelet", 5),
+) -> None:  # pragma: no cover
     """Export (store) a Seismic cube to RMS via ROXAR API spec."""
     rox = RoxUtils(project, readonly=False)
 
@@ -131,13 +149,25 @@ def export_cube_roxapi(
 
 
 def _roxapi_export_cube(
-    self, proj, rox, name, folder=None, domain="time", compression=("wavelet", 5)
-):  # type: ignore # pragma: no cover
+    self: Cube,
+    proj: Any,
+    rox: RoxUtils,
+    name: str,
+    folder: str | None = None,
+    domain: str = "time",
+    compression: tuple[str, float] = ("wavelet", 5),
+) -> None:  # pragma: no cover
     logger.info(
         "There are issues with compression %s, hence it is ignored", compression
     )
 
-    path = []
+    if roxar is None:
+        raise RuntimeError(
+            "The 'roxar'/'rmsapi' module is not available. This function can "
+            "only be run inside an RMS environment."
+        )
+
+    path: list[str] = []
     if folder is not None:
         fld = folder.split("/")
         path = fld + path
