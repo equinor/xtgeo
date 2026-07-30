@@ -797,7 +797,7 @@ class Cube:
         nextend: int = 2,
         sampling: str = "nearest",
     ) -> tuple[float, float, float, float, np.ndarray]:
-        """Get a randomline from a fence spesification.
+        """Get a randomline from a fence specification.
 
         This randomline will be a 2D numpy with depth/time on the vertical
         axis, and length along as horizontal axis. Undefined values will have
@@ -987,7 +987,7 @@ class Cube:
                 else use path to RMS project, or a project reference
             name: Name of cube (seismic data) within RMS project.
             folder: Cubes may be stored under a folder in the tree, use '/'
-                to seperate subfolders.
+                to separate subfolders.
             propname: Name of grid property; only relevant when target is "grid" and
                 defaults to "seismic_attribute"
             domain: 'time' (default) or 'depth'
