@@ -136,8 +136,8 @@ class Cube:
       rotation: Cube rotation, X axis is applied and "school-wise" rotation,
                      anti-clock in degrees
       values: Numpy array with shape (ncol, nrow, nlay), C order, np.float32
-      ilines: 1D numpy array with ncol elements, aka INLINES array, defaults to arrange
-      xlines: 1D numpy array with nrow elements, aka XLINES array, defaults to arrange
+      ilines: 1D numpy array with ncol elements, aka INLINES array, defaults to arange
+      xlines: 1D numpy array with nrow elements, aka XLINES array, defaults to arange
       segyfile: Name of source segyfile if any
       filesrc: String: Source file if any
       yflip: Normally 1; if -1 Y axis is flipped --> from left-handed (1) to
@@ -800,7 +800,7 @@ class Cube:
         nextend: int = 2,
         sampling: str = "nearest",
     ) -> tuple[float, float, float, float, np.ndarray]:
-        """Get a randomline from a fence spesification.
+        """Get a randomline from a fence specification.
 
         This randomline will be a 2D numpy with depth/time on the vertical
         axis, and length along as horizontal axis. Undefined values will have
@@ -989,7 +989,7 @@ class Cube:
                 else use path to RMS project, or a project reference
             name: Name of cube (seismic data) within RMS project.
             folder: Cubes may be stored under a folder in the tree, use '/'
-                to seperate subfolders.
+                to separate subfolders.
             propname: Name of grid property; only relevant when target is "grid" and
                 defaults to "seismic_attribute"
             domain: 'time' (default) or 'depth'
