@@ -166,7 +166,7 @@ def resample(
         0 if outside_value is None else outside_value,
     )
     if ier == -4:
-        warnings.warn("Less than 10% of origonal cube sampled", RuntimeWarning)
+        warnings.warn("Less than 10% of original cube sampled", RuntimeWarning)
     elif ier != 0:
         raise XTGeoCLibError("cube_resample_cube failed to complete")
 
@@ -228,7 +228,7 @@ def get_randomline(
     nextend: int = 2,
     sampling: str = "nearest",
 ) -> tuple[float, float, float, float, np.ndarray]:
-    """Get a random line from a fence spesification"""
+    """Get a random line from a fence specification"""
 
     if isinstance(fencespec, Polygons):
         logger.info("Estimate hincrement from Polygons instance...")
