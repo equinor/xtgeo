@@ -24,7 +24,6 @@ runs:
       if: ${{ inputs.os == 'windows-latest' }}
       shell: bash
       run: |
-        git -C C:/vcpkg pull
         vcpkg install --triplet x64-windows
 
     - name: Install macOS dependencies
