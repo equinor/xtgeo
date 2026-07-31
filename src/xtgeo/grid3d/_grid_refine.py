@@ -40,15 +40,15 @@ def refine(
         ("refine_layer", refine_layer),
     ]:
         if isinstance(factor, int):
-            if not 0 <= factor <= max_refine:
+            if not 1 <= factor <= max_refine:
                 raise ValueError(
-                    f"{name}={factor} is out of valid range [0, {max_refine}]"
+                    f"{name}={factor} is out of valid range [1, {max_refine}]"
                 )
         elif isinstance(factor, dict):
             for key, value in factor.items():
-                if not isinstance(value, int) or not 0 <= value <= max_refine:
+                if not isinstance(value, int) or not 1 <= value <= max_refine:
                     raise ValueError(
-                        f"{name}[{key}]={value} is out of valid range [0, {max_refine}]"
+                        f"{name}[{key}]={value} is out of valid range [1, {max_refine}]"
                     )
         else:
             raise TypeError(f"{name} must be int or dict[int, int], got {type(factor)}")
@@ -214,15 +214,15 @@ def refine_vertically(
 
     # Validate refinement factor is within valid range
     if isinstance(rfactor, int):
-        if not 0 <= rfactor <= max_refine:
+        if not 1 <= rfactor <= max_refine:
             raise ValueError(
-                f"rfactor={rfactor} is out of valid range [0, {max_refine}]"
+                f"rfactor={rfactor} is out of valid range [1, {max_refine}]"
             )
     elif isinstance(rfactor, dict):
         for key, value in rfactor.items():
-            if not isinstance(value, int) or not 0 <= value <= max_refine:
+            if not isinstance(value, int) or not 1 <= value <= max_refine:
                 raise ValueError(
-                    f"rfactor[{key}]={value} is out of valid range [0, {max_refine}]"
+                    f"rfactor[{key}]={value} is out of valid range [1, {max_refine}]"
                 )
     else:
         raise TypeError(f"rfactor must be int or dict[int, int], got {type(rfactor)}")
