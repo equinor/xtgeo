@@ -40,7 +40,7 @@ from .grid_properties import GridProperties
 
 if TYPE_CHECKING:
     import pathlib
-    from collections.abc import Callable, Hashable
+    from collections.abc import Callable, Hashable, Sequence
 
     import pandas as pd
 
@@ -3062,40 +3062,80 @@ class Grid(_Grid3D):
 
     def refine(
         self,
-        refine_col: int | dict[int, int],
-        refine_row: int | dict[int, int],
-        refine_layer: int | dict,
+        refine_col: int | Sequence[int] | dict[int, int],
+        refine_row: int | Sequence[int] | dict[int, int],
+        refine_layer: int | dict[int, int],
         zoneprop: GridProperty | None = None,
     ) -> None:
-        """Refine grid in all direction, proportionally.
+        """Refine grid in all directions, proportionally.
 
-        The refine_layer can be a scalar or a dictionary.
+        Each direction has its own refinement specification:
 
-        If refine_layer is a dict and zoneprop is None, then the current
-        subgrids array is used. If zoneprop is defined, the
+        - ``int``: refine every column / row / layer by the same factor.
+        - ``Sequence[int]`` *(lateral only)*: split the
+          grid in the chosen direction (``i`` for ``refine_col``, ``j`` for
+          ``refine_row``) into ``len(refine_col)`` or ``len(refine_row)``
+          approximately equal sections
+          and refine each section by the matching factor. When the cell
+          count does not divide evenly across sections, the earlier sections
+          get one extra cell (mirroring :func:`numpy.array_split`). For
+          example, with ``ncol = 10`` and ``refine_col = [2, 3, 1]`` the
+          first 4 columns are refined by 2, the next 3 by 3 and the last 3
+          are left unchanged.
+        - ``dict[int, int]`` *(lateral)*: explicitly map a 1-based column /
+          row index to a refinement factor; unspecified entries default to 1.
+        - ``dict[int, int]`` *(layer)*: see notes below.
+
+        The ``refine_layer`` argument can be a scalar or a dictionary.
+
+        If ``refine_layer`` is a dict and ``zoneprop`` is ``None``, the
+        current subgrids array is used. If ``zoneprop`` is defined, the
         current subgrid index will be redefined for the case. A warning will
-        be issued if subgrids are defined, but the give zone
-        property is inconsistent with this.
+        be issued if subgrids are defined, but the given zone property is
+        inconsistent with this.
 
-        Also, if a zoneprop is defined but no current subgrids in the grid,
-        then subgrids will be added to the grid, if more than 1 subgrid.
+        Also, if a ``zoneprop`` is defined but no current subgrids in the
+        grid, then subgrids will be added to the grid, if more than one
+        subgrid.
 
         Args:
             self (object): A grid XTGeo object
-            refine_col (scalar or dict): Refinement factor for each column.
-            refine_row (scalar or dict): Refinement factor for each row.
+            refine_col: Refinement factor in the I direction. Either a single
+                scalar applied to every column, a per-section sequence of
+                factors (the grid is split into ``len(refine_col)`` roughly
+                equal lateral sections), or a 1-based ``{column: factor}``
+                dict.
+            refine_row: Refinement factor in the J direction, same accepted
+                shapes as ``refine_col``.
             refine_layer (scalar or dict): Refinement factor for layer, if dict, then
                 the dictionary must be consistent with self.subgrids if this is
                 present.
             zoneprop (GridProperty): Zone property; must be defined if refine_layer
                 is a dict
 
-        Returns:
-            ValueError: if..
+        Raises:
+            ValueError: if a refinement factor is out of range or the layer
+                refinement does not match the grid subgrid definition.
             RuntimeError: if mismatch in dimensions for refine_layer and zoneprop
 
+        Examples::
+
+            # Refine every direction uniformly
+            grd.refine(2, 2, 3)
+
+            # Refine the I direction in three sections (factors 2, 3, 1) and
+            # the J direction in two sections (factors 1, 2):
+            grd.refine([2, 3, 1], [1, 2], 1)
+
+            # Mix list-based lateral refinement with a layer dict:
+            grd.refine([1, 3, 1], 2, {1: 2, 2: 4})
+
         Note:
-            Maximum refinement value for e.g. ``refine_layer`` is 65535 per zone.
+            Valid refinement factors are integers in the range ``[1, 65535]``
+            for all input types (scalar, list/tuple, dict). Use ``1`` to leave
+            a direction or section unchanged.
+            A list/tuple must contain at most ``ncol`` (for ``refine_col``) or
+            ``nrow`` (for ``refine_row``) entries.
 
         """
         _grid_refine.refine(

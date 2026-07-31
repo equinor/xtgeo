@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,10 +18,140 @@ if TYPE_CHECKING:
     from xtgeo.grid3d import Grid, GridProperty
 
 
+def _is_non_text_sequence(value: object) -> bool:
+    return isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    )
+
+
+def _expand_section_factors(
+    ncells: int, factors: Sequence[int], name: str
+) -> list[int]:
+    """Expand a per-section list of refinement factors to a per-cell list.
+
+    The cells along the chosen direction are split into ``len(factors)``
+    approximately equal sections, mirroring :func:`numpy.array_split` semantics:
+    when ``ncells`` is not divisible by the number of sections, the earlier
+    sections receive one extra cell each. Each section is then assigned the
+    refinement factor at the matching position of ``factors``.
+
+    Example:
+        ``_expand_section_factors(10, [2, 3, 1], "refine_col")`` produces
+        ``[2, 2, 2, 2, 3, 3, 3, 1, 1, 1]`` (sections of size 4, 3, 3).
+
+    Args:
+        ncells: Number of cells in the direction being refined.
+        factors: Per-section refinement factors. Must contain at least one
+            entry, contain only positive integers and have no more entries
+            than ``ncells``.
+        name: Argument name used in error messages.
+
+    Returns:
+        A list of length ``ncells`` holding the per-cell refinement factor.
+
+    Raises:
+        ValueError: If ``factors`` is empty, contains non-positive values or
+            has more entries than ``ncells``.
+        TypeError: If any factor is not an ``int``.
+    """
+    n_sections = len(factors)
+    if n_sections == 0:
+        raise ValueError(f"{name} list must contain at least one factor")
+    if n_sections > ncells:
+        raise ValueError(
+            f"{name} list has {n_sections} sections, but the grid only has "
+            f"{ncells} cells in that direction"
+        )
+    for idx, factor in enumerate(factors):
+        # bool is a subclass of int; reject it explicitly to avoid surprises
+        if not isinstance(factor, int) or isinstance(factor, bool):
+            raise TypeError(
+                f"{name}[{idx}]={factor!r} must be int, got {type(factor).__name__}"
+            )
+        if not 1 <= factor <= np.iinfo(np.uint16).max:
+            raise ValueError(
+                f"{name}[{idx}]={factor} must be in range "
+                f"[1, {np.iinfo(np.uint16).max}] "
+                f"(use 1 to leave a section unchanged)"
+            )
+
+    base, extra = divmod(ncells, n_sections)
+    expanded: list[int] = []
+    for k, factor in enumerate(factors):
+        size = base + (1 if k < extra else 0)
+        expanded.extend([factor] * size)
+    return expanded
+
+
+def _validate_refine_dict(name: str, factor: dict[int, int], max_refine: int) -> None:
+    for key, value in factor.items():
+        if isinstance(key, bool) or not isinstance(key, int):
+            raise TypeError(
+                f"{name}[{key!r}] key must be int, got {type(key).__name__}"
+            )
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise TypeError(
+                f"{name}[{key}]={value!r} must be int, got {type(value).__name__}"
+            )
+        if not 1 <= value <= max_refine:
+            raise ValueError(
+                f"{name}[{key}]={value} is out of valid range [1, {max_refine}]"
+            )
+
+
+def _validate_refine_factor(
+    name: str, factor: int | Sequence[int] | dict[int, int], max_refine: int
+) -> None:
+    if isinstance(factor, bool):
+        expected = (
+            "int or dict[int, int]"
+            if name == "refine_layer"
+            else "int, sequence of int or dict[int, int]"
+        )
+        raise TypeError(f"{name} must be {expected}, got {type(factor).__name__}")
+    if isinstance(factor, int):
+        if not 1 <= factor <= max_refine:
+            raise ValueError(f"{name}={factor} is out of valid range [1, {max_refine}]")
+        return
+    if _is_non_text_sequence(factor):
+        if name == "refine_layer":
+            raise TypeError(
+                f"{name} must be int or dict[int, int], got {type(factor).__name__}"
+            )
+        return
+    if isinstance(factor, dict):
+        _validate_refine_dict(name, factor, max_refine)
+        return
+    if name == "refine_layer":
+        raise TypeError(
+            f"{name} must be int or dict[int, int], got {type(factor).__name__}"
+        )
+    raise TypeError(
+        f"{name} must be int, sequence of int or dict[int, int], got "
+        f"{type(factor).__name__}"
+    )
+
+
+def _build_lateral_refine_factors(
+    name: str, factor: int | Sequence[int] | dict[int, int], ncells: int
+) -> list[int]:
+    if isinstance(factor, int):
+        return [factor] * ncells
+    if _is_non_text_sequence(factor):
+        return _expand_section_factors(ncells, factor, name)
+
+    refine_factors = [1] * ncells
+    for index, item_factor in factor.items():
+        if not 0 < index <= ncells:
+            raise ValueError(f"{name} key {index} is out of valid range [1, {ncells}]")
+        refine_factors[index - 1] = item_factor
+    return refine_factors
+
+
 def refine(
     self: Grid,
-    refine_col: int | dict[int, int],
-    refine_row: int | dict[int, int],
+    refine_col: int | Sequence[int] | dict[int, int],
+    refine_row: int | Sequence[int] | dict[int, int],
     refine_layer: int | dict[int, int],
     zoneprop: GridProperty | None = None,
 ) -> Grid:
@@ -34,44 +165,19 @@ def refine(
     max_refine = np.iinfo(np.uint16).max
 
     # Validate refinement factors are within valid range
-    for name, factor in [
+    for name, factor in (
         ("refine_col", refine_col),
         ("refine_row", refine_row),
         ("refine_layer", refine_layer),
-    ]:
-        if isinstance(factor, int):
-            if not 1 <= factor <= max_refine:
-                raise ValueError(
-                    f"{name}={factor} is out of valid range [1, {max_refine}]"
-                )
-        elif isinstance(factor, dict):
-            for key, value in factor.items():
-                if not isinstance(value, int) or not 1 <= value <= max_refine:
-                    raise ValueError(
-                        f"{name}[{key}]={value} is out of valid range [1, {max_refine}]"
-                    )
-        else:
-            raise TypeError(f"{name} must be int or dict[int, int], got {type(factor)}")
+    ):
+        _validate_refine_factor(name, factor, max_refine)
 
-    if isinstance(refine_col, int):
-        refine_factor_column = [refine_col] * self.dimensions[0]
-    else:
-        refine_factor_column = [1] * self.dimensions[0]
-        for col, factor in refine_col.items():
-            if 0 < col < self.dimensions[0] and isinstance(factor, int) and factor > 0:
-                refine_factor_column[col - 1] = factor
-            else:
-                xtg.warning("Invalid refine_col item {col}:{factor}")
-
-    if isinstance(refine_row, int):
-        refine_factor_row = [refine_row] * self.dimensions[1]
-    else:
-        refine_factor_row = [1] * self.dimensions[1]
-        for row, factor in refine_row.items():
-            if 0 < row < self.dimensions[1] and isinstance(factor, int) and factor > 0:
-                refine_factor_row[row - 1] = factor
-            else:
-                xtg.warning("Invalid refine_row item {row}:{factor}")
+    refine_factor_column = _build_lateral_refine_factors(
+        "refine_col", refine_col, self.dimensions[0]
+    )
+    refine_factor_row = _build_lateral_refine_factors(
+        "refine_row", refine_row, self.dimensions[1]
+    )
 
     refine_factor_layer_dict = {}
     # case 1 rfactor as scalar value.
@@ -214,18 +320,32 @@ def refine_vertically(
 
     # Validate refinement factor is within valid range
     if isinstance(rfactor, int):
+        if isinstance(rfactor, bool):
+            raise TypeError(
+                f"rfactor must be int or dict[int, int], got {type(rfactor).__name__}"
+            )
         if not 1 <= rfactor <= max_refine:
             raise ValueError(
                 f"rfactor={rfactor} is out of valid range [1, {max_refine}]"
             )
     elif isinstance(rfactor, dict):
         for key, value in rfactor.items():
-            if not isinstance(value, int) or not 1 <= value <= max_refine:
+            if isinstance(key, bool) or not isinstance(key, int):
+                raise TypeError(
+                    f"rfactor[{key!r}] key must be int, got {type(key).__name__}"
+                )
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise TypeError(
+                    f"rfactor[{key}]={value!r} must be int, got {type(value).__name__}"
+                )
+            if not 1 <= value <= max_refine:
                 raise ValueError(
                     f"rfactor[{key}]={value} is out of valid range [1, {max_refine}]"
                 )
     else:
-        raise TypeError(f"rfactor must be int or dict[int, int], got {type(rfactor)}")
+        raise TypeError(
+            f"rfactor must be int or dict[int, int], got {type(rfactor).__name__}"
+        )
 
     rfactord = {}
 
