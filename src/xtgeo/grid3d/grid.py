@@ -232,6 +232,12 @@ def grid_from_resinsight(
 ) -> Grid:
     """Load a corner-point grid from a ResInsight case into an XTGeo ``Grid``.
 
+    If the case contains a ``SUBGRIDS`` input property (a discrete property
+    with 1-based subgrid indices and subgrid names as category names — as
+    written by :meth:`Grid.to_resinsight` or imported from a ROFF file by
+    ResInsight), the grid's :attr:`subgrids` attribute is automatically
+    populated from that property.
+
     Args:
         instance_or_port: Optional ``rips.Instance`` or gRPC port. Use ``None``
             to auto-discover a running ResInsight instance.
@@ -268,12 +274,38 @@ def grid_from_resinsight(
     if case is None:
         raise TypeError("grid_from_resinsight() missing required argument: 'case'")
 
-    from xtgeo.interfaces.resinsight._grid import GridReader
+    from xtgeo.interfaces.resinsight import SUBGRIDS_PROPERTY_NAME
+    from xtgeo.interfaces.resinsight._grid import (
+        GridReader,
+        get_zoneprop_from_resinsight,
+    )
 
-    grid_resinsight = GridReader(
-        instance_or_port=instance_or_port,
-    ).load(case=case, find_last=find_last)
-    return grid_resinsight.to_xtgeo_grid()
+    reader = GridReader(instance_or_port=instance_or_port)
+    rips_case = reader.resolve_case(case, find_last=find_last)
+    if rips_case is None:
+        raise RuntimeError(f"Cannot find any case with name '{case}'")
+
+    grid_resinsight = reader.load(case=rips_case)
+    grid = grid_resinsight.to_xtgeo_grid()
+
+    if zoneprop := get_zoneprop_from_resinsight(instance_or_port, rips_case):
+        try:
+            grid.subgrids_from_zoneprop(zoneprop)
+            logger.info(
+                "Imported %s property from ResInsight case '%s'",
+                SUBGRIDS_PROPERTY_NAME,
+                rips_case.name,
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Failed to reconstruct subgrids from %s property in "
+                "ResInsight case '%s'; grid.subgrids will not be set.",
+                SUBGRIDS_PROPERTY_NAME,
+                rips_case.name,
+                exc_info=True,
+            )
+
+    return grid
 
 
 def create_box_grid(
@@ -1298,6 +1330,14 @@ class Grid(_Grid3D):
         The case named ``case`` will be created if it does not already exist,
         or an existing case will be replaced.
 
+        If the grid has subgrid zonation defined (see :attr:`subgrids`), a
+        discrete input property named ``"SUBGRIDS"`` is automatically exported
+        alongside the geometry.  Each cell receives a 1-based subgrid index
+        counted from the top layer (k=1) downwards, and the subgrid names are
+        registered as discrete category names in ResInsight.  This mirrors the
+        behaviour of ResInsight when it imports a ROFF grid that contains a
+        ``subgrids.nLayers`` tag.
+
         Args:
             instance_or_port: Optional ``rips.Instance`` or gRPC port. Use
                 ``None`` to auto-discover a running ResInsight instance.
@@ -1341,7 +1381,34 @@ class Grid(_Grid3D):
         )
 
         writer = GridWriter(instance_or_port=instance_or_port)
-        return writer.save(data, case, find_last)
+        rips_case = writer.save(data, case, find_last)
+
+        # Export subgrid zonation as a discrete INPUT_PROPERTY named "SUBGRIDS".
+        from xtgeo.interfaces.resinsight import SUBGRIDS_PROPERTY_NAME
+
+        zoneprop = self.get_zoneprop_from_subgrids()
+        if zoneprop is not None:
+            try:
+                zoneprop.to_resinsight(
+                    instance_or_port,
+                    rips_case,
+                    property_type="INPUT_PROPERTY",
+                    property_name=SUBGRIDS_PROPERTY_NAME,
+                    find_last=find_last,
+                )
+            except Exception:  # noqa: BLE001
+                logger.warning(
+                    f"Failed to export {SUBGRIDS_PROPERTY_NAME} property "
+                    "to ResInsight; grid geometry was still written successfully.",
+                    exc_info=True,
+                )
+            finally:
+                # get_zoneprop_from_subgrids appends to self.props; remove it
+                # so that this export call has no side effect on the grid.
+                if self.props and zoneprop in self.props:
+                    self.props.remove(zoneprop)
+
+        return rips_case
 
     def convert_units(self, units: Units) -> None:
         """
