@@ -5,12 +5,15 @@ import logging
 import pathlib
 
 import hypothesis.strategies as st
+import numpy as np
 import pytest
+import resfo
 from hypothesis import assume, given
 
 import xtgeo
 from xtgeo.common.exceptions import InvalidFileFormatError
-from xtgeo.grid3d import GridProperties, GridProperty
+from xtgeo.grid3d import GridProperties, GridProperty, _grid3d_utils as grid3d_utils
+from xtgeo.io._file import FileWrapper
 
 from .grid_generator import xtgeo_grids
 from .gridprop_generator import grid_properties as gridproperties_elements, keywords
@@ -186,6 +189,69 @@ def test_scan_dates_invalid_file(testdata_path):
     """Raise an error before trying to scan a non-existent file."""
     with pytest.raises(ValueError, match="does not exist"):
         GridProperties.scan_dates(testdata_path / pathlib.Path("notafile.UNRST"))
+
+
+def test_scan_dates_dataframe(testdata_path):
+    expected = GridProperties.scan_dates(testdata_path / RFILE1)
+    scan_df = GridProperties.scan_dates(testdata_path / RFILE1, dataframe=True)
+    assert scan_df.columns.tolist() == ["SEQNUM", "DATE"]
+    assert list(scan_df.itertuples(index=False, name=None)) == expected
+
+
+def test_scan_keywords_with_dates_matches_scan_dates(testdata_path):
+    scan_df = GridProperties.scan_dates(testdata_path / RFILE1, dataframe=True)
+    kw_df = grid3d_utils.scan_keywords(
+        FileWrapper(testdata_path / RFILE1),
+        fformat="xecl",
+        dataframe=True,
+        dates=True,
+    )
+    seqnum_dates = (
+        kw_df.loc[kw_df["KEYWORD"] == "SEQNUM", "DATE"].drop_duplicates().to_list()
+    )
+    assert seqnum_dates == scan_df["DATE"].to_list()
+
+
+def test_scan_dates_lgr_uses_first_intehead_per_seqnum():
+    def intehead_array(year, month, day):
+        arr = np.zeros(411, dtype=np.int32)
+        arr[64] = day
+        arr[65] = month
+        arr[66] = year
+        return arr
+
+    unrst = io.BytesIO()
+    resfo.write(
+        unrst,
+        [
+            ("HEAD    ", np.array([1], dtype=np.int32)),
+            ("SEQNUM  ", np.array([7], dtype=np.int32)),
+            ("PROPA   ", np.array([11], dtype=np.int32)),
+            ("INTEHEAD", intehead_array(2024, 1, 2)),
+            ("INTEHEAD", intehead_array(2024, 1, 9)),
+            ("PROPB   ", np.array([12], dtype=np.int32)),
+            ("SEQNUM  ", np.array([8], dtype=np.int32)),
+            ("PROPC   ", np.array([13], dtype=np.int32)),
+            ("INTEHEAD", intehead_array(2024, 1, 3)),
+            ("INTEHEAD", intehead_array(2024, 1, 8)),
+        ],
+    )
+    unrst.seek(0)
+    assert GridProperties.scan_dates(unrst) == [(7, 20240102), (8, 20240103)]
+
+    unrst.seek(0)
+    keywords = grid3d_utils.scan_keywords(
+        FileWrapper(unrst),
+        fformat="xecl",
+        dataframe=True,
+        dates=True,
+    )
+    assert keywords.loc[keywords["KEYWORD"] == "INTEHEAD", "DATE"].to_list() == [
+        20240102,
+        20240102,
+        20240103,
+        20240103,
+    ]
 
 
 def test_dates_from_restart(testdata_path):

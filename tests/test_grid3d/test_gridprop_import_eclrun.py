@@ -13,10 +13,12 @@ from hypothesis import HealthCheck, assume, given, settings
 
 import xtgeo
 import xtgeo.grid3d._find_gridprop_in_eclrun as xtg_im_ecl
+from xtgeo.grid3d import _grid3d_utils as grid3d_utils
 from xtgeo.grid3d._ecl_inte_head import InteHead
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Phases
 from xtgeo.grid3d._grdecl_format import match_keyword
+from xtgeo.io._file import FileWrapper
 
 from .grdecl_grid_generator import finites
 from .grid_generator import xtgeo_grids
@@ -49,6 +51,64 @@ def test_date_from_intehead():
     intehead.day = 31
 
     assert xtg_im_ecl.date_from_intehead(intehead) == 20011231
+
+
+def test_scan_ecl_keywords_w_dates_uses_first_intehead_after_seqnum():
+    def intehead_array(year, month, day):
+        arr = np.zeros(411, dtype=np.int32)
+        arr[64] = day
+        arr[65] = month
+        arr[66] = year
+        return arr
+
+    unrst = io.BytesIO()
+    resfo.write(
+        unrst,
+        [
+            ("HEAD    ", np.array([1], dtype=np.int32)),
+            ("SEQNUM  ", np.array([7], dtype=np.int32)),
+            ("PROPA   ", np.array([11], dtype=np.int32)),
+            ("INTEHEAD", intehead_array(2024, 1, 2)),
+            ("INTEHEAD", intehead_array(2024, 1, 9)),
+            ("PROPB   ", np.array([12], dtype=np.int32)),
+            ("SEQNUM  ", np.array([8], dtype=np.int32)),
+            ("PROPC   ", np.array([13], dtype=np.int32)),
+            ("INTEHEAD", intehead_array(2024, 1, 3)),
+            ("PROPD   ", np.array([14], dtype=np.int32)),
+        ],
+    )
+    unrst.seek(0)
+
+    keywords = grid3d_utils._scan_ecl_keywords_w_dates(
+        FileWrapper(unrst),
+        dataframe=False,
+    )
+
+    assert [kw[0] for kw in keywords] == [
+        "HEAD",
+        "SEQNUM",
+        "PROPA",
+        "INTEHEAD",
+        "INTEHEAD",
+        "PROPB",
+        "SEQNUM",
+        "PROPC",
+        "INTEHEAD",
+        "PROPD",
+    ]
+    assert [kw[-1] for kw in keywords] == [
+        0,
+        20240102,
+        20240102,
+        20240102,
+        20240102,
+        20240102,
+        20240103,
+        20240103,
+        20240103,
+        20240103,
+    ]
+    assert all(len(kw) == 5 for kw in keywords)
 
 
 @dataclass

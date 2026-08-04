@@ -57,15 +57,16 @@ def scan_dates(
     seqnum = -1
     for item in resfo.lazy_read(pfile.file):
         kw = item.read_keyword().strip()
-        data = item.read_array()
 
         if kw == "SEQNUM":
+            data = item.read_array()
             seqnum = data[0]
             continue
 
         # With LGRs multiple INTEHEADs may occur. Ensure we get the date
         # from the first INTEHEAD after a SEQNUM.
         if kw == "INTEHEAD" and seqnum != -1:
+            data = item.read_array()
             # Index 66 = year, 65 = month, 64 = day
             date = int(f"{data[66]}{data[65]:02d}{data[64]:02d}")
             dates.append((seqnum, date))
@@ -110,23 +111,30 @@ def _scan_ecl_keywords_w_dates(
     dataframe: bool = False,
 ) -> list[KeywordDateTuple] | pd.DataFrame:
     """Add a date column to the keyword"""
-    xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
-    assert isinstance(xkeys, list)
-    xdates = scan_dates(pfile, maxdates=MAXDATES, dataframe=False)
-    assert isinstance(xdates, list)
-
     result = []
-    # now merge these two:
-    nv = -1
     date = 0
-    for item in xkeys:
-        name, dtype, reclen, bytepos = item
-        if name == "SEQNUM":
-            nv += 1
-            date = xdates[nv][1]
+    seqnum_pos = None
+    for item in resfo.lazy_read(pfile.file):
+        name = item.read_keyword().strip()
+        dtype = item.read_type().strip()
+        reclen = item.read_length()
+        bytepos = item.stream.tell()
 
-        entry = (name, dtype, reclen, bytepos, date)
-        result.append(entry)
+        if name == "SEQNUM":
+            item.read_array()
+            seqnum_pos = len(result)
+            date = 0
+
+        if name == "INTEHEAD" and seqnum_pos is not None:
+            data = item.read_array()
+            # Index 66 = year, 65 = month, 64 = day
+            date = int(f"{data[66]}{data[65]:02d}{data[64]:02d}")
+            for index in range(seqnum_pos, len(result)):
+                prev_name, prev_type, prev_reclen, prev_bytepos, _ = result[index]
+                result[index] = (prev_name, prev_type, prev_reclen, prev_bytepos, date)
+            seqnum_pos = None
+
+        result.append((name, dtype, reclen, bytepos, date))
 
     return (
         pd.DataFrame.from_records(
