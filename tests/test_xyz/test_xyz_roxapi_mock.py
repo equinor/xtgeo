@@ -3,11 +3,12 @@ Tests for roxar RoxarAPI interface as mocks.
 
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.version import parse as versionparse
 from pandas.testing import assert_frame_equal
 
 import xtgeo
@@ -277,3 +278,71 @@ def test_roxar_polygon_importer_attrs():
         assert attrs["attr1"]["values"] == [1, 2, 3]
         assert attrs["attr2"]["values"] == ["a", "b", "c"]
         assert attrs["attr3"]["values"] == [1.1, 2.2, 3.3]
+
+
+# ---------------------------------------------------------------------------
+# Tests for attribute API selection based on xyztype and RMS API version
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("xyztype", "api_version", "expect_polyline_methods"),
+    [
+        (_XYZType.POLYGONS, "1.13", False),
+        (_XYZType.POLYGONS, "1.14", True),
+        (_XYZType.POLYGONS, "1.20", True),
+        (_XYZType.POINTS, "1.13", False),
+        (_XYZType.POINTS, "1.14", False),
+        (_XYZType.POINTS, "1.20", False),
+    ],
+)
+def test_attribute_api_selection_by_xyztype_and_version(
+    point_set,
+    polygons_set,
+    xyztype,
+    api_version,
+    expect_polyline_methods,
+):
+    """Use polyline attribute API only for POLYGONS with API version >= 1.14."""
+    roxxyz = MagicMock()
+    roxxyz.get_attributes_names.return_value = ["ATTR1"]
+    roxxyz.get_attributes_names_polylines.return_value = ["ATTR1"]
+
+    mock_rox = MagicMock()
+    mock_rox.version_required.side_effect = lambda v: (
+        versionparse(api_version) >= versionparse(v)
+    )
+
+    raw_values = polygons_set if xyztype == _XYZType.POLYGONS else point_set
+
+    with (
+        patch("xtgeo.xyz._xyz_roxapi.RoxUtils", return_value=mock_rox),
+        patch("xtgeo.xyz._xyz_roxapi._check_presence_in_project", return_value=True),
+        patch("xtgeo.xyz._xyz_roxapi._get_roxitem", return_value=roxxyz),
+        patch("xtgeo.xyz._xyz_roxapi._get_roxvalues", return_value=raw_values),
+    ):
+        _xyz_roxapi.load_xyz_from_rms(
+            project=MagicMock(),
+            name="name",
+            category="cat",
+            attributes=True,
+            xyztype=xyztype,
+        )
+
+    if xyztype == _XYZType.POLYGONS:
+        mock_rox.version_required.assert_called_once_with("1.14")
+    else:
+        mock_rox.version_required.assert_not_called()
+
+    if expect_polyline_methods:
+        roxxyz.get_attributes_names_polylines.assert_called_once_with(realisation=0)
+        roxxyz.get_attribute_values_polylines.assert_called_once_with(
+            "ATTR1", realisation=0
+        )
+        roxxyz.get_attributes_names.assert_not_called()
+        roxxyz.get_attribute_values.assert_not_called()
+    else:
+        roxxyz.get_attributes_names_polylines.assert_not_called()
+        roxxyz.get_attribute_values_polylines.assert_not_called()
+        roxxyz.get_attributes_names.assert_called_once_with(realisation=0)
+        roxxyz.get_attribute_values.assert_called_once_with("ATTR1", realisation=0)

@@ -228,13 +228,26 @@ def _load_xyz_from_rms(
 
     dfr = _rmsapi_xyz_to_dataframe(values, xyztype)
 
-    # handling attributes for points and polygons/polylines, from Roxar API version 1.6
     if attributes:
-        attr_names = roxxyz.get_attributes_names(realisation=realisation)
+        # Roxar API version 1.14 introduced a new way of getting attributes for polygons
+        if xyztype == _XYZType.POLYGONS and rox.version_required("1.14"):
+            get_attributes_names = roxxyz.get_attributes_names_polylines
+            get_attribute_values = roxxyz.get_attribute_values_polylines
+        else:
+            get_attributes_names = roxxyz.get_attributes_names
+            get_attribute_values = roxxyz.get_attribute_values
+
+        attr_names = get_attributes_names(realisation=realisation)
+
         if isinstance(attributes, list):
             attr_names = [a for a in attr_names if a in attributes]
+
         logger.info("XYZ attribute names are: %s", attr_names)
-        attr_dict = _get_rox_attrvalues(roxxyz, attr_names, realisation=realisation)
+
+        attr_dict: dict[str, list[np.ndarray] | np.ndarray] = {
+            name: get_attribute_values(name, realisation=realisation)
+            for name in attr_names
+        }
 
         poly_id: str | None = (
             None if xyztype == _XYZType.POINTS else cast("str", kwargs["pname"])
@@ -541,17 +554,6 @@ def _get_roxvalues(rox_xyz: Any, realisation: int = 0) -> list[np.ndarray] | np.
         logger.error(kwe)
 
     return roxitem
-
-
-def _get_rox_attrvalues(
-    rox_xyz: Any, attrnames: list[str], realisation: int = 0
-) -> dict[str, list[np.ndarray] | np.ndarray]:
-    """Return attributes from the Roxar API, numpy (Points) or list (Polygons)."""
-    roxitems = {}
-    for attrname in attrnames:
-        values = rox_xyz.get_attribute_values(attrname, realisation=realisation)
-        roxitems[attrname] = values
-    return roxitems
 
 
 def _load_wellpicks_from_rms(

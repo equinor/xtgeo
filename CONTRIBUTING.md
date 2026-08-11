@@ -267,6 +267,7 @@ see the five lines of code in top of this example:
 
 ```python
 import sys
+
 sysm = sys.modules.copy()
 for k, _ in sysm.items():
     if "xtgeo" in k:

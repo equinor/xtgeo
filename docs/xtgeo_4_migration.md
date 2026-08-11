@@ -198,13 +198,7 @@ A well must be created with these values set explicitly.
 ```python
 import xtgeo
 
-well = xtgeo.Well(
-    rkb=100.0,
-    xpos=0.0,
-    ypos=0.0,
-    wname="OP_1",
-    df=some_dataframe
-)
+well = xtgeo.Well(rkb=100.0, xpos=0.0, ypos=0.0, wname="OP_1", df=some_dataframe)
 ```
 
 ## xtgeo.plot
