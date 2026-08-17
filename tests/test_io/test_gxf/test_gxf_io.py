@@ -265,6 +265,27 @@ def gxf_content_with_unknown_key() -> str:
 
 
 @pytest.fixture
+def gxf_content_with_unsupported_key() -> Callable[[str], str]:
+    """Return a factory for content with an unsupported GXF key before #GRID."""
+
+    def make_content(unsupported_key: str) -> str:
+        """Return content where unsupported_key has a value before #GRID."""
+
+        return f"""
+#POINTS
+"3"
+#ROWS
+"2"
+#{unsupported_key}
+"1"
+#GRID
+1 2 3 4 5 6
+"""
+
+    return make_content
+
+
+@pytest.fixture
 def gxf_content_missing_rows() -> str:
     """Return GXF content that omits the mandatory #ROWS key."""
 
@@ -1064,6 +1085,35 @@ class TestGXFParsing:
         assert result.rows == 2
         assert "Ignoring unknown GXF key '#UNKNOWN_KEY'" in caplog.text
 
+    @pytest.mark.parametrize(
+        "unsupported_key",
+        [
+            "MAP_PROJECTION",
+            "MAP_DATUM_TRANSFORM",
+            "TITLE",
+            "TRANSFORM",
+            "UNIT_LENGHT",
+            "Z_MAXIMUM",
+            "Z_MINIMUM",
+        ],
+    )
+    def test_unsupported_gxf_key_warns_logs_and_skips(
+        self,
+        unsupported_key: str,
+        gxf_content_with_unsupported_key: Callable[[str], str],
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Unsupported GXF keys should warn, log, and be skipped."""
+        caplog.set_level("WARNING", logger="xtgeo.io.gxf._gxf_io")
+        content = gxf_content_with_unsupported_key(unsupported_key)
+
+        with pytest.warns(UserWarning, match=unsupported_key):
+            result = GXFData.from_file(gxf_stream(content))
+
+        assert result.points == 3
+        assert result.rows == 2
+        assert f"Ignoring unknown GXF key '#{unsupported_key}'" in caplog.text
+
     def test_extension_keys_are_ignored_without_warning_or_log(
         self,
         valid_gxf_content: str,
@@ -1160,11 +1210,11 @@ class TestGXFParsing:
         with pytest.raises(ValueError, match=f"Duplicate key '#{duplicate_key}'"):
             GXFData.from_file(gxf_stream(content))
 
-    def test_sense_key_with_zero_value_is_accepted(
+    def test_sense_key_with_default_value_is_accepted(
         self, gxf_content_with_sense_value: Callable[[str], str]
     ) -> None:
-        """A quoted zero #SENSE value should be accepted."""
-        result = GXFData.from_file(gxf_stream(gxf_content_with_sense_value('"0"')))
+        """A quoted default #SENSE value should be accepted."""
+        result = GXFData.from_file(gxf_stream(gxf_content_with_sense_value('"1"')))
         assert result.points == 2
 
     @pytest.mark.parametrize(
@@ -1341,9 +1391,40 @@ class TestGXFWriter:
             "12.0",
             "#DUMMY",
             "-9999.0",
+            "##XMAX",
+            "11.25",
+            "##YMAX",
+            "18.0",
         ]
         for quoted_value in ('"2"', '"1.25"', '"-2.5"', '"10.0"', '"-9999.0"'):
             assert quoted_value not in header
+
+    def test_writes_xmax_ymax_user_extension_values(self) -> None:
+        """X/Y max values should be written as user-defined extension keys."""
+        gxf = make_gxf_data(
+            points=4,
+            rows=3,
+            ptseparation=12.5,
+            rwseparation=-20.0,
+            xorigin=100.0,
+            yorigin=200.0,
+            grid=np.ma.array(
+                [
+                    [1.0, 2.0, 3.0, 4.0],
+                    [5.0, 6.0, 7.0, 8.0],
+                    [9.0, 10.0, 11.0, 12.0],
+                ]
+            ),
+        )
+
+        stream = StringIO()
+        gxf.to_file(stream)
+        lines = stream.getvalue().splitlines()
+
+        xmax_index = lines.index("##XMAX")
+        ymax_index = lines.index("##YMAX")
+        assert lines[xmax_index + 1] == "137.5"
+        assert lines[ymax_index + 1] == "160.0"
 
     def test_line_length_at_most_80_chars(self) -> None:
         """GXF spec requires all lines <= 80 characters."""
@@ -2544,13 +2625,13 @@ class TestGXFParserErrors:
         with pytest.raises(ValueError, match="Expected a single finite decimal number"):
             GXFData.from_file(gxf_stream(content))
 
-    @pytest.mark.parametrize("value", ["1", "0.0", "left-handed", "0 0"])
-    def test_sense_value_must_be_single_zero(
+    @pytest.mark.parametrize("value", ["0", "1.0", "left-handed", "1 1"])
+    def test_sense_value_must_be_single_one(
         self, value: str, gxf_content_with_sense_value: Callable[[str], str]
     ) -> None:
-        """#SENSE values should be exactly a single zero token."""
+        """#SENSE values should be exactly a single one token."""
         content = gxf_content_with_sense_value(value)
-        with pytest.raises(ValueError, match="Invalid value for key '#SENSE'.*0"):
+        with pytest.raises(ValueError, match="Invalid value for key '#SENSE'.*1"):
             GXFData.from_file(gxf_stream(content))
 
     @pytest.mark.parametrize("tail", ["", "#GRID\n1 2 3 4"])

@@ -282,9 +282,8 @@ def import_gxf(mfile: FileWrapper, **_) -> dict:
     if yinc < 0.0:
         yinc *= -1
         yflip = -1
-        # Note that the GXF #SENSE parameter is not handled in xtgeo,
-        # but that it would have an impact on the handling of yinc/yflip,
-        # origin, possibly rotation and the ordering of values (rows vs columns).
+        # GXF parsing only accepts the default #SENSE value, so yinc/yflip
+        # handling does not need to account for alternate #SENSE orientations.
     else:
         yflip = 1
 

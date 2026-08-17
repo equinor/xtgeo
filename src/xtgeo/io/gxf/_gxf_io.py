@@ -29,7 +29,10 @@ value for KEY (on the next line after KEY)
 value for KEY (on next line after KEY)
     - A KEY preceeded by '##' is NOT part
     of the GXF specification, but added by some software or user.
-    The parser recognizes but ignores such keys and their values.
+    - The parser recognizes but ignores such keys and their values, hence
+    they are not propagated through to xtgeo.
+    - Missing or invalid extension values raise ValueError,
+    since they indicate an ill-formed header.
 
 Free text
     - Any line that does NOT start with "!", "#" or "##" is considered
@@ -58,7 +61,9 @@ The parser supports the following GXF keys:
 - #YORIGIN (yori)
 - #ROTATION (rotation)
 - #DUMMY (undef)
-- #GRID (values)
+- #SENSE (only the default value 1 is supported)
+- #GTYPE (only the default value 0 is supported)
+- #GRID (only uncompressed values are supported)
 
 Keys required by the GXF format are:
 - #POINTS
@@ -66,22 +71,31 @@ Keys required by the GXF format are:
 - #GRID
 
 Optional keys have defaults per the GXF spec; when missing, the default is used.
+- Explicit defaults: `PTSEPARATION`, `RWSEPARATION`, `XORIGIN`, `YORIGIN`, `ROTATION`.
+- Implicit absence defaults: `DUMMY=None`, `GTYPE=uncompressed`, `SENSE=1`.
 
-Compressed #GRID values declared by #GTYPE != 0 are intentionally unsupported and
-raise ValueError. The absence of #GTYPE is treated as uncompressed by default.
-
-Undefined values at grid nodes are represented by a specified dummy value (#DUMMY);
-when a dummy value is provided, values equal to the dummy value are treated
-as masked/undefined. When no dummy value is provided, all finite values are treated
-as valid.
 #GRID values must be finite base-10 numeric values.
-Masked/undefined grid values require that a dummy value is specified.
+Compressed #GRID values declared by #GTYPE != 0 are intentionally unsupported and
+raise ValueError. The absence of the #GTYPE key implies that the grid is treated
+as uncompressed by default.
+Undefined values at grid nodes are represented by a specified dummy value (#DUMMY);
+- Masked/undefined grid values require that a dummy value is specified.
+- When a dummy value is provided, values equal to the dummy value are treated
+  as masked/undefined.
+- When no dummy value is provided, all finite values are treated as valid.
 
 Note that the GXF specification says nothing about the physical meaning of the data in
 the #GRID section (elevation, rock property, etc.);
 it is up to the user to interpret these values.
 Nevertheless, a typical use is to let the #GRID data represent surface elevation.
 
+The parser doesn't support all GXF keys, and it doesn't support all possible values
+(on the next line) for the supported keys.
+- supported keys with unsupported values raise `ValueError`
+- unsupported or unknown keys are warned and skipped
+- unsupported keys with valid value lines; unsupported values are rejected
+This trade-off is to allow batch processing of GXF files when unsupported keys
+are present, while rejecting malformed files.
 
 
 
@@ -126,11 +140,11 @@ Some free text
 #DUMMY
 9999999.0
 
-! x maximum (not part of GXF specification)
+! x maximum (not part of GXF specification, not propagated to xtgeo)
 ##XMAX
 439101.301489
 
-! y maximum (not part of GXF specification)
+! y maximum (not part of GXF specification, not propagated to xtgeo)
 ##YMAX
 7260149.299141
 
@@ -396,11 +410,8 @@ class GXFData:
             if key == "SENSE":
                 # SENSE controls both the orientation of the grid
                 # and right-handedness/left-handedness of the coordinate system.
-                # The current implementation does not take this parameter
-                # properly into account, but emits an error since it impacts
-                # the representation of the object.
-                # The only supported value is 0, which corresponds to
-                # the current implementation.
+                # The GXF default is 1, and this parser only supports that
+                # default representation.
                 value_line = next(lines, None)
                 if value_line is None or value_line[0].startswith("#"):
                     raise ValueError(
@@ -409,11 +420,11 @@ class GXFData:
 
                 if (
                     len(value_line) != 1
-                    or strip_surrounding_delimiters(value_line[0], '"') != "0"
+                    or strip_surrounding_delimiters(value_line[0], '"') != "1"
                 ):
                     raise ValueError(
                         f"In file {fileref_errmsg}: Invalid value for key '#SENSE'. "
-                        "The only supported value is 0."
+                        "The only supported value is 1."
                     )
                 continue
 
@@ -620,6 +631,19 @@ class GXFData:
                 stream.write("#DUMMY\n")
                 stream.write(f"{self._format_number(self.dummy)}\n")
                 stream.write("\n")
+
+            # User-defined keys (not part of GXF specification):
+
+            # maximum x and y values:
+            # Note that they are smaller than
+            # the x_origin and y_origin values if the ptseparation or rwseparation
+            # values are negative.
+            x_max = self.xorigin + (self.points - 1) * self.ptseparation
+            y_max = self.yorigin + (self.rows - 1) * self.rwseparation
+            stream.write(f"##XMAX\n{self._format_number(x_max)}\n")
+            stream.write("\n")
+            stream.write(f"##YMAX\n{self._format_number(y_max)}\n")
+            stream.write("\n")
 
             stream.write("#GRID\n")
 
