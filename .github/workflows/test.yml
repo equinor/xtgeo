@@ -185,16 +185,24 @@ jobs:
         id: resinsight
         uses: './.github/actions/setup_resinsight'
 
-      - name: Generate coverage report
+      - name: Generate coverage and test results reports
         run: |
           ${{ steps.resinsight.outputs.install-path}}/bin/ResInsight --console --version
           export RESINSIGHT_EXECUTABLE="${{ steps.resinsight.outputs.install-path}}/bin/ResInsight"
-          uv run pytest -n 4 --dist=loadgroup tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml
+          uv run pytest -n 4 --dist=loadgroup tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml --junitxml=junit.xml -o junit_family=legacy
 
-      - name: Upload coverage to Codecov
+      - name: Upload test coverage to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: xtgeocoverage.xml
+          disable_search: true
+      
+      - name: Upload test results to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: junit.xml
 
   opm-integration:
     runs-on: ubuntu-latest
