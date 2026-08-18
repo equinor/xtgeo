@@ -189,20 +189,62 @@ jobs:
         run: |
           ${{ steps.resinsight.outputs.install-path}}/bin/ResInsight --console --version
           export RESINSIGHT_EXECUTABLE="${{ steps.resinsight.outputs.install-path}}/bin/ResInsight"
-          uv run pytest -n 4 --dist=loadgroup tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml --junitxml=junit.xml -o junit_family=legacy
+          uv run pytest -n 4 --dist=loadgroup tests --doctest-modules --generate-plots --disable-warnings --durations=25 --cov=xtgeo --cov-report=xml:xtgeocoverage.xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload test coverage to Codecov
+        id: codecov-coverage
+        if: ${{ !cancelled() }}
+        continue-on-error: true
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: xtgeocoverage.xml
+          flags: unittests
           disable_search: true
-      
-      - name: Upload test results to Codecov
+          fail_ci_if_error: true
+
+      - name: Codecov retry sleep
+        if: ${{ steps.codecov-coverage.outcome == 'failure' }}
+        run: sleep 30
+
+      - name: Upload test coverage to Codecov (retry)
+        if: ${{ steps.codecov-coverage.outcome == 'failure' }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: xtgeocoverage.xml
+          flags: unittests
+          disable_search: true
+          fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Publish test summary
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: test-summary/action@37b508cfee6d4d080eedd00b5bb240a6a784a6a5 # v2.6
+        with:
+          paths: junit.xml
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
           files: junit.xml
+          disable_search: true
+
+      - name: Test for a clean repository
+        run: |
+          # Remove things we have generated on purpose:
+          ls -la
+          rm -rf .coverage
+          rm -f xtgeocoverage.xml junit*.xml
+          rm -f codecov.SHA*
+          rm -f codecov
+          rm -f .coverage.*
+          git status --porcelain
+          test -z "$(git status --porcelain)"
 
   opm-integration:
     runs-on: ubuntu-latest
