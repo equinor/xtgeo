@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from xtgeo.grid3d.grid import Grid
+    from xtgeo.grid3d.grid_property import GridProperty
 
     from ._rips_package import ResInsightInstanceOrPortType, RipsCaseType
 
@@ -245,3 +246,44 @@ class GridWriter(_BaseResInsightDataRW):
 
         except Exception as exc:
             raise RuntimeError(f"Failed to save ResInsight case data: {exc}") from exc
+
+
+def get_zoneprop_from_resinsight(
+    instance_or_port: ResInsightInstanceOrPortType | None,
+    rips_case: RipsCaseType,
+) -> GridProperty | None:
+    """Load the SUBGRIDS zone property from a ResInsight case, or return None."""
+    from . import SUBGRIDS_PROPERTY_NAME
+    from ._grid_property import GridPropertyReader
+
+    try:
+        prop_data = GridPropertyReader(instance_or_port=instance_or_port).load(
+            case=rips_case,
+            property_name=SUBGRIDS_PROPERTY_NAME,
+            property_type="INPUT_PROPERTY",
+        )
+    except Exception:  # noqa: BLE001
+        logger.debug(
+            "Failed to load %s input property from ResInsight case '%s'; "
+            "grid.subgrids will not be set.",
+            SUBGRIDS_PROPERTY_NAME,
+            rips_case.name,
+            exc_info=True,
+        )
+        return None
+
+    subgrids_prop = prop_data.to_xtgeo_gridproperty()
+    if not subgrids_prop.isdiscrete:
+        logger.warning(
+            "Ignoring non-discrete %s property in ResInsight case '%s'; "
+            "grid.subgrids will not be set.",
+            SUBGRIDS_PROPERTY_NAME,
+            rips_case.name,
+        )
+        return None
+
+    # Treat 0 as "no subgrid" to avoid constructing a synthetic "zone0".
+    subgrids_prop.values = np.ma.masked_where(
+        subgrids_prop.values == 0, subgrids_prop.values
+    )
+    return subgrids_prop
