@@ -18,7 +18,7 @@ logger = null_logger(__name__)
 xtg = XTGeoDialog()
 
 if TYPE_CHECKING:
-    from xtgeo import Cube
+    from xtgeo.cube.cube1 import Cube
 
 
 def export_segy(cube: Cube, sfile: str) -> None:
@@ -93,7 +93,7 @@ def export_segy(cube: Cube, sfile: str) -> None:
         f.text[0] = bytes(text_header)
 
 
-def export_rmsreg(self, sfile):
+def export_rmsreg(self: Cube, sfile: str) -> None:
     """Export on RMS regular format."""
 
     logger.debug("Export to RMS regular format...")
@@ -119,7 +119,7 @@ def export_rmsreg(self, sfile):
         raise RuntimeError("Error when exporting to RMS regular")
 
 
-def export_xtgregcube(self, mfile):
+def export_xtgregcube(self: Cube, mfile: str) -> None:
     """Export to experimental xtgregcube format, python version."""
     logger.info("Export as xtgregcube...")
     self.metadata.required = self
