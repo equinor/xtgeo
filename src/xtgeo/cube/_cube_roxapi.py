@@ -3,7 +3,7 @@
 
 Note on rotation:
 
-xtgeo uses rotation of "columns" whick is xline direction counterclockwise
+xtgeo uses rotation of "columns" which is xline direction counterclockwise
 measured from X axis.
 
 roxarapi uses rotation of inline direction (rows) relative to Y axis.
@@ -76,7 +76,7 @@ def _roxapi_import_cube(
 def _roxapi_cube_to_xtgeo(
     self: Cube, rox: RoxUtils, rcube: Any
 ) -> None:  # pragma: no cover
-    """Tranforming cube from ROXAPI to XTGeo object."""
+    """Transforming cube from ROXAPI to XTGeo object."""
     logger.info("Cube from roxapi to xtgeo...")
 
     # roxrotation is cube rotation clockwise from azimuth but not consistent

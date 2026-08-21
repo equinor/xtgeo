@@ -72,7 +72,9 @@ class CubeAttrs:
     _min_thickness_mask: RegularSurface | None = None  # mask for min. thickness trunc.
     _mask_map_by_traceidcode: RegularSurface | None = None  # mask for traceidcode 2
 
-    _result_attr_maps: dict = field(default_factory=dict)  # holds the resulting maps
+    _result_attr_maps: dict[str, RegularSurface] = field(
+        default_factory=dict
+    )  # holds the resulting maps
 
     def __post_init__(self) -> None:
         self._process_upper_lower_surface()
@@ -80,7 +82,7 @@ class CubeAttrs:
         self._determine_slice_indices()
         self._compute_statistical_attribute_surfaces()
 
-    def result(self) -> dict:
+    def result(self) -> dict[str, RegularSurface]:
         # return the resulting attribute maps
         return self._result_attr_maps
 
@@ -146,7 +148,7 @@ class CubeAttrs:
     def _create_depth_array(self) -> None:
         """Create a 1D array where values are cube depths; to be used as filter.
 
-        Belowe and above the input surfaces (plus a buffer), the values are set to
+        Below and above the input surfaces (plus a buffer), the values are set to
         a constant value self._outside_depth.
 
         Will also issue warnings or errors if the surfaces are outside the cube,

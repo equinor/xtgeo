@@ -308,9 +308,14 @@ def _get_randomline_fence(
         distance = hincrement
 
     logger.info("Getting fence from a Polygons instance...")
+
+    tempname = fencespec.name
     fspec = fencespec.get_fence(
         distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
     )
+    if isinstance(fspec, bool):
+        raise ValueError(f"Too few points in polygons for fence, name: {tempname}")
+
     logger.info("Getting fence from a Polygons instance... DONE")
 
     if not isinstance(fspec, np.ndarray):

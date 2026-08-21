@@ -29,8 +29,9 @@ from . import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from io import BytesIO, StringIO
+    from pathlib import Path
 
-    from xtgeo.common.types import FileLike
     from xtgeo.surface.regular_surface import RegularSurface
 
 logger = null_logger(__name__)
@@ -54,7 +55,7 @@ def _data_reader_factory(fmt: FileFormat) -> Callable[..., dict]:
 
 
 def cube_from_file(
-    mfile: FileLike,
+    mfile: str | Path | StringIO | BytesIO,
     fformat: str = "guess",
     iline: Literal[189, 193] = 189,
     xline: Literal[189, 193] = 193,
@@ -62,7 +63,8 @@ def cube_from_file(
     """This makes an instance of a Cube directly from file import.
 
     Args:
-        mfile (str): Name of file
+        mfile (str | Path | StringIO | BytesIO): File name or in-memory text/binary
+            stream containing the cube data.
         fformat (str): See :meth:`Cube.from_file`
         iline (Literal[189, 193]): Byte position of the inline number field in
             each trace header. Default is 189 (SEGY standard). Only 189 and 193
@@ -662,7 +664,7 @@ class Cube:
         Args:
             newvalue (float): Set cube values to new values where traceid is 2.
 
-        Return:
+        Returns:
             old value (float): The estimated simple 'average' of old value will
                 be returned as (max + min)/2. If no dead traces, return None.
         """
@@ -703,12 +705,12 @@ class Cube:
 
     def compute_attributes_in_window(
         self,
-        upper: RegularSurface | float,
-        lower: RegularSurface | float,
+        upper: RegularSurface | float | int,
+        lower: RegularSurface | float | int,
         ndiv: int = 10,
         interpolation: Literal["cubic", "linear"] = "cubic",
         minimum_thickness: float = 0.0,
-    ) -> dict:
+    ) -> dict[str, RegularSurface]:
         """Return a cube's attributes as a set of surfaces, given two input surfaces.
 
         The attributes are computed vertically (per column) within a window defined by
@@ -869,7 +871,7 @@ class Cube:
     @classmethod
     def _read_file(
         cls,
-        sfile: FileLike,
+        sfile: str | Path | StringIO | BytesIO,
         fformat: str = "guess",
         iline: Literal[189, 193] = 189,
         xline: Literal[189, 193] = 193,
@@ -880,7 +882,8 @@ class Cube:
         on file extension (e.g. segy og sgy for SEGY format)
 
         Args:
-            sfile (str): Filename (as string or pathlib.Path instance).
+            sfile (str | Path | StringIO | BytesIO): Filename (as string or
+                pathlib.Path instance).
             fformat (str): file format guess/segy/rms_regular/xtgregcube
                 where 'guess' is default. Regard 'xtgrecube' format as experimental.
             iline (Literal[189, 193]): Byte position of the inline number in
@@ -921,7 +924,7 @@ class Cube:
 
     def to_file(
         self,
-        sfile: FileLike,
+        sfile: str | Path | StringIO | BytesIO,
         fformat: str = "segy",
         pristine: bool = False,
         engine: str | None = None,
@@ -929,7 +932,8 @@ class Cube:
         """Export cube data to file.
 
         Args:
-            sfile (str): Filename
+            sfile (str | Path | StringIO | BytesIO): Output file path or
+                path-like object.
             fformat (str, optional): file format 'segy' (default) or
                 'rms_regular'
             pristine (bool): If True, make SEGY from scratch.

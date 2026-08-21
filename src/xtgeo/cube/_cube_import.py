@@ -78,7 +78,7 @@ def import_segy(
         )
     filename = sfile.file
 
-    attributes = {}
+    attributes: dict[str, float | int | str | np.ndarray] = {}
 
     try:
         # cube with all traces present
@@ -107,7 +107,7 @@ def import_segy(
     if not attributes:
         raise ValueError("Could not get attributes for segy file")
 
-    attributes["segyfile"] = filename
+    attributes["segyfile"] = str(filename)
     return attributes
 
 
@@ -205,7 +205,7 @@ def _process_cube_values(values: np.ndarray) -> np.ndarray:
 
 def _segy_all_traces_attributes(
     segyfile: segyio.segy.SegyFile, ncol: int, nrow: int, nlay: int
-) -> dict:
+) -> dict[str, float | int | np.ndarray]:
     """Get the geometrical values xtgeo needs for a cube definition."""
     trcode = segyio.TraceField.TraceIdentificationCode
     traceidcodes = segyfile.attributes(trcode)[:].reshape(ncol, nrow)
@@ -250,7 +250,7 @@ def _import_segy_incomplete_traces(
     segyfile: segyio.segy.SegyFile,
     iline: int = 189,
     xline: int = 193,
-) -> dict:
+) -> dict[str, float | int | str | np.ndarray]:
     """Import a a cube SEGY with incomplete traces via the SegyIO library.
 
     Note that the undefined value will be xtgeo.UNDEF (large number)!
@@ -327,12 +327,15 @@ def _import_segy_incomplete_traces(
     return attrs
 
 
-def _inverse_anyline_map(anylines: np.ndarray) -> dict:
+def _inverse_anyline_map(anylines: np.ndarray) -> dict[int, list[int]]:
     """Small helper function to get e.g. inline 2345: [0, 1, 2, .., 70].
 
     I.e. to get a mapping between inline number and a list of possible indices
 
     """
+    if anylines.ndim != 1:
+        raise ValueError("Parameter 'anylines' must be a 1D numpy array")
+
     anyll = defaultdict(list)
     for ind, key in enumerate(anylines):
         anyll[key].append(ind)
@@ -378,9 +381,9 @@ def _geometry_incomplete_traces(
     xspacing: int,
     iline: int = 189,
     xline: int = 193,
-) -> dict:
+) -> dict[str, float | int | str | np.ndarray]:
     """Compute xtgeo attributes (mostly geometries) for incomplete trace cube."""
-    attrs = {}
+    attrs: dict[str, float | int | str | np.ndarray] = {}
 
     ill = _inverse_anyline_map(ilines_case)
     xll = _inverse_anyline_map(xlines_case)
@@ -462,7 +465,7 @@ def _get_coordinate(
 
 def import_stormcube(
     sfile: FileWrapper,
-) -> dict:
+) -> dict[str, float | int | str | np.ndarray]:
     """Import on StormCube format."""
     # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------
@@ -590,7 +593,7 @@ def import_xtgregcube(mfile: FileWrapper, values: bool = True) -> dict:
 
     results = {myattr: req[myattr] for myattr in reqattrs}
 
-    # For backwards compatability, xtgeo outputs files with the undef field set
+    # For backwards compatibility, xtgeo outputs files with the undef field set
     # although we do not support initializing with any other value.
     # As xtgeo-format is only written/read by xtgeo as far as we know, this should
     # be unproblematic for now.
