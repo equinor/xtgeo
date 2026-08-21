@@ -901,6 +901,50 @@ def test_wells_importer_skips_none_wells_and_object_dtype_attrs() -> None:
     assert result["attributes"]["Category"] == "float"
 
 
+def test_wells_importer_returns_empty_when_no_well_has_data() -> None:
+    """Test ``_wells_importer`` returns empty data when every well yields ``None``.
+
+    What is tested:
+        When no well provides zonation points (e.g. the wells have no zonelog),
+        ``dflist`` stays empty and the importer must not call ``pd.concat`` on it.
+
+    Expected behaviour:
+        * An empty dict is returned, so ``points_from_wells`` builds an empty
+          ``Points`` instance instead of raising ``ValueError: No objects to
+          concatenate``.
+    """
+    from unittest.mock import MagicMock
+
+    from xtgeo.xyz.points import _wells_importer
+
+    well_none = MagicMock()
+    well_none.get_zonation_points.return_value = None
+
+    assert _wells_importer([well_none]) == {}
+    assert len(xtgeo.points_from_wells([well_none]).get_dataframe()) == 0
+
+
+def test_wells_dfrac_importer_returns_empty_when_no_well_has_data() -> None:
+    """Test ``_wells_dfrac_importer`` returns empty data when all wells yield ``None``.
+
+    What is tested:
+        When ``get_fraction_per_zone`` returns ``None`` for every well, the
+        importer must not call ``pd.concat`` on the empty list.
+
+    Expected behaviour:
+        * An empty dict is returned instead of raising ``ValueError: No objects
+          to concatenate``.
+    """
+    from unittest.mock import MagicMock
+
+    from xtgeo.xyz.points import _wells_dfrac_importer
+
+    well_none = MagicMock()
+    well_none.get_fraction_per_zone.return_value = None
+
+    assert _wells_dfrac_importer([well_none], "FACIES", [1]) == {}
+
+
 def test_wells_dfrac_importer_skips_none_wells() -> None:
     """Test ``_wells_dfrac_importer`` silently skips wells that return ``None``.
 
