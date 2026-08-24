@@ -1426,15 +1426,46 @@ class TestGXFWriter:
         assert lines[xmax_index + 1] == "137.5"
         assert lines[ymax_index + 1] == "160.0"
 
+    @pytest.mark.parametrize(
+        ("dummy", "dummy_formatted"),
+        [
+            (9.999999999999999e32, "9.999999999e+32"),
+            (1234567890.123456, "1234567890.1234"),
+        ],
+    )
+    def test_long_dummy_is_truncated_without_rounding(
+        self, dummy: float, dummy_formatted: str
+    ) -> None:
+        """Long dummy values should retain their leading digits in header and grid."""
+        gxf = make_gxf_data(
+            rows=1,
+            dummy=dummy,
+            grid=np.ma.array([[1.0, dummy]], mask=[[False, True]]),
+        )
+
+        stream = StringIO()
+        gxf.to_file(stream)
+        exported = stream.getvalue()
+        lines = exported.splitlines()
+
+        dummy_index = lines.index("#DUMMY")
+        assert lines[dummy_index + 1] == dummy_formatted
+        grid_tokens = exported.split("#GRID\n", maxsplit=1)[1].split()
+        assert grid_tokens == ["1.0", dummy_formatted]
+
+        stream.seek(0)
+        re_read = GXFData.from_file(stream)
+        np.testing.assert_array_equal(re_read.grid.mask, gxf.grid.mask)
+
     def test_line_length_at_most_80_chars(self) -> None:
         """GXF spec requires all lines <= 80 characters."""
         ncol = 20
         nrow = 3
         values = np.ma.array(
             [
-                np.arange(1000.0, 1000.0 + ncol),
-                np.arange(2000.0, 2000.0 + ncol),
-                np.arange(3000.0, 3000.0 + ncol),
+                1.234567890123456e100 * np.arange(1.0, ncol + 1.0),
+                2.345678901234567e100 * np.arange(1.0, ncol + 1.0),
+                3.456789012345678e100 * np.arange(1.0, ncol + 1.0),
             ]
         )
         gxf = make_gxf_data(
@@ -1453,11 +1484,50 @@ class TestGXFWriter:
         grid_lines = exported.split("#GRID\n", maxsplit=1)[1].splitlines()
         grid_tokens_by_line = [line.split() for line in grid_lines]
         assert len(grid_lines) > nrow
+        assert max(map(len, grid_tokens_by_line)) == 5
+        assert all(
+            len(token) <= 15 for tokens in grid_tokens_by_line for token in tokens
+        )
 
         for row in values:
-            row_start = GXFData._format_number(float(row[0]))
+            row_start = GXFData._format_number(float(row[0]), max_characters=15)
             assert any(tokens[0] == row_start for tokens in grid_tokens_by_line)
             assert all(row_start not in tokens[1:] for tokens in grid_tokens_by_line)
+
+        stream.seek(0)
+        re_read = GXFData.from_file(stream)
+        np.testing.assert_allclose(re_read.grid.data, gxf.grid.data)
+
+    def test_grid_values_five_per_line_right_adjusted(self) -> None:
+        """
+        #GRID values are written 5 per line, using the available line length
+        with aligned columns.
+        """
+        values = np.ma.array(
+            [
+                [1.0, 22.0, 333.0, 4444.0, 5.0, 6.0, 7.0],
+                [8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0],
+            ]
+        )
+        gxf = make_gxf_data(points=7, rows=2, grid=values)
+
+        stream = StringIO()
+        gxf.to_file(stream)
+        grid_lines = stream.getvalue().split("#GRID\n", maxsplit=1)[1].splitlines()
+
+        # 7 values per row wraps into a 5-value line and a 2-value line per row.
+        assert len(grid_lines) == 4
+        tokens_by_line = [line.split() for line in grid_lines]
+        assert [len(tokens) for tokens in tokens_by_line] == [5, 2, 5, 2]
+
+        for line, tokens in zip(grid_lines, tokens_by_line):
+            assert len(line) == 80
+            assert line.startswith(tokens[0].rjust(15))
+            assert line.endswith(tokens[-1])
+
+            if len(tokens) == 5:
+                for column_start, token in zip((0, 17, 33, 49, 65), tokens):
+                    assert line[column_start : column_start + 15] == token.rjust(15)
 
         stream.seek(0)
         re_read = GXFData.from_file(stream)
@@ -2697,6 +2767,11 @@ class TestGXFWriterDetails:
             assert "." in result
         if uses_scientific:
             assert "e" in result or "E" in result
+
+    def test_format_number_raises_when_limit_is_too_small(self) -> None:
+        """A float needs at least three characters to retain its type."""
+        with pytest.raises(ValueError, match="Cannot format 1.0 within 1 characters"):
+            GXFData._format_number(1.0, max_characters=1)
 
     def test_single_column_grid(self) -> None:
         """A single-column grid (ncol=1) should write one value per row."""

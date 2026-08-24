@@ -310,15 +310,20 @@ class GXFData:
         return bool(np.ma.allclose(self.grid, other.grid, rtol=rtol, atol=atol))
 
     @staticmethod
-    def _format_number(value: float | int) -> str:
+    def _format_number(value: float | int, max_characters: int | None = None) -> str:
         if isinstance(value, int):
             return str(value)
-        formatted = f"{value:.16g}"
-        # Ensure float values always contain a decimal point so that
-        # the type is preserved on re-read (e.g. -9999.0 -> "-9999.0").
-        if "." not in formatted and "e" not in formatted and "E" not in formatted:
-            formatted += ".0"
-        return formatted
+
+        for precision in range(16, 0, -1):
+            formatted = f"{value:.{precision}g}"
+            # Ensure float values always contain a decimal point so that
+            # the type is preserved on re-read (e.g. -9999.0 -> "-9999.0").
+            if "." not in formatted and "e" not in formatted and "E" not in formatted:
+                formatted += ".0"
+            if max_characters is None or len(formatted) <= max_characters:
+                return formatted
+
+        raise ValueError(f"Cannot format {value} within {max_characters} characters.")
 
     @staticmethod
     def _is_user_extension(line: TokenizedLine) -> bool:
@@ -590,9 +595,31 @@ class GXFData:
         wrapped_file = FileWrapper(file)
         wrapped_file.check_folder(raiseerror=OSError)
 
-        # GXF spec requires lines <= 80 chars; rows may wrap but each new
-        # row must start on a new line.
+        # Values are written 5 per line, right-adjusted to a common column width.
+        # This formatting is per user's request, and should not be changed without
+        # internal discussion.
+        # Tests should ensure that changes are caught.
+
         max_line_length = 80
+        max_values_per_line = 5
+        max_characters_per_value = (
+            max_line_length - (max_values_per_line - 1)
+        ) // max_values_per_line
+        dummy_formatted = (
+            self._format_number(self.dummy) if self.dummy is not None else None
+        )
+        if (
+            dummy_formatted is not None
+            and len(dummy_formatted) > max_characters_per_value
+        ):
+            if "e" in dummy_formatted:
+                mantissa, exponent = dummy_formatted.split("e", maxsplit=1)
+                max_mantissa_length = max_characters_per_value - len(exponent) - 1
+                dummy_formatted = (
+                    mantissa[:max_mantissa_length].rstrip(".") + "e" + exponent
+                )
+            else:
+                dummy_formatted = dummy_formatted[:max_characters_per_value].rstrip(".")
 
         with wrapped_file.get_text_stream_write(encoding=encoding) as stream:
             stream.write(
@@ -629,7 +656,7 @@ class GXFData:
 
             if self.dummy is not None:
                 stream.write("#DUMMY\n")
-                stream.write(f"{self._format_number(self.dummy)}\n")
+                stream.write(f"{dummy_formatted}\n")
                 stream.write("\n")
 
             # User-defined keys (not part of GXF specification):
@@ -647,16 +674,36 @@ class GXFData:
 
             stream.write("#GRID\n")
 
-            # Each line may be up to 80 characters long
-            values_for_write = np.ma.filled(self.grid, fill_value=self.dummy)
-            for row in values_for_write:
-                tokens = [self._format_number(float(v)) for v in row]
-                current_line = ""
-                for token in tokens:
-                    candidate = (current_line + " " + token) if current_line else token
-                    if len(candidate) > max_line_length and current_line:
-                        stream.write(current_line + "\n")
-                        current_line = token
+            # GXF requires lines of at most 80 characters. Rows may wrap, but each
+            # row must start on a new line.
+            for row in self.grid:
+                for start in range(0, len(row), max_values_per_line):
+                    chunk = [
+                        (
+                            dummy_formatted
+                            if np.ma.is_masked(value) and dummy_formatted is not None
+                            else self._format_number(
+                                float(value),
+                                max_characters=max_characters_per_value,
+                            )
+                        )
+                        for value in row[start : start + max_values_per_line]
+                    ]
+                    gaps = len(chunk) - 1
+                    if gaps == 0:
+                        line = chunk[0].rjust(max_characters_per_value)
                     else:
-                        current_line = candidate
-                stream.write(current_line + "\n")
+                        extra_spaces = max_line_length - (
+                            len(chunk) * max_characters_per_value + gaps
+                        )
+                        spaces_per_gap, remaining_spaces = divmod(extra_spaces, gaps)
+                        gap_widths = [
+                            1 + spaces_per_gap + (index < remaining_spaces)
+                            for index in range(gaps)
+                        ]
+                        line = chunk[0].rjust(max_characters_per_value)
+                        for token, gap_width in zip(chunk[1:], gap_widths):
+                            line += " " * gap_width + token.rjust(
+                                max_characters_per_value
+                            )
+                    stream.write(line + "\n")
