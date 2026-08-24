@@ -940,14 +940,15 @@ class RegularSurface:
         When setting values, list-like input (lists, tuples) is also accepted, as
         long as the length is correct and the entries are number-like.
 
-        In order to specify undefined values, you can specify the ``undef`` attribute
-        in the list, or use ``float("nan")``.
+        To specify undefined values, use a masked array, ``float("nan")``, or the
+        standard ``UNDEF`` value. Values equal to a finite custom ``undef`` are not
+        automatically masked (https://github.com/equinor/xtgeo/issues/1684).
 
         Example::
 
             # list like input where nrow=3 and ncol=5 (15 entries)
             newvalues = list(range(15))
-            newvalues[2] = srf.undef
+            newvalues[2] = float("nan")
             srf.values = newvalues  # here, entry 2 will be undefined
         """
         return self._values
