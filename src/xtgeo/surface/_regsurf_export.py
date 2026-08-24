@@ -12,7 +12,7 @@ import hdf5plugin
 import numpy as np
 
 from xtgeo import _cxtgeo
-from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
+from xtgeo.common.constants import UNDEF, UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 from xtgeo.common.log import null_logger
 from xtgeo.io.gxf._gxf_io import GXFData
 
@@ -194,27 +194,10 @@ def export_gxf(self: RegularSurface, mfile: FileWrapper) -> None:
     # surfaces as (ncol, nrow), therefore need to transpose
     grid_values = values.T
 
-    # Determine a dummy value to use for masked values.
-    # If the grid has masked values, we need to ensure that the dummy value is not
-    # present in the valid data. If it is, we will choose a new dummy value
-    # that is outside the range of valid data.
-    dummy = None
-    if np.ma.count_masked(grid_values):
-        valid_values = grid_values.compressed()
-        dummy = float(self.undef)
-        # Avoid using a dummy value that is also present as valid, unmasked data.
-        if np.any(valid_values == dummy):
-            finite_values = valid_values[np.isfinite(valid_values)]
-            max_abs_value = (
-                float(np.max(np.abs(finite_values))) if finite_values.size else 1.0
-            )
-            scale = max(max_abs_value, abs(dummy), 1.0)
-            # Pick a value outside the observed finite data range and keep moving
-            # farther away if the candidate is still present in the grid.
-            candidate = -(scale * 10.0 + 1.0)
-            while np.any(valid_values == candidate):
-                candidate *= 10.0
-            dummy = candidate
+    # RegularSurface masks positive values above UNDEF_LIMIT, so its standard
+    # UNDEF value is outside the valid data range. Using that stable sentinel
+    # avoids formatted #DUMMY collisions without a second pass over the grid.
+    dummy = UNDEF if np.ma.count_masked(grid_values) else None
 
     gxf_data = GXFData(
         points=self.ncol,
