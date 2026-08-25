@@ -98,8 +98,8 @@ Ready to contribute? Here's how to set up XTGeo for local development.
    pytest tests
    ```
 
-7. If you want to contribute to the C/C++ code base contact the XTGeo authors
-   for detailed instructions.
+7. If you want to contribute to the C/C++ code base, contact the XTGeo
+   authors for detailed instructions.
 
 8. Commit your changes (see
    [Writing commit messages](#writing-commit-messages)) and push your
@@ -138,12 +138,12 @@ can now do `vals = values.foo().bar()`.
 ```
 
 The first word of the commit message starts with a capitalized acronym or
-abbreviation. A list of these is available below. This prefixindicates what
+abbreviation. A list of these is available below. This prefix indicates what
 type of commit this is and is followed by a brief description of the change.
 This line should strive to be less than or equal to 50 characters.
 
 More explanation and context is often helpful to developers in the future. If
-this is the case you should add a blank link with a longer description giving
+this is the case you should add a blank line with a longer description giving
 some of these contextual details. This commit information can be as long as is
 needed but the individual lines shouldn't be longer than 72 characters.
 
@@ -225,12 +225,18 @@ Before you submit a pull request, check that it meets these guidelines:
    files. Pull requests that target the `main` branch in `equinor/xtgeo` must
    have at least one approval from the code owner team `@equinor/atlas`.
 
+4. If the change in the pull request refactors existing code, especially C/C++
+   code, components with numerical calculations or other heavy operations,
+   relevant tests should be benchmarked so that reviewers can see how the change
+   in the PR affects code speed. Follow the steps below under
+   [Benchmarking tests](#benchmarking-tests) to see how this can be done.
+
 ## Tips
 
 - To run a subset of tests, e.g. only surface tests:
 
   ```python
-  pytest test/test_surfaces
+  pytest tests/test_surface
   ```
 
 - scikit-build-core offers some suggestions about building with editable
@@ -281,3 +287,54 @@ grd = xgeo.grid_from_roxar(project, "Geogrid")
 This will work if you change python code in XTGeo. If you change C code in XTGeo, then
 this hack will not work. The only solution is to close and re-open RMS everytime the
 C code is compiled.
+
+## Benchmarking tests
+For changes that may affect code speed, the contributor should run
+benchmarking tests as part of their PR so that code speed can be checked.
+To do this, follow these steps:
+1. Identify existing tests that covers the code you are changing.
+   If the code you are changing has no coverage, create tests.
+2. Add the benchmark marker to the test:
+     -  Use @pytest.mark.benchmark(group="your-group-name")
+
+3. Add the benchmark fixture as a test argument:
+     -  def test_xxx(benchmark, ...)
+
+3. Put the operation you want to measure the code speed for inside a small callable
+4. Call benchmark(your_callable)
+5. Keep correctness assertions outside the measured callable
+
+**Note**: To get a proper benchmark measure, a reference run of
+the benchmarking test before the changes were applied is needed.
+If you are benchmarking a test for the first time, you will need
+to first run the benchmarked test without the changes applied first.
+
+**Example**
+```python
+import pytest
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_example(benchmark, tmp_path, sample_obj):
+    out = tmp_path / "data.bin"
+
+    def write():
+        sample_obj.to_file(out)
+
+    benchmark(write)
+
+    # correctness checks after timing
+    assert out.exists()
+```
+
+**Note:**
+If the benchmark is computationally heavy, combine it with the existing big test marker:
+```python
+@pytest.mark.bigtest
+@pytest.mark.benchmark(group="...")
+```
+
+To run only benchmark tests run the following command 
+```bash
+pytest --benchmark-only
+```
