@@ -193,11 +193,12 @@ def test_internal_segy_import_full_vs_partial(testdata_path: str) -> None:
     with segyio.open(testdata_path / SFILE5, "r") as f:
         attrs2 = _import_segy_incomplete_traces(f)
 
+    attrs2_by_key = dict(attrs2)
     for key, val in attrs1.items():
         if isinstance(val, np.ndarray):
-            np.testing.assert_array_equal(val, attrs2[key])
+            np.testing.assert_array_equal(val, attrs2_by_key[key])
         else:
-            assert val == attrs2[key]
+            assert val == attrs2_by_key[key]
 
 
 def test_segyio_import_ex2(testdata_path: str) -> None:

@@ -31,12 +31,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from xtgeo.common.types import FileLike
+    from xtgeo.cube._cube_import import CubeAttributes
     from xtgeo.surface.regular_surface import RegularSurface
 
 logger = null_logger(__name__)
 
 
-def _data_reader_factory(fmt: FileFormat) -> Callable[..., dict]:
+def _data_reader_factory(fmt: FileFormat) -> Callable[..., CubeAttributes]:
     if fmt == FileFormat.SEGY:
         return _cube_import.import_segy
     if fmt == FileFormat.STORM:
@@ -167,7 +168,7 @@ class Cube:
         xlines: np.ndarray | None = None,
         traceidcodes: np.ndarray | None = None,
         segyfile: str | None = None,
-        filesrc: str | None = None,
+        filesrc: FileLike | None = None,
     ) -> None:
         """Initiate a Cube instance."""
 
@@ -387,12 +388,12 @@ class Cube:
         return self._segyfile
 
     @property
-    def filesrc(self) -> str | None:
+    def filesrc(self) -> FileLike | None:
         """The input file name (str), if any (or None) (read-only)."""
         return self._filesrc
 
     @filesrc.setter
-    def filesrc(self, name: str | None) -> None:
+    def filesrc(self, name: FileLike | None) -> None:
         self._filesrc = name
 
     @property
@@ -916,8 +917,7 @@ class Cube:
             attrs = reader(mfile, iline=iline, xline=xline)
         else:
             attrs = reader(mfile)
-        attrs["filesrc"] = mfile.file
-        return cls(**attrs)
+        return cls(**attrs, filesrc=mfile.file)
 
     def to_file(
         self,

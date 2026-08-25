@@ -33,7 +33,7 @@ import json
 from collections import defaultdict
 from copy import deepcopy
 from struct import unpack
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypedDict, cast
 from warnings import warn
 
 import numpy as np
@@ -50,7 +50,28 @@ from xtgeo.metadata.metadata import MetaDataRegularCube
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper
 
-CubeAttributes = dict[str, float | int | str | np.ndarray]
+
+class CubeAttributes(TypedDict, total=False):
+    """Attributes describing a cube, as produced by the import routines."""
+
+    ncol: int
+    nrow: int
+    nlay: int
+    xori: float
+    yori: float
+    zori: float
+    xinc: float
+    yinc: float
+    zinc: float
+    rotation: float
+    yflip: int
+    zflip: int
+    traceidcodes: np.ndarray
+    ilines: np.ndarray
+    xlines: np.ndarray
+    values: np.ndarray
+    segyfile: str
+
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -182,8 +203,6 @@ def _import_segy_all_traces(segyfile: segyio.segy.SegyFile) -> CubeAttributes:
         attrs["xinc"], attrs["yinc"] = attrs["yinc"], attrs["xinc"]
         yflip = attrs["yflip"]
         rotation = attrs["rotation"]
-        if not isinstance(yflip, int) or not isinstance(rotation, (int, float)):
-            raise TypeError("Cube rotation and yflip must be numeric")
         attrs["rotation"] = (rotation + yflip * 90) % 360
         attrs["yflip"] = yflip * -1
 
@@ -493,9 +512,10 @@ def import_stormcube(
     with open(filename, "rb") as stf:
         iline = 0
 
-        ncol = nrow = nlay = nlines = 1
-        xori = yori = zori = xinc = yinc = rotation = rot = 0.999
-        xlen = ylen = zlen = 0.999
+        nlines = 1
+        ncol_b = nrow_b = nlay_b = b"1"
+        xori_b = yori_b = zori_b = rot_b = b"0.999"
+        xlen_b = ylen_b = zlen_b = b"0.999"
 
         for line in range(10):
             xline = stf.readline()
@@ -510,30 +530,32 @@ def import_stormcube(
             elif iline == 3:
                 pass
             elif iline == 4:
-                (xori, xlen, yori, ylen, zori, _, _, _) = xline.strip().split()  # type: ignore[assignment]
+                (xori_b, xlen_b, yori_b, ylen_b, zori_b, _, _, _) = (
+                    xline.strip().split()
+                )
             elif iline == 5:
-                zlen, rot = xline.strip().split()  # type: ignore[assignment]
+                zlen_b, rot_b = xline.strip().split()
             elif iline == 6:
-                ncol, nrow, nlay = xline.strip().split()  # type: ignore[assignment]
+                ncol_b, nrow_b, nlay_b = xline.strip().split()
                 nlines = line + 2
                 break
 
-    ncol = int(ncol)
-    nrow = int(nrow)
-    nlay = int(nlay)
+    ncol = int(ncol_b)
+    nrow = int(nrow_b)
+    nlay = int(nlay_b)
     nrcl = ncol * nrow * nlay
 
-    xori = float(xori)
-    yori = float(yori)
-    zori = float(zori)
+    xori = float(xori_b)
+    yori = float(yori_b)
+    zori = float(zori_b)
 
-    rotation = float(rot)
+    rotation = float(rot_b)
     if rotation < 0:
         rotation += 360
 
-    xinc = float(xlen) / ncol
-    yinc = float(ylen) / nrow
-    zinc = float(zlen) / nlay
+    xinc = float(xlen_b) / ncol
+    yinc = float(ylen_b) / nrow
+    zinc = float(zlen_b) / nlay
 
     yflip = 1
 
@@ -617,4 +639,4 @@ def import_xtgregcube(mfile: FileWrapper, values: bool = True) -> CubeAttributes
             results["ncol"], results["nrow"], results["nlay"]
         )
 
-    return results
+    return cast("CubeAttributes", results)
