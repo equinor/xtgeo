@@ -154,6 +154,7 @@ from xtgeo.grid3d.grid import (
     grid_from_file,
     grid_from_resinsight,
     grid_from_roxar,
+    grid_from_rms,
     grid_from_surfaces,
     grid_merge,
 )
@@ -228,6 +229,7 @@ __all__ = [
     "grid_from_file",
     "grid_from_resinsight",
     "grid_from_roxar",
+    "grid_from_rms",
     "grid_from_surfaces",
     "grid_merge",
     "grid_properties",

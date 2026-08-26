@@ -9,7 +9,7 @@ Functions
 
 .. autofunction:: xtgeo.grid_from_file
 
-.. autofunction:: xtgeo.grid_from_roxar
+.. autofunction:: xtgeo.grid_from_rms
 
 .. autofunction:: xtgeo.grid_from_resinsight
 
