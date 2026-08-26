@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import pytest
 
 from tests.conftest import measure_peak_memory_usage
@@ -20,18 +22,21 @@ def test_large_cube_memory_usage() -> None:
 
     @measure_peak_memory_usage
     @functimer(output="print")
-    def compute_with_mem_tracking(cube: Cube, interp: str) -> dict:
+    def compute_with_mem_tracking(
+        cube: Cube, interp: Literal["linear", "cubic"]
+    ) -> dict:
         """Helper function to be decorated."""
         return cube.compute_attributes_in_window(
             level1,
             level2,
-            interpolation=interp,  # type: ignore[arg-type]
+            interpolation=interp,
         )
 
     # Force garbage collection to get a cleaner baseline
     gc.collect()
 
-    for intp in ["linear", "cubic"]:
+    interpolations: list[Literal["linear", "cubic"]] = ["linear", "cubic"]
+    for intp in interpolations:
         print(f"\nTesting interpolation={intp}")
         peak_mem_increase_bytes, result = compute_with_mem_tracking(mycube, intp)
 
