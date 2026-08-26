@@ -22,7 +22,7 @@ of deprecation.
 | `Grid`           | `Grid().from_file("x.roff")`             | `xtgeo.grid_from_file("x.roff)"`           |                                    |
 | `Grid`           | `Grid().from_hdf("x.h5")`                | `xtgeo.grid_from_file("x.h5")`             |                                    |
 | `Grid`           | `Grid().from_xtgf("x.xtg")`              | `xtgeo.grid_from_file("x.xtg")`            |                                    |
-| `Grid`           | `Grid().from_roxar(...)`                 | `xtgeo.grid_from_roxar(...)`               |                                    |
+| `Grid`           | `Grid().from_roxar(...)`                 | `xtgeo.grid_from_roxar(...)`               | `xtgeo.grid_from_rms(...)`         |
 | `GridProperties` | `GridProperties().from_file("x.roff")`   | `xtgeo.gridproperties_from_file("x.roff")` |                                    |
 | `GridProperty`   | `GridProperty("x.roff")`                 | `xtgeo.gridproperty_from_file("x.roff")`   |                                    |
 | `GridProperty`   | `GridProperty().from_file("x.roff")`     | `xtgeo.gridproperty_from_file("x.roff")`   |                                    |
