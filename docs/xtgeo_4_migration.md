@@ -3,7 +3,7 @@
 This document contains a set of instructions on how to update your code to work
 with XTGeo 4.0.
 
-## Importing from file or Roxar
+## Importing from file or Roxar/rms
 
 One of the most significant changes in XTGeo 4.0 relates to how files are
 imported. The following table lists the style that is now deprecated with its
@@ -13,44 +13,49 @@ Note that the example file extension given in the old imports are merely
 suggestive and that _all_ valid file extensions are subject to the same manner
 of deprecation.
 
-| Class            | Deprecated import                        | Replacement                              |
-|------------------|------------------------------------------|------------------------------------------|
-| `Cube`           | `Cube("x.segy")`                         | `xtgeo.cube_from_file("x.segy")`
-| `Cube`           | `Cube().from_file("x.segy")`             | `xtgeo.cube_from_file("x.segy")`
-| `Cube`           | `Cube().from_roxar(...)`                 | `xtgeo.cube_from_roxar(...)`
-| `Grid`           | `Grid("x.grdecl")`                       | `xtgeo.grid_from_file("x.grdecl")`
-| `Grid`           | `Grid().from_file("x.roff")`             | `xtgeo.grid_from_file("x.roff)"`
-| `Grid`           | `Grid().from_hdf("x.h5")`                | `xtgeo.grid_from_file("x.h5")`
-| `Grid`           | `Grid().from_xtgf("x.xtg")`              | `xtgeo.grid_from_file("x.xtg")`
-| `Grid`           | `Grid().from_roxar(...)`                 | `xtgeo.grid_from_roxar(...)`
-| `GridProperties` | `GridProperties().from_file("x.roff")`   | `xtgeo.gridproperties_from_file("x.roff")`
-| `GridProperty`   | `GridProperty("x.roff")`                 | `xtgeo.gridproperty_from_file("x.roff")`
-| `GridProperty`   | `GridProperty().from_file("x.roff")`     | `xtgeo.gridproperty_from_file("x.roff")`
-| `GridProperty`   | `GridProperty().from_roxar(...)`         | `xtgeo.gridproperty_from_roxar(...)`
-| `Points`         | `Points("x.xyz")`                        | `xtgeo.points_from_file("x.xyz")`
-| `Points`         | `Points().from_file("x.xyz")`            | `xtgeo.points_from_file("x.xyz")`
-| `Points`         | `Points().from_roxar(...)`               | `xtgeo.points_from_roxar(...)`
-| `Points`         | `Points().from_surface(...)`             | `xtgeo.points_from_surface(...)`
-| `Points`         | `Points().from_wells(...)`               | `xtgeo.points_from_wells(...)`
-| `Points`         | `Points().dfrac_from_wells(...)`         | `xtgeo.points_from_wells_dfrac(...)`
-| `Polygons`       | `Polygons("x.xyz")`                      | `xtgeo.polygons_from_file("x.xyz")`
-| `Polygons`       | `Polygons().from_file("x.xyz")`          | `xtgeo.polygons_from_file("x.xyz")`
-| `RegularSurface` | `RegularSurface("x.gri")`                | `xtgeo.surface_from_file("x.gri")`
-| `RegularSurface` | `RegularSurface().from_file("x.gri")`    | `xtgeo.surface_from_file("x.gri")`
-| `RegularSurface` | `RegularSurface().from_hdf("x.h5")`      | `xtgeo.surface_from_file("x.h5")`
-| `RegularSurface` | `RegularSurface().from_roxar(...)`       | `xtgeo.surface_from_roxar(...)`
-| `RegularSurface` | `RegularSurface().from_cube("x.segy")`   | `xtgeo.surface_from_cube("x.segy")`
-| `RegularSurface` | `RegularSurface().from_grid3d("x.roff")` | `xtgeo.surface_from_grid3d("x.roff")`
-| `Surfaces`       | `Surfaces().from_grid3d("x.roff")`       | `xtgeo.surfaces_from_grid("x.roff")`
-| `BlockedWell`    | `BlockedWell().from_roxar(...)`          | `xtgeo.blockedwell_from_roxar(...)`
-| `BlockedWells`   | `BlockedWells().from_files(...)`         | `xtgeo.blockedwells_from_files(...)`
-| `BlockedWells`   | `BlockedWells().from_roxar(...)`         | `xtgeo.blockedwells_from_roxar(...)`
-| `Well`           | `Well("x.rmswell")`                      | `xtgeo.well_from_file("x.rmswell")`
-| `Well`           | `Well().from_file("x.rmswell")`          | `xtgeo.well_from_file("x.rmswell")`
-| `Well`           | `Well().from_hdf("x.h5")`                | `xtgeo.well_from_file("x.h5")`
-| `Well`           | `Well().from_roxar(...)`                 | `xtgeo.well_from_roxar(...)`
-| `Wells`          | `Wells(["x.rmswell"])`                   | `xtgeo.wells_from_files(["x.rmswell"])`
-| `Wells`          | `Wells().from_files(["x.rmswell"])`      | `xtgeo.wells_from_files(["x.rmswell"])`
+| Class            | Deprecated import                        | Replacement                                | XTGeo 4.26.x or greater            |
+| ---------------- | ---------------------------------------- | ------------------------------------------ | ---------------------------------- |
+| `Cube`           | `Cube("x.segy")`                         | `xtgeo.cube_from_file("x.segy")`           |                                    |
+| `Cube`           | `Cube().from_file("x.segy")`             | `xtgeo.cube_from_file("x.segy")`           |                                    |
+| `Cube`           | `Cube().from_roxar(...)`                 | `xtgeo.cube_from_roxar(...)`               |                                    |
+| `Grid`           | `Grid("x.grdecl")`                       | `xtgeo.grid_from_file("x.grdecl")`         |                                    |
+| `Grid`           | `Grid().from_file("x.roff")`             | `xtgeo.grid_from_file("x.roff)"`           |                                    |
+| `Grid`           | `Grid().from_hdf("x.h5")`                | `xtgeo.grid_from_file("x.h5")`             |                                    |
+| `Grid`           | `Grid().from_xtgf("x.xtg")`              | `xtgeo.grid_from_file("x.xtg")`            |                                    |
+| `Grid`           | `Grid().from_roxar(...)`                 | `xtgeo.grid_from_roxar(...)`               |                                    |
+| `GridProperties` | `GridProperties().from_file("x.roff")`   | `xtgeo.gridproperties_from_file("x.roff")` |                                    |
+| `GridProperty`   | `GridProperty("x.roff")`                 | `xtgeo.gridproperty_from_file("x.roff")`   |                                    |
+| `GridProperty`   | `GridProperty().from_file("x.roff")`     | `xtgeo.gridproperty_from_file("x.roff")`   |                                    |
+| `GridProperty`   | `GridProperty().from_roxar(...)`         | `xtgeo.gridproperty_from_roxar(...)`       | `xtgeo.gridproperty_from_rms(...)` |
+| `Points`         | `Points("x.xyz")`                        | `xtgeo.points_from_file("x.xyz")`          |                                    |
+| `Points`         | `Points().from_file("x.xyz")`            | `xtgeo.points_from_file("x.xyz")`          |                                    |
+| `Points`         | `Points().from_roxar(...)`               | `xtgeo.points_from_roxar(...)`             |                                    |
+| `Points`         | `Points().from_surface(...)`             | `xtgeo.points_from_surface(...)`           |                                    |
+| `Points`         | `Points().from_wells(...)`               | `xtgeo.points_from_wells(...)`             |                                    |
+| `Points`         | `Points().dfrac_from_wells(...)`         | `xtgeo.points_from_wells_dfrac(...)`       |                                    |
+| `Polygons`       | `Polygons("x.xyz")`                      | `xtgeo.polygons_from_file("x.xyz")`        |                                    |
+| `Polygons`       | `Polygons().from_file("x.xyz")`          | `xtgeo.polygons_from_file("x.xyz")`        |                                    |
+| `RegularSurface` | `RegularSurface("x.gri")`                | `xtgeo.surface_from_file("x.gri")`         |                                    |
+| `RegularSurface` | `RegularSurface().from_file("x.gri")`    | `xtgeo.surface_from_file("x.gri")`         |                                    |
+| `RegularSurface` | `RegularSurface().from_hdf("x.h5")`      | `xtgeo.surface_from_file("x.h5")`          |                                    |
+| `RegularSurface` | `RegularSurface().from_roxar(...)`       | `xtgeo.surface_from_roxar(...)`            |                                    |
+| `RegularSurface` | `RegularSurface().from_cube("x.segy")`   | `xtgeo.surface_from_cube("x.segy")`        |                                    |
+| `RegularSurface` | `RegularSurface().from_grid3d("x.roff")` | `xtgeo.surface_from_grid3d("x.roff")`      |                                    |
+| `Surfaces`       | `Surfaces().from_grid3d("x.roff")`       | `xtgeo.surfaces_from_grid("x.roff")`       |                                    |
+| `BlockedWell`    | `BlockedWell().from_roxar(...)`          | `xtgeo.blockedwell_from_roxar(...)`        |                                    |
+| `BlockedWells`   | `BlockedWells().from_files(...)`         | `xtgeo.blockedwells_from_files(...)`       |                                    |
+| `BlockedWells`   | `BlockedWells().from_roxar(...)`         | `xtgeo.blockedwells_from_roxar(...)`       |                                    |
+| `Well`           | `Well("x.rmswell")`                      | `xtgeo.well_from_file("x.rmswell")`        |                                    |
+| `Well`           | `Well().from_file("x.rmswell")`          | `xtgeo.well_from_file("x.rmswell")`        |                                    |
+| `Well`           | `Well().from_hdf("x.h5")`                | `xtgeo.well_from_file("x.h5")`             |                                    |
+| `Well`           | `Well().from_roxar(...)`                 | `xtgeo.well_from_roxar(...)`               |                                    |
+| `Wells`          | `Wells(["x.rmswell"])`                   | `xtgeo.wells_from_files(["x.rmswell"])`    |                                    |
+| `Wells`          | `Wells().from_files(["x.rmswell"])`      | `xtgeo.wells_from_files(["x.rmswell"])`    |                                    |
+
+> **Note:** Existing functions with the `_roxar` name continue to work in XTGeo
+> 4.26.x and later, but they generate a deprecation warning and will be removed
+> in a future release. The replacement functions listed in the last column are
+> available from XTGeo 4.26.x onward and will be maintained in future releases.
 
 ## Instantiating XTGeo objects
 
@@ -239,7 +244,6 @@ someplot = xtgeo.plot.Map()  # ✅
 
 This pertains to the remaining versions of xtgeo 3 and will still be removed
 in xtgeo 4.0.
-
 
 ## API Deprecations
 
