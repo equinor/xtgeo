@@ -438,6 +438,23 @@ def test_rms_get_gridproperty(rms_project_path):
 
 
 @pytest.mark.requires_roxar
+def test_rms_get_grid(rms_project_path: str) -> None:
+    """Get a grid from an RMS project using the RMS API name."""
+    grid = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
+
+    assert grid.dimensions == (40, 64, 14)
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_grid_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a grid."""
+    with pytest.warns(PendingDeprecationWarning, match="grid_from_roxar"):
+        grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+
+    assert grid.dimensions == (40, 64, 14)
+
+
+@pytest.mark.requires_roxar
 def test_rox_get_gridproperty_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a grid property."""
     with pytest.warns(PendingDeprecationWarning, match="gridproperty_from_roxar"):
@@ -453,7 +470,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     logger.info("Project is %s", rms_project_path)
     prj = rms_project_path
 
-    grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grid = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
 
     prop = xtgeo.GridProperty(grid, discrete=False, values=999)
     assert prop.roxar_dtype == np.float32
@@ -529,14 +546,14 @@ def test_rox_get_modify_set_gridproperty(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_grid_basic(rms_project_path):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
     grd1.to_roxar(rms_project_path, GRIDNAME1 + "_edit1")
 
-    grd2 = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_edit1")
+    grd2 = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_edit1")
 
     assert grd2.dimensions == grd1.dimensions
 
@@ -544,7 +561,7 @@ def test_rox_get_modify_set_grid_basic(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_grid_method_roff(rms_project_path):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
@@ -552,8 +569,8 @@ def test_rox_get_modify_set_grid_method_roff(rms_project_path):
     grd1.to_roxar(rms_project_path, GRIDNAME1 + "_roff", method="roff")
     grd1.to_roxar(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
 
-    grd2_roff = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_roff")
-    grd2_cpg = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_cpg")
+    grd2_roff = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_roff")
+    grd2_cpg = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_cpg")
 
     assert grd2_roff.dimensions == grd2_cpg.dimensions
 
@@ -562,7 +579,7 @@ def test_rox_get_modify_set_grid_method_roff(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_set_grid_method_benchmark_cpg(rms_project_path, benchmark):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
@@ -577,7 +594,7 @@ def test_rox_set_grid_method_benchmark_cpg(rms_project_path, benchmark):
 @pytest.mark.requires_roxar
 def test_rox_set_grid_method_benchmark_roff(rms_project_path, benchmark):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
@@ -592,7 +609,7 @@ def test_rox_set_grid_method_benchmark_roff(rms_project_path, benchmark):
 def test_rox_get_modify_set_get_grid_with_subzones(rms_project_path, roxinstance):
     """Get, modify and set + get a grid from a RMS project using subzones/subgrids."""
 
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
 
     zonation = {}
     zonation["intva"] = 4
@@ -607,7 +624,7 @@ def test_rox_get_modify_set_get_grid_with_subzones(rms_project_path, roxinstance
         grd.to_roxar(rms_project_path, "NewGrid")
 
         # get a new instance for recent storage (subgrids should now be present)
-        grd1 = xtgeo.grid_from_roxar(rms_project_path, "NewGrid")
+        grd1 = xtgeo.grid_from_rms(rms_project_path, "NewGrid")
 
         for intv in ["intva", "intvb", "intvc"]:
             assert list(grd.subgrids[intv]) == list(grd1.subgrids[intv])
