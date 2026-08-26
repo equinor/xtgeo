@@ -212,7 +212,7 @@ Edit a porosity in a 3D grid
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo
-    myporo = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Por")
+    myporo = xtgeo.gridproperty_from_rms(project, "Geomodel", "Por")
 
     # now I want to limit porosity to 0.35 for values above 0.35:
 
@@ -230,8 +230,8 @@ Edit a permeability given a porosity cutoff
    import numpy as np
    import xtgeo
 
-   myporo = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Por")
-   myperm = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Perm")
+   myporo = xtgeo.gridproperty_from_rms(project, "Geomodel", "Por")
+   myperm = xtgeo.gridproperty_from_rms(project, "Geomodel", "Perm")
 
    # if poro < 0.01 then perm is 0.001, otherwise keep as is, illustrated with np.where()
    myperm.values = np.where(myporo.values < 0.1, 0.001, myperm.values)
@@ -251,7 +251,7 @@ Edit a 3D grid porosity inside polygons
    import xtgeo
 
    mygrid = xtgeo.grid_from_roxar(project, "Reek_sim")
-   myprop = xtgeo.gridproperty_from_roxar(project, "Reek_sim", "PORO")
+   myprop = xtgeo.gridproperty_from_rms(project, "Reek_sim", "PORO")
 
    # read polygon(s), from Horizons, Faults, Zones or Clipboard
    mypoly = xtgeo.polygons_from_roxar(project, "TopUpperReek", "DL_test")
@@ -288,8 +288,8 @@ Create region polygons from the grid
    def create_region_polygons():
        """Create region polygons and store them on the clipboard"""
        grid = xtgeo.grid_from_roxar(project, GNAME)
-       reg = xtgeo.gridproperty_from_roxar(project, GNAME, REGNAME)
-       zone = xtgeo.gridproperty_from_roxar(project, GNAME, ZONENAME)
+       reg = xtgeo.gridproperty_from_rms(project, GNAME, REGNAME)
+       zone = xtgeo.gridproperty_from_rms(project, GNAME, ZONENAME)
 
        for regnum, regname in reg.codes.items():
            print(f"Creating boundary polygon for region {regname}")
@@ -339,7 +339,7 @@ a certain depth interval has horizontal layers.
    def hregion():
        """Make a custom region property for hybrid grid"""
        tgrid = xtgeo.grid_from_roxar(PRJ, GNAME_INPUT)
-       reg = xtgeo.gridproperty_from_roxar(PRJ, GNAME_INPUT, REGNAME)
+       reg = xtgeo.gridproperty_from_rms(PRJ, GNAME_INPUT, REGNAME)
 
        reg.values[:, :, :] = 1
        reg.values[:, 193:, :] = 0  # remember 0 base in NP arrays
