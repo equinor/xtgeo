@@ -1910,7 +1910,7 @@ class Grid(_Grid3D):
 
             grid = xtgeo.grid_from_roxar(project, "Simgrid")
             # extract polygon for a specific region, here region 3
-            region = xtgeo.gridproperty_from_roxar(project, "Simgrid", "Regions")
+            region = xtgeo.gridproperty_from_rms(project, "Simgrid", "Regions")
             filter_array = (region.values==3)
             boundary = grid.get_boundary_polygons(filter_array=filter_array)
 
@@ -2979,7 +2979,7 @@ class Grid(_Grid3D):
         Example::
             import xtgeo
             grd = xtgeo.grid_from_roxar(project, "simpleb8")
-            poro = xtgeo.gridproperty_from_roxar(project, "simpleb8", "PORO")
+            poro = xtgeo.gridproperty_from_rms(project, "simpleb8", "PORO")
             grd.props = [poro]
 
             grd.translate_coordinates(translate=(10,10, 20), flip=(1,1,-1),

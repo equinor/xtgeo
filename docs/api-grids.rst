@@ -34,7 +34,7 @@ Functions
 
 .. autofunction:: xtgeo.gridproperty_from_file
 
-.. autofunction:: xtgeo.gridproperty_from_roxar
+.. autofunction:: xtgeo.gridproperty_from_rms
 
 .. autofunction:: xtgeo.gridproperty_from_resinsight
 

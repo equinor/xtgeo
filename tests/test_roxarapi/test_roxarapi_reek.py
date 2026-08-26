@@ -420,21 +420,31 @@ def test_rox_wells(rms_project_path):
 
 
 @pytest.mark.requires_roxar
-def test_rox_get_gridproperty(rms_project_path):
+def test_rms_get_gridproperty(rms_project_path):
     """Get a grid property from a RMS project."""
     logger.info("Project is %s", rms_project_path)
 
-    poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
+    poro = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, PORONAME1)
 
     assert poro.values.mean() == pytest.approx(0.16774, abs=0.001)
     assert poro.dimensions == (40, 64, 14)
 
-    zone = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, ZONENAME1)
+    zone = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, ZONENAME1)
     assert "int" in str(zone.values.dtype)
 
     zone._roxar_dtype = np.int32
     with pytest.raises(TypeError):
         zone.to_roxar(rms_project_path, GRIDNAME1, ZONENAME1)
+
+
+@pytest.mark.requires_roxar
+def test_rox_get_gridproperty_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a grid property."""
+    with pytest.warns(PendingDeprecationWarning, match="gridproperty_from_roxar"):
+        poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
+
+    assert poro.values.mean() == pytest.approx(0.16774, abs=0.001)
+    assert poro.dimensions == (40, 64, 14)
 
 
 @pytest.mark.requires_roxar
@@ -458,7 +468,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
         prop.to_roxar(prj, GRIDNAME1, "myprop1")
         assert "Existing RMS icon has data type" in str(warning_info[0].message)
     # read icon again, it will still be a float
-    newprop = xtgeo.gridproperty_from_roxar(prj, GRIDNAME1, "myprop1")
+    newprop = xtgeo.gridproperty_from_rms(prj, GRIDNAME1, "myprop1")
     assert newprop.roxar_dtype == np.float32
     assert newprop.values.dtype == np.float64  # internal in xtgeo
 
@@ -502,7 +512,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_gridproperty(rms_project_path):
     """Get and set a grid property from a RMS project."""
-    poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
+    poro = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, PORONAME1)
     cell_value = poro.values[1, 0, 0]
 
     adder = 0.9
@@ -510,7 +520,7 @@ def test_rox_get_modify_set_gridproperty(rms_project_path):
 
     poro.to_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_NEW")
 
-    poronew = xtgeo.gridproperty_from_roxar(
+    poronew = xtgeo.gridproperty_from_rms(
         rms_project_path, GRIDNAME1, PORONAME1 + "_NEW"
     )
     assert poronew.values[1, 0, 0] == pytest.approx(cell_value + adder, abs=0.0001)
