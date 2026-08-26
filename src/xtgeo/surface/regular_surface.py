@@ -1471,7 +1471,7 @@ class RegularSurface:
         )
 
     @classmethod
-    def _read_cube(cls, cube: "Cube", zlevel: float | int):
+    def _read_cube(cls, cube: Cube, zlevel: float | int):
         """Make a constant surface from a Cube, at a given time/depth level.
 
         The surface instance will have exactly the same origins and increments
