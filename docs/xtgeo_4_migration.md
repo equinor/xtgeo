@@ -44,7 +44,7 @@ of deprecation.
 | `Surfaces`       | `Surfaces().from_grid3d("x.roff")`       | `xtgeo.surfaces_from_grid("x.roff")`       |                                    |
 | `BlockedWell`    | `BlockedWell().from_roxar(...)`          | `xtgeo.blockedwell_from_roxar(...)`        | `xtgeo.blockedwell_from_rms(...)`  |
 | `BlockedWells`   | `BlockedWells().from_files(...)`         | `xtgeo.blockedwells_from_files(...)`       |                                    |
-| `BlockedWells`   | `BlockedWells().from_roxar(...)`         | `xtgeo.blockedwells_from_roxar(...)`       |                                    |
+| `BlockedWells`   | `BlockedWells().from_roxar(...)`         | `xtgeo.blockedwells_from_roxar(...)`       | `xtgeo.blockedwells_from_rms(...)` |
 | `Well`           | `Well("x.rmswell")`                      | `xtgeo.well_from_file("x.rmswell")`        |                                    |
 | `Well`           | `Well().from_file("x.rmswell")`          | `xtgeo.well_from_file("x.rmswell")`        |                                    |
 | `Well`           | `Well().from_hdf("x.h5")`                | `xtgeo.well_from_file("x.h5")`             |                                    |
