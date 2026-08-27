@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 import pandas as pd
@@ -57,19 +58,17 @@ def blockedwell_from_file(
     )
 
 
-def blockedwell_from_roxar(
+def blockedwell_from_rms(
     project, gname, bwname, wname, lognames=None, ijk=True, realisation=0
 ):
-    """This makes an instance of a BlockedWell directly from Roxar RMS.
-
-    For arguments, see :meth:`BlockedWell.from_roxar`.
+    """This makes an instance of a BlockedWell directly from RMS.
 
     Example::
 
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mybw = xtgeo.blockedwell_from_roxar(project, 'Simgrid', 'BW', '31_3-1',
+        mybw = xtgeo.blockedwell_from_rms(project, 'Simgrid', 'BW', '31_3-1',
                                             lognames=mylogs)
 
     """
@@ -101,6 +100,34 @@ def blockedwell_from_roxar(
     obj._ensure_consistency()
 
     return obj
+
+
+def blockedwell_from_roxar(
+    project, gname, bwname, wname, lognames=None, ijk=True, realisation=0
+):
+    """Make an instance of a BlockedWell directly from Roxar RMS.
+
+    .. deprecated::
+        The `blockedwell_from_roxar` function is deprecated and will be removed in a
+        future version. Use `blockedwell_from_rms` instead.
+
+    For arguments, see :func:`blockedwell_from_rms`.
+    """
+    warnings.warn(
+        "The 'blockedwell_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'blockedwell_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+    return blockedwell_from_rms(
+        project,
+        gname,
+        bwname,
+        wname,
+        lognames=lognames,
+        ijk=ijk,
+        realisation=realisation,
+    )
 
 
 # =============================================================================
@@ -147,7 +174,7 @@ class BlockedWell(Well):
 
     If in RMS, instance can be made also from RMS icon::
 
-        well4 = xtgeo.blockedwell_from_roxar(
+        well4 = xtgeo.blockedwell_from_rms(
             project,
             'gridname',
             'bwname',

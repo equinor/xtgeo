@@ -1135,12 +1135,12 @@ def test_rox_well_update(
 
 
 @pytest.mark.requires_roxar
-def test_blocked_well_from_to_roxar(rms_project_path):
+def test_blocked_well_from_to_rms(rms_project_path):
     """Test getting blocked wells from RMS API."""
 
     rox = xtgeo.RoxUtils(rms_project_path)
 
-    bw = xtgeo.blockedwell_from_roxar(
+    bw = xtgeo.blockedwell_from_rms(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
     df = bw.get_dataframe()
@@ -1170,7 +1170,7 @@ def test_blocked_well_from_to_roxar(rms_project_path):
     bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
 
     # read again from RMS
-    bw_2 = xtgeo.blockedwell_from_roxar(
+    bw_2 = xtgeo.blockedwell_from_rms(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
 
@@ -1182,12 +1182,26 @@ def test_blocked_well_from_to_roxar(rms_project_path):
 
 
 @pytest.mark.requires_roxar
+def test_blocked_well_from_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a blocked well."""
+    rox = xtgeo.RoxUtils(rms_project_path)
+
+    with pytest.warns(PendingDeprecationWarning, match="blockedwell_from_roxar"):
+        bw = xtgeo.blockedwell_from_roxar(
+            rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
+        )
+
+    assert "Zonelog" in bw.lognames
+    rox.project.close()
+
+
+@pytest.mark.requires_roxar
 def test_blocked_well_roxar_to_from_file(rms_project_path, tmp_path):
     """Test getting a single blocked well from RMS, store to file and import again."""
 
     rox = xtgeo.RoxUtils(rms_project_path)
 
-    bw = xtgeo.blockedwell_from_roxar(
+    bw = xtgeo.blockedwell_from_rms(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
     filename = tmp_path / "op2.bw"

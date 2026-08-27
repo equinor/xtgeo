@@ -43,7 +43,7 @@ Functions
 
 .. autofunction:: xtgeo.blockedwell_from_file
 
-.. autofunction:: xtgeo.blockedwell_from_roxar
+.. autofunction:: xtgeo.blockedwell_from_rms
 
 Classes
 """""""

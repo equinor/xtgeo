@@ -76,6 +76,7 @@ from xtgeo.well import blocked_well, blocked_wells, well1, wells
 from xtgeo.well.blocked_well import (
     BlockedWell,
     blockedwell_from_file,
+    blockedwell_from_rms,
     blockedwell_from_roxar,
 )
 from xtgeo.well.blocked_wells import (
@@ -214,6 +215,7 @@ __all__ = [
     "blocked_well",
     "blocked_wells",
     "blockedwell_from_file",
+    "blockedwell_from_rms",
     "blockedwell_from_roxar",
     "blockedwells_from_files",
     "blockedwells_from_roxar",

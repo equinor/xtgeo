@@ -1,6 +1,11 @@
 """The XTGeo well package"""
 
-from .blocked_well import BlockedWell, blockedwell_from_file, blockedwell_from_roxar
+from .blocked_well import (
+    BlockedWell,
+    blockedwell_from_file,
+    blockedwell_from_rms,
+    blockedwell_from_roxar,
+)
 from .blocked_wells import (
     BlockedWells,
     blockedwells_from_files,
@@ -13,6 +18,7 @@ from .wells import Wells, wells_from_files, wells_from_stacked_file
 __all__ = [
     "BlockedWell",
     "blockedwell_from_file",
+    "blockedwell_from_rms",
     "blockedwell_from_roxar",
     "BlockedWells",
     "blockedwells_from_files",
