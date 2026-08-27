@@ -62,7 +62,7 @@ Functions
 
 .. autofunction:: xtgeo.blockedwells_from_stacked_file
 
-.. autofunction:: xtgeo.blockedwells_from_roxar
+.. autofunction:: xtgeo.blockedwells_from_rms
 
 Classes
 """""""
