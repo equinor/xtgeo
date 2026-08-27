@@ -9,6 +9,7 @@ from .blocked_well import (
 from .blocked_wells import (
     BlockedWells,
     blockedwells_from_files,
+    blockedwells_from_rms,
     blockedwells_from_roxar,
     blockedwells_from_stacked_file,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "blockedwell_from_roxar",
     "BlockedWells",
     "blockedwells_from_files",
+    "blockedwells_from_rms",
     "blockedwells_from_roxar",
     "blockedwells_from_stacked_file",
     "Well",
