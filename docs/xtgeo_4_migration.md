@@ -42,7 +42,7 @@ of deprecation.
 | `RegularSurface` | `RegularSurface().from_cube("x.segy")`   | `xtgeo.surface_from_cube("x.segy")`        |                                    |
 | `RegularSurface` | `RegularSurface().from_grid3d("x.roff")` | `xtgeo.surface_from_grid3d("x.roff")`      |                                    |
 | `Surfaces`       | `Surfaces().from_grid3d("x.roff")`       | `xtgeo.surfaces_from_grid("x.roff")`       |                                    |
-| `BlockedWell`    | `BlockedWell().from_roxar(...)`          | `xtgeo.blockedwell_from_roxar(...)`        |                                    |
+| `BlockedWell`    | `BlockedWell().from_roxar(...)`          | `xtgeo.blockedwell_from_roxar(...)`        | `xtgeo.blockedwell_from_rms(...)`  |
 | `BlockedWells`   | `BlockedWells().from_files(...)`         | `xtgeo.blockedwells_from_files(...)`       |                                    |
 | `BlockedWells`   | `BlockedWells().from_roxar(...)`         | `xtgeo.blockedwells_from_roxar(...)`       |                                    |
 | `Well`           | `Well("x.rmswell")`                      | `xtgeo.well_from_file("x.rmswell")`        |                                    |
