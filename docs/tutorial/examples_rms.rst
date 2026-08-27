@@ -533,7 +533,7 @@ be input to Equinor's APS module.
 
         for well in PRJ.wells:
 
-            blw = xtgeo.blockedwell_from_roxar(
+            blw = xtgeo.blockedwell_from_rms(
                 PRJ, GNAME, BWNAME, well.name, lognames=[FACIES]
             )
             dfr = blw.get_dataframe()
