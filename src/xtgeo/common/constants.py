@@ -19,7 +19,6 @@ UNDEF_MAP_IRAPB = 1e30
 UNDEF_MAP_IRAPA = 9999900.0000
 
 MAXKEYWORDS = _cxtgeo.MAXKEYWORDS  # maximum keywords for ECL and ROFF scanning
-MAXDATES = _cxtgeo.MAXDATES  # maximum keywords for ECL scanning
 
 # for XYZ data, restricted to float32 and int32
 UNDEF_CONT = UNDEF

@@ -11,6 +11,7 @@ import resfo
 from hypothesis import assume, given
 
 import xtgeo
+from xtgeo.common import constants
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.grid3d import GridProperties, GridProperty, _grid3d_utils as grid3d_utils
 from xtgeo.io._file import FileWrapper
@@ -183,6 +184,13 @@ def test_scan_dates(testdata_path):
         (34, 19920505),
         (35, 19920619),
     ]
+    assert GridProperties.scan_dates(testdata_path / RFILE1, maxdates=1) == (
+        GridProperties.scan_dates(testdata_path / RFILE1)
+    )
+
+
+def test_maxdates_constant_is_removed():
+    assert not hasattr(constants, "MAXDATES")
 
 
 def test_scan_dates_invalid_file(testdata_path):

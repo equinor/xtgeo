@@ -87,9 +87,8 @@ extern "C"
 #define UNDEF_ECLINT 0
 #define UNDEF_ECLFLOAT 0
 
-/* eclipse and roff binary read max keywords and dates */
+/* eclipse and roff binary read max keywords */
 #define MAXKEYWORDS 1000000
-#define MAXDATES 1000
 
     /*
      *======================================================================================
