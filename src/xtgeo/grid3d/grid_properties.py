@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from xtgeo.common import XTGDescription, XTGeoDialog, null_logger
-from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
+from xtgeo.common.constants import MAXKEYWORDS
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.io._file import FileFormat, FileWrapper
 
@@ -655,7 +655,7 @@ class GridProperties(_Grid3D):
     def scan_dates(
         pfile: FileLike,
         fformat: Literal["unrst"] = "unrst",
-        maxdates: int = MAXDATES,
+        maxdates: int | None = None,
         dataframe: bool = False,
         datesonly: bool = False,
     ) -> list | pd.DataFrame:
@@ -664,7 +664,7 @@ class GridProperties(_Grid3D):
         Args:
             pfile (str): Name of file or file handle with properties
             fformat (str): unrst (so far)
-            maxdates (int): Maximum number of dates to collect
+            maxdates (int | None): Ignored; retained for backwards compatibility
             dataframe (bool): If True, return a Pandas dataframe instead
             datesonly (bool): If True, SEQNUM is skipped,
 
@@ -687,7 +687,7 @@ class GridProperties(_Grid3D):
         _pfile = FileWrapper(pfile)
         _pfile.check_file(raiseerror=ValueError)
 
-        dlist = utils.scan_dates(_pfile, maxdates=maxdates, dataframe=dataframe)
+        dlist = utils.scan_dates(_pfile, dataframe=dataframe)
 
         if datesonly and dataframe:
             assert isinstance(dlist, pd.DataFrame)
