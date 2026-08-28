@@ -41,8 +41,35 @@ Inside RMS GUI
 
     # Note: project save needs to be done by user (GUI action)
 
-Outside RMS, direct access
+Outside RMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+To use the RMS Python API outside the RMS application, first create and activate
+an ``rmsvenv``. The following commands create an environment for the default RMS
+version configured by `runrms <https://github.com/equinor/runrms>`_:
+
+.. code-block:: bash
+
+    rmsvenv
+    source rmsvenv/enable
+
+Once the environment is active, you can install packages with ``pip``, use
+``rmsapi`` to access RMS data, and open the ``rms`` application.
+
+Each ``rmsvenv`` is tied to a single RMS version. To use another RMS version,
+create a separate environment and specify a version configured by ``runrms``:
+
+.. code-block:: bash
+
+    rmsvenv -v 14.5.0
+
+You can also install your own XTGeo feature branches in the environment. Using
+a separate ``rmsvenv`` for each feature branch is recommended to avoid dependency
+conflicts.
+
+After creating and activating the ``rmsvenv``, the next step is to access an RMS
+project. Run your Python code from the activated environment and provide the RMS
+project file path, as shown below:
+
 .. code-block:: python
 
     import xtgeo
@@ -53,27 +80,14 @@ Outside RMS, direct access
     surf.values += 100
     surf.to_roxar(myproject)
 
-    # Note: project save is done automatic
+    # Note: project save is done automatically
 
-Outside RMS, project mode
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. code-block:: python
+When you have finished working with RMS, deactivate the environment in the same
+way as a standard Python virtual environment:
 
-    import xtgeo
+.. code-block:: bash
 
-    myproject = "/some/file/path/reek.rms11.1.1"
-    rox = xtgeo.RoxUtils(myproject)
-
-    surf = xtgeo.surface_from_roxar(rox.project, "TopReek", "DS_extracted")
-    surf.values += 100
-    surf.to_roxar(rox.project)
-
-    # Note: project save is not done automatic, you need to:
-
-    rox.project.save()
-    rox.project.close()
-
-
+    deactivate
 
 Surface data
 ------------
