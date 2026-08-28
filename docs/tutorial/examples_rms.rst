@@ -43,32 +43,12 @@ Inside RMS GUI
 
 Outside RMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-To use the RMS Python API outside the RMS application, first create and activate
-an ``rmsvenv``. The following commands create an environment for the default RMS
-version configured by `runrms <https://github.com/equinor/runrms>`_:
+To use the RMS Python API outside the RMS application, ``rmsapi`` must be
+installed in the Python environment. FMU users can use
+`rmsvenv <https://github.com/equinor/rmsvenv>`_ to create a suitable environment.
 
-.. code-block:: bash
-
-    rmsvenv
-    source rmsvenv/enable
-
-Once the environment is active, you can install packages with ``pip``, use
-``rmsapi`` to access RMS data, and open the ``rms`` application.
-
-Each ``rmsvenv`` is tied to a single RMS version. To use another RMS version,
-create a separate environment and specify a version configured by ``runrms``:
-
-.. code-block:: bash
-
-    rmsvenv -v 14.5.0
-
-You can also install your own XTGeo feature branches in the environment. Using
-a separate ``rmsvenv`` for each feature branch is recommended to avoid dependency
-conflicts.
-
-After creating and activating the ``rmsvenv``, the next step is to access an RMS
-project. Run your Python code from the activated environment and provide the RMS
-project file path, as shown below:
+Run your Python code from the environment and provide the RMS project file path,
+as shown below:
 
 .. code-block:: python
 
@@ -81,13 +61,6 @@ project file path, as shown below:
     surf.to_roxar(myproject)
 
     # Note: project save is done automatically
-
-When you have finished working with RMS, deactivate the environment in the same
-way as a standard Python virtual environment:
-
-.. code-block:: bash
-
-    deactivate
 
 Surface data
 ------------
