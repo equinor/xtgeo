@@ -154,8 +154,8 @@ def test_replace_undefined_values_keeps_string_attribute_as_strings():
 
 
 @pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
-def test_load_polygons_from_roxar():
-    pol = xtgeo.polygons_from_roxar("project", "Name", "Category")
+def test_load_polygons_from_rms():
+    pol = xtgeo.polygons_from_rms("project", "Name", "Category")
 
     assert_frame_equal(
         pol.get_dataframe(),
