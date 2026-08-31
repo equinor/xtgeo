@@ -32,7 +32,7 @@ Functions
 
 .. autofunction:: xtgeo.polygons_from_file
 
-.. autofunction:: xtgeo.polygons_from_roxar
+.. autofunction:: xtgeo.polygons_from_rms
 
 .. autofunction:: xtgeo.polygons_from_wells
 

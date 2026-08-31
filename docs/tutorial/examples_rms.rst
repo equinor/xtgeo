@@ -168,7 +168,7 @@ common multiplum)
 
            # extract differences inside a polygon and compute min/max values:
 
-           poly = xtgeo.polygons_from_roxar(PRJ, topmainzones[znum], PCAT)
+           poly = xtgeo.polygons_from_rms(PRJ, topmainzones[znum], PCAT)
            surf1.eli_outside(poly)
            surf2.eli_outside(poly)
            diff2 = surf2.copy()
@@ -254,7 +254,7 @@ Edit a 3D grid porosity inside polygons
    myprop = xtgeo.gridproperty_from_rms(project, "Reek_sim", "PORO")
 
    # read polygon(s), from Horizons, Faults, Zones or Clipboard
-   mypoly = xtgeo.polygons_from_roxar(project, "TopUpperReek", "DL_test")
+   mypoly = xtgeo.polygons_from_rms(project, "TopUpperReek", "DL_test")
 
    # need to connect property to grid geometry when using polygons
    myprop.geometry = mygrid
@@ -578,7 +578,7 @@ In the following example, remove or add to points being inside or outside polygo
     def main():
         """Operations on points inside or outside polygons."""
 
-        poly = xtgeo.polygons_from_roxar(PRJ, *POLYGONS, stype="clipboard")
+        poly = xtgeo.polygons_from_rms(PRJ, *POLYGONS, stype="clipboard")
         po1 = xtgeo.points_from_rms(PRJ, *POINTSET1, stype="clipboard")
         po2 = xtgeo.points_from_rms(PRJ, *POINTSET2, stype="clipboard")
 
