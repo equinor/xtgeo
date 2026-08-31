@@ -48,7 +48,7 @@ of deprecation.
 | `Well`           | `Well("x.rmswell")`                      | `xtgeo.well_from_file("x.rmswell")`        |                                    |
 | `Well`           | `Well().from_file("x.rmswell")`          | `xtgeo.well_from_file("x.rmswell")`        |                                    |
 | `Well`           | `Well().from_hdf("x.h5")`                | `xtgeo.well_from_file("x.h5")`             |                                    |
-| `Well`           | `Well().from_roxar(...)`                 | `xtgeo.well_from_roxar(...)`               |                                    |
+| `Well`           | `Well().from_roxar(...)`                 | `xtgeo.well_from_roxar(...)`               | `xtgeo.well_from_rms(...)`         |
 | `Wells`          | `Wells(["x.rmswell"])`                   | `xtgeo.wells_from_files(["x.rmswell"])`    |                                    |
 | `Wells`          | `Wells().from_files(["x.rmswell"])`      | `xtgeo.wells_from_files(["x.rmswell"])`    |                                    |
 

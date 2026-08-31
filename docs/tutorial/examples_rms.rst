@@ -395,7 +395,7 @@ Get average properties per zone
 
     def get_well():
         """Get XTGeo Well() object"""
-        wll = xtgeo.well_from_roxar(PRJ, WELLNAME, trajectory=TRAJNAME)
+        wll = xtgeo.well_from_rms(PRJ, WELLNAME, trajectory=TRAJNAME)
         return wll
 
 
@@ -466,7 +466,7 @@ are filtered. Here is a small example on how to do this:
     def filter_shoulder():
         """Filter shoulder bed data."""
         for rms_well in PRJ.wells:
-            wll = xtgeo.well_from_roxar(
+            wll = xtgeo.well_from_rms(
                 PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME
             )
 
