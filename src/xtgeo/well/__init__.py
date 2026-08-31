@@ -13,7 +13,7 @@ from .blocked_wells import (
     blockedwells_from_roxar,
     blockedwells_from_stacked_file,
 )
-from .well1 import Well, well_from_file, well_from_roxar
+from .well1 import Well, well_from_file, well_from_rms, well_from_roxar
 from .wells import Wells, wells_from_files, wells_from_stacked_file
 
 __all__ = [
@@ -28,6 +28,7 @@ __all__ = [
     "blockedwells_from_stacked_file",
     "Well",
     "well_from_file",
+    "well_from_rms",
     "well_from_roxar",
     "Wells",
     "wells_from_files",
