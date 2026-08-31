@@ -35,6 +35,7 @@ of deprecation.
 | `Points`         | `Points().dfrac_from_wells(...)`         | `xtgeo.points_from_wells_dfrac(...)`       |                                    |
 | `Polygons`       | `Polygons("x.xyz")`                      | `xtgeo.polygons_from_file("x.xyz")`        |                                    |
 | `Polygons`       | `Polygons().from_file("x.xyz")`          | `xtgeo.polygons_from_file("x.xyz")`        |                                    |
+| `Polygons`       | `Polygons().from_roxar(...)`             | `xtgeo.polygons_from_roxar(...)`           | `xtgeo.polygons_from_rms(...)`     |
 | `RegularSurface` | `RegularSurface("x.gri")`                | `xtgeo.surface_from_file("x.gri")`         |                                    |
 | `RegularSurface` | `RegularSurface().from_file("x.gri")`    | `xtgeo.surface_from_file("x.gri")`         |                                    |
 | `RegularSurface` | `RegularSurface().from_hdf("x.h5")`      | `xtgeo.surface_from_file("x.h5")`          |                                    |

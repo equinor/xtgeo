@@ -144,7 +144,7 @@ def polygons_from_file(pfile: FileLike, fformat: str | None = "guess") -> Polygo
     return Polygons(**_file_importer(pfile, fformat=fformat))
 
 
-def polygons_from_roxar(
+def polygons_from_rms(
     project: str | Any,
     name: str,
     category: str,
@@ -152,7 +152,7 @@ def polygons_from_roxar(
     realisation: int | None = 0,
     attributes: bool | list[str] = False,
 ) -> Polygons:  # pragma: no cover
-    """Load a Polygons instance from Roxar RMS project.
+    """Load a Polygons instance from an RMS project.
 
     Note also that horizon/zone/faults name and category must exists
     in advance, otherwise an Exception will be raised.
@@ -172,7 +172,7 @@ def polygons_from_roxar(
     Example::
 
         import xtgeo
-        mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+        mysurf = xtgeo.polygons_from_rms(project, 'TopAare', 'DepthPolys')
 
     .. versionadded:: 2.19 general2d_data support is added
     .. versionadded:: 3.x support for polygon attributes (other than POLY_ID)
@@ -190,6 +190,59 @@ def polygons_from_roxar(
             realisation,
             attributes,
         )
+    )
+
+
+def polygons_from_roxar(
+    project: str | Any,
+    name: str,
+    category: str,
+    stype: str | None = "horizons",
+    realisation: int | None = 0,
+    attributes: bool | list[str] = False,
+) -> Polygons:  # pragma: no cover
+    """Load a Polygons instance from Roxar RMS project.
+
+    .. deprecated::
+        The `polygons_from_roxar` function is deprecated and will be removed in a future
+        version. Use `polygons_from_rms` instead.
+
+    Note also that horizon/zone/faults name and category must exists
+    in advance, otherwise an Exception will be raised.
+
+    Args:
+        project: Name of project (as folder) if outside RMS, or just use the magic
+            `project` word if within RMS.
+        name: Name of polygons item
+        category: For horizons/zones/faults: for example 'DL_depth'
+            or use a folder notation on clipboard/general2d_data.
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+            'faults', 'general2d_data'
+        realisation: Realisation number, default is 0
+        attributes: Polygons can store an attrubute (e.g. a fault name) per polygon,
+            i.e. per "POLY_ID")
+
+    Example::
+
+        import xtgeo
+        mysurf = xtgeo.polygons_from_rms(project, 'TopAare', 'DepthPolys')
+
+    .. versionadded:: 2.19 general2d_data support is added
+    .. versionadded:: 3.x support for polygon attributes (other than POLY_ID)
+    """
+    warnings.warn(
+        "The 'polygons_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'polygons_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+    return polygons_from_rms(
+        project=project,
+        name=name,
+        category=category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
     )
 
 
