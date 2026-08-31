@@ -17,7 +17,7 @@ of deprecation.
 | ---------------- | ---------------------------------------- | ------------------------------------------ | ---------------------------------- |
 | `Cube`           | `Cube("x.segy")`                         | `xtgeo.cube_from_file("x.segy")`           |                                    |
 | `Cube`           | `Cube().from_file("x.segy")`             | `xtgeo.cube_from_file("x.segy")`           |                                    |
-| `Cube`           | `Cube().from_roxar(...)`                 | `xtgeo.cube_from_roxar(...)`               |                                    |
+| `Cube`           | `Cube().from_roxar(...)`                 | `xtgeo.cube_from_roxar(...)`               | `xtgeo.cube_from_rms(...)`         |
 | `Grid`           | `Grid("x.grdecl")`                       | `xtgeo.grid_from_file("x.grdecl")`         |                                    |
 | `Grid`           | `Grid().from_file("x.roff")`             | `xtgeo.grid_from_file("x.roff)"`           |                                    |
 | `Grid`           | `Grid().from_hdf("x.h5")`                | `xtgeo.grid_from_file("x.h5")`             |                                    |

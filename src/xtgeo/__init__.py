@@ -150,7 +150,7 @@ _xprint("Import various XTGeo modules...DONE")
 
 # some function wrappers to initiate objects from imports
 _xprint("Import various XTGeo wrappers...")
-from xtgeo.cube.cube1 import cube_from_file, cube_from_roxar
+from xtgeo.cube.cube1 import cube_from_file, cube_from_rms, cube_from_roxar
 from xtgeo.grid3d.grid import (
     create_box_grid,
     grid_from_cube,
@@ -228,6 +228,7 @@ __all__ = [
     "create_synthetic_surface",
     "cube1",
     "cube_from_file",
+    "cube_from_rms",
     "cube_from_roxar",
     "grid",
     "grid",
