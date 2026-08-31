@@ -83,15 +83,15 @@ def cube_from_file(
     return Cube._read_file(mfile, fformat, iline=iline, xline=xline)
 
 
-def cube_from_roxar(project: Any, name: str, folder: str | None = None) -> Cube:
-    """This makes an instance of a Cube directly from roxar input.
+def cube_from_rms(project: Any, name: str, folder: str | None = None) -> Cube:
+    """This makes an instance of a Cube directly from rms input.
 
     The folder is a string on form "a" or "a/b" if subfolders are present
 
     Example::
 
         import xtgeo
-        mycube = xtgeo.cube_from_roxar(project, "DepthCube")
+        mycube = xtgeo.cube_from_rms(project, "DepthCube")
 
     """
     # this is certainly hackish, and shall be rewritten to a proper class method
@@ -99,6 +99,30 @@ def cube_from_roxar(project: Any, name: str, folder: str | None = None) -> Cube:
     _cube_roxapi.import_cube_roxapi(obj, project, name, folder=folder)
     obj._metadata.required = obj
     return obj
+
+
+def cube_from_roxar(project: Any, name: str, folder: str | None = None) -> Cube:
+    """Make an instance of a Cube directly from roxar input.
+
+    .. deprecated::
+        The `cube_from_roxar` function is deprecated and will be removed in a future
+        version. Use `cube_from_rms` instead.
+
+    The folder is a string on form "a" or "a/b" if subfolders are present
+
+    Example::
+
+        import xtgeo
+        mycube = xtgeo.cube_from_rms(project, "DepthCube")
+
+    """
+    warnings.warn(
+        "The 'cube_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'cube_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+    return cube_from_rms(project=project, name=name, folder=folder)
 
 
 class Cube:
