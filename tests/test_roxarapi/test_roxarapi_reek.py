@@ -298,7 +298,7 @@ def rms_project(rms_project_path) -> Any:
 @pytest.mark.requires_roxar
 def test_rox_getset_cube(rms_project_path):
     """Get a cube from a RMS project, do some stuff and store/save."""
-    cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME1)
+    cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME1)
     assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
     cube.values += 100
     assert cube.values.mean() == pytest.approx(100.000718, abs=0.001)
@@ -307,11 +307,19 @@ def test_rox_getset_cube(rms_project_path):
 
 
 @pytest.mark.requires_roxar
+def test_rms_cube_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a cube."""
+    with pytest.warns(PendingDeprecationWarning, match="cube_from_roxar"):
+        cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME1)
+    assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
+
+
+@pytest.mark.requires_roxar
 def test_rox_getset_cube_with_ilxl_jumps(rms_project_path, tmp_path):
     """Get a cube from a RMS project which has jumps in inline/xline"""
-    cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME2)
+    cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME2)
     cube.to_roxar(rms_project_path, CUBENAME2 + "_copy1")
-    cube2 = xtgeo.cube_from_roxar(rms_project_path, CUBENAME2 + "_copy1")
+    cube2 = xtgeo.cube_from_rms(rms_project_path, CUBENAME2 + "_copy1")
     cube2.to_file(tmp_path / "cube2.segy")
     cube3 = xtgeo.cube_from_file(tmp_path / "cube2.segy")
     assert cube3.ilines.tolist() == [12, 14, 16, 18]

@@ -9,7 +9,7 @@ Functions
 
 .. autofunction:: xtgeo.cube_from_file
 
-.. autofunction:: xtgeo.cube_from_roxar
+.. autofunction:: xtgeo.cube_from_rms
 
 Classes
 """""""
