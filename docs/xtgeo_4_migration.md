@@ -29,7 +29,7 @@ of deprecation.
 | `GridProperty`   | `GridProperty().from_roxar(...)`         | `xtgeo.gridproperty_from_roxar(...)`       | `xtgeo.gridproperty_from_rms(...)` |
 | `Points`         | `Points("x.xyz")`                        | `xtgeo.points_from_file("x.xyz")`          |                                    |
 | `Points`         | `Points().from_file("x.xyz")`            | `xtgeo.points_from_file("x.xyz")`          |                                    |
-| `Points`         | `Points().from_roxar(...)`               | `xtgeo.points_from_roxar(...)`             |                                    |
+| `Points`         | `Points().from_roxar(...)`               | `xtgeo.points_from_roxar(...)`             | `xtgeo.points_from_rms(...)`       |
 | `Points`         | `Points().from_surface(...)`             | `xtgeo.points_from_surface(...)`           |                                    |
 | `Points`         | `Points().from_wells(...)`               | `xtgeo.points_from_wells(...)`             |                                    |
 | `Points`         | `Points().dfrac_from_wells(...)`         | `xtgeo.points_from_wells_dfrac(...)`       |                                    |

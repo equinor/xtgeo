@@ -670,7 +670,7 @@ def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_points(rms_project_path):
     """Get, modify and set a points from a RMS project."""
-    poi = xtgeo.points_from_roxar(rms_project_path, POINTSNAME1, "", stype="clipboard")
+    poi = xtgeo.points_from_rms(rms_project_path, POINTSNAME1, "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 1] == pytest.approx(5.932977e06)
     assert poi.get_dataframe().shape[0] == 20
     assert poi.get_dataframe().shape[1] == 3
@@ -685,7 +685,7 @@ def test_rox_get_modify_set_points(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_points_from_horizons(rms_project_path):
     """Get, modify and set a points from a RMS project."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons"
     )
     assert poi.get_dataframe().iloc[-1, 1] == pytest.approx(5.932977e06)
@@ -695,12 +695,23 @@ def test_rox_get_modify_set_points_from_horizons(rms_project_path):
 
 
 @pytest.mark.requires_roxar
+def test_rms_points_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads points."""
+    with pytest.warns(PendingDeprecationWarning, match="points_from_roxar"):
+        poi = xtgeo.points_from_roxar(
+            rms_project_path, POINTSNAME1, "", stype="clipboard"
+        )
+    assert poi.get_dataframe().shape[0] == 20
+    assert poi.get_dataframe().shape[1] == 3
+
+
+@pytest.mark.requires_roxar
 def test_rox_set_points_with_inconsistent_xyz_names(rms_project_path):
     """
     Export points to a RMS project where the dataframe has another zname
     than the zname attribute. This should fail.
     """
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons"
     )
 
@@ -716,7 +727,7 @@ def test_rox_set_points_with_inconsistent_xyz_names(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_set_points_with_nonstandard_xyz_names(rms_project_path):
     """Export points with nonstandard xyz names to RMS."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons"
     )
 
@@ -745,12 +756,12 @@ def test_check_presence_in_project_errors(rms_project_path):
     rox = xtgeo.RoxUtils(rms_project_path)
     with pytest.raises(ValueError) as exc_info:
         name = "I_dont_exist"
-        xtgeo.points_from_roxar(rox.project, name, POINTSCAT1, stype="horizons")
+        xtgeo.points_from_rms(rox.project, name, POINTSCAT1, stype="horizons")
     assert str(exc_info.value) == f"Cannot access {name=} in horizons"
 
     # test category not given
     with pytest.raises(ValueError) as exc_info:
-        xtgeo.points_from_roxar(
+        xtgeo.points_from_rms(
             rox.project, SURFNAMES1[0], category=None, stype="horizons"
         )
     assert (
@@ -760,7 +771,7 @@ def test_check_presence_in_project_errors(rms_project_path):
     # test category not existing in project
     with pytest.raises(ValueError) as exc_info:
         category = "I_dont_exist"
-        xtgeo.points_from_roxar(rox.project, SURFNAMES1[0], category, stype="horizons")
+        xtgeo.points_from_rms(rox.project, SURFNAMES1[0], category, stype="horizons")
         rox.project.close()
     assert str(exc_info.value) == f"Cannot access {category=} in horizons"
 
@@ -768,7 +779,7 @@ def test_check_presence_in_project_errors(rms_project_path):
     with pytest.raises(RuntimeError) as exc_info:
         name = SURFNAMES1[1]
         category = POINTSCAT1
-        xtgeo.points_from_roxar(rox.project, name, category, stype="horizons")
+        xtgeo.points_from_rms(rox.project, name, category, stype="horizons")
         rox.project.close()
     assert str(exc_info.value) == f"'{name}' is empty for horizons {category=}"
 
@@ -778,7 +789,7 @@ def test_check_presence_in_project_errors(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_points_with_attrs(rms_project_path):
     """Get, modify and set a points with attributes from a RMS project."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, POINTSNAME2, "", stype="clipboard", attributes=True
     )
     assert poi.get_dataframe()["Well"].values[-1] == "WI_3"
@@ -795,7 +806,7 @@ def test_rox_get_modify_set_points_with_attrs(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_points_with_attrs_pfilter(rms_project_path):
     """Get, modify and set a points with attributes from a RMS project incl. pfilter."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, POINTSNAME2, "", stype="clipboard", attributes=True
     )
     # store to roxar with attributes using a 'pfilter'
@@ -809,7 +820,7 @@ def test_rox_get_modify_set_points_with_attrs_pfilter(rms_project_path):
     )
 
     # reread from roxar; shall now have only 2 rows
-    poi2 = xtgeo.points_from_roxar(
+    poi2 = xtgeo.points_from_rms(
         rms_project_path, "PFILTER_POINTS", "", stype="clipboard", attributes=True
     )
 
@@ -830,7 +841,7 @@ def test_get_well_picks_as_points(rms_project_path):
         return
 
     # collect well pick set as points
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=True
     )
 
@@ -855,7 +866,7 @@ def test_get_well_picks_as_points(rms_project_path):
     )
 
     # test reading the new well pick set
-    poi2 = xtgeo.points_from_roxar(
+    poi2 = xtgeo.points_from_rms(
         project, WELL_PICK_SET + "_new", "horizon", stype="well_picks", attributes=True
     )
     poi2_df = poi2.get_dataframe()
@@ -875,7 +886,7 @@ def test_get_well_picks_as_points(rms_project_path):
     )
 
     # reread from clipboard; should now have only 1 rows
-    poi3 = xtgeo.points_from_roxar(
+    poi3 = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "", stype="clipboard", attributes=True
     )
     poi3_df = poi3.get_dataframe()
@@ -893,7 +904,7 @@ def test_get_well_picks_as_points(rms_project_path):
         stype="well_picks",
         attributes=False,
     )
-    poi4 = xtgeo.points_from_roxar(
+    poi4 = xtgeo.points_from_rms(
         project,
         WELL_PICK_SET + "_newest",
         "horizon",
@@ -939,7 +950,7 @@ def test_points_from_well_tops(rms_project, wells_from_rms):
             stype="clipboard",
         )
 
-    uppreek_points = xtgeo.points_from_roxar(
+    uppreek_points = xtgeo.points_from_rms(
         rms_project,
         "TopUppReek",
         "MyWellPoints",
@@ -974,7 +985,7 @@ def test_points_from_well_thickness(rms_project, wells_from_rms):
             stype="clipboard",
         )
 
-    uppreek_iso_points = xtgeo.points_from_roxar(
+    uppreek_iso_points = xtgeo.points_from_rms(
         rms_project,
         "UppReek",
         "MyWellIsos",
@@ -1019,9 +1030,7 @@ def test_well_picks_version_requirement(rms_project_path):
 
     if not rox.version_required("1.6"):
         with pytest.raises(NotImplementedError) as exc_info:
-            xtgeo.points_from_roxar(
-                project, WELL_PICK_SET, "horizon", stype="well_picks"
-            )
+            xtgeo.points_from_rms(project, WELL_PICK_SET, "horizon", stype="well_picks")
         assert str(exc_info.value).startswith("API Support for well_picks is missing")
 
     rox.safe_close()
@@ -1037,7 +1046,7 @@ def test_get_well_picks_attributes(rms_project_path):
     if not rox.version_required("1.6"):
         return
 
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=True
     )
 
@@ -1045,14 +1054,14 @@ def test_get_well_picks_attributes(rms_project_path):
     assert "Depth Uncertainty" in poi_df
     assert "Azimuth" in poi_df
 
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=False
     )
     poi_df = poi.get_dataframe()
     assert "Depth Uncertainty" not in poi_df
     assert "Azimuth" not in poi_df
 
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project,
         WELL_PICK_SET,
         "horizon",

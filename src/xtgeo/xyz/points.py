@@ -222,7 +222,7 @@ def points_from_file(
     return Points(**_file_importer(pfile, fformat=fformat))
 
 
-def points_from_roxar(
+def points_from_rms(
     project: Any,
     name: str,
     category: str,
@@ -230,7 +230,7 @@ def points_from_roxar(
     realisation: int = 0,
     attributes: bool | list[str] = False,
 ) -> Points:
-    """Load a Points instance from Roxar RMS project.
+    """Load a Points instance from an RMS project.
 
     The import from the RMS project can be done either within the project
     or outside the project.
@@ -256,7 +256,7 @@ def points_from_roxar(
 
         # inside RMS:
         import xtgeo
-        mypoints = xtgeo.points_from_roxar(project, 'TopEtive', 'DP_seismic')
+        mypoints = xtgeo.points_from_rms(project, 'TopEtive', 'DP_seismic')
 
     .. versionadded:: 2.19 general2d_data support is added
     """
@@ -270,6 +270,64 @@ def points_from_roxar(
             realisation,
             attributes,
         )
+    )
+
+
+def points_from_roxar(
+    project: Any,
+    name: str,
+    category: str,
+    stype: str = "horizons",
+    realisation: int = 0,
+    attributes: bool | list[str] = False,
+) -> Points:
+    """Load a Points instance from Roxar RMS project.
+
+    .. deprecated::
+        The `points_from_roxar` function is deprecated and will be removed in a future
+        version. Use `points_from_rms` instead.
+
+    The import from the RMS project can be done either within the project
+    or outside the project.
+
+    Note also that horizon/zone/faults name and category must exists
+    in advance, otherwise an Exception will be raised.
+
+    Args:
+        project: Name of project (as folder) if outside RMS, or just use the
+            magic `project` word if within RMS.
+        name (str): Name of points item, or name of well pick set if
+            well picks.
+        category: For horizons/zones/faults: for example 'DL_depth'
+            or use a folder notation on clipboard/general2d_data.
+            For well picks it is the well pick type: 'horizon' or 'fault'.
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+            'general2d_data', 'faults' or 'well_picks'
+        realisation: Realisation number, default is 0
+        attributes (bool): Bool or list with attribute names to collect.
+            If True, all attributes are collected.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mypoints = xtgeo.points_from_rms(project, 'TopEtive', 'DP_seismic')
+
+    .. versionadded:: 2.19 general2d_data support is added
+    """
+    warnings.warn(
+        "The 'points_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'points_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+    return points_from_rms(
+        project=project,
+        name=name,
+        category=category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
     )
 
 
