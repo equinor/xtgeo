@@ -78,7 +78,7 @@ def well_from_file(
     )
 
 
-def well_from_roxar(
+def well_from_rms(
     project: str | object,
     name: str,
     trajectory: str | None = "Drilled trajectory",
@@ -88,7 +88,7 @@ def well_from_roxar(
     inclmd: bool | None = False,
     inclsurvey: bool | None = False,
 ) -> Well:
-    """This makes an instance of a Well directly from Roxar RMS.
+    """This makes an instance of a Well directly from RMS.
 
     Note this method works only when inside RMS, or when RMS license is
     activated (through the roxar environment).
@@ -112,7 +112,7 @@ def well_from_roxar(
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mywell = xtgeo.well_from_roxar(
+        mywell = xtgeo.well_from_rms(
             project, "31_3-1", trajectory="Drilled", logrun="log", lognames=mylogs
         )
 
@@ -120,8 +120,67 @@ def well_from_roxar(
     """
     # TODO - mdlogname and zonelogname
     return Well._read_roxar(
-        project,
-        name,
+        project=project,
+        name=name,
+        trajectory=trajectory,
+        logrun=logrun,
+        lognames=lognames,
+        lognames_strict=lognames_strict,
+        inclmd=inclmd,
+        inclsurvey=inclsurvey,
+    )
+
+
+def well_from_roxar(
+    project: str | object,
+    name: str,
+    trajectory: str | None = "Drilled trajectory",
+    logrun: str | None = "log",
+    lognames: str | list[str] | None = "all",
+    lognames_strict: bool | None = False,
+    inclmd: bool | None = False,
+    inclsurvey: bool | None = False,
+) -> Well:
+    """Make an instance of a Well directly from Roxar RMS.
+
+    .. deprecated::
+        The `well_from_roxar` function is deprecated and will be removed in a future
+        version. Use `well_from_rms` instead.
+
+    Args:
+        project: Path to project or magic the ``project`` variable in RMS.
+        name: Name of Well, as shown in RMS.
+        trajectory: Name of trajectory in RMS.
+        logrun: Name of logrun in RMS.
+        lognames: List of lognames to import, or use 'all' for all present logs
+        lognames_strict: If True and log is not in lognames is a list, an Exception will
+            be raised.
+        inclmd: If True, a Measured Depth log will be included.
+        inclsurvey: If True, logs for azimuth and deviation will be included.
+
+    Returns:
+        Well instance.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mylogs = ['ZONELOG', 'GR', 'Facies']
+        mywell = xtgeo.well_from_rms(
+            project, "31_3-1", trajectory="Drilled", logrun="log", lognames=mylogs
+        )
+
+    .. versionchanged:: 2.1 lognames defaults to "all", not None
+    """
+    warnings.warn(
+        "The 'well_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'well_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+    return well_from_rms(
+        project=project,
+        name=name,
         trajectory=trajectory,
         logrun=logrun,
         lognames=lognames,
@@ -702,7 +761,7 @@ class Well:
             # assume that existing logs in RMS are ["PORO", "PERMH", "GR", "DT", "FAC"]
             # read only one existing log (faster)
 
-            wll = xtgeo.well_from_roxar(project, "WELL1", lognames=["PORO"])
+            wll = xtgeo.well_from_rms(project, "WELL1", lognames=["PORO"])
             dfr = wll.get_dataframe()
             dfr["PORO"] += 0.2  # add 0.2 to PORO log
             wll.set_dataframe(dfr)

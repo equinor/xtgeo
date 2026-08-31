@@ -263,7 +263,7 @@ def wells_from_rms(rms_project_path) -> list[xtgeo.Well]:
 
     wlist = []
     for well in project.wells:
-        obj = xtgeo.well_from_roxar(
+        obj = xtgeo.well_from_rms(
             project,
             well.name,
             logrun="log",
@@ -409,14 +409,24 @@ def test_rox_get_set_trend_surfaces(rms_project_path):
 
 
 @pytest.mark.requires_roxar
-def test_rox_wells(rms_project_path):
-    """Various tests on Roxar wells."""
-    well = xtgeo.well_from_roxar(
+def test_rms_wells(rms_project_path: str) -> None:
+    """Various tests on RMS wells using well_from_rms."""
+    well = xtgeo.well_from_rms(
         rms_project_path, "OP_2", trajectory="My trajectory", logrun="log"
     )
     assert "Zonelog" in well.lognames
 
     assert well.get_dataframe()["Poro"].mean() == pytest.approx(0.1637623936)
+
+
+@pytest.mark.requires_roxar
+def test_rox_wells_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a well."""
+    with pytest.warns(PendingDeprecationWarning, match="well_from_roxar"):
+        well = xtgeo.well_from_roxar(
+            rms_project_path, "OP_2", trajectory="My trajectory", logrun="log"
+        )
+    assert "Zonelog" in well.lognames
 
 
 @pytest.mark.requires_roxar
@@ -1057,7 +1067,7 @@ def test_get_well_picks_attributes(rms_project_path):
 @pytest.mark.requires_roxar
 def test_rox_well_with_added_logs(rms_project_path):
     """Operations on discrete well logs"""
-    well = xtgeo.well_from_roxar(
+    well = xtgeo.well_from_rms(
         rms_project_path,
         WELLS1[1].replace(".w", ""),
         logrun="log",
@@ -1091,7 +1101,7 @@ def test_rox_well_update(
     initial_wellname = WELLS1[1].replace(".w", "")
     wellname = "TESTWELL"
 
-    initial_well = xtgeo.well_from_roxar(
+    initial_well = xtgeo.well_from_rms(
         rms_project_path,
         initial_wellname,
         logrun="log",
@@ -1100,7 +1110,7 @@ def test_rox_well_update(
     )
     initial_well.to_roxar(rms_project_path, wellname)
 
-    well = xtgeo.well_from_roxar(
+    well = xtgeo.well_from_rms(
         rms_project_path,
         wellname,
         lognames=["Poro"],

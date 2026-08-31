@@ -86,7 +86,7 @@ from xtgeo.well.blocked_wells import (
     blockedwells_from_roxar,
     blockedwells_from_stacked_file,
 )
-from xtgeo.well.well1 import Well, well_from_file, well_from_roxar
+from xtgeo.well.well1 import Well, well_from_file, well_from_rms, well_from_roxar
 from xtgeo.well.wells import Wells, wells_from_files, wells_from_stacked_file
 from xtgeo.xyz.points import (
     points_from_file,
@@ -269,6 +269,7 @@ __all__ = [
     "version",
     "well1",
     "well_from_file",
+    "well_from_rms",
     "well_from_roxar",
     "wells",
     "wells_from_files",
