@@ -9,7 +9,7 @@ Functions
 
 .. autofunction:: xtgeo.well_from_file
 
-.. autofunction:: xtgeo.well_from_roxar
+.. autofunction:: xtgeo.well_from_rms
 
 Classes
 """""""
