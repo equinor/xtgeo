@@ -241,8 +241,22 @@ Before you submit a pull request, check that it meets these guidelines:
 
 - scikit-build-core offers some suggestions about building with editable
   installs, see info
-  [here](https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs)
+  [here](https://scikit-build-core.readthedocs.io/en/latest/configuration/editable.html)
 
+## Big tests
+If a test is computationally expensive, it should be marked as a `big` test.
+You can register a test as a big test by adding the `bigtest` marker to the test:
+
+```python
+@pytest.mark.bigtest
+```
+
+`big` test cases are not run by default. To run big tests locally, you must
+set the environment variable `XTG_BIGTEST=1` when running your tests, e.g.:
+
+```bash
+XTG_BIGTEST=1 uv run pytest tests/test_cube/test_cube_attrs_more.py -m bigtest -v
+```
 
 ## Working with RMS python
 
