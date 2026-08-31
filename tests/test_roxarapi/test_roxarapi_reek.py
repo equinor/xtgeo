@@ -643,7 +643,7 @@ def test_rox_get_modify_set_get_grid_with_subzones(rms_project_path, roxinstance
 @pytest.mark.requires_roxar
 def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
     """Get, modify and set a polygons from a RMS project."""
-    poly = xtgeo.polygons_from_roxar(rms_project_path, POLYNAME1, "", stype="clipboard")
+    poly = xtgeo.polygons_from_rms(rms_project_path, POLYNAME1, "", stype="clipboard")
     assert poly.get_dataframe().iloc[-1, 2] == pytest.approx(1595.161377)
     assert poly.get_dataframe().shape[0] == 25
     assert poly.get_dataframe().shape[1] == 4
@@ -656,7 +656,7 @@ def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
     # store and retrieve in general2d_data just to see that it works
     if roxinstance.version_required("1.6"):
         poly.to_roxar(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
-        poly2 = xtgeo.polygons_from_roxar(
+        poly2 = xtgeo.polygons_from_rms(
             rms_project_path, "xxx", "folder/sub", stype="general2d_data"
         )
         assert poly.get_dataframe()[poly.xname].values.tolist() == pytest.approx(
@@ -665,6 +665,17 @@ def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
     else:
         with pytest.raises(NotImplementedError):
             poly.to_roxar(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
+
+
+@pytest.mark.requires_roxar
+def test_rms_polygons_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads polygons."""
+    with pytest.warns(PendingDeprecationWarning, match="polygons_from_roxar"):
+        poly = xtgeo.polygons_from_roxar(
+            rms_project_path, POLYNAME1, "", stype="clipboard"
+        )
+    assert poly.get_dataframe().shape[0] == 25
+    assert poly.get_dataframe().shape[1] == 4
 
 
 @pytest.mark.requires_roxar
@@ -1011,7 +1022,7 @@ def test_lines_from_well(rms_project, wells_from_rms):
         )
         w_line.to_roxar(rms_project, zonenames[code], "MyWellLines", stype="clipboard")
 
-        w_line_read = xtgeo.polygons_from_roxar(
+        w_line_read = xtgeo.polygons_from_rms(
             rms_project,
             zonenames[code],
             "MyWellLines",
