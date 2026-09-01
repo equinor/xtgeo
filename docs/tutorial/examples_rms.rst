@@ -21,9 +21,9 @@ a python job within RMS.
 Get and set data
 ----------------
 
-In general, data are imported into XTGeo by a ``from_roxar()`` or by a
-``xtgeo.xxx_from_roxar()`` (where xx is "surface", "grid", etc). Then the
-altered instance can be stored in roxar/RMS by a ``to_roxar()`` method.
+In general, data are imported into XTGeo by a ``from_rms()`` or by a
+``xtgeo.xxx_from_rms()`` (where xx is "surface", "grid", etc). Then the
+altered instance can be stored in RMS by a ``to_roxar()`` method.
 
 The ``to_roxar()`` method will not do a project save when inside RMS or when inside
 a virtual project setting. However, if a project is applied as a file path, then
@@ -35,7 +35,7 @@ Inside RMS GUI
 
     import xtgeo
 
-    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_extracted")
+    surf = xtgeo.surface_from_rms(project, "TopReek", "DS_extracted")
     surf.values += 100
     surf.to_roxar(project)
 
@@ -56,7 +56,7 @@ as shown below:
 
     myproject = "/some/file/path/reek.rms11.1.1"
 
-    surf = xtgeo.surface_from_roxar(myproject, "TopReek", "DS_extracted")
+    surf = xtgeo.surface_from_rms(myproject, "TopReek", "DS_extracted")
     surf.values += 100
     surf.to_roxar(myproject)
 
@@ -75,7 +75,7 @@ Export a surface in RMS to irap binary format
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo and export
-    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_extracted")
+    surf = xtgeo.surface_from_rms(project, "TopReek", "DS_extracted")
 
     surf.to_file("topreek.gri")
 
@@ -101,7 +101,7 @@ grid will be done in case the RMS map has a rotation.
 
     # loop over stratigraphy
     for name in hnames:
-        surf = xt.surface_from_roxar(project, name, "DS_extracted")
+        surf = xt.surface_from_rms(project, name, "DS_extracted")
         fname = name.lower()  # lower case file name
         surf.to_file(fname + ".zmap", fformat="zmap_ascii")
 
@@ -114,7 +114,7 @@ Take a surface in RMS and multiply values with 2:
 
     import xtgeo
 
-    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_tmp")
+    surf = xtgeo.surface_from_rms(project, "TopReek", "DS_tmp")
 
     surf.values *= 2  # values is the masked 2D numpy array property
 
@@ -158,8 +158,8 @@ common multiplum)
        mainzones = CFG["zones"]["MAIN_ZONES"]
        for znum, mzone in enumerate(mainzones):
 
-           surf1 = xtgeo.surface_from_roxar(PRJ, topmainzones[znum], TSCAT1)
-           surf2 = xtgeo.surface_from_roxar(PRJ, topmainzones[znum + 1], TSCAT1)
+           surf1 = xtgeo.surface_from_rms(PRJ, topmainzones[znum], TSCAT1)
+           surf2 = xtgeo.surface_from_rms(PRJ, topmainzones[znum + 1], TSCAT1)
 
            diff = surf2.copy()
            diff.values -= surf1.values
