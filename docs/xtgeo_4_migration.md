@@ -53,10 +53,26 @@ of deprecation.
 | `Wells`          | `Wells(["x.rmswell"])`                   | `xtgeo.wells_from_files(["x.rmswell"])`    |
 | `Wells`          | `Wells().from_files(["x.rmswell"])`      | `xtgeo.wells_from_files(["x.rmswell"])`    |
 
-> **Note:** Existing functions with the `_roxar` name continue to work in XTGeo
-> 4.26.x and later, but they generate a deprecation warning and will be removed
-> in a future release. The replacement functions listed in the last column are
-> available from XTGeo 4.26.x onward and will be maintained in future releases.
+> **Note:** As of XTGeo 4.27.x, all functions with the `from_roxar` and `to_roxar`
+> suffixes have been renamed to use the `from_rms` and `to_rms` suffixes,
+> respectively. The `roxar` variants remain available for backward compatibility
+> but are deprecated: they will emit a `DeprecationWarning` and are scheduled for
+> removal in a future release. Users are advised to migrate to the `rms` variants
+> at their earliest convenience.
+
+For example:
+
+```python
+import xtgeo
+
+# ⚠️ Deprecated: still works but raises a DeprecationWarning
+mycube = xtgeo.cube_from_roxar(project, "MyCube")
+mycube.to_roxar(project, "MyCube")
+
+# ✅ Preferred: use the new `rms` variants
+mycube = xtgeo.cube_from_rms(project, "MyCube")
+mycube.to_rms(project, "MyCube")
+```
 
 ## Instantiating XTGeo objects
 
