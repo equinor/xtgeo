@@ -354,6 +354,14 @@ def test_rox_surfaces(rms_project_path):
 
 
 @pytest.mark.requires_roxar
+def test_surface_from_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a surface."""
+    with pytest.warns(PendingDeprecationWarning, match="surface_from_roxar"):
+        surface = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
+    assert surface.values.mean() == pytest.approx(1698.648, abs=0.01)
+
+
+@pytest.mark.requires_roxar
 def test_rox_surfaces_dtype_switching(rms_project_path):
     """Test dtype switching for from_roxar"""
     srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1, dtype="float32")

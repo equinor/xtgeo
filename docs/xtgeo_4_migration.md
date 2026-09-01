@@ -39,7 +39,7 @@ of deprecation.
 | `RegularSurface` | `RegularSurface("x.gri")`                | `xtgeo.surface_from_file("x.gri")`         |                                    |
 | `RegularSurface` | `RegularSurface().from_file("x.gri")`    | `xtgeo.surface_from_file("x.gri")`         |                                    |
 | `RegularSurface` | `RegularSurface().from_hdf("x.h5")`      | `xtgeo.surface_from_file("x.h5")`          |                                    |
-| `RegularSurface` | `RegularSurface().from_roxar(...)`       | `xtgeo.surface_from_roxar(...)`            |                                    |
+| `RegularSurface` | `RegularSurface().from_roxar(...)`       | `xtgeo.surface_from_roxar(...)`            | `xtgeo.surface_from_rms(...)`      |
 | `RegularSurface` | `RegularSurface().from_cube("x.segy")`   | `xtgeo.surface_from_cube("x.segy")`        |                                    |
 | `RegularSurface` | `RegularSurface().from_grid3d("x.roff")` | `xtgeo.surface_from_grid3d("x.roff")`      |                                    |
 | `Surfaces`       | `Surfaces().from_grid3d("x.roff")`       | `xtgeo.surfaces_from_grid("x.roff")`       |                                    |
