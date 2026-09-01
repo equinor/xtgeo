@@ -55,6 +55,8 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build"]
 pygments_style = "sphinx"
 html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
+html_css_files = ["theme_overrides.css"]
 
 html_theme_options = {
     "style_nav_header_background": "#C0C0C0",
