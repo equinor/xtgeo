@@ -1019,7 +1019,7 @@ class RegularSurface:
     def generate_hash(self, hashmethod="md5"):
         """Return a unique hash ID for current instance.
 
-        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+        See :func:`xtgeo.generic_hash` for available hash methods.
 
         .. versionadded:: 2.14
         """
@@ -1181,7 +1181,7 @@ class RegularSurface:
 
         Note, for zmap_ascii and storm_binary an unrotation will be done
         automatically. The sampling will be somewhat finer than the
-        original map in order to prevent aliasing. See :func:`unrotate`.
+        original map in order to prevent aliasing. See :meth:`unrotate`.
 
         Args:
             mfile: Name of file,
@@ -2952,8 +2952,8 @@ class RegularSurface:
                 of points in the polygons, where tolerance is 0.1. Another
                 alternative to True is to input a Dict on the form
                 ``{"tolerance": 2.0, "preserve_topology": True}``, cf. the
-                :func:`Polygons.simplify()` method. For details on e.g. tolerance, see
-                Shapely's simplify() method.
+                :meth:`xtgeo.Polygons.simplify()` method. For details on e.g.
+                tolerance, see Shapely's simplify() method.
 
         Returns:
             A XTGeo Polygons instance
@@ -2969,7 +2969,7 @@ class RegularSurface:
             boundary.filter_byid([0])  # polygon is updated in-place
 
         See also:
-            The :func:`Polygons.boundary_from_points()` class method.
+            The :meth:`xtgeo.Polygons.boundary_from_points()` class method.
 
         .. versionadded:: 3.1
         """

@@ -114,7 +114,12 @@ def blockedwells_from_roxar(
 ):  # pragma: no cover
     """This makes an instance of a BlockedWells directly from Roxar RMS.
 
-    For arguments, see :meth:`BlockedWells.from_roxar`.
+    Args:
+        project: Name of RMS project, or use the magic ``project`` variable in RMS.
+        gname: Name of the grid model.
+        bwname: Name of the blocked well set.
+        lognames: List of lognames to import, or "all" for all present logs.
+        ijk: If True, import the IJK logs as well.
 
     Note the difference between classes BlockedWell and BlockedWells.
 

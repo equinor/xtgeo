@@ -134,7 +134,7 @@ def polygons_from_file(pfile: FileLike, fformat: str | None = "guess") -> Polygo
 
     Args:
         pfile (str): Name of file
-        fformat (str): See :meth:`Polygons.from_file`
+        fformat (str): One of the formats listed above. Default is 'guess'.
 
     Example::
 
@@ -352,6 +352,10 @@ class Polygons(XYZ):
 
     @property
     def pname(self) -> str:
+        """Name of the mandatory polygon ID column.
+
+        Setting this renames the column in the underlying dataframe.
+        """
         return self._pname
 
     @pname.setter
@@ -446,6 +450,18 @@ class Polygons(XYZ):
         return self._df.copy() if copy else self._df
 
     def set_dataframe(self, df: pd.DataFrame) -> None:
+        """Set the polygons dataframe, replacing any existing data.
+
+        The input dataframe is copied, so later changes to ``df`` itself will
+        not affect this instance; note that Python objects stored in
+        object-dtype cells are not recursively cloned. Optional attribute
+        names (``dtname``, ``dhname``, ``tname``, ``hname``) are reset to None
+        if the corresponding columns are absent.
+
+        Args:
+            df: Dataframe holding at least the mandatory X, Y, Z and
+                polygon ID columns.
+        """
         self._df = df.apply(deepcopy)
         self._name_to_none_if_missing()
 

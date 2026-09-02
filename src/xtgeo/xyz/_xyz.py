@@ -304,7 +304,7 @@ class XYZ(ABC):
             (xmin, xmax, ymin, ymax, zmin, zmax)
 
         See also:
-            The class method :func:`Polygons.boundary_from_points()`
+            The class method :meth:`xtgeo.Polygons.boundary_from_points()`
 
         """
         df = self.get_dataframe(copy=False)
@@ -432,7 +432,7 @@ class XYZ(ABC):
             value: Value to add to Z values inside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`add_inside polygons()`.
+        :meth:`add_inside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="add", inside=True, version=0)
 
@@ -463,7 +463,7 @@ class XYZ(ABC):
             value: Value to add to Z values outside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`add_outside polygons()`.
+        :meth:`add_outside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="add", inside=False, version=0)
 
@@ -494,7 +494,7 @@ class XYZ(ABC):
             value: Value to subtract to Z values inside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`sub_inside polygons()`.
+        :meth:`sub_inside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="sub", inside=True, version=1)
 
@@ -525,7 +525,7 @@ class XYZ(ABC):
             value: Value to subtract to Z values outside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`sub_outside polygons()`.
+        :meth:`sub_outside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="sub", inside=False, version=0)
 
@@ -556,7 +556,7 @@ class XYZ(ABC):
             value: Value to multiply to Z values inside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`mul_inside polygons()`.
+        :meth:`mul_inside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="mul", inside=True, version=0)
 
@@ -587,7 +587,7 @@ class XYZ(ABC):
             value: Value to multiply to Z values outside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`mul_outside polygons()`.
+        :meth:`mul_outside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="mul", inside=False, version=0)
 
@@ -618,7 +618,7 @@ class XYZ(ABC):
             value: Value to divide Z values inside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`div_inside polygons()`.
+        :meth:`div_inside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="div", inside=True, version=0)
 
@@ -649,7 +649,7 @@ class XYZ(ABC):
             value: Value to divide Z values outside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`div_outside polygons()`.
+        :meth:`div_outside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="div", inside=False, version=0)
 
@@ -682,7 +682,7 @@ class XYZ(ABC):
             value: Value to set Z values inside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`set_inside polygons()`.
+        :meth:`set_inside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="set", inside=True, version=0)
 
@@ -713,7 +713,7 @@ class XYZ(ABC):
             value: Value to set Z values outside polygons.
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`set_outside polygons()`.
+        :meth:`set_outside_polygons()`.
         """
         self.operation_polygons(poly, value, opname="set", inside=False, version=0)
 
@@ -743,7 +743,7 @@ class XYZ(ABC):
             poly: A xtgeo Polygons instance
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`eli_inside polygons()`.
+        :meth:`eli_inside_polygons()`.
         """
         self.operation_polygons(poly, 0, opname="eli", inside=True, version=0)
 
@@ -768,7 +768,7 @@ class XYZ(ABC):
             poly: A xtgeo Polygons instance
 
         See notes under :meth:`operation_polygons()` and consider instead
-        :meth:`eli_outside polygons()`.
+        :meth:`eli_outside_polygons()`.
         """
         self.operation_polygons(poly, 0, opname="eli", inside=False, version=0)
 

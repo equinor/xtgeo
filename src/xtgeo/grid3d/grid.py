@@ -169,12 +169,14 @@ def grid_from_file(
             special value "all" can be get all properties found in the INIT file
         restartprops (str list): Optional, see initprops
         restartdates (int list): Optional, required if restartprops
-        ijkrange (list-like): Optional, only applicable for hdf files, see
-            :meth:`Grid.from_hdf`.
-        zerobased (bool): Optional, only applicable for hdf files, see
-            :meth:`Grid.from_hdf`.
-        mmap (bool): Optional, only applicable for xtgf files, see
-            :meth:`Grid.from_xtgf`.
+        ijkrange (list-like): Optional, only applicable for hdf files. A 6-item
+            sequence (i1, i2, j1, j2, k1, k2) limiting the import to a subgrid
+            range. The items "min" and "max" are accepted as open bounds.
+        zerobased (bool): Optional, only applicable for hdf files. If True, the
+            ``ijkrange`` indices are interpreted as zero-based; default is False,
+            i.e. one-based indexing.
+        mmap (bool): Optional, only applicable for xtgf files. If True, memory
+            mapping is used when reading the file.
 
     Example::
 
@@ -1138,7 +1140,7 @@ class Grid(_Grid3D):
     ) -> str:
         """Return a unique hash ID for current instance (for persistance).
 
-        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+        See :func:`xtgeo.generic_hash` for available hash methods.
 
         .. versionadded:: 2.14
         """
@@ -1898,8 +1900,8 @@ class Grid(_Grid3D):
                 of points in the polygons, where tolerance is 0.1. Another
                 alternative to True is to input a Dict on the form
                 ``{"tolerance": 2.0, "preserve_topology": True}``, cf. the
-                :func:`Polygons.simplify()` method. For details on e.g. tolerance, see
-                Shapely's simplify() method.
+                :meth:`xtgeo.Polygons.simplify()` method. For details on e.g.
+                tolerance, see Shapely's simplify() method.
             filter_array: An numpy boolean array with equal shape as the grid dimension,
                 used to filter the grid cells and define where to extract boundaries.
 
@@ -1915,7 +1917,7 @@ class Grid(_Grid3D):
             boundary = grid.get_boundary_polygons(filter_array=filter_array)
 
         See also:
-            The :func:`Polygons.boundary_from_points()` class method.
+            The :meth:`xtgeo.Polygons.boundary_from_points()` class method.
 
         """
         return _grid_boundary.create_boundary(
@@ -2343,7 +2345,7 @@ class Grid(_Grid3D):
         When *nnc_table* is supplied the method additionally computes
         transmissibilities across the boundary of a nested hybrid grid.  The
         table is produced by
-        :func:`fmu.tools.nestedhybridgrid.create_nested_hybrid_grid` and
+        ``fmu.tools.nestedhybridgrid.create_nested_hybrid_grid`` and
         encodes every mother ↔ refined cell pair that should be connected.
 
         Args:

@@ -24,7 +24,8 @@ def null_logger(name: str) -> logging.Logger:
     Returns:
         logging.Logger: A logger object configured with a NullHandler.
 
-    Example:
+    Examples::
+
         # In a library module
         logger = null_logger(__name__)
         logger.info("This info won't be logged to the console by default.")

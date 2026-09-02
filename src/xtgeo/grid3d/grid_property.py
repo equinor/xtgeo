@@ -221,8 +221,8 @@ def gridproperty_from_resinsight(
             Since case names are not unique in ResInsight, passing a case object
             avoids the ambiguity that name-based lookup can introduce.
         property_name: Name of the property (e.g. ``"PORO"``, ``"PRESSURE"``).
-        property_type: A :class:`~xtgeo.interfaces.resinsight.PropertyType`
-            member or a plain string such as ``"STATIC_NATIVE"``,
+        property_type: A ``PropertyType`` member or a plain string such as
+            ``"STATIC_NATIVE"``,
             ``"DYNAMIC_NATIVE"``, ``"GENERATED"``, or ``"INPUT_PROPERTY"``.
             Strings are validated and coerced to the enum internally.
         time_step_index: Time step index (default 0).
@@ -237,7 +237,7 @@ def gridproperty_from_resinsight(
         RuntimeError: If rips is unavailable/too old, or if the case/property
             cannot be read.
         ValueError: If *property_type* is not a valid
-            :class:`~xtgeo.interfaces.resinsight.PropertyType`.
+            ``PropertyType``.
 
     Example::
 
@@ -1051,9 +1051,8 @@ class GridProperty(_Grid3D):
                 object. Since case names are not unique in ResInsight, passing a
                 case object avoids the ambiguity that name-based lookup can
                 introduce.
-            property_type: A
-                :class:`~xtgeo.interfaces.resinsight.PropertyType`
-                member or a plain string such as ``"GENERATED"``.
+            property_type: A ``PropertyType`` member or a plain string such as
+                ``"GENERATED"``.
                 Strings are validated and coerced to the enum internally.
             property_name: Name to give the property in ResInsight. If ``None``,
                 the current :attr:`name` is used.
@@ -1069,7 +1068,7 @@ class GridProperty(_Grid3D):
             RuntimeError: If rips is unavailable/too old, or if the
                 case/property cannot be written.
             ValueError: If *property_type* is not a valid
-                :class:`~xtgeo.interfaces.resinsight.PropertyType`.
+                ``PropertyType``.
 
         Example::
 
