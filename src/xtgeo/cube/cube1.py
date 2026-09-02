@@ -60,7 +60,9 @@ def cube_from_file(
 
     Args:
         mfile (str): Name of file
-        fformat (str): See :meth:`Cube.from_file`
+        fformat (str): File format, one of 'segy', 'storm' or 'xtg'. If 'guess'
+            (default), the format is detected from the file extension or the
+            file signature.
         iline (Literal[189, 193]): Byte position of the inline number field in
             each trace header. Default is 189 (SEGY standard). Only 189 and 193
             are valid; use ``iline=193, xline=189`` for files with non-standard
@@ -401,7 +403,7 @@ class Cube:
     def generate_hash(self, hashmethod="md5"):
         """Return a unique hash ID for current instance.
 
-        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+        See :func:`xtgeo.generic_hash` for available hash methods.
 
         .. versionadded:: 2.14
         """

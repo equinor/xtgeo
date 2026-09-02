@@ -373,7 +373,7 @@ def _generate_docstring_points(xname: str, yname: str, zname: str) -> str:
     return f"""
     Class for Points data in XTGeo.
 
-    The Points class is a subclass of the :py:class:`~xtgeo.xyz._xyz.XYZ` abstract
+    The Points class is a subclass of the common ``XYZ`` abstract
     class, and the point set itself is a `pandas <http://pandas.pydata.org>`_
     dataframe object.
 
@@ -540,6 +540,15 @@ class Points(XYZ):
         return self._df.copy() if copy else self._df
 
     def set_dataframe(self, df: pd.DataFrame) -> None:
+        """Set the points dataframe, replacing any existing data.
+
+        The input dataframe is copied, so later changes to ``df`` itself will
+        not affect this instance. Note that Python objects stored in
+        object-dtype cells are not recursively cloned.
+
+        Args:
+            df: Dataframe holding at least the mandatory X, Y and Z columns.
+        """
         self._df = df.apply(deepcopy)
 
     def _random(self, nrandom: int = 10) -> None:

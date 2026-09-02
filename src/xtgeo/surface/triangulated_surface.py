@@ -512,7 +512,7 @@ class TriangulatedSurface:
     ) -> str:
         """Return a unique hash ID for current instance.
 
-        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+        See :func:`xtgeo.generic_hash` for available hash methods.
 
         """
 

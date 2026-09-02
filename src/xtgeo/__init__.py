@@ -53,6 +53,7 @@ from xtgeo.common.exceptions import (
     KeywordNotFoundError,
     WellNotFoundError,
 )
+from xtgeo.common.sys import generic_hash
 
 _xprint("Import common... done")
 
@@ -96,6 +97,7 @@ from xtgeo.xyz.points import (
 
 _xprint("Import various XTGeo modules... wells...")
 
+from xtgeo.grid3d import grid, grid_properties, grid_property
 from xtgeo.grid3d._ecl_grid import GridRelative, Units
 from xtgeo.grid3d.grid import Grid
 from xtgeo.grid3d.grid_properties import (
@@ -181,7 +183,6 @@ __all__ = [
     "GridProperties",
     "GridProperty",
     "GridRelative",
-    "GridRelative",
     "InvalidFileFormatError",
     "KeywordFoundNoDateError",
     "KeywordNotFoundError",
@@ -194,14 +195,13 @@ __all__ = [
     "Points",
     "Polygons",
     "RegularSurface",
-    "TriangulatedSurface",
     "RoxUtils",
     "Surfaces",
+    "TriangulatedSurface",
     "UNDEF",
     "UNDEF_INT",
     "UNDEF_INT_LIMIT",
     "UNDEF_LIMIT",
-    "Units",
     "Units",
     "Well",
     "WellNotFoundError",
@@ -221,7 +221,7 @@ __all__ = [
     "cube1",
     "cube_from_file",
     "cube_from_roxar",
-    "grid",
+    "generic_hash",
     "grid",
     "grid_from_cube",
     "grid_from_file",
@@ -230,8 +230,6 @@ __all__ = [
     "grid_from_surfaces",
     "grid_merge",
     "grid_properties",
-    "grid_properties",
-    "grid_property",
     "grid_property",
     "gridproperties_dataframe",
     "gridproperties_from_file",

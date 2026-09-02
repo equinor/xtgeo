@@ -34,9 +34,10 @@ def blockedwell_from_file(
         bwfile (str): Name of file
         fformat (str): File format: rms_ascii, csv, hdf5.
             If None (default), auto-detect from file extension or file signature.
-        mdlogname (str): See :meth:`Well.from_file`
-        zonelogname (str): See :meth:`Well.from_file`
-        strict (bool): See :meth:`Well.from_file`
+        mdlogname (str): Name of measured depth log, if any.
+        zonelogname (str): Name of zone log, if any.
+        strict (bool): If True, then import will fail if zonelogname or
+            mdlogname are asked for but not present in the file.
         lognames: Name or list of lognames to import, default is "all"
         lognames_strict: If True, require all logs in lognames to be present
 
@@ -62,7 +63,14 @@ def blockedwell_from_roxar(
 ):
     """This makes an instance of a BlockedWell directly from Roxar RMS.
 
-    For arguments, see :meth:`BlockedWell.from_roxar`.
+    Args:
+        project: Name of RMS project, or use the magic ``project`` variable in RMS.
+        gname: Name of the grid model.
+        bwname: Name of the blocked well set.
+        wname: Name of the well.
+        lognames: List of lognames to import, or "all" for all present logs.
+        ijk: If True, import the IJK logs as well.
+        realisation: Realisation index, default is 0 (first).
 
     Example::
 
@@ -277,6 +285,16 @@ class BlockedWell(Well):
             raise ValueError("Input name is not a string.")
 
     def copy(self):
+        """Return a copy of the instance.
+
+        The copy is delegated to :meth:`xtgeo.Well.copy`, so the returned
+        object is a plain :class:`xtgeo.Well`. The ``gridname`` value is
+        carried over, but only as the private ``_gridname`` attribute, which
+        is not exposed as a property on :class:`xtgeo.Well`.
+
+        Returns:
+            A new :class:`xtgeo.Well` instance.
+        """
         newbw = super().copy()
 
         newbw._gridname = self._gridname
