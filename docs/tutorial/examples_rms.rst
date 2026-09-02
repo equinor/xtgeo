@@ -41,8 +41,15 @@ Inside RMS GUI
 
     # Note: project save needs to be done by user (GUI action)
 
-Outside RMS, direct access
+Outside RMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+To use the RMS Python API outside the RMS application, ``rmsapi`` must be
+installed in the Python environment. FMU users can use
+`rmsvenv <https://github.com/equinor/rmsvenv>`_ to create a suitable environment.
+
+Run your Python code from the environment and provide the RMS project file path,
+as shown below:
+
 .. code-block:: python
 
     import xtgeo
@@ -53,27 +60,7 @@ Outside RMS, direct access
     surf.values += 100
     surf.to_roxar(myproject)
 
-    # Note: project save is done automatic
-
-Outside RMS, project mode
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. code-block:: python
-
-    import xtgeo
-
-    myproject = "/some/file/path/reek.rms11.1.1"
-    rox = xtgeo.RoxUtils(myproject)
-
-    surf = xtgeo.surface_from_roxar(rox.project, "TopReek", "DS_extracted")
-    surf.values += 100
-    surf.to_roxar(rox.project)
-
-    # Note: project save is not done automatic, you need to:
-
-    rox.project.save()
-    rox.project.close()
-
-
+    # Note: project save is done automatically
 
 Surface data
 ------------
