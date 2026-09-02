@@ -287,6 +287,26 @@ def test_welldata_to_file_from_file_precision(tmp_path):
     assert "1.2345" not in content
 
 
+def test_welldata_to_file_uses_eight_decimal_places_by_default(tmp_path):
+    """Test that the default RMS ASCII precision preserves small values."""
+    log = WellLog(name="PERM", values=np.array([0.00012345]))
+    well = WellData(
+        name="DEFAULT-PRECISION",
+        xpos=100.0,
+        ypos=200.0,
+        zpos=0.0,
+        survey_x=np.array([100.0]),
+        survey_y=np.array([200.0]),
+        survey_z=np.array([1000.0]),
+        logs=(log,),
+    )
+
+    filepath = tmp_path / "well_default_precision.txt"
+    well.to_file(filepath=filepath, fformat=WellFileFormat.RMS_ASCII)
+
+    assert "0.00012345" in filepath.read_text()
+
+
 def test_welldata_to_file_from_file_with_nan_values(tmp_path):
     """Test WellData with NaN values using to_file/from_file."""
     log = WellLog(name="INCOMPLETE", values=np.array([10.0, np.nan, 30.0]))
@@ -620,6 +640,30 @@ def test_blockedwell_to_file_from_file_precision(tmp_path):
     content = filepath.read_text()
     # Should have 3 decimal places
     assert "1.235" in content or "1.234" in content
+
+
+def test_blockedwell_to_file_uses_eight_decimal_places_by_default(tmp_path):
+    """Test that the default RMS ASCII precision preserves small values."""
+    log = WellLog(name="PERM", values=np.array([0.00012345]))
+
+    blocked_well = BlockedWellData(
+        name="BLOCKED-DEFAULT-PRECISION",
+        xpos=100.0,
+        ypos=200.0,
+        zpos=0.0,
+        survey_x=np.array([100.0]),
+        survey_y=np.array([200.0]),
+        survey_z=np.array([1000.0]),
+        i_index=np.array([10.0]),
+        j_index=np.array([20.0]),
+        k_index=np.array([1.0]),
+        logs=(log,),
+    )
+
+    filepath = tmp_path / "blocked_default_precision.txt"
+    blocked_well.to_file(filepath=filepath, fformat=WellFileFormat.RMS_ASCII)
+
+    assert "0.00012345" in filepath.read_text()
 
 
 def test_blockedwell_to_file_from_file_stream(tmp_path):

@@ -315,14 +315,14 @@ def _write_rms_ascii_header(
 def write_rms_ascii_well(
     well: WellData,
     filepath: FileLike,
-    precision: int = 4,
+    precision: int = 8,
 ) -> None:
     """Write well data to RMS ASCII file or stream.
 
     Args:
         well: WellData object to write
         filepath: Output RMS ASCII file path or a file-like stream object
-        precision: Number of decimal places for floats (default: 4)
+        precision: Number of decimal places for floats (default: 8)
 
     """
     wrapper = FileWrapper(filepath, mode="w")
@@ -344,7 +344,7 @@ def write_rms_ascii_well(
 def _write_rms_ascii_data(
     fwell_write: TextIO,
     well: WellData,
-    precision: int = 4,
+    precision: int = 8,
 ) -> None:
     """Write RMS ASCII data section to open file handle.
 
@@ -441,14 +441,14 @@ def read_rms_ascii_blockedwell(
 def write_rms_ascii_blockedwell(
     blocked_well: BlockedWellData,
     filepath: FileLike,
-    precision: int = 4,
+    precision: int = 8,
 ) -> None:
     """Write blocked well data to RMS ASCII file.
 
     Args:
         blocked_well: BlockedWellData object to write
         filepath: Output RMS ASCII file path
-        precision: Number of decimal places for floats (default: 4)
+        precision: Number of decimal places for floats (default: 8)
 
     """
     i_log = WellLog(
