@@ -76,18 +76,21 @@ from xtgeo.well import blocked_well, blocked_wells, well1, wells
 from xtgeo.well.blocked_well import (
     BlockedWell,
     blockedwell_from_file,
+    blockedwell_from_rms,
     blockedwell_from_roxar,
 )
 from xtgeo.well.blocked_wells import (
     BlockedWells,
     blockedwells_from_files,
+    blockedwells_from_rms,
     blockedwells_from_roxar,
     blockedwells_from_stacked_file,
 )
-from xtgeo.well.well1 import Well, well_from_file, well_from_roxar
+from xtgeo.well.well1 import Well, well_from_file, well_from_rms, well_from_roxar
 from xtgeo.well.wells import Wells, wells_from_files, wells_from_stacked_file
 from xtgeo.xyz.points import (
     points_from_file,
+    points_from_rms,
     points_from_roxar,
     points_from_surface,
     points_from_wells,
@@ -110,6 +113,7 @@ from xtgeo.grid3d.grid_property import (
     gridproperty_from_file,
     gridproperty_from_resinsight,
     gridproperty_from_roxar,
+    gridproperty_from_rms,
 )
 
 _xprint("Import various XTGeo modules... 3D grids...")
@@ -146,18 +150,20 @@ _xprint("Import various XTGeo modules...DONE")
 
 # some function wrappers to initiate objects from imports
 _xprint("Import various XTGeo wrappers...")
-from xtgeo.cube.cube1 import cube_from_file, cube_from_roxar
+from xtgeo.cube.cube1 import cube_from_file, cube_from_rms, cube_from_roxar
 from xtgeo.grid3d.grid import (
     create_box_grid,
     grid_from_cube,
     grid_from_file,
     grid_from_resinsight,
     grid_from_roxar,
+    grid_from_rms,
     grid_from_surfaces,
     grid_merge,
 )
 from xtgeo.xyz.polygons import (
     polygons_from_file,
+    polygons_from_rms,
     polygons_from_roxar,
     polygons_from_wells,
 )
@@ -212,14 +218,17 @@ __all__ = [
     "blocked_well",
     "blocked_wells",
     "blockedwell_from_file",
+    "blockedwell_from_rms",
     "blockedwell_from_roxar",
     "blockedwells_from_files",
+    "blockedwells_from_rms",
     "blockedwells_from_roxar",
     "blockedwells_from_stacked_file",
     "create_box_grid",
     "create_synthetic_surface",
     "cube1",
     "cube_from_file",
+    "cube_from_rms",
     "cube_from_roxar",
     "grid",
     "grid",
@@ -227,6 +236,7 @@ __all__ = [
     "grid_from_file",
     "grid_from_resinsight",
     "grid_from_roxar",
+    "grid_from_rms",
     "grid_from_surfaces",
     "grid_merge",
     "grid_properties",
@@ -239,15 +249,18 @@ __all__ = [
     "gridproperty_from_file",
     "gridproperty_from_resinsight",
     "gridproperty_from_roxar",
+    "gridproperty_from_rms",
     "list_gridproperties",
     "points",
     "points_from_file",
+    "points_from_rms",
     "points_from_roxar",
     "points_from_surface",
     "points_from_wells",
     "points_from_wells_dfrac",
     "polygons",
     "polygons_from_file",
+    "polygons_from_rms",
     "polygons_from_roxar",
     "polygons_from_wells",
     "regular_surface",
@@ -261,6 +274,7 @@ __all__ = [
     "version",
     "well1",
     "well_from_file",
+    "well_from_rms",
     "well_from_roxar",
     "wells",
     "wells_from_files",

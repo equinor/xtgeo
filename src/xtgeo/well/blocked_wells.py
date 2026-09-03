@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Any
 
 from xtgeo.common.log import null_logger
@@ -109,12 +110,10 @@ def blockedwells_from_stacked_file(
     return BlockedWells(blockedwell_list)
 
 
-def blockedwells_from_roxar(
+def blockedwells_from_rms(
     project, gname, bwname, lognames=None, ijk=True
 ):  # pragma: no cover
-    """This makes an instance of a BlockedWells directly from Roxar RMS.
-
-    For arguments, see :meth:`BlockedWells.from_roxar`.
+    """This makes an instance of a BlockedWells directly from RMS.
 
     Note the difference between classes BlockedWell and BlockedWells.
 
@@ -123,7 +122,7 @@ def blockedwells_from_roxar(
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mybws = xtgeo.blockedwells_from_roxar(project, 'Simgrid', 'BW',
+        mybws = xtgeo.blockedwells_from_rms(project, 'Simgrid', 'BW',
                                             lognames=mylogs)
 
     """
@@ -134,6 +133,26 @@ def blockedwells_from_roxar(
     obj._from_roxar(project, gname, bwname, ijk=ijk, lognames=lognames)
 
     return obj
+
+
+def blockedwells_from_roxar(
+    project, gname, bwname, lognames=None, ijk=True
+):  # pragma: no cover
+    """Make an instance of a BlockedWells directly from Roxar RMS.
+
+    .. deprecated::
+        The `blockedwells_from_roxar` function is deprecated and will be removed in a
+        future version. Use `blockedwells_from_rms` instead.
+
+    For arguments, see :func:`blockedwells_from_rms`.
+    """
+    warnings.warn(
+        "The 'blockedwells_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'blockedwells_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+    return blockedwells_from_rms(project, gname, bwname, lognames=lognames, ijk=ijk)
 
 
 class BlockedWells(Wells):

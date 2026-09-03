@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import functools
 import hashlib
+import warnings
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -163,8 +164,8 @@ def gridproperty_from_file(
     return GridProperty._read_file(pfile, fformat, **kwargs)
 
 
-def gridproperty_from_roxar(
-    project: Any,  # project can be a path but also a magic variable in RMS
+def gridproperty_from_rms(
+    project: Any,
     gname: str,
     pname: str,
     realisation: int = 0,
@@ -172,6 +173,48 @@ def gridproperty_from_roxar(
 ) -> GridProperty:
     """
     Make a GridProperty instance directly inside RMS.
+
+    Args:
+        project: The RMS project path or magical pre-defined variable in RMS
+        gname: Name of the grid model
+        pname: Name of the grid property
+        realisation: Realisation number (default 0; first)
+        faciescodes: If an RMS property is of the special body_facies type
+            (e.g. result from a channel facies object modelling), the default
+            is to get the body code values. If faciescodes is True, the facies
+            code values will be read instead. For other RMS properties this
+            key is not relevant.
+
+    Returns:
+        A GridProperty instance.
+
+    Example::
+
+        import xtgeo
+        myporo = xtgeo.gridproperty_from_rms(project, 'Geogrid', 'Poro')
+
+    """
+    return GridProperty._read_roxar(
+        projectname=project,
+        gridname=gname,
+        propertyname=pname,
+        realisation=realisation,
+        faciescodes=faciescodes,
+    )
+
+
+def gridproperty_from_roxar(
+    project: Any,  # project can be a path but also a magic variable in RMS
+    gname: str,
+    pname: str,
+    realisation: int = 0,
+    faciescodes: bool = False,
+) -> GridProperty:
+    """Make a GridProperty instance directly inside RMS.
+
+    .. deprecated::
+        The `gridproperty_from_roxar` function is deprecated and will be removed in a
+        future version. Use `gridproperty_from_rms` instead.
 
     Args:
         project: The Roxar project path or magical pre-defined variable in RMS
@@ -193,10 +236,17 @@ def gridproperty_from_roxar(
         myporo = xtgeo.gridproperty_from_roxar(project, 'Geogrid', 'Poro')
 
     """
-    return GridProperty._read_roxar(
-        project,
-        gname,
-        pname,
+    # A pending deprecation warning will not show up in RMS for normal users
+    warnings.warn(
+        "The 'gridproperty_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'gridproperty_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+    return gridproperty_from_rms(
+        project=project,
+        gname=gname,
+        pname=pname,
         realisation=realisation,
         faciescodes=faciescodes,
     )

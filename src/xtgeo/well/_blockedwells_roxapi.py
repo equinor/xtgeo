@@ -4,7 +4,7 @@ from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
 
-from .blocked_well import blockedwell_from_roxar
+from .blocked_well import blockedwell_from_rms
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -50,7 +50,7 @@ def _roxapi_import_bwells(
     logger.debug("Loading wells ...")
     for wname in wnames:
         logger.debug("Loading well %s", wname)
-        bwtmp = blockedwell_from_roxar(
+        bwtmp = blockedwell_from_rms(
             rox.project,
             gname,
             bwname,

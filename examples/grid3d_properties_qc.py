@@ -66,11 +66,11 @@ def show_stats_inside_rms():
     propnames = ["Poro", "Perm"]
 
     # read facies (to be used as filter)
-    facies = xtgeo.gridproperty_from_roxar(prj, gridmodel, faciesname)
+    facies = xtgeo.gridproperty_from_rms(prj, gridmodel, faciesname)
     print("Facies codes are: {}".format(facies.codes))
 
     for propname in propnames:
-        prop = xtgeo.gridproperty_from_roxar(prj, gridmodel, propname)
+        prop = xtgeo.gridproperty_from_rms(prj, gridmodel, propname)
         print("Working with {}".format(prop.name))
 
         # now find statistics for each facies, and all facies

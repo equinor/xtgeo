@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
@@ -198,7 +199,7 @@ def grid_from_file(
     return _handle_import(Grid, gfile, fformat, **kwargs)
 
 
-def grid_from_roxar(
+def grid_from_rms(
     project: RmsProjectOrPathType,
     gname: str,
     realisation: int = 0,
@@ -217,10 +218,48 @@ def grid_from_roxar(
 
         # inside RMS
         import xtgeo
-        mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
+        mygrid = xtgeo.grid_from_rms(project, "REEK_SIM")
 
     """
     return Grid(**_grid_roxapi.load_grid_from_rms(project, gname, realisation, info))
+
+
+def grid_from_roxar(
+    project: RmsProjectOrPathType,
+    gname: str,
+    realisation: int = 0,
+    info: bool = False,
+) -> Grid:
+    """Read a 3D grid inside an RMS project and return a Grid() instance.
+
+    .. deprecated::
+        The `grid_from_roxar` function is deprecated and will be removed in a future
+        version. Use `grid_from_rms` instead.
+
+    Args:
+        project: The RMS project as path or the project variable
+            from inside RMS.
+        gname: Name of Grid Model in RMS.
+        realisation: Realisation number.
+        info: If true, only grid info
+
+    Example::
+
+        # inside RMS
+        import xtgeo
+        mygrid = xtgeo.grid_from_rms(project, "REEK_SIM")
+
+    """
+    warnings.warn(
+        "The 'grid_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'grid_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+
+    return grid_from_rms(
+        project=project, gname=gname, realisation=realisation, info=info
+    )
 
 
 def grid_from_resinsight(
@@ -1908,9 +1947,9 @@ class Grid(_Grid3D):
 
         Example::
 
-            grid = xtgeo.grid_from_roxar(project, "Simgrid")
+            grid = xtgeo.grid_from_rms(project, "Simgrid")
             # extract polygon for a specific region, here region 3
-            region = xtgeo.gridproperty_from_roxar(project, "Simgrid", "Regions")
+            region = xtgeo.gridproperty_from_rms(project, "Simgrid", "Regions")
             filter_array = (region.values==3)
             boundary = grid.get_boundary_polygons(filter_array=filter_array)
 
@@ -2978,8 +3017,8 @@ class Grid(_Grid3D):
 
         Example::
             import xtgeo
-            grd = xtgeo.grid_from_roxar(project, "simpleb8")
-            poro = xtgeo.gridproperty_from_roxar(project, "simpleb8", "PORO")
+            grd = xtgeo.grid_from_rms(project, "simpleb8")
+            poro = xtgeo.gridproperty_from_rms(project, "simpleb8", "PORO")
             grd.props = [poro]
 
             grd.translate_coordinates(translate=(10,10, 20), flip=(1,1,-1),
