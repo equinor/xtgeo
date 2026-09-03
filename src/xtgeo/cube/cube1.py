@@ -28,12 +28,16 @@ from . import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from xtgeo.common.types import FileLike
+    from xtgeo.cube._cube_import import CubeAttributes
     from xtgeo.surface.regular_surface import RegularSurface
 
 logger = null_logger(__name__)
 
 
-def _data_reader_factory(fmt: FileFormat):
+def _data_reader_factory(fmt: FileFormat) -> Callable[..., CubeAttributes]:
     if fmt == FileFormat.SEGY:
         return _cube_import.import_segy
     if fmt == FileFormat.STORM:
@@ -51,15 +55,15 @@ def _data_reader_factory(fmt: FileFormat):
 
 
 def cube_from_file(
-    mfile,
-    fformat="guess",
+    mfile: FileLike,
+    fformat: str = "guess",
     iline: Literal[189, 193] = 189,
     xline: Literal[189, 193] = 193,
-):
+) -> Cube:
     """This makes an instance of a Cube directly from file import.
 
     Args:
-        mfile (str): Name of file
+        mfile (FileLike): Name of file
         fformat (str): See :meth:`Cube.from_file`
         iline (Literal[189, 193]): Byte position of the inline number field in
             each trace header. Default is 189 (SEGY standard). Only 189 and 193
@@ -77,7 +81,7 @@ def cube_from_file(
     return Cube._read_file(mfile, fformat, iline=iline, xline=xline)
 
 
-def cube_from_roxar(project, name, folder=None):
+def cube_from_roxar(project: Any, name: str, folder: str | None = None) -> Cube:
     """This makes an instance of a Cube directly from roxar input.
 
     The folder is a string on form "a" or "a/b" if subfolders are present
@@ -130,8 +134,8 @@ class Cube:
       rotation: Cube rotation, X axis is applied and "school-wise" rotation,
                      anti-clock in degrees
       values: Numpy array with shape (ncol, nrow, nlay), C order, np.float32
-      ilines: 1D numpy array with ncol elements, aka INLINES array, defaults to arange
-      xlines: 1D numpy array with nrow elements, aka XLINES array, defaults to arange
+      ilines: 1D numpy array with ncol elements, aka INLINES array, defaults to arrange
+      xlines: 1D numpy array with nrow elements, aka XLINES array, defaults to arrange
       segyfile: Name of source segyfile if any
       filesrc: String: Source file if any
       yflip: Normally 1; if -1 Y axis is flipped --> from left-handed (1) to
@@ -141,25 +145,31 @@ class Cube:
 
     def __init__(
         self,
-        ncol,
-        nrow,
-        nlay,
-        xinc,
-        yinc,
-        zinc,
-        xori=0.0,
-        yori=0.0,
-        zori=0.0,
-        yflip=1,
-        values=0.0,
-        rotation=0.0,
-        zflip=1,
-        ilines=None,
-        xlines=None,
-        traceidcodes=None,
-        segyfile=None,
-        filesrc=None,
-    ):
+        ncol: int,
+        nrow: int,
+        nlay: int,
+        xinc: float,
+        yinc: float,
+        zinc: float,
+        xori: float = 0.0,
+        yori: float = 0.0,
+        zori: float = 0.0,
+        yflip: int = 1,
+        values: bool
+        | float
+        | list
+        | tuple
+        | np.ndarray
+        | None
+        | np.ma.MaskedArray = 0.0,
+        rotation: float = 0.0,
+        zflip: int = 1,
+        ilines: np.ndarray | None = None,
+        xlines: np.ndarray | None = None,
+        traceidcodes: np.ndarray | None = None,
+        segyfile: str | None = None,
+        filesrc: FileLike | None = None,
+    ) -> None:
         """Initiate a Cube instance."""
 
         self._filesrc = filesrc
@@ -197,7 +207,7 @@ class Cube:
         self._metadata = MetaDataRegularCube()
         self._metadata.required = self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The __repr__ method."""
         avg = self.values.mean()
         return (
@@ -206,17 +216,18 @@ class Cube:
             f"average {avg}, ID=<{id(self)}>"
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """The __str__ method for pretty print."""
-        return self.describe(flush=False)
+        text = self.describe(flush=False)
+        return text if text is not None else ""
 
     @property
-    def metadata(self):
-        """Return metadata object instance of type MetaDataRegularSurface."""
+    def metadata(self) -> MetaDataRegularCube:
+        """Return metadata object instance of type MetaDataRegularCube."""
         return self._metadata
 
     @metadata.setter
-    def metadata(self, obj):
+    def metadata(self, obj: MetaDataRegularCube) -> None:
         # The current metadata object can be replaced. This is a bit dangerous so
         # further check must be done to validate. TODO.
         if not isinstance(obj, MetaDataRegularCube):
@@ -225,125 +236,125 @@ class Cube:
         self._metadata = obj  # checking is currently missing! TODO
 
     @property
-    def ncol(self):
+    def ncol(self) -> int:
         """The NCOL (NX or I dir) number (read-only)."""
         return self._ncol
 
     @property
-    def nrow(self):
+    def nrow(self) -> int:
         """The NROW (NY or J dir) number (read-only)."""
         return self._nrow
 
     @property
-    def nlay(self):
+    def nlay(self) -> int:
         """The NLAY (or NZ or K dir) number (read-only)."""
         return self._nlay
 
     @property
-    def dimensions(self):
+    def dimensions(self) -> Dimensions:
         """NamedTuple: The cube dimensions with 3 integers (read only)."""
         return Dimensions(self._ncol, self._nrow, self._nlay)
 
     @property
-    def xori(self):
+    def xori(self) -> float:
         """The XORI (origin corner) coordinate."""
         return self._xori
 
     @xori.setter
-    def xori(self, val):
+    def xori(self, val: float) -> None:
         logger.warning("Changing xori is risky!")
         self._xori = val
 
     @property
-    def yori(self):
+    def yori(self) -> float:
         """The YORI (origin corner) coordinate."""
         return self._yori
 
     @yori.setter
-    def yori(self, val):
+    def yori(self, val: float) -> None:
         logger.warning("Changing yori is risky!")
         self._yori = val
 
     @property
-    def zori(self):
+    def zori(self) -> float:
         """The ZORI (origin corner) coordinate."""
         return self._zori
 
     @zori.setter
-    def zori(self, val):
+    def zori(self, val: float) -> None:
         logger.warning("Changing zori is risky!")
         self._zori = val
 
     @property
-    def xinc(self):
+    def xinc(self) -> float:
         """The XINC (increment X) as property."""
         return self._xinc
 
     @xinc.setter
-    def xinc(self, val):
+    def xinc(self, val: float) -> None:
         logger.warning("Changing xinc is risky!")
         self._xinc = val
 
     @property
-    def yinc(self):
+    def yinc(self) -> float:
         """The YINC (increment Y)."""
         return self._yinc
 
     @yinc.setter
-    def yinc(self, val):
+    def yinc(self, val: float) -> None:
         logger.warning("Changing yinc is risky!")
         self._yinc = val
 
     @property
-    def zinc(self):
+    def zinc(self) -> float:
         """The ZINC (increment Z)."""
         return self._zinc
 
     @zinc.setter
-    def zinc(self, val):
+    def zinc(self, val: float) -> None:
         logger.warning("Changing zinc is risky!")
         self._zinc = val
 
     @property
-    def rotation(self):
+    def rotation(self) -> float:
         """The rotation, anticlock from X axis in degrees."""
         return self._rotation
 
     @rotation.setter
-    def rotation(self, val):
+    def rotation(self, val: float) -> None:
         logger.warning("Changing rotation is risky!")
         self._rotation = val
 
     @property
-    def ilines(self):
+    def ilines(self) -> np.ndarray:
         """The inlines numbering vector."""
         return self._ilines
 
     @ilines.setter
-    def ilines(self, values):
+    def ilines(self, values: np.ndarray) -> None:
         self._ilines = values
 
     @property
-    def xlines(self):
+    def xlines(self) -> np.ndarray:
         """The xlines numbering vector."""
         return self._xlines
 
     @xlines.setter
-    def xlines(self, values):
+    def xlines(self, values: np.ndarray) -> None:
         self._xlines = values
 
     @property
-    def zslices(self):
+    def zslices(self) -> np.ndarray:
         """Return the time/depth slices as an int array (read only)."""
         return np.array(range(self.nlay))  # This is a derived property
 
     @property
-    def traceidcodes(self):
-        """The trace identifaction codes array (ncol, nrow)."""
+    def traceidcodes(self) -> np.ndarray:
+        """The trace identification codes array (ncol, nrow)."""
         return self._traceidcodes
 
     @traceidcodes.setter
-    def traceidcodes(self, values):
+    def traceidcodes(self, values: np.ndarray | list | int | str) -> None:
         if isinstance(values, (int, str)):
             self._traceidcodes = np.full((self.ncol, self.nrow), values, dtype=np.int32)
         else:
@@ -352,7 +363,7 @@ class Cube:
             self._traceidcodes = values.reshape(self.ncol, self.nrow)
 
     @property
-    def yflip(self):
+    def yflip(self) -> int:
         """The YFLIP indicator, 1 is normal, -1 means Y flipped.
 
         YFLIP = 1 means a LEFT HANDED coordinate system with Z axis
@@ -362,7 +373,7 @@ class Cube:
         return self._yflip
 
     @property
-    def zflip(self):
+    def zflip(self) -> int:
         """The ZFLIP indicator, 1 is normal, -1 means Z flipped.
 
         ZFLIP = 1 and YFLIP = 1 means a LEFT HANDED coordinate system with Z axis
@@ -372,33 +383,38 @@ class Cube:
         return self._zflip
 
     @property
-    def segyfile(self):
+    def segyfile(self) -> str | None:
         """The input segy file name (str), if any (or None) (read-only)."""
         return self._segyfile
 
     @property
-    def filesrc(self):
+    def filesrc(self) -> FileLike | None:
         """The input file name (str), if any (or None) (read-only)."""
         return self._filesrc
 
     @filesrc.setter
-    def filesrc(self, name):
+    def filesrc(self, name: FileLike | None) -> None:
         self._filesrc = name
 
     @property
-    def values(self):
+    def values(self) -> np.ndarray:
         """The values, as a 3D numpy (ncol, nrow, nlay), 4 byte float."""
         return self._values
 
     @values.setter
-    def values(self, values):
+    def values(
+        self,
+        values: bool | float | list | tuple | np.ndarray | None | np.ma.MaskedArray,
+    ) -> None:
         self._values = self._ensure_correct_values(values)
 
     # =========================================================================
     # Describe
     # =========================================================================
 
-    def generate_hash(self, hashmethod="md5"):
+    def generate_hash(
+        self, hashmethod: Literal["md5", "sha256", "blake2b"] | Callable = "md5"
+    ) -> str:
         """Return a unique hash ID for current instance.
 
         See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
@@ -430,7 +446,7 @@ class Cube:
 
         return generic_hash(gid, hashmethod=hashmethod)
 
-    def describe(self, flush=True):
+    def describe(self, flush: bool = True) -> str | None:
         """Describe an instance by printing to stdout or return.
 
         Args:
@@ -472,7 +488,7 @@ class Cube:
     # Copy, swapping, cropping, thinning...
     # ==================================================================================
 
-    def copy(self):
+    def copy(self) -> Cube:
         """Deep copy of a Cube() object to another instance.
 
 
@@ -505,17 +521,22 @@ class Cube:
 
         return xcube
 
-    def swapaxes(self):
+    def swapaxes(self) -> None:
         """Swap the axes inline vs xline, keep origin."""
         _cube_utils.swapaxes(self)
 
-    def resample(self, incube, sampling="nearest", outside_value=None):
+    def resample(
+        self,
+        incube: Cube,
+        sampling: str = "nearest",
+        outside_value: float | None = None,
+    ) -> None:
         """Resample a Cube object into this instance.
 
         Args:
             incube (Cube): A XTGeo Cube instance
             sampling (str): Sampling algorithm: 'nearest' for nearest node
-                of 'trilinear' for trilinear interpoltion (more correct but
+                of 'trilinear' for trilinear interpolation (more correct but
                 slower)
             outside_value (None or float). If None, keep original, otherwise
                 use this value
@@ -547,7 +568,7 @@ class Cube:
             self, incube, sampling=sampling, outside_value=outside_value
         )
 
-    def do_thinning(self, icol, jrow, klay):
+    def do_thinning(self, icol: int, jrow: int, klay: int) -> None:
         """Thinning the cube by removing every N column, row and/or layer.
 
         Args:
@@ -567,7 +588,13 @@ class Cube:
         """
         _cube_utils.thinning(self, icol, jrow, klay)
 
-    def do_cropping(self, icols, jrows, klays, mode="edges"):
+    def do_cropping(
+        self,
+        icols: tuple[int, int],
+        jrows: tuple[int, int],
+        klays: tuple[int, int],
+        mode: str = "edges",
+    ) -> None:
         """Cropping the cube by removing rows, columns, layers.
 
         Note that input boundary checking is currently lacking, and this
@@ -627,17 +654,17 @@ class Cube:
         )
         _cube_utils.cropping(self, useicols, usejrows, useklays)
 
-    def values_dead_traces(self, newvalue):
+    def values_dead_traces(self, newvalue: float) -> float | None:
         """Set values for traces flagged as dead.
 
         Dead traces have traceidcodes 2 and corresponding values in the cube
         will here receive a constant value to mimic "undefined".
 
         Args:
-            newvalue (float): Set cube values to newvalues where traceid is 2.
+            newvalue (float): Set cube values to new values where traceid is 2.
 
-        Return:
-            oldvalue (float): The estimated simple 'average' of old value will
+        Returns:
+            old value (float): The estimated simple 'average' of old value will
                 be returned as (max + min)/2. If no dead traces, return None.
         """
         logger.info("Set values for dead traces, if any")
@@ -651,7 +678,13 @@ class Cube:
 
         return None
 
-    def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
+    def get_xy_value_from_ij(
+        self,
+        iloc: int,
+        jloc: int,
+        ixline: bool = False,
+        zerobased: bool = False,
+    ) -> tuple[float, float]:
         """Returns x, y coordinate from a single i j location.
 
         Args:
@@ -671,12 +704,12 @@ class Cube:
 
     def compute_attributes_in_window(
         self,
-        upper: RegularSurface | float,
-        lower: RegularSurface | float,
+        upper: RegularSurface | float | int,
+        lower: RegularSurface | float | int,
         ndiv: int = 10,
         interpolation: Literal["cubic", "linear"] = "cubic",
         minimum_thickness: float = 0.0,
-    ) -> dict[RegularSurface]:
+    ) -> dict[str, RegularSurface]:
         """Return a cube's attributes as a set of surfaces, given two input surfaces.
 
         The attributes are computed vertically (per column) within a window defined by
@@ -756,16 +789,16 @@ class Cube:
 
     def get_randomline(
         self,
-        fencespec,
-        zmin=None,
-        zmax=None,
-        zincrement=None,
-        hincrement=None,
-        atleast=5,
-        nextend=2,
-        sampling="nearest",
-    ):
-        """Get a randomline from a fence spesification.
+        fencespec: np.ndarray | Polygons,
+        zmin: float | None = None,
+        zmax: float | None = None,
+        zincrement: float | None = None,
+        hincrement: float | bool | None = None,
+        atleast: int = 5,
+        nextend: int = 2,
+        sampling: str = "nearest",
+    ) -> tuple[float, float, float, float, np.ndarray]:
+        """Get a randomline from a fence specification.
 
         This randomline will be a 2D numpy with depth/time on the vertical
         axis, and length along as horizontal axis. Undefined values will have
@@ -837,18 +870,18 @@ class Cube:
     @classmethod
     def _read_file(
         cls,
-        sfile,
-        fformat="guess",
+        sfile: FileLike,
+        fformat: str = "guess",
         iline: Literal[189, 193] = 189,
         xline: Literal[189, 193] = 193,
-    ):
+    ) -> Cube:
         """Import cube data from file.
 
         If fformat is not provided, the file type will be guessed based
         on file extension (e.g. segy og sgy for SEGY format)
 
         Args:
-            sfile (str): Filename (as string or pathlib.Path instance).
+            sfile (FileLike): Filename (as string or pathlib.Path instance).
             fformat (str): file format guess/segy/rms_regular/xtgregcube
                 where 'guess' is default. Regard 'xtgrecube' format as experimental.
             iline (Literal[189, 193]): Byte position of the inline number in
@@ -884,14 +917,19 @@ class Cube:
             attrs = reader(mfile, iline=iline, xline=xline)
         else:
             attrs = reader(mfile)
-        attrs["filesrc"] = mfile.file
-        return cls(**attrs)
+        return cls(**attrs, filesrc=mfile.file)
 
-    def to_file(self, sfile, fformat="segy", pristine=False, engine=None):
+    def to_file(
+        self,
+        sfile: FileLike,
+        fformat: str = "segy",
+        pristine: bool = False,
+        engine: str | None = None,
+    ) -> None:
         """Export cube data to file.
 
         Args:
-            sfile (str): Filename
+            sfile (FileLike): Output file path or path-like object.
             fformat (str, optional): file format 'segy' (default) or
                 'rms_regular'
             pristine (bool): If True, make SEGY from scratch.
@@ -915,11 +953,11 @@ class Cube:
             )
 
         if fformat in FileFormat.SEGY.value:
-            _cube_export.export_segy(self, fobj.name)
+            _cube_export.export_segy(self, fobj.name)  # type: ignore[arg-type]
         elif fformat == "rms_regular":
-            _cube_export.export_rmsreg(self, fobj.name)
+            _cube_export.export_rmsreg(self, fobj.name)  # type: ignore[arg-type]
         elif fformat == "xtgregcube":
-            _cube_export.export_xtgregcube(self, fobj.name)
+            _cube_export.export_xtgregcube(self, fobj.name)  # type: ignore[arg-type]
         else:
             extensions = FileFormat.extensions_string([FileFormat.SEGY])
             raise InvalidFileFormatError(
@@ -936,7 +974,7 @@ class Cube:
         domain: str = "time",
         compression: tuple[str, float] = ("wavelet", 5.0),
         target: str = "seismic",
-    ):  # pragma: no cover
+    ) -> None:  # pragma: no cover
         """Export (transfer) a cube from a XTGeo cube object to Roxar data.
 
         Note:
@@ -949,7 +987,7 @@ class Cube:
                 else use path to RMS project, or a project reference
             name: Name of cube (seismic data) within RMS project.
             folder: Cubes may be stored under a folder in the tree, use '/'
-                to seperate subfolders.
+                to separate subfolders.
             propname: Name of grid property; only relevant when target is "grid" and
                 defaults to "seismic_attribute"
             domain: 'time' (default) or 'depth'
@@ -975,7 +1013,7 @@ class Cube:
 
         if "grid" in target.lower():
             _tmpgrd = grid_from_cube(self, propname=name)
-            _tmpprop = _tmpgrd.props[0]
+            _tmpprop = _tmpgrd.props[0]  # type: ignore[index]
             _tmpprop.name = propname if propname else "seismic_attribute"
             _tmpgrd.to_roxar(project, name)
             _tmpprop.to_roxar(project, name, _tmpprop.name)
@@ -1018,7 +1056,7 @@ class Cube:
                 )
                 values = np.ma.filled(values, fill_value=0)
 
-            exp_len = np.prod(self.dimensions)
+            exp_len = int(np.prod(self.dimensions))
             if (
                 values.size != exp_len
                 or values.ndim not in (1, 3)
