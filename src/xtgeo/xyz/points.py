@@ -130,6 +130,8 @@ def _wells_importer(
         if wp is not None:
             dflist.append(wp)
 
+    if not dflist:
+        return {}
     dfr = pd.concat(dflist, ignore_index=True)
 
     attrs = {}
@@ -175,6 +177,8 @@ def _wells_dfrac_importer(
         if wpf is not None:
             dflist.append(wpf)
 
+    if not dflist:
+        return {}
     dfr = pd.concat(dflist, ignore_index=True)
 
     attrs = {}
