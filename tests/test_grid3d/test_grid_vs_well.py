@@ -1,6 +1,8 @@
 import logging
 import pathlib
 
+import numpy as np
+import pandas as pd
 import pytest
 
 import xtgeo
@@ -38,6 +40,77 @@ MATCHD2 = {
     "OP_2": 65,
     "OP_3": 70,
 }
+
+
+def _well(values):
+    return xtgeo.Well(df=pd.DataFrame(values, dtype=float))
+
+
+def test_get_distance_to_wells():
+    """Get three-dimensional and lateral distances to a well."""
+    grid = xtgeo.create_box_grid((3, 3, 2), origin=(0, 0, 0), increment=(10, 10, 10))
+    well = _well(
+        {
+            "X_UTME": [5, 5],
+            "Y_UTMN": [5, 5],
+            "Z_TVDSS": [5, 15],
+        }
+    )
+
+    distance_3d = grid.get_distance_to_wells(well)
+    distance_lateral = grid.get_distance_to_wells(well, metric="horizontal")
+
+    assert distance_3d.name == "DISTANCE2WELL"
+    assert not distance_3d.isdiscrete
+    assert distance_3d.dimensions == grid.dimensions
+    assert np.allclose(distance_3d.values[0, 0, :], 0)
+    assert distance_3d.values[1, 0, 0] == pytest.approx(10)
+    assert np.all(distance_lateral.values <= distance_3d.values)
+
+
+def test_get_distance_to_wells_multiple_and_blocked_well():
+    """Use the nearest of multiple wells and blocked-well indices."""
+    grid = xtgeo.create_box_grid((3, 1, 1), increment=(10, 10, 10))
+    first_well = _well({"X_UTME": [5], "Y_UTMN": [5], "Z_TVDSS": [5]})
+    second_well = _well({"X_UTME": [25], "Y_UTMN": [5], "Z_TVDSS": [5]})
+    blocked_well = xtgeo.BlockedWell(
+        df=pd.DataFrame(
+            {
+                "X_UTME": [5.0],
+                "Y_UTMN": [5.0],
+                "Z_TVDSS": [5.0],
+                "I_INDEX": [0.0],
+                "J_INDEX": [0.0],
+                "K_INDEX": [0.0],
+            }
+        )
+    )
+
+    first_distance = grid.get_distance_to_wells(first_well)
+    combined_distance = grid.get_distance_to_wells([first_well, second_well])
+    blocked_distance = grid.get_distance_to_wells(blocked_well)
+
+    assert np.allclose(combined_distance.values[:, 0, 0], [0, 10, 0])
+    assert np.allclose(first_distance.values, blocked_distance.values)
+
+
+def test_get_distance_to_wells_handles_invalid_cells():
+    """Mask inactive cells and reject input that cannot identify well cells."""
+    grid = xtgeo.create_box_grid((2, 2, 1), increment=(10, 10, 10))
+    grid._actnumsv[1, 1, 0] = 0
+    well = _well({"X_UTME": [5], "Y_UTMN": [5], "Z_TVDSS": [5]})
+    outside_well = _well({"X_UTME": [-5], "Y_UTMN": [5], "Z_TVDSS": [5]})
+
+    distance = grid.get_distance_to_wells(well)
+
+    assert distance.values[1, 1, 0] is np.ma.masked
+    with pytest.raises(ValueError, match="None of the wells penetrates"):
+        grid.get_distance_to_wells(outside_well)
+    with pytest.raises(ValueError, match="Unsupported metric"):
+        grid.get_distance_to_wells(well, metric="invalid")
+    with pytest.raises(TypeError, match="Well or BlockedWell"):
+        grid.get_distance_to_wells([well, object()])
+
 
 # A problem here is that the OP wells has very few samples, which
 # makes a assumed match of 100% (since only one point)

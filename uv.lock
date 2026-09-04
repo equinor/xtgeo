@@ -3196,7 +3196,7 @@ requires-dist = [
     { name = "resfo", specifier = ">=5" },
     { name = "roffio", specifier = ">=0.0.2" },
     { name = "ruff", marker = "extra == 'dev'" },
-    { name = "scipy", specifier = ">=1.5" },
+    { name = "scipy", specifier = ">=1.6" },
     { name = "segyio", specifier = ">1.8.0" },
     { name = "shapely", specifier = ">=1.6.2" },
     { name = "sphinx", marker = "extra == 'docs'" },
