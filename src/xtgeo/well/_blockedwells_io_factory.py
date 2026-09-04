@@ -22,7 +22,7 @@ logger = null_logger(__name__)
 
 
 def _export_rms_ascii_blockedwells(
-    blockedwells: BlockedWells, bwfile_wrapper: FileWrapper
+    blockedwells: BlockedWells, bwfile_wrapper: FileWrapper, precision: int
 ) -> None:
     """Export multiple blocked wells to RMS ASCII format, as one file.
 
@@ -89,7 +89,7 @@ def _export_rms_ascii_blockedwells(
                 logs=blockedwelldata.logs + index_logs,
             )
             _write_rms_ascii_header(fhandle, temp_well)
-            _write_rms_ascii_data(fhandle, temp_well)
+            _write_rms_ascii_data(fhandle, temp_well, precision)
 
     logger.debug(
         "Successfully exported %d blocked wells to RMS ASCII", len(blockedwells._wells)
@@ -127,6 +127,7 @@ def blockedwells_to_stacked_file(
     bwfile_wrapper: FileWrapper,
     fformat: str | None,
     compression: str | None = "lzf",
+    precision: int = 8,
 ) -> None:
     """Export BlockedWells instance to stacked file based on format, as one file.
 
@@ -143,7 +144,7 @@ def blockedwells_to_stacked_file(
     fmt = bwfile_wrapper.fileformat(fformat)
 
     if fmt == FileFormat.RMSWELL:
-        _export_rms_ascii_blockedwells(blockedwells, bwfile_wrapper)
+        _export_rms_ascii_blockedwells(blockedwells, bwfile_wrapper, precision)
     elif fmt == FileFormat.CSV:
         _export_csv_blockedwells(blockedwells, bwfile_wrapper)
     else:

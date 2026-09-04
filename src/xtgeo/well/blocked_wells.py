@@ -163,6 +163,8 @@ class BlockedWells(Wells):
         bwfile: FileLike,
         fformat: str | None = "rms_ascii",
         compression: str | None = "lzf",
+        *,
+        precision: int = 8,
     ) -> Path | io.BytesIO | io.StringIO:
         """Export multiple blocked wells to a single concatenated (stacked) file.
 
@@ -177,6 +179,8 @@ class BlockedWells(Wells):
             fformat: File format ('rms_ascii'/'rmswell' or 'csv').
                 Default is 'rms_ascii'. HDF5 is not supported.
             compression: Not used, kept for API compatibility.
+            precision: Keyword-only. Number of decimal places for RMS ASCII
+                floats. Default is 8.
 
         Returns:
             Path to the file that was written.
@@ -198,7 +202,7 @@ class BlockedWells(Wells):
         bwfile_wrapper.check_folder(raiseerror=OSError)
 
         _blockedwells_io_factory.blockedwells_to_stacked_file(
-            self, bwfile_wrapper, fformat, compression
+            self, bwfile_wrapper, fformat, compression, precision
         )
 
         return bwfile_wrapper.file

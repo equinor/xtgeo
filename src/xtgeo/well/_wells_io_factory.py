@@ -21,7 +21,9 @@ if TYPE_CHECKING:
 logger = null_logger(__name__)
 
 
-def _export_rms_ascii_wells(wells: Wells, wfile_wrapper: FileWrapper) -> None:
+def _export_rms_ascii_wells(
+    wells: Wells, wfile_wrapper: FileWrapper, precision: int
+) -> None:
     """Export multiple wells to RMS ASCII format.
 
     Each well is written with its full header and data section, separated by
@@ -46,7 +48,7 @@ def _export_rms_ascii_wells(wells: Wells, wfile_wrapper: FileWrapper) -> None:
             # Convert Well to WellData and write directly to file handle
             welldata = _well_io_factory._well_to_welldata(well)
             _write_rms_ascii_header(fhandle, welldata)
-            _write_rms_ascii_data(fhandle, welldata)
+            _write_rms_ascii_data(fhandle, welldata, precision)
 
     logger.debug("Successfully exported %d wells to RMS ASCII", len(wells._wells))
 
@@ -79,6 +81,7 @@ def wells_to_stacked_file(
     wells: Wells,
     wfile_wrapper: FileWrapper,
     fformat: str | None,
+    precision: int = 8,
 ) -> None:
     """Export Wells instance to file based on format.
 
@@ -94,7 +97,7 @@ def wells_to_stacked_file(
     fmt = wfile_wrapper.fileformat(fformat)
 
     if fmt == FileFormat.RMSWELL:
-        _export_rms_ascii_wells(wells, wfile_wrapper)
+        _export_rms_ascii_wells(wells, wfile_wrapper, precision)
     elif fmt == FileFormat.CSV:
         _export_csv_wells(wells, wfile_wrapper)
     else:

@@ -539,6 +539,7 @@ class Well:
         wfile: str | Path | io.BytesIO,
         fformat: str | None = "rms_ascii",
         compression: str | None = "lzf",
+        precision: int = 8,
     ):
         """Export well to file or memory stream.
 
@@ -546,6 +547,7 @@ class Well:
             wfile: File name or stream.
             fformat: File format ('rms_ascii'/'rmswell', 'csv', 'hdf/hdf5/h5').
             compression: Compression for HDF5 format only. Default is 'lzf'.
+            precision: Number of decimal places for RMS ASCII floats. Default is 8.
 
         Example::
 
@@ -571,7 +573,9 @@ class Well:
             from xtgeo.io._welldata import WellFileFormat
 
             welldata = _well_io_factory._well_to_welldata(self)
-            welldata.to_file(wfile.name, fformat=WellFileFormat.RMS_ASCII)
+            welldata.to_file(
+                wfile.name, fformat=WellFileFormat.RMS_ASCII, precision=precision
+            )
 
         elif fformat in FileFormat.CSV.value:
             from xtgeo.io._welldata import WellFileFormat
