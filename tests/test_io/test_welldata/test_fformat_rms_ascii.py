@@ -371,6 +371,36 @@ def test_welldata_to_file_from_file_multiple_logs(tmp_path):
     assert facies_read.code_names == {1: "SAND", 2: "SHALE"}
 
 
+def test_welldata_writes_integer_valued_continuous_log_as_float(tmp_path):
+    """Test integer-valued continuous logs retain float formatting."""
+    integer_log = WellLog(name="PERM", values=np.array([100.0, np.nan, 200.0]))
+    decimal_log = WellLog(name="PORO", values=np.array([0.15, 0.20, 0.25]))
+    well = WellData(
+        name="INTEGER-CONTINUOUS",
+        xpos=100.0,
+        ypos=200.0,
+        zpos=0.0,
+        survey_x=np.array([100.0, 101.0, 102.0]),
+        survey_y=np.array([200.0, 201.0, 202.0]),
+        survey_z=np.array([1000.0, 1001.0, 1002.0]),
+        logs=(integer_log, decimal_log),
+    )
+
+    filepath = tmp_path / "integer_continuous.txt"
+    well.to_file(filepath=filepath, fformat=WellFileFormat.RMS_ASCII, precision=2)
+
+    lines = filepath.read_text().splitlines()
+    assert "PERM UNK lin" in lines
+    assert lines[6].split()[-2:] == ["100.00", "0.15"]
+    assert lines[7].split()[-2:] == ["-999.00", "0.20"]
+    assert lines[8].split()[-2:] == ["200.00", "0.25"]
+
+    well_read = WellData.from_file(filepath=filepath, fformat=WellFileFormat.RMS_ASCII)
+    perm_read = well_read.get_log("PERM")
+    assert perm_read is not None
+    assert np.array_equal(perm_read.values, integer_log.values, equal_nan=True)
+
+
 def test_welldata_metadata_roundtrip(tmp_path):
     """Test that continuous log metadata (unit, scale) is preserved in roundtrip."""
     # Create a log with specific metadata tuple (TYPE, UNIT, SCALE, ...)
@@ -498,6 +528,14 @@ def test_blockedwell_to_file_from_file_basic(tmp_path):
     filepath = tmp_path / "blocked_a.txt"
     blocked_well.to_file(filepath=filepath, fformat=WellFileFormat.RMS_ASCII)
 
+    lines = filepath.read_text().splitlines()
+    assert lines[5:8] == [
+        "I_INDEX UNK lin",
+        "J_INDEX UNK lin",
+        "K_INDEX UNK lin",
+    ]
+    assert lines[-3].split()[-3:] == ["10", "20", "1"]
+
     blocked_read = BlockedWellData.from_file(
         filepath=filepath, fformat=WellFileFormat.RMS_ASCII
     )
@@ -542,6 +580,34 @@ def test_blockedwell_to_file_from_file_with_nan_indices(tmp_path):
     assert np.array_equal(blocked_read.i_index, blocked_well.i_index, equal_nan=True)
     assert np.array_equal(blocked_read.j_index, blocked_well.j_index, equal_nan=True)
     assert np.array_equal(blocked_read.k_index, blocked_well.k_index, equal_nan=True)
+
+
+def test_blockedwell_writes_fractional_indices_as_floats(tmp_path):
+    """Test fractional index values retain their configured float precision."""
+    blocked_well = BlockedWellData(
+        name="BLOCKED-FRACTIONAL",
+        xpos=100.0,
+        ypos=200.0,
+        zpos=0.0,
+        survey_x=np.array([100.0]),
+        survey_y=np.array([200.0]),
+        survey_z=np.array([1000.0]),
+        i_index=np.array([10.5]),
+        j_index=np.array([20.0]),
+        k_index=np.array([1.0]),
+        logs=(),
+    )
+
+    filepath = tmp_path / "blocked_fractional.txt"
+    blocked_well.to_file(
+        filepath=filepath, fformat=WellFileFormat.RMS_ASCII, precision=2
+    )
+
+    assert filepath.read_text().splitlines()[-1].split()[-3:] == [
+        "10.50",
+        "20",
+        "1",
+    ]
 
 
 def test_blockedwell_to_file_from_file_multiple_logs(tmp_path):

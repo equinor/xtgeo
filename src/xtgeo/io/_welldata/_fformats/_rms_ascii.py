@@ -18,6 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = null_logger(__name__)
 
 RMS_ASCII_UNDEF: Final[float] = -999.0
+RMS_ASCII_INDEX_LOGS: Final = frozenset({"I_INDEX", "J_INDEX", "K_INDEX"})
 
 
 def _read_rms_ascii_header(
@@ -366,9 +367,18 @@ def _write_rms_ascii_data(
 
     tmpdf = pd.DataFrame(data).fillna(value=RMS_ASCII_UNDEF)
 
+    int64 = np.iinfo(np.int64)
     for log in well.logs:
-        if log.is_discrete:
-            tmpdf[[log.name]] = tmpdf[[log.name]].fillna(RMS_ASCII_UNDEF).astype(int)
+        values = tmpdf[log.name].to_numpy()
+        is_integer_index = (
+            log.name in RMS_ASCII_INDEX_LOGS
+            and np.isfinite(values).all()
+            and np.equal(np.mod(values, 1), 0).all()
+            and (values >= int64.min).all()
+            and (values < int64.max).all()
+        )
+        if log.is_discrete or is_integer_index:
+            tmpdf[[log.name]] = tmpdf[[log.name]].astype(int)
 
     cformat = f"%.{precision}f"
 
