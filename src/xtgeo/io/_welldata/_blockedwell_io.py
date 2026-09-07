@@ -166,9 +166,14 @@ class BlockedWellData(WellData):
     def to_rms_ascii(
         self,
         filepath: FileLike,
-        precision: int = 4,
+        precision: int = 8,
     ) -> None:
-        """Write blocked well data to RMS ASCII file."""
+        """Write blocked well data to RMS ASCII file.
+
+        Args:
+            filepath: Output RMS ASCII file path or stream.
+            precision: Number of decimal places for floats (default: 8).
+        """
         from xtgeo.io._welldata._fformats._rms_ascii import write_rms_ascii_blockedwell
 
         write_rms_ascii_blockedwell(

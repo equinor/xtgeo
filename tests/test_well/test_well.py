@@ -70,6 +70,18 @@ def fixture_create_well():
     return Well(25.0, 444.1, 464.1, "91/99-1", dfr)
 
 
+def test_to_file_rms_ascii_precision(simple_well, tmp_path):
+    """Test the public Well export exposes RMS ASCII precision."""
+    default_file = tmp_path / "default.rmswell"
+    simple_well.to_file(default_file)
+    assert "0.01000000" in default_file.read_text()
+
+    custom_file = tmp_path / "custom.rmswell"
+    simple_well.to_file(custom_file, precision=4)
+    assert "0.0100" in custom_file.read_text()
+    assert "0.01000000" not in custom_file.read_text()
+
+
 def test_import(loadwell1, snapshot, helpers):
     """Import well from file."""
 

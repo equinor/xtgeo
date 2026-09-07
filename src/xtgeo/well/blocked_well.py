@@ -205,6 +205,7 @@ class BlockedWell(Well):
         bwfile,
         fformat=None,
         compression: str | None = "lzf",
+        precision: int = 8,
     ):
         """Export BlockedWell to file.
 
@@ -213,6 +214,7 @@ class BlockedWell(Well):
             fformat: File format ('rms_ascii'/'rmswell', 'csv', 'hdf'/'hdf5'/'h5').
                 If None (default), uses 'rms_ascii'.
             compression: Compression for HDF5 format only. Default is 'lzf'.
+            precision: Number of decimal places for RMS ASCII floats. Default is 8.
 
         Returns:
             Path to file (or file object if stream was provided)
@@ -244,7 +246,9 @@ class BlockedWell(Well):
             blockedwelldata = _blockedwell_io_factory._blockedwell_to_blockedwelldata(
                 self
             )
-            blockedwelldata.to_file(bwfile.name, fformat=WellFileFormat.RMS_ASCII)
+            blockedwelldata.to_file(
+                bwfile.name, fformat=WellFileFormat.RMS_ASCII, precision=precision
+            )
 
         elif fformat in FileFormat.CSV.value:
             blockedwelldata = _blockedwell_io_factory._blockedwell_to_blockedwelldata(
