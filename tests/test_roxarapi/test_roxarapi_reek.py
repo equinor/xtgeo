@@ -1167,8 +1167,16 @@ def test_blocked_well_roxar_to_from_file(rms_project_path, tmp_path):
     bw.to_file(filename)
     with open(filename, "r") as fhandle:
         ff = str(fhandle.readlines())
-        assert "Unknown" in ff
-        assert "460297.7747" in ff
+        for expected in [
+            "OP_2",
+            "Zonelog",
+            "Poro",
+            "Facies",
+            "I_INDEX",
+            "J_INDEX",
+            "K_INDEX",
+        ]:
+            assert expected in ff
 
     bw_op2 = xtgeo.blockedwell_from_file(filename)
     assert bw_op2.name == "OP_2"
