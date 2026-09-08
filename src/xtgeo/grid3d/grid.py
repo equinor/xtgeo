@@ -64,20 +64,6 @@ if TYPE_CHECKING:
 xtg = xtgeo.common.XTGeoDialog()
 logger = null_logger(__name__)
 
-# --------------------------------------------------------------------------------------
-# Comment on "asmasked" vs "activeonly:
-#
-# "asmasked"=True will return a np.ma array, while "asmasked" = False will
-# return a np.ndarray
-#
-# The "activeonly" will filter out masked entries, or use None or np.nan
-# if "activeonly" is False.
-#
-# Use word "zerobased" for a bool regarding if startcell basis is 1 or 0
-#
-# For functions with mask=... ,they should be replaced with asmasked=...
-# --------------------------------------------------------------------------------------
-
 
 def _estimate_grid_ijk_handedness(coordsv: np.array) -> Literal["left", "right"] | None:
     """Helper: estimate the ijk handedness from the coordinates.
@@ -1540,6 +1526,7 @@ class Grid(_Grid3D):
 
         Args:
             activeonly (bool): If True (default), return only active cells.
+                See :ref:`asmasked-vs-activeonly`.
             ijk (bool): If True (default), show cell indices, IX JY KZ columns
             xyz (bool): If True (default), show cell center coordinates.
             doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.
@@ -2000,7 +1987,8 @@ class Grid(_Grid3D):
         Args:
             name (str): name of property in the XTGeo GridProperty object.
             asmasked (bool): Actnum is returned with all cells shown
-                as default. Use asmasked=True to make 0 entries masked.
+                as default. Use asmasked=True to make 0 entries masked. See
+                :ref:`asmasked-vs-activeonly`.
             dual (bool): If True, and the grid is a dualporo/perm grid, an
                 extended ACTNUM is applied (numbers 0..3)
 
@@ -2083,7 +2071,8 @@ class Grid(_Grid3D):
                 (experimental)
             asmasked (bool): True if only for active cells, False for all cells.
                 With `False` the inactive cells are included, but the numpy
-                array is still a MaskedArray instance.
+                array is still a MaskedArray instance. See
+                :ref:`asmasked-vs-activeonly`.
             metric (str): One of the following metrics:
                 * "euclid": sqrt(dx^2 + dy^2 + dz^2)
                 * "horizontal": sqrt(dx^2 + dy^2)
@@ -2120,7 +2109,8 @@ class Grid(_Grid3D):
             name (str): names of properties
             asmasked (bool). If True, make a np.ma array where inactive cells
                 are masked. Otherwise the inactive cells are included, but the numpy
-                array is still a MaskedArray instance.
+                array is still a MaskedArray instance. See
+                :ref:`asmasked-vs-activeonly`.
             metric (str): One of the following metrics:
                 * "euclid": sqrt(dx^2 + dy^2 + dz^2)
                 * "horizontal": sqrt(dx^2 + dy^2)
@@ -2151,7 +2141,8 @@ class Grid(_Grid3D):
             name (str): names of properties
             asmasked (bool). If True, make a np.ma array where inactive cells
                 are masked. Otherwise the inactive cells are included, but the numpy
-                array is still a MaskedArray instance.
+                array is still a MaskedArray instance. See
+                :ref:`asmasked-vs-activeonly`.
             metric (str): One of the following metrics:
                 * "euclid": sqrt(dx^2 + dy^2 + dz^2)
                 * "horizontal": sqrt(dx^2 + dy^2)
@@ -2589,7 +2580,8 @@ class Grid(_Grid3D):
         Args:
             names: a 3 x tuple of names per property (default is X_UTME,
             Y_UTMN, Z_TVDSS).
-            asmasked: If True, then inactive cells is masked (numpy.ma).
+            asmasked: If True, then inactive cells is masked (numpy.ma). See
+                :ref:`asmasked-vs-activeonly`.
         """
         return _grid_etc1.get_xyz(self, names=tuple(names), asmasked=asmasked)
 
