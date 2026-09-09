@@ -124,7 +124,9 @@ def surface_from_file(
             'signature' is used to guess format first, then file extension.
         template: Only valid if ``ijxyz`` format, where an existing Cube or
             RegularSurface instance is applied to get correct topology.
-        values (bool): If True (default), surface values will be read (Irap binary only)
+        values (bool): If True (default), surface values will be read. If False,
+            only metadata will be read. Supported for Irap binary, ZMAP ASCII, XTG,
+            and HDF5 formats.
         engine (str): Key indended for developers initially, now deprecated and have no
             effect. To be removed in future versions.
         dtype: Requsted numpy dtype of values; default is float64, alternatively float32
@@ -1108,8 +1110,8 @@ class RegularSurface:
                 is currently supported. If None or guess, the file 'signature' is
                 used to guess format first, then file extension.
             load_values: If True (default), then full array is read, if False
-                only metadata will be read. Valid for Irap binary only. This allows
-                lazy loading in e.g. ensembles.
+                only metadata will be read. Supported for Irap binary, ZMAP ASCII,
+                XTG, and HDF5 formats. This allows lazy loading in e.g. ensembles.
             kwargs: some readers allow additonal options
 
         Keyword Args:
@@ -1141,7 +1143,7 @@ class RegularSurface:
     def load_values(self):
         """Import surface values in cases where metadata only is loaded.
 
-        Currently, only Irap binary format is supported.
+        Supported for Irap binary, ZMAP ASCII, XTG, and HDF5 formats.
 
         Example::
 
