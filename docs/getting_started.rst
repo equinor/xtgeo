@@ -145,3 +145,46 @@ Write a property back to ResInsight as a "GENERATED" result::
         case_name="EXAMPLE",
         property_name="PORO_MODIFIED",
     )
+
+Load an XTGeo ``RegularSurface`` from ResInsight by name::
+
+    import xtgeo
+
+    surf = xtgeo.regular_surface_from_resinsight(
+        instance_or_port=50051,
+        surface_name="TopReservoir",
+    )
+    print(surf.ncol, surf.nrow, surf.values.mean())
+
+Surface names are unique within a ResInsight folder, so a name and a folder
+identify at most one surface. Sub-folders are addressed with a ``/``-separated
+path and are not searched recursively::
+
+    surf = xtgeo.regular_surface_from_resinsight(
+        instance_or_port=50051,
+        surface_name="TopReservoir",
+        folder_name="Reservoir/Depth",
+    )
+
+Export an XTGeo ``RegularSurface`` to ResInsight. Missing folders in
+``folder_name`` are created::
+
+    import xtgeo
+
+    surf = xtgeo.surface_from_file("mysurf.gri")
+    surf.to_resinsight(
+        instance_or_port=50051,
+        surface_name="TopReservoir from XTGeo",
+        folder_name="Reservoir/Depth",
+    )
+
+If a surface with that name already exists in the folder, its property values
+are updated in place. Replacing a surface whose geometry differs deletes it in
+ResInsight (losing its view settings) and therefore requires ``replace=True``::
+
+    surf.to_resinsight(
+        instance_or_port=50051,
+        surface_name="TopReservoir from XTGeo",
+        folder_name="Reservoir/Depth",
+        replace=True,
+    )

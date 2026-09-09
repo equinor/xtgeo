@@ -6,9 +6,13 @@ from typing import TYPE_CHECKING
 
 from xtgeo.common.log import null_logger
 
+from ._rips_package import NameConflictPolicy, require_rips
 from .rips_utils import RipsApiUtils
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import Any
+
     from ._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
@@ -17,6 +21,62 @@ if TYPE_CHECKING:
     )
 
 logger = null_logger(__name__)
+
+
+def select_by_name(
+    items: Iterable[Any],
+    name: str,
+    find_last: bool = True,
+    name_attr: str = "name",
+) -> Any | None:
+    """Select the item from *items* whose *name_attr* equals *name*.
+
+    Shared lookup helper for the ResInsight readers/writers, which pick a
+    named object (case, surface, polygon, folder, ...) from an iterable.
+    Returns the last match when *find_last* is ``True`` (default), else the
+    first, or ``None`` when nothing matches.
+    """
+    selected = None
+    for item in items:
+        if getattr(item, name_attr, None) == name:
+            selected = item
+            if not find_last:
+                break
+    return selected
+
+
+def resolve_folder(
+    root: Any,
+    folder_path: str,
+    name_attr: str,
+    create: bool = False,
+) -> Any | None:
+    """Resolve a ``/``-separated folder path below the *root* collection.
+
+    Works with any ResInsight collection exposing ``sub_collections()`` and
+    ``add_folder()`` (e.g. ``SurfaceCollection``, ``PolygonCollection``). An
+    empty *folder_path* is *root* itself. Missing segments are created when
+    *create* is ``True``, otherwise ``None`` is returned.
+    """
+    folder = root
+
+    for segment in filter(None, folder_path.split("/")):
+        sub = select_by_name(
+            folder.sub_collections(), segment, find_last=False, name_attr=name_attr
+        )
+        if sub is None:
+            if not create:
+                return None
+            # Folders are never overwritten; that would delete their content.
+            # require_rips() gives an actionable upgrade message instead of an
+            # AttributeError if rips is missing/too old for NameConflictPolicy.
+            require_rips()
+            sub = folder.add_folder(
+                folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+            )
+        folder = sub
+
+    return folder
 
 
 def validate_case(case: str | RipsCaseType) -> None:
@@ -48,7 +108,7 @@ class _BaseResInsightDataRW:
 
     def __init__(
         self,
-        instance_or_port: ResInsightInstanceOrPortType | None,
+        instance_or_port: ResInsightInstanceOrPortType | None = None,
     ) -> None:
         self.instance_or_port = instance_or_port
         self._ripsapi_utils: RipsApiUtils | None = None
@@ -101,10 +161,4 @@ class _BaseResInsightDataRW:
         if not cases:
             return None
 
-        selected_case = None
-        for case in cases:
-            if case.name == case_name:
-                selected_case = case
-                if not find_last:
-                    break
-        return selected_case
+        return select_by_name(cases, case_name, find_last=find_last)
