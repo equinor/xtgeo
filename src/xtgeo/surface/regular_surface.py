@@ -81,6 +81,9 @@ if TYPE_CHECKING:
 
     from xtgeo.cube.cube1 import Cube
     from xtgeo.grid3d.grid import Grid, GridProperty
+    from xtgeo.interfaces.resinsight._rips_package import (
+        ResInsightInstanceOrPortType,
+    )
 
 
 xtg = XTGeoDialog()
@@ -484,6 +487,49 @@ def create_synthetic_surface(
         yori=yori,
         rotation=rotation,
         values=zv,
+    )
+
+
+def regular_surface_from_resinsight(
+    instance_or_port: "ResInsightInstanceOrPortType | None",
+    surface_name: str,
+    property_name: str | None = None,
+    folder_name: str = "",
+) -> "RegularSurface":
+    """Load a regular surface from a ResInsight project.
+
+    Surface names are unique within a ResInsight folder, so ``surface_name``
+    and ``folder_name`` identify at most one surface.
+
+    Args:
+        instance_or_port: ``rips.Instance`` or gRPC port; ``None`` to
+            auto-discover a running ResInsight instance.
+        surface_name: Name of the surface to load.
+        property_name: Property to read; ``None`` (default) reads the
+            surface's current depth property, e.g. pass ``"Porosity"``.
+        folder_name: ``/``-separated folder path (e.g. ``"Reservoir/Top"``),
+            empty (default) for the root folder. Not searched recursively.
+
+    Returns:
+        A populated :class:`xtgeo.RegularSurface`.
+
+    Example::
+
+        import xtgeo
+
+        surf = xtgeo.regular_surface_from_resinsight(5000, "TopReservoir")
+
+    """
+    from xtgeo.interfaces.resinsight._regular_surface import RegularSurfaceReader
+
+    return (
+        RegularSurfaceReader(instance_or_port=instance_or_port)
+        .load(
+            surface_name=surface_name,
+            property_name=property_name,
+            folder_name=folder_name,
+        )
+        .to_xtgeo_surface()
     )
 
 
@@ -1470,6 +1516,70 @@ class RegularSurface:
             stype=stype,
             realisation=realisation,
             domain=domain,
+        )
+
+    def to_resinsight(
+        self,
+        instance_or_port: "ResInsightInstanceOrPortType | None",
+        surface_name: str,
+        folder_name: str = "",
+        property_name: str = "Depth",
+        set_as_depth: bool = True,
+        replace: bool = False,
+    ) -> None:
+        """Export this regular surface to a ResInsight project.
+
+        An existing surface of the same name is updated in place when its
+        geometry matches; otherwise it must be deleted and recreated, which
+        requires ``replace=True``.
+
+        Args:
+            instance_or_port: ``rips.Instance`` or gRPC port; ``None`` to
+                auto-discover a running ResInsight instance.
+            surface_name: Display name for the surface in ResInsight.
+            folder_name: ``/``-separated folder path (e.g. ``"Reservoir/Top"``),
+                empty (default) for the root folder. Missing folders are
+                created.
+            property_name: Property to write the values under, ``"Depth"`` by
+                default. Call repeatedly to add several properties.
+            set_as_depth: Mark the written property as the depth property.
+            replace: Allow deleting and recreating an existing surface whose
+                geometry differs.
+
+        Example::
+
+            import xtgeo
+
+            surf = xtgeo.surface_from_file("top_reservoir.gri")
+            surf.to_resinsight(5000, surface_name="TopReservoir")
+
+            # Add porosity as a second property on the same surface
+            poro = xtgeo.surface_from_file("porosity.gri")
+            poro.to_resinsight(
+                5000, "TopReservoir", property_name="Porosity", set_as_depth=False
+            )
+
+        """
+        from xtgeo.interfaces.resinsight._regular_surface import (
+            RegularSurfaceDataResInsight,
+            RegularSurfaceWriter,
+        )
+
+        # ResInsight requires yinc > 0; normalise as done for RMS export.
+        # This also covers yflip == 1 with a negative yinc, which
+        # make_lefthanded() handles internally but is not implied by yflip.
+        use_srf = self
+        if self.yflip == -1 or self.yinc < 0:
+            use_srf = self.copy()
+            use_srf.make_lefthanded()
+
+        RegularSurfaceWriter(instance_or_port=instance_or_port).save(
+            RegularSurfaceDataResInsight.from_xtgeo_surface(use_srf, name=surface_name),
+            surface_name,
+            folder_name=folder_name,
+            property_name=property_name,
+            set_as_depth=set_as_depth,
+            replace=replace,
         )
 
     @classmethod
