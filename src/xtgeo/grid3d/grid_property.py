@@ -58,20 +58,6 @@ if TYPE_CHECKING:
 
     Roxar_DType = Union[type[np.uint8], type[np.uint16], type[np.float32]]
 
-# --------------------------------------------------------------------------------------
-# Comment on 'asmasked' vs 'activeonly:
-#
-# 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
-# return a np.ndarray
-#
-# The 'activeonly' will filter out masked entries, or use None or np.nan
-# if 'activeonly' is False.
-#
-# Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
-#
-# For functions with mask=... ,they should be replaced with asmasked=...
-# --------------------------------------------------------------------------------------
-
 # ======================================================================================
 # Functions outside the class, for rapid access. Will be exposed as
 # xxx = xtgeo.gridproperty_from_file.
@@ -1216,7 +1202,8 @@ class GridProperty(_Grid3D):
             name: Name of property in the XTGeo GridProperty object.
                 Default is "ACTNUM".
             asmasked: Default is False, so that actnum is returned with all cells
-                shown. Use asmasked=True to make 0 entries masked.
+                shown. Use asmasked=True to make 0 entries masked. See
+                :ref:`asmasked-vs-activeonly`.
 
         Returns:
             The ACTNUM GridProperty object.
