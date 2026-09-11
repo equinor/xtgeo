@@ -32,6 +32,7 @@ from . import (
     _grid_roxapi,
     _grid_translate_coords,
     _grid_transmissibilities,
+    _grid_welldist,
     _grid_wellzone,
     _gridprop_lowlevel,
 )
@@ -3391,6 +3392,31 @@ class Grid(_Grid3D):
             filterlogrange=filterlogrange,
             resultformat=resultformat,
         )
+
+    def get_distance_to_wells(
+        self,
+        wells: Well | list[Well],
+        metric: Literal["euclid", "horizontal"] = "euclid",
+        name: str = "DISTANCE2WELL",
+    ) -> GridProperty:
+        """Create a property with cell-center distances to the nearest well.
+
+        The distance is calculated to the center of the nearest cell penetrated by a
+        well, rather than to the well trajectory itself. Use
+        ``metric="horizontal"`` to calculate horizontal (XY) distance only.
+        Inactive cells are masked.
+
+        Args:
+            wells: A well or list of wells. Blocked wells use their I/J/K indices.
+            metric: ``"euclid"`` (default) or ``"horizontal"`` for horizontal
+                distance.
+            name: Name of the returned property.
+
+        Returns:
+            A continuous grid property containing distances to the nearest well.
+
+        """
+        return _grid_welldist.get_distance_to_wells(self, wells, metric, name)
 
     # ==================================================================================
     # Extract a fence/randomline by sampling, ready for plotting with e.g. matplotlib
