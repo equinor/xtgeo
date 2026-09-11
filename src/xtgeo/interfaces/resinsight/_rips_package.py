@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 # Minimum rips version that exposes the full API used by xtgeo
-MIN_RIPS_VERSION = "2026.6"
+MIN_RIPS_VERSION = "2026.9"
 
 
 def _check_rips_version() -> None:
@@ -70,6 +70,7 @@ if rips is not None:
         from rips import (
             Case as _RipsCase,
             Instance as _RipsInstance,
+            NameConflictPolicy,  # noqa: F401
             Project as _RipsProject,
             PropertyDataType,  # noqa: F401
             PropertyType,  # noqa: F401
@@ -77,19 +78,22 @@ if rips is not None:
     except ImportError as err:
         _rips_import_error = (
             f"The installed rips package does not provide the required API "
-            "symbols (Case, Instance, Project, PropertyDataType, PropertyType): "
-            f"{err}. Please upgrade: pip install 'rips>={MIN_RIPS_VERSION}'"
+            "symbols (Case, Instance, NameConflictPolicy, Project, "
+            f"PropertyDataType, PropertyType): {err}. "
+            f"Please upgrade: pip install 'rips>={MIN_RIPS_VERSION}'"
         )
         rips = None
         _RipsCase = Any  # type: ignore[misc,assignment]
         _RipsInstance = Any  # type: ignore[misc,assignment]
         _RipsProject = Any  # type: ignore[misc,assignment]
+        NameConflictPolicy = Any  # type: ignore[misc,assignment]
         PropertyDataType = Any  # type: ignore[misc,assignment]
         PropertyType = Any  # type: ignore[misc,assignment]
 else:
     _RipsCase = Any  # type: ignore[misc,assignment]
     _RipsInstance = Any  # type: ignore[misc,assignment]
     _RipsProject = Any  # type: ignore[misc,assignment]
+    NameConflictPolicy = Any  # type: ignore[misc,assignment]
     PropertyDataType = Any  # type: ignore[misc,assignment]
     PropertyType = Any  # type: ignore[misc,assignment]
 
