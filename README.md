@@ -1,6 +1,6 @@
 ![XTGeo](https://github.com/equinor/xtgeo/blob/main/docs/images/xtgeo-logo-wide.png)
 ![builds](https://github.com/equinor/xtgeo/workflows/builds/badge.svg)
-![linting](https://github.com/equinor/xtgeo/workflows/linting/badge.svg)
+[![linting](https://github.com/equinor/xtgeo/actions/workflows/linting.yml/badge.svg)](https://github.com/equinor/xtgeo/actions/workflows/linting.yml)
 [![codecov](https://codecov.io/gh/equinor/xtgeo/branch/main/graph/badge.svg)](https://codecov.io/gh/equinor/xtgeo)
 [![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/equinor/xtgeo?utm_source=badge)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
