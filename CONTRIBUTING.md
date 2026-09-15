@@ -295,7 +295,7 @@ for k, _ in sysm.items():
 
 import xtgeo
 
-grd = xgeo.grid_from_roxar(project, "Geogrid")
+grd = xgeo.grid_from_rms(project, "Geogrid")
 ```
 
 This will work if you change python code in XTGeo. If you change C code in XTGeo, then
