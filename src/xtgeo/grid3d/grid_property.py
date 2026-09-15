@@ -1032,7 +1032,7 @@ class GridProperty(_Grid3D):
             )
         )
 
-    def to_roxar(
+    def to_rms(
         self,
         projectname: str,
         gridname: str,
@@ -1047,7 +1047,7 @@ class GridProperty(_Grid3D):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Note:
@@ -1077,6 +1077,38 @@ class GridProperty(_Grid3D):
             projectname,
             gridname,
             propertyname,
+            realisation=realisation,
+            casting=casting,
+        )
+
+    def to_roxar(
+        self,
+        projectname: str,
+        gridname: str,
+        propertyname: str,
+        realisation: int = 0,
+        casting: (
+            Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"] | None
+        ) = "unsafe",
+    ) -> None:
+        """Store a grid model property into an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            projectname=projectname,
+            gridname=gridname,
+            propertyname=propertyname,
             realisation=realisation,
             casting=casting,
         )

@@ -219,7 +219,7 @@ Edit a porosity in a 3D grid
     myporo.values[myporo.values > 0.35] = 0.35
 
     # store to another icon
-    poro.to_roxar(project, "Geomodel", "PorNew")
+    poro.to_rms(project, "Geomodel", "PorNew")
 
 
 Edit a permeability given a porosity cutoff
@@ -237,7 +237,7 @@ Edit a permeability given a porosity cutoff
    myperm.values = np.where(myporo.values < 0.1, 0.001, myperm.values)
 
    # store to another icon
-   myperm.to_roxar(project, "Geomodel", "PermEdit")
+    myperm.to_rms(project, "Geomodel", "PermEdit")
 
 
 Edit a 3D grid porosity inside polygons
@@ -262,7 +262,7 @@ Edit a 3D grid porosity inside polygons
    myprop.set_inside(mypoly, 99)
 
    # Save in RMS as a new icon
-   myprop.to_roxar(project, "Reek_sim", "NEWPORO_setinside")
+    myprop.to_rms(project, "Reek_sim", "NEWPORO_setinside")
 
    
 Create region polygons from the grid
@@ -344,7 +344,7 @@ a certain depth interval has horizontal layers.
        reg.values[:, :, :] = 1
        reg.values[:, 193:, :] = 0  # remember 0 base in NP arrays
 
-       reg.to_roxar(PRJ, GNAME_INPUT, HREGNAME)  # store for info/check
+    reg.to_rms(PRJ, GNAME_INPUT, HREGNAME)  # store for info/check
 
        return tgrid, reg
 
