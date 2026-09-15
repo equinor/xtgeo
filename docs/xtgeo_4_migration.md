@@ -313,6 +313,8 @@ argument has been changed to `asmasked` which is already in place.
 
 - `GridProperty().values3d` has been deprecated. Use `GridProperty().values`
   instead.
+- `GridProperty.to_roxar(...)` is deprecated. Use
+  `GridProperty.to_rms(...)` instead, with the same arguments.
 - `GridProperty().get_actnum(mask=True)` is deprecated.
   Use `asmasked` instead, e.g. `GridProperty().get_actnum(asmasked=True)`.
 
