@@ -181,21 +181,6 @@ def gridproperties_from_file(
     )
 
 
-# --------------------------------------------------------------------------------------
-# Comment on 'asmasked' vs 'activeonly:
-#
-# 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
-# return a np.ndarray
-#
-# The 'activeonly' will filter out masked entries, or use None or np.nan
-# if 'activeonly' is False.
-#
-# Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
-#
-# For functions with mask=... ,they should be replaced with asmasked=...
-# --------------------------------------------------------------------------------------
-
-
 def gridproperties_dataframe(
     gridproperties: Iterable[GridProperties],
     grid: Grid | None = None,
@@ -213,7 +198,8 @@ def gridproperties_dataframe(
         gridproperties: List (also GridProperties or iterable) of GridProperty
             to create dataframe of.
         activeonly (bool): If True, return only active cells, NB!
-            If True, will require a grid instance (see grid key)
+            If True, will require a grid instance (see grid key). See
+            :ref:`asmasked-vs-activeonly`.
         ijk (bool): If True, show cell indices, IX JY KZ columns
         xyz (bool): If True, show cell center coordinates (needs grid).
         doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.
@@ -547,7 +533,8 @@ class GridProperties(_Grid3D):
 
         Args:
             names: a 3 x tuple of names per property (default IX, JY, KZ).
-            asmasked: If True, then active cells only.
+            asmasked: If True, then active cells only. See
+                :ref:`asmasked-vs-activeonly`.
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         return _grid_etc1.get_ijk(
@@ -564,7 +551,8 @@ class GridProperties(_Grid3D):
         Args:
             name (str): name of property in the XTGeo GridProperty object.
             asmasked (bool): ACTNUM is returned with all cells
-                as default. Use asmasked=True to make 0 entries masked.
+                as default. Use asmasked=True to make 0 entries masked. See
+                :ref:`asmasked-vs-activeonly`.
 
         Example::
 
@@ -604,7 +592,8 @@ class GridProperties(_Grid3D):
 
         Args:
             activeonly (bool): If True, return only active cells, NB!
-                If True, will require a grid instance (see grid key)
+                If True, will require a grid instance (see grid key). See
+                :ref:`asmasked-vs-activeonly`.
             ijk (bool): If True, show cell indices, IX JY KZ columns
             xyz (bool): If True, show cell center coordinates (needs grid).
             doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.

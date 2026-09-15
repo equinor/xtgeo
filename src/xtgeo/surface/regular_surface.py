@@ -21,17 +21,6 @@ or::
 
 """
 
-# --------------------------------------------------------------------------------------
-# Comment on 'asmasked' vs 'activeonly:
-# 'asmasked'=True will return a np.ma array, with some fill_value if
-# if asmasked = False
-#
-# while 'activeonly' will filter
-# out maked entries, or use np.nan if 'activeonly' is False
-#
-# For functions with mask=... ,the should be replaced with asmasked=...
-# --------------------------------------------------------------------------------------
-
 from __future__ import annotations
 
 import functools
@@ -1569,11 +1558,12 @@ class RegularSurface:
         Args:
             order (str): Flatteting is in C (default) or F order
             asmasked (bool): If true, return as MaskedArray, other as standard
-                numpy ndarray with undef as np.nan or fill_value
+                numpy ndarray with undef as np.nan or fill_value. See
+                :ref:`asmasked-vs-activeonly`.
             fill_value (str): Relevent only if asmasked is False, this
                 will be the value of undef entries
             activeonly (bool): If True, only active cells. Keys 'asmasked' and
-                'fill_value' are not revelant.
+                'fill_value' are not relevant. See :ref:`asmasked-vs-activeonly`.
 
         Returns:
             A numpy 1D array or MaskedArray
@@ -1813,7 +1803,8 @@ class RegularSurface:
 
         Args:
             zero_based (bool): If False, first number is 1, not 0
-            asmasked (bool): If True, UNDEF map nodes are skipped
+            asmasked (bool): If True, UNDEF map nodes are masked. See
+                :ref:`asmasked-vs-activeonly`.
             order (str): 'C' (default) or 'F' order (row vs column major)
         """
         return _regsurf_oper.get_ij_values(
@@ -1825,7 +1816,8 @@ class RegularSurface:
 
         Args:
             zero_based (bool): If False, first number is 1, not 0
-            activeonly (bool): If True, UNDEF map nodes are skipped
+            activeonly (bool): If True, UNDEF map nodes are skipped. See
+                :ref:`asmasked-vs-activeonly`.
             order (str): 'C' (default) or 'F' order (row vs column major)
         """
         return _regsurf_oper.get_ij_values1d(
@@ -1837,7 +1829,8 @@ class RegularSurface:
 
         Args:
             order (str): 'C' (default) or 'F' order (row major vs column major)
-            asmasked (bool): If True , inactive nodes are masked.
+            asmasked (bool): If True, inactive nodes are masked. See
+                :ref:`asmasked-vs-activeonly`.
         """
         xvals, yvals = _regsurf_oper.get_xy_values(self, order=order, asmasked=asmasked)
 
@@ -1848,7 +1841,8 @@ class RegularSurface:
 
         Args:
             order (str): 'C' (default) or 'F' order (row major vs column major)
-            activeonly (bool): Only active cells are returned.
+            activeonly (bool): Only active cells are returned. See
+                :ref:`asmasked-vs-activeonly`.
         """
         xvals, yvals = _regsurf_oper.get_xy_values1d(
             self, order=order, activeonly=activeonly
@@ -1869,7 +1863,8 @@ class RegularSurface:
 
         Args:
             order (str): 'C' (default) or 'F' order (row major vs column major)
-            activeonly (bool): Only active cells are returned.
+            activeonly (bool): Only active cells are returned. See
+                :ref:`asmasked-vs-activeonly`.
             fill_value (float): If activeonly is False, value of inactive nodes
         """
         xcoord, ycoord = self.get_xy_values1d(order=order, activeonly=activeonly)
@@ -1894,7 +1889,7 @@ class RegularSurface:
                for Fortran order (column fastest)
             activeonly (bool): If True, only active nodes are listed. If
                 False, the values will have fill_value default None = NaN
-                as values
+                as values. See :ref:`asmasked-vs-activeonly`.
             fill_value (float): Value of inactive nodes if activeonly is False
 
         Example::
