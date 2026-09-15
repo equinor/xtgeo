@@ -307,13 +307,13 @@ def import_gxf(mfile: FileWrapper, **_) -> dict:
         # RegularSurface does not mask custom undef values on value assignment
         # Local solution: the #DUMMY value in the GXF file is replaced with
         # xtgeo.UNDEF when importing into RegularSurface.
-        # Upon export, the RegularSurface.undef will then be used while the original
-        # #DUMMY value is lost.
+        # Upon export, xtgeo.UNDEF is used as a stable, collision-free sentinel,
+        # while the original #DUMMY value is lost.
         # The GXF file format spec says that the #DUMMY value can be arbitrary,
         # so this is not expected to cause problems.
 
         grid_values = np.ma.array(grid_values, copy=True)
-        grid_values.data[grid_values.data == gxf_data.dummy] = UNDEF
+        grid_values.data[np.ma.getmaskarray(grid_values)] = UNDEF
 
     args["values"] = grid_values
 
