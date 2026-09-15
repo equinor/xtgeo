@@ -224,9 +224,9 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
     grd = xtgeo.grid_from_file(testdata_path / GRIDDATA1)
     grd.to_roxar(project, GRIDNAME1)
     por = xtgeo.gridproperty_from_file(testdata_path / PORODATA1, name=PORONAME1)
-    por.to_roxar(project, GRIDNAME1, PORONAME1)
+    por.to_rms(project, GRIDNAME1, PORONAME1)
     zon = xtgeo.gridproperty_from_file(testdata_path / ZONEDATA1, name=ZONENAME1)
-    zon.to_roxar(project, GRIDNAME1, ZONENAME1)
+    zon.to_rms(project, GRIDNAME1, ZONENAME1)
 
     # populate with points and polygons (XYZ data)
     poly = xtgeo.polygons_from_file(testdata_path / POLYDATA1)
@@ -460,7 +460,7 @@ def test_rms_get_gridproperty(rms_project_path):
 
     zone._roxar_dtype = np.int32
     with pytest.raises(TypeError):
-        zone.to_roxar(rms_project_path, GRIDNAME1, ZONENAME1)
+        zone.to_rms(rms_project_path, GRIDNAME1, ZONENAME1)
 
 
 @pytest.mark.requires_roxar
@@ -491,6 +491,15 @@ def test_rox_get_gridproperty_deprecation(rms_project_path: str) -> None:
 
 
 @pytest.mark.requires_roxar
+def test_gridproperty_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    poro = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, PORONAME1)
+
+    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+        poro.to_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_deprecation")
+
+
+@pytest.mark.requires_roxar
 def test_rox_gridproperty_dtypes(rms_project_path):
     """Various work with a grid property using dtype."""
     logger.info("Project is %s", rms_project_path)
@@ -500,7 +509,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
 
     prop = xtgeo.GridProperty(grid, discrete=False, values=999)
     assert prop.roxar_dtype == np.float32
-    prop.to_roxar(prj, GRIDNAME1, "myprop1")
+    prop.to_rms(prj, GRIDNAME1, "myprop1")
 
     # change to discrete
     prop.isdiscrete = True
@@ -508,7 +517,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     # try to overwite the continous icon after changing data
     prop.values = 251
     with pytest.warns(UserWarning) as warning_info:
-        prop.to_roxar(prj, GRIDNAME1, "myprop1")
+        prop.to_rms(prj, GRIDNAME1, "myprop1")
         assert "Existing RMS icon has data type" in str(warning_info[0].message)
     # read icon again, it will still be a float
     newprop = xtgeo.gridproperty_from_rms(prj, GRIDNAME1, "myprop1")
@@ -522,9 +531,9 @@ def test_rox_gridproperty_dtypes(rms_project_path):
 
     # store it again, should issue some warnings
     with pytest.warns(UserWarning):
-        newprop.to_roxar(prj, GRIDNAME1, "myprop1")
+        newprop.to_rms(prj, GRIDNAME1, "myprop1")
 
-    newprop.to_roxar(prj, GRIDNAME1, "myprop2")  # should not give warning
+    newprop.to_rms(prj, GRIDNAME1, "myprop2")  # should not give warning
 
     newprop.isdiscrete = False
     assert newprop.roxar_dtype == np.float32
@@ -533,7 +542,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     # establish a uint8 (1 byte) icon in RMS
     onebyte_prop = xtgeo.GridProperty(grid, discrete=True, values=9)
     onebyte_prop.roxar_dtype = np.uint8
-    onebyte_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+    onebyte_prop.to_rms(prj, GRIDNAME1, "onebyte")
 
     # now assign it 2 byte
     twobyte_prop = onebyte_prop.copy()
@@ -541,7 +550,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
 
     # write it to onebyte prop; should only trigger a warning
     with pytest.warns(UserWarning, match="Existing RMS icon has data type"):
-        twobyte_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+        twobyte_prop.to_rms(prj, GRIDNAME1, "onebyte")
 
     # similar when going from continuous
     cont_prop = onebyte_prop.copy()
@@ -549,7 +558,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     assert cont_prop.dtype == np.float64
     assert cont_prop.roxar_dtype == np.float32
     with pytest.warns(UserWarning, match="Existing RMS icon has data type"):
-        cont_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+        cont_prop.to_rms(prj, GRIDNAME1, "onebyte")
 
 
 @pytest.mark.requires_roxar
@@ -561,7 +570,7 @@ def test_rox_get_modify_set_gridproperty(rms_project_path):
     adder = 0.9
     poro.values = poro.values + adder
 
-    poro.to_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_NEW")
+    poro.to_rms(rms_project_path, GRIDNAME1, PORONAME1 + "_NEW")
 
     poronew = xtgeo.gridproperty_from_rms(
         rms_project_path, GRIDNAME1, PORONAME1 + "_NEW"

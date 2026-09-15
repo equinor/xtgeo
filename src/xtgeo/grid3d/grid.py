@@ -3154,7 +3154,7 @@ class Grid(_Grid3D):
 
             grd.to_roxar(project, "simpleb8_translated")
             poro1 = grd.get_prop_by_name("PORO")
-            poro1.to_roxar(project, "simpleb8_translated", "PORO")
+            poro1.to_rms(project, "simpleb8_translated", "PORO")
 
         """
         _grid_translate_coords.translate_coordinates(
