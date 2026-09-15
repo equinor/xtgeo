@@ -18,7 +18,7 @@ logger = null_logger(__name__)
 xtg = XTGeoDialog()
 
 if TYPE_CHECKING:
-    from xtgeo import Cube
+    from xtgeo.cube.cube1 import Cube
 
 
 def export_segy(cube: Cube, sfile: str) -> None:
@@ -93,24 +93,24 @@ def export_segy(cube: Cube, sfile: str) -> None:
         f.text[0] = bytes(text_header)
 
 
-def export_rmsreg(self, sfile):
+def export_rmsreg(cube: Cube, sfile: str) -> None:
     """Export on RMS regular format."""
 
     logger.debug("Export to RMS regular format...")
-    values1d = self.values.reshape(-1)
+    values1d = cube.values.reshape(-1)
 
     status = _cxtgeo.cube_export_rmsregular(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self.xori,
-        self.yori,
-        self.zori,
-        self.xinc,
-        self.yinc * self.yflip,
-        self.zinc,
-        self.rotation,
-        self.yflip,
+        cube.ncol,
+        cube.nrow,
+        cube.nlay,
+        cube.xori,
+        cube.yori,
+        cube.zori,
+        cube.xinc,
+        cube.yinc * cube.yflip,
+        cube.zinc,
+        cube.rotation,
+        cube.yflip,
         values1d,
         sfile,
     )
@@ -119,16 +119,16 @@ def export_rmsreg(self, sfile):
         raise RuntimeError("Error when exporting to RMS regular")
 
 
-def export_xtgregcube(self, mfile):
+def export_xtgregcube(cube: Cube, mfile: str) -> None:
     """Export to experimental xtgregcube format, python version."""
     logger.info("Export as xtgregcube...")
-    self.metadata.required = self
+    cube.metadata.required = cube
 
-    prevalues = (1, 1201, 4, self.ncol, self.nrow, self.nlay)
+    prevalues = (1, 1201, 4, cube.ncol, cube.nrow, cube.nlay)
     mystruct = struct.Struct("= i i i q q q")
     pre = mystruct.pack(*prevalues)
 
-    meta = self.metadata.get_metadata()
+    meta = cube.metadata.get_metadata()
 
     jmeta = json.dumps(meta).encode()
 
@@ -137,7 +137,7 @@ def export_xtgregcube(self, mfile):
 
     with open(mfile, "ab") as fout:
         # TODO. Treat dead traces as undef
-        self.values.tofile(fout)
+        cube.values.tofile(fout)
 
     with open(mfile, "ab") as fout:
         fout.write("\nXTGMETA.v01\n".encode())
