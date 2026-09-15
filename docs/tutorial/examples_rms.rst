@@ -250,7 +250,7 @@ Edit a 3D grid porosity inside polygons
 
    import xtgeo
 
-    mygrid = xtgeo.grid_from_rms(project, "Reek_sim")
+   mygrid = xtgeo.grid_from_rms(project, "Reek_sim")
    myprop = xtgeo.gridproperty_from_rms(project, "Reek_sim", "PORO")
 
    # read polygon(s), from Horizons, Faults, Zones or Clipboard
@@ -287,7 +287,7 @@ Create region polygons from the grid
 
    def create_region_polygons():
        """Create region polygons and store them on the clipboard"""
-    grid = xtgeo.grid_from_rms(project, GNAME)
+       grid = xtgeo.grid_from_rms(project, GNAME)
        reg = xtgeo.gridproperty_from_rms(project, GNAME, REGNAME)
        zone = xtgeo.gridproperty_from_rms(project, GNAME, ZONENAME)
 
@@ -338,7 +338,7 @@ a certain depth interval has horizontal layers.
 
    def hregion():
        """Make a custom region property for hybrid grid"""
-    tgrid = xtgeo.grid_from_rms(PRJ, GNAME_INPUT)
+       tgrid = xtgeo.grid_from_rms(PRJ, GNAME_INPUT)
        reg = xtgeo.gridproperty_from_rms(PRJ, GNAME_INPUT, REGNAME)
 
        reg.values[:, :, :] = 1
@@ -355,7 +355,7 @@ a certain depth interval has horizontal layers.
                              region_number=1)
 
        grd.inactivate_by_dz(0.001)
-       grd.to_roxar(PRJ, GNAME_HYBRID)
+    grd.to_rms(PRJ, GNAME_HYBRID)
 
 
    if __name__ == "__main__":

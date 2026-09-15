@@ -222,7 +222,7 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
 
     # populate with grid and props
     grd = xtgeo.grid_from_file(testdata_path / GRIDDATA1)
-    grd.to_roxar(project, GRIDNAME1)
+    grd.to_rms(project, GRIDNAME1)
     por = xtgeo.gridproperty_from_file(testdata_path / PORODATA1, name=PORONAME1)
     por.to_rms(project, GRIDNAME1, PORONAME1)
     zon = xtgeo.gridproperty_from_file(testdata_path / ZONEDATA1, name=ZONENAME1)
@@ -481,6 +481,15 @@ def test_rox_get_grid_deprecation(rms_project_path: str) -> None:
 
 
 @pytest.mark.requires_roxar
+def test_grid_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    grid = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
+
+    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+        grid.to_roxar(rms_project_path, GRIDNAME1 + "_deprecation")
+
+
+@pytest.mark.requires_roxar
 def test_rox_get_gridproperty_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a grid property."""
     with pytest.warns(PendingDeprecationWarning, match="gridproperty_from_roxar"):
@@ -586,7 +595,7 @@ def test_rox_get_modify_set_grid_basic(rms_project_path):
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
-    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_edit1")
+    grd1.to_rms(rms_project_path, GRIDNAME1 + "_edit1")
 
     grd2 = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_edit1")
 
@@ -601,8 +610,8 @@ def test_rox_get_modify_set_grid_method_roff(rms_project_path):
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
-    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_roff", method="roff")
-    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
+    grd1.to_rms(rms_project_path, GRIDNAME1 + "_roff", method="roff")
+    grd1.to_rms(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
 
     grd2_roff = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_roff")
     grd2_cpg = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_cpg")
@@ -620,7 +629,7 @@ def test_rox_set_grid_method_benchmark_cpg(rms_project_path, benchmark):
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
     def store_method_cpg():
-        grd1.to_roxar(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
+        grd1.to_rms(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
 
     benchmark(store_method_cpg)
 
@@ -635,7 +644,7 @@ def test_rox_set_grid_method_benchmark_roff(rms_project_path, benchmark):
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
     def store_method_roff():
-        grd1.to_roxar(rms_project_path, GRIDNAME1 + "_roff", method="roff")
+        grd1.to_rms(rms_project_path, GRIDNAME1 + "_roff", method="roff")
 
     benchmark(store_method_roff)
 
@@ -654,9 +663,9 @@ def test_rox_get_modify_set_get_grid_with_subzones(rms_project_path, roxinstance
 
     if not roxinstance.version_required("1.6"):
         with pytest.warns(UserWarning, match=r"Implementation of subgrids is lacking"):
-            grd.to_roxar(rms_project_path, "NewGrid")
+            grd.to_rms(rms_project_path, "NewGrid")
     else:
-        grd.to_roxar(rms_project_path, "NewGrid")
+        grd.to_rms(rms_project_path, "NewGrid")
 
         # get a new instance for recent storage (subgrids should now be present)
         grd1 = xtgeo.grid_from_rms(rms_project_path, "NewGrid")

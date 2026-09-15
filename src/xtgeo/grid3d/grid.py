@@ -1325,7 +1325,7 @@ class Grid(_Grid3D):
 
         return _gfile.file
 
-    def to_roxar(
+    def to_rms(
         self,
         project: RmsProjectOrPathType,
         gname: str,
@@ -1336,7 +1336,7 @@ class Grid(_Grid3D):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -1358,6 +1358,34 @@ class Grid(_Grid3D):
 
         """
         _grid_roxapi.save_grid_to_rms(self, project, gname, realisation, method=method)
+
+    def to_roxar(
+        self,
+        project: RmsProjectOrPathType,
+        gname: str,
+        realisation: int = 0,
+        method: Literal["cpg", "roff"] = "cpg",
+    ) -> None:
+        """Export a grid from XTGeo to RMS via Roxar API.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            gname=gname,
+            realisation=realisation,
+            method=method,
+        )
 
     def to_resinsight(
         self,
@@ -2973,7 +3001,7 @@ class Grid(_Grid3D):
             # store grid quality measures in RMS
             gprops = grd.gridquality()
             for gprop in gprops:
-                gprop.to_roxar(project, "MyGrid", gprop.name)
+                gprop.to_rms(project, "MyGrid", gprop.name)
 
 
         """
@@ -3152,7 +3180,7 @@ class Grid(_Grid3D):
             grd.translate_coordinates(translate=(10,10, 20), flip=(1,1,-1),
                 add_rotation=30)
 
-            grd.to_roxar(project, "simpleb8_translated")
+            grd.to_rms(project, "simpleb8_translated")
             poro1 = grd.get_prop_by_name("PORO")
             poro1.to_rms(project, "simpleb8_translated", "PORO")
 
