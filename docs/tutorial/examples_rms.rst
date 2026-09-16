@@ -305,7 +305,7 @@ Create region polygons from the grid
            pol.filter_byid([0])
 
            # store polygon to the clipboard
-           pol.to_roxar(project, regname, CB_FOLDER, stype="clipboard")
+           pol.to_rms(project, regname, CB_FOLDER, stype="clipboard")
 
         print(f"Complete, region polygons are stored under clipboard folder {CB_FOLDER}")
 
