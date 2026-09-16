@@ -196,7 +196,7 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
 
     # populate with cube data
     cube = xtgeo.cube_from_file(testdata_path / CUBEDATA1)
-    cube.to_roxar(project, CUBENAME1, domain="depth")
+    cube.to_rms(project, CUBENAME1, domain="depth")
 
     # make a small synthetic cube with jumps in inline/crossline
     cube2 = xtgeo.Cube(
@@ -211,7 +211,7 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
         xlines=[10030, 10040, 10050, 10060, 10070],
         rotation=20,
     )
-    cube2.to_roxar(project, CUBENAME2)
+    cube2.to_rms(project, CUBENAME2)
 
     # populate with surface data
     roxinstance.create_horizons_category(SURFCAT1)
@@ -302,8 +302,8 @@ def test_rox_getset_cube(rms_project_path):
     assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
     cube.values += 100
     assert cube.values.mean() == pytest.approx(100.000718, abs=0.001)
-    cube.to_roxar(rms_project_path, CUBENAME1 + "_copy1")
-    cube.to_roxar(rms_project_path, CUBENAME1 + "_copy2", folder="somefolder")
+    cube.to_rms(rms_project_path, CUBENAME1 + "_copy1")
+    cube.to_rms(rms_project_path, CUBENAME1 + "_copy2", folder="somefolder")
 
 
 @pytest.mark.requires_roxar
@@ -315,10 +315,19 @@ def test_rms_cube_deprecation(rms_project_path: str) -> None:
 
 
 @pytest.mark.requires_roxar
+def test_cube_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME1)
+
+    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+        cube.to_roxar(rms_project_path, CUBENAME1 + "_deprecation")
+
+
+@pytest.mark.requires_roxar
 def test_rox_getset_cube_with_ilxl_jumps(rms_project_path, tmp_path):
     """Get a cube from a RMS project which has jumps in inline/xline"""
     cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME2)
-    cube.to_roxar(rms_project_path, CUBENAME2 + "_copy1")
+    cube.to_rms(rms_project_path, CUBENAME2 + "_copy1")
     cube2 = xtgeo.cube_from_rms(rms_project_path, CUBENAME2 + "_copy1")
     cube2.to_file(tmp_path / "cube2.segy")
     cube3 = xtgeo.cube_from_file(tmp_path / "cube2.segy")
