@@ -233,16 +233,16 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
     poly.to_roxar(project, POLYNAME1, "", stype="clipboard")
 
     poi = xtgeo.points_from_file(testdata_path / POINTSDATA1)
-    poi.to_roxar(project, POINTSNAME1, "", stype="clipboard")
+    poi.to_rms(project, POINTSNAME1, "", stype="clipboard")
     logger.info("Initialised RMS project, done!")
     # add some points into the horizon folder as well
 
     # populate with surface data
     roxinstance.create_horizons_category(POINTSCAT1, htype="points")
-    poi.to_roxar(project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
     poi = xtgeo.points_from_file(testdata_path / POINTSDATA2, fformat="rms_attr")
-    poi.to_roxar(project, POINTSNAME2, "", stype="clipboard", attributes=True)
+    poi.to_rms(project, POINTSNAME2, "", stype="clipboard", attributes=True)
     logger.info("Initialised RMS project, done!")
 
     _run_blocked_wells_job(GRIDNAME1, "BW", ["OP_2", "OP_6"])
@@ -737,7 +737,7 @@ def test_rox_get_modify_set_points(rms_project_path):
     # snap to a surface as operation and store in RMS
     surf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
-    poi.to_roxar(rms_project_path, "SNAPPED", "", stype="clipboard")
+    poi.to_rms(rms_project_path, "SNAPPED", "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1651.805261)
 
 
@@ -750,7 +750,7 @@ def test_rox_get_modify_set_points_from_horizons(rms_project_path):
     assert poi.get_dataframe().iloc[-1, 1] == pytest.approx(5.932977e06)
     assert poi.get_dataframe().shape[0] == 20
     assert poi.get_dataframe().shape[1] == 3
-    poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
 
 @pytest.mark.requires_roxar
@@ -762,6 +762,17 @@ def test_rms_points_deprecation(rms_project_path: str) -> None:
         )
     assert poi.get_dataframe().shape[0] == 20
     assert poi.get_dataframe().shape[1] == 3
+
+
+@pytest.mark.requires_roxar
+def test_points_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    points = xtgeo.points_from_rms(rms_project_path, POINTSNAME1, "", stype="clipboard")
+
+    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+        points.to_roxar(
+            rms_project_path, POINTSNAME1 + "_deprecation", "", stype="clipboard"
+        )
 
 
 @pytest.mark.requires_roxar
@@ -780,7 +791,7 @@ def test_rox_set_points_with_inconsistent_xyz_names(rms_project_path):
 
     # inconsistency between z column name and zname attribute should fail
     with pytest.raises(ValueError, match="One or all"):
-        poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+        poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
 
 @pytest.mark.requires_roxar
@@ -798,14 +809,14 @@ def test_rox_set_points_with_nonstandard_xyz_names(rms_project_path):
     assert "X" in poi.get_dataframe(copy=False)
 
     # check that storing to roxar works fine
-    poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
     # another indirect check using points from surface.
     # here Z name is set on initialisation
     srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi = xtgeo.points_from_surface(srf, zname="MyZ")
     assert "MyZ" in poi.get_dataframe(copy=False)
-    poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
 
 @pytest.mark.requires_roxar
@@ -858,7 +869,7 @@ def test_rox_get_modify_set_points_with_attrs(rms_project_path):
     # snap to a surface as operation and store in RMS
     surf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
-    poi.to_roxar(rms_project_path, "SNAPPED2", "", stype="clipboard")
+    poi.to_rms(rms_project_path, "SNAPPED2", "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1706.1469, abs=0.01)
 
 
@@ -869,7 +880,7 @@ def test_rox_get_modify_set_points_with_attrs_pfilter(rms_project_path):
         rms_project_path, POINTSNAME2, "", stype="clipboard", attributes=True
     )
     # store to roxar with attributes using a 'pfilter'
-    poi.to_roxar(
+    poi.to_rms(
         rms_project_path,
         "PFILTER_POINTS",
         "",
@@ -916,7 +927,7 @@ def test_get_well_picks_as_points(rms_project_path):
     poi.set_dataframe(poi_df)
 
     # store to new well pick set
-    poi.to_roxar(
+    poi.to_rms(
         project,
         WELL_PICK_SET + "_new",
         "horizon",
@@ -935,7 +946,7 @@ def test_get_well_picks_as_points(rms_project_path):
     assert (poi2_df["Depth Uncertainty"] == 10).all()
 
     # test store to clipboard using a pfilter
-    poi2.to_roxar(
+    poi2.to_rms(
         project,
         WELL_PICK_SET,
         "",
@@ -956,7 +967,7 @@ def test_get_well_picks_as_points(rms_project_path):
     assert (poi3_df["Depth Uncertainty"] == 10).all()
 
     # store once more as a well pick set without attributes and reread
-    poi3.to_roxar(
+    poi3.to_rms(
         project,
         WELL_PICK_SET + "_newest",
         "horizon",
@@ -1000,7 +1011,7 @@ def test_points_from_well_tops(rms_project, wells_from_rms):
     assert wtops._attrs["X_UTME"] == "float"
 
     for topname in ["TopUppReek", "TopMidReek", "TopLowReek"]:
-        wtops.to_roxar(
+        wtops.to_rms(
             rms_project,
             topname,
             "MyWellPoints",
@@ -1035,7 +1046,7 @@ def test_points_from_well_thickness(rms_project, wells_from_rms):
     assert w_isos._attrs["X_UTME"] == "float"
 
     for iname in ["UppReek", "MidReek", "LowReek"]:
-        w_isos.to_roxar(
+        w_isos.to_rms(
             rms_project,
             iname,
             "MyWellIsos",

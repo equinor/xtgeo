@@ -676,7 +676,7 @@ class Points(XYZ):
             **kwargs,
         )
 
-    def to_roxar(
+    def to_rms(
         self,
         project: Any,
         name: str,
@@ -686,7 +686,7 @@ class Points(XYZ):
         realisation: int = 0,
         attributes: bool = False,
     ) -> None:  # pragma: no cover
-        """Export (store) a Points item to a Roxar RMS project.
+        """Export (store) a Points item to an RMS project.
 
         The export to the RMS project can be done either within the project
         or outside the project.
@@ -696,7 +696,7 @@ class Points(XYZ):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -730,6 +730,40 @@ class Points(XYZ):
             pfilter,
             realisation,
             attributes,
+        )
+
+    def to_roxar(
+        self,
+        project: Any,
+        name: str,
+        category: str,
+        stype: str = "horizons",
+        pfilter: dict[str, list[str]] | None = None,
+        realisation: int = 0,
+        attributes: bool = False,
+    ) -> None:
+        """Export a Points item to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            name=name,
+            category=category,
+            stype=stype,
+            pfilter=pfilter,
+            realisation=realisation,
+            attributes=attributes,
         )
 
     def copy(self) -> Self:
