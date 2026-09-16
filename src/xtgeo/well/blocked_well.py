@@ -333,7 +333,7 @@ class BlockedWell(Well):
 
         return newbw
 
-    def to_roxar(
+    def to_rms(
         self,
         project: Any,
         gridname: str,
@@ -343,7 +343,7 @@ class BlockedWell(Well):
         realisation: int = 0,
         ijk: bool = False,
     ) -> None:
-        """Set (export) a single blocked well item inside roxar project.
+        """Set (export) a single blocked well item inside an RMS project.
 
         Note this method works only when inside RMS, or when RMS license is
         activated. RMS will store blocked wells as a Gridmodel feature, not as a
@@ -351,7 +351,7 @@ class BlockedWell(Well):
 
         Note:
            When project is file path (direct access, outside RMS) then
-           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+           ``to_rms()`` will implicitly do a project save. Otherwise, the project
            will not be saved until the user do an explicit project save action.
 
         Args:
@@ -378,4 +378,38 @@ class BlockedWell(Well):
             lognames=lognames,
             ijk=ijk,
             realisation=realisation,
+        )
+
+    def to_roxar(
+        self,
+        project: Any,
+        gridname: str,
+        bwname: str,
+        wname: str,
+        lognames: str | list[str] = "all",
+        realisation: int = 0,
+        ijk: bool = False,
+    ) -> None:
+        """Export a single blocked well item to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            gridname=gridname,
+            bwname=bwname,
+            wname=wname,
+            lognames=lognames,
+            realisation=realisation,
+            ijk=ijk,
         )

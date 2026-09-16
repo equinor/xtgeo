@@ -1231,7 +1231,7 @@ def test_blocked_well_from_to_rms(rms_project_path):
     bw.delete_log("Zonelog")
     bw.create_log("Some_new")
 
-    bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
+    bw.to_rms(rox.project, GRIDNAME1, "BW", "OP_2")
 
     # read again from RMS
     bw_2 = xtgeo.blockedwell_from_rms(
@@ -1256,6 +1256,20 @@ def test_blocked_well_from_roxar_deprecation(rms_project_path: str) -> None:
         )
 
     assert "Zonelog" in bw.lognames
+    rox.project.close()
+
+
+@pytest.mark.requires_roxar
+def test_blocked_well_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    rox = xtgeo.RoxUtils(rms_project_path)
+    bw = xtgeo.blockedwell_from_rms(
+        rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
+    )
+
+    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+        bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
+
     rox.project.close()
 
 

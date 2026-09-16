@@ -546,7 +546,7 @@ be input to Equinor's APS module.
                 dfr[newname][np.isnan(dfr[FACIES])] = np.nan
 
             blw.set_dataframe(dfr)
-            blw.to_roxar(PRJ, GNAME, BWNAME, well.name)
+            blw.to_rms(PRJ, GNAME, BWNAME, well.name)
 
 
     if __name__ == "__main__":
