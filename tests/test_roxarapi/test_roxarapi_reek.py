@@ -192,7 +192,7 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
         if "XP_with" in wfile:
             wobj.name = "OP2_w_repeat"
 
-        wobj.to_roxar(project, wobj.name, logrun="log", trajectory="My trajectory")
+        wobj.to_rms(project, wobj.name, logrun="log", trajectory="My trajectory")
 
     # populate with cube data
     cube = xtgeo.cube_from_file(testdata_path / CUBEDATA1)
@@ -443,6 +443,20 @@ def test_rox_wells_deprecation(rms_project_path: str) -> None:
             rms_project_path, "OP_2", trajectory="My trajectory", logrun="log"
         )
     assert "Zonelog" in well.lognames
+
+
+@pytest.mark.requires_roxar
+def test_well_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    rox = xtgeo.RoxUtils(rms_project_path)
+    well = xtgeo.well_from_rms(
+        rox.project, "OP_2", trajectory="My trajectory", logrun="log"
+    )
+
+    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+        well.to_roxar(rox.project, "OP_2", trajectory="My trajectory", logrun="log")
+
+    rox.project.close()
 
 
 @pytest.mark.requires_roxar
@@ -1128,15 +1142,15 @@ def test_rox_well_with_added_logs(rms_project_path):
         trajectory="My trajectory",
     )
     assert well.get_dataframe()["Facies"].mean() == pytest.approx(0.357798165)
-    well.to_roxar(rms_project_path, "dummy1", logrun="log", trajectory="My trajectory")
+    well.to_rms(rms_project_path, "dummy1", logrun="log", trajectory="My trajectory")
     dataframe = well.get_dataframe()
     dataframe["Facies"] = np.nan
     well.set_dataframe(dataframe)
     assert np.isnan(well.get_dataframe()["Facies"].values).all()
-    well.to_roxar(rms_project_path, "dummy2", logrun="log", trajectory="My trajectory")
+    well.to_rms(rms_project_path, "dummy2", logrun="log", trajectory="My trajectory")
     # check that export with set codes
     well.set_logrecord("Facies", {1: "name"})
-    well.to_roxar(rms_project_path, "dummy3", logrun="log", trajectory="My trajectory")
+    well.to_rms(rms_project_path, "dummy3", logrun="log", trajectory="My trajectory")
 
 
 @pytest.mark.requires_roxar
@@ -1162,7 +1176,7 @@ def test_rox_well_update(
         lognames="all",
         trajectory="My trajectory",
     )
-    initial_well.to_roxar(rms_project_path, wellname)
+    initial_well.to_rms(rms_project_path, wellname)
 
     well = xtgeo.well_from_rms(
         rms_project_path,
@@ -1174,7 +1188,7 @@ def test_rox_well_update(
     dataframe["Poro"] += 0.1
     well.set_dataframe(dataframe)
 
-    well.to_roxar(
+    well.to_rms(
         rms_project_path,
         wellname,
         lognames=well.lognames,

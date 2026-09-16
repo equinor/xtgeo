@@ -491,7 +491,7 @@ are filtered. Here is a small example on how to do this:
             uselogs = list(PETROLOGS.keys())
 
             wll.mask_shoulderbeds(inputlogs=INLOGS, targetlogs=uselogs, nsamples=2)
-            wll.to_roxar(PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
+            wll.to_rms(PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
 
 
     if __name__ == "__main__":

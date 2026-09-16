@@ -718,7 +718,7 @@ class Well:
         )
         return cls(**kwargs)
 
-    def to_roxar(
+    def to_rms(
         self,
         project: Any,
         wname: str,
@@ -726,9 +726,9 @@ class Well:
         realisation: int = 0,
         trajectory: str = "Drilled trajectory",
         logrun: str = "log",
-        update_option: str = None,
+        update_option: str | None = None,
     ):
-        """Export (save/store) a well to a roxar project.
+        """Export (save/store) a well to an RMS project.
 
         Note this method works only when inside RMS, or when RMS license is
         activated in terminal.
@@ -757,7 +757,7 @@ class Well:
 
         Note:
            When project is file path (direct access, outside RMS) then
-           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+           ``to_rms()`` will implicitly do a project save. Otherwise, the project
            will not be saved until the user do an explicit project save action.
 
         Example::
@@ -774,13 +774,13 @@ class Well:
             # the "option" is a variable... for output, ``lognames="all"`` is default
             if option is None:
                 # remove all current logs in RMS; only logs will be PORO and NEW
-                wll.to_roxar(project, "WELL1", update_option=option)
+                wll.to_rms(project, "WELL1", update_option=option)
             elif option == "overwrite":
                 # keep all original logs but update PORO and add NEW
-                wll.to_roxar(project, "WELL1", update_option=option)
+                wll.to_rms(project, "WELL1", update_option=option)
             elif option == "append":
                 # keep all original logs as they were (incl. PORO) and add NEW
-                wll.to_roxar(project, "WELL1", update_option=option)
+                wll.to_rms(project, "WELL1", update_option=option)
 
         Note:
             The keywords ``lognames`` and ``update_option`` will interact
@@ -801,6 +801,40 @@ class Well:
             trajectory=trajectory,
             logrun=logrun,
             realisation=realisation,
+            update_option=update_option,
+        )
+
+    def to_roxar(
+        self,
+        project: Any,
+        wname: str,
+        lognames: str | list[str] = "all",
+        realisation: int = 0,
+        trajectory: str = "Drilled trajectory",
+        logrun: str = "log",
+        update_option: str | None = None,
+    ):
+        """Export a well to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            wname=wname,
+            lognames=lognames,
+            realisation=realisation,
+            trajectory=trajectory,
+            logrun=logrun,
             update_option=update_option,
         )
 
