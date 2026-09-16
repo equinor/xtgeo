@@ -612,7 +612,7 @@ class Polygons(XYZ):
 
         return _xyz_io.to_file(self, pfile, fformat=fformat, attributes=attributes)
 
-    def to_roxar(
+    def to_rms(
         self,
         project: str | Any,
         name: str,
@@ -621,7 +621,7 @@ class Polygons(XYZ):
         realisation: int = 0,
         attributes: bool = False,
     ) -> None:  # pragma: no cover
-        """Export (store) a Polygons item to a Roxar RMS project.
+        """Export (store) a Polygons item to an RMS project.
 
         The export to the RMS project can be done either within the project
         or outside the project.
@@ -631,7 +631,7 @@ class Polygons(XYZ):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -665,6 +665,38 @@ class Polygons(XYZ):
             None,
             realisation,
             attributes,
+        )
+
+    def to_roxar(
+        self,
+        project: str | Any,
+        name: str,
+        category: str,
+        stype: str = "horizons",
+        realisation: int = 0,
+        attributes: bool = False,
+    ) -> None:
+        """Export a Polygons item to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            name=name,
+            category=category,
+            stype=stype,
+            realisation=realisation,
+            attributes=attributes,
         )
 
     def copy(self) -> Self:

@@ -230,7 +230,7 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
 
     # populate with points and polygons (XYZ data)
     poly = xtgeo.polygons_from_file(testdata_path / POLYDATA1)
-    poly.to_roxar(project, POLYNAME1, "", stype="clipboard")
+    poly.to_rms(project, POLYNAME1, "", stype="clipboard")
 
     poi = xtgeo.points_from_file(testdata_path / POINTSDATA1)
     poi.to_rms(project, POINTSNAME1, "", stype="clipboard")
@@ -698,12 +698,12 @@ def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
 
     poly.rescale(300)
     # store in RMS
-    poly.to_roxar(rms_project_path, "RESCALED", "", stype="clipboard")
+    poly.to_rms(rms_project_path, "RESCALED", "", stype="clipboard")
     assert poly.get_dataframe().shape[0] == 127
 
     # store and retrieve in general2d_data just to see that it works
     if roxinstance.version_required("1.6"):
-        poly.to_roxar(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
+        poly.to_rms(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
         poly2 = xtgeo.polygons_from_rms(
             rms_project_path, "xxx", "folder/sub", stype="general2d_data"
         )
@@ -712,7 +712,7 @@ def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
         )
     else:
         with pytest.raises(NotImplementedError):
-            poly.to_roxar(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
+            poly.to_rms(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
 
 
 @pytest.mark.requires_roxar
@@ -724,6 +724,19 @@ def test_rms_polygons_deprecation(rms_project_path: str) -> None:
         )
     assert poly.get_dataframe().shape[0] == 25
     assert poly.get_dataframe().shape[1] == 4
+
+
+@pytest.mark.requires_roxar
+def test_polygons_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    polygons = xtgeo.polygons_from_rms(
+        rms_project_path, POLYNAME1, "", stype="clipboard"
+    )
+
+    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+        polygons.to_roxar(
+            rms_project_path, POLYNAME1 + "_deprecation", "", stype="clipboard"
+        )
 
 
 @pytest.mark.requires_roxar
@@ -1079,7 +1092,7 @@ def test_lines_from_well(rms_project, wells_from_rms):
             code,
             resample=1,
         )
-        w_line.to_roxar(rms_project, zonenames[code], "MyWellLines", stype="clipboard")
+        w_line.to_rms(rms_project, zonenames[code], "MyWellLines", stype="clipboard")
 
         w_line_read = xtgeo.polygons_from_rms(
             rms_project,
