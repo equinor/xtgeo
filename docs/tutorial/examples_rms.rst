@@ -583,12 +583,12 @@ In the following example, remove or add to points being inside or outside polygo
         po2 = xtgeo.points_from_rms(PRJ, *POINTSET2, stype="clipboard")
 
         po1.eli_inside_polygons(poly)
-        po1.to_roxar(PRJ, *POINTSET1_UPDATED, stype="clipboard")  # store
+        po1.to_rms(PRJ, *POINTSET1_UPDATED, stype="clipboard")  # store
 
         # now add 100 inside polugons for POINTSET2, and then remove all points outside
         po2.add_inside_polygons(poly, 100)
         po2.eli_outside_polygons(poly)
-        po2.to_roxar(PRJ, *POINTSET2_UPDATED, stype="clipboard")  # store
+        po2.to_rms(PRJ, *POINTSET2_UPDATED, stype="clipboard")  # store
 
 
     if __name__ == "__main__":
