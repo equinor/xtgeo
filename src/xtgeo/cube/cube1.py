@@ -991,7 +991,7 @@ class Cube:
                 f"Supported formats are {extensions}."
             )
 
-    def to_roxar(
+    def to_rms(
         self,
         project: Any,
         name: str,
@@ -1001,11 +1001,11 @@ class Cube:
         compression: tuple[str, float] = ("wavelet", 5.0),
         target: str = "seismic",
     ) -> None:  # pragma: no cover
-        """Export (transfer) a cube from a XTGeo cube object to Roxar data.
+        """Export (transfer) a cube from an XTGeo cube object to an RMS project.
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -1030,9 +1030,9 @@ class Cube:
         Example::
 
             zz = xtgeo.cube_from_file('myfile.segy')
-            zz.to_roxar(project, 'reek_cube')
+            zz.to_rms(project, 'reek_cube')
             # write cube to "Grid model" tree in RMS instead
-            zz.to_roxar(project, 'cube_as_grid', propname="impedance", target="grid")
+            zz.to_rms(project, 'cube_as_grid', propname="impedance", target="grid")
 
         .. versionchanged:: 3.4 Add ``target`` and ``propname`` keys
         """
@@ -1041,8 +1041,8 @@ class Cube:
             _tmpgrd = grid_from_cube(self, propname=name)
             _tmpprop = _tmpgrd.props[0]  # type: ignore[index]
             _tmpprop.name = propname if propname else "seismic_attribute"
-            _tmpgrd.to_roxar(project, name)
-            _tmpprop.to_roxar(project, name, _tmpprop.name)
+            _tmpgrd.to_rms(project, name)
+            _tmpprop.to_rms(project, name, _tmpprop.name)
 
         else:
             _cube_roxapi.export_cube_roxapi(
@@ -1053,6 +1053,40 @@ class Cube:
                 domain=domain,
                 compression=compression,
             )
+
+    def to_roxar(
+        self,
+        project: Any,
+        name: str,
+        folder: str | None = None,
+        propname: str = "seismic_attribute",
+        domain: str = "time",
+        compression: tuple[str, float] = ("wavelet", 5.0),
+        target: str = "seismic",
+    ) -> None:
+        """Export a cube to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            name=name,
+            folder=folder,
+            propname=propname,
+            domain=domain,
+            compression=compression,
+            target=target,
+        )
 
     def _ensure_correct_values(
         self,
