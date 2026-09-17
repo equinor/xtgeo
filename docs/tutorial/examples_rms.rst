@@ -23,11 +23,11 @@ Get and set data
 
 In general, data are imported into XTGeo by a ``from_rms()`` or by a
 ``xtgeo.xxx_from_rms()`` (where xxx is "surface", "grid", etc). Then the
-altered instance can be stored in RMS by a ``to_roxar()`` method.
+altered instance can be stored in RMS by a ``to_rms()`` method.
 
-The ``to_roxar()`` method will not do a project save when inside RMS or when inside
+The ``to_rms()`` method will not do a project save when inside RMS or when inside
 a virtual project setting. However, if a project is applied as a file path, then
-``to_roxar`` will save implicitly. Examples:
+``to_rms`` will save implicitly. Examples:
 
 Inside RMS GUI
 ^^^^^^^^^^^^^^
@@ -37,7 +37,7 @@ Inside RMS GUI
 
     surf = xtgeo.surface_from_rms(project, "TopReek", "DS_extracted")
     surf.values += 100
-    surf.to_roxar(project)
+    surf.to_rms(project)
 
     # Note: project save needs to be done by user (GUI action)
 
@@ -58,7 +58,7 @@ as shown below:
 
     surf = xtgeo.surface_from_rms(myproject, "TopReek", "DS_extracted")
     surf.values += 100
-    surf.to_roxar(myproject)
+    surf.to_rms(myproject)
 
     # Note: project save is done automatically
 
@@ -83,7 +83,7 @@ Export a surface in RMS to irap binary format
     surf.values += 1000
 
     # store in RMS (category must exist)
-    surf.to_roxar(project, "TopReek", "DS_whatever")
+    surf.to_rms(project, "TopReek", "DS_whatever")
 
 
 Export a surface in RMS to zmap ascii format
@@ -119,7 +119,7 @@ Take a surface in RMS and multiply values with 2:
     surf.values *= 2  # values is the masked 2D numpy array property
 
     # store the surface back to RMS
-    surf.to_roxar(project, "TopReek", "DS_tmp")
+    surf.to_rms(project, "TopReek", "DS_tmp")
 
 
 Do operations on surfaces, also inside polygons:
@@ -163,7 +163,7 @@ common multiplum)
 
            diff = surf2.copy()
            diff.values -= surf1.values
-           diff.to_roxar(PRJ, mzone, ISCAT1, stype="zones")
+           diff.to_rms(PRJ, mzone, ISCAT1, stype="zones")
            print("Store {} at {}".format(mzone, ISCAT1))
 
            # extract differences inside a polygon and compute min/max values:
@@ -178,7 +178,7 @@ common multiplum)
                     diff2.values.min(), diff2.values.max(), mzone
                     )
                 )
-           diff2.to_roxar(PRJ, mzone, ISCAT2, stype="zones")
+           diff2.to_rms(PRJ, mzone, ISCAT2, stype="zones")
            print("Store cut surface {} at {}".format(mzone, ISCAT2))
 
 
