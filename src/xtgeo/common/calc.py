@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
@@ -377,7 +377,7 @@ def vectorpair_angle3d(
 def _swap_axes(
     rotation: float,
     yflip: int,
-    **values: dict[str, Any],
+    **values: np.ndarray,
 ) -> tuple[float, int, dict[str, np.ndarray]]:
     swapped_values: dict[str, np.ndarray] = {
         name: np.ascontiguousarray(np.swapaxes(val, 0, 1))

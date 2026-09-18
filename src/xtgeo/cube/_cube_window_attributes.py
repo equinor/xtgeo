@@ -62,7 +62,7 @@ class CubeAttrs:
     _outside_depth: float | None = None  # detected and updated from the depth cube
     _min_indices: int = 0  # minimum Z index for cube slicing
     _max_indices: int = 0  # maximum Z index for cube slicing
-    _reduced_cube: Cube = None
+    _reduced_cube: Cube | None = None
     _reduced_depth_array: np.ndarray | None = None
     _refined_cube: Cube | None = None
     _refined_depth_array: np.ndarray | None = None
@@ -72,7 +72,9 @@ class CubeAttrs:
     _min_thickness_mask: RegularSurface | None = None  # mask for min. thickness trunc.
     _mask_map_by_traceidcode: RegularSurface | None = None  # mask for traceidcode 2
 
-    _result_attr_maps: dict = field(default_factory=dict)  # holds the resulting maps
+    _result_attr_maps: dict[str, RegularSurface] = field(
+        default_factory=dict
+    )  # holds the resulting maps
 
     def __post_init__(self) -> None:
         self._process_upper_lower_surface()
@@ -80,14 +82,16 @@ class CubeAttrs:
         self._determine_slice_indices()
         self._compute_statistical_attribute_surfaces()
 
-    def result(self) -> dict[RegularSurface]:
+    def result(self) -> dict[str, RegularSurface]:
         # return the resulting attribute maps
         return self._result_attr_maps
 
     def _process_upper_lower_surface(self) -> None:
         """Extract upper and lower surface, sampled to cube resolution."""
 
-        from xtgeo import surface_from_cube  # avoid circular import by having this here
+        from xtgeo.surface.regular_surface import (
+            surface_from_cube,  # avoid circular import by having this here
+        )
 
         logger.debug("Process upper and lower surface...")
 
@@ -144,13 +148,20 @@ class CubeAttrs:
     def _create_depth_array(self) -> None:
         """Create a 1D array where values are cube depths; to be used as filter.
 
-        Belowe and above the input surfaces (plus a buffer), the values are set to
+        Below and above the input surfaces (plus a buffer), the values are set to
         a constant value self._outside_depth.
 
         Will also issue warnings or errors if the surfaces are outside the cube,
         depending on severity.
         """
         logger.debug("Create depth array...")
+
+        if self._upper is None or self._lower is None:
+            raise RuntimeError(
+                "The upper and lower surfaces have not been initialized. "
+                "'_process_upper_lower_surface()' must run before "
+                "'_create_depth_array()'."
+            )
 
         self._depth_array = np.array(
             [
@@ -195,6 +206,13 @@ class CubeAttrs:
         """
         logger.debug("Determine cube slice indices...")
 
+        if self._depth_array is None or self._outside_depth is None:
+            raise RuntimeError(
+                "The depth array has not been initialized. "
+                "'_create_depth_array()' must run before "
+                "'_determine_slice_indices()'."
+            )
+
         # Create a boolean mask based on the threshold
         mask = self._depth_array < self._outside_depth
 
@@ -219,6 +237,12 @@ class CubeAttrs:
     def _add_to_attribute_map(self, attr_name: str, values: np.ndarray) -> None:
         """Compute the attribute map and add to result dictionary."""
         logger.debug("Add to attribute map...")
+        if self._upper is None or self._template_surface is None:
+            raise RuntimeError(
+                "The upper and template surfaces have not been initialized. "
+                "'_process_upper_lower_surface()' must run before "
+                "'_add_to_attribute_map()'."
+            )
         attr_map = self._upper.copy()
         attr_map.values = np.ma.masked_invalid(values)
 
@@ -238,6 +262,13 @@ class CubeAttrs:
     def _compute_statistical_attribute_surfaces(self) -> None:
         """Compute stats very fast by using internal C++ bindings."""
         logger.debug("Compute statistical attribute surfaces...")
+
+        if self._upper is None or self._lower is None or self._depth_array is None:
+            raise RuntimeError(
+                "The surfaces and depth array have not been initialized. "
+                "'_process_upper_lower_surface()' and '_create_depth_array()' "
+                "must run before '_compute_statistical_attribute_surfaces()'."
+            )
 
         # compute statistics for vertically refined cube using original cube
         cubecpp = _internal.cube.Cube(self.cube)
