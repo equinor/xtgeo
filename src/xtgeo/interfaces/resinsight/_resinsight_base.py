@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from xtgeo.common.log import null_logger
 
@@ -11,24 +11,28 @@ from .rips_utils import RipsApiUtils
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Any
 
     from ._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
         RipsInstanceType,
+        RipsPolygonCollectionType,
         RipsProjectType,
+        RipsSurfaceCollectionType,
     )
+
+    _ItemT = TypeVar("_ItemT")
+    _FolderT = TypeVar("_FolderT", RipsSurfaceCollectionType, RipsPolygonCollectionType)
 
 logger = null_logger(__name__)
 
 
 def select_by_name(
-    items: Iterable[Any],
+    items: Iterable[_ItemT],
     name: str,
     find_last: bool = True,
     name_attr: str = "name",
-) -> Any | None:
+) -> _ItemT | None:
     """Select the item from *items* whose *name_attr* equals *name*.
 
     Shared lookup helper for the ResInsight readers/writers, which pick a
@@ -45,38 +49,87 @@ def select_by_name(
     return selected
 
 
-def resolve_folder(
-    root: Any,
+def _resolve_folder(
+    root: _FolderT,
     folder_path: str,
+    collection_type: type[_FolderT],
     name_attr: str,
+    folder_kind: str,
     create: bool = False,
-) -> Any | None:
-    """Resolve a ``/``-separated folder path below the *root* collection.
-
-    Works with any ResInsight collection exposing ``sub_collections()`` and
-    ``add_folder()`` (e.g. ``SurfaceCollection``, ``PolygonCollection``). An
-    empty *folder_path* is *root* itself. Missing segments are created when
-    *create* is ``True``, otherwise ``None`` is returned.
-    """
+) -> _FolderT:
+    """Resolve a folder path using the concrete collection type."""
     folder = root
 
     for segment in filter(None, folder_path.split("/")):
         sub = select_by_name(
-            folder.sub_collections(), segment, find_last=False, name_attr=name_attr
+            (
+                child
+                for child in folder.children("SubCollections", collection_type)
+                if isinstance(child, collection_type)
+            ),
+            segment,
+            find_last=False,
+            name_attr=name_attr,
         )
         if sub is None:
             if not create:
-                return None
-            # Folders are never overwritten; that would delete their content.
-            # require_rips() gives an actionable upgrade message instead of an
-            # AttributeError if rips is missing/too old for NameConflictPolicy.
-            require_rips()
-            sub = folder.add_folder(
-                folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+                raise RuntimeError(f"Cannot find {folder_kind} folder '{segment}'")
+
+            # rips types add_folder() as PdmNestedCollectionBase, not the concrete
+            # collection type; this cast assumes that type without runtime checks.
+            sub = cast(
+                "_FolderT",
+                folder.add_folder(
+                    folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+                ),
             )
         folder = sub
 
     return folder
+
+
+def resolve_surface_folder(
+    root: RipsSurfaceCollectionType,
+    folder_path: str,
+    create: bool = False,
+) -> RipsSurfaceCollectionType:
+    """Resolve a ``/``-separated folder path below a surface collection.
+
+    An empty *folder_path* returns *root*. Missing segments are created when
+    *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
+    does not exist.
+    """
+    rips = require_rips()
+    return _resolve_folder(
+        root,
+        folder_path,
+        collection_type=rips.SurfaceCollection,
+        name_attr="surface_user_description",
+        folder_kind="surface",
+        create=create,
+    )
+
+
+def resolve_polygon_folder(
+    root: RipsPolygonCollectionType,
+    folder_path: str,
+    create: bool = False,
+) -> RipsPolygonCollectionType:
+    """Resolve a ``/``-separated folder path below a polygon collection.
+
+    An empty *folder_path* returns *root*. Missing segments are created when
+    *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
+    does not exist.
+    """
+    rips = require_rips()
+    return _resolve_folder(
+        root,
+        folder_path,
+        collection_type=rips.PolygonCollection,
+        name_attr="polygon_collection_name",
+        folder_kind="polygon",
+        create=create,
+    )
 
 
 def validate_case(case: str | RipsCaseType) -> None:

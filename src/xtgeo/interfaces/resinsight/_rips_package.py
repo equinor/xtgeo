@@ -23,33 +23,39 @@ if TYPE_CHECKING:
     from rips import (
         Case as RipsCaseType,
         Instance as RipsInstanceType,
-        NameConflictPolicy as NameConflictPolicyType,
+        NameConflictPolicy as RipsNameConflictPolicyType,
+        PolygonCollection as RipsPolygonCollectionType,
         Project as RipsProjectType,
         PropertyDataType as RipsPropertyDataType,
         PropertyType as RipsPropertyType,
         RegularSurface as RipsRegularSurfaceType,
         RipsError as RipsErrorType,
+        SurfaceCollection as RipsSurfaceCollectionType,
     )
 
     class RipsModuleType(Protocol):
         Case: type[RipsCaseType]
         Instance: type[RipsInstanceType]
+        NameConflictPolicy: type[RipsNameConflictPolicyType]
+        PolygonCollection: type[RipsPolygonCollectionType]
         Project: type[RipsProjectType]
         PropertyDataType: type[RipsPropertyDataType]
         PropertyType: type[RipsPropertyType]
-        NameConflictPolicy: type[NameConflictPolicyType]
         RegularSurface: type[RipsRegularSurfaceType]
         RipsError: type[RipsErrorType]
+        SurfaceCollection: type[RipsSurfaceCollectionType]
 else:
-    NameConflictPolicyType = Any
-    RipsPropertyDataType = Any
-    RipsPropertyType = Any
     RipsCaseType = Any
     RipsInstanceType = Any
+    RipsNameConflictPolicyType = Any
+    RipsPolygonCollectionType = Any
     RipsProjectType = Any
-    RipsModuleType = Any
+    RipsPropertyDataType = Any
+    RipsPropertyType = Any
     RipsRegularSurfaceType = Any
     RipsErrorType = Any
+    RipsSurfaceCollectionType = Any
+    RipsModuleType = Any
 
 # Minimum rips version that exposes the full API used by xtgeo
 MIN_RIPS_VERSION = "2026.9"
