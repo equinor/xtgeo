@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, cast, overload
 
 from xtgeo.common.log import null_logger
 
@@ -11,24 +11,27 @@ from .rips_utils import RipsApiUtils
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Any
+    from typing import TypeVar
 
     from ._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
         RipsInstanceType,
         RipsProjectType,
+        RipsSurfaceCollectionType,
     )
+
+    _ItemT = TypeVar("_ItemT")
 
 logger = null_logger(__name__)
 
 
 def select_by_name(
-    items: Iterable[Any],
+    items: Iterable[_ItemT],
     name: str,
     find_last: bool = True,
     name_attr: str = "name",
-) -> Any | None:
+) -> _ItemT | None:
     """Select the item from *items* whose *name_attr* equals *name*.
 
     Shared lookup helper for the ResInsight readers/writers, which pick a
@@ -45,17 +48,51 @@ def select_by_name(
     return selected
 
 
+# Keep this resolver surface-specific. Other rips collection hierarchies expose
+# different child types and should use collection-specific traversal adapters.
+
+# Reason for overloading: The return type depends on the value of the *create*
+# argument.
+
+# Creating missing folders guarantees a collection is returned.
+@overload
 def resolve_folder(
-    root: Any,
+    root: RipsSurfaceCollectionType,
+    folder_path: str,
+    name_attr: str,
+    create: Literal[True],
+) -> RipsSurfaceCollectionType: ...
+
+
+# Looking up existing folders may return None when the path is missing.
+@overload
+def resolve_folder(
+    root: RipsSurfaceCollectionType,
+    folder_path: str,
+    name_attr: str,
+    create: Literal[False] = False,
+) -> RipsSurfaceCollectionType | None: ...
+
+
+# A runtime boolean cannot guarantee creation, so the result may be None.
+@overload
+def resolve_folder(
+    root: RipsSurfaceCollectionType,
+    folder_path: str,
+    name_attr: str,
+    create: bool,
+) -> RipsSurfaceCollectionType | None: ...
+
+
+def resolve_folder(
+    root: RipsSurfaceCollectionType,
     folder_path: str,
     name_attr: str,
     create: bool = False,
-) -> Any | None:
+) -> RipsSurfaceCollectionType | None:
     """Resolve a ``/``-separated folder path below the *root* collection.
 
-    Works with any ResInsight collection exposing ``sub_collections()`` and
-    ``add_folder()`` (e.g. ``SurfaceCollection``, ``PolygonCollection``). An
-    empty *folder_path* is *root* itself. Missing segments are created when
+    An empty *folder_path* is *root* itself. Missing segments are created when
     *create* is ``True``, otherwise ``None`` is returned.
     """
     folder = root
@@ -71,8 +108,11 @@ def resolve_folder(
             # require_rips() gives an actionable upgrade message instead of an
             # AttributeError if rips is missing/too old for NameConflictPolicy.
             require_rips()
-            sub = folder.add_folder(
-                folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+            sub = cast(
+                "RipsSurfaceCollectionType",
+                folder.add_folder(
+                    folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+                ),
             )
         folder = sub
 
