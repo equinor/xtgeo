@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, cast, overload
 
 from xtgeo.common.log import null_logger
 
@@ -11,13 +11,22 @@ from .rips_utils import RipsApiUtils
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Any
+    from typing import Any, Protocol, TypeVar
 
     from ._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
         RipsInstanceType,
         RipsProjectType,
+    )
+
+    class _RipsFolderCollection(Protocol):
+        def sub_collections(self) -> Iterable[Any]: ...
+
+        def add_folder(self, folder_name: str, on_name_conflict: Any) -> Any: ...
+
+    _RipsFolderCollectionT = TypeVar(
+        "_RipsFolderCollectionT", bound=_RipsFolderCollection
     )
 
 logger = null_logger(__name__)
@@ -45,17 +54,45 @@ def select_by_name(
     return selected
 
 
+# Creating missing folders guarantees a collection is returned.
+@overload
 def resolve_folder(
-    root: Any,
+    root: _RipsFolderCollectionT,
+    folder_path: str,
+    name_attr: str,
+    create: Literal[True],
+) -> _RipsFolderCollectionT: ...
+
+
+# Looking up existing folders may return None when the path is missing.
+@overload
+def resolve_folder(
+    root: _RipsFolderCollectionT,
+    folder_path: str,
+    name_attr: str,
+    create: Literal[False] = False,
+) -> _RipsFolderCollectionT | None: ...
+
+
+# A runtime boolean cannot guarantee creation, so the result may be None.
+@overload
+def resolve_folder(
+    root: _RipsFolderCollectionT,
+    folder_path: str,
+    name_attr: str,
+    create: bool,
+) -> _RipsFolderCollectionT | None: ...
+
+
+def resolve_folder(
+    root: _RipsFolderCollectionT,
     folder_path: str,
     name_attr: str,
     create: bool = False,
-) -> Any | None:
+) -> _RipsFolderCollectionT | None:
     """Resolve a ``/``-separated folder path below the *root* collection.
 
-    Works with any ResInsight collection exposing ``sub_collections()`` and
-    ``add_folder()`` (e.g. ``SurfaceCollection``, ``PolygonCollection``). An
-    empty *folder_path* is *root* itself. Missing segments are created when
+    An empty *folder_path* is *root* itself. Missing segments are created when
     *create* is ``True``, otherwise ``None`` is returned.
     """
     folder = root
@@ -71,8 +108,11 @@ def resolve_folder(
             # require_rips() gives an actionable upgrade message instead of an
             # AttributeError if rips is missing/too old for NameConflictPolicy.
             require_rips()
-            sub = folder.add_folder(
-                folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+            sub = cast(
+                "_RipsFolderCollectionT",
+                folder.add_folder(
+                    folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+                ),
             )
         folder = sub
 
