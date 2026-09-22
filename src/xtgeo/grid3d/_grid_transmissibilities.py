@@ -56,19 +56,7 @@ def _to_property_array(
     return np.asarray(prop.values.filled(0.0), dtype=np.float64)
 
 
-def _get_cell_mask(
-    some_property: GridProperty | float,
-    nc: int,
-    nr: int,
-    nl: int,
-) -> np.ndarray:
-    """Return boolean mask (True = inactive/masked) derived from some_property."""
-    if isinstance(some_property, GridProperty):
-        return np.ma.getmaskarray(some_property.values).reshape(nc, nr, nl)
-    return np.zeros((nc, nr, nl), dtype=bool)
-
-
-def get_transmissibilities(
+def get_cell_transmissibilities(
     grid: Grid,
     permx: GridProperty | float,
     permy: GridProperty | float,
@@ -76,83 +64,40 @@ def get_transmissibilities(
     ntg: GridProperty | float = 1.0,
     min_dz_pinchout: float = 1e-4,
     min_fault_throw: float = 0.0,
-    nnc_table: pd.DataFrame | None = None,
-    nnc_table_only: bool = False,
 ) -> tuple[
     GridProperty,
     GridProperty,
     GridProperty,
     pd.DataFrame,
-    pd.DataFrame | None,
-    GridProperty | None,
 ]:
     """Compute TPFA transmissibilities for a corner-point grid.
 
-    Returns three GridProperty objects (tranx, trany, tranz), a NNC DataFrame,
-    and optionally nested-hybrid NNC results.
-    See Grid.get_transmissibilities() for full documentation.
+    Returns three GridProperty objects (tranx, trany, tranz) and a NNC DataFrame.
+    See Grid.get_cell_transmissibilities() for full documentation.
     """
+    # Validate input GridProperties have matching dimensions
+    for prop_name, prop in {
+        "permx": permx,
+        "permy": permy,
+        "permz": permz,
+        "ntg": ntg,
+    }.items():
+        if isinstance(prop, GridProperty) and prop.dimensions != grid.dimensions:
+            raise ValueError(
+                f"{prop_name} dimensions ({prop.ncol}, {prop.nrow}, {prop.nlay}) "
+                f"do not match grid dimensions ({grid.ncol}, {grid.nrow}, {grid.nlay})"
+            )
+
     grid._set_xtgformat2()
     gcpp = grid._get_grid_cpp()
 
     nc, nr, nl = grid.ncol, grid.nrow, grid.nlay
 
-    if nnc_table_only:
-        if nnc_table is None:
-            raise ValueError("nnc_table_only=True requires nnc_table to be provided.")
-        cell_mask = _get_cell_mask(permx, nc, nr, nl)
-        empty_vals = np.zeros((nc, nr, nl), dtype=np.float64)
-        tranx = GridProperty(
-            ncol=nc,
-            nrow=nr,
-            nlay=nl,
-            name="TRANX",
-            values=np.ma.MaskedArray(empty_vals.copy(), mask=cell_mask),
-            discrete=False,
-        )
-        trany = GridProperty(
-            ncol=nc,
-            nrow=nr,
-            nlay=nl,
-            name="TRANY",
-            values=np.ma.MaskedArray(empty_vals.copy(), mask=cell_mask),
-            discrete=False,
-        )
-        tranz = GridProperty(
-            ncol=nc,
-            nrow=nr,
-            nlay=nl,
-            name="TRANZ",
-            values=np.ma.MaskedArray(empty_vals.copy(), mask=cell_mask),
-            discrete=False,
-        )
-        nnc_df = pd.DataFrame(
-            {
-                "I1": pd.Series(dtype=np.int32),
-                "J1": pd.Series(dtype=np.int32),
-                "K1": pd.Series(dtype=np.int32),
-                "I2": pd.Series(dtype=np.int32),
-                "J2": pd.Series(dtype=np.int32),
-                "K2": pd.Series(dtype=np.int32),
-                "T": pd.Series(dtype=np.float64),
-                "TYPE": pd.Series(dtype=object),
-            }
-        )
-        nnc_nested_df, refined_boundary_prop = get_nnc_nested_hybrid(
-            grid,
-            permx,
-            permy,
-            permz,
-            ntg,
-            nnc_table,
-        )
-        return tranx, trany, tranz, nnc_df, nnc_nested_df, refined_boundary_prop
-
     px = _to_property_array(permx, nc, nr, nl)
     py = _to_property_array(permy, nc, nr, nl)
     pz = _to_property_array(permz, nc, nr, nl)
     nt = _to_property_array(ntg, nc, nr, nl)
-    cell_mask = _get_cell_mask(permx, nc, nr, nl)
+    cell_mask = grid.get_actnum().values.mask
 
     r = _internal.grid3d.compute_transmissibilities(
         gcpp, px, py, pz, nt, min_dz_pinchout
@@ -181,30 +126,15 @@ def get_transmissibilities(
         constant_values=0.0,
     )
 
-    tranx = GridProperty(
-        ncol=nc,
-        nrow=nr,
-        nlay=nl,
-        name="TRANX",
-        values=np.ma.MaskedArray(np.nan_to_num(tranx_raw, nan=0.0), mask=cell_mask),
-        discrete=False,
-    )
-    trany = GridProperty(
-        ncol=nc,
-        nrow=nr,
-        nlay=nl,
-        name="TRANY",
-        values=np.ma.MaskedArray(np.nan_to_num(trany_raw, nan=0.0), mask=cell_mask),
-        discrete=False,
-    )
-    tranz = GridProperty(
-        ncol=nc,
-        nrow=nr,
-        nlay=nl,
-        name="TRANZ",
-        values=np.ma.MaskedArray(np.nan_to_num(tranz_raw, nan=0.0), mask=cell_mask),
-        discrete=False,
-    )
+    tranx = GridProperty(grid, name="TRANX", values=np.nan_to_num(tranx_raw, nan=0.0))
+
+    trany = tranx.copy()
+    trany.name = "TRANY"
+    trany.values = np.nan_to_num(trany_raw, nan=0.0)
+
+    tranz = tranx.copy()
+    tranz.name = "TRANZ"
+    tranz.values = np.nan_to_num(tranz_raw, nan=0.0)
 
     # Convert 0-based C++ indices to 1-based public API convention
     nnc_df = pd.DataFrame(
@@ -287,15 +217,79 @@ def get_transmissibilities(
             keep[fault_sel.values] = significant
             nnc_df = nnc_df[keep].reset_index(drop=True)
 
-    if nnc_table is not None:
-        nnc_nested_df, refined_boundary_prop = get_nnc_nested_hybrid(
+    return tranx, trany, tranz, nnc_df
+
+
+def get_transmissibilities(
+    grid: Grid,
+    permx: GridProperty | float,
+    permy: GridProperty | float,
+    permz: GridProperty | float,
+    ntg: GridProperty | float = 1.0,
+    min_dz_pinchout: float = 1e-4,
+    min_fault_throw: float = 0.0,
+    nnc_table: pd.DataFrame | None = None,
+    nnc_table_only: bool = False,
+) -> tuple[
+    GridProperty,
+    GridProperty,
+    GridProperty,
+    pd.DataFrame,
+    pd.DataFrame | None,
+    GridProperty | None,
+]:
+    """Compute cell and, optionally, nested-hybrid NNC transmissibilities.
+
+    Deprecated: see Grid.get_transmissibilities() for full documentation.
+    """
+
+    if nnc_table_only:
+        if nnc_table is None:
+            raise ValueError("nnc_table_only=True requires nnc_table to be provided.")
+        tranx = GridProperty(
+            grid,
+            name="TRANX",
+            values=0.0,
+        )
+        trany = tranx.copy()
+        trany.name = "TRANY"
+
+        tranz = tranx.copy()
+        tranz.name = "TRANZ"
+
+        nnc_df = pd.DataFrame(
+            {
+                "I1": pd.Series(dtype=np.int32),
+                "J1": pd.Series(dtype=np.int32),
+                "K1": pd.Series(dtype=np.int32),
+                "I2": pd.Series(dtype=np.int32),
+                "J2": pd.Series(dtype=np.int32),
+                "K2": pd.Series(dtype=np.int32),
+                "T": pd.Series(dtype=np.float64),
+                "TYPE": pd.Series(dtype=object),
+            }
+        )
+    else:
+        tranx, trany, tranz, nnc_df = get_cell_transmissibilities(
             grid,
             permx,
             permy,
             permz,
             ntg,
-            nnc_table,
+            min_dz_pinchout,
+            min_fault_throw,
         )
+
+    if nnc_table is not None:
+        nnc_nested_df = get_nnc_nested_hybrid(
+            grid,
+            permx,
+            permy,
+            permz,
+            ntg,
+            nnc_table=nnc_table,
+        )
+        refined_boundary_prop = _create_refined_boundary_property(grid, nnc_nested_df)
     else:
         nnc_nested_df = None
         refined_boundary_prop = None
@@ -433,14 +427,47 @@ def _nh_tpfa(
     return factor * ht1 * ht2 / denom if denom > 0.0 else 0.0
 
 
+def _create_refined_boundary_property(
+    grid: "Grid",
+    nnc_df: pd.DataFrame,
+) -> "GridProperty":
+    """Create a GridProperty marking refined cells in nested-hybrid NNCs.
+
+    Args:
+        grid: The grid object.
+        nnc_df: DataFrame with columns ``I2, J2, K2`` (refined cell indices,
+            1-based).
+
+    Returns:
+        A discrete GridProperty with codes {0: "none", 1: "refined_boundary"}
+        marking cells that appear as cell 2 in at least one NNC.
+    """
+    nc, nr, nl = grid.ncol, grid.nrow, grid.nlay
+    flag = np.zeros((nc, nr, nl), dtype=np.int32)
+
+    if not nnc_df.empty:
+        # Convert from 1-based to 0-based indices
+        indices = nnc_df[["I2", "J2", "K2"]].to_numpy() - 1
+        flag[tuple(indices.T)] = 1
+
+    return GridProperty(
+        grid,
+        values=flag,
+        name="NNC_REFINED_BOUNDARY",
+        discrete=True,
+        codes={0: "none", 1: "refined_boundary"},
+    )
+
+
 def get_nnc_nested_hybrid(
     grid: "Grid",
     permx: "GridProperty | float",
     permy: "GridProperty | float",
     permz: "GridProperty | float",
-    ntg: "GridProperty | float",
+    ntg: "GridProperty | float" = 1.0,
+    *,
     nnc_table: pd.DataFrame,
-) -> tuple[pd.DataFrame, "GridProperty"]:
+) -> pd.DataFrame:
     """Compute NNC transmissibilities for pre-computed nested-hybrid cell pairs.
 
     The *nnc_table* DataFrame (produced by
@@ -462,8 +489,23 @@ def get_nnc_nested_hybrid(
             ``I+``, ``I-``, ``J+``, ``J-``, ``K+``, ``K-``).
 
     Returns:
-        A tuple ``(nnc_df, refined_boundary_prop)``.
+        A :class:`pandas.DataFrame` with columns ``I1, J1, K1`` (mother cell,
+        1-based), ``I2, J2, K2`` (refined cell, 1-based), ``T``
+        (transmissibility), ``TYPE`` (``"NestedHybrid"``), and ``DIRECTION``.
     """
+    # Validate input GridProperties have matching dimensions
+    for prop_name, prop in {
+        "permx": permx,
+        "permy": permy,
+        "permz": permz,
+        "ntg": ntg,
+    }.items():
+        if isinstance(prop, GridProperty) and prop.dimensions != grid.dimensions:
+            raise ValueError(
+                f"{prop_name} dimensions ({prop.ncol}, {prop.nrow}, {prop.nlay}) "
+                f"do not match grid dimensions ({grid.ncol}, {grid.nrow}, {grid.nlay})"
+            )
+
     grid._set_xtgformat2()
     gcpp = grid._get_grid_cpp()
 
@@ -545,19 +587,4 @@ def get_nnc_nested_hybrid(
             columns=["I1", "J1", "K1", "I2", "J2", "K2", "T", "TYPE", "DIRECTION"]
         )
 
-    # --- Mark refined cells that participate in NNCs -------
-    flag = np.zeros((nc, nr, nl), dtype=np.int32)
-    for ijk in refined_boundary_ijk:
-        flag[ijk] = 1
-
-    refined_boundary_prop = GridProperty(
-        ncol=nc,
-        nrow=nr,
-        nlay=nl,
-        values=flag,
-        name="NNC_REFINED_BOUNDARY",
-        discrete=True,
-        codes={0: "none", 1: "refined_boundary"},
-    )
-
-    return nnc_df, refined_boundary_prop
+    return nnc_df

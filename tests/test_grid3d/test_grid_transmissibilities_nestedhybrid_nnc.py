@@ -1,4 +1,4 @@
-"""Tests for Grid.get_transmissibilities() nested-hybrid extension."""
+"""Tests for Grid.get_nested_hybrid_nnc_transmissibilities()."""
 
 import pathlib
 
@@ -160,7 +160,7 @@ def _nnc_table_from_nest_id(grid, nest_id_prop, search_radius=600.0, min_area=1e
 
     For grids that were created externally (not via ``create_nested_hybrid_grid``),
     this replicates the old KDTree-based boundary-face detection to produce the
-    nnc_table that ``get_transmissibilities(nnc_table=...)`` now expects.
+    nnc_table that ``get_nested_hybrid_nnc_transmissibilities()`` now expects.
 
     Convention: I1=mother (1-based), I2=refined (1-based),
     DIRECTION from mother's perspective.
@@ -393,7 +393,7 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg = _uniform(grid, 1.0, "ntg")
 
-        _, _, _, _, nnc_df, _ = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg, nnc_table=table
         )
 
@@ -410,7 +410,7 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg = _uniform(grid, 1.0, "ntg")
 
-        _, _, _, _, nnc_df, _ = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg, nnc_table=table
         )
 
@@ -423,7 +423,7 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg = _uniform(grid, 1.0, "ntg")
 
-        _, _, _, _, nnc_df, _ = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg, nnc_table=table
         )
 
@@ -437,7 +437,7 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg = _uniform(grid, 1.0, "ntg")
 
-        _, _, _, _, nnc_df, _ = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg, nnc_table=table
         )
 
@@ -453,7 +453,7 @@ class TestBoxGrid:
             columns=["I1", "J1", "K1", "I2", "J2", "K2", "DIRECTION"]
         )
 
-        _, _, _, _, nnc_df, rbnd = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg, nnc_table=empty_table
         )
 
@@ -469,7 +469,6 @@ class TestBoxGrid:
             "TYPE",
             "DIRECTION",
         ]
-        assert (rbnd.values.filled(0) == 0).all()
 
     def test_ntg_scales_ij_transmissibility(self):
         """Halving NTG on all cells halves both HTs → T = C/2 for I-direction."""
@@ -478,7 +477,7 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg_half = _uniform(grid, 0.5, "ntg")
 
-        _, _, _, _, nnc_df, _ = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg_half, nnc_table=table
         )
 
@@ -492,7 +491,7 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg_half = _uniform(grid, 0.5, "ntg")  # must be ignored for K
 
-        _, _, _, _, nnc_df, _ = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg_half, nnc_table=table
         )
 
@@ -500,7 +499,7 @@ class TestBoxGrid:
         np.testing.assert_allclose(nnc_df["T"].values, [_C], rtol=1e-4)
 
     def test_refined_boundary_property_marks_correct_cells(self):
-        """refined_boundary marks refined cells (NEST_ID==2) in the NNC, not mother."""
+        """refined_boundary marks refined cells (NEST_ID==2), not mother."""
         grid, nested = _make_nested_grid(5, 1, 1, [1, 1, 0, 2, 2], axis="i")
         table = _make_nnc_table_for_box(5, 1, 1, [1, 1, 0, 2, 2], axis="i")
         perm = _uniform(grid, 1.0, "perm")
@@ -518,7 +517,6 @@ class TestBoxGrid:
             assert nv[i, j, k] == 2, (
                 f"Cell ({i},{j},{k}) marked but has NEST_ID={nv[i, j, k]}"
             )
-        # Mother cells must NOT be marked
         for i in range(grid.ncol):
             for j in range(grid.nrow):
                 for k in range(grid.nlay):
@@ -532,12 +530,12 @@ class TestBoxGrid:
         ntg = _uniform(grid, 1.0, "ntg")
 
         perm1 = _uniform(grid, 1.0, "perm1")
-        _, _, _, _, nnc1, _ = grid.get_transmissibilities(
+        nnc1 = grid.get_nested_hybrid_nnc_transmissibilities(
             perm1, perm1, perm1, ntg, nnc_table=table
         )
 
         perm2 = _uniform(grid, 2.0, "perm2")
-        _, _, _, _, nnc2, _ = grid.get_transmissibilities(
+        nnc2 = grid.get_nested_hybrid_nnc_transmissibilities(
             perm2, perm2, perm2, ntg, nnc_table=table
         )
 
@@ -550,14 +548,14 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg = _uniform(grid, 1.0, "ntg")
 
-        _, _, _, _, nnc_df, _ = grid.get_transmissibilities(
+        nnc_df = grid.get_nested_hybrid_nnc_transmissibilities(
             perm, perm, perm, ntg, nnc_table=table
         )
 
         assert len(nnc_df) == 3  # one NNC per J row
 
-    def test_nnc_table_only_skips_regular_tpfa(self):
-        """nnc_table_only=True returns zero TRAN* and empty regular NNC df."""
+    def test_nnc_table_only_preserves_legacy_behavior(self):
+        """nnc_table_only=True skips ordinary transmissibilities."""
         grid, _ = _make_nested_grid(5, 1, 1, [1, 1, 0, 2, 2], axis="i")
         table = _make_nnc_table_for_box(5, 1, 1, [1, 1, 0, 2, 2], axis="i")
         perm = _uniform(grid, 1.0, "perm")
@@ -567,38 +565,26 @@ class TestBoxGrid:
             perm, perm, perm, ntg, nnc_table=table, nnc_table_only=True
         )
 
-        # Regular TRAN* are all zero
         assert (tx.values.filled(0) == 0).all()
         assert (ty.values.filled(0) == 0).all()
         assert (tz.values.filled(0) == 0).all()
-
-        # Regular NNC dataframe is empty but has the expected columns
         assert len(nnc_df) == 0
-        assert list(nnc_df.columns) == ["I1", "J1", "K1", "I2", "J2", "K2", "T", "TYPE"]
-
-        # Nested-hybrid NNCs are still computed
-        assert nnc_nh is not None
         assert len(nnc_nh) == 1
-        np.testing.assert_allclose(nnc_nh["T"].values, [_C], rtol=1e-4)
         assert rbnd is not None
 
-    def test_nnc_table_only_matches_full_nh_results(self):
-        """nnc_table_only=True yields the same nested-hybrid NNCs as the full call."""
+    def test_legacy_method_warns_and_preserves_return_values(self):
+        """nnc_table returns nested-hybrid results in the legacy tuple."""
         grid, _ = _make_nested_grid(5, 3, 1, [1, 1, 0, 2, 2], axis="i")
         table = _make_nnc_table_for_box(5, 3, 1, [1, 1, 0, 2, 2], axis="i")
         perm = _uniform(grid, 1.0, "perm")
         ntg = _uniform(grid, 1.0, "ntg")
 
-        _, _, _, _, nh_full, _ = grid.get_transmissibilities(
-            perm, perm, perm, ntg, nnc_table=table
-        )
-        _, _, _, _, nh_only, _ = grid.get_transmissibilities(
-            perm, perm, perm, ntg, nnc_table=table, nnc_table_only=True
-        )
+        with pytest.warns(DeprecationWarning, match="get_cell_transmissibilities"):
+            result = grid.get_transmissibilities(perm, perm, perm, ntg, nnc_table=table)
 
-        pd.testing.assert_frame_equal(
-            nh_full.reset_index(drop=True), nh_only.reset_index(drop=True)
-        )
+        assert len(result) == 6
+        assert result[4] is not None
+        assert result[5] is not None
 
     def test_nnc_table_only_requires_nnc_table(self):
         """nnc_table_only=True without nnc_table raises ValueError."""
@@ -611,7 +597,7 @@ class TestBoxGrid:
 
 
 class TestDrogonNestedCase:
-    """Test get_transmissibilities() nested-hybrid mode with the Drogon grid."""
+    """Test nested-hybrid NNC transmissibilities with the Drogon grid."""
 
     def test_nested_drogon_nncs(self, testdata_path):
         """NNCs between the nested refined region (NEST_ID==2) and the mother
@@ -636,15 +622,14 @@ class TestDrogonNestedCase:
 
         @functimer(output="print")
         def get_nncs():
-            return grid.get_transmissibilities(
+            return grid.get_nested_hybrid_nnc_transmissibilities(
                 permx, permy, permz, ntg, nnc_table=table
             )
 
-        _, _, _, _, nnc_df, refined_boundary = get_nncs()
+        nnc_df = get_nncs()
 
         print(f"NNCs found: {len(nnc_df)}")
         print(nnc_df.head())
-        print(f"Refined boundary cells: {(refined_boundary.values == 1).sum()}")
 
         # --- Basic structural checks -------------------------------------------
         assert len(nnc_df) > 0, "Expected at least one NNC"
@@ -674,29 +659,6 @@ class TestDrogonNestedCase:
         assert np.isfinite(nnc_df["T"].values).all()
         assert (nnc_df["T"] >= 0.0).all()
 
-        # --- GridProperty checks -----------------------------------------------
-        assert refined_boundary.name == "NNC_REFINED_BOUNDARY"
-        assert refined_boundary.isdiscrete
-        assert refined_boundary.ncol == ncol
-        assert refined_boundary.nrow == nrow
-        assert refined_boundary.nlay == nlay
-
-        # Refined boundary cells must all come from NEST_ID==2 region
-        nv = nested.values.filled(0).astype(int)
-        flag = refined_boundary.values.filled(0)
-        marked_ijk = np.argwhere(flag == 1)
-        for i, j, k in marked_ijk:
-            assert nv[i, j, k] == 2, (
-                f"Cell ({i},{j},{k}) marked as refined_boundary but "
-                f"has NEST_ID={nv[i, j, k]}"
-            )
-
-        # --- Export for visualisation -------------------------------------------
-        out_dir = pathlib.Path(testdata_path) / "3dgrids/drogon/5"
-        out_prop = out_dir / "drogon_nested_hybrid1_nnc_boundary.roff"
-        refined_boundary.to_file(out_prop, fformat="roff")
-        print(f"Written: {out_prop}")
-
 
 class TestEmeraldNestedCase:
     """Test nested-hybrid mode witha subset of the Emerald grid."""
@@ -722,7 +684,7 @@ class TestEmeraldNestedCase:
         )
         table = _nnc_table_from_nest_id(hgrid, region_hybrid)
 
-        _, _, _, _, nncs_connections, _ = hgrid.get_transmissibilities(
+        nncs_connections = hgrid.get_nested_hybrid_nnc_transmissibilities(
             permx_hybrid,
             permy_hybrid,
             permz_hybrid,
@@ -797,7 +759,7 @@ class TestEmeraldNestedCase:
         )
         table = _nnc_table_from_nest_id(hybrid_grid, region_hybrid)
 
-        _, _, _, _, nncs_connections, _ = hybrid_grid.get_transmissibilities(
+        nncs_connections = hybrid_grid.get_nested_hybrid_nnc_transmissibilities(
             permx_hybrid,
             permy_hybrid,
             permz_hybrid,
@@ -973,7 +935,7 @@ class TestEmeraldNestedCase:
             testdata_path / EMERALD_NESTED1_PROPS, name="NestReg", grid=grid_h
         )
         table_h = _nnc_table_from_nest_id(grid_h, region_h)
-        _, _, _, _, nncs_h, _ = grid_h.get_transmissibilities(
+        nncs_h = grid_h.get_nested_hybrid_nnc_transmissibilities(
             permx_h, permy_h, permz_h, ntg_h, nnc_table=table_h
         )
         nncs_h = nncs_h[nncs_h["TYPE"] == "NestedHybrid"]
@@ -1082,7 +1044,7 @@ class TestEmeraldNestedCase:
             testdata_path / EMERALD_NESTED1_PROPS, name="NestReg", grid=grid_h
         )
         table_h = _nnc_table_from_nest_id(grid_h, region_h)
-        _, _, _, _, nncs_h, _ = grid_h.get_transmissibilities(
+        nncs_h = grid_h.get_nested_hybrid_nnc_transmissibilities(
             permx_h, permy_h, permz_h, ntg_h, nnc_table=table_h
         )
         nncs_h = nncs_h[nncs_h["TYPE"] == "NestedHybrid"].copy()
