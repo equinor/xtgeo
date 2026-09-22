@@ -1,4 +1,4 @@
-"""Tests for Grid.get_transmissibilities() public API.
+"""Tests for Grid.get_cell_transmissibilities() public API.
 
 Covers:
 - Return types (GridProperty objects + DataFrame).
@@ -62,7 +62,7 @@ def _compute(nc, nr, nl, permx=1.0, permy=1.0, permz=1.0, ntg=None):
     py = _uniform_prop(grid, permy, "permy")
     pz = _uniform_prop(grid, permz, "permz")
     nt = _uniform_prop(grid, ntg, "ntg") if ntg is not None else None
-    tranx, trany, tranz, nnc, _, _ = grid.get_transmissibilities(px, py, pz, ntg=nt)
+    tranx, trany, tranz, nnc = grid.get_cell_transmissibilities(px, py, pz, ntg=nt)
     return tranx, trany, tranz, nnc
 
 
@@ -237,10 +237,10 @@ class TestNTGScaling:
         pz = _uniform_prop(grid, 2.0, "permz")
         ntg_one = _uniform_prop(grid, 1.0, "ntg")
 
-        tx_none, ty_none, tz_none, _, _, _ = grid.get_transmissibilities(
+        tx_none, ty_none, tz_none, _ = grid.get_cell_transmissibilities(
             px, py, pz, ntg=None
         )
-        tx_one, ty_one, tz_one, _, _, _ = grid.get_transmissibilities(
+        tx_one, ty_one, tz_one, _ = grid.get_cell_transmissibilities(
             px, py, pz, ntg=ntg_one
         )
 
@@ -280,14 +280,14 @@ class TestScalarInput:
 
     def test_scalar_perms_run_without_error(self, grid):
         """Scalar permx, permy, permz are accepted."""
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(1.0, 1.0, 1.0)
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(1.0, 1.0, 1.0)
         assert isinstance(tranx, xtgeo.GridProperty)
         assert isinstance(trany, xtgeo.GridProperty)
         assert isinstance(tranz, xtgeo.GridProperty)
 
     def test_scalar_ntg_run_without_error(self, grid):
         """Scalar ntg is accepted."""
-        tranx, _, _, _, _, _ = grid.get_transmissibilities(1.0, 1.0, 1.0, ntg=0.5)
+        tranx, _, _, _ = grid.get_cell_transmissibilities(1.0, 1.0, 1.0, ntg=0.5)
         assert isinstance(tranx, xtgeo.GridProperty)
 
     def test_scalar_perm_equivalent_to_gridproperty(self, grid):
@@ -297,10 +297,10 @@ class TestScalarInput:
         py = _uniform_prop(grid, py_scalar, "permy")
         pz = _uniform_prop(grid, pz_scalar, "permz")
 
-        tx_s, ty_s, tz_s, _, _, _ = grid.get_transmissibilities(
+        tx_s, ty_s, tz_s, _ = grid.get_cell_transmissibilities(
             px_scalar, py_scalar, pz_scalar
         )
-        tx_p, ty_p, tz_p, _, _, _ = grid.get_transmissibilities(px, py, pz)
+        tx_p, ty_p, tz_p, _ = grid.get_cell_transmissibilities(px, py, pz)
 
         # Compare excluding the dummy boundary slices (NaN)
         assert np.allclose(
@@ -327,12 +327,10 @@ class TestScalarInput:
         py = _uniform_prop(grid, 1.0, "permy")
         pz = _uniform_prop(grid, 1.0, "permz")
 
-        tx_s, ty_s, tz_s, _, _, _ = grid.get_transmissibilities(
+        tx_s, ty_s, tz_s, _ = grid.get_cell_transmissibilities(
             px, py, pz, ntg=ntg_scalar
         )
-        tx_p, ty_p, tz_p, _, _, _ = grid.get_transmissibilities(
-            px, py, pz, ntg=ntg_prop
-        )
+        tx_p, ty_p, tz_p, _ = grid.get_cell_transmissibilities(px, py, pz, ntg=ntg_prop)
 
         assert np.allclose(
             tx_s.values.filled(np.nan)[:-1, :, :],
@@ -352,7 +350,7 @@ class TestScalarInput:
 
     def test_scalar_ntg_scales_horizontal_tran(self, grid):
         """Scalar ntg=0.5 halves horizontal TRAN (same as GridProperty version)."""
-        tranx, trany, _, _, _, _ = grid.get_transmissibilities(1.0, 1.0, 1.0, ntg=0.5)
+        tranx, trany, _, _ = grid.get_cell_transmissibilities(1.0, 1.0, 1.0, ntg=0.5)
         assert np.all(
             np.isclose(
                 tranx.values.filled(np.nan)[:-1, :, :], 0.5 * _C_METRIC, rtol=1e-6
@@ -368,9 +366,7 @@ class TestScalarInput:
         """Mixing scalar and GridProperty inputs works correctly."""
         px = _uniform_prop(grid, 2.0, "permx")
         # permy and permz as scalars, permx as GridProperty, ntg as scalar
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(
-            px, 3.0, 4.0, ntg=0.5
-        )
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(px, 3.0, 4.0, ntg=0.5)
         # tranx: k_eff = 2.0 * 0.5 = 1.0 → T = 1.0 * _C_METRIC
         assert np.all(
             np.isclose(tranx.values.filled(np.nan)[:-1, :, :], _C_METRIC, rtol=1e-6)
@@ -412,7 +408,7 @@ class TestInactiveCells:
         py = _uniform_prop(grid, 1.0, "permy")
         pz = _uniform_prop(grid, 1.0, "permz")
 
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(px, py, pz)
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(px, py, pz)
 
         # I-pair (0,1,1)←→(1,1,1): source cell (0,1,1) is active but neighbour is
         # inactive → C++ returns 0.0; the entry is unmasked (source cell is active)
@@ -483,9 +479,7 @@ class TestPinchoutNNC:
         px = _uniform_prop(grid, 1.0, "permx")
         py = _uniform_prop(grid, 1.0, "permy")
         pz = _uniform_prop(grid, 1.0, "permz")
-        _, _, _, nnc, _, _ = grid.get_transmissibilities(
-            px, py, pz, min_dz_pinchout=0.5
-        )
+        _, _, _, nnc = grid.get_cell_transmissibilities(px, py, pz, min_dz_pinchout=0.5)
         pinchout = nnc[nnc["TYPE"] == "Pinchout"]
         assert len(pinchout) > 0
 
@@ -494,9 +488,7 @@ class TestPinchoutNNC:
         px = _uniform_prop(grid, 1.0, "permx")
         py = _uniform_prop(grid, 1.0, "permy")
         pz = _uniform_prop(grid, 1.0, "permz")
-        _, _, _, nnc, _, _ = grid.get_transmissibilities(
-            px, py, pz, min_dz_pinchout=0.5
-        )
+        _, _, _, nnc = grid.get_cell_transmissibilities(px, py, pz, min_dz_pinchout=0.5)
         if len(nnc) > 0:
             # Accept either object dtype (legacy pandas) or StringDtype (pandas 3+)
             assert nnc["TYPE"].dtype == object or pd.api.types.is_string_dtype(
@@ -508,9 +500,7 @@ class TestPinchoutNNC:
         px = _uniform_prop(grid, 1.0, "permx")
         py = _uniform_prop(grid, 1.0, "permy")
         pz = _uniform_prop(grid, 1.0, "permz")
-        _, _, _, nnc, _, _ = grid.get_transmissibilities(
-            px, py, pz, min_dz_pinchout=0.5
-        )
+        _, _, _, nnc = grid.get_cell_transmissibilities(px, py, pz, min_dz_pinchout=0.5)
         if len(nnc) > 0:
             assert nnc["I1"].min() >= 1
             assert nnc["J1"].min() >= 1
@@ -524,9 +514,7 @@ class TestPinchoutNNC:
         px = _uniform_prop(grid, 1.0, "permx")
         py = _uniform_prop(grid, 1.0, "permy")
         pz = _uniform_prop(grid, 1.0, "permz")
-        _, _, _, nnc, _, _ = grid.get_transmissibilities(
-            px, py, pz, min_dz_pinchout=0.5
-        )
+        _, _, _, nnc = grid.get_cell_transmissibilities(px, py, pz, min_dz_pinchout=0.5)
         pinchout = nnc[nnc["TYPE"] == "Pinchout"]
         if len(pinchout) > 0:
             assert (pinchout["T"] > 0).all()
@@ -575,7 +563,7 @@ class TestMinDzPinchout:
         px = _uniform_prop(grid, 1.0, "permx")
         py = _uniform_prop(grid, 1.0, "permy")
         pz = _uniform_prop(grid, 1.0, "permz")
-        _, _, _, nnc, _, _ = grid.get_transmissibilities(
+        _, _, _, nnc = grid.get_cell_transmissibilities(
             px, py, pz, min_dz_pinchout=0.001
         )
         assert isinstance(nnc, pd.DataFrame)
@@ -601,7 +589,7 @@ class TestHandedness:
             grid.ijk_handedness = "left"
         assert grid.ijk_handedness == "left"
 
-        _, trany, _, _, _, _ = grid.get_transmissibilities(1.0, 1.0, 1.0)
+        _, trany, _, _ = grid.get_cell_transmissibilities(1.0, 1.0, 1.0)
 
         assert np.all(trany.values[:, -1, :] == 0.0)
         assert np.all(trany.values[:, :-1, :] > 0.0)
@@ -611,7 +599,7 @@ class TestHandedness:
         grid.ijk_handedness = "right"
         assert grid.ijk_handedness == "right"
 
-        _, trany, _, _, _, _ = grid.get_transmissibilities(1.0, 1.0, 1.0)
+        _, trany, _, _ = grid.get_cell_transmissibilities(1.0, 1.0, 1.0)
 
         assert np.all(trany.values[:, -1, :] == 0.0)
         assert np.all(trany.values[:, :-1, :] > 0.0)
@@ -626,8 +614,8 @@ class TestHandedness:
         grid_r = _box_grid(3, 4, 2)
         grid_r.ijk_handedness = "right"
 
-        _, trany_l, _, _, _, _ = grid_l.get_transmissibilities(1.0, 1.0, 1.0)
-        _, trany_r, _, _, _, _ = grid_r.get_transmissibilities(1.0, 1.0, 1.0)
+        _, trany_l, _, _ = grid_l.get_cell_transmissibilities(1.0, 1.0, 1.0)
+        _, trany_r, _, _ = grid_r.get_cell_transmissibilities(1.0, 1.0, 1.0)
 
         # Active slices: [:-1] for both left- and right-handed
         assert np.allclose(
@@ -645,8 +633,8 @@ class TestHandedness:
         grid_r = _box_grid(3, 4, 2)
         grid_r.ijk_handedness = "right"
 
-        tranx_l, _, tranz_l, _, _, _ = grid_l.get_transmissibilities(1.0, 1.0, 1.0)
-        tranx_r, _, tranz_r, _, _, _ = grid_r.get_transmissibilities(1.0, 1.0, 1.0)
+        tranx_l, _, tranz_l, _ = grid_l.get_cell_transmissibilities(1.0, 1.0, 1.0)
+        tranx_r, _, tranz_r, _ = grid_r.get_cell_transmissibilities(1.0, 1.0, 1.0)
 
         assert np.allclose(tranx_l.values, tranx_r.values, atol=1e-12)
         assert np.allclose(tranz_l.values, tranz_r.values, atol=1e-12)
@@ -679,7 +667,7 @@ class TestCompareCases:
         tranz_compare = xtgeo.gridproperty_from_file(file, name="TRANZ", grid=grid)
 
         # compute with xtgeo
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(
             permx, permy, permz, ntg, min_dz_pinchout=0.001
         )
 
@@ -712,7 +700,7 @@ class TestCompareCases:
         tranz_compare = xtgeo.gridproperty_from_file(file, name="TRANZ", grid=grid)
 
         # compute with xtgeo
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(
             permx, permy, permz, ntg, min_dz_pinchout=0.001
         )
 
@@ -752,7 +740,7 @@ class TestCompareCases:
         )
 
         # compute with xtgeo
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(
             permx, permy, permz, min_dz_pinchout=0.001
         )
 
@@ -797,7 +785,7 @@ class TestCompareCases:
         )
 
         # compute with xtgeo
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(
             permx, permy, permz, min_dz_pinchout=0.001
         )
 
@@ -842,7 +830,7 @@ class TestCompareCases:
         )
 
         # compute with xtgeo
-        tranx, trany, tranz, _, _, _ = grid.get_transmissibilities(
+        tranx, trany, tranz, _ = grid.get_cell_transmissibilities(
             permx, permy, permz, min_dz_pinchout=0.001
         )
 
@@ -889,9 +877,9 @@ class TestEmeraldOriginal:
 
         @functimer(output="print")
         def get_trans_nnc():
-            return grid.get_transmissibilities(permx, permy, permz, ntg)
+            return grid.get_cell_transmissibilities(permx, permy, permz, ntg)
 
-        tx, ty, tz, nncs_df, nested_nnc_df, refined_boundary = get_trans_nnc()
+        tx, ty, tz, nncs_df = get_trans_nnc()
 
         assert tx.values.mean() == pytest.approx(11.9938, rel=1e-2)
         print(f"Original grid: NNCs found: {len(nncs_df)}")
@@ -1144,7 +1132,7 @@ class TestEmeraldOriginal:
         permz = xtgeo.gridproperty_from_file(file, name="KZ", grid=grid)
         ntg = xtgeo.gridproperty_from_file(file, name="NTG", grid=grid)
 
-        _, _, _, nncs_df, _, _ = grid.get_transmissibilities(permx, permy, permz, ntg)
+        _, _, _, nncs_df = grid.get_cell_transmissibilities(permx, permy, permz, ntg)
 
         # Negligible-T NNCs (T < 1e-4) are physically irrelevant and may be
         # absent from the vendor output.  Filter both sides before counting.
