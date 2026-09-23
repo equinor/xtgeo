@@ -55,7 +55,7 @@ def select_by_name(
 
 
 # Creating missing folders guarantees a collection is returned.
-@overload
+@overload  # pragma: no cover
 def resolve_folder(
     root: _RipsFolderCollectionT,
     folder_path: str,
@@ -65,7 +65,7 @@ def resolve_folder(
 
 
 # Looking up existing folders may return None when the path is missing.
-@overload
+@overload  # pragma: no cover
 def resolve_folder(
     root: _RipsFolderCollectionT,
     folder_path: str,
@@ -75,7 +75,7 @@ def resolve_folder(
 
 
 # A runtime boolean cannot guarantee creation, so the result may be None.
-@overload
+@overload  # pragma: no cover
 def resolve_folder(
     root: _RipsFolderCollectionT,
     folder_path: str,
