@@ -17,8 +17,6 @@ Functions
 
 .. autofunction:: xtgeo.surface_from_grid3d
 
-.. autofunction:: xtgeo.surface_from_roxar
-
 .. autofunction:: xtgeo.surface_from_rms
 
 .. autofunction:: xtgeo.regular_surface_from_resinsight

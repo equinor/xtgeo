@@ -21,13 +21,13 @@ a python job within RMS.
 Get and set data
 ----------------
 
-In general, data are imported into XTGeo by a ``from_roxar()`` or by a
-``xtgeo.xxx_from_roxar()`` (where xx is "surface", "grid", etc). Then the
-altered instance can be stored in roxar/RMS by a ``to_roxar()`` method.
+In general, data are imported into XTGeo by a ``from_rms()`` or by a
+``xtgeo.xxx_from_rms()`` (where xxx is "surface", "grid", etc). Then the
+altered instance can be stored in RMS by a ``to_rms()`` method.
 
-The ``to_roxar()`` method will not do a project save when inside RMS or when inside
+The ``to_rms()`` method will not do a project save when inside RMS or when inside
 a virtual project setting. However, if a project is applied as a file path, then
-``to_roxar`` will save implicitly. Examples:
+``to_rms`` will save implicitly. Examples:
 
 Inside RMS GUI
 ^^^^^^^^^^^^^^
@@ -35,9 +35,9 @@ Inside RMS GUI
 
     import xtgeo
 
-    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_extracted")
+    surf = xtgeo.surface_from_rms(project, "TopReek", "DS_extracted")
     surf.values += 100
-    surf.to_roxar(project)
+    surf.to_rms(project)
 
     # Note: project save needs to be done by user (GUI action)
 
@@ -56,9 +56,9 @@ as shown below:
 
     myproject = "/some/file/path/reek.rms11.1.1"
 
-    surf = xtgeo.surface_from_roxar(myproject, "TopReek", "DS_extracted")
+    surf = xtgeo.surface_from_rms(myproject, "TopReek", "DS_extracted")
     surf.values += 100
-    surf.to_roxar(myproject)
+    surf.to_rms(myproject)
 
     # Note: project save is done automatically
 
@@ -75,7 +75,7 @@ Export a surface in RMS to irap binary format
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo and export
-    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_extracted")
+    surf = xtgeo.surface_from_rms(project, "TopReek", "DS_extracted")
 
     surf.to_file("topreek.gri")
 
@@ -83,7 +83,7 @@ Export a surface in RMS to irap binary format
     surf.values += 1000
 
     # store in RMS (category must exist)
-    surf.to_roxar(project, "TopReek", "DS_whatever")
+    surf.to_rms(project, "TopReek", "DS_whatever")
 
 
 Export a surface in RMS to zmap ascii format
@@ -101,7 +101,7 @@ grid will be done in case the RMS map has a rotation.
 
     # loop over stratigraphy
     for name in hnames:
-        surf = xt.surface_from_roxar(project, name, "DS_extracted")
+        surf = xt.surface_from_rms(project, name, "DS_extracted")
         fname = name.lower()  # lower case file name
         surf.to_file(fname + ".zmap", fformat="zmap_ascii")
 
@@ -114,12 +114,12 @@ Take a surface in RMS and multiply values with 2:
 
     import xtgeo
 
-    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_tmp")
+    surf = xtgeo.surface_from_rms(project, "TopReek", "DS_tmp")
 
     surf.values *= 2  # values is the masked 2D numpy array property
 
     # store the surface back to RMS
-    surf.to_roxar(project, "TopReek", "DS_tmp")
+    surf.to_rms(project, "TopReek", "DS_tmp")
 
 
 Do operations on surfaces, also inside polygons:
@@ -158,17 +158,17 @@ common multiplum)
        mainzones = CFG["zones"]["MAIN_ZONES"]
        for znum, mzone in enumerate(mainzones):
 
-           surf1 = xtgeo.surface_from_roxar(PRJ, topmainzones[znum], TSCAT1)
-           surf2 = xtgeo.surface_from_roxar(PRJ, topmainzones[znum + 1], TSCAT1)
+           surf1 = xtgeo.surface_from_rms(PRJ, topmainzones[znum], TSCAT1)
+           surf2 = xtgeo.surface_from_rms(PRJ, topmainzones[znum + 1], TSCAT1)
 
            diff = surf2.copy()
            diff.values -= surf1.values
-           diff.to_roxar(PRJ, mzone, ISCAT1, stype="zones")
+           diff.to_rms(PRJ, mzone, ISCAT1, stype="zones")
            print("Store {} at {}".format(mzone, ISCAT1))
 
            # extract differences inside a polygon and compute min/max values:
 
-           poly = xtgeo.polygons_from_roxar(PRJ, topmainzones[znum], PCAT)
+           poly = xtgeo.polygons_from_rms(PRJ, topmainzones[znum], PCAT)
            surf1.eli_outside(poly)
            surf2.eli_outside(poly)
            diff2 = surf2.copy()
@@ -178,7 +178,7 @@ common multiplum)
                     diff2.values.min(), diff2.values.max(), mzone
                     )
                 )
-           diff2.to_roxar(PRJ, mzone, ISCAT2, stype="zones")
+           diff2.to_rms(PRJ, mzone, ISCAT2, stype="zones")
            print("Store cut surface {} at {}".format(mzone, ISCAT2))
 
 
@@ -199,7 +199,7 @@ Exporting geometry to ROFF file
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo and export
-    mygrid = xtgeo.grid_from_roxar(project, "Geomodel")
+    mygrid = xtgeo.grid_from_rms(project, "Geomodel")
 
     mygrid.to_file("topreek.roff")  # roff binary is default format
 
@@ -212,14 +212,14 @@ Edit a porosity in a 3D grid
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo
-    myporo = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Por")
+    myporo = xtgeo.gridproperty_from_rms(project, "Geomodel", "Por")
 
     # now I want to limit porosity to 0.35 for values above 0.35:
 
     myporo.values[myporo.values > 0.35] = 0.35
 
     # store to another icon
-    poro.to_roxar(project, "Geomodel", "PorNew")
+    poro.to_rms(project, "Geomodel", "PorNew")
 
 
 Edit a permeability given a porosity cutoff
@@ -230,14 +230,14 @@ Edit a permeability given a porosity cutoff
    import numpy as np
    import xtgeo
 
-   myporo = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Por")
-   myperm = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Perm")
+   myporo = xtgeo.gridproperty_from_rms(project, "Geomodel", "Por")
+   myperm = xtgeo.gridproperty_from_rms(project, "Geomodel", "Perm")
 
    # if poro < 0.01 then perm is 0.001, otherwise keep as is, illustrated with np.where()
    myperm.values = np.where(myporo.values < 0.1, 0.001, myperm.values)
 
    # store to another icon
-   myperm.to_roxar(project, "Geomodel", "PermEdit")
+    myperm.to_rms(project, "Geomodel", "PermEdit")
 
 
 Edit a 3D grid porosity inside polygons
@@ -250,11 +250,11 @@ Edit a 3D grid porosity inside polygons
 
    import xtgeo
 
-   mygrid = xtgeo.grid_from_roxar(project, "Reek_sim")
-   myprop = xtgeo.gridproperty_from_roxar(project, "Reek_sim", "PORO")
+   mygrid = xtgeo.grid_from_rms(project, "Reek_sim")
+   myprop = xtgeo.gridproperty_from_rms(project, "Reek_sim", "PORO")
 
    # read polygon(s), from Horizons, Faults, Zones or Clipboard
-   mypoly = xtgeo.polygons_from_roxar(project, "TopUpperReek", "DL_test")
+   mypoly = xtgeo.polygons_from_rms(project, "TopUpperReek", "DL_test")
 
    # need to connect property to grid geometry when using polygons
    myprop.geometry = mygrid
@@ -262,7 +262,7 @@ Edit a 3D grid porosity inside polygons
    myprop.set_inside(mypoly, 99)
 
    # Save in RMS as a new icon
-   myprop.to_roxar(project, "Reek_sim", "NEWPORO_setinside")
+    myprop.to_rms(project, "Reek_sim", "NEWPORO_setinside")
 
    
 Create region polygons from the grid
@@ -287,9 +287,9 @@ Create region polygons from the grid
 
    def create_region_polygons():
        """Create region polygons and store them on the clipboard"""
-       grid = xtgeo.grid_from_roxar(project, GNAME)
-       reg = xtgeo.gridproperty_from_roxar(project, GNAME, REGNAME)
-       zone = xtgeo.gridproperty_from_roxar(project, GNAME, ZONENAME)
+       grid = xtgeo.grid_from_rms(project, GNAME)
+       reg = xtgeo.gridproperty_from_rms(project, GNAME, REGNAME)
+       zone = xtgeo.gridproperty_from_rms(project, GNAME, ZONENAME)
 
        for regnum, regname in reg.codes.items():
            print(f"Creating boundary polygon for region {regname}")
@@ -305,7 +305,7 @@ Create region polygons from the grid
            pol.filter_byid([0])
 
            # store polygon to the clipboard
-           pol.to_roxar(project, regname, CB_FOLDER, stype="clipboard")
+           pol.to_rms(project, regname, CB_FOLDER, stype="clipboard")
 
         print(f"Complete, region polygons are stored under clipboard folder {CB_FOLDER}")
 
@@ -338,13 +338,13 @@ a certain depth interval has horizontal layers.
 
    def hregion():
        """Make a custom region property for hybrid grid"""
-       tgrid = xtgeo.grid_from_roxar(PRJ, GNAME_INPUT)
-       reg = xtgeo.gridproperty_from_roxar(PRJ, GNAME_INPUT, REGNAME)
+       tgrid = xtgeo.grid_from_rms(PRJ, GNAME_INPUT)
+       reg = xtgeo.gridproperty_from_rms(PRJ, GNAME_INPUT, REGNAME)
 
        reg.values[:, :, :] = 1
        reg.values[:, 193:, :] = 0  # remember 0 base in NP arrays
 
-       reg.to_roxar(PRJ, GNAME_INPUT, HREGNAME)  # store for info/check
+    reg.to_rms(PRJ, GNAME_INPUT, HREGNAME)  # store for info/check
 
        return tgrid, reg
 
@@ -355,7 +355,7 @@ a certain depth interval has horizontal layers.
                              region_number=1)
 
        grd.inactivate_by_dz(0.001)
-       grd.to_roxar(PRJ, GNAME_HYBRID)
+    grd.to_rms(PRJ, GNAME_HYBRID)
 
 
    if __name__ == "__main__":
@@ -395,7 +395,7 @@ Get average properties per zone
 
     def get_well():
         """Get XTGeo Well() object"""
-        wll = xtgeo.well_from_roxar(PRJ, WELLNAME, trajectory=TRAJNAME)
+        wll = xtgeo.well_from_rms(PRJ, WELLNAME, trajectory=TRAJNAME)
         return wll
 
 
@@ -466,7 +466,7 @@ are filtered. Here is a small example on how to do this:
     def filter_shoulder():
         """Filter shoulder bed data."""
         for rms_well in PRJ.wells:
-            wll = xtgeo.well_from_roxar(
+            wll = xtgeo.well_from_rms(
                 PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME
             )
 
@@ -491,7 +491,7 @@ are filtered. Here is a small example on how to do this:
             uselogs = list(PETROLOGS.keys())
 
             wll.mask_shoulderbeds(inputlogs=INLOGS, targetlogs=uselogs, nsamples=2)
-            wll.to_roxar(PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
+            wll.to_rms(PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
 
 
     if __name__ == "__main__":
@@ -533,7 +533,7 @@ be input to Equinor's APS module.
 
         for well in PRJ.wells:
 
-            blw = xtgeo.blockedwell_from_roxar(
+            blw = xtgeo.blockedwell_from_rms(
                 PRJ, GNAME, BWNAME, well.name, lognames=[FACIES]
             )
             dfr = blw.get_dataframe()
@@ -546,7 +546,7 @@ be input to Equinor's APS module.
                 dfr[newname][np.isnan(dfr[FACIES])] = np.nan
 
             blw.set_dataframe(dfr)
-            blw.to_roxar(PRJ, GNAME, BWNAME, well.name)
+            blw.to_rms(PRJ, GNAME, BWNAME, well.name)
 
 
     if __name__ == "__main__":
@@ -578,17 +578,17 @@ In the following example, remove or add to points being inside or outside polygo
     def main():
         """Operations on points inside or outside polygons."""
 
-        poly = xtgeo.polygons_from_roxar(PRJ, *POLYGONS, stype="clipboard")
-        po1 = xtgeo.points_from_roxar(PRJ, *POINTSET1, stype="clipboard")
-        po2 = xtgeo.points_from_roxar(PRJ, *POINTSET2, stype="clipboard")
+        poly = xtgeo.polygons_from_rms(PRJ, *POLYGONS, stype="clipboard")
+        po1 = xtgeo.points_from_rms(PRJ, *POINTSET1, stype="clipboard")
+        po2 = xtgeo.points_from_rms(PRJ, *POINTSET2, stype="clipboard")
 
         po1.eli_inside_polygons(poly)
-        po1.to_roxar(PRJ, *POINTSET1_UPDATED, stype="clipboard")  # store
+        po1.to_rms(PRJ, *POINTSET1_UPDATED, stype="clipboard")  # store
 
         # now add 100 inside polugons for POINTSET2, and then remove all points outside
         po2.add_inside_polygons(poly, 100)
         po2.eli_outside_polygons(poly)
-        po2.to_roxar(PRJ, *POINTSET2_UPDATED, stype="clipboard")  # store
+        po2.to_rms(PRJ, *POINTSET2_UPDATED, stype="clipboard")  # store
 
 
     if __name__ == "__main__":

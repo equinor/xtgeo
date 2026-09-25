@@ -202,7 +202,7 @@ def grid_from_file(
     return _handle_import(Grid, gfile, fformat, **kwargs)
 
 
-def grid_from_roxar(
+def grid_from_rms(
     project: RmsProjectOrPathType,
     gname: str,
     realisation: int = 0,
@@ -221,10 +221,48 @@ def grid_from_roxar(
 
         # inside RMS
         import xtgeo
-        mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
+        mygrid = xtgeo.grid_from_rms(project, "REEK_SIM")
 
     """
     return Grid(**_grid_roxapi.load_grid_from_rms(project, gname, realisation, info))
+
+
+def grid_from_roxar(
+    project: RmsProjectOrPathType,
+    gname: str,
+    realisation: int = 0,
+    info: bool = False,
+) -> Grid:
+    """Read a 3D grid inside an RMS project and return a Grid() instance.
+
+    .. deprecated::
+        The `grid_from_roxar` function is deprecated and will be removed in a future
+        version. Use `grid_from_rms` instead.
+
+    Args:
+        project: The RMS project as path or the project variable
+            from inside RMS.
+        gname: Name of Grid Model in RMS.
+        realisation: Realisation number.
+        info: If true, only grid info
+
+    Example::
+
+        # inside RMS
+        import xtgeo
+        mygrid = xtgeo.grid_from_rms(project, "REEK_SIM")
+
+    """
+    warnings.warn(
+        "The 'grid_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'grid_from_rms' instead.",
+        PendingDeprecationWarning,
+        stacklevel=2,
+    )
+
+    return grid_from_rms(
+        project=project, gname=gname, realisation=realisation, info=info
+    )
 
 
 def grid_from_resinsight(
@@ -1287,7 +1325,7 @@ class Grid(_Grid3D):
 
         return _gfile.file
 
-    def to_roxar(
+    def to_rms(
         self,
         project: RmsProjectOrPathType,
         gname: str,
@@ -1298,7 +1336,7 @@ class Grid(_Grid3D):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -1320,6 +1358,34 @@ class Grid(_Grid3D):
 
         """
         _grid_roxapi.save_grid_to_rms(self, project, gname, realisation, method=method)
+
+    def to_roxar(
+        self,
+        project: RmsProjectOrPathType,
+        gname: str,
+        realisation: int = 0,
+        method: Literal["cpg", "roff"] = "cpg",
+    ) -> None:
+        """Export a grid from XTGeo to RMS via Roxar API.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            gname=gname,
+            realisation=realisation,
+            method=method,
+        )
 
     def to_resinsight(
         self,
@@ -1912,9 +1978,9 @@ class Grid(_Grid3D):
 
         Example::
 
-            grid = xtgeo.grid_from_roxar(project, "Simgrid")
+            grid = xtgeo.grid_from_rms(project, "Simgrid")
             # extract polygon for a specific region, here region 3
-            region = xtgeo.gridproperty_from_roxar(project, "Simgrid", "Regions")
+            region = xtgeo.gridproperty_from_rms(project, "Simgrid", "Regions")
             filter_array = (region.values==3)
             boundary = grid.get_boundary_polygons(filter_array=filter_array)
 
@@ -2935,7 +3001,7 @@ class Grid(_Grid3D):
             # store grid quality measures in RMS
             gprops = grd.gridquality()
             for gprop in gprops:
-                gprop.to_roxar(project, "MyGrid", gprop.name)
+                gprop.to_rms(project, "MyGrid", gprop.name)
 
 
         """
@@ -3107,16 +3173,16 @@ class Grid(_Grid3D):
 
         Example::
             import xtgeo
-            grd = xtgeo.grid_from_roxar(project, "simpleb8")
-            poro = xtgeo.gridproperty_from_roxar(project, "simpleb8", "PORO")
+            grd = xtgeo.grid_from_rms(project, "simpleb8")
+            poro = xtgeo.gridproperty_from_rms(project, "simpleb8", "PORO")
             grd.props = [poro]
 
             grd.translate_coordinates(translate=(10,10, 20), flip=(1,1,-1),
                 add_rotation=30)
 
-            grd.to_roxar(project, "simpleb8_translated")
+            grd.to_rms(project, "simpleb8_translated")
             poro1 = grd.get_prop_by_name("PORO")
-            poro1.to_roxar(project, "simpleb8_translated", "PORO")
+            poro1.to_rms(project, "simpleb8_translated", "PORO")
 
         """
         _grid_translate_coords.translate_coordinates(

@@ -1598,7 +1598,7 @@ class RegularSurface:
             Object instance updated
 
         Example:
-            Here the from_roxar method is used to initiate the object
+            Here the from_rms method is used to initiate the object
             directly::
 
             >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
