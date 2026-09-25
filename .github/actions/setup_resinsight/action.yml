@@ -25,9 +25,16 @@ runs:
         [ "$#" -eq 1 ] || { echo "Expected exactly one ResInsight archive, found $# : $*"; exit 1; }
         unzip "$1" -d "$tmpdir/resinsight_extract"
         mkdir -p "/tmp/${{ inputs.install-dir }}"
-        # Release archives nest everything under a single top-level directory;
-        # flatten it so bin/Python is directly under the install directory.
-        mv "$tmpdir/resinsight_extract"/*/* "/tmp/${{ inputs.install-dir }}/"
+        # Some release archives nest everything under a single top-level
+        # directory, others place bin/lib/plugins at the archive root. Descend
+        # into the single wrapper dir if present, then move the contents so that
+        # bin/Python ends up directly under the install directory.
+        srcdir="$tmpdir/resinsight_extract"
+        entries=("$srcdir"/*)
+        if [ "${#entries[@]}" -eq 1 ] && [ -d "${entries[0]}" ]; then
+          srcdir="${entries[0]}"
+        fi
+        mv "$srcdir"/* "/tmp/${{ inputs.install-dir }}/"
     - name: Extract ResInsight
       id: extract
       shell: bash
