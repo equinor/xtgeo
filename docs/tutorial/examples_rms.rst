@@ -174,17 +174,17 @@ common multiplum)
            diff2 = surf2.copy()
            diff2.values -= surf1.values
            print(
-              "Min and max values inside polygons {} : {} (negative OK) for {}".format(
-                    diff2.values.min(), diff2.values.max(), mzone
-                    )
-                )
+               "Min and max values inside polygons {} : {} (negative OK) for {}".format(
+                   diff2.values.min(), diff2.values.max(), mzone
+               )
+           )
            diff2.to_rms(PRJ, mzone, ISCAT2, stype="zones")
            print("Store cut surface {} at {}".format(mzone, ISCAT2))
 
 
-    if __name__ == "__main__":
-        main()
-        print("Done, see <{}> and <{}>".format(ISCAT1, ISCAT2))
+   if __name__ == "__main__":
+       main()
+       print("Done, see <{}> and <{}>".format(ISCAT1, ISCAT2))
 
 
 
@@ -237,7 +237,7 @@ Edit a permeability given a porosity cutoff
    myperm.values = np.where(myporo.values < 0.1, 0.001, myperm.values)
 
    # store to another icon
-    myperm.to_rms(project, "Geomodel", "PermEdit")
+   myperm.to_rms(project, "Geomodel", "PermEdit")
 
 
 Edit a 3D grid porosity inside polygons
@@ -262,7 +262,7 @@ Edit a 3D grid porosity inside polygons
    myprop.set_inside(mypoly, 99)
 
    # Save in RMS as a new icon
-    myprop.to_rms(project, "Reek_sim", "NEWPORO_setinside")
+   myprop.to_rms(project, "Reek_sim", "NEWPORO_setinside")
 
    
 Create region polygons from the grid
@@ -307,10 +307,10 @@ Create region polygons from the grid
            # store polygon to the clipboard
            pol.to_rms(project, regname, CB_FOLDER, stype="clipboard")
 
-        print(f"Complete, region polygons are stored under clipboard folder {CB_FOLDER}")
+       print(f"Complete, region polygons are stored under clipboard folder {CB_FOLDER}")
 
-    if __name__ == "__main__":
-        create_region_polygons()
+   if __name__ == "__main__":
+       create_region_polygons()
 
 .. _hybrid:
 
@@ -344,7 +344,7 @@ a certain depth interval has horizontal layers.
        reg.values[:, :, :] = 1
        reg.values[:, 193:, :] = 0  # remember 0 base in NP arrays
 
-    reg.to_rms(PRJ, GNAME_INPUT, HREGNAME)  # store for info/check
+       reg.to_rms(PRJ, GNAME_INPUT, HREGNAME)  # store for info/check
 
        return tgrid, reg
 
@@ -355,7 +355,7 @@ a certain depth interval has horizontal layers.
                              region_number=1)
 
        grd.inactivate_by_dz(0.001)
-    grd.to_rms(PRJ, GNAME_HYBRID)
+       grd.to_rms(PRJ, GNAME_HYBRID)
 
 
    if __name__ == "__main__":
@@ -407,10 +407,10 @@ Get average properties per zone
         df_avgs.rename(index=ZNAMES, inplace=True)  # rename zonelog numbers with true name
 
         print("Average properties per zone")
-            print(df_avgs)
+        print(df_avgs)
 
-            # e.g. get avg PORO for MIDDLE, rounded to 3 decimals:
-            print("\nAVG poro for MIDDLE is {:2.3f}\n".format(df_avgs.loc["MIDDLE", "PORO"]))
+        # e.g. get avg PORO for MIDDLE, rounded to 3 decimals:
+        print("\nAVG poro for MIDDLE is {:2.3f}\n".format(df_avgs.loc["MIDDLE", "PORO"]))
 
 
     def compute_avg_per_zone_smarter(wll):
