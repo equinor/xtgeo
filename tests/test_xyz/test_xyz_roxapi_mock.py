@@ -50,8 +50,8 @@ def polygons_set():
 
 
 @pytest.fixture
-def mock_roxutils(mocker):
-    mocker.patch("xtgeo.xyz._xyz_roxapi.RoxUtils")
+def mock_rmsapiutils(mocker):
+    mocker.patch("xtgeo.xyz._xyz_roxapi.RmsApiUtils")
     mocker.patch("xtgeo.xyz._xyz_roxapi._check_presence_in_project", return_value=True)
 
 
@@ -71,19 +71,19 @@ def polygon_set_in_roxvalues(polygons_set, mocker):
     )
 
 
-@pytest.mark.usefixtures("mock_roxutils", "point_set_in_roxvalues")
+@pytest.mark.usefixtures("mock_rmsapiutils", "point_set_in_roxvalues")
 def test_load_points_from_rms():
     poi = xtgeo.points_from_rms("project", "Name", "Category")
     assert poi.get_dataframe()["X_UTME"][3] == 1.3
 
 
-@pytest.mark.usefixtures("mock_roxutils", "point_set_in_roxvalues")
+@pytest.mark.usefixtures("mock_rmsapiutils", "point_set_in_roxvalues")
 def test_points_invalid_stype():
     with pytest.raises(ValueError, match="Invalid stype"):
         xtgeo.points_from_rms("project", "Name", "Category", stype="")
 
 
-@pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
+@pytest.mark.usefixtures("mock_rmsapiutils", "polygon_set_in_roxvalues")
 def test_polygons_invalid_stype():
     with pytest.raises(ValueError, match="Invalid stype"):
         xtgeo.polygons_from_rms("project", "Name", "Category", stype="")
@@ -153,7 +153,7 @@ def test_replace_undefined_values_keeps_string_attribute_as_strings():
     assert result.dtype.kind == "U"  # NumPy uses "U" for string dtype
 
 
-@pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
+@pytest.mark.usefixtures("mock_rmsapiutils", "polygon_set_in_roxvalues")
 def test_load_polygons_from_rms():
     pol = xtgeo.polygons_from_rms("project", "Name", "Category")
 
@@ -308,15 +308,15 @@ def test_attribute_api_selection_by_xyztype_and_version(
     roxxyz.get_attributes_names.return_value = ["ATTR1"]
     roxxyz.get_attributes_names_polylines.return_value = ["ATTR1"]
 
-    mock_rox = MagicMock()
-    mock_rox.version_required.side_effect = lambda v: (
+    mock_rmsapi = MagicMock()
+    mock_rmsapi.version_required.side_effect = lambda v: (
         versionparse(api_version) >= versionparse(v)
     )
 
     raw_values = polygons_set if xyztype == _XYZType.POLYGONS else point_set
 
     with (
-        patch("xtgeo.xyz._xyz_roxapi.RoxUtils", return_value=mock_rox),
+        patch("xtgeo.xyz._xyz_roxapi.RmsApiUtils", return_value=mock_rmsapi),
         patch("xtgeo.xyz._xyz_roxapi._check_presence_in_project", return_value=True),
         patch("xtgeo.xyz._xyz_roxapi._get_roxitem", return_value=roxxyz),
         patch("xtgeo.xyz._xyz_roxapi._get_roxvalues", return_value=raw_values),
@@ -330,9 +330,9 @@ def test_attribute_api_selection_by_xyztype_and_version(
         )
 
     if xyztype == _XYZType.POLYGONS:
-        mock_rox.version_required.assert_called_once_with("1.14")
+        mock_rmsapi.version_required.assert_called_once_with("1.14")
     else:
-        mock_rox.version_required.assert_not_called()
+        mock_rmsapi.version_required.assert_not_called()
 
     if expect_polyline_methods:
         roxxyz.get_attributes_names_polylines.assert_called_once_with(realisation=0)

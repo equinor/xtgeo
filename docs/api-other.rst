@@ -29,13 +29,13 @@ Utilities
 
 .. autofunction:: xtgeo.generic_hash
 
-Roxar utilities
-^^^^^^^^^^^^^^^
+RMS API utilities
+^^^^^^^^^^^^^^^^^
 
-RoxUtils
-""""""""
+RmsApiUtils
+"""""""""""
 
-.. autoclass:: xtgeo.RoxUtils
+.. autoclass:: xtgeo.interfaces.rms.RmsApiUtils
 
     .. autoclasstoc::
 

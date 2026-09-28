@@ -37,7 +37,7 @@ try:
         VerticalDomain as _RmsVerticalDomain,
     )
     from rmsapi.grids import Grid3D as _RmsGrid3D
-    from rmsapi.jobs import Jobs as _RmsJobs
+    from rmsapi.jobs import Job as _RmsJob
     from rmsapi.well_picks import (
         WellPick as _RmsWellPick,
         WellPickAttribute as _RmsWellPickAttribute,
@@ -50,7 +50,7 @@ except ImportError:
     _RmsSurface = Any  # type: ignore[misc]
     _RmsVerticalDomain = Any  # type: ignore[misc]
     _RmsGrid3D = Any  # type: ignore[misc]
-    _RmsJobs = Any  # type: ignore[misc]
+    _RmsJob = Any  # type: ignore[misc]
     _RmsWellPicks = Any  # type: ignore[misc]
     _RmsWellPick = Any  # type: ignore[misc]
     _RmsWellPickAttribute = Any  # type: ignore[misc]
@@ -60,7 +60,7 @@ RmsProjectType: TypeAlias = _RmsProject  # type: ignore[misc]
 RmsSurfaceType: TypeAlias = _RmsSurface  # type: ignore[misc]
 RmsVerticalDomainType: TypeAlias = _RmsVerticalDomain  # type: ignore[misc]
 RmsGrid3DType: TypeAlias = _RmsGrid3D  # type: ignore[misc]
-RmsJobsType: TypeAlias = _RmsJobs  # type: ignore[misc]
+RmsJobType: TypeAlias = _RmsJob  # type: ignore[misc]
 RmsWellPicksType: TypeAlias = _RmsWellPicks  # type: ignore[misc]
 RmsWellPickType: TypeAlias = _RmsWellPick  # type: ignore[misc]
 RmsWellPickAttributeType: TypeAlias = _RmsWellPickAttribute  # type: ignore[misc]

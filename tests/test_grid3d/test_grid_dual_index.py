@@ -106,13 +106,13 @@ def rsg_grid_mock():
 
 
 def test_simbox_index():
-    with patch("xtgeo.grid3d._grid_roxapi.RoxUtils") as mock_rox_utils:
+    with patch("xtgeo.grid3d._grid_roxapi.RmsApiUtils") as mock_rmsapi_utils:
         mock_grid_getter = MagicMock()
         mock_grid_getter.get_grid.return_value = rsg_grid_mock()
-        mock_rox_utils.return_value.project.grid_models = {
+        mock_rmsapi_utils.return_value.project.grid_models = {
             "repeat_sections_grid": mock_grid_getter
         }
-        mock_rox_utils.version_required.return_value = True
+        mock_rmsapi_utils.version_required.return_value = True
 
         with pytest.warns(UserWarning, match="dual index system"):
             xtgeo.grid3d.grid.grid_from_rms("project", "repeat_sections_grid")

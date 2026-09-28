@@ -10,8 +10,8 @@ import numpy as np
 
 import xtgeo._internal as _internal
 from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.roxutils._roxar_loader import roxar, roxar_grids
-from xtgeo.roxutils.roxutils import RoxUtils
+from xtgeo.interfaces.rms import RmsApiUtils
+from xtgeo.interfaces.rms._rmsapi_package import rmsapi_grids
 
 xtg = XTGeoDialog()
 
@@ -19,11 +19,7 @@ logger = null_logger(__name__)
 
 if TYPE_CHECKING:
     from xtgeo.grid3d.grid import Grid
-    # from xtgeo.roxutils._roxar_loader import RoxarGrid3DType
-
-    if roxar is not None:
-        from roxar import grids as RoxarGridType
-        from roxar.grids import Grid3D as RoxarGrid3DType
+    from xtgeo.interfaces.rms._rmsapi_package import RmsGrid3DType
 
 
 # self is Grid() instance
@@ -44,11 +40,11 @@ def load_grid_from_rms(
 
     """
 
-    rox = RoxUtils(projectname, readonly=True)
+    rox = RmsApiUtils(projectname, readonly=True)
     return _load_grid_from_rms_viaroxapi(rox, gname, realisation, info)
 
 
-def _display_roxapi_grid_info(roxgrid: RoxarGrid3DType) -> None:
+def _display_roxapi_grid_info(roxgrid: RmsGrid3DType) -> None:
     """Push info to screen (mostly for debugging), experimental."""
 
     indexer = roxgrid.grid_indexer
@@ -70,7 +66,7 @@ def _display_roxapi_grid_info(roxgrid: RoxarGrid3DType) -> None:
 
 
 def _load_grid_from_rms_viaroxapi(
-    rox: RoxUtils, gname: str, realisation: int, info: bool
+    rox: RmsApiUtils, gname: str, realisation: int, info: bool
 ) -> dict[str, Any]:
     """Import a Grid via ROXAR API spec."""
     proj = rox.project
@@ -98,13 +94,13 @@ def _load_grid_from_rms_viaroxapi(
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
 
-    if rox._roxexternal:
+    if rox._rmsexternal:
         rox.safe_close()
 
     return result
 
 
-def _convert_to_xtgeo_grid(roxgrid: RoxarGrid3DType, gname: str) -> dict[str, Any]:
+def _convert_to_xtgeo_grid(roxgrid: RmsGrid3DType, gname: str) -> dict[str, Any]:
     """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2."""
     indexer = roxgrid.grid_indexer
 
@@ -185,7 +181,7 @@ def save_grid_to_rms(
     want to activate undefined cells as a part of the work flow.
 
     """
-    rox = RoxUtils(projectname, readonly=False)
+    rox = RmsApiUtils(projectname, readonly=False)
 
     if method == "cpg":
         self._set_xtgformat2()
@@ -194,14 +190,14 @@ def save_grid_to_rms(
     else:
         _save_grid_to_rms_viaroff(self, rox, gname, realisation)
 
-    if rox._roxexternal:
+    if rox._rmsexternal:
         rox.project.save()
 
     rox.safe_close()
 
 
 def _save_grid_to_rms_cornerpoint(
-    self: Grid, rox: RoxUtils, gname: str, realisation: int
+    self: Grid, rox: RmsApiUtils, gname: str, realisation: int
 ) -> None:
     """Convert xtgeo geometry to pillar spec in ROXAPI and store _xtgformat=2."""
 
@@ -209,7 +205,7 @@ def _save_grid_to_rms_cornerpoint(
     grid_model.set_empty(realisation)
     grid = grid_model.get_grid(realisation)
 
-    roxar_grids_: RoxarGridType = roxar_grids  # for mypy
+    roxar_grids_: RmsGrid3DType = rmsapi_grids  # for mypy
     geom = roxar_grids_.CornerPointGridGeometry.create(self.dimensions)
 
     grid_cpp = self._get_grid_cpp()
@@ -238,7 +234,7 @@ def _save_grid_to_rms_cornerpoint(
     _set_subgrids(self, rox, grid)
 
 
-def _set_subgrids(self: Grid, rox: RoxUtils, grid: RoxarGrid3DType) -> None:
+def _set_subgrids(self: Grid, rox: RmsApiUtils, grid: RmsGrid3DType) -> None:
     """Export the subgrid index (zones) to Roxar API.
 
     From roxar API:
@@ -267,7 +263,7 @@ def _set_subgrids(self: Grid, rox: RoxUtils, grid: RoxarGrid3DType) -> None:
 
 
 def _save_grid_to_rms_viaroff(
-    self: Grid, rox: RoxUtils, gname: str, realisation: int
+    self: Grid, rox: RmsApiUtils, gname: str, realisation: int
 ) -> None:
     """Save xtgeo geometry to internal RMS via i/o ROFF tricks."""
     logger.info("Realisation is %s", realisation)
