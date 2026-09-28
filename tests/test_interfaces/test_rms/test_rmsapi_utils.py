@@ -6,10 +6,10 @@ import warnings
 
 import pytest
 
+from xtgeo import RoxUtils
 from xtgeo.common.log import null_logger
 from xtgeo.interfaces.rms.rmsapi_utils import (
     RmsApiUtils,
-    RoxUtils,
     _DomainType,
     _StorageTypeRegularSurface,
 )
@@ -17,7 +17,7 @@ from xtgeo.interfaces.rms.rmsapi_utils import (
 logger = null_logger(__name__)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsInit:
     """Test RmsApiUtils initialization."""
 
@@ -52,7 +52,7 @@ class TestRmsApiUtilsInit:
             RmsApiUtils(None)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsProperties:
     """Test RmsApiUtils properties."""
 
@@ -79,7 +79,7 @@ class TestRmsApiUtilsProperties:
         utils.safe_close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsVersionMethods:
     """Test version-related methods."""
 
@@ -105,7 +105,7 @@ class TestRmsApiUtilsVersionMethods:
         assert len(rms_versions) > 0
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsCategoryManagement:
     """Test category management methods."""
 
@@ -201,18 +201,18 @@ class TestRmsApiUtilsCategoryManagement:
 class TestRoxUtilsBackwardCompatibility:
     """Test RoxUtils backward compatibility."""
 
-    @pytest.mark.requires_roxar
+    @pytest.mark.requires_rmsapi
     def test_roxutils_deprecation_warning(self, rms_project_as_folder_path):
         """Test that RoxUtils shows deprecation warning."""
-        with pytest.warns(PendingDeprecationWarning, match="RoxUtils is deprecated"):
+        with pytest.warns(FutureWarning, match="RoxUtils is deprecated"):
             utils = RoxUtils(rms_project_as_folder_path, readonly=True)
             utils.safe_close()
 
-    @pytest.mark.requires_roxar
+    @pytest.mark.requires_rmsapi
     def test_roxutils_functionality(self, rms_project_as_folder_path):
         """Test that RoxUtils still works functionally."""
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", PendingDeprecationWarning)
+            warnings.simplefilter("ignore", FutureWarning)
 
             utils = RoxUtils(rms_project_as_folder_path, readonly=True)
 
