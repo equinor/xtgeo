@@ -3,7 +3,7 @@
 import enum
 import pathlib
 import warnings
-from typing import Any, Literal
+from typing import Literal
 
 from packaging.version import parse as versionparse
 
@@ -61,9 +61,9 @@ class _StorageTypeRegularSurface(str, enum.Enum):
 class RmsApiUtils:
     """Class RmsApiUtils, for accessing project level methods::
 
-     import xtgeo
+     from xtgeo.interfaces.rms import RmsApiUtils
 
-     xr = xtgeo.RmsApiUtils(project)
+     xr = RmsApiUtils(project)
      xr.create_horizon_category('DS_extracted_run3')
      xr.delete_horizon_category('DS_extracted_run2')
 
@@ -79,10 +79,10 @@ class RmsApiUtils:
 
     Examples::
 
-        import xtgeo
+        from xtgeo.interfaces.rms import RmsApiUtils
         path = '/some/path/to/rmsproject.rmsx'
 
-        ext = xtgeo.RoxUtils(path, readonly=True)
+        ext = RmsApiUtils(path, readonly=True)
         # ...do something
         ext.safe_close()
 
@@ -416,23 +416,3 @@ class RmsApiUtils:
         .. versionadded:: 2.1
         """
         self._clear_whatever_category(category, stype="zones")
-
-
-# Backward compatibility alias with deprecation warning. These PendingDeprecationWarning
-# warnings can be upgraded to DeprecationWarning in future releases. Currently they are
-# are not seen in RMS GUI for users due to warning filters, which is OK.
-class RoxUtils(RmsApiUtils):
-    """Deprecated: Use RmsApiUtils instead."""
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        warnings.warn(
-            "RoxUtils is deprecated and will be removed in a future version. "
-            "Use RmsApiUtils instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(*args, **kwargs)
-
-
-# For convenience, also create a simple alias without the warning for internal use
-_RoxUtils = RmsApiUtils  # Internal alias without deprecation warning

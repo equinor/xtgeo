@@ -1,16 +1,16 @@
 # coding: utf-8
-"""Roxar API functions for XTGeo Cube
+"""rmsapi API functions for XTGeo Cube
 
 Note on rotation:
 
 xtgeo uses rotation of "columns" which is xline direction counterclockwise
 measured from X axis.
 
-roxarapi uses rotation of inline direction (rows) relative to Y axis.
+rmsapi uses rotation of inline direction (rows) relative to Y axis.
 api < 1.4: counterclockwise "rotation"
 api >= 1.4 clockwise "orientation"
 
-Seems like cube._rotation == roxar.orientation * -1 anyway @ reverse engineering/testing
+Seems like cube._rotation==rmsapi.orientation * -1 anyway @ reverse engineering/testing
 
 """
 
@@ -21,8 +21,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from xtgeo.common import XTGeoDialog, null_logger
-from xtgeo.roxutils import RoxUtils
-from xtgeo.roxutils._roxar_loader import roxar
+from xtgeo.interfaces.rms import RmsApiUtils, rmsapi
 
 if TYPE_CHECKING:
     from .cube1 import Cube
@@ -39,7 +38,7 @@ def import_cube_roxapi(
 
     .. versionadded:: 2.1
     """
-    rox = RoxUtils(project, readonly=True)
+    rox = RmsApiUtils(project, readonly=True)
 
     proj = rox.project
 
@@ -47,7 +46,7 @@ def import_cube_roxapi(
 
 
 def _roxapi_import_cube(
-    cube: Cube, rox: RoxUtils, proj: Any, name: str, folder: str | None
+    cube: Cube, rox: RmsApiUtils, proj: Any, name: str, folder: str | None
 ) -> None:  # pragma: no cover
     """Short summary.
 
@@ -67,15 +66,13 @@ def _roxapi_import_cube(
         raise ValueError(f"Path {path} is not within RMS Seismic Cube container")
     try:
         rcube = proj.seismic.data[path]
-        _roxapi_cube_to_xtgeo(cube, rox, rcube)
+        _roxapi_cube_to_xtgeo(cube, rcube)
     except KeyError as emsg:
         logger.error(emsg)
         raise
 
 
-def _roxapi_cube_to_xtgeo(
-    cube: Cube, rox: RoxUtils, rcube: Any
-) -> None:  # pragma: no cover
+def _roxapi_cube_to_xtgeo(cube: Cube, rcube: Any) -> None:  # pragma: no cover
     """Transforming cube from ROXAPI to XTGeo object."""
     logger.info("Cube from roxapi to xtgeo...")
 
@@ -128,7 +125,7 @@ def export_cube_roxapi(
     compression: tuple[str, float] = ("wavelet", 5),
 ) -> None:  # pragma: no cover
     """Export (store) a Seismic cube to RMS via ROXAR API spec."""
-    rox = RoxUtils(project, readonly=False)
+    rox = RmsApiUtils(project, readonly=False)
 
     logger.debug("TODO: compression %s", compression)
 
@@ -142,7 +139,7 @@ def export_cube_roxapi(
         compression=compression,
     )
 
-    if rox._roxexternal:
+    if rox._rmsexternal:
         rox.project.save()
 
     rox.safe_close()
@@ -151,7 +148,7 @@ def export_cube_roxapi(
 def _roxapi_export_cube(
     cube: Cube,
     proj: Any,
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     name: str,
     folder: str | None = None,
     domain: str = "time",
@@ -161,7 +158,7 @@ def _roxapi_export_cube(
         "There are issues with compression %s, hence it is ignored", compression
     )
 
-    if roxar is None:
+    if rmsapi is None:
         raise RuntimeError(
             "The 'roxar'/'rmsapi' module is not available. This function can "
             "only be run inside an RMS environment."
@@ -180,15 +177,15 @@ def _roxapi_export_cube(
     increment = (cube.xinc, cube.yinc)
     sample_rate = cube.zinc
     rotation = cube.rotation
-    vertical_domain = roxar.VerticalDomain.time
+    vertical_domain = rmsapi.VerticalDomain.time
     if domain == "depth":
-        vertical_domain = roxar.VerticalDomain.depth
+        vertical_domain = rmsapi.VerticalDomain.depth
 
     values = cube.values.copy()  # copy() needed?
 
-    handedness = roxar.Direction.left
+    handedness = rmsapi.Direction.left
     if cube.yflip == -1:
-        handedness = roxar.Direction.right
+        handedness = rmsapi.Direction.right
 
     # inline xline vector
     ilstart = cube.ilines[0]

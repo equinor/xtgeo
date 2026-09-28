@@ -11,15 +11,12 @@ from numpy import ma
 
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
-from xtgeo.roxutils import RoxUtils
-from xtgeo.roxutils._roxar_loader import roxar
+from xtgeo.interfaces.rms import RmsApiUtils, rmsapi
 
 if TYPE_CHECKING:
     from xtgeo.grid3d.grid_property import GridProperty
+    from xtgeo.interfaces.rms._rmsapi_package import RmsGrid3DType, RmsProjectType
 
-    if roxar is not None:
-        from roxar import Project as RoxarProjectType
-        from roxar.grids import Grid3D as RoxarGrid3DType
 
 logger = null_logger(__name__)
 
@@ -27,7 +24,7 @@ VALID_ROXAR_DTYPES = [np.uint8, np.uint16, np.float32]
 
 
 def import_prop_roxapi(
-    project: RoxarProjectType,
+    project: RmsProjectType,
     gname: str,
     pname: str,
     realisation: int,
@@ -36,7 +33,7 @@ def import_prop_roxapi(
     """Import a Property via ROXAR API spec."""
     logger.info("Opening RMS project ...")
 
-    rox = RoxUtils(project, readonly=True)
+    rox = RmsApiUtils(project, readonly=True)
 
     result = _get_gridprop_data(rox, gname, pname, realisation, faciescodes)
 
@@ -45,7 +42,7 @@ def import_prop_roxapi(
 
 
 def _get_gridprop_data(
-    rox: RoxUtils, gname: str, pname: str, realisation: int, faciescodes: bool
+    rox: RmsApiUtils, gname: str, pname: str, realisation: int, faciescodes: bool
 ) -> dict[str, Any]:
     # inside a RMS project
 
@@ -61,7 +58,7 @@ def _get_gridprop_data(
 
 
 def _convert_to_xtgeo_prop(
-    rox: RoxUtils, gname: str, pname: str, realisation: int, faciescodes: bool
+    rox: RmsApiUtils, gname: str, pname: str, realisation: int, faciescodes: bool
 ) -> dict[str, Any]:
     result: dict[str, Any] = {}
     roxgrid = rox.project.grid_models[gname]
@@ -114,7 +111,7 @@ def _convert_to_xtgeo_prop(
 
 def export_prop_roxapi(
     self: GridProperty,
-    project: RoxarProjectType,
+    project: RmsProjectType,
     gname: str,
     pname: str,
     realisation: int = 0,
@@ -122,7 +119,7 @@ def export_prop_roxapi(
     | None = "unsafe",
 ) -> None:
     """Export (i.e. store or save) to a Property icon in RMS via ROXAR API spec."""
-    rox = RoxUtils(project, readonly=False)
+    rox = RmsApiUtils(project, readonly=False)
 
     try:
         roxgrid = rox.project.grid_models[gname]
@@ -131,7 +128,7 @@ def export_prop_roxapi(
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
 
-    if rox._roxexternal:
+    if rox._rmsexternal:
         rox.project.save()
 
     rox.safe_close()
@@ -191,7 +188,7 @@ def _validate_dtype_in_roxar(
 def _store_in_roxar(
     self: GridProperty,
     pname: str,
-    roxgrid: RoxarGrid3DType,
+    roxgrid: RmsGrid3DType,
     realisation: int,
     casting: Literal["no", "equiv", "safe", "same_kind", "same_value", "unsafe"] | None,
 ) -> None:
@@ -200,7 +197,7 @@ def _store_in_roxar(
 
     logger.info("Store in RMS...")
 
-    roxtype: Any = roxar  # needed for mypy
+    roxtype: Any = rmsapi  # needed for mypy
     roxar_property_type = (
         roxtype.GridPropertyType.discrete
         if self.isdiscrete
