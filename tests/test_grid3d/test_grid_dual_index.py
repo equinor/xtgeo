@@ -115,4 +115,4 @@ def test_simbox_index():
         mock_rox_utils.version_required.return_value = True
 
         with pytest.warns(UserWarning, match="dual index system"):
-            xtgeo.grid3d.grid.grid_from_roxar("project", "repeat_sections_grid")
+            xtgeo.grid3d.grid.grid_from_rms("project", "repeat_sections_grid")

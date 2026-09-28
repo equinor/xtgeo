@@ -72,21 +72,21 @@ def polygon_set_in_roxvalues(polygons_set, mocker):
 
 
 @pytest.mark.usefixtures("mock_roxutils", "point_set_in_roxvalues")
-def test_load_points_from_roxar():
-    poi = xtgeo.points_from_roxar("project", "Name", "Category")
+def test_load_points_from_rms():
+    poi = xtgeo.points_from_rms("project", "Name", "Category")
     assert poi.get_dataframe()["X_UTME"][3] == 1.3
 
 
 @pytest.mark.usefixtures("mock_roxutils", "point_set_in_roxvalues")
 def test_points_invalid_stype():
     with pytest.raises(ValueError, match="Invalid stype"):
-        xtgeo.points_from_roxar("project", "Name", "Category", stype="")
+        xtgeo.points_from_rms("project", "Name", "Category", stype="")
 
 
 @pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
 def test_polygons_invalid_stype():
     with pytest.raises(ValueError, match="Invalid stype"):
-        xtgeo.polygons_from_roxar("project", "Name", "Category", stype="")
+        xtgeo.polygons_from_rms("project", "Name", "Category", stype="")
 
 
 def test_replace_undefined_values_keeps_numeric_strings_without_dtype():
@@ -154,8 +154,8 @@ def test_replace_undefined_values_keeps_string_attribute_as_strings():
 
 
 @pytest.mark.usefixtures("mock_roxutils", "polygon_set_in_roxvalues")
-def test_load_polygons_from_roxar():
-    pol = xtgeo.polygons_from_roxar("project", "Name", "Category")
+def test_load_polygons_from_rms():
+    pol = xtgeo.polygons_from_rms("project", "Name", "Category")
 
     assert_frame_equal(
         pol.get_dataframe(),

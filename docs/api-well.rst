@@ -9,7 +9,7 @@ Functions
 
 .. autofunction:: xtgeo.well_from_file
 
-.. autofunction:: xtgeo.well_from_roxar
+.. autofunction:: xtgeo.well_from_rms
 
 Classes
 """""""
@@ -43,7 +43,7 @@ Functions
 
 .. autofunction:: xtgeo.blockedwell_from_file
 
-.. autofunction:: xtgeo.blockedwell_from_roxar
+.. autofunction:: xtgeo.blockedwell_from_rms
 
 Classes
 """""""
@@ -62,7 +62,7 @@ Functions
 
 .. autofunction:: xtgeo.blockedwells_from_stacked_file
 
-.. autofunction:: xtgeo.blockedwells_from_roxar
+.. autofunction:: xtgeo.blockedwells_from_rms
 
 Classes
 """""""
