@@ -145,17 +145,16 @@ def _convert_to_xtgeo_grid(roxgrid: RoxarGrid3DType, gname: str) -> dict[str, An
     result["actnumsv"] = actnumsv
 
     # subgrids
-    if len(indexer.zonation) > 1:
-        logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
-        subz = {}
-        for inum, zrange in indexer.zonation.items():
-            logger.debug("inum: %s, zrange: %s", inum, zrange)
-            zname = roxgrid.zone_names[inum]
-            logger.debug("zname is: %s", zname)
-            zra = [nn + 1 for ira in zrange for nn in ira]  # nested lists
-            subz[zname] = zra
+    logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
+    subz = {}
+    for inum, zrange in indexer.zonation.items():
+        logger.debug("inum: %s, zrange: %s", inum, zrange)
+        zname = roxgrid.zone_names[inum]
+        logger.debug("zname is: %s", zname)
+        zra = [nn + 1 for ira in zrange for nn in ira]  # nested lists
+        subz[zname] = zra
 
-        result["subgrids"] = subz
+    result["subgrids"] = subz
 
     result["roxgrid"] = roxgrid
     result["roxindexer"] = indexer
