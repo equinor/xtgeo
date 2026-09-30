@@ -698,6 +698,23 @@ def test_rox_get_modify_set_get_grid_with_subzones(rms_project_path, roxinstance
 
 
 @pytest.mark.requires_roxar
+def test_xtgeo_sets_subgrids_for_single_zone_grid(rms_project_path):
+    grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+
+    zonation = {"only_zone": grid.nlay}
+    grid.set_subgrids(zonation)
+
+    grid.to_roxar(rms_project_path, "SingleZoneGrid")
+
+    # get a new instance (subgrids should now be present)
+    grid1 = xtgeo.grid_from_roxar(rms_project_path, "SingleZoneGrid")
+
+    assert isinstance(grid1.subgrids, dict)
+    assert len(grid1.subgrids) == 1
+    assert list(grid1.subgrids["only_zone"]) == list(grid.subgrids["only_zone"])
+
+
+@pytest.mark.requires_roxar
 def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
     """Get, modify and set a polygons from a RMS project."""
     poly = xtgeo.polygons_from_rms(rms_project_path, POLYNAME1, "", stype="clipboard")
