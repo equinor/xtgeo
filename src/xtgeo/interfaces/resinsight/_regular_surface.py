@@ -37,10 +37,10 @@ def _find_regular_surface(folder: object, name: str) -> Any | None:
 
     Surface names are unique within a folder, so at most one can match.
     """
-    surface_cls = require_rips().RegularSurface
+    rips = require_rips()
     surfaces = folder.surfaces_field()  # type: ignore[attr-defined]
     return select_by_name(
-        (surf for surf in surfaces if isinstance(surf, surface_cls)),
+        (surf for surf in surfaces if isinstance(surf, rips.RegularSurface)),
         name,
         find_last=False,
         name_attr=_NAME_ATTR,

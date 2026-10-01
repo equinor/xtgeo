@@ -1,25 +1,66 @@
 """Load the optional rips package and expose type aliases.
 
 The ResInsight interface requires a minimum ``rips`` version that provides the
-complete API surface used by xtgeo.  Rather than conditionally importing
+complete API surface used by xtgeo. Rather than conditionally importing
 individual symbols to support older releases, we enforce an all-or-nothing
 version gate: either the installed ``rips`` meets :data:`MIN_RIPS_VERSION` and
 every import succeeds, or the user is told to upgrade.
+
+Note the use of TYPE_CHECKING-only imports and runtime Any fallbacks so xtgeo can be
+imported without rips, while IDEs and type checkers still get useful hints when rips
+is available.
 """
 
 from __future__ import annotations
 
 import importlib
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 from packaging.version import InvalidVersion, Version
 
 if TYPE_CHECKING:
-    from types import ModuleType
+    from rips import (
+        Case as RipsCaseType,
+        Instance as RipsInstanceType,
+        NameConflictPolicy as NameConflictPolicyType,
+        Project as RipsProjectType,
+        PropertyDataType as RipsPropertyDataType,
+        PropertyType as RipsPropertyType,
+        RegularSurface as RipsRegularSurfaceType,
+        RipsError as RipsErrorType,
+    )
+
+    class RipsModuleType(Protocol):
+        Case: type[RipsCaseType]
+        Instance: type[RipsInstanceType]
+        Project: type[RipsProjectType]
+        PropertyDataType: type[RipsPropertyDataType]
+        PropertyType: type[RipsPropertyType]
+        NameConflictPolicy: type[NameConflictPolicyType]
+        RegularSurface: type[RipsRegularSurfaceType]
+        RipsError: type[RipsErrorType]
+else:
+    NameConflictPolicyType = Any
+    RipsPropertyDataType = Any
+    RipsPropertyType = Any
+    RipsCaseType = Any
+    RipsInstanceType = Any
+    RipsProjectType = Any
+    RipsModuleType = Any
+    RipsRegularSurfaceType = Any
+    RipsErrorType = Any
 
 # Minimum rips version that exposes the full API used by xtgeo
 MIN_RIPS_VERSION = "2026.9"
+_REQUIRED_RIPS_SYMBOLS = (
+    "Case",
+    "Instance",
+    "NameConflictPolicy",
+    "Project",
+    "PropertyDataType",
+    "PropertyType",
+)
 
 
 def _check_rips_version() -> None:
@@ -54,7 +95,7 @@ def _check_rips_version() -> None:
         )
 
 
-def _load_package(package_name: str) -> Any | None:
+def _load_rips_package(package_name: str) -> RipsModuleType | None:
     """Load a Python package by name, return ``None`` if unavailable."""
     try:
         return importlib.import_module(package_name)
@@ -62,49 +103,35 @@ def _load_package(package_name: str) -> Any | None:
         return None
 
 
-rips = _load_package("rips")
+rips = _load_rips_package("rips")
 _rips_import_error: str | None = None
 
+# Runtime exports of string enums: resolved from rips when available, otherwise Any
+NameConflictPolicy: Any = Any
+PropertyDataType: Any = Any
+PropertyType: Any = Any
+
 if rips is not None:
-    try:
-        from rips import (
-            Case as _RipsCase,
-            Instance as _RipsInstance,
-            NameConflictPolicy,  # noqa: F401
-            Project as _RipsProject,
-            PropertyDataType,  # noqa: F401
-            PropertyType,  # noqa: F401
-        )
-    except ImportError as err:
+    missing_symbols = [
+        name for name in _REQUIRED_RIPS_SYMBOLS if not hasattr(rips, name)
+    ]
+    if missing_symbols:
         _rips_import_error = (
-            f"The installed rips package does not provide the required API "
-            "symbols (Case, Instance, NameConflictPolicy, Project, "
-            f"PropertyDataType, PropertyType): {err}. "
+            "The installed rips package does not provide the required API "
+            f"symbols ({', '.join(missing_symbols)}). "
             f"Please upgrade: pip install 'rips>={MIN_RIPS_VERSION}'"
         )
         rips = None
-        _RipsCase = Any  # type: ignore[misc,assignment]
-        _RipsInstance = Any  # type: ignore[misc,assignment]
-        _RipsProject = Any  # type: ignore[misc,assignment]
-        NameConflictPolicy = Any  # type: ignore[misc,assignment]
-        PropertyDataType = Any  # type: ignore[misc,assignment]
-        PropertyType = Any  # type: ignore[misc,assignment]
-else:
-    _RipsCase = Any  # type: ignore[misc,assignment]
-    _RipsInstance = Any  # type: ignore[misc,assignment]
-    _RipsProject = Any  # type: ignore[misc,assignment]
-    NameConflictPolicy = Any  # type: ignore[misc,assignment]
-    PropertyDataType = Any  # type: ignore[misc,assignment]
-    PropertyType = Any  # type: ignore[misc,assignment]
+    else:
+        NameConflictPolicy = rips.NameConflictPolicy
+        PropertyDataType = rips.PropertyDataType
+        PropertyType = rips.PropertyType
 
-RipsCaseType: TypeAlias = _RipsCase  # type: ignore[misc]
-RipsInstanceType: TypeAlias = _RipsInstance  # type: ignore[misc]
-RipsProjectType: TypeAlias = _RipsProject  # type: ignore[misc]
 
 ResInsightInstanceOrPortType: TypeAlias = int | RipsInstanceType
 
 
-def require_rips() -> ModuleType:
+def require_rips() -> RipsModuleType:
     """Return the ``rips`` module or raise ``RuntimeError`` if unavailable/too old.
 
     Call this at the top of any function that requires the rips package.
