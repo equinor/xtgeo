@@ -1202,15 +1202,17 @@ def test_get_randomline_from_numpy_fence_defaults() -> None:
     assert vmax == pytest.approx(cube.zori + (cube.nlay - 1) * cube.zinc)
 
 
-def test_get_randomline_trilinear_with_explicit_z() -> None:
-    """Test get_randomline with trilinear sampling and explicit z-range.
+def test_get_randomline_with_explicit_z_range() -> None:
+    """Test get_randomline honours an explicit z-range and increment.
 
     What is tested:
-        ``get_randomline`` is called with ``sampling="trilinear"`` and explicit
-        ``zmin``, ``zmax`` and ``zincrement``.
+        ``get_randomline`` is called with explicit ``zmin``, ``zmax`` and
+        ``zincrement`` (the ``sampling="trilinear"`` argument is passed but its
+        interpolation behaviour is not asserted here).
 
     Expected behaviour:
-        A 2D array is returned and the vertical range matches the explicit values.
+        A 2D array is returned and the returned vertical range matches the explicit
+        ``zmin`` and ``zmax`` values.
     """
     cube = _make_cube()
 
@@ -1227,15 +1229,17 @@ def test_get_randomline_trilinear_with_explicit_z() -> None:
     assert vmax == pytest.approx(1030.0)
 
 
-def test_get_randomline_from_polygons_with_hincrement() -> None:
-    """Test get_randomline from a Polygons fence with an explicit hincrement.
+def test_get_randomline_from_polygons_returns_tuple() -> None:
+    """Test get_randomline from a Polygons fence returns the expected tuple shape.
 
     What is tested:
-        ``get_randomline`` is called with a ``Polygons`` fence and an explicit
-        ``hincrement`` (exercising the non-default resampling distance branch).
+        ``get_randomline`` is called with a straight ``Polygons`` fence and an
+        explicit ``hincrement`` (which exercises the non-default resampling-distance
+        branch, but whose effect on the sampling density is not asserted here).
 
     Expected behaviour:
-        The five-element (hmin, hmax, vmin, vmax, ndarray) tuple is returned.
+        The five-element (hmin, hmax, vmin, vmax, ndarray) tuple is returned and the
+        value array is 2D.
     """
     cube = _make_cube()
     poly = Polygons([[10.0, 50.0, 1000.0, 1], [110.0, 50.0, 1000.0, 1]])
@@ -1262,7 +1266,8 @@ def test_compute_attributes_in_window_returns_all_maps() -> None:
 
     Expected behaviour:
         All expected keys are present, every value is a RegularSurface on the cube
-        map grid, and no ``max`` map value is below the corresponding ``min`` value.
+        map grid, and each ``max`` attribute value is greater than or equal to the
+        corresponding ``min`` value.
     """
     cube = _make_cube()
 
@@ -1297,12 +1302,14 @@ def test_compute_attributes_in_window_with_surface_inputs() -> None:
     assert isinstance(attrs["rms"], RegularSurface)
 
 
-def test_compute_attributes_in_window_linear_interpolation() -> None:
-    """Test compute_attributes_in_window with linear interpolation.
+def test_compute_attributes_in_window_linear_interpolation_returns_surface() -> None:
+    """Test compute_attributes_in_window returns a surface with linear interpolation.
 
     What is tested:
         ``compute_attributes_in_window`` is called with ``interpolation="linear"``
-        and a custom ``ndiv`` to exercise the linear signal-interpolation path.
+        and a custom ``ndiv`` (which exercises the linear signal-interpolation
+        branch, but whose numerical effect versus other interpolation modes is not
+        asserted here).
 
     Expected behaviour:
         The ``rms`` attribute is returned as a RegularSurface.
@@ -1421,14 +1428,15 @@ def test_determine_slice_indices_without_valid_depth_raises_runtime_error() -> N
 
     What is tested:
         ``CubeAttrs._determine_slice_indices`` is called with a depth array where
-        all values are outside the valid range.
+        every sample equals the ``_outside_depth`` sentinel, i.e. all samples are
+        excluded exactly as ``_create_depth_array`` would mark them.
 
     Expected behaviour:
         A RuntimeError is raised indicating no valid depth-cube data was found.
     """
     attrs = cube_window_attributes.CubeAttrs.__new__(cube_window_attributes.CubeAttrs)
-    attrs._depth_array = np.array([1000.0, 1002.0], dtype=np.float32)
-    attrs._outside_depth = 999.0
+    attrs._outside_depth = 1003.0
+    attrs._depth_array = np.full(2, attrs._outside_depth, dtype=np.float32)
 
     with pytest.raises(RuntimeError, match="No valid data found in the depth cube"):
         attrs._determine_slice_indices()
