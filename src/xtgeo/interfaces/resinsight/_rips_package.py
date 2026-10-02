@@ -74,18 +74,23 @@ if rips is not None:
             Project as _RipsProject,
             PropertyDataType,  # noqa: F401
             PropertyType,  # noqa: F401
+            RegularSurface as _RipsRegularSurface,
+            SurfaceCollection as _RipsSurfaceCollection,
         )
     except ImportError as err:
         _rips_import_error = (
             f"The installed rips package does not provide the required API "
             "symbols (Case, Instance, NameConflictPolicy, Project, "
-            f"PropertyDataType, PropertyType): {err}. "
+            f"PropertyDataType, PropertyType, RegularSurface, "
+            f"SurfaceCollection): {err}. "
             f"Please upgrade: pip install 'rips>={MIN_RIPS_VERSION}'"
         )
         rips = None
         _RipsCase = Any  # type: ignore[misc,assignment]
         _RipsInstance = Any  # type: ignore[misc,assignment]
         _RipsProject = Any  # type: ignore[misc,assignment]
+        _RipsRegularSurface = Any  # type: ignore[misc,assignment]
+        _RipsSurfaceCollection = Any  # type: ignore[misc,assignment]
         NameConflictPolicy = Any  # type: ignore[misc,assignment]
         PropertyDataType = Any  # type: ignore[misc,assignment]
         PropertyType = Any  # type: ignore[misc,assignment]
@@ -93,6 +98,8 @@ else:
     _RipsCase = Any  # type: ignore[misc,assignment]
     _RipsInstance = Any  # type: ignore[misc,assignment]
     _RipsProject = Any  # type: ignore[misc,assignment]
+    _RipsRegularSurface = Any  # type: ignore[misc,assignment]
+    _RipsSurfaceCollection = Any  # type: ignore[misc,assignment]
     NameConflictPolicy = Any  # type: ignore[misc,assignment]
     PropertyDataType = Any  # type: ignore[misc,assignment]
     PropertyType = Any  # type: ignore[misc,assignment]
@@ -100,6 +107,8 @@ else:
 RipsCaseType: TypeAlias = _RipsCase  # type: ignore[misc]
 RipsInstanceType: TypeAlias = _RipsInstance  # type: ignore[misc]
 RipsProjectType: TypeAlias = _RipsProject  # type: ignore[misc]
+RipsRegularSurfaceType: TypeAlias = _RipsRegularSurface  # type: ignore[misc]
+RipsSurfaceCollectionType: TypeAlias = _RipsSurfaceCollection  # type: ignore[misc]
 
 ResInsightInstanceOrPortType: TypeAlias = int | RipsInstanceType
 
