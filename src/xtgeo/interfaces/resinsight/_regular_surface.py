@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 
     from xtgeo.surface.regular_surface import RegularSurface
 
+    from ._rips_package import RipsRegularSurfaceType
+
 
 logger = null_logger(__name__)
 
@@ -153,7 +155,7 @@ class RegularSurfaceReader(_BaseResInsightDataRW):
             RuntimeError: If the folder or the surface cannot be found.
         """
         target_folder = resolve_folder(
-            self.get_project().surface_folder(),  # type: ignore[attr-defined]
+            self.get_project().surface_folder(),
             folder_name,
             _NAME_ATTR,
         )
@@ -171,12 +173,12 @@ class RegularSurfaceReader(_BaseResInsightDataRW):
 
     @staticmethod
     def _read_regular_surface(
-        surface: object, property_name: str | None = None
+        surface: RipsRegularSurfaceType, property_name: str | None = None
     ) -> RegularSurfaceDataResInsight:
         """Extract geometry and values from a rips ``RegularSurface``."""
-        name = surface.surface_user_description  # type: ignore[attr-defined]
-        ncol = int(surface.nx)  # type: ignore[attr-defined]
-        nrow = int(surface.ny)  # type: ignore[attr-defined]
+        name = surface.surface_user_description
+        ncol = int(surface.nx)
+        nrow = int(surface.ny)
 
         prop = (
             property_name
@@ -185,7 +187,7 @@ class RegularSurfaceReader(_BaseResInsightDataRW):
         )
         if prop == _FIXED_DEPTH_PROPERTY:
             # Constant-depth surfaces hold a scalar depth, not a value array.
-            values = np.full(ncol * nrow, float(surface.depth))  # type: ignore[attr-defined]
+            values = np.full(ncol * nrow, float(surface.depth))
         else:
             values_list = surface.get_property(prop)  # type: ignore[attr-defined]
             if values_list is None or len(values_list) == 0:
@@ -198,11 +200,11 @@ class RegularSurfaceReader(_BaseResInsightDataRW):
             name=name,
             ncol=ncol,
             nrow=nrow,
-            xori=float(surface.origin_x),  # type: ignore[attr-defined]
-            yori=float(surface.origin_y),  # type: ignore[attr-defined]
-            xinc=float(surface.increment_x),  # type: ignore[attr-defined]
-            yinc=float(surface.increment_y),  # type: ignore[attr-defined]
-            rotation=float(surface.rotation),  # type: ignore[attr-defined]
+            xori=float(surface.origin_x),
+            yori=float(surface.origin_y),
+            xinc=float(surface.increment_x),
+            yinc=float(surface.increment_y),
+            rotation=float(surface.rotation),
             values=values,
         )
 
@@ -266,7 +268,7 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
         try:
             surface = (
                 existing
-                if reuse
+                if existing and reuse
                 else self._create_regular_surface(
                     target_folder, surface_name, data, overwrite=replace
                 )
@@ -281,10 +283,10 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
 
     @staticmethod
     def _regular_surface_geometry_matches(
-        surface: object, data: RegularSurfaceDataResInsight
+        surface: RipsRegularSurfaceType, data: RegularSurfaceDataResInsight
     ) -> bool:
         """Check whether an existing surface has the same geometry."""
-        if int(surface.nx) != data.ncol or int(surface.ny) != data.nrow:  # type: ignore[attr-defined]
+        if int(surface.nx) != data.ncol or int(surface.ny) != data.nrow:
             return False
 
         # ResInsight stores coordinates as float32, so compare against the
@@ -294,17 +296,17 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
         return all(
             np.float32(actual) == np.float32(expected)
             for actual, expected in (
-                (surface.origin_x, data.xori),  # type: ignore[attr-defined]
-                (surface.origin_y, data.yori),  # type: ignore[attr-defined]
-                (surface.increment_x, data.xinc),  # type: ignore[attr-defined]
-                (surface.increment_y, data.yinc),  # type: ignore[attr-defined]
-                (surface.rotation, data.rotation),  # type: ignore[attr-defined]
+                (surface.origin_x, data.xori),
+                (surface.origin_y, data.yori),
+                (surface.increment_x, data.xinc),
+                (surface.increment_y, data.yinc),
+                (surface.rotation, data.rotation),
             )
         )
 
     @staticmethod
     def _set_regular_surface_property(
-        surface: object,
+        surface: RipsRegularSurfaceType,
         data: RegularSurfaceDataResInsight,
         property_name: str = _DEPTH_PROPERTY_NAME,
         set_as_depth: bool = True,
@@ -321,14 +323,14 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
         surface_name: str,
         data: RegularSurfaceDataResInsight,
         overwrite: bool = False,
-    ) -> Any:
+    ) -> RipsRegularSurfaceType:
         """Create an empty ResInsight ``RegularSurface`` inside the folder.
 
         With *overwrite*, ResInsight deletes any existing item carrying the same
         name in *folder* — including a non-regular surface, which the
         ``RegularSurface`` lookup does not see; otherwise a name clash raises.
         """
-        new_surf = folder.new_regular_surface(  # type: ignore[attr-defined]
+        new_surf: RipsRegularSurfaceType = folder.new_regular_surface(  # type: ignore[attr-defined]
             name=surface_name,
             on_name_conflict=(
                 NameConflictPolicy.OVERWRITE if overwrite else NameConflictPolicy.FAIL
