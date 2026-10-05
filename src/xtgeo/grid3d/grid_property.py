@@ -236,11 +236,10 @@ def gridproperty_from_roxar(
         myporo = xtgeo.gridproperty_from_roxar(project, 'Geogrid', 'Poro')
 
     """
-    # A pending deprecation warning will not show up in RMS for normal users
     warnings.warn(
         "The 'gridproperty_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'gridproperty_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
     return gridproperty_from_rms(
@@ -1102,7 +1101,7 @@ class GridProperty(_Grid3D):
         warnings.warn(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(

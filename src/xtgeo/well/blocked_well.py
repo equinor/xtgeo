@@ -125,7 +125,7 @@ def blockedwell_from_roxar(
     warnings.warn(
         "The 'blockedwell_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'blockedwell_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
     return blockedwell_from_rms(
@@ -401,7 +401,7 @@ class BlockedWell(Well):
         warnings.warn(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(

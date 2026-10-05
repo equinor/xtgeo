@@ -115,7 +115,7 @@ def test_add_inside_old_new_behaviour(reekset):
     poi1.set_dataframe(dataframe1)
     poi2.set_dataframe(dataframe2)
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         poi1.add_inside(pol, 1)
 
     zvec = poi1.get_dataframe()["Z_TVDSS"].values

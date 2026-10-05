@@ -234,11 +234,10 @@ def surface_from_roxar(
 
     """
 
-    # A pending deprecation warning will not show up in RMS for normal users
     warnings.warn(
         "The 'surface_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'surface_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
 
@@ -345,7 +344,7 @@ def surface_from_grid3d(
     if mode is not None:
         warnings.warn(
             "The 'mode' argument is deprecated, use 'property' instead",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         property = mode
@@ -678,7 +677,7 @@ class RegularSurface:
             warnings.warn(
                 "The 'masked' parameter is deprecated and will be removed in a "
                 "future version.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
 
@@ -1502,12 +1501,10 @@ class RegularSurface:
            ``to_roxar()`` is deprecated and will be removed in a future version.
            Use :meth:`to_rms()` instead.
         """
-        # a PendingDeprecationWarning will not show up for RMS users, which is intended
-        # since they should not be 'disturbed' by this change at this point.
         warnings.warn(
             "The 'to_roxar()' method is deprecated and will be removed in a later "
             "xtgeo version. Use 'to_rms()' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(
@@ -2038,7 +2035,7 @@ class RegularSurface:
         warnings.warn(
             "The dataframe() is deprecated and will be removed in xtgeo "
             "version 5. Use get_dataframe() instead",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
 
         return self.get_dataframe(**kwargs)
@@ -3005,7 +3002,7 @@ class RegularSurface:
             warnings.warn(
                 "Other algorithms than no. 3 is not recommended, and will be "
                 "removed in near future.",
-                DeprecationWarning,
+                FutureWarning,
             )
 
         scube = surface_from_cube(cube, 0)

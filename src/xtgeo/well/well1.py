@@ -175,7 +175,7 @@ def well_from_roxar(
     warnings.warn(
         "The 'well_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'well_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
     return well_from_rms(
@@ -441,7 +441,7 @@ class Well:
         warnings.warn(
             "Direct access to the dataframe property in Well class will be deprecated "
             "in xtgeo 5.0. Use `get_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         return self._wdata.get_dataframe(copy=False)  # get a view, for backward compat.
 
@@ -450,7 +450,7 @@ class Well:
         warnings.warn(
             "Direct access to the dataframe property in Well class will be deprecated "
             "in xtgeo 5.0. Use `set_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         self.set_dataframe(dfr)  # this will include consistency checking!
 
@@ -688,7 +688,7 @@ class Well:
         warnings.warn(
             "to_hdf() is deprecated and will be removed in version 5.0. "
             "Use to_file() with fformat='hdf5' instead.",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
@@ -825,7 +825,7 @@ class Well:
         warnings.warn(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(

@@ -310,7 +310,7 @@ def test_rox_getset_cube(rms_project_path):
 @pytest.mark.requires_rmsapi
 def test_cube_from_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a cube."""
-    with pytest.warns(PendingDeprecationWarning, match="cube_from_roxar"):
+    with pytest.warns(FutureWarning, match="cube_from_roxar"):
         cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME1)
     assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
 
@@ -320,7 +320,7 @@ def test_cube_to_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar export method warns."""
     cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME1)
 
-    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
         cube.to_roxar(rms_project_path, CUBENAME1 + "_deprecation")
 
 
@@ -366,7 +366,7 @@ def test_rox_surfaces(rms_project_path):
 @pytest.mark.requires_rmsapi
 def test_surface_from_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a surface."""
-    with pytest.warns(PendingDeprecationWarning, match="surface_from_roxar"):
+    with pytest.warns(FutureWarning, match="surface_from_roxar"):
         surface = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
     assert surface.values.mean() == pytest.approx(1698.648, abs=0.01)
 
@@ -448,7 +448,7 @@ def test_rms_wells(rms_project_path: str) -> None:
 @pytest.mark.requires_rmsapi
 def test_rox_wells_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a well."""
-    with pytest.warns(PendingDeprecationWarning, match="well_from_roxar"):
+    with pytest.warns(FutureWarning, match="well_from_roxar"):
         well = xtgeo.well_from_roxar(
             rms_project_path, "OP_2", trajectory="My trajectory", logrun="log"
         )
@@ -463,7 +463,7 @@ def test_well_to_roxar_deprecation(rms_project_path: str) -> None:
         rox.project, "OP_2", trajectory="My trajectory", logrun="log"
     )
 
-    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
         well.to_roxar(rox.project, "OP_2", trajectory="My trajectory", logrun="log")
 
     rox.project.close()
@@ -498,7 +498,7 @@ def test_rms_get_grid(rms_project_path: str) -> None:
 @pytest.mark.requires_rmsapi
 def test_rox_get_grid_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a grid."""
-    with pytest.warns(PendingDeprecationWarning, match="grid_from_roxar"):
+    with pytest.warns(FutureWarning, match="grid_from_roxar"):
         grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
 
     assert grid.dimensions == (40, 64, 14)
@@ -509,14 +509,14 @@ def test_grid_to_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar export method warns."""
     grid = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
 
-    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
         grid.to_roxar(rms_project_path, GRIDNAME1 + "_deprecation")
 
 
 @pytest.mark.requires_rmsapi
 def test_rox_get_gridproperty_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a grid property."""
-    with pytest.warns(PendingDeprecationWarning, match="gridproperty_from_roxar"):
+    with pytest.warns(FutureWarning, match="gridproperty_from_roxar"):
         poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
 
     assert poro.values.mean() == pytest.approx(0.16774, abs=0.001)
@@ -528,7 +528,7 @@ def test_gridproperty_to_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar export method warns."""
     poro = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, PORONAME1)
 
-    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
         poro.to_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_deprecation")
 
 
@@ -745,7 +745,7 @@ def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
 @pytest.mark.requires_rmsapi
 def test_rms_polygons_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads polygons."""
-    with pytest.warns(PendingDeprecationWarning, match="polygons_from_roxar"):
+    with pytest.warns(FutureWarning, match="polygons_from_roxar"):
         poly = xtgeo.polygons_from_roxar(
             rms_project_path, POLYNAME1, "", stype="clipboard"
         )
@@ -760,7 +760,7 @@ def test_polygons_to_roxar_deprecation(rms_project_path: str) -> None:
         rms_project_path, POLYNAME1, "", stype="clipboard"
     )
 
-    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
         polygons.to_roxar(
             rms_project_path, POLYNAME1 + "_deprecation", "", stype="clipboard"
         )
@@ -796,7 +796,7 @@ def test_rox_get_modify_set_points_from_horizons(rms_project_path):
 @pytest.mark.requires_rmsapi
 def test_rms_points_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads points."""
-    with pytest.warns(PendingDeprecationWarning, match="points_from_roxar"):
+    with pytest.warns(FutureWarning, match="points_from_roxar"):
         poi = xtgeo.points_from_roxar(
             rms_project_path, POINTSNAME1, "", stype="clipboard"
         )
@@ -809,7 +809,7 @@ def test_points_to_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar export method warns."""
     points = xtgeo.points_from_rms(rms_project_path, POINTSNAME1, "", stype="clipboard")
 
-    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
         points.to_roxar(
             rms_project_path, POINTSNAME1 + "_deprecation", "", stype="clipboard"
         )
@@ -1315,7 +1315,7 @@ def test_blocked_well_from_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads a blocked well."""
     rox = RmsApiUtils(rms_project_path)
 
-    with pytest.warns(PendingDeprecationWarning, match="blockedwell_from_roxar"):
+    with pytest.warns(FutureWarning, match="blockedwell_from_roxar"):
         bw = xtgeo.blockedwell_from_roxar(
             rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
         )
@@ -1332,7 +1332,7 @@ def test_blocked_well_to_roxar_deprecation(rms_project_path: str) -> None:
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
 
-    with pytest.warns(PendingDeprecationWarning, match="to_roxar.*to_rms"):
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
         bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
 
     rox.project.close()
@@ -1395,7 +1395,7 @@ def test_blocked_wells_roxar_deprecation(rms_project_path: str) -> None:
     """The deprecated Roxar alias warns and still loads blocked wells."""
     rox = RmsApiUtils(rms_project_path)
 
-    with pytest.warns(PendingDeprecationWarning, match="blockedwells_from_roxar"):
+    with pytest.warns(FutureWarning, match="blockedwells_from_roxar"):
         bwells = xtgeo.blockedwells_from_roxar(
             rox.project, GRIDNAME1, "BW", lognames="all"
         )

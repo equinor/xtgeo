@@ -318,7 +318,7 @@ def points_from_roxar(
     warnings.warn(
         "The 'points_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'points_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
     return points_from_rms(
@@ -571,7 +571,7 @@ class Points(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Points class will be "
             "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
             stacklevel=2,
         )
         return self._df
@@ -581,7 +581,7 @@ class Points(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Points class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe(df)` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         self.set_dataframe(df)
 
@@ -753,7 +753,7 @@ class Points(XYZ):
         warnings.warn(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(

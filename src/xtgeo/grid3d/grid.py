@@ -256,7 +256,7 @@ def grid_from_roxar(
     warnings.warn(
         "The 'grid_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'grid_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
 
@@ -1377,7 +1377,7 @@ class Grid(_Grid3D):
         warnings.warn(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(
@@ -2519,7 +2519,7 @@ class Grid(_Grid3D):
             "get_transmissibilities() is deprecated; use "
             "get_cell_transmissibilities() and "
             "get_nested_hybrid_nnc_transmissibilities() instead.",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         return _grid_transmissibilities.get_transmissibilities(

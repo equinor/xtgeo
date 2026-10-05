@@ -421,7 +421,7 @@ class XYZ(ABC):
                     "be deprecated in future versions. Consider using "
                     f"'{opname}_{itxt}_polygons()' instead which is both faster "
                     "and works intuitively when several and/or overlapping polygons",
-                    DeprecationWarning,
+                    FutureWarning,
                 )
 
     def add_inside(self, poly: Polygons | list[Polygons], value: float) -> None:

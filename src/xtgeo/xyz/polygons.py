@@ -233,7 +233,7 @@ def polygons_from_roxar(
     warnings.warn(
         "The 'polygons_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'polygons_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
     return polygons_from_rms(
@@ -478,7 +478,7 @@ class Polygons(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Polygons class will be "
             "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         return self._df
 
@@ -487,7 +487,7 @@ class Polygons(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Polygons class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         self.set_dataframe(df)
 
@@ -687,7 +687,7 @@ class Polygons(XYZ):
         warnings.warn(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(

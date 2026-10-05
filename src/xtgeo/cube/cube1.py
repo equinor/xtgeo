@@ -119,7 +119,7 @@ def cube_from_roxar(project: Any, name: str, folder: str | None = None) -> Cube:
     warnings.warn(
         "The 'cube_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'cube_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
     return cube_from_rms(project=project, name=name, folder=folder)
@@ -1075,7 +1075,7 @@ class Cube:
         warnings.warn(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(

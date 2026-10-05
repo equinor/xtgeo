@@ -187,7 +187,7 @@ def test_roundtrip_box_grid(resinsight_instance):
 
 def test_grid_from_resinsight_case_name_alias_deprecated(resinsight_instance):
     """The deprecated 'case_name' alias still works but emits a warning."""
-    with pytest.warns(DeprecationWarning, match="case_name"):
+    with pytest.warns(FutureWarning, match="case_name"):
         grid = xtgeo.grid_from_resinsight(resinsight_instance, case_name="EXAMPLE")
     assert isinstance(grid, xtgeo.Grid)
 
@@ -199,7 +199,7 @@ def test_grid_from_resinsight_case_name_alias_deprecated(resinsight_instance):
 def test_to_resinsight_gname_alias_deprecated(resinsight_instance):
     """The deprecated 'gname' alias for Grid.to_resinsight still works but warns."""
     grid = xtgeo.create_box_grid((2, 2, 2))
-    with pytest.warns(DeprecationWarning, match="gname"):
+    with pytest.warns(FutureWarning, match="gname"):
         case = grid.to_resinsight(resinsight_instance, gname="GRID_GNAME_ALIAS")
     assert case.name == "GRID_GNAME_ALIAS"
 

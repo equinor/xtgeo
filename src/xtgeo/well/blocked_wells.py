@@ -156,7 +156,7 @@ def blockedwells_from_roxar(
     warnings.warn(
         "The 'blockedwells_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'blockedwells_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
     return blockedwells_from_rms(project, gname, bwname, lognames=lognames, ijk=ijk)

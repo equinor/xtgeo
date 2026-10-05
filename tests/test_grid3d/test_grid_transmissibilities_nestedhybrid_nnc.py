@@ -579,7 +579,7 @@ class TestBoxGrid:
         perm = _uniform(grid, 1.0, "perm")
         ntg = _uniform(grid, 1.0, "ntg")
 
-        with pytest.warns(DeprecationWarning, match="get_cell_transmissibilities"):
+        with pytest.warns(FutureWarning, match="get_cell_transmissibilities"):
             result = grid.get_transmissibilities(perm, perm, perm, ntg, nnc_table=table)
 
         assert len(result) == 6
