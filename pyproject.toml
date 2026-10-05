@@ -165,7 +165,7 @@ testpaths = "tests"
 markers = [
     "bigtest: A big test not executed by default",
     "requires_opm: A test requiring opm in the environment",
-    "requires_roxar: Test requires to run in RMS python",
+    "requires_rmsapi: Test requires to run in RMS python",
     "requires_resinsight: Test requires ResInsight (+rips)",
 ]
 doctest_optionflags = "ELLIPSIS"

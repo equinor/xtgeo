@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import warnings
+from unittest.mock import Mock
 
 import pytest
 
+from xtgeo import RoxUtils
 from xtgeo.common.log import null_logger
+from xtgeo.interfaces.rms import rmsapi_utils
 from xtgeo.interfaces.rms.rmsapi_utils import (
     RmsApiUtils,
-    RoxUtils,
     _DomainType,
     _StorageTypeRegularSurface,
 )
@@ -17,7 +19,7 @@ from xtgeo.interfaces.rms.rmsapi_utils import (
 logger = null_logger(__name__)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsInit:
     """Test RmsApiUtils initialization."""
 
@@ -51,8 +53,40 @@ class TestRmsApiUtilsInit:
         with pytest.raises(RuntimeError, match="Project is not valid"):
             RmsApiUtils(None)
 
+    def test_init_requires_rmsapi(
+        self, monkeypatch: pytest.MonkeyPatch, rms_project_as_folder_path: str
+    ) -> None:
+        """Test that missing rmsapi dependency raises RuntimeError."""
+        monkeypatch.setattr(rmsapi_utils, "rmsapi", None)
 
-@pytest.mark.requires_roxar
+        with pytest.raises(RuntimeError, match="rmsapi package is not available"):
+            RmsApiUtils(rms_project_as_folder_path, readonly=True)
+
+    def test_init_rejects_unsupported_rmsapi_version(
+        self, monkeypatch: pytest.MonkeyPatch, rms_project_as_folder_path: str
+    ) -> None:
+        """Test that unsupported rmsapi version raises RuntimeError."""
+        unsupported_rmsapi = Mock(__version__="1.9")
+        monkeypatch.setattr(rmsapi_utils, "rmsapi", unsupported_rmsapi)
+
+        with pytest.raises(RuntimeError, match="requires rmsapi API >= 1.10"):
+            RmsApiUtils(rms_project_as_folder_path, readonly=True)
+
+    @pytest.mark.parametrize("version", ["1.10", "1.11"])
+    def test_init_accepts_supported_rmsapi_versions(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        rms_project_as_folder_path: str,
+        version: str,
+    ) -> None:
+        """Test that supported rmsapi versions pass initialisation."""
+        supported_rmsapi = Mock(__version__=version)
+        monkeypatch.setattr(rmsapi_utils, "rmsapi", supported_rmsapi)
+
+        RmsApiUtils(rms_project_as_folder_path, readonly=True)
+
+
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsProperties:
     """Test RmsApiUtils properties."""
 
@@ -79,7 +113,7 @@ class TestRmsApiUtilsProperties:
         utils.safe_close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsVersionMethods:
     """Test version-related methods."""
 
@@ -105,7 +139,7 @@ class TestRmsApiUtilsVersionMethods:
         assert len(rms_versions) > 0
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRmsApiUtilsCategoryManagement:
     """Test category management methods."""
 
@@ -201,20 +235,26 @@ class TestRmsApiUtilsCategoryManagement:
 class TestRoxUtilsBackwardCompatibility:
     """Test RoxUtils backward compatibility."""
 
-    @pytest.mark.requires_roxar
+    @pytest.mark.requires_rmsapi
     def test_roxutils_deprecation_warning(self, rms_project_as_folder_path):
         """Test that RoxUtils shows deprecation warning."""
-        with pytest.warns(PendingDeprecationWarning, match="RoxUtils is deprecated"):
+        with pytest.warns(FutureWarning, match="RoxUtils is deprecated"):
             utils = RoxUtils(rms_project_as_folder_path, readonly=True)
             utils.safe_close()
 
-    @pytest.mark.requires_roxar
+    @pytest.mark.requires_rmsapi
     def test_roxutils_functionality(self, rms_project_as_folder_path):
         """Test that RoxUtils still works functionally."""
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", PendingDeprecationWarning)
+            warnings.simplefilter("ignore", FutureWarning)
 
             utils = RoxUtils(rms_project_as_folder_path, readonly=True)
+
+            # Verify inheritance and compatibility behaviour
+            assert issubclass(RoxUtils, RmsApiUtils)
+            assert isinstance(utils, RmsApiUtils)
+            assert utils.roxversion == utils.rmsapiversion
+            assert utils.project is not None
 
             # Should have same functionality as RmsApiUtils
             assert hasattr(utils, "rmsapiversion")
