@@ -238,7 +238,7 @@ def test_roundtrip_box_grid_property(resinsight_instance):
 def test_gridproperty_from_resinsight_case_name_alias_deprecated(resinsight_instance):
     """The deprecated 'case_name' alias still works but emits a warning."""
     _write_generated_property(resinsight_instance)
-    with pytest.warns(DeprecationWarning, match="case_name"):
+    with pytest.warns(FutureWarning, match="case_name"):
         prop = xtgeo.gridproperty_from_resinsight(
             resinsight_instance,
             case_name="EXAMPLE",

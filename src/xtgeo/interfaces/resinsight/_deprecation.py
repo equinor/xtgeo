@@ -19,7 +19,7 @@ def resolve_deprecated_alias(
     """Return the effective value for an argument that was renamed.
 
     ``None`` marks "not provided" (the ResInsight case/property arguments are
-    never legitimately ``None``). Emits a :class:`DeprecationWarning` when the
+    never legitimately ``None``). Emits a :class:`FutureWarning` when the
     deprecated (old) name is used, and raises :class:`TypeError` if both names
     are supplied at once.
 
@@ -40,7 +40,7 @@ def resolve_deprecated_alias(
         warnings.warn(
             f"The '{old_name}' argument is deprecated and will be removed in a "
             f"future version; use '{new_name}' instead.",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=stacklevel,
         )
         return old_value

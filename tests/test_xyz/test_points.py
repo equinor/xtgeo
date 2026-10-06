@@ -958,7 +958,7 @@ def test_points_dataframe_property_getter_warns_and_returns_dataframe() -> None:
     """Test deprecated ``dataframe`` getter emits warning and returns dataframe.
 
     What is tested:
-        Accessing ``Points.dataframe`` triggers a ``PendingDeprecationWarning``
+        Accessing ``Points.dataframe`` triggers a ``DeprecationWarning``
         and still returns the underlying dataframe with the expected values.
 
     Expected behaviour:
@@ -967,7 +967,7 @@ def test_points_dataframe_property_getter_warns_and_returns_dataframe() -> None:
     """
     points = Points([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
 
-    with pytest.warns(PendingDeprecationWarning, match="get_dataframe"):
+    with pytest.warns(DeprecationWarning, match="get_dataframe"):
         dataframe = points.dataframe
 
     assert list(dataframe.columns) == ["X_UTME", "Y_UTMN", "Z_TVDSS"]
@@ -979,7 +979,7 @@ def test_points_dataframe_property_setter_warns_and_sets_deep_copy() -> None:
 
     What is tested:
         Assigning through ``Points.dataframe`` triggers a
-        ``PendingDeprecationWarning`` and routes through ``set_dataframe``.
+        ``DeprecationWarning`` and routes through ``set_dataframe``.
 
     Expected behaviour:
         The warning is emitted, the points dataframe is updated to assigned
@@ -989,7 +989,7 @@ def test_points_dataframe_property_setter_warns_and_sets_deep_copy() -> None:
     points = Points([(1.0, 2.0, 3.0)])
     new_df = pd.DataFrame({"X_UTME": [10.0], "Y_UTMN": [11.0], "Z_TVDSS": [12.0]})
 
-    with pytest.warns(PendingDeprecationWarning, match="set_dataframe"):
+    with pytest.warns(DeprecationWarning, match="set_dataframe"):
         points.dataframe = new_df
 
     assert points.get_dataframe(copy=False)["Z_TVDSS"].tolist() == [12.0]

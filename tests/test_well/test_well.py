@@ -1285,5 +1285,5 @@ def test_welldf_view_vs_copy(loadwell1):
 def test_well_dataframe_deprecation(loadwell1):
     well = loadwell1
 
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.warns(DeprecationWarning):
         well.dataframe
