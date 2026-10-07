@@ -24,10 +24,12 @@ if TYPE_CHECKING:
         Case as RipsCaseType,
         Instance as RipsInstanceType,
         NameConflictPolicy as RipsNameConflictPolicyType,
+        PolygonCollection as RipsPolygonCollectionType,
         Project as RipsProjectType,
         PropertyDataType as RipsPropertyDataType,
         PropertyType as RipsPropertyType,
         RegularSurface as RipsRegularSurfaceType,
+        RimPolygonContainer as RipsRimPolygonContainerType,
         RipsError as RipsErrorType,
         SurfaceCollection as RipsSurfaceCollectionType,
     )
@@ -36,20 +38,24 @@ if TYPE_CHECKING:
         Case: type[RipsCaseType]
         Instance: type[RipsInstanceType]
         NameConflictPolicy: type[RipsNameConflictPolicyType]
+        PolygonCollection: type[RipsPolygonCollectionType]
         Project: type[RipsProjectType]
         PropertyDataType: type[RipsPropertyDataType]
         PropertyType: type[RipsPropertyType]
         RegularSurface: type[RipsRegularSurfaceType]
+        RimPolygonContainer: type[RipsRimPolygonContainerType]
         RipsError: type[RipsErrorType]
         SurfaceCollection: type[RipsSurfaceCollectionType]
 else:
     RipsCaseType = Any
     RipsInstanceType = Any
     RipsNameConflictPolicyType = Any
+    RipsPolygonCollectionType = Any
     RipsProjectType = Any
     RipsPropertyDataType = Any
     RipsPropertyType = Any
     RipsRegularSurfaceType = Any
+    RipsRimPolygonContainerType = Any
     RipsErrorType = Any
     RipsSurfaceCollectionType = Any
     RipsModuleType = Any
@@ -60,10 +66,12 @@ _REQUIRED_RIPS_SYMBOLS = (
     "Case",
     "Instance",
     "NameConflictPolicy",
+    "PolygonCollection",
     "Project",
     "PropertyDataType",
     "PropertyType",
     "RegularSurface",
+    "RimPolygonContainer",
     "RipsError",
     "SurfaceCollection",
 )

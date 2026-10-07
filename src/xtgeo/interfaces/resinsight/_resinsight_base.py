@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast, overload
+from typing import TYPE_CHECKING, Protocol, TypeVar
 
 from xtgeo.common.log import null_logger
 
@@ -11,17 +11,20 @@ from .rips_utils import RipsApiUtils
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import TypeVar
 
     from ._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
         RipsInstanceType,
+        RipsPolygonCollectionType,
         RipsProjectType,
+        RipsRimPolygonContainerType,
         RipsSurfaceCollectionType,
     )
 
     _ItemT = TypeVar("_ItemT")
+
+_NodeT = TypeVar("_NodeT")
 
 logger = null_logger(__name__)
 
@@ -48,6 +51,97 @@ def select_by_name(
     return selected
 
 
+class _FolderOps(Protocol[_NodeT]):
+    """Adapt hierarchy-specific folder operations for generic traversal."""
+
+    def children(self, node: _NodeT) -> Iterable[_NodeT]: ...
+
+    def add(self, node: _NodeT, name: str) -> _NodeT: ...
+
+
+class _SurfaceFolderOps:
+    """Adapt and validate the rips surface-folder API."""
+
+    def children(
+        self, node: RipsSurfaceCollectionType
+    ) -> Iterable[RipsSurfaceCollectionType]:
+        return node.sub_collections()
+
+    def add(
+        self, node: RipsSurfaceCollectionType, name: str
+    ) -> RipsSurfaceCollectionType:
+        rips = require_rips()
+        child = node.add_folder(
+            folder_name=name, on_name_conflict=NameConflictPolicy.FAIL
+        )
+        if not isinstance(child, rips.SurfaceCollection):
+            raise RuntimeError(
+                "ResInsight returned an invalid surface folder type "
+                f"({type(child).__name__})"
+            )
+        return child
+
+
+class _PolygonFolderOps:
+    """Adapt and validate the polymorphic rips polygon-container API."""
+
+    def children(
+        self, node: RipsRimPolygonContainerType
+    ) -> Iterable[RipsRimPolygonContainerType]:
+        rips = require_rips()
+        return node.children("SubCollections", rips.RimPolygonContainer)
+
+    def add(
+        self, node: RipsRimPolygonContainerType, name: str
+    ) -> RipsRimPolygonContainerType:
+        rips = require_rips()
+        child = node.add_folder(
+            folder_name=name, on_name_conflict=NameConflictPolicy.FAIL
+        )
+        if not isinstance(child, rips.RimPolygonContainer):
+            raise RuntimeError(
+                "ResInsight returned an invalid polygon folder type "
+                f"({type(child).__name__})"
+            )
+        return child
+
+
+def _resolve_folder(
+    root: _NodeT,
+    folder_path: str,
+    name_attr: str,
+    ops: _FolderOps[_NodeT],
+    folder_kind: str,
+    create: bool = False,
+) -> _NodeT:
+    """Resolve a folder path using hierarchy-specific operations."""
+    folder = root
+
+    for segment in filter(None, folder_path.split("/")):
+        sub = select_by_name(
+            ops.children(folder), segment, find_last=False, name_attr=name_attr
+        )
+        if sub is None:
+            if not create:
+                raise RuntimeError(f"Cannot find {folder_kind} folder '{segment}'")
+
+            # Folders are never overwritten; that would delete their content.
+            sub = ops.add(folder, segment)
+        folder = sub
+
+    return folder
+
+
+_SURFACE_FOLDER_OPS: _FolderOps[RipsSurfaceCollectionType] = _SurfaceFolderOps()
+_POLYGON_FOLDER_OPS: _FolderOps[RipsRimPolygonContainerType] = _PolygonFolderOps()
+
+
+# TODO: the resolved folder functions are now inconsistently named:
+# _resolve_folder() for surfaces, and _resolve_polygon_folder() for polygons
+# Could _resolve_folder() ==> _resolve_surface_folder() ?
+# Or will it break existing code that relies on the current naming?
+
+
 def resolve_folder(
     root: RipsSurfaceCollectionType,
     folder_path: str,
@@ -60,29 +154,58 @@ def resolve_folder(
     *create* is ``True``. Otherwise a RuntimeError is raised if the folder does not
     exist.
     """
-    folder = root
+    return _resolve_folder(
+        root,
+        folder_path,
+        name_attr,
+        _SURFACE_FOLDER_OPS,
+        "surface",
+        create=create,
+    )
 
-    for segment in filter(None, folder_path.split("/")):
-        sub = select_by_name(
-            folder.sub_collections(), segment, find_last=False, name_attr=name_attr
-        )
-        if sub is None:
-            if not create:
-                raise RuntimeError(f"Cannot find surface folder '{segment}'")
 
-            # Folders are never overwritten; that would delete their content.
-            # require_rips() gives an actionable upgrade message instead of an
-            # AttributeError if rips is missing/too old for NameConflictPolicy.
-            require_rips()
-            sub = cast(
-                "RipsSurfaceCollectionType",
-                folder.add_folder(
-                    folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
-                ),
-            )
-        folder = sub
+# TODO: resolve_surface_folder() = better name consistency for resolved folder functions
+# Then resolve_folder() above can be deleted.
+def resolve_surface_folder(
+    root: RipsSurfaceCollectionType,
+    folder_path: str,
+    create: bool = False,
+) -> RipsSurfaceCollectionType:
+    """Resolve a ``/``-separated folder path below a surface collection.
 
-    return folder
+    An empty *folder_path* returns *root*. Missing segments are created when
+    *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
+    does not exist.
+    """
+    return _resolve_folder(
+        root,
+        folder_path,
+        "surface_user_description",
+        _SURFACE_FOLDER_OPS,
+        "surface",
+        create=create,
+    )
+
+
+def resolve_polygon_folder(
+    root: RipsPolygonCollectionType,
+    folder_path: str,
+    create: bool = False,
+) -> RipsRimPolygonContainerType:
+    """Resolve a ``/``-separated folder path below a polygon collection.
+
+    An empty *folder_path* returns *root*. Missing segments are created when
+    *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
+    does not exist.
+    """
+    return _resolve_folder(
+        root,
+        folder_path,
+        "polygon_collection_name",
+        _POLYGON_FOLDER_OPS,
+        "polygon",
+        create=create,
+    )
 
 
 def validate_case(case: str | RipsCaseType) -> None:
