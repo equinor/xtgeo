@@ -233,6 +233,7 @@ def test_resolve_surface_folder(resinsight_instance: RipsInstanceType):
     with pytest.raises(RuntimeError, match="Cannot find surface folder"):
         resolve_folder(root, "NO_SUCH_FOLDER", _NAME_ATTR)
 
+
 @pytest.mark.requires_resinsight
 @pytest.mark.xdist_group(name="resinsight")
 def test_surface_lookup_is_not_recursive(
