@@ -159,8 +159,6 @@ class RegularSurfaceReader(_BaseResInsightDataRW):
             folder_name,
             _NAME_ATTR,
         )
-        if target_folder is None:
-            raise RuntimeError(f"Cannot find surface folder '{folder_name}'")
 
         surface = _find_regular_surface(target_folder, surface_name)
         if surface is None:
