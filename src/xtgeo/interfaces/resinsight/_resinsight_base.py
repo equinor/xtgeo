@@ -48,52 +48,17 @@ def select_by_name(
     return selected
 
 
-# Keep this resolver surface-specific. Other rips collection hierarchies expose
-# different child types and should use collection-specific traversal adapters.
-
-# Reason for overloading: The return type depends on the value of the *create*
-# argument.
-
-# Creating missing folders guarantees a collection is returned.
-@overload
-def resolve_folder(
-    root: RipsSurfaceCollectionType,
-    folder_path: str,
-    name_attr: str,
-    create: Literal[True],
-) -> RipsSurfaceCollectionType: ...
-
-
-# Looking up existing folders may return None when the path is missing.
-@overload
-def resolve_folder(
-    root: RipsSurfaceCollectionType,
-    folder_path: str,
-    name_attr: str,
-    create: Literal[False] = False,
-) -> RipsSurfaceCollectionType | None: ...
-
-
-# A runtime boolean cannot guarantee creation, so the result may be None.
-@overload
-def resolve_folder(
-    root: RipsSurfaceCollectionType,
-    folder_path: str,
-    name_attr: str,
-    create: bool,
-) -> RipsSurfaceCollectionType | None: ...
-
-
 def resolve_folder(
     root: RipsSurfaceCollectionType,
     folder_path: str,
     name_attr: str,
     create: bool = False,
-) -> RipsSurfaceCollectionType | None:
+) -> RipsSurfaceCollectionType:
     """Resolve a ``/``-separated folder path below the *root* collection.
 
     An empty *folder_path* is *root* itself. Missing segments are created when
-    *create* is ``True``, otherwise ``None`` is returned.
+    *create* is ``True``. Otherwise a RuntimeError is raised if the folder does not
+    exist.
     """
     folder = root
 
@@ -103,7 +68,8 @@ def resolve_folder(
         )
         if sub is None:
             if not create:
-                return None
+                raise RuntimeError(f"Cannot find surface folder '{segment}'")
+
             # Folders are never overwritten; that would delete their content.
             # require_rips() gives an actionable upgrade message instead of an
             # AttributeError if rips is missing/too old for NameConflictPolicy.
