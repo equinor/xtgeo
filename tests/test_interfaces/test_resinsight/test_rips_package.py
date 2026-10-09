@@ -8,11 +8,30 @@ require_rips() without needing an actual rips installation or ResInsight executa
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from xtgeo.interfaces.resinsight import _rips_package
+
+
+def test_find_missing_required_rips_symbols_all_present():
+    package = SimpleNamespace(
+        **{name: object() for name in _rips_package._REQUIRED_RIPS_SYMBOLS}
+    )
+
+    assert _rips_package._find_missing_required_rips_symbols(package) == []
+
+
+@pytest.mark.parametrize("missing_symbol", _rips_package._REQUIRED_RIPS_SYMBOLS)
+def test_find_missing_required_rips_symbols_reports_each_symbol(missing_symbol):
+    symbols = {name: object() for name in _rips_package._REQUIRED_RIPS_SYMBOLS}
+    symbols.pop(missing_symbol)
+
+    assert _rips_package._find_missing_required_rips_symbols(
+        SimpleNamespace(**symbols)
+    ) == [missing_symbol]
 
 
 # Tests for _check_rips_version()

@@ -219,7 +219,7 @@ def test_geometry_matches_resinsight_float32_coordinates(
 @pytest.mark.requires_resinsight
 @pytest.mark.xdist_group(name="resinsight")
 def test_resolve_surface_folder(resinsight_instance: RipsInstanceType):
-    """Nested folder paths are created once, reused after, else resolve None."""
+    """Nested paths are created once, reused, and missing folders raise."""
     root = resinsight_instance.project.surface_folder()
 
     created = resolve_folder(root, "PATH_A/PATH_B", _NAME_ATTR, create=True)
@@ -230,7 +230,8 @@ def test_resolve_surface_folder(resinsight_instance: RipsInstanceType):
     names = [f.surface_user_description for f in parent.sub_collections()]
     assert names.count("PATH_B") == 1
 
-    assert resolve_folder(root, "NO_SUCH_FOLDER", _NAME_ATTR) is None
+    with pytest.raises(RuntimeError, match="Cannot find surface folder"):
+        resolve_folder(root, "NO_SUCH_FOLDER", _NAME_ATTR)
 
 
 @pytest.mark.requires_resinsight

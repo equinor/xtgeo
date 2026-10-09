@@ -23,33 +23,42 @@ if TYPE_CHECKING:
     from rips import (
         Case as RipsCaseType,
         Instance as RipsInstanceType,
-        NameConflictPolicy as NameConflictPolicyType,
+        NameConflictPolicy as RipsNameConflictPolicyType,
+        PolygonCollection as RipsPolygonCollectionType,
         Project as RipsProjectType,
         PropertyDataType as RipsPropertyDataType,
         PropertyType as RipsPropertyType,
         RegularSurface as RipsRegularSurfaceType,
+        RimPolygonContainer as RipsRimPolygonContainerType,
         RipsError as RipsErrorType,
+        SurfaceCollection as RipsSurfaceCollectionType,
     )
 
     class RipsModuleType(Protocol):
         Case: type[RipsCaseType]
         Instance: type[RipsInstanceType]
+        NameConflictPolicy: type[RipsNameConflictPolicyType]
+        PolygonCollection: type[RipsPolygonCollectionType]
         Project: type[RipsProjectType]
         PropertyDataType: type[RipsPropertyDataType]
         PropertyType: type[RipsPropertyType]
-        NameConflictPolicy: type[NameConflictPolicyType]
         RegularSurface: type[RipsRegularSurfaceType]
+        RimPolygonContainer: type[RipsRimPolygonContainerType]
         RipsError: type[RipsErrorType]
+        SurfaceCollection: type[RipsSurfaceCollectionType]
 else:
-    NameConflictPolicyType = Any
-    RipsPropertyDataType = Any
-    RipsPropertyType = Any
     RipsCaseType = Any
     RipsInstanceType = Any
+    RipsNameConflictPolicyType = Any
+    RipsPolygonCollectionType = Any
     RipsProjectType = Any
-    RipsModuleType = Any
+    RipsPropertyDataType = Any
+    RipsPropertyType = Any
     RipsRegularSurfaceType = Any
+    RipsRimPolygonContainerType = Any
     RipsErrorType = Any
+    RipsSurfaceCollectionType = Any
+    RipsModuleType = Any
 
 # Minimum rips version that exposes the full API used by xtgeo
 MIN_RIPS_VERSION = "2026.9"
@@ -57,10 +66,20 @@ _REQUIRED_RIPS_SYMBOLS = (
     "Case",
     "Instance",
     "NameConflictPolicy",
+    "PolygonCollection",
     "Project",
     "PropertyDataType",
     "PropertyType",
+    "RegularSurface",
+    "RimPolygonContainer",
+    "RipsError",
+    "SurfaceCollection",
 )
+
+
+def _find_missing_required_rips_symbols(package: object) -> list[str]:
+    """Return required API symbols that are absent from the rips package."""
+    return [name for name in _REQUIRED_RIPS_SYMBOLS if not hasattr(package, name)]
 
 
 def _check_rips_version() -> None:
@@ -112,9 +131,7 @@ PropertyDataType: Any = Any
 PropertyType: Any = Any
 
 if rips is not None:
-    missing_symbols = [
-        name for name in _REQUIRED_RIPS_SYMBOLS if not hasattr(rips, name)
-    ]
+    missing_symbols = _find_missing_required_rips_symbols(rips)
     if missing_symbols:
         _rips_import_error = (
             "The installed rips package does not provide the required API "
