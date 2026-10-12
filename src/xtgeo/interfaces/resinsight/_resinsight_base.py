@@ -135,37 +135,6 @@ def _resolve_folder(
 _SURFACE_FOLDER_OPS: _FolderOps[RipsSurfaceCollectionType] = _SurfaceFolderOps()
 _POLYGON_FOLDER_OPS: _FolderOps[RipsRimPolygonContainerType] = _PolygonFolderOps()
 
-
-# TODO: the resolved folder functions are now inconsistently named:
-# _resolve_folder() for surfaces, and _resolve_polygon_folder() for polygons
-# Could _resolve_folder() ==> _resolve_surface_folder() ?
-# Or will it break existing code that relies on the current naming?
-
-
-def resolve_folder(
-    root: RipsSurfaceCollectionType,
-    folder_path: str,
-    name_attr: str,
-    create: bool = False,
-) -> RipsSurfaceCollectionType:
-    """Resolve a ``/``-separated folder path below the *root* collection.
-
-    An empty *folder_path* is *root* itself. Missing segments are created when
-    *create* is ``True``. Otherwise a RuntimeError is raised if the folder does not
-    exist.
-    """
-    return _resolve_folder(
-        root,
-        folder_path,
-        name_attr,
-        _SURFACE_FOLDER_OPS,
-        "surface",
-        create=create,
-    )
-
-
-# TODO: resolve_surface_folder() = better name consistency for resolved folder functions
-# Then resolve_folder() above can be deleted.
 def resolve_surface_folder(
     root: RipsSurfaceCollectionType,
     folder_path: str,
