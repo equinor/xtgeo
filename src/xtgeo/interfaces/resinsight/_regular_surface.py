@@ -11,7 +11,7 @@ from xtgeo.common.log import null_logger
 
 from ._resinsight_base import (
     _BaseResInsightDataRW,
-    resolve_folder,
+    resolve_surface_folder,
     select_by_name,
 )
 from ._rips_package import NameConflictPolicy, require_rips
@@ -154,10 +154,9 @@ class RegularSurfaceReader(_BaseResInsightDataRW):
         Raises:
             RuntimeError: If the folder or the surface cannot be found.
         """
-        target_folder = resolve_folder(
+        target_folder = resolve_surface_folder(
             self.get_project().surface_folder(),
             folder_name,
-            _NAME_ATTR,
         )
 
         surface = _find_regular_surface(target_folder, surface_name)
@@ -238,10 +237,9 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
             RuntimeError: If the save fails, or if a differing surface would
                 have to be replaced while ``replace`` is ``False``.
         """
-        target_folder = resolve_folder(
+        target_folder = resolve_surface_folder(
             self.get_project().surface_folder(),
             folder_name,
-            _NAME_ATTR,
             create=True,
         )
         existing = _find_regular_surface(target_folder, surface_name)

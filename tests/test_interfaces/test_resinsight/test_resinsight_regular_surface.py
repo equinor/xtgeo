@@ -13,13 +13,12 @@ from numpy.testing import assert_allclose
 
 import xtgeo
 from xtgeo.interfaces.resinsight._regular_surface import (
-    _NAME_ATTR,
     RegularSurfaceDataResInsight,
     RegularSurfaceReader,
     RegularSurfaceWriter,
     _find_regular_surface,
 )
-from xtgeo.interfaces.resinsight._resinsight_base import resolve_folder
+from xtgeo.interfaces.resinsight._resinsight_base import resolve_surface_folder
 
 if TYPE_CHECKING:
     from xtgeo.interfaces.resinsight._rips_package import RipsInstanceType
@@ -222,16 +221,16 @@ def test_resolve_surface_folder(resinsight_instance: RipsInstanceType):
     """Nested paths are created once, reused, and missing folders raise."""
     root = resinsight_instance.project.surface_folder()
 
-    created = resolve_folder(root, "PATH_A/PATH_B", _NAME_ATTR, create=True)
+    created = resolve_surface_folder(root, "PATH_A/PATH_B", create=True)
     assert created.surface_user_description == "PATH_B"
 
-    assert resolve_folder(root, "PATH_A/PATH_B", _NAME_ATTR, create=True) is not None
-    parent = resolve_folder(root, "PATH_A", _NAME_ATTR)
+    assert resolve_surface_folder(root, "PATH_A/PATH_B", create=True) is not None
+    parent = resolve_surface_folder(root, "PATH_A")
     names = [f.surface_user_description for f in parent.sub_collections()]
     assert names.count("PATH_B") == 1
 
     with pytest.raises(RuntimeError, match="Cannot find surface folder"):
-        resolve_folder(root, "NO_SUCH_FOLDER", _NAME_ATTR)
+        resolve_surface_folder(root, "NO_SUCH_FOLDER")
 
 
 @pytest.mark.requires_resinsight
@@ -246,7 +245,7 @@ def test_surface_lookup_is_not_recursive(
     assert _find_regular_surface(root, "NESTED_SURF") is None
 
     found = _find_regular_surface(
-        resolve_folder(root, "NESTED_LOOKUP", _NAME_ATTR), "NESTED_SURF"
+        resolve_surface_folder(root, "NESTED_LOOKUP"), "NESTED_SURF"
     )
     assert found.surface_user_description == "NESTED_SURF"
 

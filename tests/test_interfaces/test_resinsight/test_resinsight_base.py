@@ -12,8 +12,8 @@ import xtgeo
 from xtgeo.interfaces.resinsight import _resinsight_base
 from xtgeo.interfaces.resinsight._resinsight_base import (
     _BaseResInsightDataRW,
-    resolve_folder,
     resolve_polygon_folder,
+    resolve_surface_folder,
     validate_case,
 )
 from xtgeo.interfaces.resinsight._rips_package import require_rips
@@ -57,7 +57,7 @@ def _fake_rips():
     )
 
 
-def test_resolve_surface_folder_adapter_creates_and_reuses_nested_path():
+def test_resolve_surface_folder_creates_and_reuses_nested_path():
     root = _SurfaceFolder("root")
 
     with (
@@ -66,8 +66,8 @@ def test_resolve_surface_folder_adapter_creates_and_reuses_nested_path():
             _resinsight_base, "NameConflictPolicy", SimpleNamespace(FAIL="FAIL")
         ),
     ):
-        created = resolve_folder(root, "A/B", "surface_user_description", create=True)
-        found = resolve_folder(root, "A/B", "surface_user_description")
+        created = resolve_surface_folder(root, "A/B", create=True)
+        found = resolve_surface_folder(root, "A/B")
 
     assert created is found
     assert created.surface_user_description == "B"
@@ -150,7 +150,7 @@ def test_resolve_polygon_folder_with_rips_raises_for_missing_path(
     "resolver, root, expected",
     [
         (
-            lambda root: resolve_folder(root, "MISSING", "surface_user_description"),
+            lambda root: resolve_surface_folder(root, "MISSING"),
             _SurfaceFolder("root"),
             "Cannot find surface folder",
         ),
@@ -173,9 +173,7 @@ def test_folder_adapters_raise_for_missing_path(resolver, root, expected):
     "resolver, root, expected",
     [
         (
-            lambda root: resolve_folder(
-                root, "INVALID", "surface_user_description", create=True
-            ),
+            lambda root: resolve_surface_folder(root, "INVALID", create=True),
             _SurfaceFolder("root"),
             "invalid surface folder type",
         ),
