@@ -135,6 +135,7 @@ def _resolve_folder(
 _SURFACE_FOLDER_OPS: _FolderOps[RipsSurfaceCollectionType] = _SurfaceFolderOps()
 _POLYGON_FOLDER_OPS: _FolderOps[RipsRimPolygonContainerType] = _PolygonFolderOps()
 
+
 def resolve_surface_folder(
     root: RipsSurfaceCollectionType,
     folder_path: str,

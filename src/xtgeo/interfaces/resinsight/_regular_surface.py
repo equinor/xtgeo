@@ -237,46 +237,78 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
             RuntimeError: If the save fails, or if a differing surface would
                 have to be replaced while ``replace`` is ``False``.
         """
-        target_folder = resolve_surface_folder(
-            self.get_project().surface_folder(),
-            folder_name,
-            create=True,
-        )
-        existing = _find_regular_surface(target_folder, surface_name)
-        reuse = existing is not None and self._regular_surface_geometry_matches(
-            existing, data
-        )
+        rips = require_rips()
 
-        if existing is not None and not reuse and not replace:
-            raise RuntimeError(
-                f"A surface named '{surface_name}' already exists in folder "
-                f"'{folder_name or '<root>'}' with a different geometry. "
-                "Pass replace=True to overwrite it."
+        try:
+            target_folder: RipsSurfaceCollectionType = resolve_surface_folder(
+                self.get_project().surface_folder(),
+                folder_name,
+                create=True,
             )
+
+            surface = self._get_or_create_regular_surface(
+                target_folder,
+                surface_name,
+                data,
+                folder_name=folder_name,
+                replace=replace,
+            )
+
+            self._set_regular_surface_property(
+                surface,
+                data,
+                property_name=property_name,
+                set_as_depth=set_as_depth,
+            )
+        except rips.RipsError as exc:
+            raise RuntimeError(
+                f"Failed to save ResInsight regular surface data: {exc}"
+            ) from exc
+
+    def _get_or_create_regular_surface(
+        self,
+        target_folder: RipsSurfaceCollectionType,
+        surface_name: str,
+        data: RegularSurfaceDataResInsight,
+        folder_name: str | None,
+        replace: bool,
+    ) -> RipsRegularSurfaceType:
+        """
+        Get an existing regular surface or create a new one if it doesn't exist or
+        needs replacement.
+        """
+        existing_surface = _find_regular_surface(target_folder, surface_name)
+
+        if existing_surface is not None:
+            if self._regular_surface_geometry_matches(existing_surface, data):
+                logger.debug(
+                    "Saving surface '%s' (reuse existing=%s, overwrite=%s)",
+                    surface_name,
+                    True,
+                    False,
+                )
+                return existing_surface
+
+            if not replace:
+                raise RuntimeError(
+                    f"A surface named '{surface_name}' already exists in folder "
+                    f"'{folder_name or '<root>'}' with a different geometry. "
+                    "Pass replace=True to overwrite it."
+                )
 
         logger.debug(
             "Saving surface '%s' (reuse existing=%s, overwrite=%s)",
             surface_name,
-            reuse,
-            existing is not None and not reuse,
+            False,
+            existing_surface is not None,
         )
 
-        try:
-            if reuse:
-                # ``reuse`` is true only when an existing surface matches the data.
-                assert existing is not None
-                surface = existing
-            else:
-                surface = self._create_regular_surface(
-                    target_folder, surface_name, data, overwrite=replace
-                )
-            self._set_regular_surface_property(
-                surface, data, property_name=property_name, set_as_depth=set_as_depth
-            )
-        except Exception as exc:
-            raise RuntimeError(
-                f"Failed to save ResInsight regular surface data: {exc}"
-            ) from exc
+        return self._create_regular_surface(
+            folder=target_folder,
+            surface_name=surface_name,
+            data=data,
+            overwrite=replace,
+        )
 
     @staticmethod
     def _regular_surface_geometry_matches(
