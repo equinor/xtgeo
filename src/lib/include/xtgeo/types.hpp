@@ -290,6 +290,9 @@ private:
 
 namespace grid3d {
 
+// Defined only in grid_xyz_in.cpp to keep the type-erased lookup cache private
+class SpatialIndexCacheAccess;
+
 /*
  * Need Grid3D cell corners for a single Grid cell for some operations
  * The cell is a general hexahedron with 8 corners in space, organized as this
@@ -300,7 +303,6 @@ namespace grid3d {
  *  |       |     Notice order: sw - se - nw - ne
  *  sw ---- se
  */
-
 struct CellCorners
 {
     // For cellcorners, Z is increasing upward in C++! For most North Sea cases it means
@@ -562,9 +564,19 @@ public:
         return { m_min_point, m_max_point };
     }
 
-    // Cache for the point-lookup index. The index type itself is private to
-    // grid_xyz_in.cpp, hence the void pointer. Built once and reused; thrown away
+    // Fix zero pillars to ensure proper Z separation
+    void fix_zero_pillars() const;
+
+private:
+    // Only the point-lookup implementation may interpret or replace this cache.
+    friend class SpatialIndexCacheAccess;
+
+    // Cache for the point-lookup index.
+    // The index type is private to grid_xyz_in.cpp, hence the void pointer.
+    // Built once and reused; thrown away
     // when a new C++ Grid is made after a geometry change.
+    // Spatial index cache access is only allowed through the friend class
+    // SpatialIndexCacheAccess.
     std::shared_ptr<void> get_spatial_index_cache() const
     {
         return m_spatial_index_cache;
@@ -576,10 +588,6 @@ public:
         m_spatial_index_active_only = active_only;
     }
 
-    // Fix zero pillars to ensure proper Z separation
-    void fix_zero_pillars() const;
-
-private:
     const size_t m_ncol;
     const size_t m_nrow;
     const size_t m_nlay;

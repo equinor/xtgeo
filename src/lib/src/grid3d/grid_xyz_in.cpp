@@ -21,6 +21,30 @@ namespace py = pybind11;
 
 namespace xtgeo::grid3d {
 
+// This bridge is the sole non-Grid code allowed to read or replace the
+// type-erased cache. Keeping its definition out of the public header prevents
+// other lookup implementations from storing an incompatible pointer type.
+class SpatialIndexCacheAccess
+{
+public:
+    static std::shared_ptr<void> get(const Grid &grid)
+    {
+        return grid.get_spatial_index_cache();
+    }
+
+    static bool active_only(const Grid &grid)
+    {
+        return grid.get_spatial_index_active_only();
+    }
+
+    static void set(const Grid &grid,
+                    std::shared_ptr<void> index,
+                    const bool active_only)
+    {
+        grid.set_spatial_index_cache(std::move(index), active_only);
+    }
+};
+
 // use Tetrahedrons method for point in hexahedron checks since it is fast
 
 constexpr size_t INVALID = std::numeric_limits<size_t>::max();
@@ -591,12 +615,12 @@ spatial_lookup_cell(const SpatialIndex &sx,
 static std::shared_ptr<SpatialIndex>
 get_or_build_spatial_index(const Grid &grid, const bool active_only)
 {
-    auto cached = grid.get_spatial_index_cache();
-    if (cached && grid.get_spatial_index_active_only() == active_only) {
+    auto cached = SpatialIndexCacheAccess::get(grid);
+    if (cached && SpatialIndexCacheAccess::active_only(grid) == active_only) {
         return std::static_pointer_cast<SpatialIndex>(cached);
     }
     auto sx = std::make_shared<SpatialIndex>(build_spatial_index(grid, active_only));
-    grid.set_spatial_index_cache(sx, active_only);
+    SpatialIndexCacheAccess::set(grid, sx, active_only);
     return sx;
 }
 
