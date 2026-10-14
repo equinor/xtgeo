@@ -568,38 +568,57 @@ def get_ijk_from_points(
     columnnames: tuple[str, str, str] = ("IX", "JY", "KZ"),
     fmt: Literal["int", "float"] = "int",
     undef: int = -1,
+    method: Literal["guided", "spatial"] = "guided",
 ) -> pd.DataFrame | list:
     """Get I J K indices as a list of tuples or a dataframe.
 
     It is here tried to get fast execution. This requires a preprosessing
     of the grid to store a onelayer version, and maps with IJ positions. This is
     stored as a cache variable we can derive.
+
+    The ``method`` keyword selects the lookup engine:
+
+    * ``"guided"`` (default): uses guide surfaces to narrow the search; fastest when
+      XYZ and IJK are well correlated. Points it cannot place fall back to the same
+      spatial index as below, which is then built once and cached on the grid.
+    * ``"spatial"``: uses a spatial-hash index cached on the grid. It makes no
+      assumption about XYZ<->IJK correlation and is much faster for large point sets
+      on nested hybrid grids.
     """
-    logger.info("Getting IJK indices from Points...")
+    if method not in ("guided", "spatial"):
+        raise ValueError(f"Unknown method {method!r}; use 'guided' or 'spatial'")
+
+    logger.info("Getting IJK indices from Points (method=%s)...", method)
 
     self._set_xtgformat2()
-
-    cache = self._get_cache()
-
-    points_df = points.get_dataframe(copy=False)
 
     p_array = points.get_xyz_arrays()
     if p_array is None:
         raise ValueError("Points object has no XYZ data available")
+    pointset = _internal.xyz.PointSet(p_array)
 
-    iarr, jarr, karr = self._get_grid_cpp().get_indices_from_pointset(
-        _internal.xyz.PointSet(p_array),
-        cache.onegrid_cpp,
-        cache.top_i_index_cpp,
-        cache.top_j_index_cpp,
-        cache.base_i_index_cpp,
-        cache.base_j_index_cpp,
-        cache.top_depth_cpp,
-        cache.base_depth_cpp,
-        cache.threshold_magic_1,
-        activeonly,
-        M.Optimized,
-    )
+    grid_cpp = self._get_grid_cpp()
+    if method == "spatial":
+        iarr, jarr, karr = grid_cpp.get_indices_from_pointset_cached(
+            pointset,
+            activeonly,
+            M.Optimized,
+        )
+    else:
+        cache = self._get_cache()
+        iarr, jarr, karr = grid_cpp.get_indices_from_pointset(
+            pointset,
+            cache.onegrid_cpp,
+            cache.top_i_index_cpp,
+            cache.top_j_index_cpp,
+            cache.base_i_index_cpp,
+            cache.base_j_index_cpp,
+            cache.top_depth_cpp,
+            cache.base_depth_cpp,
+            cache.threshold_magic_1,
+            activeonly,
+            M.Optimized,
+        )
 
     if not zerobased:
         iarr = np.where(iarr >= 0, iarr + 1, iarr)
@@ -608,6 +627,7 @@ def get_ijk_from_points(
 
     proplist = {}
     if includepoints:
+        points_df = points.get_dataframe(copy=False)
         proplist["X_UTME"] = points_df[points.xname].to_numpy()
         proplist["Y_UTMN"] = points_df[points.yname].to_numpy()
         proplist["Z_TVDSS"] = points_df[points.zname].to_numpy()

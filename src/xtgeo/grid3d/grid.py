@@ -785,9 +785,11 @@ class Grid(_Grid3D):
         roxindexer: Any | None = None,
     ):
         logger.debug("Initialize Grid...")
-        coordsv = np.asarray(coordsv)
-        zcornsv = np.asarray(zcornsv)
-        actnumsv = np.asarray(actnumsv)
+        # The C++ layer reads these by linear cell number, so the layout must be
+        # C-contiguous; importers already normalize this way.
+        coordsv = np.ascontiguousarray(coordsv)
+        zcornsv = np.ascontiguousarray(zcornsv)
+        actnumsv = np.ascontiguousarray(actnumsv)
         if coordsv.dtype != np.float64:
             raise TypeError(
                 f"The dtype of the coordsv array must be float64, got {coordsv.dtype}"
@@ -2729,14 +2731,28 @@ class Grid(_Grid3D):
         columnnames: tuple[str, str, str] = ("IX", "JY", "KZ"),
         fmt: Literal["int", "float"] = "int",
         undef: int = -1,
+        method: Literal["guided", "spatial"] = "guided",
     ) -> pd.DataFrame | list:
         """Returns a list/dataframe of cell indices based on a Points() instance.
 
-        If a point is outside the grid, -1 values are returned
+        For each input point the enclosing grid cell is found and reported as
+        ``(I, J, K)`` indices (1-based by default). Points that fall outside the
+        grid get ``-1`` (or the value given by ``undef``).
+
+        Nested hybrid grids are supported even when refined cells overlap coarse
+        mother cells geometrically but have distant ``(I, J)`` indices. With
+        ``activeonly=True``, inactive mother cells are skipped. With
+        ``activeonly=False``, active cells take precedence over overlapping inactive
+        cells; an inactive cell is returned only if no active cell contains the point.
+
+        The default ``"guided"`` method uses guide surfaces and falls back to a
+        cached spatial index for unresolved points. Use ``"spatial"`` for large
+        point sets on nested hybrid grids: it uses the index for every point without
+        assuming XYZ-to-IJK correlation.
 
         Args:
             points (Points): A XTGeo Points instance
-            activeonly (bool): If True, UNDEF cells are not included
+            activeonly (bool): If True, only active cells are included.
             zerobased (bool): If True, counter start from 0, otherwise 1 (default=1).
             dataframe (bool): If True result is Pandas dataframe, otherwise a list
                 of tuples
@@ -2744,12 +2760,19 @@ class Grid(_Grid3D):
             columnnames (tuple): Name of columns if dataframe is returned
             fmt (str): Format of IJK arrays (int/float). Default is "int"
             undef (int or float): Value to assign to undefined (outside) entries.
+            method (str): Lookup engine: "guided" (default) or "spatial".
+                Use "spatial" for nested hybrid grids.
 
         Raises:
             ValueError: If the Points object has no XYZ data available.
+            ValueError: If ``method`` is not "guided" or "spatial".
 
         .. versionadded:: 2.6
         .. versionchanged:: 2.8 Added keywords `columnnames`, `fmt`, `undef`
+        .. versionchanged:: 4.27 Points inside nested hybrid (refined) cells are
+           now resolved instead of being reported as outside the grid.
+        .. versionchanged:: 4.27 Added keyword `method` for the cached spatial-hash
+           lookup engine.
         """
         return _grid_etc1.get_ijk_from_points(
             self,
@@ -2761,6 +2784,7 @@ class Grid(_Grid3D):
             columnnames=columnnames,
             fmt=fmt,
             undef=undef,
+            method=method,
         )
 
     def get_xyz(

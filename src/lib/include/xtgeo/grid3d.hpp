@@ -383,6 +383,13 @@ get_indices_from_pointset(const Grid &grid,
                           const bool active_only,
                           const geometry::PointInHexahedronMethod point_in_hex_method);
 
+std::tuple<py::array_t<int>, py::array_t<int>, py::array_t<int>>
+get_indices_from_pointset_cached(
+  const Grid &grid,
+  const xyz::PointSet &points,
+  const bool active_only,
+  const geometry::PointInHexahedronMethod point_in_hex_method);
+
 py::array_t<double>
 get_grid_fence(const Grid &grd,
                const Grid &one_grid,
@@ -502,6 +509,9 @@ init(py::module &m)
            py::arg("rsurfs"), py::arg("tolerance") = numerics::TOLERANCE)
       .def("get_indices_from_pointset", &get_indices_from_pointset,
            "Get the indices of a point set in the grid")
+      .def("get_indices_from_pointset_cached", &get_indices_from_pointset_cached,
+           "Opt-in spatial point lookup using a Grid-cached spatial-hash index",
+           py::arg("points"), py::arg("active_only"), py::arg("point_in_hex_method"))
       .def("refine_vertically", &refine_vertically, "Refine vertically, proportionally")
       .def("refine_columns", &refine_columns, "Refine per column proportionally")
       .def("refine_rows", &refine_rows, "Refine per row proportionally")
