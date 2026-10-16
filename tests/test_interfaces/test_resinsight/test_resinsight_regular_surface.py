@@ -5,21 +5,23 @@ Only the tests marked ``requires_resinsight`` need a running ResInsight.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
 import xtgeo
+from xtgeo.interfaces.resinsight import _regular_surface
 from xtgeo.interfaces.resinsight._regular_surface import (
-    _NAME_ATTR,
     RegularSurfaceDataResInsight,
     RegularSurfaceReader,
     RegularSurfaceWriter,
     _find_regular_surface,
 )
-from xtgeo.interfaces.resinsight._resinsight_base import resolve_folder
+from xtgeo.interfaces.resinsight._resinsight_base import resolve_surface_folder
 
 if TYPE_CHECKING:
     from xtgeo.interfaces.resinsight._rips_package import RipsInstanceType
@@ -124,6 +126,96 @@ def test_equality_compares_values_not_identity(make_data):
     assert make_data() != "not a container"
 
 
+def test_writer_wraps_rips_errors(make_data, monkeypatch):
+    """ResInsight failures are presented as the writer's documented error type."""
+
+    class FakeRipsError(Exception):
+        pass
+
+    def raise_rips_error(*args, **kwargs):
+        raise FakeRipsError("name collision")
+
+    writer = RegularSurfaceWriter()
+    monkeypatch.setattr(
+        _regular_surface,
+        "require_rips",
+        lambda: SimpleNamespace(RipsError=FakeRipsError),
+    )
+    monkeypatch.setattr(
+        writer,
+        "get_project",
+        lambda: SimpleNamespace(surface_folder=lambda: object()),
+    )
+    monkeypatch.setattr(
+        _regular_surface,
+        "resolve_surface_folder",
+        lambda root, folder_path, create: object(),
+    )
+    monkeypatch.setattr(writer, "_get_or_create_regular_surface", raise_rips_error)
+
+    with pytest.raises(RuntimeError, match="Failed to save ResInsight") as exc_info:
+        writer.save(make_data(), surface_name="COLLISION")
+
+    assert isinstance(exc_info.value.__cause__, FakeRipsError)
+
+
+@pytest.mark.parametrize(
+    ("has_existing_surface", "geometry_matches", "replace", "expected_flags"),
+    [
+        (False, False, False, (False, False)),
+        (True, True, False, (True, False)),
+        (True, False, True, (False, True)),
+    ],
+)
+def test_writer_logs_create_reuse_and_replace_decisions(
+    has_existing_surface, geometry_matches, replace, expected_flags, monkeypatch
+):
+    """Successful saves retain their legacy debug log records."""
+    existing_surface = object() if has_existing_surface else None
+    created_surface = object()
+    debug_calls = []
+    writer = RegularSurfaceWriter()
+
+    monkeypatch.setattr(
+        _regular_surface,
+        "_find_regular_surface",
+        lambda folder, name: existing_surface,
+    )
+    monkeypatch.setattr(
+        writer,
+        "_regular_surface_geometry_matches",
+        lambda surface, data: geometry_matches,
+    )
+    monkeypatch.setattr(
+        writer,
+        "_create_regular_surface",
+        lambda **kwargs: created_surface,
+    )
+    monkeypatch.setattr(
+        _regular_surface.logger,
+        "debug",
+        lambda *args: debug_calls.append(args),
+    )
+
+    surface = writer._get_or_create_regular_surface(
+        target_folder=object(),
+        surface_name="SURFACE",
+        data=object(),
+        folder_name=None,
+        replace=replace,
+    )
+
+    expected_surface = existing_surface if geometry_matches else created_surface
+    assert surface is expected_surface
+    assert debug_calls == [
+        (
+            "Saving surface '%s' (reuse existing=%s, overwrite=%s)",
+            "SURFACE",
+            *expected_flags,
+        )
+    ]
+
+
 @pytest.mark.parametrize("rotation", [0.0, 30.0, 90.0])
 def test_righthanded_surface_normalizes_without_shifting_geometry(rotation):
     """A make_righthanded() surface round-trips through the data container.
@@ -219,18 +311,19 @@ def test_geometry_matches_resinsight_float32_coordinates(
 @pytest.mark.requires_resinsight
 @pytest.mark.xdist_group(name="resinsight")
 def test_resolve_surface_folder(resinsight_instance: RipsInstanceType):
-    """Nested folder paths are created once, reused after, else resolve None."""
+    """Nested paths are created once, reused, and missing folders raise."""
     root = resinsight_instance.project.surface_folder()
 
-    created = resolve_folder(root, "PATH_A/PATH_B", _NAME_ATTR, create=True)
+    created = resolve_surface_folder(root, "PATH_A/PATH_B", create=True)
     assert created.surface_user_description == "PATH_B"
 
-    assert resolve_folder(root, "PATH_A/PATH_B", _NAME_ATTR, create=True) is not None
-    parent = resolve_folder(root, "PATH_A", _NAME_ATTR)
+    assert resolve_surface_folder(root, "PATH_A/PATH_B", create=True) is not None
+    parent = resolve_surface_folder(root, "PATH_A")
     names = [f.surface_user_description for f in parent.sub_collections()]
     assert names.count("PATH_B") == 1
 
-    assert resolve_folder(root, "NO_SUCH_FOLDER", _NAME_ATTR) is None
+    with pytest.raises(RuntimeError, match="Cannot find surface folder"):
+        resolve_surface_folder(root, "NO_SUCH_FOLDER")
 
 
 @pytest.mark.requires_resinsight
@@ -245,7 +338,7 @@ def test_surface_lookup_is_not_recursive(
     assert _find_regular_surface(root, "NESTED_SURF") is None
 
     found = _find_regular_surface(
-        resolve_folder(root, "NESTED_LOOKUP", _NAME_ATTR), "NESTED_SURF"
+        resolve_surface_folder(root, "NESTED_LOOKUP"), "NESTED_SURF"
     )
     assert found.surface_user_description == "NESTED_SURF"
 
@@ -261,13 +354,15 @@ def test_writer_overwrites_same_named_non_regular_surface(
     lookup does not see them, so the conflict surfaces from ResInsight itself.
     """
     folder = resinsight_instance.project.surface_folder()
+    # The live project can retain surfaces from earlier test runs
+    surface_name = f"TYPE_CLASH_{uuid4().hex}"
     other = folder.new_surface(case=resinsight_instance.project.cases()[0], k_index=0)
-    other.surface_user_description = "TYPE_CLASH"
+    other.surface_user_description = surface_name
     other.update()
 
-    data = make_data(name="TYPE_CLASH")
+    data = make_data(name=surface_name)
     with pytest.raises(RuntimeError, match="already exists"):
-        writer.save(data, surface_name="TYPE_CLASH")
+        writer.save(data, surface_name=surface_name)
 
-    writer.save(data, surface_name="TYPE_CLASH", replace=True)
-    assert _find_regular_surface(folder, "TYPE_CLASH") is not None
+    writer.save(data, surface_name=surface_name, replace=True)
+    assert _find_regular_surface(folder, surface_name) is not None
