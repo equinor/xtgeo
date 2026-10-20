@@ -11,19 +11,17 @@ from xtgeo.common.log import null_logger
 
 from ._resinsight_base import (
     _BaseResInsightDataRW,
-    resolve_folder,
+    resolve_surface_folder,
     select_by_name,
 )
 from ._rips_package import NameConflictPolicy, require_rips
 
 if TYPE_CHECKING:
-    from typing import Any
-
     import numpy.typing as npt
 
     from xtgeo.surface.regular_surface import RegularSurface
 
-    from ._rips_package import RipsRegularSurfaceType
+    from ._rips_package import RipsRegularSurfaceType, RipsSurfaceCollectionType
 
 
 logger = null_logger(__name__)
@@ -34,13 +32,19 @@ _FIXED_DEPTH_PROPERTY = "FIXED_DEPTH"
 _NAME_ATTR = "surface_user_description"
 
 
-def _find_regular_surface(folder: object, name: str) -> Any | None:
+class _SurfaceGeometryMismatchError(RuntimeError):
+    """An existing surface has incompatible geometry and cannot be replaced."""
+
+
+def _find_regular_surface(
+    folder: RipsSurfaceCollectionType, name: str
+) -> RipsRegularSurfaceType | None:
     """Find the ``RegularSurface`` named *name* directly in *folder*.
 
     Surface names are unique within a folder, so at most one can match.
     """
     rips = require_rips()
-    surfaces = folder.surfaces_field()  # type: ignore[attr-defined]
+    surfaces = folder.surfaces_field()
     return select_by_name(
         (surf for surf in surfaces if isinstance(surf, rips.RegularSurface)),
         name,
@@ -154,13 +158,10 @@ class RegularSurfaceReader(_BaseResInsightDataRW):
         Raises:
             RuntimeError: If the folder or the surface cannot be found.
         """
-        target_folder = resolve_folder(
+        target_folder = resolve_surface_folder(
             self.get_project().surface_folder(),
             folder_name,
-            _NAME_ATTR,
         )
-        if target_folder is None:
-            raise RuntimeError(f"Cannot find surface folder '{folder_name}'")
 
         surface = _find_regular_surface(target_folder, surface_name)
         if surface is None:
@@ -240,46 +241,74 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
             RuntimeError: If the save fails, or if a differing surface would
                 have to be replaced while ``replace`` is ``False``.
         """
-        target_folder = resolve_folder(
-            self.get_project().surface_folder(),  # type: ignore[attr-defined]
-            folder_name,
-            _NAME_ATTR,
-            create=True,
-        )
-        existing = _find_regular_surface(target_folder, surface_name)
-        reuse = existing is not None and self._regular_surface_geometry_matches(
-            existing, data
-        )
-
-        if existing is not None and not reuse and not replace:
-            raise RuntimeError(
-                f"A surface named '{surface_name}' already exists in folder "
-                f"'{folder_name or '<root>'}' with a different geometry. "
-                "Pass replace=True to overwrite it."
-            )
-
-        logger.debug(
-            "Saving surface '%s' (reuse existing=%s, overwrite=%s)",
-            surface_name,
-            reuse,
-            existing is not None and not reuse,
-        )
+        require_rips()
 
         try:
-            surface = (
-                existing
-                if existing and reuse
-                else self._create_regular_surface(
-                    target_folder, surface_name, data, overwrite=replace
-                )
+            target_folder: RipsSurfaceCollectionType = resolve_surface_folder(
+                self.get_project().surface_folder(),
+                folder_name,
+                create=True,
             )
+
+            surface = self._get_or_create_regular_surface(
+                target_folder,
+                surface_name,
+                data,
+                folder_name=folder_name,
+                replace=replace,
+            )
+
             self._set_regular_surface_property(
-                surface, data, property_name=property_name, set_as_depth=set_as_depth
+                surface,
+                data,
+                property_name=property_name,
+                set_as_depth=set_as_depth,
             )
+        except _SurfaceGeometryMismatchError:
+            raise
         except Exception as exc:
             raise RuntimeError(
                 f"Failed to save ResInsight regular surface data: {exc}"
             ) from exc
+
+    def _get_or_create_regular_surface(
+        self,
+        target_folder: RipsSurfaceCollectionType,
+        surface_name: str,
+        data: RegularSurfaceDataResInsight,
+        folder_name: str | None,
+        replace: bool,
+    ) -> RipsRegularSurfaceType:
+        """
+        Get an existing regular surface or create a new one if it doesn't exist or
+        needs replacement.
+        """
+        existing_surface = _find_regular_surface(target_folder, surface_name)
+
+        if existing_surface is not None:
+            if self._regular_surface_geometry_matches(existing_surface, data):
+                logger.debug("Reusing existing surface '%s' ", surface_name)
+                return existing_surface
+
+            if not replace:
+                raise _SurfaceGeometryMismatchError(
+                    f"A surface named '{surface_name}' already exists in folder "
+                    f"'{folder_name or '<root>'}' with a different geometry. "
+                    "Pass replace=True to overwrite it."
+                )
+
+        logger.debug(
+            "Creating new surface '%s' (overwrite=%s)",
+            surface_name,
+            replace,
+        )
+
+        return self._create_regular_surface(
+            folder=target_folder,
+            surface_name=surface_name,
+            data=data,
+            overwrite=replace,
+        )
 
     @staticmethod
     def _regular_surface_geometry_matches(
@@ -315,11 +344,11 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
         values_list = data.values.astype(np.float32).tolist()
         surface.set_property(property_name, values_list)  # type: ignore[attr-defined]
         if set_as_depth:
-            surface.set_property_as_depth(property_name)  # type: ignore[attr-defined]
+            surface.set_property_as_depth(property_name)
 
     @staticmethod
     def _create_regular_surface(
-        folder: object,
+        folder: RipsSurfaceCollectionType,
         surface_name: str,
         data: RegularSurfaceDataResInsight,
         overwrite: bool = False,
@@ -330,7 +359,7 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
         name in *folder* — including a non-regular surface, which the
         ``RegularSurface`` lookup does not see; otherwise a name clash raises.
         """
-        new_surf: RipsRegularSurfaceType = folder.new_regular_surface(  # type: ignore[attr-defined]
+        new_surf: RipsRegularSurfaceType = folder.new_regular_surface(
             name=surface_name,
             on_name_conflict=(
                 NameConflictPolicy.OVERWRITE if overwrite else NameConflictPolicy.FAIL
