@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, TypeVar
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from xtgeo.common.log import null_logger
 
@@ -18,13 +18,11 @@ if TYPE_CHECKING:
         RipsInstanceType,
         RipsPolygonCollectionType,
         RipsProjectType,
-        RipsRimPolygonContainerType,
         RipsSurfaceCollectionType,
     )
 
     _ItemT = TypeVar("_ItemT")
-
-_NodeT = TypeVar("_NodeT")
+    _FolderT = TypeVar("_FolderT", RipsSurfaceCollectionType, RipsPolygonCollectionType)
 
 logger = null_logger(__name__)
 
@@ -51,89 +49,45 @@ def select_by_name(
     return selected
 
 
-class _FolderOps(Protocol[_NodeT]):
-    """Adapt hierarchy-specific folder operations for generic traversal."""
-
-    def children(self, node: _NodeT) -> Iterable[_NodeT]: ...
-
-    def add(self, node: _NodeT, name: str) -> _NodeT: ...
-
-
-class _SurfaceFolderOps:
-    """Adapt and validate the rips surface-folder API."""
-
-    def children(
-        self, node: RipsSurfaceCollectionType
-    ) -> Iterable[RipsSurfaceCollectionType]:
-        return node.sub_collections()
-
-    def add(
-        self, node: RipsSurfaceCollectionType, name: str
-    ) -> RipsSurfaceCollectionType:
-        rips = require_rips()
-        child = node.add_folder(
-            folder_name=name, on_name_conflict=NameConflictPolicy.FAIL
-        )
-        if not isinstance(child, rips.SurfaceCollection):
-            raise RuntimeError(
-                "ResInsight returned an invalid surface folder type "
-                f"({type(child).__name__})"
-            )
-        return child
-
-
-class _PolygonFolderOps:
-    """Adapt and validate the polymorphic rips polygon-container API."""
-
-    def children(
-        self, node: RipsRimPolygonContainerType
-    ) -> Iterable[RipsRimPolygonContainerType]:
-        rips = require_rips()
-        return node.children("SubCollections", rips.RimPolygonContainer)
-
-    def add(
-        self, node: RipsRimPolygonContainerType, name: str
-    ) -> RipsRimPolygonContainerType:
-        rips = require_rips()
-        child = node.add_folder(
-            folder_name=name, on_name_conflict=NameConflictPolicy.FAIL
-        )
-        if not isinstance(child, rips.RimPolygonContainer):
-            raise RuntimeError(
-                "ResInsight returned an invalid polygon folder type "
-                f"({type(child).__name__})"
-            )
-        return child
-
-
 def _resolve_folder(
-    root: _NodeT,
+    root: _FolderT,
     folder_path: str,
+    collection_type: type[_FolderT],
     name_attr: str,
-    ops: _FolderOps[_NodeT],
     folder_kind: str,
     create: bool = False,
-) -> _NodeT:
-    """Resolve a folder path using hierarchy-specific operations."""
+) -> _FolderT:
+    """Resolve a folder path using the concrete collection type."""
     folder = root
 
     for segment in filter(None, folder_path.split("/")):
+        # rips uses collection_type as a fallback wrapper class, not a filter;
+        # explicitly exclude other container types before matching by name.
         sub = select_by_name(
-            ops.children(folder), segment, find_last=False, name_attr=name_attr
+            (
+                child
+                for child in folder.children("SubCollections", collection_type)
+                if isinstance(child, collection_type)
+            ),
+            segment,
+            find_last=False,
+            name_attr=name_attr,
         )
         if sub is None:
             if not create:
                 raise RuntimeError(f"Cannot find {folder_kind} folder '{segment}'")
 
-            # Folders are never overwritten; that would delete their content.
-            sub = ops.add(folder, segment)
+            # rips types add_folder() as PdmNestedCollectionBase, not the concrete
+            # collection type; this cast assumes that type without runtime checks.
+            sub = cast(
+                "_FolderT",
+                folder.add_folder(
+                    folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+                ),
+            )
         folder = sub
 
     return folder
-
-
-_SURFACE_FOLDER_OPS: _FolderOps[RipsSurfaceCollectionType] = _SurfaceFolderOps()
-_POLYGON_FOLDER_OPS: _FolderOps[RipsRimPolygonContainerType] = _PolygonFolderOps()
 
 
 def resolve_surface_folder(
@@ -147,12 +101,13 @@ def resolve_surface_folder(
     *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
     does not exist.
     """
+    rips = require_rips()
     return _resolve_folder(
         root,
         folder_path,
-        "surface_user_description",
-        _SURFACE_FOLDER_OPS,
-        "surface",
+        collection_type=rips.SurfaceCollection,
+        name_attr="surface_user_description",
+        folder_kind="surface",
         create=create,
     )
 
@@ -161,19 +116,20 @@ def resolve_polygon_folder(
     root: RipsPolygonCollectionType,
     folder_path: str,
     create: bool = False,
-) -> RipsRimPolygonContainerType:
+) -> RipsPolygonCollectionType:
     """Resolve a ``/``-separated folder path below a polygon collection.
 
     An empty *folder_path* returns *root*. Missing segments are created when
     *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
     does not exist.
     """
+    rips = require_rips()
     return _resolve_folder(
         root,
         folder_path,
-        "polygon_collection_name",
-        _POLYGON_FOLDER_OPS,
-        "polygon",
+        collection_type=rips.PolygonCollection,
+        name_attr="polygon_collection_name",
+        folder_kind="polygon",
         create=create,
     )
 

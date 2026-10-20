@@ -126,21 +126,10 @@ def test_equality_compares_values_not_identity(make_data):
     assert make_data() != "not a container"
 
 
-def test_writer_wraps_rips_errors(make_data, monkeypatch):
-    """ResInsight failures are presented as the writer's documented error type."""
-
-    class FakeRipsError(Exception):
-        pass
-
-    def raise_rips_error(*args, **kwargs):
-        raise FakeRipsError("name collision")
-
+@pytest.fixture
+def offline_writer(monkeypatch):
     writer = RegularSurfaceWriter()
-    monkeypatch.setattr(
-        _regular_surface,
-        "require_rips",
-        lambda: SimpleNamespace(RipsError=FakeRipsError),
-    )
+    monkeypatch.setattr(_regular_surface, "require_rips", lambda: SimpleNamespace())
     monkeypatch.setattr(
         writer,
         "get_project",
@@ -151,6 +140,24 @@ def test_writer_wraps_rips_errors(make_data, monkeypatch):
         "resolve_surface_folder",
         lambda root, folder_path, create: object(),
     )
+    return writer
+
+
+def test_writer_wraps_rips_errors(make_data, monkeypatch, offline_writer):
+    """ResInsight failures are presented as the writer's documented error type."""
+
+    class FakeRipsError(Exception):
+        pass
+
+    def raise_rips_error(*args, **kwargs):
+        raise FakeRipsError("name collision")
+
+    writer = offline_writer
+    monkeypatch.setattr(
+        _regular_surface,
+        "require_rips",
+        lambda: SimpleNamespace(RipsError=FakeRipsError),
+    )
     monkeypatch.setattr(writer, "_get_or_create_regular_surface", raise_rips_error)
 
     with pytest.raises(RuntimeError, match="Failed to save ResInsight") as exc_info:
@@ -159,18 +166,86 @@ def test_writer_wraps_rips_errors(make_data, monkeypatch):
     assert isinstance(exc_info.value.__cause__, FakeRipsError)
 
 
+@pytest.mark.parametrize("error_type", [ValueError, RuntimeError])
 @pytest.mark.parametrize(
-    ("has_existing_surface", "geometry_matches", "replace", "expected_flags"),
+    "operation", ["_create_regular_surface", "_set_regular_surface_property"]
+)
+def test_writer_wraps_operational_errors(
+    make_data, monkeypatch, offline_writer, error_type, operation
+):
+    error = error_type("operation failed")
+
+    def fail(*args, **kwargs):
+        raise error
+
+    monkeypatch.setattr(_regular_surface, "_find_regular_surface", lambda *args: None)
+    monkeypatch.setattr(
+        offline_writer, "_create_regular_surface", lambda **kwargs: object()
+    )
+    monkeypatch.setattr(offline_writer, operation, fail)
+
+    with pytest.raises(RuntimeError, match="Failed to save ResInsight") as exc_info:
+        offline_writer.save(make_data(), surface_name="TEST")
+
+    assert type(exc_info.value) is RuntimeError
+    assert exc_info.value.__cause__ is error
+
+
+def test_writer_wraps_value_conversion_errors(make_data, monkeypatch, offline_writer):
+    data = make_data(values=np.full(6, "not-a-number"))
+    monkeypatch.setattr(
+        offline_writer,
+        "_get_or_create_regular_surface",
+        lambda *args, **kwargs: object(),
+    )
+
+    with pytest.raises(RuntimeError, match="Failed to save ResInsight") as exc_info:
+        offline_writer.save(data, surface_name="TEST")
+
+    assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+@pytest.mark.parametrize("folder_name", ["", "A/B"])
+def test_writer_preserves_geometry_mismatch_error(
+    make_data, monkeypatch, offline_writer, folder_name
+):
+    monkeypatch.setattr(
+        _regular_surface, "_find_regular_surface", lambda *args: object()
+    )
+    monkeypatch.setattr(
+        offline_writer, "_regular_surface_geometry_matches", lambda *args: False
+    )
+
+    def unexpected_operation(*args, **kwargs):
+        pytest.fail("Geometry mismatch must fail before creation or property writes")
+
+    monkeypatch.setattr(offline_writer, "_create_regular_surface", unexpected_operation)
+    monkeypatch.setattr(
+        offline_writer, "_set_regular_surface_property", unexpected_operation
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        offline_writer.save(make_data(), surface_name="TEST", folder_name=folder_name)
+
+    assert str(exc_info.value) == (
+        f"A surface named 'TEST' already exists in folder '{folder_name or '<root>'}' "
+        "with a different geometry. Pass replace=True to overwrite it."
+    )
+    assert exc_info.value.__cause__ is None
+
+
+@pytest.mark.parametrize(
+    ("has_existing_surface", "geometry_matches", "replace"),
     [
-        (False, False, False, (False, False)),
-        (True, True, False, (True, False)),
-        (True, False, True, (False, True)),
+        (False, False, False),
+        (True, True, False),
+        (True, False, True),
     ],
 )
 def test_writer_logs_create_reuse_and_replace_decisions(
-    has_existing_surface, geometry_matches, replace, expected_flags, monkeypatch
+    has_existing_surface, geometry_matches, replace, monkeypatch
 ):
-    """Successful saves retain their legacy debug log records."""
+    """Successful saves log whether a surface is reused or created."""
     existing_surface = object() if has_existing_surface else None
     created_surface = object()
     debug_calls = []
@@ -208,10 +283,12 @@ def test_writer_logs_create_reuse_and_replace_decisions(
     expected_surface = existing_surface if geometry_matches else created_surface
     assert surface is expected_surface
     assert debug_calls == [
-        (
-            "Saving surface '%s' (reuse existing=%s, overwrite=%s)",
+        ("Reusing existing surface '%s' ", "SURFACE")
+        if geometry_matches
+        else (
+            "Creating new surface '%s' (overwrite=%s)",
             "SURFACE",
-            *expected_flags,
+            replace,
         )
     ]
 

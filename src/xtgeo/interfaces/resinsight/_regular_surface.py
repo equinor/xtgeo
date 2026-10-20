@@ -32,6 +32,10 @@ _FIXED_DEPTH_PROPERTY = "FIXED_DEPTH"
 _NAME_ATTR = "surface_user_description"
 
 
+class _SurfaceGeometryMismatchError(RuntimeError):
+    """An existing surface has incompatible geometry and cannot be replaced."""
+
+
 def _find_regular_surface(
     folder: RipsSurfaceCollectionType, name: str
 ) -> RipsRegularSurfaceType | None:
@@ -237,7 +241,7 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
             RuntimeError: If the save fails, or if a differing surface would
                 have to be replaced while ``replace`` is ``False``.
         """
-        rips = require_rips()
+        require_rips()
 
         try:
             target_folder: RipsSurfaceCollectionType = resolve_surface_folder(
@@ -260,7 +264,9 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
                 property_name=property_name,
                 set_as_depth=set_as_depth,
             )
-        except rips.RipsError as exc:
+        except _SurfaceGeometryMismatchError:
+            raise
+        except Exception as exc:
             raise RuntimeError(
                 f"Failed to save ResInsight regular surface data: {exc}"
             ) from exc
@@ -281,26 +287,20 @@ class RegularSurfaceWriter(_BaseResInsightDataRW):
 
         if existing_surface is not None:
             if self._regular_surface_geometry_matches(existing_surface, data):
-                logger.debug(
-                    "Saving surface '%s' (reuse existing=%s, overwrite=%s)",
-                    surface_name,
-                    True,
-                    False,
-                )
+                logger.debug("Reusing existing surface '%s' ", surface_name)
                 return existing_surface
 
             if not replace:
-                raise RuntimeError(
+                raise _SurfaceGeometryMismatchError(
                     f"A surface named '{surface_name}' already exists in folder "
                     f"'{folder_name or '<root>'}' with a different geometry. "
                     "Pass replace=True to overwrite it."
                 )
 
         logger.debug(
-            "Saving surface '%s' (reuse existing=%s, overwrite=%s)",
+            "Creating new surface '%s' (overwrite=%s)",
             surface_name,
-            False,
-            existing_surface is not None,
+            replace,
         )
 
         return self._create_regular_surface(
