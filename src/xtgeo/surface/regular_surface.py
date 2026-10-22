@@ -617,7 +617,9 @@ class RegularSurface:
             rotation: rotation in degrees, anticlock from X axis between 0, 360.
             values: A scalar (for constant values) or a "array-like" input that has
                 ncol * nrow elements. As result, a 2D (masked) numpy array of shape
-                (ncol, nrow), C order will be made.
+                (ncol, nrow), C order will be made. Non-finite values and values
+                strictly greater than UNDEF_LIMIT are masked for both scalar and
+                array-like inputs.
             masked: Deprecated and ignored.
             name: A given name for the surface, default is file name root or
                 'unknown' if constructed from scratch.
@@ -3461,7 +3463,9 @@ class RegularSurface:
                 self._values += vals
             else:
                 vals = ma.zeros((self.ncol, self.nrow), order="C", dtype=apply_dtype)
-                self._values = vals + float(values)
+                vals = vals + float(values)
+                vals = ma.masked_greater(vals, self.undef_limit, copy=False)
+                self._values = ma.masked_invalid(vals, copy=False)
 
         elif isinstance(values, (list, tuple, np.ndarray)):  # ie values ~ list-like
             vals = ma.array(values, order="C", dtype=apply_dtype)
