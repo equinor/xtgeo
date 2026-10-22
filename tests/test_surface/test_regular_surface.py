@@ -162,6 +162,46 @@ def test_custom_undef_value_is_not_masked_by_value_assignment(undef):
     assert surf.values[0, 1] == pytest.approx(undef)
 
 
+@pytest.mark.parametrize(
+    "value, masked",
+    [
+        (np.nan, True),
+        (np.inf, True),
+        (-np.inf, True),
+        (xtgeo.UNDEF, True),
+        (np.nextafter(xtgeo.UNDEF_LIMIT, np.inf), True),
+        (xtgeo.UNDEF_LIMIT, False),
+        (np.nextafter(xtgeo.UNDEF_LIMIT, -np.inf), False),
+        (-xtgeo.UNDEF, False),
+        (0.0, False),
+        (5.5, False),
+    ],
+)
+@pytest.mark.parametrize(
+    "input_kind", ["scalar", "assignment", "array", "masked_array", "values1d"]
+)
+def test_undefined_values_are_masked_consistently(value, masked, input_kind):
+    kwargs = {"ncol": 2, "nrow": 2, "xinc": 1.0, "yinc": 1.0}
+    values = np.full((2, 2), value)
+    if input_kind == "scalar":
+        surf = xtgeo.RegularSurface(**kwargs, values=value)
+    elif input_kind == "array":
+        surf = xtgeo.RegularSurface(**kwargs, values=values)
+    elif input_kind == "masked_array":
+        surf = xtgeo.RegularSurface(**kwargs, values=np.ma.array(values))
+    else:
+        surf = xtgeo.RegularSurface(**kwargs, values=0.0)
+        if input_kind == "assignment":
+            surf.values = value
+        else:
+            surf.set_values1d(values.ravel())
+
+    np.testing.assert_array_equal(surf.values.mask, np.full((2, 2), masked))
+    assert surf.nactive == (0 if masked else 4)
+    if not masked:
+        np.testing.assert_array_equal(surf.values.data, values)
+
+
 def test_ensure_correct_values_scalar_preserves_existing_mask():
     initial = np.ma.array(
         [[10.0, 20.0], [30.0, 40.0]],
@@ -179,14 +219,15 @@ def test_ensure_correct_values_scalar_preserves_existing_mask():
     assert surf.values.tolist() == [[5.5, None], [5.5, 5.5]]
 
 
-def test_ensure_correct_values_undef_scalar_extends_existing_mask_to_all_cells():
+@pytest.mark.parametrize("value", [xtgeo.UNDEF, np.nan, np.inf, -np.inf])
+def test_ensure_correct_values_undef_scalar_extends_existing_mask_to_all_cells(value):
     initial = np.ma.array(
         [[10.0, 20.0], [30.0, 40.0]],
         mask=[[False, True], [False, False]],
     )
     surf = xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=initial)
 
-    surf.values = xtgeo.UNDEF
+    surf.values = value
 
     np.testing.assert_array_equal(
         np.ma.getmaskarray(surf.values), [[True, True], [True, True]]

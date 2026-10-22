@@ -4,8 +4,16 @@ Go to the
 [XTGeo GitHub releases page](https://github.com/equinor/xtgeo/releases)
 to see new releases and their notes.
 
-This page contains releaes notes for XTGeo versions 2.21 and older and is kept
-for preservation reasons.
+## Unreleased
+
+### Bug fixes
+
+- Constructing a `RegularSurface` with a non-finite scalar or a scalar strictly
+  greater than `UNDEF_LIMIT` now masks all nodes, consistently with array inputs.
+  Values equal to `UNDEF_LIMIT` remain active.
+
+The notes below cover XTGeo versions 2.21 and older and are kept for preservation
+reasons.
 
 
 ## Version 2.20
