@@ -404,13 +404,11 @@ def to_file(
     if fformat is None or fformat in FileFormat.XYZ.value:
         # NB! reuse export_rms_attr function, but no attributes
         # are possible
-        ncount = export_rms_attr(
-            xyz, wrapped_file.name, attributes=False, pfilter=pfilter
-        )
+        ncount = export_rms_attr(xyz, wrapped_file, attributes=False, pfilter=pfilter)
 
     elif fformat in FileFormat.RMS_ATTR.value:
         ncount = export_rms_attr(
-            xyz, wrapped_file.name, attributes=attributes, pfilter=pfilter
+            xyz, wrapped_file, attributes=attributes, pfilter=pfilter
         )
     elif fformat in FileFormat.CSV.value:
         ncount = export_table(
@@ -452,7 +450,7 @@ def to_file(
 
 def export_rms_attr(
     xyz: Points | Polygons,
-    pfile: str,
+    pfile: FileWrapper,
     attributes: bool | list[str] | None = True,
     pfilter: dict[str, list[str]] | None = None,
 ) -> int:
@@ -463,6 +461,9 @@ def export_rms_attr(
     Attributes can be a bool or a list. If True, then use all attributes.
 
     Filter is on the form {TopName: ['Name1', 'Name2']}
+
+    The file wrapper supplies a text stream for a path, StringIO, or BytesIO.
+    Attribute headers and data rows are written to the same stream.
 
     Returns:
         The number of values exported. If value is 0; then no file
@@ -478,7 +479,7 @@ def export_rms_attr(
     columns = [xyz._xname, xyz._yname, xyz.zname]
     df.fillna(value=999.0, inplace=True)
 
-    mode = "w"
+    headers: list[str] = []
 
     transl = {"int": "Discrete", "float": "Float", "str": "String"}
 
@@ -520,21 +521,20 @@ def export_rms_attr(
                 f"Attributes must be a bool or a list, not {type(attributes)}"
             )
 
-        mode = "a"
         columns += use_attributes
-        with open(pfile, "w") as fout:
-            for col in use_attributes:
-                if col in df.columns:
-                    fout.write(transl[xyz._attrs[col]] + " " + col + "\n")
-                    if xyz._attrs[col] == "int":
-                        df[col] = df[col].replace(UNDEF_INT, "UNDEF")
-                    elif xyz._attrs[col] == "float":
-                        df[col] = df[col].replace(UNDEF, "UNDEF")
+        for col in use_attributes:
+            if col in df.columns:
+                headers.append(transl[xyz._attrs[col]] + " " + col + "\n")
+                if xyz._attrs[col] == "int":
+                    df[col] = df[col].replace(UNDEF_INT, "UNDEF")
+                elif xyz._attrs[col] == "float":
+                    df[col] = df[col].replace(UNDEF, "UNDEF")
 
     elif not attributes:
         df = df[[xyz._xname, xyz._yname, xyz.zname]]
 
-    with open(pfile, mode) as fc:
+    with pfile.get_text_stream_write() as fc:
+        fc.writelines(headers)
         df.to_csv(fc, sep=" ", header=False, columns=columns, index=False)
 
     return len(df.index)
