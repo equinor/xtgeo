@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 from copy import deepcopy
-from typing import Generator, Literal
+from typing import TYPE_CHECKING, Generator, Literal
 
 import resfo
 
@@ -20,6 +20,13 @@ from ._find_gridprop_in_eclrun import (
 from ._gridprop_import_eclrun import decorate_name
 from .grid_property import GridProperty
 
+if TYPE_CHECKING:
+    import pandas as pd
+
+    from xtgeo.common.types import FileLike
+
+    from .grid import Grid
+
 xtg = xtgeo.common.XTGeoDialog()
 
 logger = null_logger(__name__)
@@ -34,17 +41,19 @@ def read_eclrun_properties(xtg_file: FileWrapper) -> Generator[str, None, None]:
     Returns:
         Names of properties within the Eclipse file.
     """
-    is_stream = isinstance(xtg_file.file, (io.BytesIO, io.StringIO))
+    source = xtg_file.file
+    stream = source if isinstance(source, (io.BytesIO, io.StringIO)) else None
+    mark = stream.tell() if stream is not None else 0
     try:
-        if is_stream:
-            mark = xtg_file.file.tell()
         ntotal = 0
         nactive = 0
-        for item in resfo.lazy_read(xtg_file.file):
+        for item in resfo.lazy_read(source):
             keyword = item.read_keyword().strip()
 
             if keyword == "INTEHEAD":
                 data = item.read_array()
+                if isinstance(data, resfo.MessType):
+                    raise ValueError(f"Unexpected MESS value in {source}")
                 # nx * ny * nz
                 ntotal = data[8] * data[9] * data[10]
                 nactive = data[11]
@@ -58,8 +67,8 @@ def read_eclrun_properties(xtg_file: FileWrapper) -> Generator[str, None, None]:
             ):
                 yield keyword
     finally:
-        if is_stream:
-            xtg_file.file.seek(mark)
+        if stream is not None:
+            stream.seek(mark)
 
 
 def sanitize_date_list(
@@ -84,8 +93,12 @@ def sanitize_date_list(
     >>> sanitize_date_list([20200101])
     [20200101]
     """
-    if dates in ("first", "last", "all"):
-        return dates
+    if dates == "first":
+        return "first"
+    if dates == "last":
+        return "last"
+    if dates == "all":
+        return "all"
     new_dates = []
     for date in dates:
         if isinstance(date, int):
@@ -110,10 +123,10 @@ def sanitize_date_list(
 
 
 def import_ecl_init_gridproperties(
-    pfile,
+    pfile: FileLike | FileWrapper,
     names: list[str] | Literal["all"],
-    grid,
-    strict=True,
+    grid: Grid,
+    strict: bool = True,
     maxkeys: int = MAXKEYWORDS,
 ) -> list[GridProperty]:
     """Imports list of properties from an init file.
@@ -148,6 +161,7 @@ def import_ecl_init_gridproperties(
         dates=True,
         maxkeys=maxkeys,
     )
+    assert not isinstance(kwlist, list)
 
     validnames = []
 
@@ -188,10 +202,10 @@ def import_ecl_init_gridproperties(
 
 
 def import_ecl_restart_gridproperties(
-    pfile,
+    pfile: FileWrapper,
     names: list[str] | Literal["all"],
     dates: list[int] | list[str] | Literal["all", "last", "first"],
-    grid,
+    grid: Grid,
     strict: tuple[bool, bool],
     namestyle: Literal[0, 1],
     maxkeys: int = MAXKEYWORDS,
@@ -231,7 +245,7 @@ def import_ecl_restart_gridproperties(
     if not names:
         raise ValueError("Name list cannot be empty (None)")
 
-    dates = sanitize_date_list(dates)
+    normalized_dates = sanitize_date_list(dates)
 
     # scan valid keywords with dates
     kwlist = utils.scan_keywords(
@@ -241,26 +255,30 @@ def import_ecl_restart_gridproperties(
         dates=True,
         maxkeys=maxkeys,
     )
+    assert not isinstance(kwlist, list)
 
     validnamedatepairs, validdates = _process_valid_namesdates(kwlist, grid)
 
     # allow sloppy dates, i.e. remove invalid date entries
-    if isinstance(dates, list) and strictdate is False:
-        dates = _process_sloppydates(dates, validdates)
+    if isinstance(normalized_dates, list) and strictdate is False:
+        normalized_dates = _process_sloppydates(normalized_dates, validdates)
 
-    usenamedatepairs = []
-    if names == "all" and dates == "all":
-        usenamedatepairs = deepcopy(validnamedatepairs)
-        usedates = dates
+    usenamedatepairs: list[tuple[str, int | str]] = []
+    if names == "all" and normalized_dates == "all":
+        usenamedatepairs.extend(deepcopy(validnamedatepairs))
     else:
-        if names == "all" and dates != "all":
+        usenames: list[str]
+        usedates: list[int] | Literal["first", "last"]
+        if names == "all" and normalized_dates != "all":
             usenames = [namedate[0] for namedate in validnamedatepairs]
-            usedates = dates
-        elif names != "all" and dates == "all":
+            usedates = normalized_dates
+        elif names != "all" and normalized_dates == "all":
             usedates = [namedate[1] for namedate in validnamedatepairs]
             usenames = names
         else:
-            usedates = dates
+            assert names != "all"
+            assert normalized_dates != "all"
+            usedates = normalized_dates
             usenames = names
 
         for name in usenames:
@@ -287,7 +305,9 @@ def import_ecl_restart_gridproperties(
                 validnamedatepairs,
             )
 
-    results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    results = find_gridprops_from_restart_file(
+        pfile.file, names, normalized_dates, grid=grid
+    )
     properties_list = []
     for result in results:
         if namestyle == 1:
@@ -303,7 +323,9 @@ def import_ecl_restart_gridproperties(
     return properties_list
 
 
-def _process_valid_namesdates(kwlist, grid):
+def _process_valid_namesdates(
+    kwlist: pd.DataFrame, grid: Grid
+) -> tuple[list[tuple[str, int]], list[int]]:
     """Return lists with valid pairs, dates scanned from RESTART"""
     validnamedatepairs = []
     validdates = []
@@ -322,7 +344,7 @@ def _process_valid_namesdates(kwlist, grid):
     return validnamedatepairs, validdates
 
 
-def _process_sloppydates(dates, validdates):
+def _process_sloppydates(dates: list[int], validdates: list[int]) -> list[int]:
     """Allow "sloppy dates", which removes invalid dates from the list"""
 
     usedates = []
