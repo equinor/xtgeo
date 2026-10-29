@@ -450,47 +450,37 @@ def get_heights_above_ffl(
 
 def get_property_between_surfaces(
     grid: Grid,
-    top: RegularSurface,
-    base: RegularSurface,
+    top: RegularSurface | None = None,
+    base: RegularSurface | None = None,
     value: int = 1,
     name: str = "between_surfaces",
 ) -> GridProperty:
-    """For a grid, create a grid property with value <value> between two surfaces.
+    """Create a grid property bounded by zero, one, or two surfaces.
 
-    The value would be zero elsewhere, or if surfaces has inactive nodes.
+    With only ``top``, cells at or below it are selected; with only ``base``,
+    cells at or above it are selected. Cells with undefined surfaces or inactive
+    cells receive 0.
     """
+    if top is None and base is None:
+        raise ValueError("At least one surface (top or base) must be provided")
+
     if not isinstance(value, int) or value < 1:
         raise ValueError(f"Value (integer) must be positive, >= 1, got: {value}")
 
+    if top is not None:
+        top = _get_lefthanded_surface(top)
+    if base is not None:
+        base = _get_lefthanded_surface(base)
+    if top is not None and base is not None:
+        diff = base - top
+        if np.any(diff.values.compressed() < 0):
+            raise ValueError("Top surface must be equal to or above base surface")
+
     grid._set_xtgformat2()
-    logger.debug("Creating property between surfaces...")
-
-    grid_cpp = grid._get_grid_cpp()
-
-    top_ = top
-    base_ = base
-    if top.yflip == -1:
-        top_ = top.copy()
-        top_.make_lefthanded()
-        logger.debug("Top surface is right-handed, flipping a copy prior to operation")
-    if base.yflip == -1:
-        base_ = base.copy()
-        base_.make_lefthanded()
-        logger.debug("Base surface is right-handed, flipping a copy prior to operation")
-
-    diff = base_ - top_
-    if (diff.values).all() <= 0:
-        raise ValueError(
-            "Top surface must be equal or above base surface for all nodes"
-        )
-
-    # array is always 0, 1 integer
-    array = grid_cpp.get_gridprop_value_between_surfaces(
-        _internal.regsurf.RegularSurface(top_),
-        _internal.regsurf.RegularSurface(base_),
+    array = grid._get_grid_cpp().get_gridprop_value_between_surfaces(
+        _internal.regsurf.RegularSurface(top) if top is not None else None,
+        _internal.regsurf.RegularSurface(base) if base is not None else None,
     )
-
-    logger.debug("Creating property between surfaces... done")
 
     return GridProperty(
         ncol=grid.ncol,
@@ -500,6 +490,13 @@ def get_property_between_surfaces(
         values=array * value,
         discrete=True,
     )
+
+
+def _get_lefthanded_surface(surface: RegularSurface) -> RegularSurface:
+    if surface.yflip == -1:
+        surface = surface.copy()
+        surface.make_lefthanded()
+    return surface
 
 
 def get_ijk(
