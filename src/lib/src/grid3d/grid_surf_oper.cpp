@@ -22,19 +22,18 @@ namespace py = pybind11;
 namespace xtgeo::grid3d {
 
 /*
- * Create a parameter that is 1 if the cell center is between the top and bottom
- * surfaces
+ * Create a parameter that is 1 if the cell center is within the supplied bounds.
  *
  * @param grd Grid instance
- * @param top The top surface (RegularSurface object)
- * @param bot The bottom surface (RegularSurface object)
- * @return An int array containing 1 if the cell is between the surfaces, 0 otherwise
+ * @param top The top surface (RegularSurface object), optional
+ * @param bot The bottom surface (RegularSurface object), optional
+ * @return An int array containing 1 if the cell is within the bounds, 0 otherwise
  */
 
 py::array_t<int8_t>
 get_gridprop_value_between_surfaces(const Grid &grd,
-                                    const regsurf::RegularSurface &top,
-                                    const regsurf::RegularSurface &bot)
+                                    const std::optional<regsurf::RegularSurface> &top,
+                                    const std::optional<regsurf::RegularSurface> &bot)
 {
     pybind11::array_t<int8_t> result(
       { grd.get_ncol(), grd.get_nrow(), grd.get_nlay() });
@@ -62,20 +61,14 @@ get_gridprop_value_between_surfaces(const Grid &grd,
                     continue;
                 }
 
-                double top_z = regsurf::get_z_from_xy(top, xm, ym);
-                double bot_z = regsurf::get_z_from_xy(bot, xm, ym);
-
-                // check if top_z or bot_z is NaN
-                if (std::isnan(top_z) || std::isnan(bot_z)) {
-                    result_(i, j, k) = 0;
-                    continue;
+                bool inside = true;
+                if (top) {
+                    inside = zm >= regsurf::get_z_from_xy(*top, xm, ym);
                 }
-
-                if (zm >= top_z && zm <= bot_z) {  // inside
-                    result_(i, j, k) = 1;
-                } else {
-                    result_(i, j, k) = 0;
+                if (inside && bot) {
+                    inside = zm <= regsurf::get_z_from_xy(*bot, xm, ym);
                 }
+                result_(i, j, k) = inside;
             }
         }
     }
