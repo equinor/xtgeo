@@ -126,6 +126,7 @@ manylinux-aarch64-image = "manylinux_2_28"
 before-build = "python -m pip install -U pip"
 
 test-extras = ["dev"]
+test-requires = ["pytest<9.2"]  # pytest-benchmark uses pytest's removed Function._nodeid.
 before-test = [
     "pushd {package}",
     "git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata || true",
