@@ -943,6 +943,134 @@ def test_get_property_between_surfaces_w_holes(testdata_path):
     assert prop.values.sum() == 129592  # ~verified  in RMS (129591 there ~precision)
 
 
+def test_get_property_below_and_above_surface(testdata_path):
+    """Below and above properties combine to delimit a between property."""
+    grd = xtgeo.grid_from_file(testdata_path / REEKFIL4)
+    top = xtgeo.surface_from_grid3d(grd)
+    top.fill()
+    top.values = 1650
+    base = top.copy()
+    base.values = 1700
+    top.values.mask[60:70, 70:75] = True
+    base.values.mask[50:70, 60:71] = True
+    top.make_righthanded()
+
+    below = grd.get_property_between_surfaces(top=top, value=2, name="below")
+    above = grd.get_property_between_surfaces(base=base, value=3, name="above")
+    between = grd.get_property_between_surfaces(top, base)
+
+    np.testing.assert_array_equal(
+        between.values != 0, (below.values != 0) & (above.values != 0)
+    )
+    assert below.values.dtype == np.int32
+    assert below.isdiscrete
+    assert below.name == "below"
+    assert above.name == "above"
+
+
+def test_get_property_above_below_surface_inclusive():
+    """A cell center on the surface is included in both properties."""
+    grd = xtgeo.create_box_grid((2, 2, 1))
+    surf = xtgeo.surface_from_grid3d(grd)
+    surf.fill()
+    surf.values = 0.5
+
+    below = grd.get_property_between_surfaces(top=surf)
+    above = grd.get_property_between_surfaces(base=surf)
+
+    assert np.all(below.values == 1)
+    assert np.all(above.values == 1)
+
+
+def test_get_property_between_surfaces_top_only_values():
+    """A top-only bound selects cells at or below the surface."""
+    grd = xtgeo.create_box_grid((2, 2, 4))
+    surf = xtgeo.surface_from_grid3d(grd)
+    surf.fill()
+    surf.values = 1.5
+
+    prop = grd.get_property_between_surfaces(top=surf, value=3, name="below")
+
+    expected = np.broadcast_to(np.array([0, 3, 3, 3]), grd.dimensions)
+    np.testing.assert_array_equal(prop.values, expected)
+    assert prop.name == "below"
+    assert prop.isdiscrete
+
+
+def test_get_property_between_surfaces_base_only_values():
+    """A base-only bound selects cells at or above the surface."""
+    grd = xtgeo.create_box_grid((2, 2, 4))
+    surf = xtgeo.surface_from_grid3d(grd)
+    surf.fill()
+    surf.values = 1.5
+
+    prop = grd.get_property_between_surfaces(base=surf, value=3, name="above")
+
+    expected = np.broadcast_to(np.array([3, 3, 0, 0]), grd.dimensions)
+    np.testing.assert_array_equal(prop.values, expected)
+    assert prop.name == "above"
+    assert prop.isdiscrete
+
+
+@pytest.mark.parametrize(
+    "method, layers",
+    [
+        ("top", [0, 1, 1]),
+        ("base", [1, 0, 0]),
+    ],
+)
+@pytest.mark.parametrize("rotation", [0, 30])
+@pytest.mark.parametrize("righthanded", [False, True])
+def test_get_property_surface_undefined(method, layers, rotation, righthanded):
+    grd = xtgeo.create_box_grid((4, 2, 3), rotation=rotation)
+    actnum = grd.get_actnum()
+    actnum.values[1, 1, 1] = 0
+    grd.set_actnum(actnum)
+    surf = xtgeo.RegularSurface(
+        ncol=3, nrow=3, xinc=1, yinc=1, rotation=rotation, values=1.25
+    )
+    surf.values.mask[0, 0] = True
+    if righthanded:
+        surf.make_righthanded()
+
+    prop = grd.get_property_between_surfaces(**{method: surf}, value=3)
+
+    expected = np.zeros(grd.dimensions, dtype=np.int32)
+    expected[:2, :, :] = np.array(layers) * 3
+    expected[0, 0, :] = 0
+    expected[1, 1, 1] = 0
+    np.testing.assert_array_equal(prop.values, expected)
+
+
+@pytest.mark.parametrize("surface_argument", ["top", "base"])
+@pytest.mark.parametrize("value", [0, -1, 1.5])
+def test_get_property_surface_invalid_value(surface_argument, value):
+    grd = xtgeo.create_box_grid((2, 2, 1))
+    surf = xtgeo.surface_from_grid3d(grd)
+    with pytest.raises(ValueError, match="must be positive"):
+        grd.get_property_between_surfaces(**{surface_argument: surf}, value=value)
+
+
+def test_get_property_between_surfaces_requires_surface():
+    grd = xtgeo.create_box_grid((2, 2, 1))
+    with pytest.raises(ValueError, match="At least one surface"):
+        grd.get_property_between_surfaces()
+
+
+def test_get_property_between_surfaces_rejects_crossing_surfaces(testdata_path):
+    """The top surface cannot be deeper than the base at any defined node."""
+    grd = xtgeo.grid_from_file(testdata_path / REEKFIL4)
+    top = xtgeo.surface_from_grid3d(grd)
+    top.fill()
+    top.values = 1650
+    base = top.copy()
+    base.values = 1700
+    base.values[0, 0] = 1600
+
+    with pytest.raises(ValueError, match="Top surface"):
+        grd.get_property_between_surfaces(top, base)
+
+
 def test_bad_egrid_ends_before_kw(tmp_path):
     egrid_file = tmp_path / "test.egrid"
     with open(egrid_file, "wb") as fh:
