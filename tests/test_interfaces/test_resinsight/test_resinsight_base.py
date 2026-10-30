@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
 
 import xtgeo
+from tests import conftest as test_configuration
+from tests.test_interfaces.test_resinsight import conftest as resinsight_fixtures
 from xtgeo.interfaces.resinsight import _resinsight_base
 from xtgeo.interfaces.resinsight._resinsight_base import (
     _BaseResInsightDataRW,
@@ -476,3 +478,50 @@ def test_gridproperty_to_resinsight_rejects_invalid_case_early():
     gprop = xtgeo.GridProperty(ncol=2, nrow=2, nlay=2, values=np.ones((2, 2, 2)))
     with pytest.raises(TypeError, match="case must be a case name"):
         gprop.to_resinsight(5000, case=123)
+
+
+@pytest.mark.parametrize("required", [False, True])
+@pytest.mark.parametrize("available", [False, True])
+def test_resinsight_requirement_controls_missing_dependency(
+    monkeypatch, required, available
+):
+    monkeypatch.setattr(test_configuration, "has_rips", lambda: available)
+    config = Mock()
+    config.getoption.return_value = required
+    item = SimpleNamespace(
+        config=config,
+        iter_markers=lambda: [SimpleNamespace(name="requires_resinsight")],
+    )
+
+    if available:
+        test_configuration.pytest_runtest_setup(item)
+    elif required:
+        with pytest.raises(pytest.fail.Exception, match="--require-resinsight"):
+            test_configuration.pytest_runtest_setup(item)
+        config.getoption.assert_called_once_with("--require-resinsight")
+    else:
+        with pytest.raises(pytest.skip.Exception, match="requires ResInsight"):
+            test_configuration.pytest_runtest_setup(item)
+        config.getoption.assert_called_once_with("--require-resinsight")
+
+
+@pytest.mark.parametrize("required", [False, True])
+@pytest.mark.parametrize("error_type", [RuntimeError, OSError])
+def test_resinsight_requirement_controls_launch_failure(
+    monkeypatch, tmp_path, required, error_type
+):
+    monkeypatch.setattr(resinsight_fixtures.pytest, "importorskip", Mock())
+    launch = Mock(side_effect=error_type("launch failed"))
+    monkeypatch.setattr(resinsight_fixtures.RipsApiUtils, "launch_instance", launch)
+    config = Mock()
+    config.getoption.return_value = required
+    instance = resinsight_fixtures.resinsight_instance.__wrapped__(
+        testdata_path=tmp_path, request=SimpleNamespace(config=config)
+    )
+
+    expected_error = error_type if required else pytest.skip.Exception
+    with pytest.raises(expected_error, match="launch failed"):
+        next(instance)
+
+    launch.assert_called_once_with(executable="", console_mode=True)
+    config.getoption.assert_called_once_with("--require-resinsight")
