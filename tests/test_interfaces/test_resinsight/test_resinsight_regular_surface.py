@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 from uuid import uuid4
 
 import numpy as np
@@ -238,7 +239,9 @@ def test_writer_preserves_geometry_mismatch_error(
     ("has_existing_surface", "geometry_matches", "replace"),
     [
         (False, False, False),
+        (False, False, True),
         (True, True, False),
+        (True, True, True),
         (True, False, True),
     ],
 )
@@ -250,6 +253,9 @@ def test_writer_logs_create_reuse_and_replace_decisions(
     created_surface = object()
     debug_calls = []
     writer = RegularSurfaceWriter()
+    target_folder = object()
+    data = object()
+    create_surface = Mock(return_value=created_surface)
 
     monkeypatch.setattr(
         _regular_surface,
@@ -264,7 +270,7 @@ def test_writer_logs_create_reuse_and_replace_decisions(
     monkeypatch.setattr(
         writer,
         "_create_regular_surface",
-        lambda **kwargs: created_surface,
+        create_surface,
     )
     monkeypatch.setattr(
         _regular_surface.logger,
@@ -273,15 +279,24 @@ def test_writer_logs_create_reuse_and_replace_decisions(
     )
 
     surface = writer._get_or_create_regular_surface(
-        target_folder=object(),
+        target_folder=target_folder,
         surface_name="SURFACE",
-        data=object(),
+        data=data,
         folder_name=None,
         replace=replace,
     )
 
     expected_surface = existing_surface if geometry_matches else created_surface
     assert surface is expected_surface
+    if geometry_matches:
+        create_surface.assert_not_called()
+    else:
+        create_surface.assert_called_once_with(
+            folder=target_folder,
+            surface_name="SURFACE",
+            data=data,
+            overwrite=replace,
+        )
     assert debug_calls == [
         ("Reusing existing surface '%s' ", "SURFACE")
         if geometry_matches
@@ -291,6 +306,75 @@ def test_writer_logs_create_reuse_and_replace_decisions(
             replace,
         )
     ]
+
+
+@pytest.mark.parametrize("overwrite", [False, True])
+def test_create_regular_surface_passes_geometry_and_conflict_policy(
+    make_data, monkeypatch, overwrite
+):
+    policy = SimpleNamespace(FAIL=object(), OVERWRITE=object())
+    monkeypatch.setattr(_regular_surface, "NameConflictPolicy", policy)
+    folder = Mock()
+    data = make_data()
+
+    created = RegularSurfaceWriter._create_regular_surface(
+        folder, "SURFACE", data, overwrite=overwrite
+    )
+
+    folder.new_regular_surface.assert_called_once_with(
+        name="SURFACE",
+        on_name_conflict=policy.OVERWRITE if overwrite else policy.FAIL,
+        origin_x=data.xori,
+        origin_y=data.yori,
+        depth=0.0,
+        nx=data.ncol,
+        ny=data.nrow,
+        increment_x=data.xinc,
+        increment_y=data.yinc,
+        rotation=data.rotation,
+    )
+    assert created is folder.new_regular_surface.return_value
+    created.update.assert_called_once_with()
+
+
+@pytest.mark.parametrize(
+    "changed_attribute",
+    [
+        None,
+        "nx",
+        "ny",
+        "origin_x",
+        "origin_y",
+        "increment_x",
+        "increment_y",
+        "rotation",
+    ],
+)
+def test_geometry_matches_float32_values_but_rejects_different_geometry(
+    make_data, changed_attribute
+):
+    data = make_data(
+        xori=6788228.1234,
+        yori=6123456.9876,
+        xinc=25.123456,
+        yinc=50.987654,
+        rotation=10.123456,
+    )
+    surface = SimpleNamespace(
+        nx=data.ncol,
+        ny=data.nrow,
+        origin_x=np.float32(data.xori),
+        origin_y=np.float32(data.yori),
+        increment_x=np.float32(data.xinc),
+        increment_y=np.float32(data.yinc),
+        rotation=np.float32(data.rotation),
+    )
+    if changed_attribute is not None:
+        setattr(surface, changed_attribute, getattr(surface, changed_attribute) + 1)
+
+    assert RegularSurfaceWriter._regular_surface_geometry_matches(surface, data) is (
+        changed_attribute is None
+    )
 
 
 @pytest.mark.parametrize("rotation", [0.0, 30.0, 90.0])
