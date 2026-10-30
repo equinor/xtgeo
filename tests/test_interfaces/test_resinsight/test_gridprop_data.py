@@ -19,7 +19,10 @@ from xtgeo.interfaces.resinsight._grid_property import (
     _validate_property_type,
 )
 
-pytestmark = pytest.mark.requires_resinsight
+pytestmark = [
+    pytest.mark.requires_resinsight,
+    pytest.mark.xdist_group(name="resinsight"),
+]
 
 
 # ---------------------------------------------------------------------------
