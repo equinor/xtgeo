@@ -20,7 +20,7 @@ logger.addHandler(logging.NullHandler())
 
 
 @pytest.fixture(scope="module")
-def resinsight_instance(testdata_path) -> RipsInstanceType:
+def resinsight_instance(testdata_path, request) -> RipsInstanceType:
     """Create a ResInsight instance for testing.
 
     Use console_mode to avoid opening the full GUI, which is not needed for API tests
@@ -33,6 +33,8 @@ def resinsight_instance(testdata_path) -> RipsInstanceType:
     try:
         instance = RipsApiUtils.launch_instance(executable="", console_mode=True)
     except (RuntimeError, OSError) as e:
+        if request.config.getoption("--require-resinsight"):
+            raise
         pytest.skip(
             f"ResInsight executable not available (set RESINSIGHT_EXECUTABLE env var "
             f"or add ResInsight to PATH): {e}"
