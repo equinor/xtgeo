@@ -337,8 +337,8 @@ get_height_above_ffl(const Grid &grid_cpp,
 
 py::array_t<int8_t>
 get_gridprop_value_between_surfaces(const Grid &grd,
-                                    const regsurf::RegularSurface &top,
-                                    const regsurf::RegularSurface &bot);
+                                    const std::optional<regsurf::RegularSurface> &top,
+                                    const std::optional<regsurf::RegularSurface> &bot);
 
 std::tuple<py::array_t<double>,
            py::array_t<double>,
@@ -497,7 +497,8 @@ init(py::module &m)
       .def("get_cell_centers", &get_cell_centers,
            "Compute the cells centers coordinates as 3 arrays")
       .def("get_gridprop_value_between_surfaces", &get_gridprop_value_between_surfaces,
-           "Make a property that is one if cell center is between two surfaces.")
+           py::arg("top") = py::none(), py::arg("bot") = py::none(),
+           "Make a property that is one if cell center is within the supplied bounds.")
       .def("get_height_above_ffl", &get_height_above_ffl,
            "Compute the height above a FFL (free fluid level).")
       .def("get_cell_corners_from_ijk", &get_cell_corners_from_ijk,
