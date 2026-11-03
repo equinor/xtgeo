@@ -1,6 +1,7 @@
 import pathlib
 
 import pandas as pd
+import pytest
 
 import xtgeo
 
@@ -21,6 +22,16 @@ def test_from_simple_surface():
     poi2 = xtgeo.points_from_surface(surf, zname="VALUES")
 
     pd.testing.assert_frame_equal(poi2.get_dataframe(), surf.get_dataframe())
+
+
+@pytest.mark.parametrize("zname", ["X_UTME", "Y_UTMN"])
+def test_from_surface_zname_same_as_xy_column(zname):
+    """A zname equal to the X or Y column name would overwrite that column."""
+    surf = xtgeo.RegularSurface(
+        ncol=4, nrow=5, xori=0, yori=0, xinc=25, yinc=25, values=1234.0
+    )
+    with pytest.raises(ValueError, match="already the name of the X or Y column"):
+        xtgeo.points_from_surface(surf, zname=zname)
 
 
 def test_init_with_surface_classmethod(testdata_path):

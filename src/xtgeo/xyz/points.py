@@ -74,6 +74,12 @@ def _surface_importer(
     surf: RegularSurface, zname: str = _AttrName.ZNAME.value
 ) -> dict[str, Any]:
     """General function for _read_surface()"""
+    if zname in (_AttrName.XNAME.value, _AttrName.YNAME.value):
+        raise ValueError(
+            f"The zname {zname} is already the name of the X or Y column; "
+            "choose another name for the Z column."
+        )
+
     val = surf.values
     xc, yc = surf.get_xy_values()
 
@@ -342,6 +348,9 @@ def points_from_surface(
     Args:
         regular_surface: XTGeo RegularSurface() instance
         zname: Name of third column
+
+    Raises:
+        ValueError: If zname is the name of the X or Y column.
 
     .. versionadded:: 2.16
        Replaces the from_surface() method.
