@@ -19,9 +19,9 @@ runs:
       run: |
         tmpdir="$(mktemp -d)"
         gh release download --repo OPM/ResInsight \
-          --pattern 'ResInsight-Ubuntu_24.04_gcc*.zip' \
+          --pattern 'ResInsight-Ubuntu*.zip' \
           --dir "$tmpdir"
-        set -- "$tmpdir"/ResInsight-Ubuntu_24.04_gcc*.zip
+        set -- "$tmpdir"/ResInsight-Ubuntu*.zip
         [ "$#" -eq 1 ] || { echo "Expected exactly one ResInsight archive, found $# : $*"; exit 1; }
         unzip "$1" -d "$tmpdir/resinsight_extract"
         mkdir -p "/tmp/${{ inputs.install-dir }}"
