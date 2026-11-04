@@ -9,7 +9,6 @@ import resfo
 import xtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXKEYWORDS
-from xtgeo.io._file import FileWrapper
 
 from . import _grid3d_utils as utils
 from ._find_gridprop_in_eclrun import (
@@ -23,7 +22,7 @@ from .grid_property import GridProperty
 if TYPE_CHECKING:
     import pandas as pd
 
-    from xtgeo.common.types import FileLike
+    from xtgeo.io._file import FileWrapper
 
     from .grid import Grid
 
@@ -123,7 +122,7 @@ def sanitize_date_list(
 
 
 def import_ecl_init_gridproperties(
-    pfile: FileLike | FileWrapper,
+    pfile: FileWrapper,
     names: list[str] | Literal["all"],
     grid: Grid,
     strict: bool = True,
@@ -136,17 +135,14 @@ def import_ecl_init_gridproperties(
     to be considered as a grid property.
 
     Args:
-        pfile: Path to the ecl restart file
+        pfile: FileWrapper for the Eclipse init file
         names: List of names to fetch, can also be "all" to fetch all properties.
-        grid: The grid used by the simulator to produce the restart file.
+        grid: The grid used by the simulator to produce the init file.
         strict: If strict=True, will raise error if key is not found.
         maxkeys: Maximum number of keywords allocated
     Returns:
         List of GridProperty objects fetched from the init file.
     """
-    if not isinstance(pfile, FileWrapper):
-        pfile = FileWrapper(pfile)
-
     if not grid:
         raise ValueError("Grid Geometry object is missing")
 
@@ -217,7 +213,7 @@ def import_ecl_restart_gridproperties(
     to be considered as a grid property.
 
     Args:
-        pfile: Path to the ecl restart file
+        pfile: FileWrapper for the Eclipse restart file
         names: List of names to fetch, can also be "all" to fetch all properties.
         dates: List of xtgeo style dates (e.g. int(19990101) or "YYYYMMDD"),
             also Also accepts "YYYY-MM-DD".  "all", "last" and "first" can be
