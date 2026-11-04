@@ -195,6 +195,8 @@ class Wells:
         self,
         wfile: FileLike,
         fformat: str | None = "rms_ascii",
+        *,
+        precision: int = 8,
     ) -> Path | io.BytesIO | io.StringIO:
         """Export multiple wells to a single concatenated (stacked) file.
 
@@ -208,6 +210,8 @@ class Wells:
             wfile: File name or stream.
             fformat: File format ('rms_ascii'/'rmswell' or 'csv'). HDF5 format
                 is not supported for multiple wells.
+            precision: Keyword-only. Number of decimal places for RMS ASCII
+                floats. Default is 8.
 
         Returns:
             Path to the file that was written.
@@ -226,7 +230,7 @@ class Wells:
         wfile_wrapper = FileWrapper(wfile, mode="wb", obj=self)
         wfile_wrapper.check_folder(raiseerror=OSError)
 
-        _wells_io_factory.wells_to_stacked_file(self, wfile_wrapper, fformat)
+        _wells_io_factory.wells_to_stacked_file(self, wfile_wrapper, fformat, precision)
 
         return wfile_wrapper.file
 

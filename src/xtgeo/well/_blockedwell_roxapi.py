@@ -10,8 +10,7 @@ from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import INT_MIN
 from xtgeo.common.exceptions import WellNotFoundError
 from xtgeo.common.log import null_logger
-from xtgeo.roxutils import RoxUtils
-from xtgeo.roxutils._roxar_loader import roxar
+from xtgeo.interfaces.rms import RmsApiUtils, rmsapi
 
 logger = null_logger(__name__)
 
@@ -25,7 +24,7 @@ def import_bwell_roxapi(
     """Private function for loading project and ROXAPI blockwell import"""
 
     logger.debug("Opening RMS project ...")
-    rox = RoxUtils(project, readonly=True)
+    rox = RmsApiUtils(project, readonly=True)
 
     _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
 
@@ -38,11 +37,11 @@ def export_bwell_roxapi(
     """Private function for blockwell export (store in RMS) from XTGeo to RoxarAPI"""
 
     logger.debug("Opening RMS project ...")
-    rox = RoxUtils(project, readonly=False)
+    rox = RmsApiUtils(project, readonly=False)
 
     _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
 
-    if rox._roxexternal:
+    if rox._rmsexternal:
         rox.project.save()
 
     rox.safe_close()
@@ -181,12 +180,12 @@ def _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisa
         if lname not in bwnames:
             if self.wlogtypes[lname] == _AttrType.CONT.value:
                 bwlog = bwset.properties.create(
-                    lname, roxar.GridPropertyType.continuous, np.float32
+                    lname, rmsapi.GridPropertyType.continuous, np.float32
                 )
                 bwprop = bwset.generate_values(discrete=False, fill_value=0.0)
             else:
                 bwlog = bwset.properties.create(
-                    lname, roxar.GridPropertyType.discrete, np.int32
+                    lname, rmsapi.GridPropertyType.discrete, np.int32
                 )
                 bwprop = bwset.generate_values(discrete=True, fill_value=0)
 

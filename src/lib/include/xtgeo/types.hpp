@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <memory>
 #include <xtgeo/logging.hpp>
 
 #ifndef M_PI
@@ -561,6 +562,20 @@ public:
         return { m_min_point, m_max_point };
     }
 
+    // Cache for the point-lookup index. The index type itself is private to
+    // grid_xyz_in.cpp, hence the void pointer. Built once and reused; thrown away
+    // when a new C++ Grid is made after a geometry change.
+    std::shared_ptr<void> get_spatial_index_cache() const
+    {
+        return m_spatial_index_cache;
+    }
+    bool get_spatial_index_active_only() const { return m_spatial_index_active_only; }
+    void set_spatial_index_cache(std::shared_ptr<void> idx, bool active_only) const
+    {
+        m_spatial_index_cache = std::move(idx);
+        m_spatial_index_active_only = active_only;
+    }
+
     // Fix zero pillars to ensure proper Z separation
     void fix_zero_pillars() const;
 
@@ -581,6 +596,10 @@ private:
     mutable xyz::Point m_min_point;
     mutable xyz::Point m_max_point;
     mutable bool m_bounding_box_computed = false;
+
+    // Spatial index cache (the index itself, and which active_only it was built for)
+    mutable std::shared_ptr<void> m_spatial_index_cache;
+    mutable bool m_spatial_index_active_only = false;
     // Internal method to compute the bounding box
     void impl_compute_bounding_box() const;
     void impl_compute_cell_corners() const;

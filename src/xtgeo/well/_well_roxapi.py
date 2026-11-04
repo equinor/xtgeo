@@ -11,7 +11,7 @@ import pandas as pd
 from xtgeo.common import XTGeoDialog, null_logger
 from xtgeo.common._xyz_enum import _AttrName, _AttrType
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
-from xtgeo.roxutils import RoxUtils
+from xtgeo.interfaces.rms import RmsApiUtils
 
 if TYPE_CHECKING:
     from .well1 import Well
@@ -36,7 +36,7 @@ def import_well_roxapi(
     inclsurvey=False,
 ):  # pragma: no cover
     """Private function for loading project and ROXAPI well import."""
-    rox = RoxUtils(project, readonly=True)
+    rox = RmsApiUtils(project, readonly=True)
 
     result = _roxapi_import_well(
         rox,
@@ -167,7 +167,7 @@ def export_well_roxapi(
     """Private function for well export (i.e. store in RMS) from XTGeo to RoxarAPI."""
     logger.debug("Opening RMS project ...")
 
-    rox = RoxUtils(project, readonly=False)
+    rox = RmsApiUtils(project, readonly=False)
 
     if wname in rox.project.wells:
         _roxapi_update_well(
@@ -176,7 +176,7 @@ def export_well_roxapi(
     else:
         _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation)
 
-    if rox._roxexternal:
+    if rox._rmsexternal:
         rox.project.save()
 
     rox.safe_close()

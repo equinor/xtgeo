@@ -6,13 +6,12 @@ from ._regular_surface import (
     RegularSurfaceWriter,
 )
 from ._rmsapi_package import rmsapi
-from .rmsapi_utils import RmsApiUtils, RoxUtils
+from .rmsapi_utils import RmsApiUtils
 
 __all__ = [
     "RegularSurfaceDataRms",
     "RegularSurfaceReader",
     "RegularSurfaceWriter",
     "RmsApiUtils",
-    "RoxUtils",
     "rmsapi",
 ]

@@ -78,7 +78,7 @@ def well_from_file(
     )
 
 
-def well_from_roxar(
+def well_from_rms(
     project: str | object,
     name: str,
     trajectory: str | None = "Drilled trajectory",
@@ -88,7 +88,7 @@ def well_from_roxar(
     inclmd: bool | None = False,
     inclsurvey: bool | None = False,
 ) -> Well:
-    """This makes an instance of a Well directly from Roxar RMS.
+    """This makes an instance of a Well directly from RMS.
 
     Note this method works only when inside RMS, or when RMS license is
     activated (through the roxar environment).
@@ -112,7 +112,7 @@ def well_from_roxar(
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mywell = xtgeo.well_from_roxar(
+        mywell = xtgeo.well_from_rms(
             project, "31_3-1", trajectory="Drilled", logrun="log", lognames=mylogs
         )
 
@@ -120,8 +120,67 @@ def well_from_roxar(
     """
     # TODO - mdlogname and zonelogname
     return Well._read_roxar(
-        project,
-        name,
+        project=project,
+        name=name,
+        trajectory=trajectory,
+        logrun=logrun,
+        lognames=lognames,
+        lognames_strict=lognames_strict,
+        inclmd=inclmd,
+        inclsurvey=inclsurvey,
+    )
+
+
+def well_from_roxar(
+    project: str | object,
+    name: str,
+    trajectory: str | None = "Drilled trajectory",
+    logrun: str | None = "log",
+    lognames: str | list[str] | None = "all",
+    lognames_strict: bool | None = False,
+    inclmd: bool | None = False,
+    inclsurvey: bool | None = False,
+) -> Well:
+    """Make an instance of a Well directly from Roxar RMS.
+
+    .. deprecated::
+        The `well_from_roxar` function is deprecated and will be removed in a future
+        version. Use `well_from_rms` instead.
+
+    Args:
+        project: Path to project or magic the ``project`` variable in RMS.
+        name: Name of Well, as shown in RMS.
+        trajectory: Name of trajectory in RMS.
+        logrun: Name of logrun in RMS.
+        lognames: List of lognames to import, or use 'all' for all present logs
+        lognames_strict: If True and log is not in lognames is a list, an Exception will
+            be raised.
+        inclmd: If True, a Measured Depth log will be included.
+        inclsurvey: If True, logs for azimuth and deviation will be included.
+
+    Returns:
+        Well instance.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mylogs = ['ZONELOG', 'GR', 'Facies']
+        mywell = xtgeo.well_from_rms(
+            project, "31_3-1", trajectory="Drilled", logrun="log", lognames=mylogs
+        )
+
+    .. versionchanged:: 2.1 lognames defaults to "all", not None
+    """
+    warnings.warn(
+        "The 'well_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'well_from_rms' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+    return well_from_rms(
+        project=project,
+        name=name,
         trajectory=trajectory,
         logrun=logrun,
         lognames=lognames,
@@ -382,7 +441,7 @@ class Well:
         warnings.warn(
             "Direct access to the dataframe property in Well class will be deprecated "
             "in xtgeo 5.0. Use `get_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         return self._wdata.get_dataframe(copy=False)  # get a view, for backward compat.
 
@@ -391,7 +450,7 @@ class Well:
         warnings.warn(
             "Direct access to the dataframe property in Well class will be deprecated "
             "in xtgeo 5.0. Use `set_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         self.set_dataframe(dfr)  # this will include consistency checking!
 
@@ -539,6 +598,7 @@ class Well:
         wfile: str | Path | io.BytesIO,
         fformat: str | None = "rms_ascii",
         compression: str | None = "lzf",
+        precision: int = 8,
     ):
         """Export well to file or memory stream.
 
@@ -546,6 +606,7 @@ class Well:
             wfile: File name or stream.
             fformat: File format ('rms_ascii'/'rmswell', 'csv', 'hdf/hdf5/h5').
             compression: Compression for HDF5 format only. Default is 'lzf'.
+            precision: Number of decimal places for RMS ASCII floats. Default is 8.
 
         Example::
 
@@ -571,7 +632,9 @@ class Well:
             from xtgeo.io._welldata import WellFileFormat
 
             welldata = _well_io_factory._well_to_welldata(self)
-            welldata.to_file(wfile.name, fformat=WellFileFormat.RMS_ASCII)
+            welldata.to_file(
+                wfile.name, fformat=WellFileFormat.RMS_ASCII, precision=precision
+            )
 
         elif fformat in FileFormat.CSV.value:
             from xtgeo.io._welldata import WellFileFormat
@@ -625,7 +688,7 @@ class Well:
         warnings.warn(
             "to_hdf() is deprecated and will be removed in version 5.0. "
             "Use to_file() with fformat='hdf5' instead.",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
 
@@ -655,7 +718,7 @@ class Well:
         )
         return cls(**kwargs)
 
-    def to_roxar(
+    def to_rms(
         self,
         project: Any,
         wname: str,
@@ -663,9 +726,9 @@ class Well:
         realisation: int = 0,
         trajectory: str = "Drilled trajectory",
         logrun: str = "log",
-        update_option: str = None,
+        update_option: str | None = None,
     ):
-        """Export (save/store) a well to a roxar project.
+        """Export (save/store) a well to an RMS project.
 
         Note this method works only when inside RMS, or when RMS license is
         activated in terminal.
@@ -694,7 +757,7 @@ class Well:
 
         Note:
            When project is file path (direct access, outside RMS) then
-           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+           ``to_rms()`` will implicitly do a project save. Otherwise, the project
            will not be saved until the user do an explicit project save action.
 
         Example::
@@ -702,7 +765,7 @@ class Well:
             # assume that existing logs in RMS are ["PORO", "PERMH", "GR", "DT", "FAC"]
             # read only one existing log (faster)
 
-            wll = xtgeo.well_from_roxar(project, "WELL1", lognames=["PORO"])
+            wll = xtgeo.well_from_rms(project, "WELL1", lognames=["PORO"])
             dfr = wll.get_dataframe()
             dfr["PORO"] += 0.2  # add 0.2 to PORO log
             wll.set_dataframe(dfr)
@@ -711,13 +774,13 @@ class Well:
             # the "option" is a variable... for output, ``lognames="all"`` is default
             if option is None:
                 # remove all current logs in RMS; only logs will be PORO and NEW
-                wll.to_roxar(project, "WELL1", update_option=option)
+                wll.to_rms(project, "WELL1", update_option=option)
             elif option == "overwrite":
                 # keep all original logs but update PORO and add NEW
-                wll.to_roxar(project, "WELL1", update_option=option)
+                wll.to_rms(project, "WELL1", update_option=option)
             elif option == "append":
                 # keep all original logs as they were (incl. PORO) and add NEW
-                wll.to_roxar(project, "WELL1", update_option=option)
+                wll.to_rms(project, "WELL1", update_option=option)
 
         Note:
             The keywords ``lognames`` and ``update_option`` will interact
@@ -738,6 +801,40 @@ class Well:
             trajectory=trajectory,
             logrun=logrun,
             realisation=realisation,
+            update_option=update_option,
+        )
+
+    def to_roxar(
+        self,
+        project: Any,
+        wname: str,
+        lognames: str | list[str] = "all",
+        realisation: int = 0,
+        trajectory: str = "Drilled trajectory",
+        logrun: str = "log",
+        update_option: str | None = None,
+    ):
+        """Export a well to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            wname=wname,
+            lognames=lognames,
+            realisation=realisation,
+            trajectory=trajectory,
+            logrun=logrun,
             update_option=update_option,
         )
 

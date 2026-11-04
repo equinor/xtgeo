@@ -20,7 +20,8 @@ import pytest
 
 import xtgeo
 from tests.conftest import in_roxar_env
-from xtgeo.roxutils._roxar_loader import roxar, roxar_jobs, roxar_well_picks
+from xtgeo.interfaces.rms import RmsApiUtils
+from xtgeo.interfaces.rms._rmsapi_package import rmsapi, rmsapi_jobs, rmsapi_well_picks
 
 logger = logging.getLogger(__name__)
 
@@ -79,8 +80,8 @@ def fixture_roxinstance():
     if not in_roxar_env():
         pytest.skip("Skip test if outside RMSVENV_RELEASE (former ROXENV)")
 
-    project = roxar.Project.create()
-    return xtgeo.RoxUtils(project)
+    project = rmsapi.Project.create()
+    return RmsApiUtils(project)
 
 
 def _run_blocked_wells_job(
@@ -88,7 +89,7 @@ def _run_blocked_wells_job(
     bwname: str,
     wells: list[str],
 ):
-    """Using roxar.jobs to make blocked wells.
+    """Using rmsapi.jobs to make blocked wells.
 
     This option with 1.4 (RMS 12).
 
@@ -96,7 +97,7 @@ def _run_blocked_wells_job(
     """
 
     # create the block well job and add it to the grid
-    bw_job = roxar_jobs.Job.create(
+    bw_job = rmsapi_jobs.Job.create(
         ["Grid models", gmname, "Grid"], "Block Wells", "API_BW_Job"
     )
 
@@ -160,7 +161,7 @@ def _run_blocked_wells_job(
 
 def _add_well_pick_to_project(project: Any, well_pick_data: dict, trajectory: str):
     """Add well picks to the project."""
-    wp = roxar_well_picks
+    wp = rmsapi_well_picks
 
     mypicks = [
         wp.WellPick.create(
@@ -192,11 +193,11 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
         if "XP_with" in wfile:
             wobj.name = "OP2_w_repeat"
 
-        wobj.to_roxar(project, wobj.name, logrun="log", trajectory="My trajectory")
+        wobj.to_rms(project, wobj.name, logrun="log", trajectory="My trajectory")
 
     # populate with cube data
     cube = xtgeo.cube_from_file(testdata_path / CUBEDATA1)
-    cube.to_roxar(project, CUBENAME1, domain="depth")
+    cube.to_rms(project, CUBENAME1, domain="depth")
 
     # make a small synthetic cube with jumps in inline/crossline
     cube2 = xtgeo.Cube(
@@ -211,38 +212,38 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
         xlines=[10030, 10040, 10050, 10060, 10070],
         rotation=20,
     )
-    cube2.to_roxar(project, CUBENAME2)
+    cube2.to_rms(project, CUBENAME2)
 
     # populate with surface data
     roxinstance.create_horizons_category(SURFCAT1)
     for num, name in enumerate(SURFNAMES1):
         srf = xtgeo.surface_from_file(testdata_path / SURFTOPS1[num])
-        project.horizons.create(name, roxar.HorizonType.interpreted)
+        project.horizons.create(name, rmsapi.HorizonType.interpreted)
         srf.to_rms(project, name, SURFCAT1)
 
     # populate with grid and props
     grd = xtgeo.grid_from_file(testdata_path / GRIDDATA1)
-    grd.to_roxar(project, GRIDNAME1)
+    grd.to_rms(project, GRIDNAME1)
     por = xtgeo.gridproperty_from_file(testdata_path / PORODATA1, name=PORONAME1)
-    por.to_roxar(project, GRIDNAME1, PORONAME1)
+    por.to_rms(project, GRIDNAME1, PORONAME1)
     zon = xtgeo.gridproperty_from_file(testdata_path / ZONEDATA1, name=ZONENAME1)
-    zon.to_roxar(project, GRIDNAME1, ZONENAME1)
+    zon.to_rms(project, GRIDNAME1, ZONENAME1)
 
     # populate with points and polygons (XYZ data)
     poly = xtgeo.polygons_from_file(testdata_path / POLYDATA1)
-    poly.to_roxar(project, POLYNAME1, "", stype="clipboard")
+    poly.to_rms(project, POLYNAME1, "", stype="clipboard")
 
     poi = xtgeo.points_from_file(testdata_path / POINTSDATA1)
-    poi.to_roxar(project, POINTSNAME1, "", stype="clipboard")
+    poi.to_rms(project, POINTSNAME1, "", stype="clipboard")
     logger.info("Initialised RMS project, done!")
     # add some points into the horizon folder as well
 
     # populate with surface data
     roxinstance.create_horizons_category(POINTSCAT1, htype="points")
-    poi.to_roxar(project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(project, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
     poi = xtgeo.points_from_file(testdata_path / POINTSDATA2, fformat="rms_attr")
-    poi.to_roxar(project, POINTSNAME2, "", stype="clipboard", attributes=True)
+    poi.to_rms(project, POINTSNAME2, "", stype="clipboard", attributes=True)
     logger.info("Initialised RMS project, done!")
 
     _run_blocked_wells_job(GRIDNAME1, "BW", ["OP_2", "OP_6"])
@@ -259,11 +260,11 @@ def fixture_create_project(tmp_data_dir, roxinstance, testdata_path) -> str:
 def wells_from_rms(rms_project_path) -> list[xtgeo.Well]:
     """Read wells from roxar project and return a list."""
 
-    project = xtgeo.RoxUtils(rms_project_path).project
+    project = RmsApiUtils(rms_project_path).project
 
     wlist = []
     for well in project.wells:
-        obj = xtgeo.well_from_roxar(
+        obj = xtgeo.well_from_rms(
             project,
             well.name,
             logrun="log",
@@ -288,37 +289,54 @@ def rms_project(rms_project_path) -> Any:
     need for this fixture to close the project after the test.
     """
 
-    project = xtgeo.RoxUtils(rms_project_path).project
+    project = RmsApiUtils(rms_project_path).project
 
     yield project
 
     project.close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_getset_cube(rms_project_path):
     """Get a cube from a RMS project, do some stuff and store/save."""
-    cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME1)
+    cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME1)
     assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
     cube.values += 100
     assert cube.values.mean() == pytest.approx(100.000718, abs=0.001)
-    cube.to_roxar(rms_project_path, CUBENAME1 + "_copy1")
-    cube.to_roxar(rms_project_path, CUBENAME1 + "_copy2", folder="somefolder")
+    cube.to_rms(rms_project_path, CUBENAME1 + "_copy1")
+    cube.to_rms(rms_project_path, CUBENAME1 + "_copy2", folder="somefolder")
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
+def test_cube_from_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a cube."""
+    with pytest.warns(FutureWarning, match="cube_from_roxar"):
+        cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME1)
+    assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
+
+
+@pytest.mark.requires_rmsapi
+def test_cube_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME1)
+
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
+        cube.to_roxar(rms_project_path, CUBENAME1 + "_deprecation")
+
+
+@pytest.mark.requires_rmsapi
 def test_rox_getset_cube_with_ilxl_jumps(rms_project_path, tmp_path):
     """Get a cube from a RMS project which has jumps in inline/xline"""
-    cube = xtgeo.cube_from_roxar(rms_project_path, CUBENAME2)
-    cube.to_roxar(rms_project_path, CUBENAME2 + "_copy1")
-    cube2 = xtgeo.cube_from_roxar(rms_project_path, CUBENAME2 + "_copy1")
+    cube = xtgeo.cube_from_rms(rms_project_path, CUBENAME2)
+    cube.to_rms(rms_project_path, CUBENAME2 + "_copy1")
+    cube2 = xtgeo.cube_from_rms(rms_project_path, CUBENAME2 + "_copy1")
     cube2.to_file(tmp_path / "cube2.segy")
     cube3 = xtgeo.cube_from_file(tmp_path / "cube2.segy")
     assert cube3.ilines.tolist() == [12, 14, 16, 18]
     assert cube3.xlines.tolist() == [10030, 10040, 10050, 10060, 10070]
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_surfaces(rms_project_path):
     """Various get set on surfaces in RMS."""
     srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
@@ -331,7 +349,7 @@ def test_rox_surfaces(rms_project_path):
     srf.to_rms(rms_project_path, "TopReek_copy", "SomeFolder", stype="clipboard")
 
     # open project and do save explicit
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
     prj = rox.project
     iso = srf2 - srf
     rox.create_zones_category("IS_isochore")
@@ -345,7 +363,15 @@ def test_rox_surfaces(rms_project_path):
     prj.close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
+def test_surface_from_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a surface."""
+    with pytest.warns(FutureWarning, match="surface_from_roxar"):
+        surface = xtgeo.surface_from_roxar(rms_project_path, "TopReek", SURFCAT1)
+    assert surface.values.mean() == pytest.approx(1698.648, abs=0.01)
+
+
+@pytest.mark.requires_rmsapi
 def test_rox_surfaces_dtype_switching(rms_project_path):
     """Test dtype switching for from_roxar"""
     srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1, dtype="float32")
@@ -361,13 +387,13 @@ def test_rox_surfaces_dtype_switching(rms_project_path):
     np.testing.assert_allclose(srf.values, srf2.values)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_surfaces_alternative_open(rms_project_path):
     """Based on previous but instead use a project ref as first argument"""
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
 
-    assert isinstance(rox.project, roxar.Project)
+    assert isinstance(rox.project, rmsapi.Project)
 
     srf = xtgeo.surface_from_rms(rox.project, "TopReek", SURFCAT1)
     assert srf.ncol == 554
@@ -376,7 +402,7 @@ def test_rox_surfaces_alternative_open(rms_project_path):
     rox.project.close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_surfaces_clipboard_general2d_data(rms_project, roxinstance):
     """Set and get surfaces on clipboard and general2D data"""
 
@@ -393,7 +419,7 @@ def test_rox_surfaces_clipboard_general2d_data(rms_project, roxinstance):
     assert surf2.values.tolist() == surf.values.tolist()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_set_trend_surfaces(rms_project_path):
     """Get, modify and set trendsurfaces from a RMS project.
 
@@ -408,10 +434,10 @@ def test_rox_get_set_trend_surfaces(rms_project_path):
     np.testing.assert_array_equal(surf2.values, surf1.values)
 
 
-@pytest.mark.requires_roxar
-def test_rox_wells(rms_project_path):
-    """Various tests on Roxar wells."""
-    well = xtgeo.well_from_roxar(
+@pytest.mark.requires_rmsapi
+def test_rms_wells(rms_project_path: str) -> None:
+    """Various tests on RMS wells using well_from_rms."""
+    well = xtgeo.well_from_rms(
         rms_project_path, "OP_2", trajectory="My trajectory", logrun="log"
     )
     assert "Zonelog" in well.lognames
@@ -419,35 +445,104 @@ def test_rox_wells(rms_project_path):
     assert well.get_dataframe()["Poro"].mean() == pytest.approx(0.1637623936)
 
 
-@pytest.mark.requires_roxar
-def test_rox_get_gridproperty(rms_project_path):
+@pytest.mark.requires_rmsapi
+def test_rox_wells_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a well."""
+    with pytest.warns(FutureWarning, match="well_from_roxar"):
+        well = xtgeo.well_from_roxar(
+            rms_project_path, "OP_2", trajectory="My trajectory", logrun="log"
+        )
+    assert "Zonelog" in well.lognames
+
+
+@pytest.mark.requires_rmsapi
+def test_well_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    rox = RmsApiUtils(rms_project_path)
+    well = xtgeo.well_from_rms(
+        rox.project, "OP_2", trajectory="My trajectory", logrun="log"
+    )
+
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
+        well.to_roxar(rox.project, "OP_2", trajectory="My trajectory", logrun="log")
+
+    rox.project.close()
+
+
+@pytest.mark.requires_rmsapi
+def test_rms_get_gridproperty(rms_project_path):
     """Get a grid property from a RMS project."""
     logger.info("Project is %s", rms_project_path)
 
-    poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
+    poro = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, PORONAME1)
 
     assert poro.values.mean() == pytest.approx(0.16774, abs=0.001)
     assert poro.dimensions == (40, 64, 14)
 
-    zone = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, ZONENAME1)
+    zone = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, ZONENAME1)
     assert "int" in str(zone.values.dtype)
 
     zone._roxar_dtype = np.int32
     with pytest.raises(TypeError):
-        zone.to_roxar(rms_project_path, GRIDNAME1, ZONENAME1)
+        zone.to_rms(rms_project_path, GRIDNAME1, ZONENAME1)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
+def test_rms_get_grid(rms_project_path: str) -> None:
+    """Get a grid from an RMS project using the RMS API name."""
+    grid = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
+
+    assert grid.dimensions == (40, 64, 14)
+
+
+@pytest.mark.requires_rmsapi
+def test_rox_get_grid_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a grid."""
+    with pytest.warns(FutureWarning, match="grid_from_roxar"):
+        grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+
+    assert grid.dimensions == (40, 64, 14)
+
+
+@pytest.mark.requires_rmsapi
+def test_grid_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    grid = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
+
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
+        grid.to_roxar(rms_project_path, GRIDNAME1 + "_deprecation")
+
+
+@pytest.mark.requires_rmsapi
+def test_rox_get_gridproperty_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a grid property."""
+    with pytest.warns(FutureWarning, match="gridproperty_from_roxar"):
+        poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
+
+    assert poro.values.mean() == pytest.approx(0.16774, abs=0.001)
+    assert poro.dimensions == (40, 64, 14)
+
+
+@pytest.mark.requires_rmsapi
+def test_gridproperty_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    poro = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, PORONAME1)
+
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
+        poro.to_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_deprecation")
+
+
+@pytest.mark.requires_rmsapi
 def test_rox_gridproperty_dtypes(rms_project_path):
     """Various work with a grid property using dtype."""
     logger.info("Project is %s", rms_project_path)
     prj = rms_project_path
 
-    grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grid = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
 
     prop = xtgeo.GridProperty(grid, discrete=False, values=999)
     assert prop.roxar_dtype == np.float32
-    prop.to_roxar(prj, GRIDNAME1, "myprop1")
+    prop.to_rms(prj, GRIDNAME1, "myprop1")
 
     # change to discrete
     prop.isdiscrete = True
@@ -455,10 +550,10 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     # try to overwite the continous icon after changing data
     prop.values = 251
     with pytest.warns(UserWarning) as warning_info:
-        prop.to_roxar(prj, GRIDNAME1, "myprop1")
+        prop.to_rms(prj, GRIDNAME1, "myprop1")
         assert "Existing RMS icon has data type" in str(warning_info[0].message)
     # read icon again, it will still be a float
-    newprop = xtgeo.gridproperty_from_roxar(prj, GRIDNAME1, "myprop1")
+    newprop = xtgeo.gridproperty_from_rms(prj, GRIDNAME1, "myprop1")
     assert newprop.roxar_dtype == np.float32
     assert newprop.values.dtype == np.float64  # internal in xtgeo
 
@@ -469,9 +564,9 @@ def test_rox_gridproperty_dtypes(rms_project_path):
 
     # store it again, should issue some warnings
     with pytest.warns(UserWarning):
-        newprop.to_roxar(prj, GRIDNAME1, "myprop1")
+        newprop.to_rms(prj, GRIDNAME1, "myprop1")
 
-    newprop.to_roxar(prj, GRIDNAME1, "myprop2")  # should not give warning
+    newprop.to_rms(prj, GRIDNAME1, "myprop2")  # should not give warning
 
     newprop.isdiscrete = False
     assert newprop.roxar_dtype == np.float32
@@ -480,7 +575,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     # establish a uint8 (1 byte) icon in RMS
     onebyte_prop = xtgeo.GridProperty(grid, discrete=True, values=9)
     onebyte_prop.roxar_dtype = np.uint8
-    onebyte_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+    onebyte_prop.to_rms(prj, GRIDNAME1, "onebyte")
 
     # now assign it 2 byte
     twobyte_prop = onebyte_prop.copy()
@@ -488,7 +583,7 @@ def test_rox_gridproperty_dtypes(rms_project_path):
 
     # write it to onebyte prop; should only trigger a warning
     with pytest.warns(UserWarning, match="Existing RMS icon has data type"):
-        twobyte_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+        twobyte_prop.to_rms(prj, GRIDNAME1, "onebyte")
 
     # similar when going from continuous
     cont_prop = onebyte_prop.copy()
@@ -496,93 +591,93 @@ def test_rox_gridproperty_dtypes(rms_project_path):
     assert cont_prop.dtype == np.float64
     assert cont_prop.roxar_dtype == np.float32
     with pytest.warns(UserWarning, match="Existing RMS icon has data type"):
-        cont_prop.to_roxar(prj, GRIDNAME1, "onebyte")
+        cont_prop.to_rms(prj, GRIDNAME1, "onebyte")
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_gridproperty(rms_project_path):
     """Get and set a grid property from a RMS project."""
-    poro = xtgeo.gridproperty_from_roxar(rms_project_path, GRIDNAME1, PORONAME1)
+    poro = xtgeo.gridproperty_from_rms(rms_project_path, GRIDNAME1, PORONAME1)
     cell_value = poro.values[1, 0, 0]
 
     adder = 0.9
     poro.values = poro.values + adder
 
-    poro.to_roxar(rms_project_path, GRIDNAME1, PORONAME1 + "_NEW")
+    poro.to_rms(rms_project_path, GRIDNAME1, PORONAME1 + "_NEW")
 
-    poronew = xtgeo.gridproperty_from_roxar(
+    poronew = xtgeo.gridproperty_from_rms(
         rms_project_path, GRIDNAME1, PORONAME1 + "_NEW"
     )
     assert poronew.values[1, 0, 0] == pytest.approx(cell_value + adder, abs=0.0001)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_grid_basic(rms_project_path):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
-    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_edit1")
+    grd1.to_rms(rms_project_path, GRIDNAME1 + "_edit1")
 
-    grd2 = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_edit1")
+    grd2 = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_edit1")
 
     assert grd2.dimensions == grd1.dimensions
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_grid_method_roff(rms_project_path):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
-    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_roff", method="roff")
-    grd1.to_roxar(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
+    grd1.to_rms(rms_project_path, GRIDNAME1 + "_roff", method="roff")
+    grd1.to_rms(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
 
-    grd2_roff = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_roff")
-    grd2_cpg = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1 + "_cpg")
+    grd2_roff = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_roff")
+    grd2_cpg = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1 + "_cpg")
 
     assert grd2_roff.dimensions == grd2_cpg.dimensions
 
 
 @pytest.mark.benchmark(group="grid_to_roxar_method")
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_set_grid_method_benchmark_cpg(rms_project_path, benchmark):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
     def store_method_cpg():
-        grd1.to_roxar(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
+        grd1.to_rms(rms_project_path, GRIDNAME1 + "_cpg", method="cpg")
 
     benchmark(store_method_cpg)
 
 
 @pytest.mark.benchmark(group="grid_to_roxar_method")
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_set_grid_method_benchmark_roff(rms_project_path, benchmark):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
     grd1 = grd.copy()
 
     grd1.translate_coordinates(translate=(200, 3000, 300))
 
     def store_method_roff():
-        grd1.to_roxar(rms_project_path, GRIDNAME1 + "_roff", method="roff")
+        grd1.to_rms(rms_project_path, GRIDNAME1 + "_roff", method="roff")
 
     benchmark(store_method_roff)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_get_grid_with_subzones(rms_project_path, roxinstance):
     """Get, modify and set + get a grid from a RMS project using subzones/subgrids."""
 
-    grd = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+    grd = xtgeo.grid_from_rms(rms_project_path, GRIDNAME1)
 
     zonation = {}
     zonation["intva"] = 4
@@ -592,34 +687,51 @@ def test_rox_get_modify_set_get_grid_with_subzones(rms_project_path, roxinstance
 
     if not roxinstance.version_required("1.6"):
         with pytest.warns(UserWarning, match=r"Implementation of subgrids is lacking"):
-            grd.to_roxar(rms_project_path, "NewGrid")
+            grd.to_rms(rms_project_path, "NewGrid")
     else:
-        grd.to_roxar(rms_project_path, "NewGrid")
+        grd.to_rms(rms_project_path, "NewGrid")
 
         # get a new instance for recent storage (subgrids should now be present)
-        grd1 = xtgeo.grid_from_roxar(rms_project_path, "NewGrid")
+        grd1 = xtgeo.grid_from_rms(rms_project_path, "NewGrid")
 
         for intv in ["intva", "intvb", "intvc"]:
             assert list(grd.subgrids[intv]) == list(grd1.subgrids[intv])
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
+def test_xtgeo_sets_subgrids_for_single_zone_grid(rms_project_path):
+    grid = xtgeo.grid_from_roxar(rms_project_path, GRIDNAME1)
+
+    zonation = {"only_zone": grid.nlay}
+    grid.set_subgrids(zonation)
+
+    grid.to_roxar(rms_project_path, "SingleZoneGrid")
+
+    # get a new instance (subgrids should now be present)
+    grid1 = xtgeo.grid_from_roxar(rms_project_path, "SingleZoneGrid")
+
+    assert isinstance(grid1.subgrids, dict)
+    assert len(grid1.subgrids) == 1
+    assert list(grid1.subgrids["only_zone"]) == list(grid.subgrids["only_zone"])
+
+
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
     """Get, modify and set a polygons from a RMS project."""
-    poly = xtgeo.polygons_from_roxar(rms_project_path, POLYNAME1, "", stype="clipboard")
+    poly = xtgeo.polygons_from_rms(rms_project_path, POLYNAME1, "", stype="clipboard")
     assert poly.get_dataframe().iloc[-1, 2] == pytest.approx(1595.161377)
     assert poly.get_dataframe().shape[0] == 25
     assert poly.get_dataframe().shape[1] == 4
 
     poly.rescale(300)
     # store in RMS
-    poly.to_roxar(rms_project_path, "RESCALED", "", stype="clipboard")
+    poly.to_rms(rms_project_path, "RESCALED", "", stype="clipboard")
     assert poly.get_dataframe().shape[0] == 127
 
     # store and retrieve in general2d_data just to see that it works
     if roxinstance.version_required("1.6"):
-        poly.to_roxar(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
-        poly2 = xtgeo.polygons_from_roxar(
+        poly.to_rms(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
+        poly2 = xtgeo.polygons_from_rms(
             rms_project_path, "xxx", "folder/sub", stype="general2d_data"
         )
         assert poly.get_dataframe()[poly.xname].values.tolist() == pytest.approx(
@@ -627,13 +739,37 @@ def test_rox_get_modify_set_polygons(rms_project_path, roxinstance):
         )
     else:
         with pytest.raises(NotImplementedError):
-            poly.to_roxar(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
+            poly.to_rms(rms_project_path, "xxx", "folder/sub", stype="general2d_data")
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
+def test_rms_polygons_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads polygons."""
+    with pytest.warns(FutureWarning, match="polygons_from_roxar"):
+        poly = xtgeo.polygons_from_roxar(
+            rms_project_path, POLYNAME1, "", stype="clipboard"
+        )
+    assert poly.get_dataframe().shape[0] == 25
+    assert poly.get_dataframe().shape[1] == 4
+
+
+@pytest.mark.requires_rmsapi
+def test_polygons_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    polygons = xtgeo.polygons_from_rms(
+        rms_project_path, POLYNAME1, "", stype="clipboard"
+    )
+
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
+        polygons.to_roxar(
+            rms_project_path, POLYNAME1 + "_deprecation", "", stype="clipboard"
+        )
+
+
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_points(rms_project_path):
     """Get, modify and set a points from a RMS project."""
-    poi = xtgeo.points_from_roxar(rms_project_path, POINTSNAME1, "", stype="clipboard")
+    poi = xtgeo.points_from_rms(rms_project_path, POINTSNAME1, "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 1] == pytest.approx(5.932977e06)
     assert poi.get_dataframe().shape[0] == 20
     assert poi.get_dataframe().shape[1] == 3
@@ -641,29 +777,51 @@ def test_rox_get_modify_set_points(rms_project_path):
     # snap to a surface as operation and store in RMS
     surf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
-    poi.to_roxar(rms_project_path, "SNAPPED", "", stype="clipboard")
+    poi.to_rms(rms_project_path, "SNAPPED", "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1651.805261)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_points_from_horizons(rms_project_path):
     """Get, modify and set a points from a RMS project."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons"
     )
     assert poi.get_dataframe().iloc[-1, 1] == pytest.approx(5.932977e06)
     assert poi.get_dataframe().shape[0] == 20
     assert poi.get_dataframe().shape[1] == 3
-    poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
+def test_rms_points_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads points."""
+    with pytest.warns(FutureWarning, match="points_from_roxar"):
+        poi = xtgeo.points_from_roxar(
+            rms_project_path, POINTSNAME1, "", stype="clipboard"
+        )
+    assert poi.get_dataframe().shape[0] == 20
+    assert poi.get_dataframe().shape[1] == 3
+
+
+@pytest.mark.requires_rmsapi
+def test_points_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    points = xtgeo.points_from_rms(rms_project_path, POINTSNAME1, "", stype="clipboard")
+
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
+        points.to_roxar(
+            rms_project_path, POINTSNAME1 + "_deprecation", "", stype="clipboard"
+        )
+
+
+@pytest.mark.requires_rmsapi
 def test_rox_set_points_with_inconsistent_xyz_names(rms_project_path):
     """
     Export points to a RMS project where the dataframe has another zname
     than the zname attribute. This should fail.
     """
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons"
     )
 
@@ -673,13 +831,13 @@ def test_rox_set_points_with_inconsistent_xyz_names(rms_project_path):
 
     # inconsistency between z column name and zname attribute should fail
     with pytest.raises(ValueError, match="One or all"):
-        poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+        poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_set_points_with_nonstandard_xyz_names(rms_project_path):
     """Export points with nonstandard xyz names to RMS."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons"
     )
 
@@ -691,29 +849,29 @@ def test_rox_set_points_with_nonstandard_xyz_names(rms_project_path):
     assert "X" in poi.get_dataframe(copy=False)
 
     # check that storing to roxar works fine
-    poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
     # another indirect check using points from surface.
     # here Z name is set on initialisation
     srf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi = xtgeo.points_from_surface(srf, zname="MyZ")
     assert "MyZ" in poi.get_dataframe(copy=False)
-    poi.to_roxar(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
+    poi.to_rms(rms_project_path, SURFNAMES1[0], POINTSCAT1, stype="horizons")
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_check_presence_in_project_errors(rms_project_path):
     # test category not existing in project
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
     with pytest.raises(ValueError) as exc_info:
         name = "I_dont_exist"
-        xtgeo.points_from_roxar(rox.project, name, POINTSCAT1, stype="horizons")
+        xtgeo.points_from_rms(rox.project, name, POINTSCAT1, stype="horizons")
     assert str(exc_info.value) == f"Cannot access {name=} in horizons"
 
     # test category not given
     with pytest.raises(ValueError) as exc_info:
-        xtgeo.points_from_roxar(
+        xtgeo.points_from_rms(
             rox.project, SURFNAMES1[0], category=None, stype="horizons"
         )
     assert (
@@ -723,7 +881,7 @@ def test_check_presence_in_project_errors(rms_project_path):
     # test category not existing in project
     with pytest.raises(ValueError) as exc_info:
         category = "I_dont_exist"
-        xtgeo.points_from_roxar(rox.project, SURFNAMES1[0], category, stype="horizons")
+        xtgeo.points_from_rms(rox.project, SURFNAMES1[0], category, stype="horizons")
         rox.project.close()
     assert str(exc_info.value) == f"Cannot access {category=} in horizons"
 
@@ -731,17 +889,17 @@ def test_check_presence_in_project_errors(rms_project_path):
     with pytest.raises(RuntimeError) as exc_info:
         name = SURFNAMES1[1]
         category = POINTSCAT1
-        xtgeo.points_from_roxar(rox.project, name, category, stype="horizons")
+        xtgeo.points_from_rms(rox.project, name, category, stype="horizons")
         rox.project.close()
     assert str(exc_info.value) == f"'{name}' is empty for horizons {category=}"
 
     rox.project.close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_points_with_attrs(rms_project_path):
     """Get, modify and set a points with attributes from a RMS project."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, POINTSNAME2, "", stype="clipboard", attributes=True
     )
     assert poi.get_dataframe()["Well"].values[-1] == "WI_3"
@@ -751,18 +909,18 @@ def test_rox_get_modify_set_points_with_attrs(rms_project_path):
     # snap to a surface as operation and store in RMS
     surf = xtgeo.surface_from_rms(rms_project_path, "TopReek", SURFCAT1)
     poi.snap_surface(surf, activeonly=False)
-    poi.to_roxar(rms_project_path, "SNAPPED2", "", stype="clipboard")
+    poi.to_rms(rms_project_path, "SNAPPED2", "", stype="clipboard")
     assert poi.get_dataframe().iloc[-1, 2] == pytest.approx(1706.1469, abs=0.01)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_get_modify_set_points_with_attrs_pfilter(rms_project_path):
     """Get, modify and set a points with attributes from a RMS project incl. pfilter."""
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         rms_project_path, POINTSNAME2, "", stype="clipboard", attributes=True
     )
     # store to roxar with attributes using a 'pfilter'
-    poi.to_roxar(
+    poi.to_rms(
         rms_project_path,
         "PFILTER_POINTS",
         "",
@@ -772,7 +930,7 @@ def test_rox_get_modify_set_points_with_attrs_pfilter(rms_project_path):
     )
 
     # reread from roxar; shall now have only 2 rows
-    poi2 = xtgeo.points_from_roxar(
+    poi2 = xtgeo.points_from_rms(
         rms_project_path, "PFILTER_POINTS", "", stype="clipboard", attributes=True
     )
 
@@ -781,11 +939,11 @@ def test_rox_get_modify_set_points_with_attrs_pfilter(rms_project_path):
     assert poi2.get_dataframe().shape[0] == 2
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_get_well_picks_as_points(rms_project_path):
     """Get, well picks as points with attributes"""
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
     project = rox.project
 
     assert set(project.well_picks.sets.keys()) == {"Default", "MyWellPicks"}
@@ -793,7 +951,7 @@ def test_get_well_picks_as_points(rms_project_path):
         return
 
     # collect well pick set as points
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=True
     )
 
@@ -809,7 +967,7 @@ def test_get_well_picks_as_points(rms_project_path):
     poi.set_dataframe(poi_df)
 
     # store to new well pick set
-    poi.to_roxar(
+    poi.to_rms(
         project,
         WELL_PICK_SET + "_new",
         "horizon",
@@ -818,7 +976,7 @@ def test_get_well_picks_as_points(rms_project_path):
     )
 
     # test reading the new well pick set
-    poi2 = xtgeo.points_from_roxar(
+    poi2 = xtgeo.points_from_rms(
         project, WELL_PICK_SET + "_new", "horizon", stype="well_picks", attributes=True
     )
     poi2_df = poi2.get_dataframe()
@@ -828,7 +986,7 @@ def test_get_well_picks_as_points(rms_project_path):
     assert (poi2_df["Depth Uncertainty"] == 10).all()
 
     # test store to clipboard using a pfilter
-    poi2.to_roxar(
+    poi2.to_rms(
         project,
         WELL_PICK_SET,
         "",
@@ -838,7 +996,7 @@ def test_get_well_picks_as_points(rms_project_path):
     )
 
     # reread from clipboard; should now have only 1 rows
-    poi3 = xtgeo.points_from_roxar(
+    poi3 = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "", stype="clipboard", attributes=True
     )
     poi3_df = poi3.get_dataframe()
@@ -849,14 +1007,14 @@ def test_get_well_picks_as_points(rms_project_path):
     assert (poi3_df["Depth Uncertainty"] == 10).all()
 
     # store once more as a well pick set without attributes and reread
-    poi3.to_roxar(
+    poi3.to_rms(
         project,
         WELL_PICK_SET + "_newest",
         "horizon",
         stype="well_picks",
         attributes=False,
     )
-    poi4 = xtgeo.points_from_roxar(
+    poi4 = xtgeo.points_from_rms(
         project,
         WELL_PICK_SET + "_newest",
         "horizon",
@@ -879,7 +1037,7 @@ def test_get_well_picks_as_points(rms_project_path):
     }
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_points_from_well_tops(rms_project, wells_from_rms):
     """Extracting tops from well zonelog."""
 
@@ -893,7 +1051,7 @@ def test_points_from_well_tops(rms_project, wells_from_rms):
     assert wtops._attrs["X_UTME"] == "float"
 
     for topname in ["TopUppReek", "TopMidReek", "TopLowReek"]:
-        wtops.to_roxar(
+        wtops.to_rms(
             rms_project,
             topname,
             "MyWellPoints",
@@ -902,7 +1060,7 @@ def test_points_from_well_tops(rms_project, wells_from_rms):
             stype="clipboard",
         )
 
-    uppreek_points = xtgeo.points_from_roxar(
+    uppreek_points = xtgeo.points_from_rms(
         rms_project,
         "TopUppReek",
         "MyWellPoints",
@@ -915,7 +1073,7 @@ def test_points_from_well_tops(rms_project, wells_from_rms):
     assert nwells == 3
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_points_from_well_thickness(rms_project, wells_from_rms):
     """Extracting points for thickness / isocores from wells."""
 
@@ -928,7 +1086,7 @@ def test_points_from_well_thickness(rms_project, wells_from_rms):
     assert w_isos._attrs["X_UTME"] == "float"
 
     for iname in ["UppReek", "MidReek", "LowReek"]:
-        w_isos.to_roxar(
+        w_isos.to_rms(
             rms_project,
             iname,
             "MyWellIsos",
@@ -937,7 +1095,7 @@ def test_points_from_well_thickness(rms_project, wells_from_rms):
             stype="clipboard",
         )
 
-    uppreek_iso_points = xtgeo.points_from_roxar(
+    uppreek_iso_points = xtgeo.points_from_rms(
         rms_project,
         "UppReek",
         "MyWellIsos",
@@ -948,7 +1106,7 @@ def test_points_from_well_thickness(rms_project, wells_from_rms):
     assert "MidReek" not in uppreek_iso_points.get_dataframe()["ZoneName"].to_numpy()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_lines_from_well(rms_project, wells_from_rms):
     """Extracting line data (pieces) from well data, per zone."""
 
@@ -961,9 +1119,9 @@ def test_lines_from_well(rms_project, wells_from_rms):
             code,
             resample=1,
         )
-        w_line.to_roxar(rms_project, zonenames[code], "MyWellLines", stype="clipboard")
+        w_line.to_rms(rms_project, zonenames[code], "MyWellLines", stype="clipboard")
 
-        w_line_read = xtgeo.polygons_from_roxar(
+        w_line_read = xtgeo.polygons_from_rms(
             rms_project,
             zonenames[code],
             "MyWellLines",
@@ -973,34 +1131,32 @@ def test_lines_from_well(rms_project, wells_from_rms):
             assert (w_line_read.get_dataframe()["POLY_ID"] == 2).sum() == 26
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_well_picks_version_requirement(rms_project_path):
     """Chech rox version requirement for well picks"""
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
     project = rox.project
 
     if not rox.version_required("1.6"):
         with pytest.raises(NotImplementedError) as exc_info:
-            xtgeo.points_from_roxar(
-                project, WELL_PICK_SET, "horizon", stype="well_picks"
-            )
+            xtgeo.points_from_rms(project, WELL_PICK_SET, "horizon", stype="well_picks")
         assert str(exc_info.value).startswith("API Support for well_picks is missing")
 
     rox.safe_close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_get_well_picks_attributes(rms_project_path):
     """Get, well picks as points with attributes"""
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
     project = rox.project
 
     if not rox.version_required("1.6"):
         return
 
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=True
     )
 
@@ -1008,14 +1164,14 @@ def test_get_well_picks_attributes(rms_project_path):
     assert "Depth Uncertainty" in poi_df
     assert "Azimuth" in poi_df
 
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project, WELL_PICK_SET, "horizon", stype="well_picks", attributes=False
     )
     poi_df = poi.get_dataframe()
     assert "Depth Uncertainty" not in poi_df
     assert "Azimuth" not in poi_df
 
-    poi = xtgeo.points_from_roxar(
+    poi = xtgeo.points_from_rms(
         project,
         WELL_PICK_SET,
         "horizon",
@@ -1027,28 +1183,28 @@ def test_get_well_picks_attributes(rms_project_path):
     assert "Azimuth" in poi_df
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_rox_well_with_added_logs(rms_project_path):
     """Operations on discrete well logs"""
-    well = xtgeo.well_from_roxar(
+    well = xtgeo.well_from_rms(
         rms_project_path,
         WELLS1[1].replace(".w", ""),
         logrun="log",
         trajectory="My trajectory",
     )
     assert well.get_dataframe()["Facies"].mean() == pytest.approx(0.357798165)
-    well.to_roxar(rms_project_path, "dummy1", logrun="log", trajectory="My trajectory")
+    well.to_rms(rms_project_path, "dummy1", logrun="log", trajectory="My trajectory")
     dataframe = well.get_dataframe()
     dataframe["Facies"] = np.nan
     well.set_dataframe(dataframe)
     assert np.isnan(well.get_dataframe()["Facies"].values).all()
-    well.to_roxar(rms_project_path, "dummy2", logrun="log", trajectory="My trajectory")
+    well.to_rms(rms_project_path, "dummy2", logrun="log", trajectory="My trajectory")
     # check that export with set codes
     well.set_logrecord("Facies", {1: "name"})
-    well.to_roxar(rms_project_path, "dummy3", logrun="log", trajectory="My trajectory")
+    well.to_rms(rms_project_path, "dummy3", logrun="log", trajectory="My trajectory")
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 @pytest.mark.parametrize(
     "update_option, expected_logs, expected_poroavg",
     [
@@ -1064,16 +1220,16 @@ def test_rox_well_update(
     initial_wellname = WELLS1[1].replace(".w", "")
     wellname = "TESTWELL"
 
-    initial_well = xtgeo.well_from_roxar(
+    initial_well = xtgeo.well_from_rms(
         rms_project_path,
         initial_wellname,
         logrun="log",
         lognames="all",
         trajectory="My trajectory",
     )
-    initial_well.to_roxar(rms_project_path, wellname)
+    initial_well.to_rms(rms_project_path, wellname)
 
-    well = xtgeo.well_from_roxar(
+    well = xtgeo.well_from_rms(
         rms_project_path,
         wellname,
         lognames=["Poro"],
@@ -1083,7 +1239,7 @@ def test_rox_well_update(
     dataframe["Poro"] += 0.1
     well.set_dataframe(dataframe)
 
-    well.to_roxar(
+    well.to_rms(
         rms_project_path,
         wellname,
         lognames=well.lognames,
@@ -1091,7 +1247,7 @@ def test_rox_well_update(
     )
     print("Lognames are", well.lognames)
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
 
     rox_lcurves = (
         rox.project.wells[wellname]
@@ -1107,13 +1263,13 @@ def test_rox_well_update(
     )
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 def test_blocked_well_from_to_roxar(rms_project_path):
     """Test getting blocked wells from RMS API."""
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
 
-    bw = xtgeo.blockedwell_from_roxar(
+    bw = xtgeo.blockedwell_from_rms(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
     df = bw.get_dataframe()
@@ -1140,10 +1296,10 @@ def test_blocked_well_from_to_roxar(rms_project_path):
     bw.delete_log("Zonelog")
     bw.create_log("Some_new")
 
-    bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
+    bw.to_rms(rox.project, GRIDNAME1, "BW", "OP_2")
 
     # read again from RMS
-    bw_2 = xtgeo.blockedwell_from_roxar(
+    bw_2 = xtgeo.blockedwell_from_rms(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
 
@@ -1154,34 +1310,70 @@ def test_blocked_well_from_to_roxar(rms_project_path):
     rox.project.close()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
+def test_blocked_well_from_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads a blocked well."""
+    rox = RmsApiUtils(rms_project_path)
+
+    with pytest.warns(FutureWarning, match="blockedwell_from_roxar"):
+        bw = xtgeo.blockedwell_from_roxar(
+            rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
+        )
+
+    assert "Zonelog" in bw.lognames
+    rox.project.close()
+
+
+@pytest.mark.requires_rmsapi
+def test_blocked_well_to_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar export method warns."""
+    rox = RmsApiUtils(rms_project_path)
+    bw = xtgeo.blockedwell_from_rms(
+        rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
+    )
+
+    with pytest.warns(FutureWarning, match="to_roxar.*to_rms"):
+        bw.to_roxar(rox.project, GRIDNAME1, "BW", "OP_2")
+
+    rox.project.close()
+
+
+@pytest.mark.requires_rmsapi
 def test_blocked_well_roxar_to_from_file(rms_project_path, tmp_path):
     """Test getting a single blocked well from RMS, store to file and import again."""
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
 
-    bw = xtgeo.blockedwell_from_roxar(
+    bw = xtgeo.blockedwell_from_rms(
         rox.project, GRIDNAME1, "BW", "OP_2", lognames="all"
     )
     filename = tmp_path / "op2.bw"
     bw.to_file(filename)
     with open(filename, "r") as fhandle:
         ff = str(fhandle.readlines())
-        assert "Unknown" in ff
-        assert "460297.7747" in ff
+        for expected in [
+            "OP_2",
+            "Zonelog",
+            "Poro",
+            "Facies",
+            "I_INDEX",
+            "J_INDEX",
+            "K_INDEX",
+        ]:
+            assert expected in ff
 
     bw_op2 = xtgeo.blockedwell_from_file(filename)
     assert bw_op2.name == "OP_2"
     rox.project.close()
 
 
-@pytest.mark.requires_roxar
-def test_blocked_wells_roxar_to_from_file(rms_project_path, tmp_path):
+@pytest.mark.requires_rmsapi
+def test_blocked_wells_rms_to_from_file(rms_project_path, tmp_path):
     """Test getting blocked wells (plural) from RMS, store to files and import again."""
 
-    rox = xtgeo.RoxUtils(rms_project_path)
+    rox = RmsApiUtils(rms_project_path)
 
-    bwells = xtgeo.blockedwells_from_roxar(rox.project, GRIDNAME1, "BW", lognames="all")
+    bwells = xtgeo.blockedwells_from_rms(rox.project, GRIDNAME1, "BW", lognames="all")
     assert bwells.names == ["OP_2", "OP_6"]
 
     filenames = []
@@ -1195,4 +1387,18 @@ def test_blocked_wells_roxar_to_from_file(rms_project_path, tmp_path):
 
     bwells2 = xtgeo.blockedwells_from_files(filenames)
     assert bwells2.names == bwells.names
+    rox.project.close()
+
+
+@pytest.mark.requires_rmsapi
+def test_blocked_wells_roxar_deprecation(rms_project_path: str) -> None:
+    """The deprecated Roxar alias warns and still loads blocked wells."""
+    rox = RmsApiUtils(rms_project_path)
+
+    with pytest.warns(FutureWarning, match="blockedwells_from_roxar"):
+        bwells = xtgeo.blockedwells_from_roxar(
+            rox.project, GRIDNAME1, "BW", lognames="all"
+        )
+
+    assert bwells.names == ["OP_2", "OP_6"]
     rox.project.close()

@@ -68,6 +68,18 @@ def test_blockedwells_to_stacked_file_rms_ascii(tmp_path, testblockedwells):
         assert bw.lognames == orig.lognames
 
 
+def test_blockedwells_to_stacked_file_rms_ascii_precision(tmp_path, testblockedwells):
+    """Test the public stacked BlockedWell export exposes RMS ASCII precision."""
+    default_file = tmp_path / "default_bwells.rmswell"
+    testblockedwells.to_stacked_file(default_file, fformat="rms_ascii")
+    assert "463812.89941400" in default_file.read_text()
+
+    custom_file = tmp_path / "custom_bwells.rmswell"
+    testblockedwells.to_stacked_file(custom_file, fformat="rms_ascii", precision=4)
+    assert "463812.8994" in custom_file.read_text()
+    assert "463812.89941400" not in custom_file.read_text()
+
+
 def test_blockedwells_to_stacked_file_hdf5_raises(tmp_path, testblockedwells):
     """Test that HDF5 format raises appropriate error."""
     outfile = tmp_path / "all_bwells.h5"

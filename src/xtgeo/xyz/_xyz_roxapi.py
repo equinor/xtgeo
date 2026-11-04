@@ -13,31 +13,17 @@ import pandas as pd
 from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.log import null_logger
-from xtgeo.roxutils import RoxUtils
-from xtgeo.roxutils._roxar_loader import roxar, roxar_well_picks
+from xtgeo.interfaces.rms import RmsApiUtils, rmsapi
 from xtgeo.xyz import points, polygons
 
-if roxar:
-    from roxar import (  # type: ignore[import-not-found]
-        WellPickAttributeType,
-        WellPickType,
-    )
-    from roxar.well_picks import (  # type: ignore[import-not-found]
-        WellPick,
-    )
-
 if TYPE_CHECKING:
-    if roxar is not None:
-        from roxar import (  # type: ignore[import-not-found]
-            Project as RoxarProjectType,
-        )
-        from roxar.well_picks import (  # type: ignore[import-not-found]
-            WellPickAttribute,
-            WellPickSet,
-        )
+    from xtgeo.interfaces.rms._rmsapi_package import (
+        RmsProjectType,
+        RmsWellPickAttributeType,
+        RmsWellPickSetType,
+        RmsWellPickType,
+    )
 
-if roxar:
-    roxwp = roxar_well_picks
 
 logger = null_logger(__name__)
 
@@ -66,7 +52,7 @@ VALID_WELL_PICK_TYPES = ["fault", "horizon"]  # note, not plural as in STYPE
 
 
 def _check_input_and_version_requirement(
-    roxutils: RoxUtils,
+    rmsapiutils: RmsApiUtils,
     stype: STYPE,
     category: str | list[str] | None,
     attributes: list[str] | bool | None,
@@ -88,10 +74,10 @@ def _check_input_and_version_requirement(
     if stype in (
         STYPE.GENERAL2D_DATA,
         STYPE.WELL_PICKS,
-    ) and not roxutils.version_required("1.6"):
+    ) and not rmsapiutils.version_required("1.6"):
         raise NotImplementedError(
             f"API Support for {stype.value} is missing in this RMS version "
-            f"(current API version is {roxutils.roxversion} - required is 1.6)"
+            f"(current API version is {rmsapiutils.roxversion} - required is 1.6)"
         )
 
     if stype == STYPE.WELL_PICKS:
@@ -104,7 +90,7 @@ def _check_input_and_version_requirement(
 
 
 def _check_presence_in_project(
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     name: str,
     category: str | list[str] | None,
     stype: STYPE,
@@ -147,7 +133,7 @@ def _check_presence_in_project(
 
 
 def load_xyz_from_rms(
-    project: RoxarProjectType,
+    project: RmsProjectType,
     name: str,
     category: str | list[str],
     stype: str = STYPE.HORIZONS.value,
@@ -171,7 +157,7 @@ def load_xyz_from_rms(
         filesrc
     """
 
-    rox = RoxUtils(project, readonly=True)
+    rox = RmsApiUtils(project, readonly=True)
     stype = STYPE(stype.lower())
 
     _check_input_and_version_requirement(
@@ -197,7 +183,7 @@ def load_xyz_from_rms(
 
 
 def _load_xyz_from_rms(
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     name: str,
     category: str | list[str] | None,
     stype: STYPE,
@@ -338,7 +324,7 @@ def _add_attributes_to_dataframe(
 
 def save_xyz_to_rms(
     xyz: points.Points | polygons.Polygons,
-    project: RoxarProjectType,
+    project: RmsProjectType,
     name: str,
     category: str | list[str] | None,
     stype: str,
@@ -348,7 +334,7 @@ def save_xyz_to_rms(
 ) -> None:
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
 
-    rox = RoxUtils(project, readonly=False)
+    rox = RmsApiUtils(project, readonly=False)
     stype = STYPE(stype.lower())
 
     _check_input_and_version_requirement(
@@ -365,7 +351,7 @@ def save_xyz_to_rms(
             xyz, rox, name, category, stype, pfilter, realisation, attributes
         )
 
-    if rox._roxexternal:
+    if rox._rmsexternal:
         rox.project.save()
 
     rox.safe_close()
@@ -373,7 +359,7 @@ def save_xyz_to_rms(
 
 def _save_xyz_to_rms(
     xyz: points.Points | polygons.Polygons,
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     name: str,
     category: str | list[str] | None,
     stype: STYPE,
@@ -519,7 +505,7 @@ def _get_rox_clipboard_folders(category: str | list[str] | None) -> list[str]:
 
 
 def _get_roxitem(
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     name: str,
     category: str | list[str] | None,
     stype: STYPE,
@@ -557,7 +543,7 @@ def _get_roxvalues(rox_xyz: Any, realisation: int = 0) -> list[np.ndarray] | np.
 
 
 def _load_wellpicks_from_rms(
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     well_pick_set: str,
     wp_category: Literal["fault", "horizon"] = "horizon",
     attributes: list[str] | bool = False,
@@ -593,7 +579,7 @@ def _load_wellpicks_from_rms(
 
 
 def _create_dataframe_from_wellpicks(
-    well_picks: list[WellPick],
+    well_picks: list[RmsWellPickType],
     wp_category: Literal["fault", "horizon"],
     attribute_types: dict[str, str],
 ) -> pd.DataFrame:
@@ -632,7 +618,7 @@ def _create_dataframe_from_wellpicks(
 
 def _save_well_picks_to_rms(
     points: points.Points,
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     well_pick_set: str,
     wp_category: Literal["horizon", "fault"],
     attributes: bool,
@@ -648,7 +634,7 @@ def _save_well_picks_to_rms(
         return
 
     project_attr = getattr(rox.project, f"{wp_category}s")
-    rox_wp_type = getattr(WellPickType, wp_category)
+    rox_wp_type = getattr(rmsapi.WellPickType, wp_category)
 
     df = _apply_pfilter_to_dataframe(df, pfilter)
     if df.empty:
@@ -700,7 +686,7 @@ def _save_well_picks_to_rms(
                 raise ValueError(
                     f"Trajectory name '{traj_name}' not present for {well=}"
                 )
-            wp = WellPick.create(
+            wp = rmsapi.well_picks.WellPick.create(
                 intersection_object=project_attr[intersection_object_name],
                 trajectory=rox_well_traj[traj_name],
                 md=wp_row[_AttrName.M_MD_NAME.value],
@@ -723,8 +709,8 @@ def _save_well_picks_to_rms(
 
 
 def _get_well_pick_set(
-    rox: RoxUtils, well_pick_set: str, rox_wp_type: WellPickType
-) -> WellPickSet:
+    rox: RmsApiUtils, well_pick_set: str, rox_wp_type: RmsWellPickType
+) -> RmsWellPickSetType:
     """
     Function to retrieve a well pick set object. If the given well pick set
     name is not present, it will be created. Otherwise the current well pick
@@ -741,13 +727,13 @@ def _get_well_pick_set(
 
 
 def _get_writeable_well_pick_attributes(
-    rox: RoxUtils,
+    rox: RmsApiUtils,
     attribute_types: dict[str, str],
-    rox_wp_type: WellPickType,
-) -> dict[str, WellPickAttribute]:
+    rox_wp_type: RmsWellPickType,
+) -> dict[str, RmsWellPickAttributeType]:
     """
     Function to retrive a dictionary of regular and user-defined
-    roxar WellPickAttribute's. Only writable attributes are
+    rmsapi WellPickAttribute's. Only writable attributes are
     returned (i.e. not read_only). Attributes not present in the
     project will be created as user-defined attributes.
     """
@@ -757,7 +743,9 @@ def _get_writeable_well_pick_attributes(
         "Quality",
         "Wellpick Symbol - Horizon",
     ]
-    regular_attributes = {x.name: x for x in WellPick.get_attributes(rox_wp_type)}
+    regular_attributes = {
+        x.name: x for x in rmsapi.well_picks.WellPick.get_attributes(rox_wp_type)
+    }
     user_attributes = {
         x.name: x
         for x in rox.project.well_picks.user_attributes.get_subset(rox_wp_type)
@@ -765,7 +753,7 @@ def _get_writeable_well_pick_attributes(
 
     rox_attributes = {}
     for attr, dtype in attribute_types.items():
-        rox_dtype = getattr(WellPickAttributeType, dtype)
+        rox_dtype = getattr(rmsapi.WellPickAttributeType, dtype)
 
         if attr in regular_attributes:
             if (

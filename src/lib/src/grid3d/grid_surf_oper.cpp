@@ -57,7 +57,7 @@ get_gridprop_value_between_surfaces(const Grid &grd,
                 double zm = zmid_(i, j, k);
 
                 // check if zm is NaN which can occur for inactive cells
-                if (std ::isnan(zm)) {
+                if (std::isnan(zm)) {
                     result_(i, j, k) = 0;
                     continue;
                 }

@@ -23,12 +23,16 @@ if TYPE_CHECKING:
     from xtgeo.grid3d.grid import Grid
     from xtgeo.grid3d.grid_property import GridProperty
 
-    from ._rips_package import ResInsightInstanceOrPortType, RipsCaseType
+    from ._rips_package import (
+        ResInsightInstanceOrPortType,
+        RipsCaseType,
+        RipsPropertyType,
+    )
 
 logger = null_logger(__name__)
 
 
-def _validate_property_type(property_type: str | PropertyType) -> PropertyType:
+def _validate_property_type(property_type: str | RipsPropertyType) -> RipsPropertyType:
     """Coerce *property_type* to ``rips.PropertyType``.
 
     Raises ``RuntimeError`` if rips is not installed, ``ValueError`` on invalid input.
@@ -60,7 +64,7 @@ class GridPropertyDataResInsight:
     nz: int
     values: npt.NDArray[np.float64] | npt.NDArray[np.int32] = field(repr=False)
     actnumsv: npt.NDArray[np.int32] = field(repr=False)
-    property_type: str | PropertyType
+    property_type: str | RipsPropertyType
     time_step_index: int
     discrete: bool
     codes: dict[int, str]
@@ -126,7 +130,7 @@ class GridPropertyDataResInsight:
     def from_xtgeo_gridproperty(
         cls,
         prop: GridProperty,
-        property_type: str | PropertyType,
+        property_type: str | RipsPropertyType,
         time_step_index: int = 0,
         grid: Grid | None = None,
     ) -> GridPropertyDataResInsight:
@@ -208,7 +212,7 @@ class GridPropertyReader(_BaseResInsightDataRW):
         self,
         case: str | RipsCaseType,
         property_name: str,
-        property_type: str | PropertyType = "STATIC_NATIVE",
+        property_type: str | RipsPropertyType = "STATIC_NATIVE",
         time_step_index: int = 0,
         find_last: bool = True,
     ) -> GridPropertyDataResInsight:

@@ -134,7 +134,7 @@ def polygons_from_file(pfile: FileLike, fformat: str | None = "guess") -> Polygo
 
     Args:
         pfile (str): Name of file
-        fformat (str): See :meth:`Polygons.from_file`
+        fformat (str): One of the formats listed above. Default is 'guess'.
 
     Example::
 
@@ -144,7 +144,7 @@ def polygons_from_file(pfile: FileLike, fformat: str | None = "guess") -> Polygo
     return Polygons(**_file_importer(pfile, fformat=fformat))
 
 
-def polygons_from_roxar(
+def polygons_from_rms(
     project: str | Any,
     name: str,
     category: str,
@@ -152,7 +152,7 @@ def polygons_from_roxar(
     realisation: int | None = 0,
     attributes: bool | list[str] = False,
 ) -> Polygons:  # pragma: no cover
-    """Load a Polygons instance from Roxar RMS project.
+    """Load a Polygons instance from an RMS project.
 
     Note also that horizon/zone/faults name and category must exists
     in advance, otherwise an Exception will be raised.
@@ -172,7 +172,7 @@ def polygons_from_roxar(
     Example::
 
         import xtgeo
-        mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+        mysurf = xtgeo.polygons_from_rms(project, 'TopAare', 'DepthPolys')
 
     .. versionadded:: 2.19 general2d_data support is added
     .. versionadded:: 3.x support for polygon attributes (other than POLY_ID)
@@ -190,6 +190,59 @@ def polygons_from_roxar(
             realisation,
             attributes,
         )
+    )
+
+
+def polygons_from_roxar(
+    project: str | Any,
+    name: str,
+    category: str,
+    stype: str | None = "horizons",
+    realisation: int | None = 0,
+    attributes: bool | list[str] = False,
+) -> Polygons:  # pragma: no cover
+    """Load a Polygons instance from Roxar RMS project.
+
+    .. deprecated::
+        The `polygons_from_roxar` function is deprecated and will be removed in a future
+        version. Use `polygons_from_rms` instead.
+
+    Note also that horizon/zone/faults name and category must exists
+    in advance, otherwise an Exception will be raised.
+
+    Args:
+        project: Name of project (as folder) if outside RMS, or just use the magic
+            `project` word if within RMS.
+        name: Name of polygons item
+        category: For horizons/zones/faults: for example 'DL_depth'
+            or use a folder notation on clipboard/general2d_data.
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+            'faults', 'general2d_data'
+        realisation: Realisation number, default is 0
+        attributes: Polygons can store an attrubute (e.g. a fault name) per polygon,
+            i.e. per "POLY_ID")
+
+    Example::
+
+        import xtgeo
+        mysurf = xtgeo.polygons_from_rms(project, 'TopAare', 'DepthPolys')
+
+    .. versionadded:: 2.19 general2d_data support is added
+    .. versionadded:: 3.x support for polygon attributes (other than POLY_ID)
+    """
+    warnings.warn(
+        "The 'polygons_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'polygons_from_rms' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+    return polygons_from_rms(
+        project=project,
+        name=name,
+        category=category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
     )
 
 
@@ -352,6 +405,10 @@ class Polygons(XYZ):
 
     @property
     def pname(self) -> str:
+        """Name of the mandatory polygon ID column.
+
+        Setting this renames the column in the underlying dataframe.
+        """
         return self._pname
 
     @pname.setter
@@ -421,7 +478,7 @@ class Polygons(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Polygons class will be "
             "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         return self._df
 
@@ -430,7 +487,7 @@ class Polygons(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Polygons class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         self.set_dataframe(df)
 
@@ -446,6 +503,18 @@ class Polygons(XYZ):
         return self._df.copy() if copy else self._df
 
     def set_dataframe(self, df: pd.DataFrame) -> None:
+        """Set the polygons dataframe, replacing any existing data.
+
+        The input dataframe is copied, so later changes to ``df`` itself will
+        not affect this instance; note that Python objects stored in
+        object-dtype cells are not recursively cloned. Optional attribute
+        names (``dtname``, ``dhname``, ``tname``, ``hname``) are reset to None
+        if the corresponding columns are absent.
+
+        Args:
+            df: Dataframe holding at least the mandatory X, Y, Z and
+                polygon ID columns.
+        """
         self._df = df.apply(deepcopy)
         self._name_to_none_if_missing()
 
@@ -543,7 +612,7 @@ class Polygons(XYZ):
 
         return _xyz_io.to_file(self, pfile, fformat=fformat, attributes=attributes)
 
-    def to_roxar(
+    def to_rms(
         self,
         project: str | Any,
         name: str,
@@ -552,7 +621,7 @@ class Polygons(XYZ):
         realisation: int = 0,
         attributes: bool = False,
     ) -> None:  # pragma: no cover
-        """Export (store) a Polygons item to a Roxar RMS project.
+        """Export (store) a Polygons item to an RMS project.
 
         The export to the RMS project can be done either within the project
         or outside the project.
@@ -562,7 +631,7 @@ class Polygons(XYZ):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -596,6 +665,38 @@ class Polygons(XYZ):
             None,
             realisation,
             attributes,
+        )
+
+    def to_roxar(
+        self,
+        project: str | Any,
+        name: str,
+        category: str,
+        stype: str = "horizons",
+        realisation: int = 0,
+        attributes: bool = False,
+    ) -> None:
+        """Export a Polygons item to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            name=name,
+            category=category,
+            stype=stype,
+            realisation=realisation,
+            attributes=attributes,
         )
 
     def copy(self) -> Self:

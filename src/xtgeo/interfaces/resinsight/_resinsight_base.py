@@ -2,21 +2,134 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from xtgeo.common.log import null_logger
 
+from ._rips_package import NameConflictPolicy, require_rips
 from .rips_utils import RipsApiUtils
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from ._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
         RipsInstanceType,
+        RipsPolygonCollectionType,
         RipsProjectType,
+        RipsSurfaceCollectionType,
     )
 
+    _ItemT = TypeVar("_ItemT")
+    _FolderT = TypeVar("_FolderT", RipsSurfaceCollectionType, RipsPolygonCollectionType)
+
 logger = null_logger(__name__)
+
+
+def select_by_name(
+    items: Iterable[_ItemT],
+    name: str,
+    find_last: bool = True,
+    name_attr: str = "name",
+) -> _ItemT | None:
+    """Select the item from *items* whose *name_attr* equals *name*.
+
+    Shared lookup helper for the ResInsight readers/writers, which pick a
+    named object (case, surface, polygon, folder, ...) from an iterable.
+    Returns the last match when *find_last* is ``True`` (default), else the
+    first, or ``None`` when nothing matches.
+    """
+    selected = None
+    for item in items:
+        if getattr(item, name_attr, None) == name:
+            selected = item
+            if not find_last:
+                break
+    return selected
+
+
+def _resolve_folder(
+    root: _FolderT,
+    folder_path: str,
+    collection_type: type[_FolderT],
+    name_attr: str,
+    folder_kind: str,
+    create: bool = False,
+) -> _FolderT:
+    """Resolve a folder path using the concrete collection type."""
+    folder = root
+
+    for segment in filter(None, folder_path.split("/")):
+        sub = select_by_name(
+            (
+                child
+                for child in folder.children("SubCollections", collection_type)
+                if isinstance(child, collection_type)
+            ),
+            segment,
+            find_last=False,
+            name_attr=name_attr,
+        )
+        if sub is None:
+            if not create:
+                raise RuntimeError(f"Cannot find {folder_kind} folder '{segment}'")
+
+            # rips types add_folder() as PdmNestedCollectionBase, not the concrete
+            # collection type; this cast assumes that type without runtime checks.
+            sub = cast(
+                "_FolderT",
+                folder.add_folder(
+                    folder_name=segment, on_name_conflict=NameConflictPolicy.FAIL
+                ),
+            )
+        folder = sub
+
+    return folder
+
+
+def resolve_surface_folder(
+    root: RipsSurfaceCollectionType,
+    folder_path: str,
+    create: bool = False,
+) -> RipsSurfaceCollectionType:
+    """Resolve a ``/``-separated folder path below a surface collection.
+
+    An empty *folder_path* returns *root*. Missing segments are created when
+    *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
+    does not exist.
+    """
+    rips = require_rips()
+    return _resolve_folder(
+        root,
+        folder_path,
+        collection_type=rips.SurfaceCollection,
+        name_attr="surface_user_description",
+        folder_kind="surface",
+        create=create,
+    )
+
+
+def resolve_polygon_folder(
+    root: RipsPolygonCollectionType,
+    folder_path: str,
+    create: bool = False,
+) -> RipsPolygonCollectionType:
+    """Resolve a ``/``-separated folder path below a polygon collection.
+
+    An empty *folder_path* returns *root*. Missing segments are created when
+    *create* is ``True``. Otherwise, a ``RuntimeError`` is raised when a folder
+    does not exist.
+    """
+    rips = require_rips()
+    return _resolve_folder(
+        root,
+        folder_path,
+        collection_type=rips.PolygonCollection,
+        name_attr="polygon_collection_name",
+        folder_kind="polygon",
+        create=create,
+    )
 
 
 def validate_case(case: str | RipsCaseType) -> None:
@@ -48,7 +161,7 @@ class _BaseResInsightDataRW:
 
     def __init__(
         self,
-        instance_or_port: ResInsightInstanceOrPortType | None,
+        instance_or_port: ResInsightInstanceOrPortType | None = None,
     ) -> None:
         self.instance_or_port = instance_or_port
         self._ripsapi_utils: RipsApiUtils | None = None
@@ -101,10 +214,4 @@ class _BaseResInsightDataRW:
         if not cases:
             return None
 
-        selected_case = None
-        for case in cases:
-            if case.name == case_name:
-                selected_case = case
-                if not find_last:
-                    break
-        return selected_case
+        return select_by_name(cases, case_name, find_last=find_last)

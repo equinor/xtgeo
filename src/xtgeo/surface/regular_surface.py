@@ -81,6 +81,9 @@ if TYPE_CHECKING:
 
     from xtgeo.cube.cube1 import Cube
     from xtgeo.grid3d.grid import Grid, GridProperty
+    from xtgeo.interfaces.resinsight._rips_package import (
+        ResInsightInstanceOrPortType,
+    )
 
 
 xtg = XTGeoDialog()
@@ -124,7 +127,9 @@ def surface_from_file(
             'signature' is used to guess format first, then file extension.
         template: Only valid if ``ijxyz`` format, where an existing Cube or
             RegularSurface instance is applied to get correct topology.
-        values (bool): If True (default), surface values will be read (Irap binary only)
+        values (bool): If True (default), surface values will be read. If False,
+            only metadata will be read. Supported for Irap binary, ZMAP ASCII, XTG,
+            and HDF5 formats.
         engine (str): Key indended for developers initially, now deprecated and have no
             effect. To be removed in future versions.
         dtype: Requsted numpy dtype of values; default is float64, alternatively float32
@@ -229,11 +234,10 @@ def surface_from_roxar(
 
     """
 
-    # A pending deprecation warning will not show up in RMS for normal users
     warnings.warn(
         "The 'surface_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'surface_from_rms' instead.",
-        PendingDeprecationWarning,
+        FutureWarning,
         stacklevel=2,
     )
 
@@ -247,14 +251,14 @@ def surface_from_roxar(
     )
 
 
-def surface_from_cube(cube, value):
+def surface_from_cube(cube: Cube, value: float | int) -> RegularSurface:
     """Make RegularSurface directly from a cube instance with a constant value.
 
     The surface geometry will be exactly the same as for the Cube.
 
     Args:
-        cube(xtgeo.cube.Cube): A Cube instance
-        value (float): A constant value for the surface
+        cube (xtgeo.cube.Cube): A Cube instance
+        value (float | int): A constant value for the surface
 
     Example::
 
@@ -340,7 +344,7 @@ def surface_from_grid3d(
     if mode is not None:
         warnings.warn(
             "The 'mode' argument is deprecated, use 'property' instead",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         property = mode
@@ -482,6 +486,49 @@ def create_synthetic_surface(
         yori=yori,
         rotation=rotation,
         values=zv,
+    )
+
+
+def regular_surface_from_resinsight(
+    instance_or_port: "ResInsightInstanceOrPortType | None",
+    surface_name: str,
+    property_name: str | None = None,
+    folder_name: str = "",
+) -> "RegularSurface":
+    """Load a regular surface from a ResInsight project.
+
+    Surface names are unique within a ResInsight folder, so ``surface_name``
+    and ``folder_name`` identify at most one surface.
+
+    Args:
+        instance_or_port: ``rips.Instance`` or gRPC port; ``None`` to
+            auto-discover a running ResInsight instance.
+        surface_name: Name of the surface to load.
+        property_name: Property to read; ``None`` (default) reads the
+            surface's current depth property, e.g. pass ``"Porosity"``.
+        folder_name: ``/``-separated folder path (e.g. ``"Reservoir/Top"``),
+            empty (default) for the root folder. Not searched recursively.
+
+    Returns:
+        A populated :class:`xtgeo.RegularSurface`.
+
+    Example::
+
+        import xtgeo
+
+        surf = xtgeo.regular_surface_from_resinsight(5000, "TopReservoir")
+
+    """
+    from xtgeo.interfaces.resinsight._regular_surface import RegularSurfaceReader
+
+    return (
+        RegularSurfaceReader(instance_or_port=instance_or_port)
+        .load(
+            surface_name=surface_name,
+            property_name=property_name,
+            folder_name=folder_name,
+        )
+        .to_xtgeo_surface()
     )
 
 
@@ -630,7 +677,7 @@ class RegularSurface:
             warnings.warn(
                 "The 'masked' parameter is deprecated and will be removed in a "
                 "future version.",
-                DeprecationWarning,
+                FutureWarning,
                 stacklevel=2,
             )
 
@@ -938,14 +985,15 @@ class RegularSurface:
         When setting values, list-like input (lists, tuples) is also accepted, as
         long as the length is correct and the entries are number-like.
 
-        In order to specify undefined values, you can specify the ``undef`` attribute
-        in the list, or use ``float("nan")``.
+        To specify undefined values, use a masked array, ``float("nan")``, or the
+        standard ``UNDEF`` value. Values equal to a finite custom ``undef`` are not
+        automatically masked (https://github.com/equinor/xtgeo/issues/1684).
 
         Example::
 
             # list like input where nrow=3 and ncol=5 (15 entries)
             newvalues = list(range(15))
-            newvalues[2] = srf.undef
+            newvalues[2] = float("nan")
             srf.values = newvalues  # here, entry 2 will be undefined
         """
         return self._values
@@ -1019,7 +1067,7 @@ class RegularSurface:
     def generate_hash(self, hashmethod="md5"):
         """Return a unique hash ID for current instance.
 
-        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+        See :func:`xtgeo.generic_hash` for available hash methods.
 
         .. versionadded:: 2.14
         """
@@ -1108,8 +1156,8 @@ class RegularSurface:
                 is currently supported. If None or guess, the file 'signature' is
                 used to guess format first, then file extension.
             load_values: If True (default), then full array is read, if False
-                only metadata will be read. Valid for Irap binary only. This allows
-                lazy loading in e.g. ensembles.
+                only metadata will be read. Supported for Irap binary, ZMAP ASCII,
+                XTG, and HDF5 formats. This allows lazy loading in e.g. ensembles.
             kwargs: some readers allow additonal options
 
         Keyword Args:
@@ -1141,7 +1189,7 @@ class RegularSurface:
     def load_values(self):
         """Import surface values in cases where metadata only is loaded.
 
-        Currently, only Irap binary format is supported.
+        Supported for Irap binary, ZMAP ASCII, XTG, and HDF5 formats.
 
         Example::
 
@@ -1181,7 +1229,7 @@ class RegularSurface:
 
         Note, for zmap_ascii and storm_binary an unrotation will be done
         automatically. The sampling will be somewhat finer than the
-        original map in order to prevent aliasing. See :func:`unrotate`.
+        original map in order to prevent aliasing. See :meth:`unrotate`.
 
         Args:
             mfile: Name of file,
@@ -1453,12 +1501,10 @@ class RegularSurface:
            ``to_roxar()`` is deprecated and will be removed in a future version.
            Use :meth:`to_rms()` instead.
         """
-        # a PendingDeprecationWarning will not show up for RMS users, which is intended
-        # since they should not be 'disturbed' by this change at this point.
         warnings.warn(
             "The 'to_roxar()' method is deprecated and will be removed in a later "
             "xtgeo version. Use 'to_rms()' instead.",
-            PendingDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         self.to_rms(
@@ -1470,8 +1516,72 @@ class RegularSurface:
             domain=domain,
         )
 
+    def to_resinsight(
+        self,
+        instance_or_port: "ResInsightInstanceOrPortType | None",
+        surface_name: str,
+        folder_name: str = "",
+        property_name: str = "Depth",
+        set_as_depth: bool = True,
+        replace: bool = False,
+    ) -> None:
+        """Export this regular surface to a ResInsight project.
+
+        An existing surface of the same name is updated in place when its
+        geometry matches; otherwise it must be deleted and recreated, which
+        requires ``replace=True``.
+
+        Args:
+            instance_or_port: ``rips.Instance`` or gRPC port; ``None`` to
+                auto-discover a running ResInsight instance.
+            surface_name: Display name for the surface in ResInsight.
+            folder_name: ``/``-separated folder path (e.g. ``"Reservoir/Top"``),
+                empty (default) for the root folder. Missing folders are
+                created.
+            property_name: Property to write the values under, ``"Depth"`` by
+                default. Call repeatedly to add several properties.
+            set_as_depth: Mark the written property as the depth property.
+            replace: Allow deleting and recreating an existing surface whose
+                geometry differs.
+
+        Example::
+
+            import xtgeo
+
+            surf = xtgeo.surface_from_file("top_reservoir.gri")
+            surf.to_resinsight(5000, surface_name="TopReservoir")
+
+            # Add porosity as a second property on the same surface
+            poro = xtgeo.surface_from_file("porosity.gri")
+            poro.to_resinsight(
+                5000, "TopReservoir", property_name="Porosity", set_as_depth=False
+            )
+
+        """
+        from xtgeo.interfaces.resinsight._regular_surface import (
+            RegularSurfaceDataResInsight,
+            RegularSurfaceWriter,
+        )
+
+        # ResInsight requires yinc > 0; normalise as done for RMS export.
+        # This also covers yflip == 1 with a negative yinc, which
+        # make_lefthanded() handles internally but is not implied by yflip.
+        use_srf = self
+        if self.yflip == -1 or self.yinc < 0:
+            use_srf = self.copy()
+            use_srf.make_lefthanded()
+
+        RegularSurfaceWriter(instance_or_port=instance_or_port).save(
+            RegularSurfaceDataResInsight.from_xtgeo_surface(use_srf, name=surface_name),
+            surface_name,
+            folder_name=folder_name,
+            property_name=property_name,
+            set_as_depth=set_as_depth,
+            replace=replace,
+        )
+
     @classmethod
-    def _read_cube(cls, cube, zlevel):
+    def _read_cube(cls, cube: Cube, zlevel: float | int):
         """Make a constant surface from a Cube, at a given time/depth level.
 
         The surface instance will have exactly the same origins and increments
@@ -1479,13 +1589,13 @@ class RegularSurface:
 
         Args:
             cube (Cube): XTGeo Cube instance
-            zlevel (float): Depth or Time (or whatever) value of the surface
+            zlevel (float | int): Depth or Time (or whatever) value of the surface
 
         Returns:
             Object instance updated
 
         Example:
-            Here the from_roxar method is used to initiate the object
+            Here the from_rms method is used to initiate the object
             directly::
 
             >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
@@ -1925,7 +2035,7 @@ class RegularSurface:
         warnings.warn(
             "The dataframe() is deprecated and will be removed in xtgeo "
             "version 5. Use get_dataframe() instead",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
 
         return self.get_dataframe(**kwargs)
@@ -2892,7 +3002,7 @@ class RegularSurface:
             warnings.warn(
                 "Other algorithms than no. 3 is not recommended, and will be "
                 "removed in near future.",
-                DeprecationWarning,
+                FutureWarning,
             )
 
         scube = surface_from_cube(cube, 0)
@@ -2952,8 +3062,8 @@ class RegularSurface:
                 of points in the polygons, where tolerance is 0.1. Another
                 alternative to True is to input a Dict on the form
                 ``{"tolerance": 2.0, "preserve_topology": True}``, cf. the
-                :func:`Polygons.simplify()` method. For details on e.g. tolerance, see
-                Shapely's simplify() method.
+                :meth:`xtgeo.Polygons.simplify()` method. For details on e.g.
+                tolerance, see Shapely's simplify() method.
 
         Returns:
             A XTGeo Polygons instance
@@ -2969,7 +3079,7 @@ class RegularSurface:
             boundary.filter_byid([0])  # polygon is updated in-place
 
         See also:
-            The :func:`Polygons.boundary_from_points()` class method.
+            The :meth:`xtgeo.Polygons.boundary_from_points()` class method.
 
         .. versionadded:: 3.1
         """

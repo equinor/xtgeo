@@ -78,8 +78,8 @@ def pytest_runtest_setup(item):
     if "bigtest" in markers and "XTG_BIGTEST" not in os.environ:
         pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
-    # pytest.mark.requires_roxar:
-    if "requires_roxar" in markers and not in_roxar_env():
+    # pytest.mark.requires_rmsapi:
+    if "requires_rmsapi" in markers and not in_roxar_env():
         pytest.skip("Skip test if outside RMSVENV_RELEASE (former ROXENV)")
 
     # pytest.mark.requires_opm:

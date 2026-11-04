@@ -1,26 +1,30 @@
+from __future__ import annotations
+
+from typing import Literal
+
 import pytest
 
-import xtgeo
 from tests.conftest import measure_peak_memory_usage
 from xtgeo.common.log import functimer
+from xtgeo.cube import Cube
 
 
 @pytest.mark.bigtest
-def test_large_cube_memory_usage():
+def test_large_cube_memory_usage() -> None:
     """Get attribute around a constant cube slices and check peak memory."""
     import gc
 
     # Cube size: 500 * 600 * 700 * 4 bytes ~= 840 MB
-    mycube = xtgeo.Cube(
-        ncol=500, nrow=600, nlay=700, xinc=12, yinc=12, zinc=4, values=666.0
-    )
+    mycube = Cube(ncol=500, nrow=600, nlay=700, xinc=12, yinc=12, zinc=4, values=666.0)
 
     level1 = 10
     level2 = 1500
 
     @measure_peak_memory_usage
     @functimer(output="print")
-    def compute_with_mem_tracking(cube, interp):
+    def compute_with_mem_tracking(
+        cube: Cube, interp: Literal["linear", "cubic"]
+    ) -> dict:
         """Helper function to be decorated."""
         return cube.compute_attributes_in_window(
             level1,
@@ -31,7 +35,8 @@ def test_large_cube_memory_usage():
     # Force garbage collection to get a cleaner baseline
     gc.collect()
 
-    for intp in ["linear", "cubic"]:
+    interpolations: list[Literal["linear", "cubic"]] = ["linear", "cubic"]
+    for intp in interpolations:
         print(f"\nTesting interpolation={intp}")
         peak_mem_increase_bytes, result = compute_with_mem_tracking(mycube, intp)
 

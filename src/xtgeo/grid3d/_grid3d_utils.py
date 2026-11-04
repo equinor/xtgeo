@@ -10,7 +10,7 @@ import resfo
 import roffio
 
 from xtgeo.common import null_logger
-from xtgeo.common.constants import MAXDATES, MAXKEYWORDS
+from xtgeo.common.constants import MAXKEYWORDS
 
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper
@@ -46,7 +46,6 @@ def scan_keywords(
 
 def scan_dates(
     pfile: FileWrapper,
-    maxdates: int = MAXDATES,
     dataframe: bool = False,
 ) -> list | pd.DataFrame:
     """Quick scan dates in a simulation restart file.

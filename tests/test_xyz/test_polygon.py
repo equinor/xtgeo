@@ -658,7 +658,7 @@ def test_raise_special_name_name_type(name_attribute):
             setattr(pol, name_attribute, "anyname_" + name_attribute)
 
 
-@suppress_xtgeo_warnings(DeprecationWarning)
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 @pytest.mark.parametrize(
     "func, where, value, expected_result",
     [
@@ -717,7 +717,7 @@ def test_polygons_operation_in_polygons(
     assert list(pointset.get_dataframe()["Z_TVDSS"]) == expected_result
 
 
-@suppress_xtgeo_warnings(DeprecationWarning)
+@suppress_xtgeo_warnings(FutureWarning, DeprecationWarning)
 @pytest.mark.parametrize(
     "functionname, expected",
     [

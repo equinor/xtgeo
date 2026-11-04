@@ -16,6 +16,18 @@ def fixture_loadwell1(testdata_path):
     return xtgeo.blockedwell_from_file(wfile)
 
 
+def test_to_file_rms_ascii_precision(loadwell1, tmp_path):
+    """Test the public BlockedWell export exposes RMS ASCII precision."""
+    default_file = tmp_path / "default.bw"
+    loadwell1.to_file(default_file)
+    assert "462688.15942400" in default_file.read_text()
+
+    custom_file = tmp_path / "custom.bw"
+    loadwell1.to_file(custom_file, precision=4)
+    assert "462688.1594" in custom_file.read_text()
+    assert "462688.15942400" not in custom_file.read_text()
+
+
 def test_import_blockedwell(loadwell1):
     """Import blocked well from file."""
 

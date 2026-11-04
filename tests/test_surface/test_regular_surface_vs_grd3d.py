@@ -145,5 +145,5 @@ def test_surface_from_grd3d_layer_deprecate_mode(testdata_path):
 
     grd = xtgeo.grid_from_file(testdata_path / RGRD2, fformat="roff")
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         _ = xtgeo.surface_from_grid3d(grd, where="3_base", mode="depth")
