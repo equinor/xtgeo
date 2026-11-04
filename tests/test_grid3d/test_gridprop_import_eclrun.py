@@ -79,12 +79,9 @@ def test_scan_ecl_keywords_w_dates_uses_first_intehead_after_seqnum():
     )
     unrst.seek(0)
 
-    keywords = grid3d_utils._scan_ecl_keywords_w_dates(
-        FileWrapper(unrst),
-        dataframe=False,
-    )
+    keywords = grid3d_utils._scan_ecl_keywords_w_dates(FileWrapper(unrst))
 
-    assert [kw[0] for kw in keywords] == [
+    assert keywords["KEYWORD"].to_list() == [
         "HEAD",
         "SEQNUM",
         "PROPA",
@@ -96,7 +93,7 @@ def test_scan_ecl_keywords_w_dates_uses_first_intehead_after_seqnum():
         "INTEHEAD",
         "PROPD",
     ]
-    assert [kw[-1] for kw in keywords] == [
+    assert keywords["DATE"].to_list() == [
         0,
         20240102,
         20240102,
@@ -108,7 +105,13 @@ def test_scan_ecl_keywords_w_dates_uses_first_intehead_after_seqnum():
         20240103,
         20240103,
     ]
-    assert all(len(kw) == 5 for kw in keywords)
+    assert keywords.columns.to_list() == [
+        "KEYWORD",
+        "TYPE",
+        "NITEMS",
+        "BYTESTART",
+        "DATE",
+    ]
 
 
 @dataclass

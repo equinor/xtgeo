@@ -211,7 +211,6 @@ def test_scan_keywords_with_dates_matches_scan_dates(testdata_path):
     kw_df = grid3d_utils.scan_keywords(
         FileWrapper(testdata_path / RFILE1),
         fformat="xecl",
-        dataframe=True,
         dates=True,
     )
     seqnum_dates = (
@@ -251,7 +250,6 @@ def test_scan_dates_lgr_uses_first_intehead_per_seqnum():
     keywords = grid3d_utils.scan_keywords(
         FileWrapper(unrst),
         fformat="xecl",
-        dataframe=True,
         dates=True,
     )
     assert keywords.loc[keywords["KEYWORD"] == "INTEHEAD", "DATE"].to_list() == [

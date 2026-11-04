@@ -15,8 +15,6 @@ from xtgeo.common.constants import MAXKEYWORDS
 if TYPE_CHECKING:
     from xtgeo.io._file import FileWrapper
 
-    from .grid_properties import GridPropertiesKeywords, KeywordDateTuple, KeywordTuple
-
 logger = null_logger(__name__)
 
 
@@ -24,9 +22,8 @@ def scan_keywords(
     pfile: FileWrapper,
     fformat: Literal["xecl", "roff"] = "xecl",
     maxkeys: int = MAXKEYWORDS,
-    dataframe: bool = False,
     dates: bool = False,
-) -> GridPropertiesKeywords:
+) -> pd.DataFrame:
     """Quick scan of keywords in Eclipse binary restart/init/... file,
     or ROFF binary files.
 
@@ -36,11 +33,11 @@ def scan_keywords(
         raise ValueError(f"File format can be either `roff` or `xecl`, given {fformat}")
 
     if fformat == "roff":
-        return _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
+        return _scan_roff_keywords(pfile, maxkeys=maxkeys)
     return (
-        _scan_ecl_keywords_w_dates(pfile, maxkeys=maxkeys, dataframe=dataframe)
+        _scan_ecl_keywords_w_dates(pfile, maxkeys=maxkeys)
         if dates
-        else _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
+        else _scan_ecl_keywords(pfile, maxkeys=maxkeys)
     )
 
 
@@ -81,8 +78,7 @@ def scan_dates(
 def _scan_ecl_keywords(
     pfile: FileWrapper,
     maxkeys: int = MAXKEYWORDS,
-    dataframe: bool = False,
-) -> list[KeywordTuple] | pd.DataFrame:
+) -> pd.DataFrame:
     keywords = []
     for item in resfo.lazy_read(pfile.file):
         keywords.append(
@@ -94,21 +90,16 @@ def _scan_ecl_keywords(
             )
         )
 
-    return (
-        pd.DataFrame.from_records(
-            keywords,
-            columns=["KEYWORD", "TYPE", "NITEMS", "BYTESTART"],
-        )
-        if dataframe
-        else keywords
+    return pd.DataFrame.from_records(
+        keywords,
+        columns=["KEYWORD", "TYPE", "NITEMS", "BYTESTART"],
     )
 
 
 def _scan_ecl_keywords_w_dates(
     pfile: FileWrapper,
     maxkeys: int = MAXKEYWORDS,
-    dataframe: bool = False,
-) -> list[KeywordDateTuple] | pd.DataFrame:
+) -> pd.DataFrame:
     """Add a date column to the keyword"""
     result = []
     date = 0
@@ -135,21 +126,16 @@ def _scan_ecl_keywords_w_dates(
 
         result.append((name, dtype, reclen, bytepos, date))
 
-    return (
-        pd.DataFrame.from_records(
-            result,
-            columns=["KEYWORD", "TYPE", "NITEMS", "BYTESTART", "DATE"],
-        )
-        if dataframe
-        else result
+    return pd.DataFrame.from_records(
+        result,
+        columns=["KEYWORD", "TYPE", "NITEMS", "BYTESTART", "DATE"],
     )
 
 
 def _scan_roff_keywords(
     pfile: FileWrapper,
     maxkeys: int = MAXKEYWORDS,
-    dataframe: bool = False,
-) -> list[KeywordTuple] | pd.DataFrame:
+) -> pd.DataFrame:
     with open(pfile.file, "rb") as fin:
         is_binary = fin.read(8) == b"roff-bin"
 
@@ -196,13 +182,9 @@ def _scan_roff_keywords(
             if done:
                 break
 
-    return (
-        pd.DataFrame.from_records(
-            keywords,
-            columns=["KEYWORD", "TYPE", "NITEMS", "BYTESTARTDATA"],
-        )
-        if dataframe
-        else keywords
+    return pd.DataFrame.from_records(
+        keywords,
+        columns=["KEYWORD", "TYPE", "NITEMS", "BYTESTARTDATA"],
     )
 
 

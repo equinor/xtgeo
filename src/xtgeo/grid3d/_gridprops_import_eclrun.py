@@ -153,11 +153,9 @@ def import_ecl_init_gridproperties(
     kwlist = utils.scan_keywords(
         pfile,
         fformat="xecl",
-        dataframe=True,
         dates=True,
         maxkeys=maxkeys,
     )
-    assert not isinstance(kwlist, list)
 
     validnames = []
 
@@ -247,11 +245,9 @@ def import_ecl_restart_gridproperties(
     kwlist = utils.scan_keywords(
         pfile,
         fformat="xecl",
-        dataframe=True,
         dates=True,
         maxkeys=maxkeys,
     )
-    assert not isinstance(kwlist, list)
 
     validnamedatepairs, validdates = _process_valid_namesdates(kwlist, grid)
 
