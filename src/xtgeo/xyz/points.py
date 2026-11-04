@@ -222,7 +222,7 @@ def points_from_file(
     return Points(**_file_importer(pfile, fformat=fformat))
 
 
-def points_from_roxar(
+def points_from_rms(
     project: Any,
     name: str,
     category: str,
@@ -230,7 +230,7 @@ def points_from_roxar(
     realisation: int = 0,
     attributes: bool | list[str] = False,
 ) -> Points:
-    """Load a Points instance from Roxar RMS project.
+    """Load a Points instance from an RMS project.
 
     The import from the RMS project can be done either within the project
     or outside the project.
@@ -256,7 +256,7 @@ def points_from_roxar(
 
         # inside RMS:
         import xtgeo
-        mypoints = xtgeo.points_from_roxar(project, 'TopEtive', 'DP_seismic')
+        mypoints = xtgeo.points_from_rms(project, 'TopEtive', 'DP_seismic')
 
     .. versionadded:: 2.19 general2d_data support is added
     """
@@ -270,6 +270,64 @@ def points_from_roxar(
             realisation,
             attributes,
         )
+    )
+
+
+def points_from_roxar(
+    project: Any,
+    name: str,
+    category: str,
+    stype: str = "horizons",
+    realisation: int = 0,
+    attributes: bool | list[str] = False,
+) -> Points:
+    """Load a Points instance from Roxar RMS project.
+
+    .. deprecated::
+        The `points_from_roxar` function is deprecated and will be removed in a future
+        version. Use `points_from_rms` instead.
+
+    The import from the RMS project can be done either within the project
+    or outside the project.
+
+    Note also that horizon/zone/faults name and category must exists
+    in advance, otherwise an Exception will be raised.
+
+    Args:
+        project: Name of project (as folder) if outside RMS, or just use the
+            magic `project` word if within RMS.
+        name (str): Name of points item, or name of well pick set if
+            well picks.
+        category: For horizons/zones/faults: for example 'DL_depth'
+            or use a folder notation on clipboard/general2d_data.
+            For well picks it is the well pick type: 'horizon' or 'fault'.
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+            'general2d_data', 'faults' or 'well_picks'
+        realisation: Realisation number, default is 0
+        attributes (bool): Bool or list with attribute names to collect.
+            If True, all attributes are collected.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mypoints = xtgeo.points_from_rms(project, 'TopEtive', 'DP_seismic')
+
+    .. versionadded:: 2.19 general2d_data support is added
+    """
+    warnings.warn(
+        "The 'points_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'points_from_rms' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+    return points_from_rms(
+        project=project,
+        name=name,
+        category=category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
     )
 
 
@@ -373,7 +431,7 @@ def _generate_docstring_points(xname: str, yname: str, zname: str) -> str:
     return f"""
     Class for Points data in XTGeo.
 
-    The Points class is a subclass of the :py:class:`~xtgeo.xyz._xyz.XYZ` abstract
+    The Points class is a subclass of the common ``XYZ`` abstract
     class, and the point set itself is a `pandas <http://pandas.pydata.org>`_
     dataframe object.
 
@@ -513,7 +571,7 @@ class Points(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Points class will be "
             "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
             stacklevel=2,
         )
         return self._df
@@ -523,7 +581,7 @@ class Points(XYZ):
         warnings.warn(
             "Direct access to the dataframe property in Points class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe(df)` instead.",
-            PendingDeprecationWarning,
+            DeprecationWarning,
         )
         self.set_dataframe(df)
 
@@ -540,6 +598,15 @@ class Points(XYZ):
         return self._df.copy() if copy else self._df
 
     def set_dataframe(self, df: pd.DataFrame) -> None:
+        """Set the points dataframe, replacing any existing data.
+
+        The input dataframe is copied, so later changes to ``df`` itself will
+        not affect this instance. Note that Python objects stored in
+        object-dtype cells are not recursively cloned.
+
+        Args:
+            df: Dataframe holding at least the mandatory X, Y and Z columns.
+        """
         self._df = df.apply(deepcopy)
 
     def _random(self, nrandom: int = 10) -> None:
@@ -609,7 +676,7 @@ class Points(XYZ):
             **kwargs,
         )
 
-    def to_roxar(
+    def to_rms(
         self,
         project: Any,
         name: str,
@@ -619,7 +686,7 @@ class Points(XYZ):
         realisation: int = 0,
         attributes: bool = False,
     ) -> None:  # pragma: no cover
-        """Export (store) a Points item to a Roxar RMS project.
+        """Export (store) a Points item to an RMS project.
 
         The export to the RMS project can be done either within the project
         or outside the project.
@@ -629,7 +696,7 @@ class Points(XYZ):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -663,6 +730,40 @@ class Points(XYZ):
             pfilter,
             realisation,
             attributes,
+        )
+
+    def to_roxar(
+        self,
+        project: Any,
+        name: str,
+        category: str,
+        stype: str = "horizons",
+        pfilter: dict[str, list[str]] | None = None,
+        realisation: int = 0,
+        attributes: bool = False,
+    ) -> None:
+        """Export a Points item to an RMS project.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            name=name,
+            category=category,
+            stype=stype,
+            pfilter=pfilter,
+            realisation=realisation,
+            attributes=attributes,
         )
 
     def copy(self) -> Self:

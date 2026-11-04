@@ -421,7 +421,7 @@ class XTGeoDialog:
         warnings.warn(
             "functionlogger is deprecated and will be removed in a future version. "
             "Use null_logger instead.",
-            DeprecationWarning,
+            FutureWarning,
         )
         return null_logger(name)
 

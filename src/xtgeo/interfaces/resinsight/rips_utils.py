@@ -8,13 +8,13 @@ from xtgeo.common.log import null_logger
 
 from ._rips_package import (
     ResInsightInstanceOrPortType,
-    RipsInstanceType,
-    RipsProjectType,
     require_rips,
 )
 
 if TYPE_CHECKING:
     import pathlib
+
+    from ._rips_package import RipsInstanceType, RipsProjectType
 
 logger = null_logger(__name__)
 
@@ -34,8 +34,6 @@ class RipsApiUtils:
         instance_or_port: ResInsightInstanceOrPortType | None = None,
     ) -> None:
         rips = require_rips()
-
-        self._instance: RipsInstanceType
 
         if instance_or_port is None or (
             isinstance(instance_or_port, int) and not isinstance(instance_or_port, bool)

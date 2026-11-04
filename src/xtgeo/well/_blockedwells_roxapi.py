@@ -2,9 +2,9 @@
 
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
-from xtgeo.roxutils import RoxUtils
+from xtgeo.interfaces.rms import RmsApiUtils
 
-from .blocked_well import blockedwell_from_roxar
+from .blocked_well import blockedwell_from_rms
 
 xtg = XTGeoDialog()
 logger = null_logger(__name__)
@@ -18,7 +18,7 @@ def import_bwells_roxapi(
     """Private function for loading project and ROXAPI blockwell import"""
 
     logger.debug("Opening RMS project ...")
-    rox = RoxUtils(project, readonly=True)
+    rox = RmsApiUtils(project, readonly=True)
 
     _roxapi_import_bwells(self, rox, gname, bwname, lognames, ijk, realisation)
 
@@ -50,7 +50,7 @@ def _roxapi_import_bwells(
     logger.debug("Loading wells ...")
     for wname in wnames:
         logger.debug("Loading well %s", wname)
-        bwtmp = blockedwell_from_roxar(
+        bwtmp = blockedwell_from_rms(
             rox.project,
             gname,
             bwname,

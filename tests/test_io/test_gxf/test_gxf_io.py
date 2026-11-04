@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import warnings
 from dataclasses import FrozenInstanceError
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -11,6 +12,7 @@ import pytest
 
 import xtgeo
 from xtgeo.io._file import FileWrapper
+from xtgeo.io.gxf import GXFSerializationWarning
 from xtgeo.io.gxf._gxf_io import GXFData
 from xtgeo.surface import _regsurf_export
 from xtgeo.surface._regsurf_import import import_gxf
@@ -999,6 +1001,48 @@ class TestGXFParsing:
         expected_mask = np.array([[False, False, False], [False, True, False]])
         np.testing.assert_array_equal(result.grid.mask, expected_mask)
 
+    @pytest.mark.parametrize(
+        "key",
+        ["#POINTS", "#GRID", "##XMAX", "#UNKNOWN_KEY"],
+    )
+    def test_key_line_with_trailing_tokens_raises(
+        self,
+        key: str,
+        tmp_path: Path,
+        valid_gxf_content: str,
+    ) -> None:
+        """Every standard, extension, and unknown key must be a single token."""
+        if key == "#UNKNOWN_KEY":
+            content = valid_gxf_content.replace(
+                "#GRID\n", "#UNKNOWN_KEY trailing\n1\n#GRID\n", 1
+            )
+        else:
+            content = valid_gxf_content.replace(f"{key}\n", f"{key} trailing\n", 1)
+        path = tmp_path / "trailing_key_token.gxf"
+        path.write_text(content)
+
+        with pytest.raises(ValueError) as exc_info:
+            GXFData.from_file(path)
+
+        message = str(exc_info.value)
+        assert f"In file {path}" in message
+        assert f"Malformed GXF key line '{key}'" in message
+        assert "expected a single key token, but found 2 tokens" in message
+
+    def test_surrounding_whitespace_on_single_key_tokens_is_accepted(
+        self, valid_gxf_content: str
+    ) -> None:
+        """Surrounding whitespace must not make a single key token malformed."""
+        content = valid_gxf_content.replace("#POINTS\n", " \t#POINTS \t\n", 1)
+        content = content.replace("##XMAX\n", " \t##XMAX \t\n", 1)
+        content = content.replace("#GRID\n", " \t#UNKNOWN_KEY \t\n1\n \t#GRID \t\n", 1)
+
+        with pytest.warns(UserWarning, match="UNKNOWN_KEY"):
+            result = GXFData.from_file(gxf_stream(content))
+
+        assert result.points == 3
+        assert result.rows == 2
+
     def test_from_file_path_input(self, tmp_path: Path, valid_gxf_content: str) -> None:
         """GXFData.from_file should accept filesystem paths."""
         path = tmp_path / "surface.gxf"
@@ -1022,6 +1066,38 @@ class TestGXFParsing:
 
         with pytest.raises(ValueError, match="Number of values in #GRID section"):
             GXFData.from_file(gxf_stream(content))
+
+    @pytest.mark.parametrize(
+        ("points", "rows", "invalid_key"),
+        [
+            (0, 2, "#POINTS"),
+            (-1, 2, "#POINTS"),
+            (2, 0, "#ROWS"),
+            (2, -1, "#ROWS"),
+        ],
+    )
+    def test_non_positive_dimensions_raise_dimension_specific_error(
+        self, points: int, rows: int, invalid_key: str
+    ) -> None:
+        """Parsed dimensions must be positive before validating grid size."""
+        content = f"""
+#POINTS
+{points}
+#ROWS
+{rows}
+#GRID
+"""
+
+        with pytest.raises(ValueError) as exc_info:
+            GXFData.from_file(gxf_stream(content))
+
+        message = str(exc_info.value)
+        invalid_value = points if invalid_key == "#POINTS" else rows
+        assert "In file <_io.StringIO object at " in message
+        assert f"Invalid value '{invalid_value}'" in message
+        assert f"key '{invalid_key}'" in message
+        assert "Expected a strictly positive integer" in message
+        assert "Number of values in #GRID section" not in message
 
     @pytest.mark.parametrize(
         "missing_key",
@@ -1259,8 +1335,9 @@ class TestGXFParsing:
 class TestGXFFileRoundtrip:
     """Tests for write-then-read roundtrips via file streams."""
 
-    def test_roundtrip_stringio(self) -> None:
-        """Writing to StringIO and reading back should preserve GXF data."""
+    @pytest.mark.parametrize("stream_factory", [StringIO, BytesIO])
+    def test_roundtrip_stream(self, stream_factory: Callable[[], IO]) -> None:
+        """Text and binary stream round trips should preserve all GXF data."""
         values = np.ma.array(
             [[1.0, 2.0, 3.0], [4.0, 9999.0, 6.0]],
             mask=[[False, False, False], [False, True, False]],
@@ -1277,7 +1354,7 @@ class TestGXFFileRoundtrip:
             grid=values,
         )
 
-        stream = StringIO()
+        stream = stream_factory()
         gxf.to_file(stream)
         stream.seek(0)
 
@@ -1291,23 +1368,6 @@ class TestGXFFileRoundtrip:
         assert re_read.yorigin == pytest.approx(gxf.yorigin)
         assert re_read.rotation == pytest.approx(gxf.rotation)
         assert re_read.dummy == pytest.approx(gxf.dummy)
-        np.testing.assert_allclose(re_read.grid.data, gxf.grid.data)
-        np.testing.assert_array_equal(re_read.grid.mask, gxf.grid.mask)
-
-    def test_roundtrip_bytesio(self) -> None:
-        """Writing to BytesIO and reading back should preserve grid data."""
-        values = np.ma.array(
-            [[1.0, 2.0], [3.0, 9999.0]],
-            mask=[[False, False], [False, True]],
-        )
-        gxf = make_gxf_data(dummy=9999.0, grid=values)
-
-        stream = BytesIO()
-        gxf.to_file(stream)
-        stream.seek(0)
-
-        re_read = GXFData.from_file(stream)
-
         np.testing.assert_allclose(re_read.grid.data, gxf.grid.data)
         np.testing.assert_array_equal(re_read.grid.mask, gxf.grid.mask)
 
@@ -1426,41 +1486,222 @@ class TestGXFWriter:
         assert lines[xmax_index + 1] == "137.5"
         assert lines[ymax_index + 1] == "160.0"
 
-    def test_line_length_at_most_80_chars(self) -> None:
-        """GXF spec requires all lines <= 80 characters."""
-        ncol = 20
-        nrow = 3
-        values = np.ma.array(
-            [
-                np.arange(1000.0, 1000.0 + ncol),
-                np.arange(2000.0, 2000.0 + ncol),
-                np.arange(3000.0, 3000.0 + ncol),
-            ]
-        )
+    @pytest.mark.parametrize(
+        ("overrides", "field"),
+        [
+            ({"xorigin": 1e308, "ptseparation": 1e308}, "##XMAX"),
+            ({"yorigin": 1e308, "rwseparation": 1e308}, "##YMAX"),
+        ],
+    )
+    def test_non_finite_derived_metadata_raises_field_specific_error(
+        self, overrides: dict[str, float], field: str
+    ) -> None:
+        """Overflowing derived metadata should identify its GXF field."""
+        gxf = make_gxf_data(**overrides)
+
+        with pytest.raises(ValueError, match=field):
+            gxf.to_file(StringIO())
+
+    def test_derived_metadata_failure_leaves_stream_unchanged(self) -> None:
+        """Metadata validation should happen before writing to a stream."""
+        gxf = make_gxf_data(xorigin=1e308, ptseparation=1e308)
+        stream = StringIO("existing content")
+
+        with pytest.raises(ValueError, match="##XMAX"):
+            gxf.to_file(stream)
+
+        assert stream.getvalue() == "existing content"
+
+    @pytest.mark.parametrize("preexisting", [False, True])
+    def test_derived_metadata_failure_does_not_create_or_truncate_file(
+        self, tmp_path: Path, preexisting: bool
+    ) -> None:
+        """Metadata validation should happen before opening a destination path."""
+        gxf = make_gxf_data(yorigin=1e308, rwseparation=1e308)
+        path = tmp_path / "invalid_metadata.gxf"
+        if preexisting:
+            path.write_text("existing content")
+
+        with pytest.raises(ValueError, match="##YMAX"):
+            gxf.to_file(path)
+
+        if preexisting:
+            assert path.read_text() == "existing content"
+        else:
+            assert not path.exists()
+
+    @pytest.mark.parametrize(
+        ("dummy", "dummy_formatted"),
+        [
+            (9.999999999999999e32, "1e+33"),
+            (999999999999999945575230987042816, "1e+33"),
+            (1234567890.123456, "1234567890.1235"),
+        ],
+    )
+    def test_long_dummy_is_formatted_within_field_width(
+        self, dummy: int | float, dummy_formatted: str
+    ) -> None:
+        """Long dummy values should fit and match in the header and grid."""
         gxf = make_gxf_data(
-            points=ncol,
-            rows=nrow,
-            grid=values,
+            rows=1,
+            dummy=dummy,
+            grid=np.ma.array([[1.0, float(dummy)]], mask=[[False, True]]),
         )
 
         stream = StringIO()
         gxf.to_file(stream)
         exported = stream.getvalue()
-        stream.seek(0)
-        for line in stream:
-            assert len(line.rstrip("\n")) <= 80
+        lines = exported.splitlines()
 
-        grid_lines = exported.split("#GRID\n", maxsplit=1)[1].splitlines()
-        grid_tokens_by_line = [line.split() for line in grid_lines]
-        assert len(grid_lines) > nrow
-
-        for row in values:
-            row_start = GXFData._format_number(float(row[0]))
-            assert any(tokens[0] == row_start for tokens in grid_tokens_by_line)
-            assert all(row_start not in tokens[1:] for tokens in grid_tokens_by_line)
+        dummy_index = lines.index("#DUMMY")
+        assert lines[dummy_index + 1] == dummy_formatted
+        grid_tokens = exported.split("#GRID\n", maxsplit=1)[1].split()
+        assert grid_tokens == ["1.0", dummy_formatted]
 
         stream.seek(0)
         re_read = GXFData.from_file(stream)
+        np.testing.assert_array_equal(re_read.grid.mask, gxf.grid.mask)
+
+    @pytest.mark.parametrize(
+        ("dummy", "valid_value", "serialized_token"),
+        [
+            (999999999.9, 1e9, "1000000000.0"),
+            (1234567890.123456, 1234567890.12349, "1234567890.1235"),
+        ],
+    )
+    def test_warns_when_unmasked_value_serializes_as_dummy(
+        self,
+        dummy: float,
+        valid_value: float,
+        serialized_token: str,
+    ) -> None:
+        """A serialized dummy collision should produce one specific warning."""
+        gxf = make_gxf_data(
+            points=3,
+            rows=1,
+            dummy=dummy,
+            grid=np.ma.array(
+                [[valid_value, valid_value, valid_value]],
+                mask=[[False, False, True]],
+            ),
+        )
+        stream = StringIO()
+
+        with pytest.warns(
+            GXFSerializationWarning,
+            match="unmasked GXF grid value serializes to the same token",
+        ) as warning_records:
+            gxf.to_file(stream)
+
+        assert len(warning_records) == 1
+        assert stream.getvalue().split("#GRID\n", maxsplit=1)[1].split() == [
+            serialized_token,
+            serialized_token,
+            serialized_token,
+        ]
+
+    def test_safe_export_does_not_warn_about_dummy_collision(self) -> None:
+        """An ordinary export should not emit a serialization warning."""
+        gxf = make_gxf_data(
+            grid=np.ma.array(
+                [[1.0, 2.0], [3.0, -999.0]],
+                mask=[[False, False], [False, True]],
+            )
+        )
+
+        with warnings.catch_warnings(record=True) as warning_records:
+            warnings.simplefilter("always")
+            gxf.to_file(StringIO())
+
+        assert not any(
+            isinstance(record.message, GXFSerializationWarning)
+            for record in warning_records
+        )
+
+    def test_serialized_dummy_collision_warning_can_be_an_error(self) -> None:
+        """Strict callers should be able to reject lossy GXF serialization."""
+        gxf = make_gxf_data(
+            points=1,
+            rows=1,
+            dummy=999999999.9,
+            grid=np.ma.array([[1e9]], mask=[[False]]),
+        )
+
+        with (
+            pytest.raises(
+                GXFSerializationWarning,
+                match="reading the exported GXF file will mask that value",
+            ),
+            warnings.catch_warnings(),
+        ):
+            warnings.simplefilter("error", GXFSerializationWarning)
+            gxf.to_file(StringIO())
+
+    def test_line_length_at_most_80_chars(self) -> None:
+        """Every physical output line should fit the GXF 80-character limit."""
+        values = np.ma.array([[0.0, -1e-100, 1.234567890123456, -1e100, 1e308, -1e308]])
+        gxf = make_gxf_data(points=6, rows=1, grid=values)
+
+        stream = StringIO()
+        gxf.to_file(stream)
+
+        assert all(len(line) <= 80 for line in stream.getvalue().splitlines())
+
+    def test_grid_values_wrap_at_five_without_crossing_rows(self) -> None:
+        """Grid output should wrap after five tokens and start each row anew."""
+        values = np.ma.array(
+            [
+                [1.0, 22.0, 333.0, 4444.0, 5.0, 6.0, 7.0],
+                [8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0],
+            ]
+        )
+        gxf = make_gxf_data(points=7, rows=2, grid=values)
+
+        stream = StringIO()
+        gxf.to_file(stream)
+        grid_lines = stream.getvalue().split("#GRID\n", maxsplit=1)[1].splitlines()
+
+        tokens_by_line = [line.split() for line in grid_lines]
+        assert tokens_by_line == [
+            ["1.0", "22.0", "333.0", "4444.0", "5.0"],
+            ["6.0", "7.0"],
+            ["8.0", "9.0", "10.0", "11.0", "12.0"],
+            ["13.0", "14.0"],
+        ]
+        for line in (grid_lines[1], grid_lines[3]):
+            first, second = line.split()
+            assert line[0:15] == first.rjust(15)
+            assert line[17:32] == second.rjust(15)
+
+    def test_grid_values_are_right_aligned_in_fixed_columns(self) -> None:
+        """A full grid line should right-align tokens in fixed-width columns."""
+        values = np.ma.array([[1.0, 22.0, 333.0, 4444.0, 5.0]])
+        gxf = make_gxf_data(points=5, rows=1, grid=values)
+
+        stream = StringIO()
+        gxf.to_file(stream)
+        grid_line = stream.getvalue().split("#GRID\n", maxsplit=1)[1].rstrip()
+        tokens = grid_line.split()
+
+        assert len(grid_line) == 80
+        for column_start, token in zip((0, 17, 33, 49, 65), tokens):
+            assert grid_line[column_start : column_start + 15] == token.rjust(15)
+
+    def test_grid_numeric_formatting_roundtrip(self) -> None:
+        """Formatted grid tokens should retain numeric values on reread."""
+        values = np.ma.array(
+            [
+                [1.234567890123456e100, -2.345678901234567e100],
+                [3.456789012345678e-100, -4.567890123456789e-100],
+            ]
+        )
+        gxf = make_gxf_data(grid=values)
+
+        stream = StringIO()
+        gxf.to_file(stream)
+        stream.seek(0)
+        re_read = GXFData.from_file(stream)
+
         np.testing.assert_allclose(re_read.grid.data, gxf.grid.data)
 
     def test_to_file_nonexistent_folder_raises(self, tmp_path: Path) -> None:
@@ -1517,19 +1758,13 @@ class TestGXFDataclass:
 
 
 class TestGXFDataComparison:
-    """Tests for GXFData equality and tolerant comparisons."""
+    """Tests for GXFData equality."""
 
     def test_exact_equality_returns_notimplemented_for_other_type(self) -> None:
         """Exact equality should return NotImplemented for unrelated types."""
         gxf = make_gxf_data()
 
         assert gxf.__eq__(object()) is NotImplemented
-
-    def test_allclose_returns_false_for_other_type(self) -> None:
-        """Tolerant comparison should return false for unrelated types."""
-        gxf = make_gxf_data()
-
-        assert not gxf.allclose(object())
 
     def test_exact_equality_ignores_masked_grid_values(self) -> None:
         """Exact equality should ignore grid values behind matching masks."""
@@ -1593,99 +1828,6 @@ class TestGXFDataComparison:
         )
 
         assert first != second
-
-    def test_allclose_accepts_small_floating_differences(self) -> None:
-        """Tolerant comparison should accept small floating-point differences."""
-        eps = 1e-06
-        first = make_gxf_data(
-            ptseparation=1.0,
-            rwseparation=2.0,
-            xorigin=3.0,
-            yorigin=4.0,
-            rotation=5.0,
-            dummy=-999.0,
-            grid=np.ma.array([[1.0, 2.0], [3.0, 4.0]]),
-        )
-        second = make_gxf_data(
-            ptseparation=1.0 + eps,
-            rwseparation=2.0 + eps,
-            xorigin=3.0 + eps,
-            yorigin=4.0 + eps,
-            rotation=5.0 + eps,
-            dummy=-999.0 + eps,
-            grid=np.ma.array([[1.0, 2.0 + eps], [3.0, 4.0]]),
-        )
-
-        assert first.allclose(second)
-
-    def test_allclose_rejects_grid_shape_differences(self) -> None:
-        """Tolerant comparison should reject grid shape differences."""
-        first = make_gxf_data()
-        second = make_gxf_data(
-            points=3,
-            rows=2,
-            grid=np.ma.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
-        )
-
-        assert not first.allclose(second)
-
-    @pytest.mark.parametrize(
-        "overrides",
-        [
-            {"ptseparation": 2.0},
-            {"rwseparation": 2.0},
-            {"xorigin": 1.0},
-            {"yorigin": 1.0},
-            {"rotation": 2.0},
-            {"dummy": -998.0},
-        ],
-    )
-    def test_allclose_rejects_large_floating_core_value_differences(
-        self, overrides: dict[str, object]
-    ) -> None:
-        """Tolerant comparison should reject large core value differences."""
-        first = make_gxf_data()
-        second = make_gxf_data(**overrides)
-
-        assert not first.allclose(second)
-
-    def test_allclose_rejects_none_dummy_difference(self) -> None:
-        """Tolerant comparison should reject None versus numeric dummy values."""
-        first = make_gxf_data(dummy=None)
-        second = make_gxf_data(dummy=-999.0)
-
-        assert not first.allclose(second)
-
-    def test_allclose_accepts_matching_none_dummy_values(self) -> None:
-        """Tolerant comparison should accept matching None dummy values."""
-        first = make_gxf_data(dummy=None)
-        second = make_gxf_data(dummy=None)
-
-        assert first.allclose(second)
-
-    def test_allclose_rejects_large_dummy_difference(self) -> None:
-        """Tolerant comparison should reject large dummy value differences."""
-        first = make_gxf_data(dummy=-999.0)
-        second = make_gxf_data(dummy=-998.0)
-
-        assert not first.allclose(second)
-
-    def test_allclose_rejects_mask_differences(self) -> None:
-        """Tolerant comparison should reject grid mask differences."""
-        first = make_gxf_data(
-            grid=np.ma.array(
-                [[1.0, 2.0], [3.0, 4.0]],
-                mask=[[False, True], [False, False]],
-            )
-        )
-        second = make_gxf_data(
-            grid=np.ma.array(
-                [[1.0, 2.0], [3.0, 4.0]],
-                mask=[[False, False], [False, True]],
-            )
-        )
-
-        assert not first.allclose(second)
 
 
 class TestFileFormatVerification:
@@ -1807,6 +1949,7 @@ class TestRegularSurfaceIntegration:
         """
         args = import_gxf(FileWrapper(gxf_stream(valid_gxf_content)), values=False)
 
+        assert "values" in args
         assert args["ncol"] == 3
         assert args["nrow"] == 2
         assert args["xinc"] == pytest.approx(30.0)
@@ -1815,6 +1958,7 @@ class TestRegularSurfaceIntegration:
         assert args["yori"] == pytest.approx(2000.0)
         assert args["rotation"] == pytest.approx(12.5)
         assert "undef" not in args
+
         expected_values = np.array([[1.0, 4.0], [2.0, np.nan], [3.0, 6.0]])
         np.testing.assert_allclose(
             args["values"].filled(np.nan), expected_values, equal_nan=True
@@ -1873,51 +2017,27 @@ class TestRegularSurfaceIntegration:
         assert captured["ptseparation"] == pytest.approx(surf.xinc)
         assert captured["rwseparation"] == pytest.approx(-surf.yinc)
         assert captured["rotation"] == pytest.approx(surf.rotation)
-        assert captured["dummy"] == pytest.approx(surf.undef)
+        assert captured["dummy"] == pytest.approx(xtgeo.UNDEF)
         np.testing.assert_array_equal(captured["grid"], surf.values.T)
 
-    def test_to_file_roundtrip(self) -> None:
-        """RegularSurface GXF export and import should preserve values."""
-
-        values = np.ma.array(
-            [[11.0, 44.0], [22.0, 55.0], [33.0, np.nan]],
-            mask=[[False, False], [False, False], [False, True]],
-        )
-        surf = make_regular_surface(values=values)
-
-        stream = BytesIO()
-        surf.to_file(stream, fformat="gxf")
-        stream.seek(0)
-
-        re_read = xtgeo.surface_from_file(stream, fformat="gxf")
-
-        assert re_read.ncol == surf.ncol
-        assert re_read.nrow == surf.nrow
-        assert re_read.xinc == pytest.approx(surf.xinc)
-        assert re_read.yinc == pytest.approx(surf.yinc)
-        assert re_read.xori == pytest.approx(surf.xori)
-        assert re_read.yori == pytest.approx(surf.yori)
-        assert re_read.rotation == pytest.approx(surf.rotation)
-
-        np.testing.assert_allclose(
-            re_read.values.filled(np.nan),
-            surf.values.filled(np.nan),
-            equal_nan=True,
-        )
-
-    def test_to_file_path_roundtrip(self, tmp_path: Path) -> None:
-        """RegularSurface GXF path export should return the path and roundtrip."""
+    @pytest.mark.parametrize("destination_kind", ["stream", "path"])
+    def test_to_file_roundtrip(self, tmp_path: Path, destination_kind: str) -> None:
+        """Stream and path GXF exports should preserve surface data."""
         values = np.ma.array(
             [[11.0, 44.0], [22.0, np.nan], [33.0, 66.0]],
             mask=[[False, False], [False, True], [False, False]],
         )
         surf = make_regular_surface(undef=-999.0, values=values)
-        path = tmp_path / "surface.gxf"
+        destination: BytesIO | Path
+        destination = (
+            BytesIO() if destination_kind == "stream" else tmp_path / "surface.gxf"
+        )
 
-        result = surf.to_file(path, fformat="gxf")
+        surf.to_file(destination, fformat="gxf")
+        if isinstance(destination, BytesIO):
+            destination.seek(0)
 
-        assert result == path
-        re_read = xtgeo.surface_from_file(path, fformat="gxf")
+        re_read = xtgeo.surface_from_file(destination, fformat="gxf")
         assert re_read.ncol == surf.ncol
         assert re_read.nrow == surf.nrow
         assert re_read.xinc == pytest.approx(surf.xinc)
@@ -1931,6 +2051,15 @@ class TestRegularSurfaceIntegration:
             equal_nan=True,
         )
         np.testing.assert_array_equal(re_read.values.mask, surf.values.mask)
+
+    def test_to_file_path_returns_path(self, tmp_path: Path) -> None:
+        """RegularSurface GXF path export should return its destination path."""
+        surface = make_regular_surface()
+        path = tmp_path / "surface.gxf"
+
+        result = surface.to_file(path, fformat="gxf")
+
+        assert result == path
 
     def test_to_file_omits_dummy_when_no_values_are_masked(self) -> None:
         """GXF export should omit #DUMMY when no grid values are masked."""
@@ -1953,7 +2082,7 @@ class TestRegularSurfaceIntegration:
         assert re_read.values[1, 0] == pytest.approx(123.0)
 
     def test_to_file_writes_dummy_when_values_are_masked(self) -> None:
-        """GXF export should write #DUMMY when values are masked."""
+        """GXF export should write a safe #DUMMY when values are masked."""
         values = np.ma.array(
             [[11.0, 44.0], [22.0, 55.0], [33.0, 66.0]],
             mask=[[False, False], [False, False], [False, True]],
@@ -1966,7 +2095,7 @@ class TestRegularSurfaceIntegration:
         exported = stream.getvalue().decode()
         lines = exported.splitlines()
         dummy_index = lines.index("#DUMMY")
-        assert lines[dummy_index + 1] == "-999.0"
+        assert lines[dummy_index + 1] == "1e+33"
 
         stream.seek(0)
         re_read = xtgeo.surface_from_file(stream, fformat="gxf")
@@ -1995,6 +2124,31 @@ class TestRegularSurfaceIntegration:
 
         np.testing.assert_array_equal(re_read.values.mask, surf.values.mask)
         assert re_read.values[1, 0] == pytest.approx(-999.0)
+
+    def test_to_file_avoids_formatted_dummy_collision(self) -> None:
+        """RegularSurface export should preserve masks across GXF formatting."""
+        values = np.ma.array(
+            [[1e9, xtgeo.UNDEF_LIMIT], [3.0, 4.0], [5.0, 6.0]],
+            mask=[[False, False], [False, False], [False, True]],
+        )
+        surf = make_regular_surface(undef=999999999.9, values=values)
+        stream = BytesIO()
+
+        assert surf.values[0, 0] is not np.ma.masked
+        with warnings.catch_warnings(record=True) as warning_records:
+            warnings.simplefilter("always")
+            surf.to_file(stream, fformat="gxf")
+
+        assert not any(
+            isinstance(record.message, GXFSerializationWarning)
+            for record in warning_records
+        )
+        stream.seek(0)
+        re_read = xtgeo.surface_from_file(stream, fformat="gxf")
+
+        np.testing.assert_array_equal(re_read.values.mask, surf.values.mask)
+        assert re_read.values[0, 0] == pytest.approx(1e9)
+        assert re_read.values[0, 1] == pytest.approx(xtgeo.UNDEF_LIMIT)
 
     @pytest.mark.parametrize("surface_state", ["not_loaded", "empty_values"])
     def test_to_file_raises_without_grid_values(self, surface_state: str) -> None:
@@ -2127,6 +2281,110 @@ class TestDummyValue:
         if not masked_positions:
             assert not np.any(result.grid.mask)
 
+    @pytest.mark.parametrize(
+        ("dummy_literal", "grid_values", "expected_mask"),
+        [
+            (
+                "9007199254740993",
+                "9007199254740992 9007199254740992 9007199254740993 3",
+                [[False, False], [True, False]],
+            ),
+            (
+                "-9007199254740993",
+                "-9007199254740992 -9007199254740992 -9007199254740993 3",
+                [[False, False], [True, False]],
+            ),
+            (
+                "1.0000000000000001",
+                "1.0 1.00 1.0000000000000001 3",
+                [[False, False], [True, False]],
+            ),
+        ],
+    )
+    def test_distinct_decimal_value_is_not_masked_after_float64_alias(
+        self,
+        dummy_literal: str,
+        grid_values: str,
+        expected_mask: list[list[bool]],
+        gxf_content_with_dummy_value: Callable[[str, str], str],
+    ) -> None:
+        """Distinct decimal values must not be masked after float64 conversion."""
+        content = gxf_content_with_dummy_value(dummy_literal, grid_values)
+
+        with pytest.warns(
+            UserWarning, match="numerically indistinguishable"
+        ) as warning_records:
+            result = GXFData.from_file(gxf_stream(content))
+
+        assert len(warning_records) == 1
+        np.testing.assert_array_equal(result.grid.mask, expected_mask)
+
+    def test_float64_dummy_alias_roundtrip_changes_mask_with_warnings(self) -> None:
+        """The documented lossy alias round trip should expose both warnings."""
+        content = """
+#POINTS
+1
+#ROWS
+1
+#DUMMY
+1.0000000000000001
+#GRID
+1.0
+"""
+
+        with pytest.warns(UserWarning, match="numerically indistinguishable"):
+            parsed = GXFData.from_file(gxf_stream(content))
+
+        # On the first read, Decimal("1.0000000000000001") for #DUMMY differs
+        # from Decimal("1.0") for #GRID, so the grid node remains unmasked.
+        assert not parsed.grid.mask[0, 0]
+
+        output = StringIO()
+        with pytest.warns(
+            GXFSerializationWarning,
+            match="serializes to the same token as the #DUMMY value",
+        ):
+            parsed.to_file(output)
+
+        output.seek(0)
+        reread = GXFData.from_file(output)
+        # Both values are stored as float64 1.0, so the writer emits "1.0" for
+        # both #DUMMY and #GRID. Those tokens compare equal on the second read,
+        # causing the formerly valid grid node to become masked.
+        assert reread.grid.mask[0, 0]
+
+    def test_equivalent_decimal_dummy_spellings_are_masked(
+        self, gxf_content_with_dummy_value: Callable[[str, str], str]
+    ) -> None:
+        """Numerically equivalent decimal spellings should match #DUMMY."""
+        content = gxf_content_with_dummy_value("1000", "1e3 1000.0 2 3")
+
+        result = GXFData.from_file(gxf_stream(content))
+
+        np.testing.assert_array_equal(
+            result.grid.mask,
+            [[True, True], [False, False]],
+        )
+
+    def test_surface_import_preserves_unmasked_float64_dummy_alias(
+        self, gxf_content_with_dummy_value: Callable[[str, str], str]
+    ) -> None:
+        """RegularSurface import must preserve an unmasked float64 alias."""
+        content = gxf_content_with_dummy_value(
+            "9007199254740993",
+            "9007199254740992 9007199254740993 2 3",
+        )
+
+        with pytest.warns(UserWarning, match="numerically indistinguishable"):
+            surface = xtgeo.surface_from_file(
+                gxf_stream(content),
+                fformat="gxf",
+            )
+
+        assert surface.values[0, 0] is not np.ma.masked
+        assert surface.values[0, 0] == pytest.approx(9007199254740992.0)
+        assert surface.values[1, 0] is np.ma.masked
+
     def test_no_dummy_key_means_default_value_is_valid(
         self, gxf_content_no_dummy_with_default_value: str
     ) -> None:
@@ -2195,59 +2453,16 @@ class TestDummyValue:
         assert gxf.grid.count() == expected_count
 
     def test_surface_from_file_masks_dummy_values(
-        self, tmp_path: Path, gxf_content_with_dummy_value: Callable[[str, str], str]
+        self, gxf_content_with_dummy_value: Callable[[str, str], str]
     ) -> None:
         """GXF dummy values should be masked in the imported RegularSurface."""
         content = gxf_content_with_dummy_value("-9999.0", "1 2 3 -9999.0")
-        path = tmp_path / "test.gxf"
-        path.write_text(content)
-
-        surf = xtgeo.surface_from_file(path, fformat="gxf")
-
-        # The masked value should propagate as NaN in the RegularSurface
-        filled = surf.values.filled(np.nan)
-        assert np.isnan(filled).sum() == 1
-        assert surf.nactive == 3
-
-    def test_surface_from_file_stores_xtgeo_undef_under_masked_dummy_values(
-        self, gxf_content_with_dummy_value: Callable[[str, str], str]
-    ) -> None:
-        """RegularSurface import should store xtgeo undef under masked dummies."""
-        content = gxf_content_with_dummy_value("-9999.0", "1 2 3 -9999.0")
         surf = xtgeo.surface_from_file(gxf_stream(content), fformat="gxf")
 
-        assert surf.undef == pytest.approx(xtgeo.UNDEF)
         assert surf.values[1, 1] is np.ma.masked
+        assert surf.nactive == 3
+        assert surf.undef == pytest.approx(xtgeo.UNDEF)
         assert surf.values.data[1, 1] == pytest.approx(xtgeo.UNDEF)
-
-    def test_dummy_roundtrip_masking_preserved(self) -> None:
-        """Masked values should survive a GXF write-read roundtrip."""
-        # Use symmetric off-diagonal values so that the internal
-        # transpose in to_file/from_file does not alter data.
-        values = np.ma.array(
-            [[10.0, 20.0], [20.0, -999.0]],
-            mask=[[False, False], [False, True]],
-        )
-        gxf = make_gxf_data(
-            ptseparation=5.0,
-            rwseparation=5.0,
-            xorigin=100.0,
-            yorigin=200.0,
-            grid=values,
-        )
-
-        stream = StringIO()
-        gxf.to_file(stream)
-        stream.seek(0)
-
-        re_read = GXFData.from_file(stream)
-        assert re_read.grid.count() == 3
-        np.testing.assert_array_equal(re_read.grid.mask, gxf.grid.mask)
-        np.testing.assert_allclose(
-            re_read.grid.filled(np.nan),
-            gxf.grid.filled(np.nan),
-            equal_nan=True,
-        )
 
 
 class TestInRepoGXFVariantFixtures:
@@ -2669,34 +2884,6 @@ class TestGXFWriterDetails:
         first_line = stream.readline()
         assert first_line.startswith("!")
         assert "xtgeo" in first_line
-
-    @pytest.mark.parametrize(
-        "value, expected, contains_decimal, uses_scientific",
-        [
-            (42, "42", False, False),
-            (-9999, "-9999", False, False),
-            (0, "0", False, False),
-            (-9999.0, None, True, False),
-            (1.0, None, True, False),
-            (1e33, None, False, True),
-        ],
-    )
-    def test_format_number(
-        self,
-        value: int | float,
-        expected: str | None,
-        contains_decimal: bool,
-        uses_scientific: bool,
-    ) -> None:
-        """_format_number should preserve int and float formatting rules."""
-        result = GXFData._format_number(value)
-
-        if expected is not None:
-            assert result == expected
-        if contains_decimal:
-            assert "." in result
-        if uses_scientific:
-            assert "e" in result or "E" in result
 
     def test_single_column_grid(self) -> None:
         """A single-column grid (ncol=1) should write one value per row."""

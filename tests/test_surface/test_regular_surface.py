@@ -44,7 +44,7 @@ def test_masked_constructor_argument_is_deprecated():
     Verify that a warning is raised when the deprecated 'masked' argument
     is used in the RegularSurface constructor.
     """
-    with pytest.warns(DeprecationWarning, match="'masked' parameter is deprecated"):
+    with pytest.warns(FutureWarning, match="'masked' parameter is deprecated"):
         xtgeo.RegularSurface(
             ncol=2,
             nrow=2,
@@ -61,7 +61,7 @@ def test_omitted_masked_constructor_argument_does_not_warn():
     is _not_ used in the RegularSurface constructor.
     """
     with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
+        warnings.simplefilter("error", FutureWarning)
         xtgeo.RegularSurface(ncol=2, nrow=2, xinc=1.0, yinc=1.0, values=1.0)
 
 
@@ -1602,7 +1602,7 @@ def test_regsurface_get_dataframe(default_surface):
         15.0,
     ]
 
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.warns(DeprecationWarning):
         dataframe2 = surf.dataframe()
 
     pd.testing.assert_frame_equal(dataframe, dataframe2)

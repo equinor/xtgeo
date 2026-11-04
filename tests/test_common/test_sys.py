@@ -2,7 +2,14 @@ import hashlib
 
 import pytest
 
+import xtgeo
 from xtgeo.common.sys import generic_hash
+
+
+def test_generic_hash_is_exported():
+    """The generic_hash function shall be available as a top level API."""
+    assert "generic_hash" in xtgeo.__all__
+    assert xtgeo.generic_hash is generic_hash
 
 
 def test_generic_hash():

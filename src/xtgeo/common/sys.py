@@ -71,16 +71,16 @@ def generic_hash(
     This hash can e.g. be used to compare two instances for equality.
 
     Args:
-        gid: Any string as signature, e.g. cumulative attributes of an instance.
+        gid: String to hash, e.g. cumulative attributes of an instance.
         hashmethod: Supported methods are "md5", "sha256", "blake2b"
-            or use a full function signature e.g. hashlib.sha128.
+            or a hash constructor such as ``hashlib.sha256``.
             Defaults to md5.
 
     Returns:
         Hash signature.
 
     Raises:
-        KeyError: String in hashmethod has an invalid option
+        ValueError: The hashmethod is not a valid option
 
     .. versionadded:: 2.14
 

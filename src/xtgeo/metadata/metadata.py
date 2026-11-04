@@ -448,11 +448,12 @@ class MetaDataTriangulatedSurface(MetaData):
             metadata: The metadata instance to validate.
             equal_values:
                 If True, check that the values in required_metadata equal
-                    the values in metadata._required.
-                If False, only basic tests are performed
+                the values in metadata._required.
+                If False, only basic tests are performed.
 
-        Returns:
-            True if all required fields match.
+        Raises:
+            TypeError: If the input types are wrong.
+            ValueError: If the required metadata do not validate.
         """
 
         if not isinstance(required_metadata, dict):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Any
 
 from xtgeo.common.log import null_logger
@@ -109,12 +110,17 @@ def blockedwells_from_stacked_file(
     return BlockedWells(blockedwell_list)
 
 
-def blockedwells_from_roxar(
+def blockedwells_from_rms(
     project, gname, bwname, lognames=None, ijk=True
 ):  # pragma: no cover
-    """This makes an instance of a BlockedWells directly from Roxar RMS.
+    """This makes an instance of a BlockedWells directly from RMS.
 
-    For arguments, see :meth:`BlockedWells.from_roxar`.
+    Args:
+        project: Name of RMS project, or use the magic ``project`` variable in RMS.
+        gname: Name of the grid model.
+        bwname: Name of the blocked well set.
+        lognames: List of lognames to import, or "all" for all present logs.
+        ijk: If True, import the IJK logs as well.
 
     Note the difference between classes BlockedWell and BlockedWells.
 
@@ -123,7 +129,7 @@ def blockedwells_from_roxar(
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mybws = xtgeo.blockedwells_from_roxar(project, 'Simgrid', 'BW',
+        mybws = xtgeo.blockedwells_from_rms(project, 'Simgrid', 'BW',
                                             lognames=mylogs)
 
     """
@@ -134,6 +140,26 @@ def blockedwells_from_roxar(
     obj._from_roxar(project, gname, bwname, ijk=ijk, lognames=lognames)
 
     return obj
+
+
+def blockedwells_from_roxar(
+    project, gname, bwname, lognames=None, ijk=True
+):  # pragma: no cover
+    """Make an instance of a BlockedWells directly from Roxar RMS.
+
+    .. deprecated::
+        The `blockedwells_from_roxar` function is deprecated and will be removed in a
+        future version. Use `blockedwells_from_rms` instead.
+
+    For arguments, see :func:`blockedwells_from_rms`.
+    """
+    warnings.warn(
+        "The 'blockedwells_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'blockedwells_from_rms' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+    return blockedwells_from_rms(project, gname, bwname, lognames=lognames, ijk=ijk)
 
 
 class BlockedWells(Wells):
@@ -158,6 +184,8 @@ class BlockedWells(Wells):
         bwfile: FileLike,
         fformat: str | None = "rms_ascii",
         compression: str | None = "lzf",
+        *,
+        precision: int = 8,
     ) -> Path | io.BytesIO | io.StringIO:
         """Export multiple blocked wells to a single concatenated (stacked) file.
 
@@ -172,6 +200,8 @@ class BlockedWells(Wells):
             fformat: File format ('rms_ascii'/'rmswell' or 'csv').
                 Default is 'rms_ascii'. HDF5 is not supported.
             compression: Not used, kept for API compatibility.
+            precision: Keyword-only. Number of decimal places for RMS ASCII
+                floats. Default is 8.
 
         Returns:
             Path to the file that was written.
@@ -193,7 +223,7 @@ class BlockedWells(Wells):
         bwfile_wrapper.check_folder(raiseerror=OSError)
 
         _blockedwells_io_factory.blockedwells_to_stacked_file(
-            self, bwfile_wrapper, fformat, compression
+            self, bwfile_wrapper, fformat, compression, precision
         )
 
         return bwfile_wrapper.file

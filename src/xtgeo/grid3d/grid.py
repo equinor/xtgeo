@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
@@ -32,6 +33,7 @@ from . import (
     _grid_roxapi,
     _grid_translate_coords,
     _grid_transmissibilities,
+    _grid_welldist,
     _grid_wellzone,
     _gridprop_lowlevel,
 )
@@ -44,7 +46,7 @@ if TYPE_CHECKING:
 
     import pandas as pd
 
-    from xtgeo import Polygons, Well
+    from xtgeo import BlockedWell, Polygons, Well
     from xtgeo._internal.grid3d import Grid as GridCPP  # type: ignore
     from xtgeo._internal.regsurf import (  # type: ignore
         RegularSurface as RegularSurfaceCPP,
@@ -169,12 +171,14 @@ def grid_from_file(
             special value "all" can be get all properties found in the INIT file
         restartprops (str list): Optional, see initprops
         restartdates (int list): Optional, required if restartprops
-        ijkrange (list-like): Optional, only applicable for hdf files, see
-            :meth:`Grid.from_hdf`.
-        zerobased (bool): Optional, only applicable for hdf files, see
-            :meth:`Grid.from_hdf`.
-        mmap (bool): Optional, only applicable for xtgf files, see
-            :meth:`Grid.from_xtgf`.
+        ijkrange (list-like): Optional, only applicable for hdf files. A 6-item
+            sequence (i1, i2, j1, j2, k1, k2) limiting the import to a subgrid
+            range. The items "min" and "max" are accepted as open bounds.
+        zerobased (bool): Optional, only applicable for hdf files. If True, the
+            ``ijkrange`` indices are interpreted as zero-based; default is False,
+            i.e. one-based indexing.
+        mmap (bool): Optional, only applicable for xtgf files. If True, memory
+            mapping is used when reading the file.
 
     Example::
 
@@ -198,7 +202,7 @@ def grid_from_file(
     return _handle_import(Grid, gfile, fformat, **kwargs)
 
 
-def grid_from_roxar(
+def grid_from_rms(
     project: RmsProjectOrPathType,
     gname: str,
     realisation: int = 0,
@@ -217,10 +221,48 @@ def grid_from_roxar(
 
         # inside RMS
         import xtgeo
-        mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
+        mygrid = xtgeo.grid_from_rms(project, "REEK_SIM")
 
     """
     return Grid(**_grid_roxapi.load_grid_from_rms(project, gname, realisation, info))
+
+
+def grid_from_roxar(
+    project: RmsProjectOrPathType,
+    gname: str,
+    realisation: int = 0,
+    info: bool = False,
+) -> Grid:
+    """Read a 3D grid inside an RMS project and return a Grid() instance.
+
+    .. deprecated::
+        The `grid_from_roxar` function is deprecated and will be removed in a future
+        version. Use `grid_from_rms` instead.
+
+    Args:
+        project: The RMS project as path or the project variable
+            from inside RMS.
+        gname: Name of Grid Model in RMS.
+        realisation: Realisation number.
+        info: If true, only grid info
+
+    Example::
+
+        # inside RMS
+        import xtgeo
+        mygrid = xtgeo.grid_from_rms(project, "REEK_SIM")
+
+    """
+    warnings.warn(
+        "The 'grid_from_roxar' function is deprecated and will be removed in a "
+        "future version. Use 'grid_from_rms' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+
+    return grid_from_rms(
+        project=project, gname=gname, realisation=realisation, info=info
+    )
 
 
 def grid_from_resinsight(
@@ -231,6 +273,12 @@ def grid_from_resinsight(
     case_name: str | RipsCaseType | None = None,
 ) -> Grid:
     """Load a corner-point grid from a ResInsight case into an XTGeo ``Grid``.
+
+    If the case contains a ``SUBGRIDS`` input property (a discrete property
+    with 1-based subgrid indices and subgrid names as category names — as
+    written by :meth:`Grid.to_resinsight` or imported from a ROFF file by
+    ResInsight), the grid's :attr:`subgrids` attribute is automatically
+    populated from that property.
 
     Args:
         instance_or_port: Optional ``rips.Instance`` or gRPC port. Use ``None``
@@ -259,21 +307,47 @@ def grid_from_resinsight(
         grid = xtgeo.grid_from_resinsight(instance, case)
 
     """
-    if case_name is not None:
-        from xtgeo.interfaces.resinsight._deprecation import resolve_deprecated_alias
 
+    from xtgeo.interfaces.resinsight import SUBGRIDS_PROPERTY_NAME
+    from xtgeo.interfaces.resinsight._deprecation import resolve_deprecated_alias
+    from xtgeo.interfaces.resinsight._grid import (
+        GridReader,
+        get_zoneprop_from_resinsight,
+    )
+
+    if case_name is not None:
         case = resolve_deprecated_alias(
             case, case_name, new_name="case", old_name="case_name"
         )
     if case is None:
         raise TypeError("grid_from_resinsight() missing required argument: 'case'")
 
-    from xtgeo.interfaces.resinsight._grid import GridReader
+    reader = GridReader(instance_or_port=instance_or_port)
+    rips_case = reader.resolve_case(case, find_last=find_last)
+    if rips_case is None:
+        raise RuntimeError(f"Cannot find any case with name '{case}'")
 
-    grid_resinsight = GridReader(
-        instance_or_port=instance_or_port,
-    ).load(case=case, find_last=find_last)
-    return grid_resinsight.to_xtgeo_grid()
+    grid_resinsight = reader.load(case=rips_case)
+    grid = grid_resinsight.to_xtgeo_grid()
+
+    if zoneprop := get_zoneprop_from_resinsight(instance_or_port, rips_case):
+        try:
+            grid.subgrids_from_zoneprop(zoneprop)
+            logger.info(
+                "Imported %s property from ResInsight case '%s'",
+                SUBGRIDS_PROPERTY_NAME,
+                rips_case.name,
+            )
+        except ValueError:
+            logger.warning(
+                "Failed to reconstruct subgrids from %s property in "
+                "ResInsight case '%s'; grid.subgrids will not be set.",
+                SUBGRIDS_PROPERTY_NAME,
+                rips_case.name,
+                exc_info=True,
+            )
+
+    return grid
 
 
 def create_box_grid(
@@ -711,9 +785,11 @@ class Grid(_Grid3D):
         roxindexer: Any | None = None,
     ):
         logger.debug("Initialize Grid...")
-        coordsv = np.asarray(coordsv)
-        zcornsv = np.asarray(zcornsv)
-        actnumsv = np.asarray(actnumsv)
+        # The C++ layer reads these by linear cell number, so the layout must be
+        # C-contiguous; importers already normalize this way.
+        coordsv = np.ascontiguousarray(coordsv)
+        zcornsv = np.ascontiguousarray(zcornsv)
+        actnumsv = np.ascontiguousarray(actnumsv)
         if coordsv.dtype != np.float64:
             raise TypeError(
                 f"The dtype of the coordsv array must be float64, got {coordsv.dtype}"
@@ -1106,7 +1182,7 @@ class Grid(_Grid3D):
     ) -> str:
         """Return a unique hash ID for current instance (for persistance).
 
-        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+        See :func:`xtgeo.generic_hash` for available hash methods.
 
         .. versionadded:: 2.14
         """
@@ -1251,7 +1327,7 @@ class Grid(_Grid3D):
 
         return _gfile.file
 
-    def to_roxar(
+    def to_rms(
         self,
         project: RmsProjectOrPathType,
         gname: str,
@@ -1262,7 +1338,7 @@ class Grid(_Grid3D):
 
         Note:
             When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            ``to_rms()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
 
         Args:
@@ -1285,6 +1361,34 @@ class Grid(_Grid3D):
         """
         _grid_roxapi.save_grid_to_rms(self, project, gname, realisation, method=method)
 
+    def to_roxar(
+        self,
+        project: RmsProjectOrPathType,
+        gname: str,
+        realisation: int = 0,
+        method: Literal["cpg", "roff"] = "cpg",
+    ) -> None:
+        """Export a grid from XTGeo to RMS via Roxar API.
+
+        .. deprecated::
+            The `to_roxar` method is deprecated and will be removed in a future
+            version. Use `to_rms` instead.
+
+        For parameters and usage details, see :meth:`to_rms`.
+        """
+        warnings.warn(
+            "The 'to_roxar' method is deprecated and will be removed in a "
+            "future version. Use 'to_rms' instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        self.to_rms(
+            project=project,
+            gname=gname,
+            realisation=realisation,
+            method=method,
+        )
+
     def to_resinsight(
         self,
         instance_or_port: ResInsightInstanceOrPortType | None,
@@ -1297,6 +1401,14 @@ class Grid(_Grid3D):
 
         The case named ``case`` will be created if it does not already exist,
         or an existing case will be replaced.
+
+        If the grid has subgrid zonation defined (see :attr:`subgrids`), a
+        discrete input property named ``"SUBGRIDS"`` is automatically exported
+        alongside the geometry.  Each cell receives a 1-based subgrid index
+        counted from the top layer (k=1) downwards, and the subgrid names are
+        registered as discrete category names in ResInsight.  This mirrors the
+        behaviour of ResInsight when it imports a ROFF grid that contains a
+        ``subgrids.nLayers`` tag.
 
         Args:
             instance_or_port: Optional ``rips.Instance`` or gRPC port. Use
@@ -1315,22 +1427,20 @@ class Grid(_Grid3D):
             The ResInsight case that was created or replaced.
 
         """
-        if gname is not None:
-            from xtgeo.interfaces.resinsight._deprecation import (
-                resolve_deprecated_alias,
-            )
-
-            case = resolve_deprecated_alias(
-                case, gname, new_name="case", old_name="gname"
-            )
-        if case is None:
-            raise TypeError("to_resinsight() missing required argument: 'case'")
-
+        from xtgeo.interfaces.resinsight import SUBGRIDS_PROPERTY_NAME
+        from xtgeo.interfaces.resinsight._deprecation import resolve_deprecated_alias
         from xtgeo.interfaces.resinsight._grid import (
             GridDataResInsight,
             GridWriter,
         )
         from xtgeo.interfaces.resinsight._resinsight_base import validate_case
+
+        if gname is not None:
+            case = resolve_deprecated_alias(
+                case, gname, new_name="case", old_name="gname"
+            )
+        if case is None:
+            raise TypeError("to_resinsight() missing required argument: 'case'")
 
         validate_case(case)  # fail fast before extracting grid data
         name = case if isinstance(case, str) else case.name
@@ -1341,7 +1451,32 @@ class Grid(_Grid3D):
         )
 
         writer = GridWriter(instance_or_port=instance_or_port)
-        return writer.save(data, case, find_last)
+        rips_case = writer.save(data, case, find_last)
+
+        # Export subgrid zonation as a discrete INPUT_PROPERTY named "SUBGRIDS".
+        zoneprop = self.get_zoneprop_from_subgrids()
+        if zoneprop is not None:
+            try:
+                zoneprop.to_resinsight(
+                    instance_or_port,
+                    rips_case,
+                    property_type="INPUT_PROPERTY",
+                    property_name=SUBGRIDS_PROPERTY_NAME,
+                    find_last=find_last,
+                )
+            except (RuntimeError, ValueError, TypeError):
+                logger.warning(
+                    f"Failed to export {SUBGRIDS_PROPERTY_NAME} property "
+                    "to ResInsight; grid geometry was still written successfully.",
+                    exc_info=True,
+                )
+            finally:
+                # get_zoneprop_from_subgrids appends to self.props; remove it
+                # so that this export call has no side effect on the grid.
+                if self.props and zoneprop in self.props:
+                    self.props.remove(zoneprop)
+
+        return rips_case
 
     def convert_units(self, units: Units) -> None:
         """
@@ -1835,8 +1970,8 @@ class Grid(_Grid3D):
                 of points in the polygons, where tolerance is 0.1. Another
                 alternative to True is to input a Dict on the form
                 ``{"tolerance": 2.0, "preserve_topology": True}``, cf. the
-                :func:`Polygons.simplify()` method. For details on e.g. tolerance, see
-                Shapely's simplify() method.
+                :meth:`xtgeo.Polygons.simplify()` method. For details on e.g.
+                tolerance, see Shapely's simplify() method.
             filter_array: An numpy boolean array with equal shape as the grid dimension,
                 used to filter the grid cells and define where to extract boundaries.
 
@@ -1845,14 +1980,14 @@ class Grid(_Grid3D):
 
         Example::
 
-            grid = xtgeo.grid_from_roxar(project, "Simgrid")
+            grid = xtgeo.grid_from_rms(project, "Simgrid")
             # extract polygon for a specific region, here region 3
-            region = xtgeo.gridproperty_from_roxar(project, "Simgrid", "Regions")
+            region = xtgeo.gridproperty_from_rms(project, "Simgrid", "Regions")
             filter_array = (region.values==3)
             boundary = grid.get_boundary_polygons(filter_array=filter_array)
 
         See also:
-            The :func:`Polygons.boundary_from_points()` class method.
+            The :meth:`xtgeo.Polygons.boundary_from_points()` class method.
 
         """
         return _grid_boundary.create_boundary(
@@ -2239,7 +2374,7 @@ class Grid(_Grid3D):
         permx: GridProperty | float,
         permy: GridProperty | float,
         permz: GridProperty | float,
-        ntg: GridProperty | float | None = 1.0,
+        ntg: GridProperty | float = 1.0,
         min_dz_pinchout: float = 1e-4,
         min_fault_throw: float = 0.01,
         nnc_table: pd.DataFrame | None = None,
@@ -2253,6 +2388,12 @@ class Grid(_Grid3D):
         GridProperty | None,
     ]:
         """Compute TPFA transmissibilities between all cell pairs.
+
+        .. deprecated:: 4.27
+           Use :meth:`get_cell_transmissibilities` for ordinary cell-to-cell
+           transmissibilities and
+           :meth:`get_nested_hybrid_nnc_transmissibilities` for nested-hybrid
+           NNC transmissibilities.
 
         Uses the two-point flux approximation (TPFA) formula:
 
@@ -2280,7 +2421,7 @@ class Grid(_Grid3D):
         When *nnc_table* is supplied the method additionally computes
         transmissibilities across the boundary of a nested hybrid grid.  The
         table is produced by
-        :func:`fmu.tools.nestedhybridgrid.create_nested_hybrid_grid` and
+        ``fmu.tools.nestedhybridgrid.create_nested_hybrid_grid`` and
         encodes every mother ↔ refined cell pair that should be connected.
 
         Args:
@@ -2376,6 +2517,13 @@ class Grid(_Grid3D):
             >>> print(f"NNCs found: {len(nnc_nh)}")
         """
 
+        warnings.warn(
+            "get_transmissibilities() is deprecated; use "
+            "get_cell_transmissibilities() and "
+            "get_nested_hybrid_nnc_transmissibilities() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
         return _grid_transmissibilities.get_transmissibilities(
             self,
             permx=permx,
@@ -2386,6 +2534,118 @@ class Grid(_Grid3D):
             min_fault_throw=min_fault_throw,
             nnc_table=nnc_table,
             nnc_table_only=nnc_table_only,
+        )
+
+    def get_cell_transmissibilities(
+        self,
+        permx: GridProperty | float,
+        permy: GridProperty | float,
+        permz: GridProperty | float,
+        ntg: GridProperty | float = 1.0,
+        min_dz_pinchout: float = 1e-4,
+        min_fault_throw: float = 0.01,
+    ) -> tuple[GridProperty, GridProperty, GridProperty, pd.DataFrame]:
+        """Compute ordinary cell-to-cell TPFA transmissibilities.
+
+        Uses the two-point flux approximation (TPFA) formula:
+
+        .. math::
+
+            T = \\frac{HT_1 \\cdot HT_2}{HT_1 + HT_2}, \\quad
+            HT_i = \\frac{k_i \\cdot A}{d_i}
+
+        where *A* is the shared face area, *d* is the distance from the cell
+        centre to the face, and *k* is the effective permeability
+        (``perm * ntg`` in the horizontal directions; ``permz`` alone in the
+        vertical direction).
+
+        The calculation includes regular I-, J-, and K-direction connections,
+        fault NNCs, and pinch-out NNCs. Nested-hybrid NNCs are computed by
+        :meth:`get_nested_hybrid_nnc_transmissibilities`.
+
+        Args:
+            permx: Permeability in the I-direction, in md, as a
+                :class:`~xtgeo.GridProperty` or scalar float.
+            permy: Permeability in the J-direction, in md, as a
+                :class:`~xtgeo.GridProperty` or scalar float.
+            permz: Permeability in the K-direction, in md, as a
+                :class:`~xtgeo.GridProperty` or scalar float.
+            ntg: Net-to-gross ratio applied to horizontal transmissibilities.
+                May be a :class:`~xtgeo.GridProperty` or scalar float.
+                Defaults to ``1.0``.
+            min_dz_pinchout: Minimum layer thickness in grid Z-units below
+                which a K-layer is treated as a pinch-out. Defaults to
+                ``1e-4``.
+            min_fault_throw: Minimum fault throw in grid Z-units. Fault NNCs
+                below this threshold are discarded. Defaults to ``0.01``.
+
+        Returns:
+            A 4-tuple ``(tranx, trany, tranz, nnc)``:
+
+            - **tranx**: I-direction transmissibilities as a
+              :class:`~xtgeo.GridProperty`.
+            - **trany**: J-direction transmissibilities as a
+              :class:`~xtgeo.GridProperty`.
+            - **tranz**: K-direction transmissibilities as a
+              :class:`~xtgeo.GridProperty`.
+            - **nnc**: A :class:`pandas.DataFrame` containing fault and
+              pinch-out NNCs with 1-based cell indices, transmissibility
+              ``T``, and ``TYPE``.
+
+        Example::
+
+            >>> tranx, trany, tranz, nnc = grid.get_cell_transmissibilities(
+            ...     permx, permy, permz, ntg=ntg
+            ... )
+        """
+        return _grid_transmissibilities.get_cell_transmissibilities(
+            self,
+            permx=permx,
+            permy=permy,
+            permz=permz,
+            ntg=ntg,
+            min_dz_pinchout=min_dz_pinchout,
+            min_fault_throw=min_fault_throw,
+        )
+
+    def get_nested_hybrid_nnc_transmissibilities(
+        self,
+        permx: GridProperty | float,
+        permy: GridProperty | float,
+        permz: GridProperty | float,
+        ntg: GridProperty | float = 1.0,
+        *,
+        nnc_table: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Compute transmissibilities for nested-hybrid NNC cell pairs.
+
+        Args:
+            permx: Permeability in the I-direction (grid cells), md, either as
+                a :class:`~xtgeo.GridProperty` or a scalar float.
+            permy: Permeability in the J-direction (grid cells), md, either as
+                a :class:`~xtgeo.GridProperty` or a scalar float.
+            permz: Permeability in the K-direction (grid cells), md, either as
+                a :class:`~xtgeo.GridProperty`  or a scalar float.
+            ntg: Net-to-gross ratio (0–1). Applied to horizontal transmissibility
+                only. Either a :class:`~xtgeo.GridProperty` or a scalar float.
+                Defaults to ``1.0``.
+            nnc_table: :class:`pandas.DataFrame` with columns ``I1, J1, K1``
+                (mother cell, 1-based), ``I2, J2, K2`` (refined cell, 1-based),
+                and ``DIRECTION`` (face direction from the mother cell's
+                perspective: ``I+``, ``I-``, ``J+``, ``J-``, ``K+``, ``K-``).
+
+        Returns:
+            A :class:`pandas.DataFrame` with columns ``I1, J1, K1`` (mother cell,
+            1-based), ``I2, J2, K2`` (refined cell, 1-based), ``T``
+            (transmissibility), ``TYPE`` (``"NestedHybrid"``), and ``DIRECTION``.
+        """
+        return _grid_transmissibilities.get_nnc_nested_hybrid(
+            self,
+            permx=permx,
+            permy=permy,
+            permz=permz,
+            ntg=ntg,
+            nnc_table=nnc_table,
         )
 
     def get_heights_above_ffl(
@@ -2471,14 +2731,28 @@ class Grid(_Grid3D):
         columnnames: tuple[str, str, str] = ("IX", "JY", "KZ"),
         fmt: Literal["int", "float"] = "int",
         undef: int = -1,
+        method: Literal["guided", "spatial"] = "guided",
     ) -> pd.DataFrame | list:
         """Returns a list/dataframe of cell indices based on a Points() instance.
 
-        If a point is outside the grid, -1 values are returned
+        For each input point the enclosing grid cell is found and reported as
+        ``(I, J, K)`` indices (1-based by default). Points that fall outside the
+        grid get ``-1`` (or the value given by ``undef``).
+
+        Nested hybrid grids are supported even when refined cells overlap coarse
+        mother cells geometrically but have distant ``(I, J)`` indices. With
+        ``activeonly=True``, inactive mother cells are skipped. With
+        ``activeonly=False``, active cells take precedence over overlapping inactive
+        cells; an inactive cell is returned only if no active cell contains the point.
+
+        The default ``"guided"`` method uses guide surfaces and falls back to a
+        cached spatial index for unresolved points. Use ``"spatial"`` for large
+        point sets on nested hybrid grids: it uses the index for every point without
+        assuming XYZ-to-IJK correlation.
 
         Args:
             points (Points): A XTGeo Points instance
-            activeonly (bool): If True, UNDEF cells are not included
+            activeonly (bool): If True, only active cells are included.
             zerobased (bool): If True, counter start from 0, otherwise 1 (default=1).
             dataframe (bool): If True result is Pandas dataframe, otherwise a list
                 of tuples
@@ -2486,12 +2760,19 @@ class Grid(_Grid3D):
             columnnames (tuple): Name of columns if dataframe is returned
             fmt (str): Format of IJK arrays (int/float). Default is "int"
             undef (int or float): Value to assign to undefined (outside) entries.
+            method (str): Lookup engine: "guided" (default) or "spatial".
+                Use "spatial" for nested hybrid grids.
 
         Raises:
             ValueError: If the Points object has no XYZ data available.
+            ValueError: If ``method`` is not "guided" or "spatial".
 
         .. versionadded:: 2.6
         .. versionchanged:: 2.8 Added keywords `columnnames`, `fmt`, `undef`
+        .. versionchanged:: 4.27 Points inside nested hybrid (refined) cells are
+           now resolved instead of being reported as outside the grid.
+        .. versionchanged:: 4.27 Added keyword `method` for the cached spatial-hash
+           lookup engine.
         """
         return _grid_etc1.get_ijk_from_points(
             self,
@@ -2503,6 +2784,7 @@ class Grid(_Grid3D):
             columnnames=columnnames,
             fmt=fmt,
             undef=undef,
+            method=method,
         )
 
     def get_xyz(
@@ -2743,7 +3025,7 @@ class Grid(_Grid3D):
             # store grid quality measures in RMS
             gprops = grd.gridquality()
             for gprop in gprops:
-                gprop.to_roxar(project, "MyGrid", gprop.name)
+                gprop.to_rms(project, "MyGrid", gprop.name)
 
 
         """
@@ -2915,16 +3197,16 @@ class Grid(_Grid3D):
 
         Example::
             import xtgeo
-            grd = xtgeo.grid_from_roxar(project, "simpleb8")
-            poro = xtgeo.gridproperty_from_roxar(project, "simpleb8", "PORO")
+            grd = xtgeo.grid_from_rms(project, "simpleb8")
+            poro = xtgeo.gridproperty_from_rms(project, "simpleb8", "PORO")
             grd.props = [poro]
 
             grd.translate_coordinates(translate=(10,10, 20), flip=(1,1,-1),
                 add_rotation=30)
 
-            grd.to_roxar(project, "simpleb8_translated")
+            grd.to_rms(project, "simpleb8_translated")
             poro1 = grd.get_prop_by_name("PORO")
-            poro1.to_roxar(project, "simpleb8_translated", "PORO")
+            poro1.to_rms(project, "simpleb8_translated", "PORO")
 
         """
         _grid_translate_coords.translate_coordinates(
@@ -3326,6 +3608,32 @@ class Grid(_Grid3D):
             filterlogrange=filterlogrange,
             resultformat=resultformat,
         )
+
+    def get_distance_to_wells(
+        self,
+        wells: list[Well | BlockedWell],
+        metric: Literal["euclid", "horizontal"] = "euclid",
+        name: str = "DISTANCE2WELL",
+    ) -> GridProperty:
+        """Create a property with cell-center distances to the nearest well.
+
+        The distance is calculated to the center of the nearest cell penetrated by a
+        well, rather than to the well trajectory itself. Use
+        ``metric="horizontal"`` to calculate horizontal (XY) distance only.
+        Inactive cells are masked.
+
+        Args:
+            wells: A list of wells or blocked wells. Blocked wells use their I/J/K
+                indices.
+            metric: ``"euclid"`` (default) or ``"horizontal"`` for horizontal
+                distance.
+            name: Name of the returned property.
+
+        Returns:
+            A continuous grid property containing distances to the nearest well.
+
+        """
+        return _grid_welldist.get_distance_to_wells(self, wells, metric, name)
 
     # ==================================================================================
     # Extract a fence/randomline by sampling, ready for plotting with e.g. matplotlib

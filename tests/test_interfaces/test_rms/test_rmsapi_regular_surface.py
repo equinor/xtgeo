@@ -22,7 +22,7 @@ from xtgeo.interfaces.rms.rmsapi_utils import _StorageTypeRegularSurface as Stor
 logger = null_logger(__name__)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceReaderInit:
     """Test RegularSurfaceReader initialization and basic functionality."""
 
@@ -134,7 +134,7 @@ class TestRegularSurfaceReaderInit:
             _ = reader.load()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceReaderValidation:
     """Test input validation in RegularSurfaceReader."""
 
@@ -232,7 +232,7 @@ class TestRegularSurfaceReaderValidation:
             _ = reader.load()
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceReaderDataValidation:
     """Test that loaded data is correct."""
 
@@ -305,7 +305,7 @@ class TestRegularSurfaceReaderDataValidation:
         assert np.allclose(data2.values, data1.values + 100.0)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceReaderMethods:
     """Test RegularSurfaceReader methods."""
 
@@ -326,7 +326,7 @@ class TestRegularSurfaceReaderMethods:
         assert reader._rmsapi_utils is None
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceReaderEdgeCases:
     """Test edge cases and error conditions."""
 
@@ -407,7 +407,7 @@ class TestRegularSurfaceReaderEdgeCases:
 # ======================================================================================
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceWriter:
     """Tests for writing regular surfaces to RMS via RegularSurfaceWriter."""
 
@@ -581,7 +581,7 @@ class TestRegularSurfaceWriter:
             writer.save(data)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceMoreReaderPlusWriter:
     @staticmethod
     def test_read_write_to_same_object(rms_regular_surface_project):
@@ -793,7 +793,7 @@ class TestRegularSurfaceMoreReaderPlusWriter:
             writer.save(data)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceAdditional:
     @staticmethod
     def test_reader_cleanup_after_failure(rms_regular_surface_project):
@@ -926,7 +926,7 @@ class TestRegularSurfaceAdditional:
             writer.save(data)
 
 
-@pytest.mark.requires_roxar
+@pytest.mark.requires_rmsapi
 class TestRegularSurfaceDataValidation:
     """Test RegularSurfaceDataRms validation without full RMS setup."""
 

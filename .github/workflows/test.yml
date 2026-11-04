@@ -115,7 +115,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 
       - name: Setup testdata
         uses: "./.github/actions/setup_testdata"
@@ -189,13 +189,13 @@ jobs:
         run: |
           ${{ steps.resinsight.outputs.install-path}}/bin/ResInsight --console --version
           export RESINSIGHT_EXECUTABLE="${{ steps.resinsight.outputs.install-path}}/bin/ResInsight"
-          uv run pytest -n 4 --dist=loadgroup tests --doctest-modules --generate-plots --disable-warnings --durations=25 --cov=xtgeo --cov-report=xml:xtgeocoverage.xml --junitxml=junit.xml -o junit_family=legacy
+          uv run --frozen pytest -n 4 --dist=loadgroup tests --doctest-modules --generate-plots --disable-warnings --durations=25 --cov=xtgeo --cov-report=xml:xtgeocoverage.xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload test coverage to Codecov
         id: codecov-coverage
         if: ${{ !cancelled() }}
         continue-on-error: true
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: xtgeocoverage.xml
@@ -209,7 +209,7 @@ jobs:
 
       - name: Upload test coverage to Codecov (retry)
         if: ${{ steps.codecov-coverage.outcome == 'failure' }}
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: xtgeocoverage.xml
@@ -227,7 +227,7 @@ jobs:
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         continue-on-error: true
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results

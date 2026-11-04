@@ -166,8 +166,10 @@ End example of a valid GXF file
 from __future__ import annotations
 
 import logging
+import math
 import warnings
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
+from decimal import Decimal
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
@@ -175,6 +177,7 @@ from typing_extensions import Self
 
 from xtgeo.common.version import __version__ as xtgeo_version
 from xtgeo.io._file import FileFormat, FileWrapper
+from xtgeo.io._formatting import format_number, round_to_power_of_ten_if_close
 from xtgeo.io._tokens import (
     TokenizedLine,
     is_finite_decimal_number,
@@ -190,6 +193,20 @@ if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
 
 logger = logging.getLogger(__name__)
+
+
+class GXFSerializationWarning(UserWarning):
+    """Warn that GXF serialization cannot preserve the input data exactly.
+
+    Promote this warning to an exception when mask-preserving output is required::
+
+        >>> import warnings
+        >>> from xtgeo.io.gxf import GXFSerializationWarning
+        >>> warnings.simplefilter("error", GXFSerializationWarning)
+
+    This warning is emitted during streaming of the grid, so an exception may
+    leave a partially written output.
+    """
 
 
 @dataclass(frozen=True, eq=False)
@@ -213,8 +230,9 @@ class GXFData:
     rotation: float
     dummy: int | float | None
     grid: np.ma.MaskedArray
+    _mask_values_equal_to_dummy: InitVar[bool] = True
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, _mask_values_equal_to_dummy: bool) -> None:
         values = np.ma.array(self.grid, copy=True)
 
         if self.points <= 0 or self.rows <= 0:
@@ -230,7 +248,11 @@ class GXFData:
             if not np.isfinite(value):
                 raise ValueError(f"{name} must be a finite number.")
 
-        if self.dummy is not None and not np.isfinite(self.dummy):
+        if (
+            self.dummy is not None
+            and not isinstance(self.dummy, int)
+            and not math.isfinite(self.dummy)
+        ):
             raise ValueError("dummy value must be a finite number.")
 
         if values.shape != (self.rows, self.points):
@@ -247,7 +269,7 @@ class GXFData:
 
         # Ensure undefined nodes are represented by a mask when #DUMMY is defined.
         values = np.ma.masked_invalid(values)
-        if self.dummy is not None:
+        if self.dummy is not None and _mask_values_equal_to_dummy:
             values = np.ma.masked_where(values == self.dummy, values)
         values.mask = np.ma.getmaskarray(values)
         if self.dummy is None and np.ma.count_masked(values):
@@ -279,47 +301,6 @@ class GXFData:
 
         return bool(np.array_equal(self.grid.data[~mask], other.grid.data[~other_mask]))
 
-    def allclose(self, other: object, rtol: float = 1e-05, atol: float = 1e-08) -> bool:
-        if not isinstance(other, GXFData):
-            return False
-
-        if self.points != other.points or self.rows != other.rows:
-            return False
-
-        for value, other_value in (
-            (self.ptseparation, other.ptseparation),
-            (self.rwseparation, other.rwseparation),
-            (self.xorigin, other.xorigin),
-            (self.yorigin, other.yorigin),
-            (self.rotation, other.rotation),
-        ):
-            if not np.isclose(value, other_value, rtol=rtol, atol=atol):
-                return False
-
-        if self.dummy is None or other.dummy is None:
-            if self.dummy is not other.dummy:
-                return False
-        elif not np.isclose(self.dummy, other.dummy, rtol=rtol, atol=atol):
-            return False
-
-        mask = np.ma.getmaskarray(self.grid)
-        other_mask = np.ma.getmaskarray(other.grid)
-        if not np.array_equal(mask, other_mask):
-            return False
-
-        return bool(np.ma.allclose(self.grid, other.grid, rtol=rtol, atol=atol))
-
-    @staticmethod
-    def _format_number(value: float | int) -> str:
-        if isinstance(value, int):
-            return str(value)
-        formatted = f"{value:.16g}"
-        # Ensure float values always contain a decimal point so that
-        # the type is preserved on re-read (e.g. -9999.0 -> "-9999.0").
-        if "." not in formatted and "e" not in formatted and "E" not in formatted:
-            formatted += ".0"
-        return formatted
-
     @staticmethod
     def _is_user_extension(line: TokenizedLine) -> bool:
         """
@@ -332,9 +313,22 @@ class GXFData:
 
     @classmethod
     def _parse_gxf(cls, stream: Iterable[str], fileref_errmsg: str) -> Self:
+        """Parse an ASCII GXF stream into validated, immutable grid data.
+
+        Args:
+            stream: Text lines containing the complete GXF document.
+            fileref_errmsg: Reference to file for error messages.
+
+        Returns:
+            Parsed GXF metadata and grid values as a ``GXFData`` instance.
+        """
 
         scalar_values: dict[str, float | int] = {}
         grid_values: list[float] = []
+        grid_mask: list[bool] = []
+        dummy_decimal: Decimal | None = None
+        dummy_float: float | None = None
+        dummy_alias_warned = False
         grid_found = False
 
         int_keys = {"POINTS", "ROWS", "GTYPE"}
@@ -353,6 +347,13 @@ class GXFData:
             if not line[0].startswith("#"):
                 # Free text outside the grid section:
                 continue
+
+            if not is_single_token(line):
+                raise ValueError(
+                    f"In file {fileref_errmsg}: Malformed GXF key line "
+                    f"'{line[0]}': expected a single key token, but found "
+                    f"{len(line)} tokens."
+                )
 
             if line[0] != line[0].upper():
                 raise ValueError(
@@ -404,7 +405,39 @@ class GXFData:
                                 f"'{token_value}' inside #GRID section. Only "
                                 "finite decimal numbers are allowed."
                             )
-                        grid_values.append(float(token_value))
+                        grid_value = float(token_value)
+                        grid_values.append(grid_value)
+                        is_dummy = False
+                        if dummy_decimal is not None and grid_value == dummy_float:
+                            is_dummy = Decimal(token_value) == dummy_decimal
+                            if not is_dummy and not dummy_alias_warned:
+                                # Example: #DUMMY 1.0000000000000001 and a single
+                                # #GRID value 1.0 parse with the grid value unmasked,
+                                # but both are stored as float64 1.0. Writing emits
+                                # 1.0 for both and issues a warning,
+                                # but rereading masks the grid value.
+                                # This should happen extremely rarely.
+                                # A potential alternative is to choose a collision-free
+                                # dummy value. But that is currently blocked by
+                                # https://github.com/equinor/xtgeo/issues/1684
+                                warnings.warn(
+                                    "A GXF grid value differs from #DUMMY in "
+                                    "decimal form but becomes equal after float64 "
+                                    "conversion. The exact decimal comparison "
+                                    "preserves the correct mask, but both tokens "
+                                    "are numerically indistinguishable: they are "
+                                    "stored as the same float64 value, so the "
+                                    "underlying numeric values alone cannot identify "
+                                    "which token was #DUMMY. If the data is written "
+                                    "to GXF, the unmasked value may serialize as "
+                                    "#DUMMY; the writer will warn about such a "
+                                    "collision, and reading that output will mask "
+                                    "previously valid data.",
+                                    UserWarning,
+                                    stacklevel=3,
+                                )
+                                dummy_alias_warned = True
+                        grid_mask.append(is_dummy)
                 break
 
             if key == "SENSE":
@@ -492,6 +525,9 @@ class GXFData:
                 )
 
             scalar_values[key] = parsed_value
+            if key == "DUMMY":
+                dummy_decimal = Decimal(value_token)
+                dummy_float = float(value_token)
 
         # Check for required keys
         required = ["POINTS", "ROWS"]
@@ -514,6 +550,16 @@ class GXFData:
 
         points = int(scalar_values["POINTS"])
         rows = int(scalar_values["ROWS"])
+        if points <= 0:
+            raise ValueError(
+                f"In file {fileref_errmsg}: Invalid value '{points}' for key "
+                "'#POINTS'. Expected a strictly positive integer."
+            )
+        if rows <= 0:
+            raise ValueError(
+                f"In file {fileref_errmsg}: Invalid value '{rows}' for key "
+                "'#ROWS'. Expected a strictly positive integer."
+            )
         num_expected_values = points * rows
         if len(grid_values) != num_expected_values:
             raise ValueError(
@@ -526,7 +572,8 @@ class GXFData:
 
         if "DUMMY" in scalar_values:
             dummy_val = scalar_values["DUMMY"]
-            masked_values = np.ma.masked_equal(values_2d, dummy_val)
+            mask_2d = np.array(grid_mask, dtype=bool).reshape((rows, points))
+            masked_values = np.ma.array(values_2d, mask=mask_2d)
         else:
             # The GXF specification says the default is no dummy value.
             dummy_val = None
@@ -542,6 +589,7 @@ class GXFData:
             rotation=float(scalar_values["ROTATION"]),
             dummy=dummy_val,
             grid=masked_values,
+            _mask_values_equal_to_dummy=False,
         )
 
     @classmethod
@@ -585,14 +633,65 @@ class GXFData:
         Args:
             file: Path to GXF file or a file-like object (BytesIO or StringIO).
             encoding: Text encoding for the output file.
+
+        Warns:
+            GXFSerializationWarning:
+            Callers can promote this warning to
+            an exception with :func:`warnings.simplefilter`.
         """
+
+        # User-defined keys (not part of GXF specification)
+        # 1) Calculate the maximum X and Y coordinates, write as ##XMAX and ##YMAX
+        #    These keys are per user's request, and should not be changed without
+        #    internal discussion.
+        x_max = self.xorigin + (self.points - 1) * self.ptseparation
+        if not math.isfinite(x_max):
+            raise ValueError(
+                "Derived GXF metadata ##XMAX must be finite."
+                " (##XMAX is the maximum X coordinate of the grid.) \n"
+                " Non-finite value indicates invalid grid configuration."
+            )
+        x_max_formatted = format_number(x_max)
+
+        y_max = self.yorigin + (self.rows - 1) * self.rwseparation
+        if not math.isfinite(y_max):
+            raise ValueError(
+                "Derived GXF metadata ##YMAX must be finite."
+                " (##YMAX is the maximum Y coordinate of the grid.) \n"
+                " Non-finite value indicates invalid grid configuration."
+            )
+        y_max_formatted = format_number(y_max)
 
         wrapped_file = FileWrapper(file)
         wrapped_file.check_folder(raiseerror=OSError)
 
-        # GXF spec requires lines <= 80 chars; rows may wrap but each new
-        # row must start on a new line.
+        # Values are written 5 per line, right-adjusted to a common column width.
+        # This formatting is per user's request, and should not be changed without
+        # internal discussion.
+        # Tests should ensure that changes are caught.
+
         max_line_length = 80
+        max_values_per_line = 5
+        max_characters_per_value = (
+            max_line_length - (max_values_per_line - 1)
+        ) // max_values_per_line
+        extra_spaces = max_line_length - (
+            max_values_per_line * max_characters_per_value + (max_values_per_line - 1)
+        )
+        spaces_per_gap, remaining_spaces = divmod(extra_spaces, max_values_per_line - 1)
+        gap_widths = [
+            1 + spaces_per_gap + (index < remaining_spaces)
+            for index in range(max_values_per_line - 1)
+        ]
+        dummy_formatted = (
+            format_number(
+                round_to_power_of_ten_if_close(self.dummy),
+                max_characters=max_characters_per_value,
+            )
+            if self.dummy is not None
+            else None
+        )
+        dummy_collision_warned = False
 
         with wrapped_file.get_text_stream_write(encoding=encoding) as stream:
             stream.write(
@@ -600,63 +699,91 @@ class GXFData:
                 "! (https://github.com/equinor/xtgeo)\n\n"
             )
             stream.write("#POINTS\n")
-            stream.write(f"{self._format_number(self.points)}\n")
+            stream.write(f"{format_number(self.points)}\n")
             stream.write("\n")
 
             stream.write("#ROWS\n")
-            stream.write(f"{self._format_number(self.rows)}\n")
+            stream.write(f"{format_number(self.rows)}\n")
             stream.write("\n")
 
             stream.write("#PTSEPARATION\n")
-            stream.write(f"{self._format_number(self.ptseparation)}\n")
+            stream.write(f"{format_number(self.ptseparation)}\n")
             stream.write("\n")
 
             stream.write("#RWSEPARATION\n")
-            stream.write(f"{self._format_number(self.rwseparation)}\n")
+            stream.write(f"{format_number(self.rwseparation)}\n")
             stream.write("\n")
 
             stream.write("#XORIGIN\n")
-            stream.write(f"{self._format_number(self.xorigin)}\n")
+            stream.write(f"{format_number(self.xorigin)}\n")
             stream.write("\n")
 
             stream.write("#YORIGIN\n")
-            stream.write(f"{self._format_number(self.yorigin)}\n")
+            stream.write(f"{format_number(self.yorigin)}\n")
             stream.write("\n")
 
             stream.write("#ROTATION\n")
-            stream.write(f"{self._format_number(self.rotation)}\n")
+            stream.write(f"{format_number(self.rotation)}\n")
             stream.write("\n")
 
             if self.dummy is not None:
                 stream.write("#DUMMY\n")
-                stream.write(f"{self._format_number(self.dummy)}\n")
+                stream.write(f"{dummy_formatted}\n")
                 stream.write("\n")
 
-            # User-defined keys (not part of GXF specification):
-
-            # maximum x and y values:
-            # Note that they are smaller than
-            # the x_origin and y_origin values if the ptseparation or rwseparation
-            # values are negative.
-            x_max = self.xorigin + (self.points - 1) * self.ptseparation
-            y_max = self.yorigin + (self.rows - 1) * self.rwseparation
-            stream.write(f"##XMAX\n{self._format_number(x_max)}\n")
+            # User-defined keys start with '##' (not part of GXF specification):
+            stream.write(f"##XMAX\n{x_max_formatted}\n")
             stream.write("\n")
-            stream.write(f"##YMAX\n{self._format_number(y_max)}\n")
+            stream.write(f"##YMAX\n{y_max_formatted}\n")
             stream.write("\n")
 
             stream.write("#GRID\n")
 
-            # Each line may be up to 80 characters long
-            values_for_write = np.ma.filled(self.grid, fill_value=self.dummy)
-            for row in values_for_write:
-                tokens = [self._format_number(float(v)) for v in row]
-                current_line = ""
-                for token in tokens:
-                    candidate = (current_line + " " + token) if current_line else token
-                    if len(candidate) > max_line_length and current_line:
-                        stream.write(current_line + "\n")
-                        current_line = token
+            # GXF requires lines of at most 80 characters. Rows may wrap, but each
+            # row must start on a new line.
+            for row in self.grid:
+                for start in range(0, len(row), max_values_per_line):
+                    chunk = []
+                    for value in row[start : start + max_values_per_line]:
+                        if np.ma.is_masked(value) and dummy_formatted is not None:
+                            formatted = dummy_formatted
+                        else:
+                            formatted = format_number(
+                                float(value),
+                                max_characters=max_characters_per_value,
+                            )
+                            if (
+                                formatted == dummy_formatted
+                                and not dummy_collision_warned
+                            ):
+                                # Cases where a grid value and the #DUMMY value
+                                # are different but are formatted to the same value are
+                                # rare; only issuing a warning avoids a second grid pass
+                                # to identify a collision-free dummy value
+                                # and preserves streaming performance in normal cases.
+                                # Note that automatically choosing a new dummy value
+                                # in case of a collision would require a potentially
+                                # time-consuming pre-read of the grid.
+                                # Moreover, https://github.com/equinor/xtgeo/issues/1684
+                                # explains that such a dummy value is currently not
+                                # handled properly.
+                                warnings.warn(
+                                    "An unmasked GXF grid value serializes to the "
+                                    "same token as the #DUMMY value "
+                                    f"({dummy_formatted}); reading the exported GXF "
+                                    "file will mask that value.",
+                                    GXFSerializationWarning,
+                                    stacklevel=2,
+                                )
+                                dummy_collision_warned = True
+                        chunk.append(formatted)
+                    gaps = len(chunk) - 1
+                    if gaps == 0:
+                        line = chunk[0].rjust(max_characters_per_value)
                     else:
-                        current_line = candidate
-                stream.write(current_line + "\n")
+                        line = chunk[0].rjust(max_characters_per_value)
+                        for token, gap_width in zip(chunk[1:], gap_widths[:gaps]):
+                            line += " " * gap_width + token.rjust(
+                                max_characters_per_value
+                            )
+                    stream.write(line + "\n")
