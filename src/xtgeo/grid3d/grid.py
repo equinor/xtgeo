@@ -2678,25 +2678,26 @@ class Grid(_Grid3D):
 
     def get_property_between_surfaces(
         self,
-        top: xtgeo.RegularSurface,
-        base: xtgeo.RegularSurface,
+        top: xtgeo.RegularSurface | None = None,
+        base: xtgeo.RegularSurface | None = None,
         value: int = 1,
         name: str = "between_surfaces",
     ) -> GridProperty:
-        """Returns a 3D GridProperty object with <value> between two surfaces."
+        """Return a discrete property for cells bounded by the supplied surfaces.
 
         Args:
-            top: The bounding top surface (RegularSurface object)
-            base: The bounding base surface (RegularSurface object)
+            top: Optional upper bound; if provided alone, selects cells at or below it
+            base: Optional lower bound; if provided alone, selects cells at or above it
             value: An integer > 0 to assign to cells between surfaces, 1 as default
             name: Name of the property, default is "between_surfaces"
 
         Returns:
-            xtgeo GridProperty object with <value> if cell center is between surfaces,
-            otherwise 0. Note that the property wil be discrete if input value is an
-            integer, otherwise it will be continuous.
+            A discrete property with <value> for cells within the supplied bounds,
+            otherwise 0.
 
         .. versionadded:: 4.5
+        .. versionchanged:: 4.28
+            Validates surface order and allows either surface to be omitted.
 
         """
         return _grid_etc1.get_property_between_surfaces(self, top, base, value, name)
