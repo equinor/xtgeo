@@ -15,7 +15,10 @@ from numpy.testing import assert_allclose
 
 import xtgeo
 
-pytestmark = pytest.mark.requires_resinsight
+pytestmark = [
+    pytest.mark.requires_resinsight,
+    pytest.mark.xdist_group(name="resinsight"),
+]
 
 
 def _write_generated_property(resinsight_instance, case_name="EXAMPLE"):
