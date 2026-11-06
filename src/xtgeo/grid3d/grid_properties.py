@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import warnings
-from typing import TYPE_CHECKING, List, Literal, Tuple, Union
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -33,12 +33,6 @@ if TYPE_CHECKING:
     from xtgeo.common.types import FileLike
 
     from .grid_property import GridProperty
-
-KeywordTuple = Tuple[str, str, int, int]
-KeywordDateTuple = Tuple[str, str, int, int, Union[str, int]]
-GridPropertiesKeywords = Union[
-    List[Union[KeywordTuple, KeywordDateTuple]], pd.DataFrame
-]
 
 
 def list_gridproperties(

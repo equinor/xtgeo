@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import io
 from copy import deepcopy
-from typing import Generator, Literal
+from typing import TYPE_CHECKING, Generator, Literal
 
 import resfo
 
 import xtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import MAXKEYWORDS
-from xtgeo.io._file import FileWrapper
 
 from . import _grid3d_utils as utils
 from ._find_gridprop_in_eclrun import (
@@ -19,6 +18,13 @@ from ._find_gridprop_in_eclrun import (
 )
 from ._gridprop_import_eclrun import decorate_name
 from .grid_property import GridProperty
+
+if TYPE_CHECKING:
+    import pandas as pd
+
+    from xtgeo.io._file import FileWrapper
+
+    from .grid import Grid
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -34,17 +40,23 @@ def read_eclrun_properties(xtg_file: FileWrapper) -> Generator[str, None, None]:
     Returns:
         Names of properties within the Eclipse file.
     """
-    is_stream = isinstance(xtg_file.file, (io.BytesIO, io.StringIO))
+    source = xtg_file.file
+    stream = source if isinstance(source, (io.BytesIO, io.StringIO)) else None
+    mark = stream.tell() if stream is not None else 0
     try:
-        if is_stream:
-            mark = xtg_file.file.tell()
         ntotal = 0
         nactive = 0
-        for item in resfo.lazy_read(xtg_file.file):
+        for item in resfo.lazy_read(source):
             keyword = item.read_keyword().strip()
 
             if keyword == "INTEHEAD":
                 data = item.read_array()
+                if isinstance(data, resfo.MessType):
+                    raise ValueError(
+                        f"Keyword '{keyword}' in {source} has type MESS (no data), "
+                        "but an integer array was expected. The file may be corrupt "
+                        "or not a valid Eclipse INIT/restart file."
+                    )
                 # nx * ny * nz
                 ntotal = data[8] * data[9] * data[10]
                 nactive = data[11]
@@ -58,8 +70,8 @@ def read_eclrun_properties(xtg_file: FileWrapper) -> Generator[str, None, None]:
             ):
                 yield keyword
     finally:
-        if is_stream:
-            xtg_file.file.seek(mark)
+        if stream is not None:
+            stream.seek(mark)
 
 
 def sanitize_date_list(
@@ -84,8 +96,8 @@ def sanitize_date_list(
     >>> sanitize_date_list([20200101])
     [20200101]
     """
-    if dates in ("first", "last", "all"):
-        return dates
+    if isinstance(dates, str):
+        return dates  # narrowed to Literal["first", "all", "last"]
     new_dates = []
     for date in dates:
         if isinstance(date, int):
@@ -110,10 +122,10 @@ def sanitize_date_list(
 
 
 def import_ecl_init_gridproperties(
-    pfile,
+    pfile: FileWrapper,
     names: list[str] | Literal["all"],
-    grid,
-    strict=True,
+    grid: Grid,
+    strict: bool = True,
     maxkeys: int = MAXKEYWORDS,
 ) -> list[GridProperty]:
     """Imports list of properties from an init file.
@@ -123,17 +135,14 @@ def import_ecl_init_gridproperties(
     to be considered as a grid property.
 
     Args:
-        pfile: Path to the ecl restart file
+        pfile: FileWrapper for the Eclipse init file
         names: List of names to fetch, can also be "all" to fetch all properties.
-        grid: The grid used by the simulator to produce the restart file.
+        grid: The grid used by the simulator to produce the init file.
         strict: If strict=True, will raise error if key is not found.
         maxkeys: Maximum number of keywords allocated
     Returns:
         List of GridProperty objects fetched from the init file.
     """
-    if not isinstance(pfile, FileWrapper):
-        pfile = FileWrapper(pfile)
-
     if not grid:
         raise ValueError("Grid Geometry object is missing")
 
@@ -144,7 +153,6 @@ def import_ecl_init_gridproperties(
     kwlist = utils.scan_keywords(
         pfile,
         fformat="xecl",
-        dataframe=True,
         dates=True,
         maxkeys=maxkeys,
     )
@@ -188,10 +196,10 @@ def import_ecl_init_gridproperties(
 
 
 def import_ecl_restart_gridproperties(
-    pfile,
+    pfile: FileWrapper,
     names: list[str] | Literal["all"],
     dates: list[int] | list[str] | Literal["all", "last", "first"],
-    grid,
+    grid: Grid,
     strict: tuple[bool, bool],
     namestyle: Literal[0, 1],
     maxkeys: int = MAXKEYWORDS,
@@ -203,7 +211,7 @@ def import_ecl_restart_gridproperties(
     to be considered as a grid property.
 
     Args:
-        pfile: Path to the ecl restart file
+        pfile: FileWrapper for the Eclipse restart file
         names: List of names to fetch, can also be "all" to fetch all properties.
         dates: List of xtgeo style dates (e.g. int(19990101) or "YYYYMMDD"),
             also Also accepts "YYYY-MM-DD".  "all", "last" and "first" can be
@@ -231,13 +239,12 @@ def import_ecl_restart_gridproperties(
     if not names:
         raise ValueError("Name list cannot be empty (None)")
 
-    dates = sanitize_date_list(dates)
+    normalized_dates = sanitize_date_list(dates)
 
     # scan valid keywords with dates
     kwlist = utils.scan_keywords(
         pfile,
         fformat="xecl",
-        dataframe=True,
         dates=True,
         maxkeys=maxkeys,
     )
@@ -245,22 +252,25 @@ def import_ecl_restart_gridproperties(
     validnamedatepairs, validdates = _process_valid_namesdates(kwlist, grid)
 
     # allow sloppy dates, i.e. remove invalid date entries
-    if isinstance(dates, list) and strictdate is False:
-        dates = _process_sloppydates(dates, validdates)
+    if isinstance(normalized_dates, list) and strictdate is False:
+        normalized_dates = _process_sloppydates(normalized_dates, validdates)
 
-    usenamedatepairs = []
-    if names == "all" and dates == "all":
-        usenamedatepairs = deepcopy(validnamedatepairs)
-        usedates = dates
+    usenamedatepairs: list[tuple[str, int | str]] = []
+    if names == "all" and normalized_dates == "all":
+        usenamedatepairs.extend(deepcopy(validnamedatepairs))
     else:
-        if names == "all" and dates != "all":
+        usenames: list[str]
+        usedates: list[int] | Literal["first", "last"]
+        if names == "all" and normalized_dates != "all":
             usenames = [namedate[0] for namedate in validnamedatepairs]
-            usedates = dates
-        elif names != "all" and dates == "all":
+            usedates = normalized_dates
+        elif names != "all" and normalized_dates == "all":
             usedates = [namedate[1] for namedate in validnamedatepairs]
             usenames = names
         else:
-            usedates = dates
+            assert names != "all"
+            assert normalized_dates != "all"
+            usedates = normalized_dates
             usenames = names
 
         for name in usenames:
@@ -287,7 +297,9 @@ def import_ecl_restart_gridproperties(
                 validnamedatepairs,
             )
 
-    results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    results = find_gridprops_from_restart_file(
+        pfile.file, names, normalized_dates, grid=grid
+    )
     properties_list = []
     for result in results:
         if namestyle == 1:
@@ -303,7 +315,9 @@ def import_ecl_restart_gridproperties(
     return properties_list
 
 
-def _process_valid_namesdates(kwlist, grid):
+def _process_valid_namesdates(
+    kwlist: pd.DataFrame, grid: Grid
+) -> tuple[list[tuple[str, int]], list[int]]:
     """Return lists with valid pairs, dates scanned from RESTART"""
     validnamedatepairs = []
     validdates = []
@@ -322,7 +336,7 @@ def _process_valid_namesdates(kwlist, grid):
     return validnamedatepairs, validdates
 
 
-def _process_sloppydates(dates, validdates):
+def _process_sloppydates(dates: list[int], validdates: list[int]) -> list[int]:
     """Allow "sloppy dates", which removes invalid dates from the list"""
 
     usedates = []
