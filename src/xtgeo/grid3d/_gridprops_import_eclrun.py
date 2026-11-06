@@ -52,7 +52,11 @@ def read_eclrun_properties(xtg_file: FileWrapper) -> Generator[str, None, None]:
             if keyword == "INTEHEAD":
                 data = item.read_array()
                 if isinstance(data, resfo.MessType):
-                    raise ValueError(f"Unexpected MESS value in {source}")
+                    raise ValueError(
+                        f"Keyword '{keyword}' in {source} has type MESS (no data), "
+                        "but an integer array was expected. The file may be corrupt "
+                        "or not a valid Eclipse INIT/restart file."
+                    )
                 # nx * ny * nz
                 ntotal = data[8] * data[9] * data[10]
                 nactive = data[11]
@@ -92,12 +96,8 @@ def sanitize_date_list(
     >>> sanitize_date_list([20200101])
     [20200101]
     """
-    if dates == "first":
-        return "first"
-    if dates == "last":
-        return "last"
-    if dates == "all":
-        return "all"
+    if isinstance(dates, str):
+        return dates  # narrowed to Literal["first", "all", "last"]
     new_dates = []
     for date in dates:
         if isinstance(date, int):
