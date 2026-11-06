@@ -22,17 +22,17 @@ jobs:
     timeout-minutes: 25
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
         os: [ubuntu-latest]
         include:
           - os: macos-latest
             python-version: "3.11"
           - os: macos-latest
-            python-version: "3.14"
+            python-version: "3.15"
           - os: windows-latest
             python-version: "3.11"
           - os: windows-latest
-            python-version: "3.14"
+            python-version: "3.15"
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,7 +60,8 @@ jobs:
         if: ${{ matrix.os != 'macos-latest'
           && matrix.python-version != '3.12'
           && matrix.python-version != '3.13'
-          && matrix.python-version != '3.14' }}
+          && matrix.python-version != '3.14'
+          && matrix.python-version != '3.15' }}
         run: |
           uv pip install openvds  # Does not build macOS wheels or 3.12+ (yet)
           uv run pytest tests/test_dependency_integration.py
