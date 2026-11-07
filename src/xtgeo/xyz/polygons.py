@@ -67,8 +67,7 @@ def _file_importer(
         kwargs["values"]["POLY_ID"] = (
             kwargs["values"].isnull().all(axis=1).cumsum().dropna()
         )
-        kwargs["values"].dropna(axis=0, inplace=True)
-        kwargs["values"].reset_index(inplace=True, drop=True)
+        kwargs["values"] = kwargs["values"].dropna(axis=0).reset_index(drop=True)
     kwargs["name"] = "poly"
     return kwargs
 
@@ -114,7 +113,7 @@ def _wells_importer(
     if not dflist:
         return {}
     dfr = pd.concat(dflist, ignore_index=True)
-    dfr.reset_index(inplace=True, drop=True)
+    dfr = dfr.reset_index(drop=True)
     return {
         "values": dfr,
         "attributes": {"WellName": "str"},
