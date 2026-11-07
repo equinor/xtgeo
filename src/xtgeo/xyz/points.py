@@ -65,7 +65,7 @@ def _file_importer(
     pfile = FileWrapper(points_file)
     fmt = pfile.fileformat(fformat)
     kwargs = _data_reader_factory(fmt)(pfile)
-    kwargs["values"].dropna(inplace=True)
+    kwargs["values"] = kwargs["values"].dropna()
     kwargs["filesrc"] = pfile.name
     return kwargs
 
