@@ -163,6 +163,10 @@ def refine(
         self._zcornsv = ref_zcornsv
         self._actnumsv = ref_actnumsv.astype(np.int32)
         self._ncol = int(refine_factor_column.sum())
+        if self._padding_mask is not None:
+            self._padding_mask = np.repeat(
+                self._padding_mask, refine_factor_column, axis=0
+            )
 
     if refine_factor_row.sum() > self.dimensions[1]:
         grid_cpp = _internal.grid3d.Grid(self)
@@ -171,6 +175,10 @@ def refine(
         self._zcornsv = ref_zcornsv
         self._actnumsv = ref_actnumsv.astype(np.int32)
         self._nrow = int(refine_factor_row.sum())
+        if self._padding_mask is not None:
+            self._padding_mask = np.repeat(
+                self._padding_mask, refine_factor_row, axis=1
+            )
 
     if refine_factor_layer.sum() > self.dimensions[2]:
         grid_cpp = _internal.grid3d.Grid(self)
@@ -178,6 +186,10 @@ def refine(
         self._zcornsv = ref_zcornsv
         self._actnumsv = ref_actnumsv.astype(np.int32)
         self._nlay = newnlay
+        if self._padding_mask is not None:
+            self._padding_mask = np.repeat(
+                self._padding_mask, refine_factor_layer, axis=2
+            )
         if self.subgrids is None or len(self.subgrids) <= 1:
             self.subgrids = None
         else:
@@ -300,6 +312,8 @@ def refine_vertically(
 
     # update instance:
     self._nlay = newnlay
+    if self._padding_mask is not None:
+        self._padding_mask = np.repeat(self._padding_mask, refine_factors, axis=2)
     self._zcornsv = ref_zcornsv
     self._actnumsv = ref_actnumsv.astype(np.int32)
 

@@ -187,6 +187,77 @@ def test_sample_grid3d_layer(get_drogondata):
     assert np.allclose(poromap.values.mean(), 0.1974, atol=0.01)
 
 
+@pytest.mark.parametrize("boundary", [0, 1])
+def test_boundary_sampling_has_consistent_indices_across_threads(boundary):
+    """Return the same boundary cells with one, two, or four requested threads."""
+    coarse = xtgeo.create_box_grid((2, 2, 1))
+    inactive = coarse.get_actnum()
+    inactive.values[:] = 0
+    coarse.set_actnum(inactive)
+    fine = xtgeo.create_box_grid((4, 4, 1), increment=(0.5, 0.5, 1))
+    merged = xtgeo.grid_merge(coarse, fine)
+    surface = xtgeo.RegularSurface(
+        ncol=8, nrow=8, xori=0.125, yori=0.125, xinc=0.25, yinc=0.25, values=0
+    )
+    layers = np.zeros(merged.dimensions[:2], dtype=np.int32)
+    layers[merged.padding_mask.all(axis=2)] = -1
+    sampler = _internal.regsurf.RegularSurface(surface)
+    reference = sampler.sample_grid3d(
+        merged._get_grid_cpp(), layers, boundary, boundary, 1
+    )
+    assert (reference[0] >= 3).all()  # Active refined cells win equal-depth ties.
+    assert not reference[-1].any()
+    np.testing.assert_allclose(reference[3], 0)
+    np.testing.assert_allclose(reference[4], 1)
+    for threads in (2, 4):
+        for _ in range(3):
+            result = sampler.sample_grid3d(
+                merged._get_grid_cpp(), layers, boundary, boundary, threads
+            )
+            for actual, expected in zip(result, reference):
+                np.testing.assert_array_equal(actual, expected)
+
+
+@pytest.mark.parametrize("boundary", [-1, 0, 1])
+@pytest.mark.parametrize("inactive_first", [False, True])
+def test_active_cell_wins_over_outer_inactive_cell(boundary, inactive_first):
+    """Select the active cell, but keep the depth of the outer inactive cell.
+
+    Two unit boxes cover the same map points. The inactive box is 0.5 m
+    shallower for a layer or top request, and 0.5 m deeper for a base request.
+    """
+    inactive_box = xtgeo.create_box_grid(
+        (1, 1, 1), origin=(0, 0, 0.5 if boundary == 1 else 0)
+    )
+    actnum = inactive_box.get_actnum()
+    actnum.values[:] = 0
+    inactive_box.set_actnum(actnum)
+    active_box = xtgeo.create_box_grid(
+        (1, 1, 1), origin=(0, 0, 0 if boundary == 1 else 0.5)
+    )
+    merged = (
+        xtgeo.grid_merge(inactive_box, active_box)
+        if inactive_first
+        else xtgeo.grid_merge(active_box, inactive_box)
+    )
+    surface = xtgeo.RegularSurface(
+        ncol=2, nrow=2, xori=0.25, yori=0.25, xinc=0.25, yinc=0.25, values=0
+    )
+    layers = np.zeros(merged.dimensions[:2], dtype=np.int32)
+    layers[merged.padding_mask.all(axis=2)] = -1
+    sampler = _internal.regsurf.RegularSurface(surface)
+    index_position = 2 if boundary == -1 else boundary
+    for threads in (1, 2, 4):
+        ii, _, _, top, base, inactive = sampler.sample_grid3d(
+            merged._get_grid_cpp(), layers, index_position, boundary, threads
+        )
+        np.testing.assert_array_equal(ii, 2 if inactive_first else 0)
+        assert not inactive.any()
+        np.testing.assert_allclose(
+            base if boundary == 1 else top, 1.5 if boundary == 1 else 0
+        )
+
+
 @pytest.fixture(scope="module")
 def keep_top_store():
     """To remember the top layer for the single-threaded case."""

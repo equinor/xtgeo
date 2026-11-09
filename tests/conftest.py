@@ -123,7 +123,7 @@ def nested_box():
     The box has 4 x 4 x 3 cells and extends from 1500 to 1560 m. Refine the
     central columns between 1520 and 1540 m by a factor of two in each axis.
     Deactivate the replaced coarse parent cells before merging. The merged
-    grid keeps the same physical top and base.
+    grid keeps the same physical top and base and records merge padding.
     """
     coarse = xtgeo.create_box_grid(
         (4, 4, 3), origin=(0, 0, 1500), increment=(100, 100, 20)
@@ -141,6 +141,46 @@ def nested_box():
         np.array([1, 2], dtype=np.int32),
     )
     return coarse, merged
+
+
+@pytest.fixture
+def uneven_nested_grid():
+    """Return a function that builds a nested grid with uneven cell faces.
+
+    Call it with ``geometry`` ("tilted" or "non-planar") and ``refined_first``
+    (merge the refined grid before the coarse grid). It returns the coarse,
+    refined and merged grids.
+
+    The 6 x 6 x 2 box is tilted or has non-planar cell faces, so parent and
+    refined faces differ slightly in depth. Columns and rows 2 to 5 are refined
+    by two in each axis through both layers, and their parent cells are
+    inactive.
+    """
+
+    def build(geometry, refined_first=False):
+        coarse = xtgeo.create_box_grid(
+            (6, 6, 2), origin=(0, 0, 1500), increment=(100, 100, 20)
+        )
+        if geometry == "tilted":
+            column, row = np.indices((7, 7))
+            shift = 5.37 * column + 3.11 * row
+        else:
+            shift = np.random.default_rng(1886).normal(0, 2, (7, 7))
+        coarse._zcornsv += shift[:, :, None, None].astype(np.float32)
+        fine = coarse.copy()
+        fine.crop((2, 5), (2, 5), (1, 2))
+        fine.refine(2, 2, 2)
+        actnum = coarse.get_actnum()
+        actnum.values[1:5, 1:5, :] = 0
+        coarse.set_actnum(actnum)
+        coarse_layers, fine_layers = np.array([0, 2]), np.array([0, 1, 2, 3])
+        if refined_first:
+            merged = xtgeo.grid_merge(fine, coarse, fine_layers, coarse_layers)
+        else:
+            merged = xtgeo.grid_merge(coarse, fine, coarse_layers, fine_layers)
+        return coarse, fine, merged
+
+    return build
 
 
 @pytest.fixture(name="show_plot")

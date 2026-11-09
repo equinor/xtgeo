@@ -45,6 +45,19 @@ sample_grid3d_layer(const RegularSurface &rs_cpp,
                     const int index_position,
                     const int num_threads = -1);
 
+std::tuple<py::array_t<int>,
+           py::array_t<int>,
+           py::array_t<int>,
+           py::array_t<double>,
+           py::array_t<double>,
+           py::array_t<bool>>
+sample_grid3d(const RegularSurface &rs_cpp,
+              const grid3d::Grid &grid_cpp,
+              const py::array_t<int> &layers,
+              const int index_position,
+              const int boundary,
+              const int num_threads = -1);
+
 inline void
 init(py::module &m)
 {
@@ -76,7 +89,12 @@ init(py::module &m)
            py::arg("tolerance") = numerics::TOLERANCE)
       .def("sample_grid3d_layer", &sample_grid3d_layer,
            "Sample values for regular surface from a 3D grid.", py::arg("grid_cpp"),
-           py::arg("klayer"), py::arg("index_position"), py::arg("num_threads") = -1);
+           py::arg("klayer"), py::arg("index_position"), py::arg("num_threads") = -1)
+      .def(
+        "sample_grid3d", &sample_grid3d,
+        "Sample a layer per column; boundary is -1 for a layer, 0 for top, 1 for base.",
+        py::arg("grid_cpp"), py::arg("layers"), py::arg("index_position"),
+        py::arg("boundary"), py::arg("num_threads") = -1);
 }
 
 }  // namespace xtgeo::regsurf

@@ -83,6 +83,7 @@ def merge_grids(
         (new_ncol + 1, new_nrow + 1, new_nlay + 1, 4), dtype=np.float32
     )
     new_actnumsv = np.zeros((new_ncol, new_nrow, new_nlay), dtype=np.int32)
+    padding_mask = np.ones((new_ncol, new_nrow, new_nlay), dtype=bool)
 
     _copy_grid_data(
         grid1,
@@ -108,10 +109,21 @@ def merge_grids(
 
     _fill_gap_pillars(new_coordsv, new_zcornsv, new_actnumsv)
 
+    for source, i_start, j_start, layer_map in (
+        (grid1, i1_start, j1_start, lmap1),
+        (grid2, i2_start, j2_start, lmap2),
+    ):
+        padding_mask[
+            i_start : i_start + source.ncol,
+            j_start : j_start + source.nrow,
+            layer_map,
+        ] = source._padding_mask if source._padding_mask is not None else False
+
     merged_grid = Grid(
         coordsv=new_coordsv,
         zcornsv=new_zcornsv,
         actnumsv=new_actnumsv,
+        padding_mask=padding_mask,
     )
 
     # Fix any remaining zero pillars in the merged grid
