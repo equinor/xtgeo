@@ -45,7 +45,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y libxkbcommon-x11-0 libegl1 libgl1-mesa-dev mesa-common-dev libglfw3-dev libglu1-mesa-dev libxcb-cursor0
+        sudo apt-get install -y libxkbcommon-x11-0 libegl1 libgl1-mesa-dev mesa-common-dev libglfw3-dev libglu1-mesa-dev libxcb-cursor0 libomp5
     - name: Install rips
       shell: bash
       run: |
