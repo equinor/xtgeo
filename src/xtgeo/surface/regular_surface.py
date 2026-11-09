@@ -289,14 +289,14 @@ def surface_from_grid3d(
             rotation). If None (default) a non-rotated surface will be made
             based on a refined estimation from the current grid
             resolution (see ``rfactor``).
-        where: Cell layer number, or if property is "depth", use "top" or "base" to get
-            a surface sampled from the very top or very base of the grid (including
-            inactive cells!). Otherwise use the syntax "2_top" where 2
+        where: Cell layer number, or "top" or "base" to sample the first or last
+            active cell in each grid column. Columns with no active cells give
+            no value. Otherwise use the syntax "2_top" where 2
             is layer no. 2 and _top indicates top of cell, while "_base"
             indicates base of cell. Cell layer numbering starts from 1. Default position
             in a cell layer is "top" if layer is given as pure number and "depth" is
-            the property. If a grid property is given, the position is always found
-            the center depth within in a cell.
+            the property. If a grid property is given, the cell center is used by
+            default.
         property: Which property to return. Choices are "depth", "i"
             (columns) or "j" (rows) or, more generic, a GridProperty instance
             which belongs to the given grid geometry. Alle these returns a
@@ -310,16 +310,27 @@ def surface_from_grid3d(
         index_position: Default is "center" which means that the index is taken
             from the Z center of the cell. If "top" is given, the index is taken from
             the top of the cell, and if "base" is given, the index is taken from the
-            base of the cell. This is only valid for index properties "i" and "j".
+            base of the cell. This is valid for "i", "j" and a GridProperty.
 
     Note::
         The keyword ``mode`` is deprecated and will be removed in XTGeo version 5,
         use keyword ``property`` instead. If both are given, ``property`` will be used.
 
     Note::
-        For ``property`` "depth", "i" and "j", all cells in a layer will be used
-        (including inactive 3D cells), while for a GridProperty, only active cells
-        will be used. Hence the extent of the resulting surfaces may differ.
+        With ``where="top"`` or ``where="base"``, each grid column uses its
+        first or last active cell. Each map point gets the shallowest active
+        top or the deepest active base. Columns with no active cells give no
+        depth, index or property value. Inactive boundary layers are skipped.
+
+        An explicit layer such as ``"3_base"`` samples that stored layer.
+        For ``property`` "depth", "i" and "j", this includes inactive cells.
+        GridProperty values from inactive cells are masked.
+
+    Note::
+        Where more than one cell of the sampled layer covers a map point, the
+        depth includes inactive cells for explicit layers. The "i", "j", "raw"
+        indices and a GridProperty come from an active cell if there is one.
+        A GridProperty value from an inactive cell is masked.
 
     Note::
         For ``property`` "raw", the return is a list of 2D arrays, where the first
@@ -328,10 +339,15 @@ def surface_from_grid3d(
         fifth is a mask (boolean) for inactive cells. For the index arrays, -1
         indicates that the cell is outside any grid cell (projected from above; i.e.
         could also be within a fault). For the depth arrays, the value is NaN
-        for inactive cells. The inactive mask is True for inactive cells. The index
-        arrays and mask is derived from the Z midpoints of the 3D cells. The "raw"
-        option is useful for further processing in Python, e.g. when a combination
-        of properties is needed.
+        where no grid cell covers the map point. The inactive mask is True
+        where only inactive cells of an explicit layer cover the map point.
+        The index arrays and mask use ``index_position``, which defaults to
+        the Z midpoint of each cell. The "raw" option is useful for further
+        processing in Python, for example to combine properties.
+
+        K indices are not returned. With ``where="top"`` or ``where="base"``,
+        K is the first (top) or last (base) active layer of the column at the
+        returned I and J. Thus, K can differ between columns.
 
     .. versionadded:: 2.1
     .. versionchanged:: 4.2 Changed ``mode`` to ``property`` to add support for
@@ -339,6 +355,11 @@ def surface_from_grid3d(
                             Added option ``activeonly``.
     .. versionchanged:: 4.3 Added option ``raw`` to get data for further processing.
                             and add ``index_position`` for "i" and "j" properties.
+    .. versionchanged:: 4.28 ``where="top"`` and ``where="base"`` exclude inactive
+                             cells. ``"base"`` takes the deepest active base at
+                             each map point. Where cells overlap, indices and
+                             property values come from an
+                             active cell if there is one.
     """
     mode = kwargs.get("mode")
     if mode is not None:
