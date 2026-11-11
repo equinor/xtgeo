@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <xtgeo/geometry.hpp>
 #include <xtgeo/grid3d.hpp>
 #include <xtgeo/logging.hpp>
@@ -60,6 +61,8 @@ get_grid_fence(const Grid &grd,
 
     logger.debug("Iterating over fspec points to extract grid fence");
     std::vector<xyz::Point> points(z_vector_.shape(0));
+    std::vector<xyz::Point> missing_points;
+    std::vector<std::pair<size_t, size_t>> missing_samples;
 
     for (size_t i = 0; i < fspec_.shape(0); i++) {
         double x = fspec_(i, 0);
@@ -74,7 +77,7 @@ get_grid_fence(const Grid &grd,
         py::array_t<int> i_idx, j_idx, k_idx;
         std::tie(i_idx, j_idx, k_idx) = grid3d::get_indices_from_pointset(
           grd, pset, one_grid, top_i, top_j, base_i, base_j, top_d, base_d,
-          threshold_magic, false, point_in_hex_method);
+          threshold_magic, true, point_in_hex_method);
 
         auto i_idx_ = i_idx.unchecked<1>();
         auto j_idx_ = j_idx.unchecked<1>();
@@ -84,10 +87,30 @@ get_grid_fence(const Grid &grd,
             auto ii = i_idx_[k];
             auto jj = j_idx_[k];
             auto kk = k_idx_[k];
-            if (ii != INVALID) {
+            if (ii != INVALID &&
+                is_point_in_cell(points[k], get_cell_corners_from_ijk(grd, ii, jj, kk),
+                                 geometry::PointInHexahedronMethod::Optimized)) {
                 result_(i, k) = property_(ii, jj, kk);
             } else {
                 result_(i, k) = std::numeric_limits<double>::quiet_NaN();
+                missing_points.push_back(points[k]);
+                missing_samples.emplace_back(i, k);
+            }
+        }
+    }
+
+    // Retry once for the whole fence, avoiding repeated active-cell index rebuilds.
+    if (!missing_points.empty()) {
+        auto [retry_i, retry_j, retry_k] = get_indices_from_pointset_cached(
+          grd, xyz::PointSet(missing_points), true,
+          geometry::PointInHexahedronMethod::Optimized);
+        auto ri = retry_i.unchecked<1>();
+        auto rj = retry_j.unchecked<1>();
+        auto rk = retry_k.unchecked<1>();
+        for (size_t k = 0; k < missing_samples.size(); ++k) {
+            if (ri(k) >= 0) {
+                auto [row, column] = missing_samples[k];
+                result_(row, column) = property_(ri(k), rj(k), rk(k));
             }
         }
     }
