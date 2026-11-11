@@ -50,6 +50,12 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
     )
+    parser.addoption(
+        "--require-resinsight",
+        help="Fail instead of skipping when ResInsight support is unavailable.",
+        action="store_true",
+        default=False,
+    )
 
 
 def in_roxar_env():
@@ -87,6 +93,11 @@ def pytest_runtest_setup(item):
         pytest.skip("Skip as requires OPM")
 
     if "requires_resinsight" in markers and not has_rips():
+        if item.config.getoption("--require-resinsight"):
+            pytest.fail(
+                "ResInsight (+rips) is required by --require-resinsight",
+                pytrace=False,
+            )
         pytest.skip("Skip as requires ResInsight (+rips)")
 
 
