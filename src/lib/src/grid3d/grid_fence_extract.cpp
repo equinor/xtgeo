@@ -88,8 +88,11 @@ get_grid_fence(const Grid &grd,
             auto jj = j_idx_[k];
             auto kk = k_idx_[k];
             if (ii != INVALID &&
-                is_point_in_cell(points[k], get_cell_corners_from_ijk(grd, ii, jj, kk),
-                                 geometry::PointInHexahedronMethod::Optimized)) {
+                is_point_in_cell(
+                  points[k],
+                  grd.get_cell_corners_cache()[ii * grd.get_nrow() * grd.get_nlay() +
+                                               jj * grd.get_nlay() + kk],
+                  geometry::PointInHexahedronMethod::Optimized)) {
                 result_(i, k) = property_(ii, jj, kk);
             } else {
                 result_(i, k) = std::numeric_limits<double>::quiet_NaN();
