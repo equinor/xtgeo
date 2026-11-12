@@ -24,30 +24,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup xtgeo
-        uses: "./.github/actions/setup_xtgeo"
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: 3.12
+          enable-cache: false
+
+      - name: Install lint tools
+        run: uv sync --locked --only-dev --python 3.12
 
       - name: List dependencies
         run: uv pip freeze
 
       - name: Ruff check
         if: ${{ always() }}
-        run: uv run ruff check .
+        run: uv run --no-sync ruff check .
 
       - name: Ruff format
         if: ${{ always() }}
-        run: uv run ruff format . --check
+        run: uv run --no-sync ruff format . --check
 
       - name: cmake-format
         if: ${{ always() }}
         run: |
           shopt -s globstar
-          uv run cmake-format --check **/CMakeLists.txt
+          uv run --no-sync cmake-format --check **/CMakeLists.txt
 
       - name: clang-format
         if: ${{ always() }}
         run: |
           shopt -s globstar
-          uv run clang-format **/*.{c,h,cpp,hpp} -Werror -n --verbose
+          uv run --no-sync clang-format **/*.{c,h,cpp,hpp} -Werror -n --verbose

@@ -29,19 +29,36 @@ jobs:
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: ${{ matrix.python }}
+          enable-cache: false
 
       - name: Install cibuildwheel
         run: |
           uv venv
           uv pip install -U pip cibuildwheel twine
 
+      - name: Get runner image version
+        if: ${{ runner.os == 'Windows' }}
+        id: image
+        shell: bash
+        run: echo "version=$ImageVersion" >> "$GITHUB_OUTPUT"
+
+      - name: Cache vcpkg packages
+        if: ${{ runner.os == 'Windows' }}
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~\AppData\Local\vcpkg\archives
+          # Same key as in the setup_xtgeo action, so the test and wheel jobs share the cache.
+          key: vcpkg-x64-windows-${{ steps.image.outputs.version }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-x64-windows-
+
       - name: Build wheels
-        run: uv run cibuildwheel --output-dir wheelhouse
+        run: uv run --no-sync cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: ${{ matrix.python }}-*
 
       - name: Check metadata
-        run: uv run twine check wheelhouse/*
+        run: uv run --no-sync twine check wheelhouse/*
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
