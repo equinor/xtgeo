@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 440" width="880" height="440" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <pattern id="coarse" width="60" height="60" patternUnits="userSpaceOnUse" x="40" y="70">
+      <rect width="60" height="60" fill="none" stroke="#3b5f8f" stroke-width="1.5"/>
+    </pattern>
+    <pattern id="fine" width="30" height="30" patternUnits="userSpaceOnUse" x="160" y="130">
+      <rect width="30" height="30" fill="none" stroke="#d9822b" stroke-width="1"/>
+    </pattern>
+    <pattern id="gap" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#bbb" stroke-width="1.5"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+    </marker>
+    <marker id="axis" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="26" font-size="16" font-weight="bold">Nested hybrid grid</text>
+
+  <!-- ============ Panel A: map view (physical space) ============ -->
+  <text x="40" y="54" font-size="14" font-weight="bold">Map view (physical space)</text>
+
+  <rect x="40" y="70" width="360" height="240" fill="#dbe9f6"/>
+  <rect x="40" y="70" width="360" height="240" fill="url(#coarse)"/>
+  <rect x="40" y="70" width="360" height="240" fill="none" stroke="#3b5f8f" stroke-width="1.5"/>
+
+  <rect x="160" y="130" width="120" height="120" fill="#ffffff"/>
+  <rect x="160" y="130" width="120" height="120" fill="#fde3c8"/>
+  <rect x="160" y="130" width="120" height="120" fill="url(#fine)"/>
+  <rect x="160" y="130" width="120" height="120" fill="none" stroke="#d9822b" stroke-width="2"/>
+
+  <!-- outline of the inactive mother cells on top of the refined cells -->
+  <g fill="none" stroke="#555" stroke-width="2" stroke-dasharray="6 4">
+    <rect x="160" y="130" width="120" height="120"/>
+    <line x1="220" y1="130" x2="220" y2="250"/>
+    <line x1="160" y1="190" x2="280" y2="190"/>
+  </g>
+
+  <g stroke="#c0392b" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)">
+    <line x1="130" y1="160" x2="175" y2="145"/>
+    <line x1="130" y1="160" x2="175" y2="175"/>
+    <line x1="310" y1="220" x2="265" y2="205"/>
+    <line x1="310" y1="220" x2="265" y2="235"/>
+  </g>
+
+  <!-- axes -->
+  <g stroke="#333" stroke-width="1.5" marker-end="url(#axis)">
+    <line x1="40" y1="326" x2="100" y2="326"/>
+    <line x1="30" y1="310" x2="30" y2="250"/>
+  </g>
+  <text x="104" y="331" font-weight="bold">I</text>
+  <text x="25" y="243" font-weight="bold">J</text>
+
+  <!-- ============ Panel B: IJ array view (merged grid) ============ -->
+  <text x="480" y="54" font-size="14" font-weight="bold">IJ array view (merged grid)</text>
+
+  <!-- column index labels -->
+  <g text-anchor="middle" font-size="11" fill="#444">
+    <text x="495" y="106">1</text><text x="525" y="106">2</text><text x="555" y="106">3</text>
+    <text x="585" y="106">4</text><text x="615" y="106">5</text><text x="645" y="106">6</text>
+    <text x="675" y="106">7</text><text x="705" y="106">8</text><text x="735" y="106">9</text>
+    <text x="765" y="106">10</text><text x="795" y="106">11</text>
+  </g>
+  <!-- row index labels (J increases upwards, as in the map view) -->
+  <g text-anchor="end" font-size="11" fill="#444">
+    <text x="474" y="124">4</text><text x="474" y="154">3</text>
+    <text x="474" y="184">2</text><text x="474" y="214">1</text>
+  </g>
+
+  <!-- coarse part: I=1..6, J=1..4 -->
+  <rect x="480" y="110" width="180" height="120" fill="#dbe9f6"/>
+  <!-- inactive mother cells: I=3..4, J=2..3 -->
+  <rect x="540" y="140" width="60" height="60" fill="#ffffff"/>
+  <!-- gap column: I=7 -->
+  <rect x="660" y="110" width="30" height="120" fill="url(#gap)"/>
+  <!-- refined part: I=8..11, J=1..4 -->
+  <rect x="690" y="110" width="120" height="120" fill="#fde3c8"/>
+
+  <!-- cell lines -->
+  <g stroke="#3b5f8f" stroke-width="1">
+    <path d="M480,110 H660 M480,140 H660 M480,170 H660 M480,200 H660 M480,230 H660"/>
+    <path d="M480,110 V230 M510,110 V230 M540,110 V230 M570,110 V230 M600,110 V230 M630,110 V230 M660,110 V230"/>
+  </g>
+  <g stroke="#d9822b" stroke-width="1">
+    <path d="M690,110 H810 M690,140 H810 M690,170 H810 M690,200 H810 M690,230 H810"/>
+    <path d="M690,110 V230 M720,110 V230 M750,110 V230 M780,110 V230 M810,110 V230"/>
+  </g>
+  <g fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 3">
+    <rect x="540" y="140" width="60" height="60"/>
+  </g>
+  <rect x="660" y="110" width="30" height="120" fill="none" stroke="#999" stroke-width="1"/>
+
+  <!-- NNCs: coarse (2,3) -> refined (8,4),(8,3); coarse (5,2) -> refined (11,2),(11,1) -->
+  <g fill="none" stroke="#c0392b" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)">
+    <line x1="525" y1="155" x2="705" y2="125"/>
+    <line x1="525" y1="155" x2="705" y2="155"/>
+    <line x1="615" y1="185" x2="795" y2="185"/>
+    <line x1="615" y1="185" x2="795" y2="215"/>
+  </g>
+
+  <!-- part labels -->
+  <g text-anchor="middle" font-size="12" fill="#444">
+    <text x="570" y="252">coarse part (I = 1&#8211;6)</text>
+    <text x="675" y="268">gap (I = 7)</text>
+    <text x="750" y="252">refined part (I = 8&#8211;11)</text>
+  </g>
+  <g stroke="#333" stroke-width="1.5" marker-end="url(#axis)">
+    <line x1="480" y1="284" x2="540" y2="284"/>
+  </g>
+  <text x="544" y="288" font-weight="bold">I</text>
+  <text x="480" y="304" font-size="12" fill="#444">Coarse boundary cells and refined cells are far apart in I,</text>
+  <text x="480" y="320" font-size="12" fill="#444">so they are not array neighbours.</text>
+
+  <!-- ============ Legend ============ -->
+  <g transform="translate(40,356)" font-size="13">
+    <rect x="0" y="0" width="22" height="22" fill="#dbe9f6" stroke="#3b5f8f" stroke-width="1.5"/>
+    <text x="32" y="16">Coarse cells (active)</text>
+
+    <rect x="200" y="0" width="22" height="22" fill="#ffffff" stroke="#555" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="232" y="10">Parent cells (inactive,</text>
+    <text x="232" y="26">replaced by refined cells)</text>
+
+    <rect x="450" y="0" width="22" height="22" fill="#fde3c8" stroke="#d9822b" stroke-width="1.5"/>
+    <text x="482" y="16">Refined cells (active)</text>
+
+    <rect x="640" y="0" width="22" height="22" fill="url(#gap)" stroke="#999" stroke-width="1"/>
+    <text x="672" y="10">Gap / padding (inactive,</text>
+    <text x="672" y="26">not a replaced parent)</text>
+
+    <line x1="0" y1="52" x2="22" y2="52" stroke="#c0392b" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+    <text x="32" y="57">Non-neighbour connection (NNC) between active coarse boundary cells and adjacent refined cells</text>
+  </g>
+
+  <text x="40" y="432" font-size="12" fill="#444">A 2&#215;2 block of coarse cells is refined 2&#215;2: each parent cell is replaced by 4 refined cells.</text>
+</svg>

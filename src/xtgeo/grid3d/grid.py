@@ -2429,6 +2429,7 @@ class Grid(_Grid3D):
         table is produced by
         ``fmu.tools.nestedhybridgrid.create_nested_hybrid_grid`` and
         encodes every mother ↔ refined cell pair that should be connected.
+        See :ref:`nested_hybrid_grids` for a definition and known limitations.
 
         Args:
             permx: Permeability in the I-direction (grid cells), md, either as
@@ -2567,7 +2568,9 @@ class Grid(_Grid3D):
 
         The calculation includes regular I-, J-, and K-direction connections,
         fault NNCs, and pinch-out NNCs. Nested-hybrid NNCs are computed by
-        :meth:`get_nested_hybrid_nnc_transmissibilities`.
+        :meth:`get_nested_hybrid_nnc_transmissibilities`. Note that replaced
+        parent cells of a nested hybrid grid may be treated as ordinary gaps, see
+        :ref:`nhg_known_issues`.
 
         Args:
             permx: Permeability in the I-direction, in md, as a
@@ -2624,6 +2627,8 @@ class Grid(_Grid3D):
         nnc_table: pd.DataFrame,
     ) -> pd.DataFrame:
         """Compute transmissibilities for nested-hybrid NNC cell pairs.
+
+        See :ref:`nested_hybrid_grids` for what a nested hybrid grid is.
 
         Args:
             permx: Permeability in the I-direction (grid cells), md, either as
@@ -2746,7 +2751,8 @@ class Grid(_Grid3D):
         ``(I, J, K)`` indices (1-based by default). Points that fall outside the
         grid get ``-1`` (or the value given by ``undef``).
 
-        Nested hybrid grids are supported even when refined cells overlap coarse
+        Nested hybrid grids (see :ref:`nested_hybrid_grids`) are supported even
+        when refined cells overlap coarse
         mother cells geometrically but have distant ``(I, J)`` indices. With
         ``activeonly=True``, inactive mother cells are skipped. With
         ``activeonly=False``, active cells take precedence over overlapping inactive
@@ -3363,6 +3369,8 @@ class Grid(_Grid3D):
         Note that the resulting hybrid will have an increased number of layers.
         If the initial grid has N layers, and the number of horizontal layers
         is NHDIV, then the result grid will have N * 2 + NHDIV layers.
+
+        This is not a nested hybrid grid; see :ref:`nested_hybrid_grids`.
 
         .. image:: images/hybridgrid2.jpg
            :width: 600
