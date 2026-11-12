@@ -36,7 +36,7 @@ else()
   FetchContent_MakeAvailable(fmt)
 endif()
 
-find_package(Eigen3 3.4 CONFIG QUIET)
+find_package(Eigen3 3.3.4 CONFIG QUIET)
 if(Eigen3_FOUND)
   message(STATUS "Found Eigen3 ${Eigen3_VERSION}")
 else()

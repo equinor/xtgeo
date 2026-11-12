@@ -27,13 +27,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup xtgeo
-        uses: "./.github/actions/setup_xtgeo"
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: ${{ matrix.python-version }}
+          enable-cache: false
+
+      - name: Install dependencies
+        run: uv sync --locked --extra dev --no-install-project --python ${{ matrix.python-version }}
 
       - name: List dependencies
         run: uv pip freeze
 
       - name: Run mypy
-        run: uv run mypy .
+        run: uv run --no-sync mypy .

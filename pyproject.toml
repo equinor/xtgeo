@@ -141,14 +141,14 @@ test-command = [
 before-all = "vcpkg install --triplet x64-windows"
 
 [tool.cibuildwheel.linux]
-before-all = "yum update -y && yum install -y eigen3-devel fmt-devel || (apt-get update && apt-get install -y libeigen3-dev libfmt-dev)"
+before-all = "yum install -y eigen3-devel fmt-devel"
 
 [tool.cibuildwheel.macos]
 before-all = [
     "brew update",
-    "brew install hdf5 eigen c-blosc",
+    "brew install hdf5 eigen@3 c-blosc",
 ]
-environment = { HDF5_DIR = "/opt/homebrew" }
+environment = { HDF5_DIR = "/opt/homebrew", CMAKE_PREFIX_PATH = "/opt/homebrew/opt/eigen@3" }
 
 [tool.pydocstyle]
 convention = "google"
