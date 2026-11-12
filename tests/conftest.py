@@ -7,11 +7,14 @@ import threading
 import time
 import warnings
 
+import numpy as np
 import pandas as pd
 import psutil
 import pytest
 from hypothesis import HealthCheck, settings
 from packaging.version import parse as versionparse
+
+import xtgeo
 
 settings.register_profile(
     "no_timeouts",
@@ -111,6 +114,33 @@ def testdata_path(request):
 @pytest.fixture()
 def tmp_path_cwd(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def nested_box():
+    """Return a coarse box and its merged nested grid.
+
+    The box has 4 x 4 x 3 cells and extends from 1500 to 1560 m. Refine the
+    central columns between 1520 and 1540 m by a factor of two in each axis.
+    Deactivate the replaced coarse parent cells before merging. The merged
+    grid keeps the same physical top and base.
+    """
+    coarse = xtgeo.create_box_grid(
+        (4, 4, 3), origin=(0, 0, 1500), increment=(100, 100, 20)
+    )
+    fine = coarse.copy()
+    fine.crop((2, 3), (2, 3), (2, 2))
+    fine.refine(2, 2, 2)
+    actnum = coarse.get_actnum()
+    actnum.values[1:3, 1:3, 1] = 0
+    coarse.set_actnum(actnum)
+    merged = xtgeo.grid_merge(
+        coarse,
+        fine,
+        np.array([0, 1, 3], dtype=np.int32),
+        np.array([1, 2], dtype=np.int32),
+    )
+    return coarse, merged
 
 
 @pytest.fixture(name="show_plot")
