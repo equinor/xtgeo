@@ -29,6 +29,7 @@ from . import (
     _grid_import,
     _grid_import_ecl,
     _grid_merge,
+    _grid_nested_hybrid,
     _grid_refine,
     _grid_roxapi,
     _grid_translate_coords,
@@ -52,6 +53,7 @@ if TYPE_CHECKING:
         RegularSurface as RegularSurfaceCPP,
     )
     from xtgeo.common.types import FileLike
+    from xtgeo.grid3d._grid_nested_hybrid import NestedHybridBlock
     from xtgeo.interfaces.resinsight._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
@@ -65,6 +67,7 @@ if TYPE_CHECKING:
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = null_logger(__name__)
+
 
 # --------------------------------------------------------------------------------------
 # Comment on "asmasked" vs "activeonly:
@@ -489,6 +492,8 @@ def grid_merge(
     with inactive cells filling the gaps. Grid1 is placed at position (0, 0)
     and grid2 is placed adjacent to it with a 1-cell gap in the column direction.
 
+    Use :attr:`Grid.nestedhybrid` to detect nested hybrid layouts in the result.
+
     By default, if the grids have different numbers of layers, the result grid
     will have the maximum number of layers. The grid with fewer layers will have
     its bottom layer geometry extended vertically with inactive cells for the
@@ -877,6 +882,7 @@ class Grid(_Grid3D):
 
         self._tmp = {}  # TMP!
         self._cache: _GridCache | None = None
+        self._nested_hybrid_cache: tuple[str, list[NestedHybridBlock]] | None = None
         logger.debug("Initialize Grid... DONE!")
 
     def __repr__(self) -> str:
@@ -2787,6 +2793,59 @@ class Grid(_Grid3D):
             undef=undef,
             method=method,
         )
+
+    @property
+    def nestedhybrid(self) -> bool:
+        """Detect a nested hybrid layout from geometry and active cells.
+
+        Requires an interior, fully inactive I-column strip and all of the
+        right block's active cell centres inside the left block's XY footprint,
+        including inactive cells. The first strip separates the two blocks, and
+        the right block ends at the next strip or grid edge. Further blocks are
+        located but not verified. Each strip may span multiple columns.
+        No properties or source-specific metadata are required.
+
+        This recognises the coarse-left, refined-right layout of :func:`grid_merge`;
+        it is a geometric heuristic, not proof of the grid's creation history.
+        The result is cached until the geometry or ACTNUM changes.
+
+        See :attr:`nestedhybrid_blocks` for the location of each block.
+
+        .. versionadded:: 4.28
+        """
+        return bool(self.nestedhybrid_blocks)
+
+    @property
+    def nestedhybrid_blocks(self) -> list[NestedHybridBlock]:
+        """Return the location of each block of a nested hybrid grid.
+
+        The first item is the coarse grid, followed by the first refinement, the
+        second refinement, and so on, in I order.
+        Each item holds the I-column range (``istart``, ``istop``; stop exclusive).
+        The list is empty if the grid is not a nested hybrid, see
+        :attr:`nestedhybrid`.
+
+        The first access hashes the grid and may run the detection; the result is
+        then cached until the geometry or ACTNUM changes.
+
+        .. versionadded:: 4.28
+        """
+        self._set_xtgformat2()
+        if len(_grid_nested_hybrid._find_blocks(self._actnumsv)) < 2:
+            # Cheap rejection first; hashing the grid for the cache is costly.
+            blocks: list[NestedHybridBlock] = []
+        else:
+            grid_hash = self.generate_hash()
+            if (
+                self._nested_hybrid_cache is None
+                or self._nested_hybrid_cache[0] != grid_hash
+            ):
+                self._nested_hybrid_cache = (
+                    grid_hash,
+                    _grid_nested_hybrid.detect_nested_hybrid(self),
+                )
+            blocks = self._nested_hybrid_cache[1]
+        return list(blocks)
 
     def get_xyz(
         self,
