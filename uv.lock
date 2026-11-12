@@ -3509,7 +3509,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "scipy", specifier = ">=1.6" },
     { name = "segyio", specifier = ">1.8.0" },
-    { name = "shapely", specifier = ">=1.6.2" },
+    { name = "shapely", specifier = ">=2.0.4" },
     { name = "sphinx", marker = "extra == 'docs'" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'" },
