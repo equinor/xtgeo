@@ -3656,6 +3656,8 @@ class Grid(_Grid3D):
         axis, and length along as horizontal axis. Undefined values will have
         the np.nan value.
 
+        Only active cells are sampled. Points outside active cells return NaN.
+
         The input fencespec is either a 2D numpy where each row is X, Y, Z, HLEN,
         where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
         length along the fence, or a Polygons instance.
