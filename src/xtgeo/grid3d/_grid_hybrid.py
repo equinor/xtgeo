@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -48,3 +49,11 @@ def make_hybridgrid(
     self._nlay = newnlay
     self._zcornsv = hyb_zcornsv
     self._actnumsv = hyb_actnumsv.astype(np.int32)
+    if self._padding_mask is not None:
+        self._padding_mask = None
+        warnings.warn(
+            "Vertical hybrid conversion discards recorded merge padding. "
+            "Supply a new padding_mask before sampling the physical grid boundary.",
+            UserWarning,
+            stacklevel=2,
+        )

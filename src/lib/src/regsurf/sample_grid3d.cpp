@@ -23,24 +23,28 @@ namespace xtgeo::regsurf {
  *
  * @param regsurf RegularSurface object representing the surface input
  * @param grd Grid object representing the 3D grid
- * @param klayer The layer to sample, base 0
+ * @param layers The layer to sample per column, base 0; -1 skips a column
  * @param index_position 0: top, 1: base|bot, 2: center
- * @return Tuple of 5 numpy arrays: I index, J index, Depth_top, Depth_base, Inactive
+ * @param boundary -1: stored layer, 0: grid top, 1: grid base
+ * @return Tuple of 6 numpy arrays: I index, J index, K index, Depth_top,
+ * Depth_base, Inactive
  */
 std::tuple<py::array_t<int>,
+           py::array_t<int>,
            py::array_t<int>,
            py::array_t<double>,
            py::array_t<double>,
            py::array_t<bool>>
-sample_grid3d_layer(const RegularSurface &regsurf,
-                    const grid3d::Grid &grd,
-                    const size_t klayer,
-                    const int index_position,  // 0: top, 1: base|bot, 2: center
-                    const int num_threads)
+sample_grid3d(const RegularSurface &regsurf,
+              const grid3d::Grid &grd,
+              const py::array_t<int> &layers,
+              const int index_position,  // 0: top, 1: base|bot, 2: center
+              const int boundary,
+              const int num_threads)
 {
     auto &logger =
       xtgeo::logging::LoggerManager::get("xtgeo.regsurf.sample_grid3d_layer");
-    logger.debug("Sampling grid3d layer ", klayer, " to regular surface");
+    logger.debug("Sampling grid3d to regular surface");
     logger.debug("Initial number of threads: {}", num_threads);
 
     // clang-format off
@@ -56,11 +60,28 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                               std::to_string(regsurf.yinc));
     }
 
+    if (layers.ndim() != 2 || !shape_equals(layers.shape(0), grd.get_ncol()) ||
+        !shape_equals(layers.shape(1), grd.get_nrow())) {
+        throw py::value_error("layers must have the grid's column and row dimensions");
+    }
+    if (boundary < -1 || boundary > 1) {
+        throw py::value_error("boundary must be -1, 0 or 1");
+    }
+    auto klayers = layers.unchecked<2>();
+    for (size_t i = 0; i < grd.get_ncol(); ++i) {
+        for (size_t j = 0; j < grd.get_nrow(); ++j) {
+            if (klayers(i, j) >= static_cast<int>(grd.get_nlay())) {
+                throw py::value_error("layer index is outside the grid");
+            }
+        }
+    }
+
     auto actnumsv_ = grd.get_actnumsv().unchecked<3>();
 
     // Initialize 2D numpy arrays to store the sampled values
     py::array_t<int> iindex({ regsurf.ncol, regsurf.nrow });
     py::array_t<int> jindex({ regsurf.ncol, regsurf.nrow });
+    py::array_t<int> kindex({ regsurf.ncol, regsurf.nrow });
     py::array_t<double> depth_top({ regsurf.ncol, regsurf.nrow });
     py::array_t<double> depth_bot({ regsurf.ncol, regsurf.nrow });
     py::array_t<bool> inactive({ regsurf.ncol, regsurf.nrow });
@@ -68,6 +89,7 @@ sample_grid3d_layer(const RegularSurface &regsurf,
     // Get unchecked access to the arrays
     auto iindex_ = iindex.mutable_unchecked<2>();
     auto jindex_ = jindex.mutable_unchecked<2>();
+    auto kindex_ = kindex.mutable_unchecked<2>();
     auto depth_top_ = depth_top.mutable_unchecked<2>();
     auto depth_bot_ = depth_bot.mutable_unchecked<2>();
     auto inactive_ = inactive.mutable_unchecked<2>();
@@ -77,6 +99,7 @@ sample_grid3d_layer(const RegularSurface &regsurf,
               iindex_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow), -1);
     std::fill(jindex_.mutable_data(0, 0),
               jindex_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow), -1);
+    std::fill(kindex.mutable_data(), kindex.mutable_data() + kindex.size(), -1);
     std::fill(inactive_.mutable_data(0, 0),
               inactive_.mutable_data(0, 0) + (regsurf.ncol * regsurf.nrow), false);
 
@@ -92,7 +115,17 @@ sample_grid3d_layer(const RegularSurface &regsurf,
     // Windows (MSVC) does not support size_t in OpenMP (!), so we use int
     int ncol = static_cast<int>(grd.get_ncol());
     int nrow = static_cast<int>(grd.get_nrow());
-    int nlay = static_cast<int>(grd.get_nlay());
+    std::vector<double> selected_depth(regsurf.ncol * regsurf.nrow,
+                                       numerics::QUIET_NAN);
+    std::vector<unsigned char> selected_boundary(regsurf.ncol * regsurf.nrow, false);
+    // clang-format off
+    #ifdef XTGEO_USE_OPENMP
+      // Lock only the sampled node, so unrelated output updates can run in parallel.
+      std::vector<omp_lock_t> locks(regsurf.ncol * regsurf.nrow);
+      for (auto &lock : locks)
+          omp_init_lock(&lock);
+    #endif
+    // clang-format on
 
     // clang-format off
     #ifdef XTGEO_USE_OPENMP
@@ -104,6 +137,9 @@ sample_grid3d_layer(const RegularSurface &regsurf,
 
             size_t i_cell = static_cast<size_t>(icell);
             size_t j_cell = static_cast<size_t>(jcell);
+            int klayer = klayers(i_cell, j_cell);
+            if (klayer < 0)
+                continue;
             // Get cell corners
             auto corners =
               grid3d::get_cell_corners_from_ijk(grd, i_cell, j_cell, klayer);
@@ -144,51 +180,107 @@ sample_grid3d_layer(const RegularSurface &regsurf,
                         is_inside_mid = is_inside_top;
                     }
 
-                    if (is_inside_top) {
-                        auto previous_depth_top = depth_top_(i, j);
-                        auto new_depth_top =
-                          grid3d::get_depth_in_cell(p.x(), p.y(), corners, 0);
-
-                        if (std::isnan(previous_depth_top) ||
-                            new_depth_top < previous_depth_top) {
-                            // Update the depth if the new depth is smaller
-                            depth_top_(i, j) = new_depth_top;
+                    double new_depth_top =
+                      is_inside_top
+                        ? grid3d::get_depth_in_cell(p.x(), p.y(), corners, 0)
+                        : numerics::QUIET_NAN;
+                    double new_depth_bot =
+                      is_inside_bot
+                        ? grid3d::get_depth_in_cell(p.x(), p.y(), corners, 1)
+                        : numerics::QUIET_NAN;
+                    bool contains_index = index_position == 0   ? is_inside_top
+                                          : index_position == 1 ? is_inside_bot
+                                                                : is_inside_mid;
+                    double depth = boundary == 1 ? new_depth_bot : new_depth_top;
+                    bool has_boundary_depth = !std::isnan(depth);
+                    if (contains_index && std::isnan(depth)) {
+                        depth = grid3d::cell_center(corners).z();
+                    }
+                    // Check if the cell is active or not
+                    bool cell_inactive = actnumsv_(i_cell, j_cell, klayer) == 0;
+                    size_t node = i * regsurf.nrow + j;
+                    // clang-format off
+                    #ifdef XTGEO_USE_OPENMP
+                      omp_set_lock(&locks[node]);
+                    #endif
+                    // clang-format on
+                    if (is_inside_top && (std::isnan(depth_top_(i, j)) ||
+                                          new_depth_top < depth_top_(i, j))) {
+                        // Update the depth if the new depth is smaller
+                        depth_top_(i, j) = new_depth_top;
+                    }
+                    if (is_inside_bot &&
+                        (std::isnan(depth_bot_(i, j)) ||
+                         (boundary == 1 ? new_depth_bot > depth_bot_(i, j)
+                                        : new_depth_bot < depth_bot_(i, j)))) {
+                        depth_bot_(i, j) = new_depth_bot;
+                    }
+                    // the selected cell determines activity and i, j, k indices
+                    if (contains_index) {
+                        double previous = selected_depth[node];
+                        int cell = icell * nrow + jcell;
+                        int previous_cell = iindex_(i, j) * nrow + jindex_(i, j);
+                        // Exact keys: the result does not depend on thread order.
+                        bool choose;
+                        if (iindex_(i, j) < 0) {
+                            choose = true;
+                        } else if (cell_inactive != inactive_(i, j)) {
+                            choose = !cell_inactive;
+                        } else if (boundary == -1) {
+                            choose = cell > previous_cell;
+                        } else if (has_boundary_depth != selected_boundary[node]) {
+                            // Prefer a real boundary depth over a center fallback.
+                            choose = has_boundary_depth;
+                        } else if (depth != previous) {
+                            choose =
+                              boundary == 1 ? depth > previous : depth < previous;
+                        } else {
+                            choose = cell < previous_cell;
                         }
-                        if (index_position == 0) {
+                        if (choose) {
                             iindex_(i, j) = i_cell;
                             jindex_(i, j) = j_cell;
+                            kindex_(i, j) = klayer;
+                            inactive_(i, j) = cell_inactive;
+                            selected_depth[node] = depth;
+                            selected_boundary[node] = has_boundary_depth;
                         }
                     }
-                    if (is_inside_bot) {
-                        auto previous_depth_bot = depth_bot_(i, j);
-                        auto new_depth_bot =
-                          grid3d::get_depth_in_cell(p.x(), p.y(), corners, 1);
-                        if (std::isnan(previous_depth_bot) ||
-                            new_depth_bot < previous_depth_bot) {
-                            depth_bot_(i, j) = new_depth_bot;
-                        }
-                        if (index_position == 1) {
-                            iindex_(i, j) = i_cell;
-                            jindex_(i, j) = j_cell;
-                        }
-                    }
-                    // the mid cell determines the active status and i, j index
-                    if (is_inside_mid) {
-                        // Check if the cell is active or not
-                        if (actnumsv_(i_cell, j_cell, klayer) == 0) {
-                            inactive_(i, j) = true;
-                        }
-                        if (index_position < 0 || index_position > 1) {
-                            iindex_(i, j) = i_cell;
-                            jindex_(i, j) = j_cell;
-                        }
-                    }
+                    // clang-format off
+                    #ifdef XTGEO_USE_OPENMP
+                      omp_unset_lock(&locks[node]);
+                    #endif
+                    // clang-format on
                 }
             }
         }
     }
 
-    return std::make_tuple(iindex, jindex, depth_top, depth_bot, inactive);
-}  // regsurf_sample_grid3d_layer
+    // clang-format off
+    #ifdef XTGEO_USE_OPENMP
+      for (auto &lock : locks)
+          omp_destroy_lock(&lock);
+    #endif
+    // clang-format on
+    return std::make_tuple(iindex, jindex, kindex, depth_top, depth_bot, inactive);
+}
+
+std::tuple<py::array_t<int>,
+           py::array_t<int>,
+           py::array_t<double>,
+           py::array_t<double>,
+           py::array_t<bool>>
+sample_grid3d_layer(const RegularSurface &regsurf,
+                    const grid3d::Grid &grd,
+                    const size_t klayer,
+                    const int index_position,
+                    const int num_threads)
+{
+    py::array_t<int> layers({ grd.get_ncol(), grd.get_nrow() });
+    std::fill(layers.mutable_data(), layers.mutable_data() + layers.size(), klayer);
+    auto [i, j, k, top, base, inactive] =
+      sample_grid3d(regsurf, grd, layers, index_position, -1, num_threads);
+    return { i, j, top, base, inactive };
+}
 
 }  // namespace xtgeo::regsurf

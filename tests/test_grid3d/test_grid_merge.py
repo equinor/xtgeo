@@ -14,6 +14,133 @@ logger = null_logger(__name__)
 EMERALD = pathlib.Path("3dgrids/eme/1/emerald_hetero_grid.roff")
 
 
+def test_padding_mask_marks_inserted_cells_not_inactive_cells():
+    """Test that merge padding is marked, but genuine inactive cells are not."""
+    coarse = xtgeo.create_box_grid((2, 2, 2))
+    actnum = coarse.get_actnum()
+    actnum.values[0, 0, 0] = 0
+    coarse.set_actnum(actnum)
+    fine = xtgeo.create_box_grid((1, 3, 1), origin=(10, 0, 0))
+    merged = xtgeo.grid_merge(coarse, fine, np.array([0, 2]), np.array([1]))
+    padding = merged.padding_mask
+    assert padding.shape == merged.dimensions
+    assert padding.dtype == bool
+    assert padding[:2, :2, 0].sum() == 0
+    assert padding[:2, :2, 2].sum() == 0
+    assert padding[:2, :, 1].all()  # Inserted layer.
+    assert padding[:2, 2, :].all()  # Inserted row.
+    assert padding[2, :, :].all()  # Separator column.
+    assert not padding[3, :, 1].any()
+    assert padding[3, :, [0, 2]].all()
+    assert not padding[0, 0, 0]  # Genuine inactive cell.
+    assert not padding.flags.writeable
+
+
+def test_padding_mask_survives_copy_crop_and_merge():
+    """Test that copy, crop and a second merge keep the padding mask."""
+    first = xtgeo.grid_merge(
+        xtgeo.create_box_grid((2, 2, 2)),
+        xtgeo.create_box_grid((1, 1, 1), origin=(10, 0, 0)),
+    )
+    copied = first.copy()
+    np.testing.assert_array_equal(copied.padding_mask, first.padding_mask)
+    copied.padding_mask = np.zeros(copied.dimensions, dtype=bool)
+    assert first.padding_mask.any()
+    copied = first.copy()
+    expected = first.padding_mask[1:, :1, :].copy()
+    copied.crop((2, 4), (1, 1), (1, 2))
+    np.testing.assert_array_equal(copied.padding_mask, expected)
+    merged = xtgeo.grid_merge(first, xtgeo.create_box_grid((1, 2, 2)))
+    np.testing.assert_array_equal(merged.padding_mask[:4], first.padding_mask)
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2])
+def test_padding_mask_follows_axis_flips(axis):
+    """Test that flipping the I, J or K axis also flips the padding mask."""
+    grid = xtgeo.grid_merge(
+        xtgeo.create_box_grid((2, 2, 2)),
+        xtgeo.create_box_grid((1, 1, 1), origin=(10, 0, 0)),
+    )
+    expected = np.flip(grid.padding_mask, axis=axis)
+    if axis == 0:
+        grid.reverse_column_axis()
+    elif axis == 1:
+        grid.reverse_row_axis()
+    else:
+        grid.translate_coordinates(flip=(1, 1, -1))
+    np.testing.assert_array_equal(grid.padding_mask, expected)
+
+
+def test_padding_mask_follows_refinement_and_reduction():
+    """Test that refinement repeats the mask and layer reduction merges it."""
+    grid = xtgeo.grid_merge(
+        xtgeo.create_box_grid((2, 2, 2)),
+        xtgeo.create_box_grid((1, 1, 1), origin=(10, 0, 0)),
+    )
+    expected = grid.padding_mask.copy()
+    for axis in range(3):
+        expected = np.repeat(expected, 2, axis=axis)
+    grid.refine(2, 2, 2)
+    np.testing.assert_array_equal(grid.padding_mask, expected)
+    grid.refine_vertically(2)
+    expected = np.repeat(expected, 2, axis=2)
+    np.testing.assert_array_equal(grid.padding_mask, expected)
+    grid.reduce_to_one_layer()
+    np.testing.assert_array_equal(
+        grid.padding_mask, expected.all(axis=2, keepdims=True)
+    )
+
+
+@pytest.mark.parametrize("layer", [0, 1])
+def test_padding_mask_reduction_keeps_real_faces(layer):
+    """Keep top/base depths and gaps when outer padding has nonzero thickness."""
+    first = xtgeo.create_box_grid((1, 2, 1), increment=(1, 1, 10))
+    second = xtgeo.create_box_grid((1, 1, 2), origin=(10, 0, 0), increment=(1, 1, 10))
+    grid = xtgeo.grid_merge(first, second, np.array([layer]), np.array([0, 1]))
+    grid.make_zconsistent(zsep=1)
+    template = xtgeo.RegularSurface(
+        ncol=11, nrow=2, xori=0.5, yori=0.5, xinc=1, yinc=1, values=0
+    )
+    before = {
+        where: xtgeo.surface_from_grid3d(grid, template=template, where=where)
+        for where in ("top", "base")
+    }
+    assert before["top"].values[0, 0] == layer
+    assert before["base"].values[0, 0] == 10
+    padding = grid.padding_mask.all(axis=2, keepdims=True)
+
+    grid.reduce_to_one_layer()
+
+    np.testing.assert_array_equal(grid.padding_mask, padding)
+    for where, expected in before.items():
+        result = xtgeo.surface_from_grid3d(grid, template=template, where=where)
+        assert result.values.count() == 3
+        np.testing.assert_array_equal(result.values.mask, expected.values.mask)
+        np.testing.assert_allclose(
+            result.values.compressed(), expected.values.compressed()
+        )
+
+
+def test_padding_mask_rejects_invalid_arrays():
+    """Test that the mask is None by default and rejects wrong shape or dtype."""
+    grid = xtgeo.create_box_grid((2, 2, 1))
+    assert grid.padding_mask is None
+    for invalid in (np.zeros((1, 1, 1), dtype=bool), np.zeros(grid.dimensions)):
+        with pytest.raises(ValueError, match="boolean array with grid dimensions"):
+            grid.padding_mask = invalid
+
+
+def test_padding_mask_cleared_by_hybrid_conversion():
+    """Test that vertical hybrid conversion clears the mask with a warning."""
+    grid = xtgeo.grid_merge(
+        xtgeo.create_box_grid((2, 2, 2)),
+        xtgeo.create_box_grid((1, 1, 1), origin=(10, 0, 0)),
+    )
+    with pytest.warns(UserWarning, match="discards recorded merge padding"):
+        grid.convert_to_hybrid(nhdiv=2, toplevel=0.5, bottomlevel=1.5)
+    assert grid.padding_mask is None
+
+
 def test_basic_merge():
     """Test basic merging of two grids."""
     g1 = xtgeo.create_box_grid((3, 2, 2))

@@ -66,6 +66,8 @@ def _flip_vertically(grid: Grid) -> None:
     grid._zcornsv += diff
 
     grid._actnumsv = np.flip(grid._actnumsv, axis=2).copy()
+    if grid._padding_mask is not None:
+        grid._padding_mask = np.flip(grid._padding_mask, axis=2).copy()
 
     # Handle properties if they exist
     if grid._props and grid._props.props:

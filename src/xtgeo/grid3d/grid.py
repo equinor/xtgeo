@@ -527,6 +527,11 @@ def grid_merge(
     - Discrete properties with different codes are renamed (e.g., FACIES_2)
     - Properties with type conflicts (continuous vs discrete) are renamed
 
+    The returned grid records inserted columns, rows and layers in
+    :attr:`Grid.padding_mask`. Padding already recorded on the inputs is
+    preserved. This mask is independent of ACTNUM and does not identify replaced
+    parents. Current file exporters do not preserve the mask.
+
     Args:
         grid1: First grid instance
         grid2: Second grid instance
@@ -768,6 +773,9 @@ class Grid(_Grid3D):
         name: Optional name of the grid.
         roxgrid: Roxar Grid the Grid originates from if any, defaults to no such grid.
         roxindexer: Roxar grid indexer for the roxgrid. Defaults to no such indexer.
+        padding_mask: Optional boolean array with the grid dimensions. True marks
+            synthetic cells inserted by a merge, independently of cell activity.
+            None means that no padding information was supplied.
 
     See Also:
         The :class:`.GridProperty` and the :class:`.GridProperties` classes.
@@ -788,6 +796,7 @@ class Grid(_Grid3D):
         name: str | None = None,
         roxgrid: Any | None = None,
         roxindexer: Any | None = None,
+        padding_mask: np.ndarray | None = None,
     ):
         logger.debug("Initialize Grid...")
         # The C++ layer reads these by linear cell number, so the layout must be
@@ -836,6 +845,8 @@ class Grid(_Grid3D):
         self._coordsv = coordsv
         self._zcornsv = zcornsv
         self._actnumsv = actnumsv
+        self._padding_mask: np.ndarray | None = None
+        self.padding_mask = padding_mask
         self._dualporo = dualporo
         self._dualperm = dualperm
 
@@ -921,6 +932,41 @@ class Grid(_Grid3D):
             raise ValueError("Input obj not an instance of MetaDataCPGeometry")
 
         self._metadata = obj  # checking is currently missing! TODO
+
+    @property
+    def padding_mask(self) -> np.ndarray | None:
+        """Boolean array that identifies padding cells added during a grid merge.
+
+        Padding cells fill unused positions in the merged grid arrays. True
+        marks padding; False marks a cell copied from a source grid, including
+        inactive cells and coarse parent cells replaced by refined cells. This
+        mask is separate from ACTNUM, which records whether cells are active.
+
+        None means padding information is unavailable. It does not mean that
+        the grid has no padding.
+
+        The returned array is read-only. To set or change the mask, assign a
+        boolean array with shape (ncol, nrow, nlay) to this property. This also
+        lets you supply known padding information for an imported grid.
+
+        The mask is not saved in grid files, so it is lost on export and reload.
+        """
+        if self._padding_mask is None:
+            return None
+        result = self._padding_mask.view()
+        result.flags.writeable = False
+        return result
+
+    @padding_mask.setter
+    def padding_mask(self, mask: np.ndarray | None) -> None:
+        if mask is None:
+            self._padding_mask = None
+            return
+        if mask.dtype != np.bool_ or mask.shape != self.dimensions:
+            raise ValueError(
+                "padding_mask must be a boolean array with grid dimensions"
+            )
+        self._padding_mask = np.array(mask, dtype=bool, order="C", copy=True)
 
     @property
     def filesrc(self) -> str | pathlib.Path | None:
@@ -3209,6 +3255,9 @@ class Grid(_Grid3D):
 
     def reduce_to_one_layer(self) -> None:
         """Reduce the grid to one single layer.
+
+        If the grid has a :attr:`padding_mask`, the top and base come from the
+        first and last non-padding cell in each column.
 
         Example::
 

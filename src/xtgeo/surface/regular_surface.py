@@ -295,8 +295,8 @@ def surface_from_grid3d(
             is layer no. 2 and _top indicates top of cell, while "_base"
             indicates base of cell. Cell layer numbering starts from 1. Default position
             in a cell layer is "top" if layer is given as pure number and "depth" is
-            the property. If a grid property is given, the position is always found
-            the center depth within in a cell.
+            the property. If a grid property is given, the cell center is used by
+            default.
         property: Which property to return. Choices are "depth", "i"
             (columns) or "j" (rows) or, more generic, a GridProperty instance
             which belongs to the given grid geometry. Alle these returns a
@@ -310,7 +310,7 @@ def surface_from_grid3d(
         index_position: Default is "center" which means that the index is taken
             from the Z center of the cell. If "top" is given, the index is taken from
             the top of the cell, and if "base" is given, the index is taken from the
-            base of the cell. This is only valid for index properties "i" and "j".
+            base of the cell. This is valid for "i", "j" and a GridProperty.
 
     Note::
         The keyword ``mode`` is deprecated and will be removed in XTGeo version 5,
@@ -322,16 +322,35 @@ def surface_from_grid3d(
         will be used. Hence the extent of the resulting surfaces may differ.
 
     Note::
+        Cells marked in :attr:`Grid.padding_mask` are skipped. With
+        ``where="top"`` or ``where="base"``, each grid column uses its first or
+        last non-padding cell, and each map point gets the shallowest top or the
+        deepest base. An explicit layer such as ``"3_base"`` samples only that
+        stored layer. If ``padding_mask`` is None, no cells are skipped.
+
+    Note::
+        Where more than one cell of the sampled layer covers a map point, the
+        depth includes inactive cells, but "i", "j", the "raw" indices and a
+        GridProperty come from an active cell if there is one. A GridProperty
+        value from an inactive cell is masked.
+
+    Note::
         For ``property`` "raw", the return is a list of 2D arrays, where the first
         array is the i-index (int), the second is the j-index (int), the third is the
         top depth (float64), the fourth is the bottom depth (float64), and the
         fifth is a mask (boolean) for inactive cells. For the index arrays, -1
         indicates that the cell is outside any grid cell (projected from above; i.e.
         could also be within a fault). For the depth arrays, the value is NaN
-        for inactive cells. The inactive mask is True for inactive cells. The index
+        where no grid cell covers the map point. The inactive mask is True
+        where only inactive cells cover the map point. The index
         arrays and mask is derived from the Z midpoints of the 3D cells. The "raw"
         option is useful for further processing in Python, e.g. when a combination
         of properties is needed.
+
+        K indices are not returned. With ``where="top"`` or ``where="base"`` on
+        a grid with a :attr:`Grid.padding_mask`, K is the first (top) or last
+        (base) non-padding layer of the column at the returned I and J, so it
+        can differ between columns.
 
     .. versionadded:: 2.1
     .. versionchanged:: 4.2 Changed ``mode`` to ``property`` to add support for
@@ -339,6 +358,11 @@ def surface_from_grid3d(
                             Added option ``activeonly``.
     .. versionchanged:: 4.3 Added option ``raw`` to get data for further processing.
                             and add ``index_position`` for "i" and "j" properties.
+    .. versionchanged:: 4.28 ``where="top"`` and ``where="base"`` exclude cells
+                             in :attr:`Grid.padding_mask`, and ``"base"`` takes
+                             the deepest base at each map point. Where cells
+                             overlap, indices and property values come from an
+                             active cell if there is one.
     """
     mode = kwargs.get("mode")
     if mode is not None:

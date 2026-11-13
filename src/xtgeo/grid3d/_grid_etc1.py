@@ -1205,6 +1205,7 @@ def copy(self: Grid) -> Grid:
         roxindexer=self.roxindexer,
         props=self._props.copy() if self._props else None,
         filesrc=filesrc,
+        padding_mask=self._padding_mask,
     )
 
     # Update geometry references in copied properties to point to the new grid
@@ -1296,6 +1297,11 @@ def crop(
     self._nrow = nnrow
     self._nlay = nnlay
 
+    if self._padding_mask is not None:
+        self._padding_mask = self._padding_mask[
+            ic1 - 1 : ic2, jc1 - 1 : jc2, kc1 - 1 : kc2
+        ].copy()
+
     if isinstance(self.subgrids, dict):
         newsub = {}
         # easier to work with numpies than lists
@@ -1360,6 +1366,16 @@ def reduce_to_one_layer(self: Grid) -> None:
         0,
     )
 
+    if self._padding_mask is not None:
+        top = self._padding_mask.argmin(axis=2).T
+        base = (self.nlay - self._padding_mask[:, :, ::-1].argmin(axis=2)).T
+        # Legacy corner arrays use (layer, row, column, corner) order.
+        corners = self._zcornsv.reshape(self.nlay + 1, self.nrow, self.ncol, 4)
+        reduced = new_zcorn.reshape(2, self.nrow, self.ncol, 4)
+        rows, columns = np.indices((self.nrow, self.ncol))
+        reduced[0] = corners[top, rows, columns]
+        reduced[1] = corners[base, rows, columns]
+        self._padding_mask = np.asarray(self._padding_mask.all(axis=2, keepdims=True))
     self._nlay = 1
     self._zcornsv = new_zcorn
     self._actnumsv = new_actnum
@@ -1393,6 +1409,8 @@ def reverse_row_axis(
 
     # Also flip actnum along row axis
     self._actnumsv = np.flip(self._actnumsv, axis=1).copy()
+    if self._padding_mask is not None:
+        self._padding_mask = np.flip(self._padding_mask, axis=1).copy()
 
     # Update handedness
     if self._ijk_handedness == "left":
@@ -1434,6 +1452,8 @@ def reverse_column_axis(
 
     # Also flip actnum along column axis
     self._actnumsv = np.flip(self._actnumsv, axis=0).copy()
+    if self._padding_mask is not None:
+        self._padding_mask = np.flip(self._padding_mask, axis=0).copy()
 
     # Update handedness
     if self._ijk_handedness == "left":

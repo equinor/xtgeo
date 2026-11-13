@@ -91,6 +91,7 @@ class DeriveSurfaceFromGrid3D:
     _tempsurf: RegularSurface | None = None
     _klayer: int | None = None
     _option: Literal["top", "bot"] = "top"
+    _boundary: bool = False
     _result: np.ma.MaskedArray | list[np.ndarray] | None = None
 
     def __post_init__(self) -> None:
@@ -199,16 +200,16 @@ class DeriveSurfaceFromGrid3D:
         if isinstance(self.where, str):
             where = self.where.lower()
             if where == "top":
+                self._boundary = True
                 self._klayer = 0
                 self._option = "top"
             elif where == "base":
+                self._boundary = True
                 self._klayer = self.grid.nlay - 1
                 self._option = "bot"
             else:
                 klayer, what = where.split("_")
                 self._klayer = int(klayer) - 1
-                if self._klayer < 0 or self._klayer >= self.grid.nlay:
-                    raise ValueError(f"Klayer out of range in where={where}")
                 self._option = "top"
                 if what == "base":
                     self._option = "bot"
@@ -216,15 +217,37 @@ class DeriveSurfaceFromGrid3D:
             self._klayer = self.where - 1
             self._option = "top"
 
+        if self._klayer < 0 or self._klayer >= self.grid.nlay:
+            raise ValueError(f"Klayer out of range in where={self.where}")
+
     def _sample_regsurf_from_grid3d(self) -> None:
         """Sample the grid3d to get the values for the regular surface."""
 
         regsurf_cpp = _internal.regsurf.RegularSurface(self._tempsurf)
 
-        iindex, jindex, d_top, d_bot, mask = regsurf_cpp.sample_grid3d_layer(
+        layers = np.full(self.grid.dimensions[:2], self._klayer, dtype=np.int32)
+        padding = self.grid._padding_mask
+        if padding is not None:
+            if self._boundary:
+                present = ~padding
+                if self._option == "top":
+                    layers = present.argmax(axis=2).astype(np.int32)
+                else:
+                    layers = (
+                        self.grid.nlay - 1 - present[:, :, ::-1].argmax(axis=2)
+                    ).astype(np.int32)
+                layers[~present.any(axis=2)] = -1
+            else:
+                layers[padding[:, :, self._klayer]] = -1
+
+        position = {"top": 0, "bot": 1, "base": 1}.get(self.index_position, 2)
+        if self.property == "depth":
+            position = 0 if self._option == "top" else 1
+        iindex, jindex, kindex, d_top, d_bot, mask = regsurf_cpp.sample_grid3d(
             self.grid._get_grid_cpp(),
-            self._klayer,
-            {"top": 0, "bot": 1, "base": 1}.get(self.index_position, 2),
+            layers,
+            position,
+            (0 if self._option == "top" else 1) if self._boundary else -1,
             -1,  # number of threads for OpenMP; -1 means let the system decide
         )
 
@@ -263,7 +286,9 @@ class DeriveSurfaceFromGrid3D:
             iindex[iindex < 0] = 0
             jindex[jindex < 0] = 0
             self._result = np.ma.masked_array(np.zeros_like(d_top), mask=propmask)
-            self._result = self.property.values[iindex, jindex, self._klayer]
+            kindex = np.where(kindex < 0, 0, kindex)
+            self._result = self.property.values[iindex, jindex, kindex].copy()
+            self._result.mask += mask
             self._result.mask += additional_mask
 
 
