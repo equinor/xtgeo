@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import pathlib
+from typing import Literal
 
 import hypothesis.strategies as st
 import numpy as np
@@ -319,6 +320,32 @@ def test_generate_hash_is_deterministic_and_sensitive() -> None:
 
     other = _make_cube(seed=7)
     assert cube.generate_hash() != other.generate_hash()
+
+
+@pytest.mark.parametrize("array", ["_values", "_ilines", "_traceidcodes"])
+@pytest.mark.parametrize(
+    "hashmethod, length", [("md5", 32), ("sha256", 64), ("blake2b", 128)]
+)
+def test_generate_hash_sees_interior_edits(
+    array: str, hashmethod: Literal["md5", "sha256", "blake2b"], length: int
+) -> None:
+    """Test that generate_hash depends on values in the middle of large arrays.
+
+    What is tested:
+        One value in the middle of the cube values, inlines or trace ID codes is
+        changed. The cube is large enough that NumPy shortens these arrays when
+        printing them.
+
+    Expected behaviour:
+        The hash changes.
+    """
+    cube = Cube(ncol=1200, nrow=10, nlay=10, xinc=1, yinc=1, zinc=1, values=0.0)
+    before = cube.generate_hash(hashmethod=hashmethod)
+    assert len(before) == length
+    assert cube.copy().generate_hash(hashmethod=hashmethod) == before
+
+    getattr(cube, array)[600] += 1
+    assert cube.generate_hash(hashmethod=hashmethod) != before
 
 
 def test_describe_flush_and_return(capsys: pytest.CaptureFixture[str]) -> None:

@@ -14,7 +14,7 @@ import xtgeo._internal as _internal  # type: ignore
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGDescription, null_logger
 from xtgeo.common.exceptions import InvalidFileFormatError
-from xtgeo.common.sys import generic_hash
+from xtgeo.common.sys import _hash_with_arrays
 from xtgeo.common.types import Dimensions
 from xtgeo.io._file import FileFormat, FileWrapper
 from xtgeo.surface.regular_surface import surface_from_grid3d
@@ -1191,21 +1191,17 @@ class Grid(_Grid3D):
         See :func:`xtgeo.generic_hash` for available hash methods.
 
         .. versionadded:: 2.14
+        .. versionchanged:: 4.28
+            All geometry and ACTNUM values are hashed; before, most of them were
+            ignored. Hash values differ from earlier versions.
         """
         self._set_xtgformat2()  # ensure xtgformat 2!
 
-        required = (
-            "_ncol",
-            "_nrow",
-            "_nlay",
-            "_coordsv",
-            "_zcornsv",
-            "_actnumsv",
+        return _hash_with_arrays(
+            f"{self._ncol},{self._nrow},{self._nlay}",
+            (self._coordsv, self._zcornsv, self._actnumsv),
+            hashmethod=hashmethod,
         )
-
-        gid = "".join(str(getattr(self, att)) for att in required)
-
-        return generic_hash(gid, hashmethod=hashmethod)
 
     # ==================================================================================
     # Create/import/export

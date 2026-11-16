@@ -17,7 +17,7 @@ from ._xyz_enum import _AttrType
 from .log import null_logger
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     import numpy.typing as npt
     import pandas as pd
@@ -85,6 +85,20 @@ def generic_hash(
     .. versionadded:: 2.14
 
     """
+    return _hash_with_arrays(gid, (), hashmethod)
+
+
+def _hash_with_arrays(
+    gid: str,
+    arrays: Iterable[np.ndarray],
+    hashmethod: Literal["md5", "sha256", "blake2b"] | Callable = "md5",
+) -> str:
+    """Return a hash of a string and of every value in the given arrays.
+
+    Each array also adds its shape and data type, so arrays holding the same bytes
+    in a different layout give different hashes. The arrays are not copied when
+    they are already C-contiguous.
+    """
     validmethods: dict[str, Callable] = {
         "md5": hashlib.md5,
         "sha256": hashlib.sha256,
@@ -99,6 +113,10 @@ def generic_hash(
         raise ValueError(f"Invalid hash method provided: {hashmethod}")
 
     mhash.update(gid.encode())
+    for array in arrays:
+        array = np.ascontiguousarray(array)
+        mhash.update(f"{array.shape}{array.dtype.str}".encode())
+        mhash.update(array.data)
     return mhash.hexdigest()
 
 

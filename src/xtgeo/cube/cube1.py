@@ -11,7 +11,7 @@ import numpy as np
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
-from xtgeo.common.sys import generic_hash
+from xtgeo.common.sys import _hash_with_arrays
 from xtgeo.common.types import Dimensions
 from xtgeo.common.xtgeo_dialog import XTGDescription
 from xtgeo.grid3d.grid import grid_from_cube
@@ -446,6 +446,9 @@ class Cube:
         See :func:`xtgeo.generic_hash` for available hash methods.
 
         .. versionadded:: 2.14
+        .. versionchanged:: 4.28
+            All values, inlines, xlines and trace ID codes are hashed; before,
+            most of them were ignored. Hash values differ from earlier versions.
         """
         required = (
             "ncol",
@@ -460,17 +463,18 @@ class Cube:
             "yflip",
             "zflip",
             "rotation",
-            "values",
-            "ilines",
-            "xlines",
-            "traceidcodes",
         )
+        arrays = ("values", "ilines", "xlines", "traceidcodes")
 
         gid = ""
         for req in required:
-            gid += f"{getattr(self, '_' + req)}"
+            gid += f"{getattr(self, '_' + req)},"
 
-        return generic_hash(gid, hashmethod=hashmethod)
+        return _hash_with_arrays(
+            gid,
+            (getattr(self, "_" + name) for name in arrays),
+            hashmethod=hashmethod,
+        )
 
     def describe(self, flush: bool = True) -> str | None:
         """Describe an instance by printing to stdout or return.
