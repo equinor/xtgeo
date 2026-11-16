@@ -695,6 +695,21 @@ def test_generate_hash(grd1):
     assert grd1.generate_hash() == grd2.generate_hash()
 
 
+@pytest.mark.parametrize("array", ["_coordsv", "_zcornsv", "_actnumsv"])
+def test_generate_hash_sees_interior_edits(array):
+    """An edit in the middle of a large grid array changes the hash.
+
+    The grid is large enough that NumPy shortens the arrays when printing them.
+    """
+    grid = xtgeo.create_box_grid((20, 20, 10))
+    grid._set_xtgformat2()
+    before = grid.generate_hash()
+
+    values = getattr(grid, array)
+    values[10, 10, ...] = 1 - values[10, 10, ...]
+    assert grid.generate_hash() != before
+
+
 def test_gridquality_properties(show_plot, testdata_path):
     """Get grid quality props."""
     grd1 = xtgeo.grid_from_file(testdata_path / GRIDQC1)

@@ -321,6 +321,25 @@ def test_generate_hash_is_deterministic_and_sensitive() -> None:
     assert cube.generate_hash() != other.generate_hash()
 
 
+@pytest.mark.parametrize("array", ["_values", "_ilines", "_traceidcodes"])
+def test_generate_hash_sees_interior_edits(array: str) -> None:
+    """Test that generate_hash depends on values in the middle of large arrays.
+
+    What is tested:
+        One value in the middle of the cube values, inlines or trace ID codes is
+        changed. The cube is large enough that NumPy shortens these arrays when
+        printing them.
+
+    Expected behaviour:
+        The hash changes.
+    """
+    cube = Cube(ncol=1200, nrow=10, nlay=10, xinc=1, yinc=1, zinc=1, values=0.0)
+    before = cube.generate_hash()
+
+    getattr(cube, array)[600] += 1
+    assert cube.generate_hash() != before
+
+
 def test_describe_flush_and_return(capsys: pytest.CaptureFixture[str]) -> None:
     """Test the describe method for both flush modes.
 
