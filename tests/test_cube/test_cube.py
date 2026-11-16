@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import pathlib
+from typing import Literal
 
 import hypothesis.strategies as st
 import numpy as np
@@ -326,7 +327,7 @@ def test_generate_hash_is_deterministic_and_sensitive() -> None:
     "hashmethod, length", [("md5", 32), ("sha256", 64), ("blake2b", 128)]
 )
 def test_generate_hash_sees_interior_edits(
-    array: str, hashmethod: str, length: int
+    array: str, hashmethod: Literal["md5", "sha256", "blake2b"], length: int
 ) -> None:
     """Test that generate_hash depends on values in the middle of large arrays.
 
