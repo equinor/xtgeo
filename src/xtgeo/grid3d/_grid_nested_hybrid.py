@@ -18,6 +18,15 @@ if TYPE_CHECKING:
     from xtgeo.grid3d import Grid
 
 
+def raise_if_nested_hybrid(grid: Grid, operation: str) -> None:
+    """Raise NotImplementedError if the grid is a nested hybrid grid."""
+    if grid.nestedhybrid:
+        raise NotImplementedError(
+            f"{operation} is not supported for nested hybrid grids, "
+            "see https://github.com/equinor/xtgeo/issues/1853"
+        )
+
+
 @dataclass(frozen=True)
 class NestedHybridBlock:
     """Location of one block of a nested hybrid grid.

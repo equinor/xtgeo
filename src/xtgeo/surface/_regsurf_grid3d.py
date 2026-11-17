@@ -9,7 +9,8 @@ import numpy as np
 
 from xtgeo import _cxtgeo, _internal
 from xtgeo.common.log import null_logger
-from xtgeo.grid3d import _gridprop_lowlevel
+from xtgeo.grid3d import _grid_etc1, _gridprop_lowlevel
+from xtgeo.grid3d._grid_nested_hybrid import raise_if_nested_hybrid
 from xtgeo.grid3d.grid_property import GridProperty
 
 if TYPE_CHECKING:
@@ -100,6 +101,10 @@ class DeriveSurfaceFromGrid3D:
         self._generate_working_surface()
         self._eval_where()
 
+        # Merged padding and refined blocks affect every layer, not only the grid
+        # boundaries, so any surface derived from a nested hybrid grid is unsafe.
+        raise_if_nested_hybrid(self.grid, "Surface from a grid")
+
         xtgformat_convert = self.grid._xtgformat == 1
         if xtgformat_convert:
             self.grid._set_xtgformat2()
@@ -129,8 +134,8 @@ class DeriveSurfaceFromGrid3D:
         args = {}
         if self.template is None:
             # need to estimate map settings from the existing 3D grid
-            geom = self.grid.get_geometrics(
-                allcells=True, cellcenter=True, return_dict=True, _ver=2
+            geom = _grid_etc1.get_geometrics(
+                self.grid, allcells=True, cellcenter=True, return_dict=True, _ver=2
             )
             gminx, gminy, _, gmaxx, gmaxy, _ = self.grid.get_bounding_box()
 
@@ -155,8 +160,8 @@ class DeriveSurfaceFromGrid3D:
             args["nrow"] = nrow
             args["values"] = np.ma.zeros((ncol, nrow), dtype=np.float64)
         elif isinstance(self.template, str) and self.template == "native":
-            geom = self.grid.get_geometrics(
-                allcells=True, cellcenter=True, return_dict=True
+            geom = _grid_etc1.get_geometrics(
+                self.grid, allcells=True, cellcenter=True, return_dict=True
             )
 
             args["ncol"] = self.grid.ncol
@@ -169,7 +174,7 @@ class DeriveSurfaceFromGrid3D:
             args["values"] = np.ma.zeros(
                 (self.grid.ncol, self.grid.nrow), dtype=np.float64
             )
-            args["yflip"] = -1 if self.grid.ijk_handedness == "right" else 1
+            args["yflip"] = -1 if self.grid._ijk_handedness == "right" else 1
 
         else:
             args["xori"] = self.template.xori

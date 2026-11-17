@@ -9,7 +9,7 @@ import numpy as np
 from xtgeo import _cxtgeo
 from xtgeo.common import null_logger
 from xtgeo.common.constants import UNDEF_LIMIT
-from xtgeo.grid3d import _gridprop_lowlevel as gl
+from xtgeo.grid3d import _grid_etc1, _gridprop_lowlevel as gl
 from xtgeo.surface import _regsurf_lowlevel as rl
 from xtgeo.surface.regular_surface import surface_from_grid3d
 from xtgeo.xyz import Polygons
@@ -131,7 +131,7 @@ def _get_randomline_fence(
     """Compute a resampled fence from a Polygons instance."""
     if distance is None:
         logger.debug("Estimate fence distance from grid resolution...")
-        geom = self.get_geometrics()
+        geom = _grid_etc1.get_geometrics(self)
 
         avgdxdy = 0.5 * (geom[10] + geom[11])
         distance = 0.5 * avgdxdy

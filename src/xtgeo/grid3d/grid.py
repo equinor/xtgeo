@@ -963,6 +963,7 @@ class Grid(_Grid3D):
         lower-left, while 'right' is origin in upper-left corner.
 
         """
+        _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.ijk_handedness")
         return self._ijk_handedness
 
     @ijk_handedness.setter
@@ -1531,7 +1532,7 @@ class Grid(_Grid3D):
         dsc.txt("Number of active cells", self.nactive)
 
         if details:
-            geom = self.get_geometrics(cellcenter=True, return_dict=True)
+            geom = _grid_etc1.get_geometrics(self, cellcenter=True, return_dict=True)
 
             assert isinstance(geom, dict)
 
@@ -1543,8 +1544,8 @@ class Grid(_Grid3D):
             for prp in ("avg_dx", "avg_dy", "avg_dz", "avg_rotation"):
                 prp2.append(f"{geom[prp]:7.4f}")
 
-            geox = self.get_geometrics(
-                cellcenter=False, allcells=True, return_dict=True
+            geox = _grid_etc1.get_geometrics(
+                self, cellcenter=False, allcells=True, return_dict=True
             )
             assert isinstance(geox, dict)
             prp3: list[str] = []
@@ -1862,6 +1863,7 @@ class Grid(_Grid3D):
             if nsubname not in self.subgrids:
                 return None
 
+        _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.estimate_design()")
         return _grid_etc1.estimate_design(self, nsubname)
 
     def estimate_flip(self) -> Literal[1, -1]:
@@ -1871,6 +1873,7 @@ class Grid(_Grid3D):
 
         .. seealso:: :py:attr:`~ijk_handedness`
         """
+        _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.estimate_flip()")
         self._set_xtgformat2()  # ensure xtgformat 2!
         handedness = _estimate_grid_ijk_handedness(self._coordsv.copy())
         return -1 if handedness == "right" else 1
@@ -2426,6 +2429,8 @@ class Grid(_Grid3D):
         ``fmu.tools.nestedhybridgrid.create_nested_hybrid_grid`` and
         encodes every mother ↔ refined cell pair that should be connected.
         See :ref:`nested_hybrid_grids` for a definition and known limitations.
+        On a nested hybrid grid the ordinary calculation is not supported, so
+        ``nnc_table_only=True`` is required.
 
         Args:
             permx: Permeability in the I-direction (grid cells), md, either as
@@ -2512,10 +2517,9 @@ class Grid(_Grid3D):
             >>> merged, nnc_tbl = create_nested_hybrid_grid(
             ...     grid, region, target_region_id=2, refinement=(3, 3, 3)
             ... )
-            >>> tranx, trany, tranz, nnc, nnc_nh, rbnd = (
-            ...     merged.get_transmissibilities(
-            ...         permx, permy, permz, ntg=ntg, nnc_table=nnc_tbl
-            ...     )
+            >>> *_, nnc_nh, rbnd = merged.get_transmissibilities(
+            ...     permx, permy, permz, ntg=ntg, nnc_table=nnc_tbl,
+            ...     nnc_table_only=True,
             ... )
             >>> print(f"NNCs found: {len(nnc_nh)}")
         """
@@ -2564,9 +2568,9 @@ class Grid(_Grid3D):
 
         The calculation includes regular I-, J-, and K-direction connections,
         fault NNCs, and pinch-out NNCs. Nested-hybrid NNCs are computed by
-        :meth:`get_nested_hybrid_nnc_transmissibilities`. Note that replaced
-        parent cells of a nested hybrid grid may be treated as ordinary gaps, see
-        :ref:`nhg_known_issues`.
+        :meth:`get_nested_hybrid_nnc_transmissibilities`. A nested hybrid grid
+        raises ``NotImplementedError``, as replaced parent cells would be treated
+        as ordinary gaps, see :ref:`nhg_known_issues`.
 
         Args:
             permx: Permeability in the I-direction, in md, as a
@@ -2832,11 +2836,15 @@ class Grid(_Grid3D):
 
         .. versionadded:: 4.28
         """
-        self._set_xtgformat2()
-        if len(_grid_nested_hybrid._find_blocks(self._actnumsv)) < 2:
+        actnum = self._actnumsv
+        if self._xtgformat == 1:
+            # Fortran-ordered flat array; reshaping gives a view without converting.
+            actnum = actnum.reshape(self.dimensions, order="F")
+        if len(_grid_nested_hybrid._find_blocks(actnum)) < 2:
             # Cheap rejection first; hashing the grid for the cache is costly.
             blocks: list[NestedHybridBlock] = []
         else:
+            self._set_xtgformat2()
             grid_hash = self.generate_hash()
             if (
                 self._nested_hybrid_cache is None
@@ -3030,6 +3038,7 @@ class Grid(_Grid3D):
             X min/max is 456620.79 467106.33
 
         """
+        _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.get_geometrics()")
         # TODO(JB): _grid_etc1.get_geometrics(False, False, True): Looks like it will
         # fail due to glist and gkeys will be out of sync (lengths will be differnt)
         return _grid_etc1.get_geometrics(
@@ -3062,6 +3071,7 @@ class Grid(_Grid3D):
         Raises: Nothing
 
         """
+        _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.get_adjacent_cells()")
         return _grid_etc1.get_adjacent_cells(
             self, prop, val1, val2, activeonly=activeonly
         )
@@ -3161,6 +3171,9 @@ class Grid(_Grid3D):
 
         Args:
             internal: If True (default), then the internal collapse is also done.
+                On a nested hybrid grid this also collapses replaced parent cells,
+                which can make coarse cells overlap the refined cells, see
+                :ref:`nhg_known_issues`.
 
         .. versionchanged:: 4.11 Added ``internal option``, algorithm is improved
         """
@@ -3305,6 +3318,8 @@ class Grid(_Grid3D):
         .. versionadded:: 2.5
 
         """
+        if ijk_handedness is not None:
+            _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.reverse_row_axis()")
         _grid_etc1.reverse_row_axis(self, ijk_handedness=ijk_handedness)
 
     def reverse_column_axis(
@@ -3334,9 +3349,13 @@ class Grid(_Grid3D):
             # secure that the grid geometry is IJK right-handed
             grd.reverse_column_axis(ijk_handedness="right")
 
+        Nested hybrid grids are not supported, as reversing the I order puts the
+        refined block before the coarse block, which is no longer detected.
+
         .. versionadded:: 4.14
 
         """
+        _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.reverse_column_axis()")
         _grid_etc1.reverse_column_axis(self, ijk_handedness=ijk_handedness)
 
     def make_zconsistent(self, zsep: float | int = 1e-5) -> None:
@@ -3564,6 +3583,7 @@ class Grid(_Grid3D):
             )
 
         """
+        _grid_nested_hybrid.raise_if_nested_hybrid(self, "Grid.conform_to_surfaces()")
         _grid_conform.conform_grid_to_surfaces(
             self,
             surfaces,

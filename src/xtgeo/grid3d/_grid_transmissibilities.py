@@ -10,6 +10,7 @@ import pandas as pd
 import xtgeo._internal as _internal  # type: ignore
 from xtgeo.common.log import null_logger
 
+from . import _grid_nested_hybrid
 from ._ecl_grid import Units as _GridUnits
 from .grid_property import GridProperty
 
@@ -75,6 +76,10 @@ def get_cell_transmissibilities(
     Returns three GridProperty objects (tranx, trany, tranz) and a NNC DataFrame.
     See Grid.get_cell_transmissibilities() for full documentation.
     """
+    _grid_nested_hybrid.raise_if_nested_hybrid(
+        grid, "Grid.get_cell_transmissibilities()"
+    )
+
     # Validate input GridProperties have matching dimensions
     for prop_name, prop in {
         "permx": permx,

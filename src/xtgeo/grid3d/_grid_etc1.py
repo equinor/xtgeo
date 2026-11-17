@@ -1376,7 +1376,7 @@ def reverse_row_axis(
     coordsv and zcornsv arrays, and also handles the corner ordering within
     each pillar to maintain proper geometry.
     """
-    if ijk_handedness == self.ijk_handedness:
+    if ijk_handedness == self._ijk_handedness:
         return
 
     self._set_xtgformat2()
@@ -1417,7 +1417,7 @@ def reverse_column_axis(
     coordsv and zcornsv arrays, and also handles the corner ordering within
     each pillar to maintain proper geometry.
     """
-    if ijk_handedness == self.ijk_handedness:
+    if ijk_handedness == self._ijk_handedness:
         return
 
     self._set_xtgformat2()

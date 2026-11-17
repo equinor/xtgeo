@@ -150,17 +150,18 @@ def test_surface_from_grd3d_layer_deprecate_mode(testdata_path):
 
 
 @pytest.mark.benchmark(group="surface-from-grid3d")
-@pytest.mark.parametrize("case", ["layer", "boundary", "nested-boundary"])
+@pytest.mark.parametrize("case", ["layer", "boundary"])
 def test_benchmark_surface_boundary(nested_box, benchmark, case):
     """Time layer and boundary sampling on a map where the per-point cost dominates.
 
     The grid setup is outside the timer. All 250 000 map points are inside the box.
     """
-    coarse, merged = nested_box
+    coarse, _ = nested_box
     template = xtgeo.RegularSurface(
         ncol=500, nrow=500, xori=0.4, yori=0.4, xinc=0.8, yinc=0.8, values=0
     )
-    grid = merged if case == "nested-boundary" else coarse
     where = "3_base" if case == "layer" else "base"
-    result = benchmark(xtgeo.surface_from_grid3d, grid, template=template, where=where)
+    result = benchmark(
+        xtgeo.surface_from_grid3d, coarse, template=template, where=where
+    )
     assert result.values.count() == 250_000

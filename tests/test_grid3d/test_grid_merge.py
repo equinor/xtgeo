@@ -248,7 +248,7 @@ def test_handedness_consistency():
     merged = xtgeo.grid_merge(g1, g2)
 
     # Verify the merged grid has the same handedness as g1
-    assert merged.ijk_handedness == g1_handedness, (
+    assert merged._ijk_handedness == g1_handedness, (
         f"Merged grid should have g1's handedness ({g1_handedness})"
     )
 
