@@ -341,8 +341,8 @@ def surface_from_grid3d(
         could also be within a fault). For the depth arrays, the value is NaN
         where no grid cell covers the map point. The inactive mask is True
         where only inactive cells of an explicit layer cover the map point.
-        The index arrays and mask use ``index_position``, which defaults to
-        the Z midpoint of each cell. The "raw" option is useful for further
+        The index arrays and mask are always derived from the Z midpoints
+        of the cells. The "raw" option is useful for further
         processing in Python, for example to combine properties.
 
         K indices are not returned. With ``where="top"`` or ``where="base"``,
