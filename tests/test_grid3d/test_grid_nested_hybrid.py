@@ -324,3 +324,85 @@ def test_nestedhybrid_blocks_locate_every_level(nested_box):
 
 def test_nestedhybrid_blocks_empty_when_not_nested():
     assert xtgeo.create_box_grid((3, 3, 1)).nestedhybrid_blocks == []
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda g: g.get_cell_transmissibilities(100.0, 100.0, 10.0),
+        lambda g: g.get_adjacent_cells(g.get_actnum(), 0, 1),
+        lambda g: g.get_geometrics(),
+        lambda g: g.estimate_design(),
+        lambda g: g.ijk_handedness,
+        lambda g: setattr(g, "ijk_handedness", "left"),
+        lambda g: g.estimate_flip(),
+        lambda g: g.reverse_row_axis(ijk_handedness="left"),
+        lambda g: g.reverse_column_axis(),
+        lambda g: g.reverse_column_axis(ijk_handedness="left"),
+        lambda g: xtgeo.surface_from_grid3d(g, where="base"),
+        lambda g: xtgeo.surface_from_grid3d(g, where="top"),
+        lambda g: xtgeo.surface_from_grid3d(g, where=1),
+        lambda g: xtgeo.surface_from_grid3d(g, where=g.nlay, property="raw"),
+        lambda g: xtgeo.surface_from_grid3d(g, where=g.nlay, property="i"),
+        lambda g: xtgeo.surface_from_grid3d(g, where="1_top"),
+        lambda g: xtgeo.surface_from_grid3d(g, where=f"{g.nlay}_base"),
+        lambda g: xtgeo.surface_from_grid3d(g, where=2),
+        lambda g: xtgeo.surface_from_grid3d(g, where="2_base", property="i"),
+        lambda g: g.get_transmissibilities(100.0, 100.0, 10.0),
+    ],
+    ids=[
+        "transmissibilities",
+        "adjacent_cells",
+        "geometrics",
+        "estimate_design",
+        "handedness_get",
+        "handedness_set",
+        "estimate_flip",
+        "reverse_row_axis_handedness",
+        "reverse_column_axis",
+        "reverse_column_axis_handedness",
+        "surface_base",
+        "surface_top",
+        "surface_layer1",
+        "surface_last_raw",
+        "surface_last_i",
+        "surface_1_top",
+        "surface_last_base",
+        "surface_interior_layer",
+        "surface_interior_base_i",
+        "deprecated_transmissibilities",
+    ],
+)
+def test_unsupported_operations_raise(nested_box, call):
+    with pytest.raises(NotImplementedError, match="nested hybrid"):
+        call(nested_box[1])
+
+
+def test_internal_users_of_geometrics_still_work(nested_box):
+    merged = nested_box[1]
+    merged.describe(details=True, flush=False)
+
+
+def test_checking_does_not_convert_xtgformat(nested_box):
+    coarse = nested_box[0]
+    coarse._set_xtgformat1()
+    assert not coarse.nestedhybrid
+    assert coarse._xtgformat == 1
+
+
+def test_conform_to_surfaces_raises(nested_box):
+    surf = xtgeo.RegularSurface(
+        ncol=5, nrow=5, xinc=100, yinc=100, xori=0, yori=0, values=1510
+    )
+    with pytest.raises(NotImplementedError, match="nested hybrid"):
+        nested_box[1].conform_to_surfaces([surf, surf + 40], [2])
+
+
+def test_supported_operations_on_nested_grid(nested_box):
+    coarse, merged = nested_box
+    # Collapsing inactive cells is needed after a merge, so it must not raise.
+    merged.collapse_inactive_cells()
+    merged.collapse_inactive_cells(internal=False)
+    coarse.get_cell_transmissibilities(100.0, 100.0, 10.0)
+    coarse.get_geometrics()
+    assert coarse.ijk_handedness in ("left", "right")

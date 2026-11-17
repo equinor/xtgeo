@@ -8,6 +8,8 @@ import numpy as np
 
 from xtgeo.common.log import null_logger
 
+from . import _grid_etc1
+
 if TYPE_CHECKING:
     from xtgeo.grid3d import Grid
 
@@ -40,23 +42,23 @@ def merge_grids(
 
     # Ensure both grids have the same ijk_handedness
     if (
-        grid1.ijk_handedness is not None
-        and grid2.ijk_handedness is not None
-        and grid1.ijk_handedness != grid2.ijk_handedness
+        grid1._ijk_handedness is not None
+        and grid2._ijk_handedness is not None
+        and grid1._ijk_handedness != grid2._ijk_handedness
     ):
         logger.debug(
             "Grid handedness mismatch: grid1=%s, grid2=%s. "
             "Creating a copy of grid2 and adjusting to match grid1.",
-            grid1.ijk_handedness,
-            grid2.ijk_handedness,
+            grid1._ijk_handedness,
+            grid2._ijk_handedness,
         )
         grid2 = grid2.copy()
-        grid2.ijk_handedness = grid1.ijk_handedness
-    elif grid1.ijk_handedness is None or grid2.ijk_handedness is None:
+        _grid_etc1.reverse_row_axis(grid2, ijk_handedness=grid1._ijk_handedness)
+    elif grid1._ijk_handedness is None or grid2._ijk_handedness is None:
         logger.debug(
             "Cannot verify handedness compatibility: grid1=%s, grid2=%s",
-            grid1.ijk_handedness,
-            grid2.ijk_handedness,
+            grid1._ijk_handedness,
+            grid2._ijk_handedness,
         )
 
     new_nlay = max(lmap1.max() + 1, lmap2.max() + 1)

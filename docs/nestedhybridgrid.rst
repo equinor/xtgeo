@@ -70,11 +70,11 @@ Working with nested hybrid grids in xtgeo
 Transmissibilities
 ^^^^^^^^^^^^^^^^^^
 
-Ordinary cell-to-cell transmissibilities (two-point flux approximation, TPFA)
-are computed with :meth:`xtgeo.Grid.get_cell_transmissibilities`.
 Transmissibilities across the refinement boundary are computed from the NNC
 table with :meth:`xtgeo.Grid.get_nested_hybrid_nnc_transmissibilities`, using
-geometric face-overlap calculations.
+geometric face-overlap calculations. Ordinary cell-to-cell transmissibilities
+(:meth:`xtgeo.Grid.get_cell_transmissibilities`) are not supported on nested
+hybrid grids yet, see :ref:`nhg_known_issues`.
 
 The input NNC table has the following columns:
 
@@ -123,5 +123,10 @@ Known issues
 ------------
 
 Several xtgeo operations are known to give wrong results on nested hybrid
-grids. See `#1853 <https://github.com/equinor/xtgeo/issues/1853>`_ for the
-overview and its sub-issues for the status of each operation.
+grids. Most of them raise ``NotImplementedError`` when the grid is detected as a
+nested hybrid (:attr:`xtgeo.Grid.nestedhybrid`). Others, such as
+:meth:`xtgeo.Grid.collapse_inactive_cells` (which can make coarse cells overlap
+refined cells) and functions taking plain arrays, cannot be blocked and may give
+wrong results silently. See
+`#1853 <https://github.com/equinor/xtgeo/issues/1853>`_ for the overview and its
+sub-issues for the status of each operation.
