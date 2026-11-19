@@ -3095,7 +3095,7 @@ class Grid(_Grid3D):
         Example::
 
             # store grid quality measures in RMS
-            gprops = grd.gridquality()
+            gprops = grd.get_gridquality_properties()
             for gprop in gprops:
                 gprop.to_rms(project, "MyGrid", gprop.name)
 
