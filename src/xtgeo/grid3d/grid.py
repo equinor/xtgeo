@@ -53,7 +53,7 @@ if TYPE_CHECKING:
         RegularSurface as RegularSurfaceCPP,
     )
     from xtgeo.common.types import FileLike
-    from xtgeo.grid3d._grid_nested_hybrid import NestedHybridBlock
+    from xtgeo.grid3d._grid_nested_hybrid import NestedHybridBlock, NestedHybridParents
     from xtgeo.interfaces.resinsight._rips_package import (
         ResInsightInstanceOrPortType,
         RipsCaseType,
@@ -883,6 +883,7 @@ class Grid(_Grid3D):
         self._tmp = {}  # TMP!
         self._cache: _GridCache | None = None
         self._nested_hybrid_cache: tuple[str, list[NestedHybridBlock]] | None = None
+        self._nested_hybrid_parents_cache: tuple[str, NestedHybridParents] | None = None
         logger.debug("Initialize Grid... DONE!")
 
     def __repr__(self) -> str:
@@ -2856,6 +2857,24 @@ class Grid(_Grid3D):
                 )
             blocks = self._nested_hybrid_cache[1]
         return list(blocks)
+
+    def _get_nestedhybrid_parents(self) -> NestedHybridParents | None:
+        """Return the parent cells and cell types of a nested hybrid grid.
+
+        None if the grid is not a nested hybrid. The result is cached until the
+        geometry or ACTNUM changes. See
+        :func:`xtgeo.grid3d._grid_nested_hybrid.map_parents`.
+        """
+        blocks = self.nestedhybrid_blocks
+        if not blocks or self._nested_hybrid_cache is None:
+            return None
+        # nestedhybrid_blocks has just checked this hash against the current grid.
+        grid_hash = self._nested_hybrid_cache[0]
+        cache = self._nested_hybrid_parents_cache
+        if cache is None or cache[0] != grid_hash:
+            cache = (grid_hash, _grid_nested_hybrid.map_parents(self, blocks))
+            self._nested_hybrid_parents_cache = cache
+        return cache[1]
 
     def get_xyz(
         self,
