@@ -10,7 +10,6 @@ import numpy as np
 from xtgeo import _cxtgeo, _internal
 from xtgeo.common.log import null_logger
 from xtgeo.grid3d import _grid_etc1, _gridprop_lowlevel
-from xtgeo.grid3d._grid_nested_hybrid import raise_if_nested_hybrid
 from xtgeo.grid3d.grid_property import GridProperty
 
 if TYPE_CHECKING:
@@ -101,10 +100,6 @@ class DeriveSurfaceFromGrid3D:
         self._parametrize_regsurf()
         self._generate_working_surface()
         self._eval_where()
-
-        # Merged padding and refined blocks affect every layer, not only the grid
-        # boundaries, so any surface derived from a nested hybrid grid is unsafe.
-        raise_if_nested_hybrid(self.grid, "Surface from a grid")
 
         xtgformat_convert = self.grid._xtgformat == 1
         if xtgformat_convert:
