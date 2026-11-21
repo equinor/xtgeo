@@ -118,7 +118,7 @@ def _get_randomline_v2(
         cache.threshold_magic_1,
     )
 
-    return (fencespec[3, 0], fencespec[3, -1], zmin, zmax, arr.T)
+    return (fencespec[0, 3], fencespec[-1, 3], zmin, zmax, arr.T)
 
 
 def _get_randomline_fence(
