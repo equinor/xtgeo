@@ -101,13 +101,28 @@ def test_randomline_regular_grid_values_and_undefined_samples(inactive):
         grid.set_actnum(actnum)
     xs = np.arange(-0.25, 3, 0.5)
     fence = np.column_stack((xs, np.full(7, 0.5), np.zeros(7), xs - xs[0]))
-    *_, values = grid.get_randomline(fence, prop, zmin=-0.25, zmax=2.25, zincrement=0.5)
+    hmin, hmax, *_, values = grid.get_randomline(
+        fence, prop, zmin=-0.25, zmax=2.25, zincrement=0.5
+    )
+    assert (hmin, hmax) == (0.0, 3.0)
     expected = np.full((6, 7), np.nan)
     expected[1:3, 1:5] = [0, 0, 1, 1]
     expected[3:5, 1:5] = [4, 4, 5, 5]
     if inactive:
         expected[1:3, 3:5] = np.nan
     np.testing.assert_array_equal(values, expected)
+
+
+def test_randomline_polygons_hmin_hmax():
+    grid = xtgeo.create_box_grid((4, 4, 2))
+    prop = xtgeo.GridProperty(grid, values=1.0)
+    pol = xtgeo.Polygons([(0.5, 0.5, 0.0, 0), (3.5, 2.5, 0.0, 0)])
+    fence = pol.get_fence(distance=0.5, atleast=5, nextend=2, asnumpy=True)
+    hmin, hmax, *_ = grid.get_randomline(
+        pol, prop, zmin=0.0, zmax=2.0, hincrement=0.5, nextend=2
+    )
+    assert (hmin, hmax) == pytest.approx((fence[0, 3], fence[-1, 3]))
+    assert hmax - hmin > 1.0
 
 
 def test_randomline_prefers_refined_cell_over_inactive_parent(testdata_path):
