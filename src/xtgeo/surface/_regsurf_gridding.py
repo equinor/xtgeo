@@ -1832,7 +1832,7 @@ def avgsum_from_3dprops_gridding(
         if trimbydz:
             try:
                 dzi = scipy.interpolate.griddata(
-                    (xcv, ycv), dzv, (xiv, yiv), method="linear", fill_value=0.0
+                    (xcv, ycv), dzv * wei, (xiv, yiv), method="linear", fill_value=0.0
                 )
             except ValueError:
                 continue
