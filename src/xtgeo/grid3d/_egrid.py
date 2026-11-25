@@ -692,11 +692,11 @@ class EGrid(EclGrid):
         return self.global_grid.dimensions
 
     @property
-    def map_axis_units(self) -> Units:
+    def map_axis_units(self) -> Units | None:
         return self.egrid_head.mapunits
 
     @map_axis_units.setter
-    def map_axis_units(self, value):
+    def map_axis_units(self, value: Units | None) -> None:
         self.egrid_head.mapunits = value
 
     @property

@@ -174,6 +174,19 @@ def test_transform_map_relative_no_double(egrid):
         assert_allclose(coord1, coord2)
 
 
+def test_egrid_zcorn_uses_grid_units_without_mapunits():
+    grid = xtgeo.create_box_grid((1, 1, 1))
+    egrid = xtg_egrid.EGrid.from_xtgeo_grid(grid)
+    egrid.grid_units = xtgeo.Units.FEET
+    egrid.egrid_head.gridunit.grid_relative = xtgeo.GridRelative.ORIGIN
+    egrid.egrid_head.mapunits = None
+
+    assert_allclose(
+        egrid.xtgeo_zcorn(relative_to=xtgeo.GridRelative.MAP),
+        egrid.xtgeo_zcorn(relative_to=xtgeo.GridRelative.ORIGIN),
+    )
+
+
 def test_conversion_warning(caplog):
     import logging
 
