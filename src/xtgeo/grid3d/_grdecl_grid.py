@@ -216,13 +216,13 @@ class GrdeclGrid(EclGrid):
         )
 
     @property
-    def map_axis_units(self):
+    def map_axis_units(self) -> Units:
         if self.mapunits is None:
             return Units.METRES
         return self.mapunits
 
     @map_axis_units.setter
-    def map_axis_units(self, value):
+    def map_axis_units(self, value: Units | None) -> None:
         self.mapunits = value
 
     @property
