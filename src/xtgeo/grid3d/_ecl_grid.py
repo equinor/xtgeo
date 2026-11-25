@@ -349,7 +349,7 @@ class CoordinateType(Enum):
         return 0 if self == CoordinateType.CARTESIAN else 1
 
     @classmethod
-    def from_bgrdecl(cls, coord_value: int) -> Self:
+    def from_bgrdecl(cls, coord_value: int | np.integer[Any]) -> Self:
         return cls.CARTESIAN if coord_value == 0 else cls.CYLINDRICAL
 
     @classmethod
