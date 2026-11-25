@@ -170,8 +170,10 @@ def test_avg_irregular_zone_layout(testdata_path):
         zone_avg=False,
     )
 
-    assert avgmap.values.mean() == pytest.approx(0.024, abs=0.001)
-    assert avgmap.values.std() == pytest.approx(0.006, abs=0.001)
-    assert avgmap.values.min() == 0.0
-    assert avgmap.values.max() == pytest.approx(0.050, abs=0.001)
-    assert avgmap.values.mask.sum() == 2962
+    # the thickness is weighted by the zone, so the result is in the same
+    # range as the regular average maps
+    assert avgmap.values.mean() == pytest.approx(0.166, abs=0.001)
+    assert avgmap.values.std() == pytest.approx(0.039, abs=0.001)
+    assert avgmap.values.min() == pytest.approx(0.047, abs=0.001)
+    assert avgmap.values.max() == pytest.approx(0.288, abs=0.001)
+    assert avgmap.values.mask.sum() == 2964
