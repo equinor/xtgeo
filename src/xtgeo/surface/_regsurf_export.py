@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import struct
+import warnings
 from typing import TYPE_CHECKING
 
 import h5py
@@ -327,9 +328,10 @@ def export_petromod_binary(
                 raise ValueError("Values for pmd_dataunits cannot be negative!")
 
     if not validunits:
-        UserWarning(
+        warnings.warn(
             "Format or values for pmd_dataunits out of range: Pair should be in ranges "
-            f"{PMD_DATAUNITDISTANCE} and {PMD_DATAUNITZ}"
+            f"{PMD_DATAUNITDISTANCE} and {PMD_DATAUNITZ}",
+            UserWarning,
         )
 
     undef = 99999
