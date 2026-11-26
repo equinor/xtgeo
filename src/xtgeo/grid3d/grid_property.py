@@ -132,8 +132,8 @@ def gridproperty_from_file(
         date (int or str): For restart files, date in YYYYMMDD format. Also
             the YYYY-MM-DD form is allowed (string), and for Eclipse,
             mnemonics like 'first', 'last' is also allowed.
-        grid (Grid, optional): Grid object for checks. Optional for
-            ROFF, required for Eclipse).
+        grid (:py:class:`~xtgeo.Grid`, *optional*): Grid object for checks.
+            Optional for ROFF. Required for Eclipse.
         gridlink (bool): If True, and grid is not None, a link from the grid
             instance to the property is made. If False, no such link is made.
             Avoiding gridlink is recommended when running statistics of multiple

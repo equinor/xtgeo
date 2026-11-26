@@ -1,6 +1,8 @@
 from datetime import date
 
-from autoclasstoc import PublicMethods
+import autoclasstoc
+from autoclasstoc import AutoClassToc, PublicMethods, load_static_assets
+from docutils import nodes
 
 import xtgeo
 
@@ -11,7 +13,6 @@ current_year = date.today().year
 copyright = "Equinor 2019 - " + str(current_year) + f" (XTGeo release {release})"
 
 extensions = [
-    "autoclasstoc",
     "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -59,3 +60,22 @@ html_theme_options = {
     "style_nav_header_background": "#C0C0C0",
 }
 html_logo = "images/xtgeo-logo.png"
+
+
+class ClassToc(AutoClassToc):
+    """Render a class table without a transition inside the class directive."""
+
+    def run(self):
+        """Return the table nodes allowed inside the class directive."""
+        return [
+            node for node in super().run() if not isinstance(node, nodes.transition)
+        ]
+
+
+def setup(app):
+    """Register the class table directive without overriding Sphinx autodoc."""
+    # See https://github.com/kalekundert/autoclasstoc/issues/41.
+    autoclasstoc.nodes.setup(app)
+    app.add_config_value("autoclasstoc_sections", autoclasstoc_sections, "env")
+    app.add_directive("autoclasstoc", ClassToc)
+    app.connect("config-inited", load_static_assets)

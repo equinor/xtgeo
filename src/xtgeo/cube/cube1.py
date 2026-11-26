@@ -960,7 +960,7 @@ class Cube:
 
         Args:
             sfile (FileLike): Output file path or path-like object.
-            fformat (str, optional): file format 'segy' (default) or
+            fformat (str, *optional*): file format 'segy' (default) or
                 'rms_regular'
             pristine (bool): If True, make SEGY from scratch.
             engine (str): Which "engine" to use.
