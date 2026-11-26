@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING, Any
 
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.io._file import FileWrapper
@@ -153,7 +153,7 @@ def blockedwells_from_roxar(
 
     For arguments, see :func:`blockedwells_from_rms`.
     """
-    warnings.warn(
+    warn_deprecated(
         "The 'blockedwells_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'blockedwells_from_rms' instead.",
         FutureWarning,

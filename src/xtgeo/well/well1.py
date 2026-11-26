@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Sequence
 
@@ -10,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from xtgeo import _cxtgeo
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common._xyz_enum import _AttrType
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_LIMIT
 from xtgeo.common.exceptions import InvalidFileFormatError
@@ -172,7 +172,7 @@ def well_from_roxar(
 
     .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
-    warnings.warn(
+    warn_deprecated(
         "The 'well_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'well_from_rms' instead.",
         FutureWarning,
@@ -376,8 +376,15 @@ class Well:
     def name(self, newname):
         self._wname = newname
 
-    # alias
-    wname = name
+    @property
+    def wname(self):
+        """Alias for :attr:`name`."""
+        return self._wname
+
+    @wname.setter
+    def wname(self, newname):
+        """Set the well name through its alias."""
+        self._wname = newname
 
     @property
     def safewellname(self):
@@ -438,7 +445,7 @@ class Well:
     @property
     def dataframe(self):
         """Returns or set the Pandas dataframe object for all logs."""
-        warnings.warn(
+        warn_deprecated(
             "Direct access to the dataframe property in Well class will be deprecated "
             "in xtgeo 5.0. Use `get_dataframe()` instead.",
             DeprecationWarning,
@@ -447,7 +454,7 @@ class Well:
 
     @dataframe.setter
     def dataframe(self, dfr):
-        warnings.warn(
+        warn_deprecated(
             "Direct access to the dataframe property in Well class will be deprecated "
             "in xtgeo 5.0. Use `set_dataframe()` instead.",
             DeprecationWarning,
@@ -685,7 +692,7 @@ class Well:
 
         .. versionadded:: 2.14
         """
-        warnings.warn(
+        warn_deprecated(
             "to_hdf() is deprecated and will be removed in version 5.0. "
             "Use to_file() with fformat='hdf5' instead.",
             FutureWarning,
@@ -822,7 +829,7 @@ class Well:
 
         For parameters and usage details, see :meth:`to_rms`.
         """
-        warnings.warn(
+        warn_deprecated(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
             FutureWarning,
@@ -1007,7 +1014,9 @@ class Well:
         logger.debug("Deleting log(s) %s...", lname)
         return self._wdata.delete_attr(lname)
 
-    delete_logs = delete_log  # alias function
+    def delete_logs(self, lname: str | list[str]) -> int:
+        """Alias for :meth:`delete_log`."""
+        return Well.delete_log(self, lname)
 
     def get_logtype(self, lname) -> str | None:
         """Returns the type of a given log (e.g. DISC or CONT), None if not present."""
@@ -1581,9 +1590,10 @@ class Well:
         """
         algorithm = kwargs.get("algorithm")
         if algorithm:
-            warnings.warn(
+            warn_deprecated(
                 "Keyword 'algorithm': Is not in use anymore, please remove it",
                 UserWarning,
+                identifier="algorithm",
             )
 
         _well_oper.make_ijk_from_grid(

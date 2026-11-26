@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-from warnings import warn
 
 import numpy as np
 
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.log import null_logger
 from xtgeo.common.xtgeo_dialog import XTGDescription, XTGeoDialog
@@ -416,7 +416,7 @@ class XYZ(ABC):
                 # using version 0 INTERNALLY to mark that "add_inside" etc has been
                 # applied, and now raise a generic deprecation warning:
                 itxt = "inside" if inside else "outside"
-                warn(
+                warn_deprecated(
                     f"You are using the method '{opname}_{itxt}()'; this will "
                     "be deprecated in future versions. Consider using "
                     f"'{opname}_{itxt}_polygons()' instead which is both faster "

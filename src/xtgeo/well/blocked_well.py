@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 import pandas as pd
 
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common._xyz_enum import _AttrName
 from xtgeo.common.log import null_logger
 
@@ -122,7 +122,7 @@ def blockedwell_from_roxar(
 
     For arguments, see :func:`blockedwell_from_rms`.
     """
-    warnings.warn(
+    warn_deprecated(
         "The 'blockedwell_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'blockedwell_from_rms' instead.",
         FutureWarning,
@@ -398,7 +398,7 @@ class BlockedWell(Well):
 
         For parameters and usage details, see :meth:`to_rms`.
         """
-        warnings.warn(
+        warn_deprecated(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
             FutureWarning,
