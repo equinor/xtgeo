@@ -46,6 +46,8 @@ import warnings
 from datetime import datetime as dtime
 from typing import Any, Literal
 
+from xtgeo.common._telemetry import warn_deprecated
+
 from .log import null_logger
 from .version import __version__
 
@@ -418,7 +420,7 @@ class XTGeoDialog:
             logger = null_logger(__name__)
         """
 
-        warnings.warn(
+        warn_deprecated(
             "functionlogger is deprecated and will be removed in a future version. "
             "Use null_logger instead.",
             FutureWarning,
@@ -472,16 +474,12 @@ class XTGeoDialog:
         self._output(idx, level, string)
 
     def speak(self, string: str) -> None:
-        level = 1
-        idx = 1
+        """Show an informational message."""
+        self._show_message(string, idx=1, level=1)
 
-        caller = sys._getframe(1).f_code.co_name
-        frame = inspect.stack()[1][0]
-        self.get_callerinfo(caller, frame)
-
-        self._output(idx, level, string)
-
-    info = speak
+    def info(self, string: str) -> None:
+        """Show an informational message."""
+        self._show_message(string, idx=1, level=1)
 
     def say(self, string: str) -> None:
         level = -5
@@ -495,24 +493,26 @@ class XTGeoDialog:
 
     def warn(self, string: str) -> None:
         """Show warnings at Runtime (pure user info/warns)."""
-        level = 0
-        idx = 6
-
         if self._showrtwarnings:
-            caller = sys._getframe(1).f_code.co_name
-            frame = inspect.stack()[1][0]
-            self.get_callerinfo(caller, frame)
+            self._show_message(string, idx=6, level=0)
 
-            self._output(idx, level, string)
+    def warning(self, string: str) -> None:
+        """Show a runtime warning when runtime warnings are enabled."""
+        if self._showrtwarnings:
+            self._show_message(string, idx=6, level=0)
 
-    warning = warn
+    def _show_message(self, string: str, *, idx: int, level: int) -> None:
+        """Show a message with the caller of the public method."""
+        frame = sys._getframe(2)
+        self.get_callerinfo(frame.f_code.co_name, frame)
+        self._output(idx, level, string)
 
     @staticmethod
     def warndeprecated(string: str) -> None:
         """Show Deprecation warnings using Python warnings"""
 
         warnings.simplefilter("default", DeprecationWarning)
-        warnings.warn(string, DeprecationWarning, stacklevel=2)
+        warn_deprecated(string, DeprecationWarning, stacklevel=2)
 
     @staticmethod
     def warnuser(string: str) -> None:

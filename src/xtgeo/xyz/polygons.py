@@ -14,6 +14,7 @@ import pandas as pd
 import shapely.geometry as sg
 from typing_extensions import Self
 
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common._xyz_enum import _AttrName, _XYZType
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
@@ -229,7 +230,7 @@ def polygons_from_roxar(
     .. versionadded:: 2.19 general2d_data support is added
     .. versionadded:: 3.x support for polygon attributes (other than POLY_ID)
     """
-    warnings.warn(
+    warn_deprecated(
         "The 'polygons_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'polygons_from_rms' instead.",
         FutureWarning,
@@ -474,7 +475,7 @@ class Polygons(XYZ):
     @property
     def dataframe(self) -> pd.DataFrame:
         """Returns or set the Pandas dataframe object."""
-        warnings.warn(
+        warn_deprecated(
             "Direct access to the dataframe property in Polygons class will be "
             "deprecated in xtgeo 5.0. Use `get_dataframe()` instead.",
             DeprecationWarning,
@@ -483,7 +484,7 @@ class Polygons(XYZ):
 
     @dataframe.setter
     def dataframe(self, df: pd.DataFrame) -> None:
-        warnings.warn(
+        warn_deprecated(
             "Direct access to the dataframe property in Polygons class will be "
             "deprecated in xtgeo 5.0. Use `set_dataframe()` instead.",
             DeprecationWarning,
@@ -683,7 +684,7 @@ class Polygons(XYZ):
 
         For parameters and usage details, see :meth:`to_rms`.
         """
-        warnings.warn(
+        warn_deprecated(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
             FutureWarning,

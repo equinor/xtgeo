@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.log import null_logger
@@ -116,7 +117,7 @@ def cube_from_roxar(project: Any, name: str, folder: str | None = None) -> Cube:
         mycube = xtgeo.cube_from_rms(project, "DepthCube")
 
     """
-    warnings.warn(
+    warn_deprecated(
         "The 'cube_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'cube_from_rms' instead.",
         FutureWarning,
@@ -975,11 +976,12 @@ class Cube:
         fobj.check_folder(raiseerror=OSError)
 
         if engine is not None:
-            warnings.warn(
+            warn_deprecated(
                 "Providing an 'engine' value is no longer supported and will have no "
                 "effect in the future. segyio will eventually be used by default. "
                 "Current default engine is 'xtgeo'.",
                 UserWarning,
+                identifier="engine",
             )
 
         if fformat in FileFormat.SEGY.value:
@@ -1076,7 +1078,7 @@ class Cube:
 
         For parameters and usage details, see :meth:`to_rms`.
         """
-        warnings.warn(
+        warn_deprecated(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
             FutureWarning,

@@ -48,6 +48,7 @@ import pandas as pd
 import scipy.ndimage
 
 import xtgeo.interfaces.rms
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common.constants import (
     UNDEF,
     UNDEF_LIMIT,
@@ -234,7 +235,7 @@ def surface_from_roxar(
 
     """
 
-    warnings.warn(
+    warn_deprecated(
         "The 'surface_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'surface_from_rms' instead.",
         FutureWarning,
@@ -342,10 +343,11 @@ def surface_from_grid3d(
     """
     mode = kwargs.get("mode")
     if mode is not None:
-        warnings.warn(
+        warn_deprecated(
             "The 'mode' argument is deprecated, use 'property' instead",
             FutureWarning,
             stacklevel=2,
+            identifier="mode",
         )
         property = mode
 
@@ -675,11 +677,12 @@ class RegularSurface:
             self._xlines = xlines
 
         if masked is not None:
-            warnings.warn(
+            warn_deprecated(
                 "The 'masked' parameter is deprecated and will be removed in a "
                 "future version.",
                 FutureWarning,
                 stacklevel=2,
+                identifier="masked",
             )
 
         self._masked = True if masked is None else masked
@@ -1277,12 +1280,13 @@ class RegularSurface:
                                 and will be removed in version 5
         """
         if engine:
-            warnings.warn(
+            warn_deprecated(
                 "The 'engine' keyword is deprecated and will be removed in XTGeo 5"
                 "(Note that this key was intended as a developer setting.)"
                 "Please remove this key from your code.",
                 DeprecationWarning,
                 stacklevel=2,
+                identifier="engine",
             )
 
         logger.info("Export RegularSurface to file or memstream...")
@@ -1502,7 +1506,7 @@ class RegularSurface:
            ``to_roxar()`` is deprecated and will be removed in a future version.
            Use :meth:`to_rms()` instead.
         """
-        warnings.warn(
+        warn_deprecated(
             "The 'to_roxar()' method is deprecated and will be removed in a later "
             "xtgeo version. Use 'to_rms()' instead.",
             FutureWarning,
@@ -2033,7 +2037,7 @@ class RegularSurface:
 
     def dataframe(self, **kwargs):
         """Deprecated; see method get_dataframe()."""
-        warnings.warn(
+        warn_deprecated(
             "The dataframe() is deprecated and will be removed in xtgeo "
             "version 5. Use get_dataframe() instead",
             DeprecationWarning,
@@ -2989,7 +2993,7 @@ class RegularSurface:
 
         """
 
-        warnings.warn(
+        warn_deprecated(
             "This method is deprecated and will be removed in xtgeo version 5. "
             "It is strongly recommended to use `Cube().compute_attributes_in_window()` "
             "instead!",
@@ -3000,10 +3004,11 @@ class RegularSurface:
             zrange = 10
 
         if algorithm != 3:
-            warnings.warn(
+            warn_deprecated(
                 "Other algorithms than no. 3 is not recommended, and will be "
                 "removed in near future.",
                 FutureWarning,
+                identifier="algorithm",
             )
 
         scube = surface_from_cube(cube, 0)

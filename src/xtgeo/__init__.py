@@ -280,3 +280,8 @@ __all__ = [
     "wells_from_files",
     "wells_from_stacked_file",
 ]
+
+from xtgeo.common._telemetry import configure_telemetry as _configure_telemetry
+
+_configure_telemetry()
+del _configure_telemetry

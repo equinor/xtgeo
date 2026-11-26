@@ -1,6 +1,7 @@
 [run]
 source=xtgeo
 branch = True
+patch = subprocess, _exit
 omit =
     *roxapi*
     *roxutil*

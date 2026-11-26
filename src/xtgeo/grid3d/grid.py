@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import warnings
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
@@ -13,6 +12,7 @@ import xtgeo
 import xtgeo._internal as _internal  # type: ignore
 from xtgeo import _cxtgeo
 from xtgeo.common import XTGDescription, null_logger
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.sys import _hash_with_arrays
 from xtgeo.common.types import Dimensions
@@ -256,7 +256,7 @@ def grid_from_roxar(
         mygrid = xtgeo.grid_from_rms(project, "REEK_SIM")
 
     """
-    warnings.warn(
+    warn_deprecated(
         "The 'grid_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'grid_from_rms' instead.",
         FutureWarning,
@@ -1379,7 +1379,7 @@ class Grid(_Grid3D):
 
         For parameters and usage details, see :meth:`to_rms`.
         """
-        warnings.warn(
+        warn_deprecated(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
             FutureWarning,
@@ -2524,7 +2524,7 @@ class Grid(_Grid3D):
             >>> print(f"NNCs found: {len(nnc_nh)}")
         """
 
-        warnings.warn(
+        warn_deprecated(
             "get_transmissibilities() is deprecated; use "
             "get_cell_transmissibilities() and "
             "get_nested_hybrid_nnc_transmissibilities() instead.",

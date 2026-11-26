@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import functools
 import hashlib
-import warnings
 from types import FunctionType
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -12,6 +11,7 @@ import numpy.typing as npt
 
 import xtgeo
 from xtgeo.common import XTGeoDialog, null_logger
+from xtgeo.common._telemetry import warn_deprecated
 from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
 from xtgeo.common.exceptions import InvalidFileFormatError
 from xtgeo.common.types import Dimensions
@@ -236,7 +236,7 @@ def gridproperty_from_roxar(
         myporo = xtgeo.gridproperty_from_roxar(project, 'Geogrid', 'Poro')
 
     """
-    warnings.warn(
+    warn_deprecated(
         "The 'gridproperty_from_roxar' function is deprecated and will be removed in a "
         "future version. Use 'gridproperty_from_rms' instead.",
         FutureWarning,
@@ -1098,7 +1098,7 @@ class GridProperty(_Grid3D):
 
         For parameters and usage details, see :meth:`to_rms`.
         """
-        warnings.warn(
+        warn_deprecated(
             "The 'to_roxar' method is deprecated and will be removed in a "
             "future version. Use 'to_rms' instead.",
             FutureWarning,

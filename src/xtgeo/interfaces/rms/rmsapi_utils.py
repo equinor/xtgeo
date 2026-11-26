@@ -148,7 +148,10 @@ class RmsApiUtils:
         """RMS API version (read only)"""
         return self._version
 
-    roxversion = rmsapiversion
+    @property
+    def roxversion(self) -> str:
+        """RMS API version (read only, alias for rmsapiversion)"""
+        return self._version
 
     @property
     def project(self) -> RmsProjectType:

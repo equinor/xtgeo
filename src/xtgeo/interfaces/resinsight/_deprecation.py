@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import TypeVar
+
+from xtgeo.common._telemetry import warn_deprecated
 
 T = TypeVar("T")
 
@@ -37,11 +38,12 @@ def resolve_deprecated_alias(
                 f"Got values for both '{new_name}' and its deprecated alias "
                 f"'{old_name}'; please pass only '{new_name}'."
             )
-        warnings.warn(
+        warn_deprecated(
             f"The '{old_name}' argument is deprecated and will be removed in a "
             f"future version; use '{new_name}' instead.",
             FutureWarning,
             stacklevel=stacklevel,
+            identifier=old_name,
         )
         return old_value
     return new_value
