@@ -384,23 +384,24 @@ def create_synthetic_surface(
         nrow (int): Number of rows in the surface grid.
         xinc (float): X-axis increment (spacing between columns).
         yinc (float): Y-axis increment (spacing between rows).
-        xori (float, optional): X-axis origin. Default is 0.0.
-        yori (float, optional): Y-axis origin. Default is 0.0.
-        rotation (float, optional): Rotation angle of the surface in degrees.
+        xori (float, *optional*): X-axis origin. Default is 0.0.
+        yori (float, *optional*): Y-axis origin. Default is 0.0.
+        rotation (float, *optional*): Rotation angle of the surface in degrees.
             Default is 0.0.
-        rx (float, optional): Radius of curvature in X direction. Default is 0.0.
+        rx (float, *optional*): Radius of curvature in X direction. Default is 0.0.
             If 0, return a planar surface with optional tilt.
-        ry (float, optional): Radius of curvature in Y direction. Default is 0.0.
+        ry (float, *optional*): Radius of curvature in Y direction. Default is 0.0.
             If 0, return a planar surface with optional tilt.
-        rz (float, optional): Radius of curvature in Z direction. Default is 0.0.
+        rz (float, *optional*): Radius of curvature in Z direction. Default is 0.0.
             If 0, return a planar surface with optional tilt.
-        top_depth (float, optional): Top depth (Z value) of the surface after
+        top_depth (float, *optional*): Top depth (Z value) of the surface after
             normalization. Default is 0.0.
-        dipping (float, optional): Dip angle of the surface in degrees. Default is 0.0.
-        azimuth (float, optional): Azimuth direction of dip in degrees,
+        dipping (float, *optional*): Dip angle of the surface in degrees.
+            Default is 0.0.
+        azimuth (float, *optional*): Azimuth direction of dip in degrees,
             clockwise from global North (+Y). This is independent of the
             surface ``rotation``. Default is 0.0.
-        centroid (tuple[float, float], optional): Centroid position as
+        centroid (tuple[float, float], *optional*): Centroid position as
             (x_fraction, y_fraction) relative to grid dimensions. Default is (0.5, 0.5).
 
     Returns:

@@ -340,7 +340,7 @@ class XTGeoDialog:
         Args:
             appname (str): Name of application.
             appversion (str): Version of application on form '3.2.1'
-            info (str, optional): More info, e.g. if beta release
+            info (str, *optional*): More info, e.g. if beta release
 
         Example::
 

@@ -33,7 +33,7 @@ class Surfaces:
     * A collection of isochores
 
     Args:
-        input (list, optional): A list of XTGeo objects and/or file names)
+        input (list, *optional*): List of XTGeo objects or file names.
         subtype (str): "tops", "isochores", or None (default)
         order (str): Assummed order: "same", "stratigraphic", None(default)
 
