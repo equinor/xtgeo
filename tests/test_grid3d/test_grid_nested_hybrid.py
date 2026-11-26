@@ -2,9 +2,11 @@ import pathlib
 
 import numpy as np
 import pytest
+import shapely
 
 import xtgeo
 from xtgeo.grid3d import _grid_nested_hybrid
+from xtgeo.grid3d._grid_nested_hybrid import NestedHybridCellType
 
 
 @pytest.mark.parametrize(
@@ -406,3 +408,597 @@ def test_supported_operations_on_nested_grid(nested_box):
     coarse.get_cell_transmissibilities(100.0, 100.0, 10.0)
     coarse.get_geometrics()
     assert coarse.ijk_handedness in ("left", "right")
+
+
+def _refine_region(grid, region, refinement, names=("P_I", "P_J", "P_K")):
+    """Refine the cells in ``region`` the way fmu-tools does, and merge.
+
+    The parent indices are recorded as properties before cropping, so they give an
+    independent reference for the mapping.
+
+    Returns:
+        The merged grid, the slice of the new refined block, and the recorded parent
+        I, J and K of its cells in merged-grid indices, -1 where none.
+    """
+    grid = grid.copy()
+    for prop in grid.get_ijk(names=names, zerobased=True):
+        grid.append_prop(prop)
+    cells = np.argwhere(region)
+    (i0, j0, k0), (i1, j1, k1) = (
+        cells.min(axis=0).tolist(),
+        (cells.max(axis=0) + 1).tolist(),
+    )
+    fine = grid.copy()
+    fine.crop((i0 + 1, i1), (j0 + 1, j1), (k0 + 1, k1), props="all")
+    fine.refine(*refinement)
+
+    # Deactivation masks the parent index properties.
+    recorded = [fine.get_prop_by_name(name).values.filled(0) for name in names]
+    _deactivate(fine, ~region[tuple(recorded)])
+    _deactivate(grid, region)
+
+    layers = np.arange(grid.nlay)
+    layer_map = layers + (refinement[2] - 1) * np.clip(layers - k0, 0, k1 - k0)
+    merged = xtgeo.grid_merge(
+        grid,
+        fine,
+        layer_map.astype(np.int32),
+        (np.arange(fine.nlay) + k0).astype(np.int32),
+    )
+    block = slice(grid.ncol + 1, merged.ncol)
+    expected = np.full((3, fine.ncol, merged.nrow, merged.nlay), -1)
+    expected[:, :, : fine.nrow, k0 : k0 + fine.nlay] = (
+        recorded[0],
+        recorded[1],
+        layer_map[recorded[2]],
+    )
+    return merged, block, tuple(expected)
+
+
+def _deactivate(grid, cells):
+    actnum = grid.get_actnum()
+    actnum.values[cells] = 0
+    grid.set_actnum(actnum)
+
+
+def _box(shape, cells):
+    region = np.zeros(shape, dtype=bool)
+    region[cells] = True
+    return region
+
+
+def _assert_parents(parents, block, recorded, cells):
+    """Check parent I, J and K of the given cells of a block against the record."""
+    for found, expected in zip((parents.i, parents.j, parents.k), recorded):
+        np.testing.assert_array_equal(found[block][cells], expected[cells])
+
+
+@pytest.mark.parametrize(
+    "rotation, refinement, inclined",
+    [
+        (0, (2, 2, 2), False),
+        (30, (3, 2, 1), False),
+        (10, (2, 3, 3), True),
+        (0, ({1: 2, 2: 3}, 2, 1), False),
+    ],
+)
+def test_parents_match_recorded_parents(rotation, refinement, inclined):
+    """Check the mapping against parent indices recorded before refinement."""
+    coarse = xtgeo.create_box_grid(
+        (8, 7, 5), origin=(1000, 2000, 1500), increment=(100, 80, 10), rotation=rotation
+    )
+    if inclined:
+        coarse._set_xtgformat2()
+        coarse._coordsv[:, :, 3] += 30
+        noise = np.random.default_rng(1).uniform(-2, 2, coarse._zcornsv.shape[:3])
+        coarse._zcornsv = np.maximum.accumulate(
+            coarse._zcornsv + noise[..., None], axis=2
+        ).astype(np.float32)
+    region = _box(coarse.dimensions, np.s_[2:6, 1:5, 1:4])
+    grid, block, recorded = _refine_region(coarse, region, refinement)
+
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[block] > 0
+    _assert_parents(parents, block, recorded, active)
+    expected = np.zeros(grid.dimensions, dtype=bool)
+    expected[tuple(axis[active] for axis in recorded)] = True
+    replaced = parents.celltype == NestedHybridCellType.REPLACED_PARENT
+    np.testing.assert_array_equal(replaced, expected)
+
+
+def test_parents_of_inactive_refined_cells():
+    """Refined cells outside an L-shaped region are inactive, in active parents."""
+    coarse = xtgeo.create_box_grid((6, 6, 2), increment=(100, 100, 10))
+    region = _box(coarse.dimensions, np.s_[1:4, 1:4, :])
+    region[3, 3, :] = False
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 1))
+
+    parents = grid._get_nestedhybrid_parents()
+    inactive = (grid._actnumsv[block] == 0) & (recorded[0] >= 0)
+    assert inactive.any()
+    _assert_parents(parents, block, recorded, inactive)
+    assert parents.celltype[3, 3, 0] == NestedHybridCellType.ACTIVE_COARSE
+
+
+def test_parents_in_coarse_columns_before_the_first_active_column():
+    """Refining all active cells of the first coarse columns leaves those columns
+    without active cells, but they still hold the parents."""
+    coarse = xtgeo.create_box_grid((6, 6, 2), increment=(100, 100, 10))
+    _deactivate(coarse, np.s_[:1])
+    region = _box(coarse.dimensions, np.s_[1:3, :, :])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 1))
+    assert grid.nestedhybrid_blocks[0].istart == 3
+
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[block] > 0
+    _assert_parents(parents, block, recorded, active)
+    expected = np.zeros(grid.dimensions, dtype=bool)
+    expected[tuple(axis[active] for axis in recorded)] = True
+    replaced = parents.celltype == NestedHybridCellType.REPLACED_PARENT
+    np.testing.assert_array_equal(replaced, expected)
+
+
+@pytest.mark.parametrize("history", ["refined_again", "sibling"])
+def test_parents_of_later_block_are_coarse_cells(history):
+    """Map a later block to the coarse block, also when it refines a refined block.
+
+    The later block refines the centre of the first refinement again, or it
+    refines the coarse cells there directly. The coarse parents are the same.
+    """
+    coarse = xtgeo.create_box_grid(
+        (6, 6, 2), origin=(1000, 2000, 1500), increment=(100, 80, 10), rotation=10
+    )
+    coarse._set_xtgformat2()
+    coarse._coordsv[:, :, 3] += 30
+    noise = np.random.default_rng(1).uniform(-2, 2, coarse._zcornsv.shape[:3])
+    coarse._zcornsv = np.maximum.accumulate(
+        coarse._zcornsv + noise[..., None], axis=2
+    ).astype(np.float32)
+    centre = np.s_[2:4, 2:4, :]
+    region = _box(coarse.dimensions, np.s_[1:5, 1:5, :])
+    if history == "sibling":
+        region[centre] = False
+    first, first_block, first_recorded = _refine_region(coarse, region, (2, 2, 1))
+    names = ("Q_I", "Q_J", "Q_K")
+    if history == "sibling":
+        grid, block, recorded = _refine_region(
+            first, _box(first.dimensions, centre), (4, 4, 1), names=names
+        )
+        active = grid._actnumsv[block] > 0
+        expected = tuple(axis[active] for axis in recorded)
+    else:
+        start = first_block.start
+        again = _box(first.dimensions, np.s_[start + 2 : start + 6, 2:6, :])
+        grid, block, recorded = _refine_region(first, again, (2, 2, 1), names=names)
+        active = grid._actnumsv[block] > 0
+        # The recorded parents are first-level cells, which have coarse parents.
+        first_level = (recorded[0][active] - start, recorded[1][active])
+        expected = tuple(
+            axis[(*first_level, recorded[2][active])] for axis in first_recorded
+        )
+
+    parents = grid._get_nestedhybrid_parents()
+    for found, wanted in zip((parents.i, parents.j, parents.k), expected):
+        np.testing.assert_array_equal(found[block][active], wanted)
+    first_active = grid._actnumsv[first_block] > 0
+    _assert_parents(parents, first_block, first_recorded, first_active)
+    assert np.all(parents.celltype[centre] == NestedHybridCellType.REPLACED_PARENT)
+    assert np.all(
+        parents.celltype[first_block][~first_active]
+        == NestedHybridCellType.OTHER_INACTIVE
+    )
+
+
+def test_later_block_ending_inside_a_coarse_cell_has_no_parent_there():
+    """Leave the cells unmapped where a block covers only part of a coarse cell."""
+    coarse = xtgeo.create_box_grid((6, 6, 2), increment=(100, 100, 10))
+    first, first_block, _ = _refine_region(
+        coarse, _box(coarse.dimensions, np.s_[1:5, 1:5, :]), (2, 2, 1)
+    )
+    start = first_block.start
+    # The whole of coarse cell (2, 2), and half of its neighbours in I and J.
+    region = _box(first.dimensions, np.s_[start + 2 : start + 5, 2:5, :])
+    grid, block, recorded = _refine_region(
+        first, region, (2, 2, 1), names=("Q_I", "Q_J", "Q_K")
+    )
+
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[block] > 0
+    whole = active & (recorded[0] < start + 4) & (recorded[1] < 4)
+    assert whole.any()
+    assert np.any(active & ~whole)
+    assert np.all(parents.i[block][whole] == 2)
+    assert np.all(parents.j[block][whole] == 2)
+    np.testing.assert_array_equal(parents.k[block][whole], recorded[2][whole])
+    for found in (parents.i, parents.j, parents.k):
+        assert np.all(found[block][active & ~whole] == -1)
+
+
+@pytest.mark.parametrize("squeezed", ["parents", "refined"])
+def test_unmatched_depths_give_columns_only(squeezed):
+    """Parents that lost their shape, or refined cells that do not fill them, give
+    parent columns but no parent layers."""
+    coarse = xtgeo.create_box_grid((4, 4, 3), increment=(100, 100, 10))
+    region = _box(coarse.dimensions, np.s_[1:3, 1:3, :])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 1))
+    grid._set_xtgformat2()
+    if squeezed == "parents":
+        # Keep the neighboring cells' corner depths unchanged.
+        for di, dj, quadrant in [(0, 0, 3), (1, 0, 2), (1, 1, 0), (0, 1, 1)]:
+            corners = grid._zcornsv[1 + di : 3 + di, 1 + dj : 3 + dj, :, quadrant]
+            corners[:] = corners[:, :, :1] + (corners - corners[:, :, :1]) / 2
+    else:
+        # The top refined layer stays inside its parent but no longer fills it.
+        corners = grid._zcornsv[block.start : block.stop + 1]
+        corners[:] = corners[:, :, :1] + (corners - corners[:, :, :1]) * 0.75
+
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[block] > 0
+    np.testing.assert_array_equal(parents.i[block][active], recorded[0][active])
+    np.testing.assert_array_equal(parents.j[block][active], recorded[1][active])
+    assert np.all(parents.k[block] == -1)
+    assert np.all(parents.celltype[1:3, 1:3] == NestedHybridCellType.UNVERIFIED_PARENT)
+    assert not np.any(parents.celltype == NestedHybridCellType.REPLACED_PARENT)
+
+
+def test_thin_parent_layers_are_unverified():
+    """Classify thin parents as unverified when their K matches are uncertain."""
+    coarse = xtgeo.create_box_grid(
+        (4, 4, 3), origin=(0, 0, 1500), increment=(100, 100, 0.001)
+    )
+    region = _box(coarse.dimensions, np.s_[1:3, 1:3, 1:2])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 2))
+
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[block] > 0
+    np.testing.assert_array_equal(parents.i[block][active], recorded[0][active])
+    np.testing.assert_array_equal(parents.j[block][active], recorded[1][active])
+    assert np.all(parents.k[block][active] == -1)
+    assert np.all(
+        parents.celltype[1:3, 1:3, 1] == NestedHybridCellType.UNVERIFIED_PARENT
+    )
+    assert np.all(parents.celltype[1:3, 1:3, 2] == NestedHybridCellType.OTHER_INACTIVE)
+
+
+def test_child_corners_above_inclined_parent_face_keep_parents():
+    """Refine interpolates depths along pillars, so on non-parallel inclined pillars
+    a refined corner can lie above the parent face. The parent is still known."""
+    coarse = xtgeo.create_box_grid(
+        (4, 4, 1), origin=(0, 0, 1500), increment=(100, 100, 10)
+    )
+    coarse._set_xtgformat2()
+    coarse._coordsv[..., [2, 5]] = [1480, 1540]
+    coarse._coordsv[2, :, [2, 5]] += 10
+    coarse._coordsv[2, :, 3] -= 50
+    coarse._zcornsv[2] += 20
+    region = _box(coarse.dimensions, np.s_[1:2, 1:3, :])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 1))
+
+    # On the south edge of the parent top, the coarse corners are (100, 1500)
+    # and (175, 1520) in X and Z. The midpoint pillar puts the fine corner
+    # at X > 137.5 at Z=1510, above the sloping top face.
+    middle_pillar = grid._coordsv[block.start + 1, 0]
+    fine_top = grid._zcornsv[block.start + 1, 0, 0, 3]
+    assert fine_top == 1510
+    assert _grid_nested_hybrid._xy_at_depth(middle_pillar, fine_top)[0] > 137.5
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[block] > 0
+    _assert_parents(parents, block, recorded, active)
+    replaced = parents.celltype == NestedHybridCellType.REPLACED_PARENT
+    assert np.count_nonzero(replaced) == np.count_nonzero(region)
+
+
+def test_parent_mapping_is_independent_of_chunk_size(monkeypatch):
+    """Keep the same mapping when vertical and inclined columns share a chunk."""
+    coarse = xtgeo.create_box_grid((5, 4, 1), increment=(100, 100, 10))
+    coarse._set_xtgformat2()
+    coarse._coordsv[4, :, 3] += 5
+    region = _box(coarse.dimensions, np.s_[1:4, 1:3, :])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 2))
+    # Offset one vertical pillar within the tolerance for matching columns.
+    grid._coordsv[block.start + 1, 1, [0, 3]] += 0.002
+
+    mixed_chunk = grid._get_nestedhybrid_parents()
+    monkeypatch.setattr(_grid_nested_hybrid, "_CHUNK_SIZE", 1)
+    separate_chunks = grid.copy()._get_nestedhybrid_parents()
+
+    active = grid._actnumsv[block] > 0
+    _assert_parents(separate_chunks, block, recorded, active)
+    _assert_parents(mixed_chunk, block, recorded, active)
+    np.testing.assert_array_equal(mixed_chunk.celltype, separate_chunks.celltype)
+
+
+@pytest.mark.parametrize(
+    "first_shifted_pillar", [5, 6], ids=["no_matching_line", "one_matching_line"]
+)
+def test_moved_refined_block_has_no_parents(nested_box, first_shifted_pillar):
+    """Leave the block unmapped when too few pillar lines still match."""
+    grid = nested_box[1]
+    grid._set_xtgformat2()
+    grid._coordsv[first_shifted_pillar:, :, [0, 3]] += 5
+    assert grid.nestedhybrid
+
+    parents = grid._get_nestedhybrid_parents()
+    assert np.all(parents.i == -1)
+    assert np.all(parents.k == -1)
+    assert not np.isin(
+        parents.celltype,
+        [NestedHybridCellType.REPLACED_PARENT, NestedHybridCellType.UNVERIFIED_PARENT],
+    ).any()
+
+
+def test_rotated_refined_block_with_conflicting_pillar_lines_has_no_parents():
+    """Leave a rotated block unmapped when its pillar lines conflict."""
+    coarse = xtgeo.create_box_grid((4, 4, 1), increment=(100, 100, 10))
+    refined = xtgeo.create_box_grid(
+        (4, 4, 1), origin=(200, 100, 0), increment=(50, 50, 10), rotation=90
+    )
+    grid = xtgeo.grid_merge(coarse, refined)
+
+    parents = grid._get_nestedhybrid_parents()
+    assert parents is not None
+    assert np.all(parents.i == -1)
+    assert np.all(parents.j == -1)
+
+
+def test_later_block_without_horizontal_area_has_no_parents(nested_box):
+    """Leave a block with no horizontal area unmapped and keep earlier mappings."""
+    later = xtgeo.create_box_grid((2, 2, 1), increment=(100, 100, 10))
+    later._set_xtgformat2()
+    later._coordsv[..., [0, 3]] = 0
+    grid = xtgeo.grid_merge(nested_box[1], later)
+    blocks = grid.nestedhybrid_blocks
+    assert len(blocks) == 3
+
+    parents = grid._get_nestedhybrid_parents()
+    assert np.all(parents.i[blocks[2].istart :] == -1)
+    assert np.any(parents.k[blocks[1].istart : blocks[1].istop] >= 0)
+
+
+def test_celltypes(nested_box):
+    """Distinguish replaced parents from padding and check the padding layers."""
+    grid = nested_box[1]
+    active = grid._actnumsv > 0
+    expected = np.where(
+        active, NestedHybridCellType.ACTIVE_REFINED, NestedHybridCellType.OTHER_INACTIVE
+    )
+    expected[:4][active[:4]] = NestedHybridCellType.ACTIVE_COARSE
+    expected[1:3, 1:3, 1] = NestedHybridCellType.REPLACED_PARENT
+
+    parents = grid._get_nestedhybrid_parents()
+    np.testing.assert_array_equal(parents.celltype, expected)
+    # Layers 0 and 3 are merge padding.
+    assert np.all(parents.k[5:, :, [0, 3]] == -1)
+    assert np.all(parents.k[5:, :, 1:3] == 1)
+
+
+def test_inactive_cell_above_proven_children_is_not_a_parent(nested_box):
+    """All refined cells in the column have a proven parent layer, so the other
+    inactive cells in the column are not parents."""
+    grid = nested_box[1]
+    _deactivate(grid, (1, 1, 0))
+
+    celltype = grid._get_nestedhybrid_parents().celltype
+    assert celltype[1, 1, 0] == NestedHybridCellType.OTHER_INACTIVE
+    assert celltype[1, 1, 1] == NestedHybridCellType.REPLACED_PARENT
+
+
+def test_parents_none_when_not_nested():
+    """Return None for a grid with no nested hybrid layout."""
+    assert xtgeo.create_box_grid((3, 3, 1))._get_nestedhybrid_parents() is None
+
+
+def test_parents_are_cached(nested_box, monkeypatch):
+    """Reuse the computed parent mapping when the grid stays the same."""
+    grid = nested_box[1]
+    map_parents = _grid_nested_hybrid.map_parents
+    calls = 0
+
+    def count_calls(*args):
+        nonlocal calls
+        calls += 1
+        return map_parents(*args)
+
+    monkeypatch.setattr(_grid_nested_hybrid, "map_parents", count_calls)
+    first = grid._get_nestedhybrid_parents()
+    assert grid._get_nestedhybrid_parents() is first
+    assert calls == 1
+
+
+def test_parents_follow_grid_edits(nested_box):
+    """Preserve the mapping on copies and update it after grid edits."""
+    grid = nested_box[1]
+    before = grid._get_nestedhybrid_parents()
+    copied = grid.copy()._get_nestedhybrid_parents()
+    for name in ("i", "j", "k", "celltype"):
+        np.testing.assert_array_equal(getattr(copied, name), getattr(before, name))
+
+    actnum = grid.get_actnum()
+    actnum.values[1, 1, 1] = 1
+    grid.set_actnum(actnum)
+    assert (
+        grid._get_nestedhybrid_parents().celltype[1, 1, 1]
+        == NestedHybridCellType.ACTIVE_COARSE
+    )
+
+    grid._set_xtgformat2()
+    grid._coordsv[6, 2, [0, 3]] += 1
+    assert grid._get_nestedhybrid_parents().i[6, 2, 1] == -1
+
+
+def test_parents_drogon(testdata_path):
+    """Every active refined cell has its centre inside its parent column."""
+    grid = xtgeo.grid_from_file(
+        pathlib.Path(testdata_path) / "3dgrids/drogon/5/drogon_nested_hybrid1.roff"
+    )
+    parents = grid._get_nestedhybrid_parents()
+    block = grid.nestedhybrid_blocks[1]
+    active = np.zeros(grid.dimensions, dtype=bool)
+    active[block.istart : block.istop] = grid._actnumsv[block.istart : block.istop] > 0
+    pi, pj = parents.i[active], parents.j[active]
+    assert np.all(pi >= 0)
+
+    x, y, z = (prop.values.data[active] for prop in grid.get_xyz(asmasked=False))
+    pillars = [
+        grid._coordsv[pi + di, pj + dj] for di, dj in [(0, 0), (1, 0), (1, 1), (0, 1)]
+    ]
+    corners = np.stack(
+        [_grid_nested_hybrid._xy_at_depth(pillar, z) for pillar in pillars], axis=1
+    )
+    assert shapely.contains_xy(shapely.polygons(corners), x, y).all()
+    replaced = parents.celltype == NestedHybridCellType.REPLACED_PARENT
+    assert np.all(grid._actnumsv[replaced] == 0)
+
+
+@pytest.fixture
+def emerald_nested_grid(testdata_path):
+    return xtgeo.grid_from_file(
+        pathlib.Path(testdata_path)
+        / "3dgrids/eme/3/nested_grid_refine_2_2_2_merged.grdecl"
+    )
+
+
+def test_parents_emerald(emerald_nested_grid):
+    """Every refined cell of the 2 x 2 x 2 refinement has a parent in a group of 8."""
+    grid = emerald_nested_grid
+    parents = grid._get_nestedhybrid_parents()
+    refined = parents.celltype == NestedHybridCellType.ACTIVE_REFINED
+    for axis in (parents.i, parents.j, parents.k):
+        assert np.all(axis[refined] >= 0)
+    index = (parents.i[refined], parents.j[refined], parents.k[refined])
+    _, counts = np.unique(np.column_stack(index), axis=0, return_counts=True)
+    assert np.all(counts == 8)
+    assert np.all(parents.celltype[index] == NestedHybridCellType.REPLACED_PARENT)
+    assert np.count_nonzero(
+        parents.celltype == NestedHybridCellType.REPLACED_PARENT
+    ) == len(counts)
+
+
+@pytest.mark.benchmark(group="nested-hybrid-parent-mapping")
+def test_benchmark_parent_mapping_emerald(emerald_nested_grid, benchmark):
+    """Time parent mapping after grid loading and block detection."""
+    grid = emerald_nested_grid
+    blocks = grid.nestedhybrid_blocks
+    parents = benchmark(_grid_nested_hybrid.map_parents, grid, blocks)
+    assert np.any(parents.celltype == NestedHybridCellType.REPLACED_PARENT)
+
+
+def test_inverted_parent_depths_give_no_parent_layer():
+    """Small depth inversions add up, so two parent layers contain the same cells."""
+    coarse = xtgeo.create_box_grid((4, 4, 11), increment=(100, 100, 1))
+    coarse._set_xtgformat2()
+    coarse._zcornsv[:] = (1500 + np.r_[-0.004, np.zeros(10), 0.004])[:, None]
+    _deactivate(coarse, np.s_[1:3, 1:3, :10])
+    region = _box(coarse.dimensions, np.s_[1:3, 1:3, 10:])
+    grid, block, _ = _refine_region(coarse, region, (2, 2, 1))
+    grid._set_xtgformat2()
+    inverted = np.r_[0, 0.004, 0.0035, 0.003, 0.0025, 0.002, 0.0015, 0.001]
+    grid._zcornsv[1:4, 1:4] = (1500 + np.r_[inverted, 0.0005, 0, 0, 0.004])[:, None]
+
+    parents = grid._get_nestedhybrid_parents()
+    assert np.all(parents.k[block] == -1)
+    assert not np.any(parents.celltype == NestedHybridCellType.REPLACED_PARENT)
+
+
+def test_inverted_child_depths_leave_affected_parent_unverified():
+    """Reject an inverted child column and keep the neighboring parent verified."""
+    coarse = xtgeo.create_box_grid(
+        (4, 4, 1), origin=(0, 0, 1500), increment=(100, 100, 10)
+    )
+    region = _box(coarse.dimensions, np.s_[1:3, 1:2, :])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 3))
+    depths = np.array([1500, 1503, 1507, 1510])
+    grid._zcornsv[block.start : block.stop + 1] = depths[:, None]
+    grid._zcornsv[block.start, 0, 1:3, 3] = [1507, 1503]
+
+    parents = grid._get_nestedhybrid_parents()
+    expected = (recorded[0], recorded[1], np.where(recorded[0] == 1, -1, recorded[2]))
+    _assert_parents(parents, block, expected, grid._actnumsv[block] > 0)
+    assert parents.celltype[1, 1, 0] == NestedHybridCellType.UNVERIFIED_PARENT
+    assert parents.celltype[2, 1, 0] == NestedHybridCellType.REPLACED_PARENT
+
+
+def test_garbage_depths_outside_the_blocks_do_not_change_parents():
+    """Keep verified parent layers when a separator contains an invalid depth."""
+    coarse = xtgeo.create_box_grid((4, 4, 3), increment=(100, 100, 10))
+    region = _box(coarse.dimensions, np.s_[1:3, 1:3, :])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 1))
+    grid._set_xtgformat2()
+    grid._zcornsv[4, 0, 0, 3] = 1e33  # in the inactive separator column
+
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[block] > 0
+    np.testing.assert_array_equal(parents.k[block][active], recorded[2][active])
+
+
+def test_parent_needs_all_its_refined_columns(monkeypatch):
+    """Reject a partially filled parent when processing columns in small chunks."""
+    coarse = xtgeo.create_box_grid((6, 6, 2), increment=(100, 100, 10))
+    region = _box(coarse.dimensions, np.s_[1:5, 1:5, :])
+    grid, block, recorded = _refine_region(coarse, region, (2, 2, 2))
+    monkeypatch.setattr(_grid_nested_hybrid, "_CHUNK_SIZE", 1)
+    grid._set_xtgformat2()
+    column = (block.start + 2, 2)
+    for di, dj, quadrant in [(0, 0, 3), (1, 0, 2), (1, 1, 0), (0, 1, 1)]:
+        corners = grid._zcornsv[column[0] + di, column[1] + dj, :, quadrant]
+        corners[:] = corners[0] + (corners - corners[0]) * 0.75
+
+    parents = grid._get_nestedhybrid_parents()
+    local = (column[0] - block.start, column[1])
+    in_parent_column = (recorded[0] == recorded[0][local][0]) & (
+        recorded[1] == recorded[1][local][0]
+    )
+    active = grid._actnumsv[block] > 0
+    expected = np.where(in_parent_column, -1, recorded[2])
+    np.testing.assert_array_equal(parents.k[block][active], expected[active])
+
+
+def test_moved_interior_pillar_gives_no_parent_layer():
+    """Refined columns on a moved pillar lose their parent, so the remaining columns
+    no longer prove that the parent is filled."""
+    coarse = xtgeo.create_box_grid((4, 4, 2), increment=(90, 90, 10))
+    region = _box(coarse.dimensions, np.s_[1:2, 1:2, :])
+    grid, block, recorded = _refine_region(coarse, region, (3, 3, 1))
+    grid._set_xtgformat2()
+    grid._coordsv[block.start + 1, 1, [0, 3]] += 5
+
+    parents = grid._get_nestedhybrid_parents()
+    mapped = parents.i[block] >= 0
+    assert 0 < mapped[..., 0].sum() < 9
+    np.testing.assert_array_equal(parents.i[block][mapped], recorded[0][mapped])
+    assert np.all(parents.k == -1)
+    assert np.all(parents.celltype[1, 1] == NestedHybridCellType.UNVERIFIED_PARENT)
+
+
+def test_padding_inside_parent_keeps_parent_layers():
+    """Refining one first-level layer again adds zero-thickness padding between the
+    first-level layers that fill a coarse parent."""
+    coarse = xtgeo.create_box_grid((6, 6, 2), increment=(100, 100, 10))
+    first, first_block, _ = _refine_region(
+        coarse, _box(coarse.dimensions, np.s_[1:5, 1:5, :]), (2, 2, 2)
+    )
+    start = first_block.start
+    region = _box(first.dimensions, np.s_[start + 2 : start + 4, 2:4, 0:1])
+    grid, _, _ = _refine_region(first, region, (2, 2, 2), names=("Q_I", "Q_J", "Q_K"))
+    assert np.any(np.diff(grid._zcornsv[first_block.start, 0, :, 3]) == 0)
+
+    parents = grid._get_nestedhybrid_parents()
+    active = grid._actnumsv[first_block] > 0
+    assert np.all(parents.k[first_block][active] >= 0)
+
+
+def test_positive_thickness_between_child_layers_is_not_padding():
+    """Reject a parent match when an unproven child layer has positive thickness."""
+    coarse = xtgeo.create_box_grid(
+        (4, 4, 1), origin=(0, 0, 1500), increment=(100, 100, 10)
+    )
+    region = _box(coarse.dimensions, np.s_[1:2, 1:3, :])
+    grid, block, _ = _refine_region(coarse, region, (2, 2, 3))
+    next_depth = np.nextafter(np.float32(1505), np.float32(np.inf))
+    grid._zcornsv[block.start : block.stop + 1] = np.array(
+        [1500, 1505, next_depth, 1510]
+    )[:, None]
+
+    parents = grid._get_nestedhybrid_parents()
+    assert np.all(parents.k[block] == -1)
+    assert not np.any(parents.celltype == NestedHybridCellType.REPLACED_PARENT)
