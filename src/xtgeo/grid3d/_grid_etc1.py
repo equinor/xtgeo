@@ -1506,7 +1506,7 @@ def estimate_design(
     self: Grid,
     nsubname: str | None = None,
 ) -> dict[str, str | float]:
-    """Estimate (guess) (sub)grid design by examing DZ in median thickness column."""
+    """Estimate (sub)grid design from the column with median nonzero thickness."""
     actv = self.get_actnum().values
 
     dzv_raw = self.get_dz(asmasked=False).values
@@ -1534,16 +1534,17 @@ def estimate_design(
         dzcum = np.ma.filled(dzcum, fill_value=0.0)
     dzcum = np.asarray(dzcum)
 
-    # find the average thickness for nonzero thicknesses
-    dzcum2 = dzcum.copy()
-    dzcum2[dzcum == 0.0] = np.nan
-    dzavg = np.nanmean(dzcum2) / dzv.shape[2]
+    nonzero_thicknesses = dzcum[dzcum != 0.0]
+    if nonzero_thicknesses.size == 0:
+        return {"design": "X", "dzsimbox": np.nan}
+
+    dzavg = nonzero_thicknesses.mean() / dzv.shape[2]
 
     # find the I J indices for the median value
     if versionparse(np.__version__) < versionparse("1.22"):
-        median_value = np.percentile(dzcum, 50, interpolation="nearest")  # type: ignore
+        median_value = np.percentile(nonzero_thicknesses, 50, interpolation="nearest")  # type: ignore
     else:
-        median_value = np.percentile(dzcum, 50, method="nearest")
+        median_value = np.percentile(nonzero_thicknesses, 50, method="nearest")
 
     argmed = np.stack(np.nonzero(dzcum == median_value), axis=1)
 
