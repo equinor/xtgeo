@@ -1822,8 +1822,9 @@ class Grid(_Grid3D):
             result (dict): where key "design" gives one letter in(P, T, B, X, M)
                 P=proportional, T=topconform, B=baseconform,
                 X=underdetermined, M=Mixed conform. Key "dzsimbox" is simbox thickness
-                estimate per cell. None if nsub is given, but subgrids are missing, or
-                nsub (name or number) is out of range.
+                estimate per cell. If every column has zero active thickness in the
+                requested grid or subgrid, "design" is "X" and "dzsimbox" is NaN.
+                Returns None if the requested subgrid is missing or out of range.
 
         Example::
 

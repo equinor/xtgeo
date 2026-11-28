@@ -641,6 +641,51 @@ def test_grid_design(emerald_grid):
         code = emerald_grid.estimate_design(nsub=None)
 
 
+@pytest.mark.parametrize("inactive_i_slices", [0, 6])
+def test_grid_design_excludes_inactive_columns(inactive_i_slices):
+    grid = xtgeo.create_box_grid((10, 8, 3), increment=(1, 1, 10))
+    actnum = grid.get_actnum()
+    actnum.values[:inactive_i_slices, :, :] = 0
+    grid.set_actnum(actnum)
+
+    result = grid.estimate_design()
+
+    assert result == {"design": "P", "dzsimbox": pytest.approx(10)}
+
+
+@pytest.mark.parametrize("padding", [0, 4])
+def test_grid_design_preserves_first_median_column_when_tied(padding):
+    grid = xtgeo.create_box_grid((padding + 3, 1, 3), increment=(1, 1, 10))
+    actnum = grid.get_actnum()
+    actnum.values[:padding, :, :] = 0
+    # The first active column is thicker. The two median columns tie at 20 m,
+    # but the first is top-conforming and the second is base-conforming.
+    actnum.values[padding + 1, :, -1] = 0
+    actnum.values[padding + 2, :, 0] = 0
+    grid.set_actnum(actnum)
+
+    result = grid.estimate_design()
+
+    assert result == {"design": "T", "dzsimbox": pytest.approx(10)}
+
+
+@pytest.mark.filterwarnings("error::RuntimeWarning")
+def test_grid_design_returns_underdetermined_for_inactive_subgrid():
+    grid = xtgeo.create_box_grid((4, 2, 6), increment=(1, 1, 10))
+    grid.set_subgrids({"inactive": 3, "active": 3})
+    actnum = grid.get_actnum()
+    actnum.values[:, :, :3] = 0
+    grid.set_actnum(actnum)
+
+    inactive_result = grid.estimate_design("inactive")
+    active_result = grid.estimate_design("active")
+
+    assert inactive_result is not None
+    assert inactive_result["design"] == "X"
+    assert math.isnan(inactive_result["dzsimbox"])
+    assert active_result == {"design": "P", "dzsimbox": pytest.approx(10)}
+
+
 @pytest.mark.parametrize(
     "grid, flip",
     [
